@@ -91,3 +91,11 @@
   elements: ["POPA 2.5.1"]
   front: "Conditions for maximum endurance and maximum range?"
   back: "Endurance: minimum power speed (minimum fuel flow), slow, leaned. Range: minimum drag (best L/D) speed in still air, leaned, improved by higher altitude and lower weight. Headwind: fly faster for range; tailwind: fly slower."
+- id: POPA-C024
+  elements: ["POPA 2.4.2"]
+  front: "Workbook chart conditions at a glance: Figs 3, 4, 5, 6, 12, 13?"
+  back: "Fig 3 take-off: 10 degrees flap, 60 KIAS, MTOW 1,090 kg. Fig 4 landing: 40 degrees, 65 KIAS, distance independent of weight. Fig 5 take-off: zero flap, 64 KIAS, 2,350 RPM minimum. Fig 6 landing: 30 degrees, 58 KIAS. All 15 kt crosswind, factor 1.15. ECHO Fig 12: zero flap, 3,200 RPM, 37.4 in Hg, factor 1.22; Fig 13: 45 degrees, factor 1.26; both 20 kt crosswind, speeds from the chart scale."
+- id: POPA-C025
+  elements: ["POPA 2.4.2"]
+  front: "Fig 3 gives weights (A) and (B). Which take-off weight applies?"
+  back: "The lesser of (A) and (B) (note 1), and never above the 1,090 kg MTOW (note 2). (A) is the runway-limited weight from TODA, wind, slope and surface. On Fig 6 the landing weight must not exceed the climb weight limit (A)."

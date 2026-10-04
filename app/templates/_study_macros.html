@@ -20,10 +20,19 @@
   {%- endif -%}
 {%- endmacro %}
 
-{% macro workbook_link(q) -%}
+{# The workbook page a question uses (app/seed/workbook.py), folded unless `open`: the quiz opens it, the exam
+   leaves it shut like the paper booklet on the desk. #}
+{% macro workbook_link(q, open=False) -%}
   {%- if q.workbook_page -%}
-    <p class="mt-2 text-sm"><a href="/static/rpl-ppl-cpl-aeroplane-workbook.pdf#page={{ q.workbook_page }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1">
-      {{ icon("external", "size-3.5") }} CASA workbook, page {{ q.workbook_page }}</a></p>
+    {%- set img = "/static/workbook/p%02d.webp" | format(q.workbook_page) -%}
+    <details class="workbook-figure"{% if open %} open{% endif %}>
+      <summary>{{ icon("book", "size-4") }} CASA workbook, page {{ q.workbook_page }}</summary>
+      <div class="workbook-figure-body">
+        <a class="workbook-page" href="{{ img }}" target="_blank" rel="noopener"><img src="{{ img }}" alt="CASA workbook page {{ q.workbook_page }}" width="1240" height="1754" loading="lazy"></a>
+        <p class="workbook-source"><a href="/static/rpl-ppl-cpl-aeroplane-workbook.pdf#page={{ q.workbook_page }}" target="_blank" rel="noopener">Open page {{ q.workbook_page }} in the PDF</a>
+          · Source: CASA RPL, PPL &amp; CPL (Aeroplane) Workbook v3.0a, CC BY 4.0</p>
+      </div>
+    </details>
   {%- endif -%}
 {%- endmacro %}
 

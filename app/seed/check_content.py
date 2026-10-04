@@ -4,8 +4,8 @@
 
 Reports: subtopics without a note, notes without a "## What the exam expects" section or whose list misses an
 element number, elements with no question, elements with no card, questions/cards tagged with unknown element codes,
-duplicate ids, MCQs without exactly 4 options or out-of-range answers, and visuals: diagram:/widget:
-references to missing files, diagram and widget files nothing references, and style-guide violations
+duplicate ids, MCQs without exactly 4 options or out-of-range answers, workbook_page outside the workbook's figure
+pages, and visuals: diagram:/widget:/workbook: references to missing files, diagram and widget files nothing references, and style-guide violations
 (see content/diagrams/README.md and app.seed.visuals.lint_svg / lint_widget).
 """
 from __future__ import annotations
@@ -19,6 +19,7 @@ from pathlib import Path
 import yaml
 
 from app.seed.loader import split_frontmatter
+from app.seed import workbook
 from app.seed.visuals import find_refs, lint_svg, lint_widget, visual_path
 
 CONTENT = Path(__file__).resolve().parents[2] / "content"
@@ -40,7 +41,9 @@ def check_visuals(bodies: dict[str, tuple[str, str]], problems: list[str]) -> di
         for kind, slug in find_refs(body):
             referenced.add((kind, slug))
             per_unit[sid.split()[0]] = per_unit.get(sid.split()[0], 0) + 1
-            if not visual_path(CONTENT, kind, slug).is_file():
+            if kind == "workbook" and slug not in workbook.FIGURES:
+                problems.append(f"{path}: workbook:{slug} is not a figure id in app/seed/workbook.py")
+            elif not visual_path(CONTENT, kind, slug).is_file():
                 problems.append(f"{path}: {kind}:{slug} has no file at {visual_path(CONTENT, kind, slug).relative_to(CONTENT.parent)}")
     for p in sorted((CONTENT / "reference").glob("*.md")):
         for kind, slug in find_refs(p.read_text(encoding="utf-8")):
@@ -122,6 +125,9 @@ def main(argv: list[str]) -> int:
                 problems.append(f"{path}: question {q.get('id')} unknown kind {q.get('kind')!r}")
             if not q.get("explanation"):
                 problems.append(f"{path}: question {q.get('id')} has no explanation")
+            if q.get("workbook_page") is not None and q["workbook_page"] not in workbook.PAGE_TITLES:
+                problems.append(f"{path}: question {q.get('id')} workbook_page {q['workbook_page']} is not a figure page "
+                                f"({workbook.FIRST_PAGE}-{workbook.LAST_PAGE})")
     c_ids: Counter = Counter()
     c_elements: Counter = Counter()
     for path in sorted((CONTENT / "cards").glob("*.yaml")):

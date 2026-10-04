@@ -1,0 +1,277 @@
+# POPC: loading systems ALPHA, BRAVO, CHARLIE and ECHO, worked on the CASA workbook pages (workbook_page shows the page in the quiz).
+- id: POPC-W001
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE: a 65 kg passenger sits in row 2. How many index units does the passenger add?"
+  answer: 2340
+  tolerance: 0
+  unit: IU
+  workbook_page: 14
+  explanation: "Row 2 arm 3,600 mm: 65 × 3,600 ÷ 100 = 2,340 IU, the figure the page 14 occupant table prints against 65 kg in the row 2 column. Do not use the row 1 column (65 kg = 1,786 IU)."
+  references: ["POPC 2.1", "Workbook p14"]
+  difficulty: 1
+- id: POPC-W002
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE: you load 180 litres of AVGAS. How many index units does the fuel add, to the nearest whole unit?"
+  answer: 3823
+  tolerance: 1
+  unit: IU
+  workbook_page: 14
+  explanation: "180 L × 0.72 = 129.6 kg. At the 2,950 mm fuel arm: 129.6 × 2,950 ÷ 100 = 3,823.2 IU, matching the page 14 fuel table. Converting litres to kilograms first is the step most often skipped."
+  references: ["POPC 2.1", "Workbook p14"]
+  difficulty: 1
+- id: POPC-W003
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE: empty weight 687 kg, 19,522 IU; oil 7 kg; row 1 pilot 75 kg and passenger 70 kg; row 2 one passenger 85 kg; baggage 30 kg. What is the CG at zero fuel weight, in mm aft of datum?"
+  answer: 2926
+  tolerance: 1
+  unit: mm
+  workbook_page: 13
+  explanation: "ZFW = 687 + 7 + 145 + 85 + 30 = 954 kg. IU = 19,522 + 86.1 + 3,987.5 + 3,060 + 1,263 = 27,918.6. CG = 27,918.6 × 100 ÷ 954 = 2,926.5 mm. Row 1 at 145 kg is not one table line: add the two people (75 kg = 2,062 IU, 70 kg = 1,925 IU) or work 145 × 2,750 ÷ 100."
+  references: ["POPC 2.1", "Workbook p13-14"]
+  difficulty: 2
+- id: POPC-W004
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE: empty weight 687 kg, 19,522 IU; oil 7 kg; row 1 pilot 75 kg and passenger 70 kg; row 2 one passenger 85 kg; baggage 30 kg. You then load 160 L of fuel. What is the CG at take-off weight, in mm aft of datum?"
+  answer: 2929
+  tolerance: 1
+  unit: mm
+  workbook_page: 15
+  explanation: "Fuel 160 × 0.72 = 115.2 kg, 3,398.4 IU. TOW = 954 + 115.2 = 1069.2 kg (under 1,115 kg). IU = 27,918.6 + 3,398.4 = 31,317.0. CG = 31,317.0 × 100 ÷ 1069.2 = 2,929.0 mm. On Fig 9 the forward limit at 1069 kg is about 2,868 mm and the aft limit 3,004 mm: inside."
+  references: ["POPC 2.1", "Workbook p15"]
+  difficulty: 2
+- id: POPC-W005
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE, normal category: empty 687 kg, oil 7 kg, row 1 160 kg, row 2 150 kg, baggage 26 kg. What is the most fuel, in whole litres, you can load without exceeding the maximum take-off weight?"
+  answer: 118
+  tolerance: 0
+  unit: L
+  workbook_page: 13
+  explanation: "ZFW = 687 + 7 + 160 + 150 + 26 = 1030 kg. Margin to the 1,115 kg MTOW = 85 kg. 85 ÷ 0.72 = 118.1 L, so 118 L: round down, since 119 L would put you over. Then check the CG at both weights."
+  references: ["POPC 2.1", "Workbook p13"]
+  difficulty: 2
+- id: POPC-W006
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE: the take-off weight works out at 940 kg with the CG at 2,850 mm. In which category may the aeroplane be flown?"
+  options:
+    - "Normal and utility"
+    - "Normal only"
+    - "Utility only"
+    - "Neither: it is overweight"
+  answer: 1
+  workbook_page: 13
+  explanation: "940 kg is under the 1,115 kg normal category MTOW but over the 925 kg utility limit, so it is normal category only. The CG of 2,850 mm is inside the normal envelope at 940 kg (forward limit about 2,804 mm). Utility manoeuvres need the weight below 925 kg and the CG inside the shaded envelope."
+  references: ["POPC 2.1", "Workbook p13, p15"]
+  difficulty: 2
+- id: POPC-W007
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Take the workbook's own CHARLIE example on page 13 (take-off weight 1,114.8 kg) and add 15 kg of baggage. How many whole litres of fuel must be off-loaded to get back to the maximum take-off weight?"
+  answer: 21
+  tolerance: 0
+  unit: L
+  workbook_page: 13
+  explanation: "New TOW = 1,114.8 + 15 = 1129.8 kg, 14.8 kg over 1,115 kg. 14.8 ÷ 0.72 = 20.56 L, so at least 21 L must come out (round up when removing). The baggage, 35 kg in total, is well inside the 122 kg compartment limit."
+  references: ["POPC 2.1", "Workbook p13"]
+  difficulty: 2
+- id: POPC-W008
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE: empty 687 kg, 19,522 IU; oil 7 kg; pilot 70 kg in row 1; two passengers totalling 180 kg in row 2; 122 kg of baggage. Ignoring fuel for now, is the loading acceptable?"
+  options:
+    - "Yes: every weight is within its limit"
+    - "No: the baggage exceeds the compartment limit"
+    - "No: the CG is aft of the 3,004 mm aft limit"
+    - "No: the CG is forward of the forward limit"
+  answer: 2
+  workbook_page: 15
+  explanation: "ZFW = 1066 kg, IU = 19,522 + 86.1 + 1,925 + 6,480 + 5,136.2 = 33,149.3. CG = 33,149.3 × 100 ÷ 1066 = 3,110 mm, about 100 mm aft of the 3,004 mm limit. The baggage is exactly at its 122 kg limit (legal) and the weight is under MTOW, but the light pilot up front and the heavy load behind put the CG far aft. Fuel at 2,950 mm will not bring it back."
+  references: ["POPC 2.1", "Workbook p13-15"]
+  difficulty: 3
+- id: POPC-W009
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "In the workbook's own CHARLIE example on page 13, the CG is 2,963.2 mm at take-off and 2,964.5 mm at zero fuel weight. Why does burning the fuel move the CG aft?"
+  options:
+    - "Because the fuel arm (2,950 mm) is forward of the loaded CG"
+    - "Because the fuel arm is aft of the loaded CG"
+    - "Because the oil is burned with the fuel"
+    - "Because index units are not additive"
+  answer: 0
+  workbook_page: 13
+  explanation: "Removing a load moves the CG away from that load's arm. The fuel sits at 2,950 mm, about 13 mm forward of the 2,963 mm CG, so as it burns the CG creeps aft. With a lighter load whose CG is forward of 2,950 mm, the same fuel burn would move the CG forward: always check both ends."
+  references: ["POPC 2.1", "Workbook p13"]
+  difficulty: 3
+- id: POPC-W010
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system BRAVO works in pounds. How many pounds is 120 litres of AVGAS, to the nearest pound?"
+  answer: 191
+  tolerance: 1
+  unit: lb
+  workbook_page: 11
+  explanation: "120 L × 0.72 = 86.4 kg; 86.4 × 2.205 = 190.5 lb. In one step: 120 × 1.587 = 190.4 lb. The workbook's specific gravity of 0.72 applies to every loading system."
+  references: ["POPC 2.1", "Workbook p11"]
+  difficulty: 1
+- id: POPC-W011
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system BRAVO: empty 1,260 lb, moment/1,000 100.80; oil 15 lb (0.48); pilot and front passenger 340 lb; cargo 50 lb; baggage 20 lb; fuel 120 L. What is the take-off weight, to the nearest pound?"
+  answer: 1876
+  tolerance: 1
+  unit: lb
+  workbook_page: 11
+  explanation: "ZFW = 1,260 + 15 + 340 + 50 + 20 = 1685 lb. Fuel 120 × 1.587 = 190.5 lb. TOW = 1875.5 lb, under the 2,200 lb normal category limit."
+  references: ["POPC 2.1", "Workbook p11"]
+  difficulty: 2
+- id: POPC-W012
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system BRAVO: empty 1,260 lb, moment/1,000 100.80; oil 15 lb (0.48); pilot and front passenger 340 lb; cargo 50 lb; baggage 20 lb; fuel 120 L. Take-off moment/1,000 works out at about 158.3. Where does the take-off point fall on the Fig 8 envelope?"
+  options:
+    - "Inside both the normal and the utility envelopes"
+    - "Inside the normal envelope only: too heavy for utility"
+    - "Aft of the normal envelope"
+    - "Forward of the normal envelope"
+  answer: 1
+  workbook_page: 12
+  explanation: "TOW 1876 lb is over the 1,850 lb utility limit, so utility is out. Moments: 100.80 + 0.48 + 30.94 + 5.75 + 3.02 + fuel 17.34 = 158.33. At 1876 lb the normal envelope runs from about 154 to 173, so 158.3 is inside."
+  references: ["POPC 2.1", "Workbook p11-12"]
+  difficulty: 3
+- id: POPC-W013
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system BRAVO: empty 1,260 lb (100.80); oil 15 lb (0.48); pilot 170 lb; cargo 200 lb; rear seat passengers 400 lb; baggage 120 lb. Before any fuel, where is the zero fuel point on the envelope?"
+  options:
+    - "Inside the normal envelope"
+    - "Inside the utility envelope"
+    - "Aft of the envelope"
+    - "Forward of the envelope"
+  answer: 2
+  workbook_page: 12
+  explanation: "ZFW = 2165 lb; moment/1,000 = 100.80 + 0.48 + 15.47 + 23.00 + 50.40 + 18.12 = 208.27. At 2165 lb the aft edge of the normal envelope is at about 200.7, so the point is aft of it. The weight is also within 35 lb of the 2,200 lb limit before any fuel: off-load from the back."
+  references: ["POPC 2.1", "Workbook p11-12"]
+  difficulty: 3
+- id: POPC-W014
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system BRAVO has two load compartments behind the seats. What are their maximum loads?"
+  options:
+    - "Cargo 154 kg (339 lb), baggage 54 kg (120 lb)"
+    - "Cargo 122 kg, baggage 54 kg"
+    - "Cargo 55 kg, baggage 155 kg"
+    - "Both 54 kg (120 lb)"
+  answer: 0
+  workbook_page: 11
+  explanation: "BRAVO's limits page lists a 154 kg (339 lb) cargo compartment and a 54 kg (120 lb) baggage compartment. 122 kg is CHARLIE's baggage limit; 55 and 155 kg are ECHO's compartments."
+  references: ["POPC 2.1", "Workbook p11"]
+  difficulty: 1
+- id: POPC-W015
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system ECHO: 120 kg goes in the rear compartment (arm 5,000 mm). What moment index does it add? (1 index unit = 10,000 kg mm.)"
+  answer: 60
+  tolerance: 1
+  workbook_page: 18
+  explanation: "120 × 5,000 ÷ 10,000 = 60.0. On Fig 10 the same answer comes from 120 kg across to the REAR COMP line and down to the moment index scale."
+  references: ["POPC 2.1", "Workbook p16, p18"]
+  difficulty: 1
+- id: POPC-W016
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "The workbook's ECHO example (page 17) gives a take-off weight of 2,690 kg with a total moment index of 699.8. What is the CG in mm aft of datum?"
+  answer: 2601
+  tolerance: 2
+  unit: mm
+  workbook_page: 16
+  explanation: "CG = 699.8 × 10,000 ÷ 2,690 = 2,601.5 mm. The page 16 CG range at 2,690 kg runs from about 2,489 mm (linear between 2,400 mm at 2,360 kg and 2,560 mm at 2,950 kg) to 2,680 mm: inside."
+  references: ["POPC 2.1", "Workbook p16-17"]
+  difficulty: 2
+- id: POPC-W017
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system ECHO: what is the forward CG limit at a gross weight of 2,655 kg, in mm aft of datum?"
+  answer: 2480
+  tolerance: 1
+  unit: mm
+  workbook_page: 16
+  explanation: "The forward limit varies linearly from 2,400 mm at 2,360 kg to 2,560 mm at 2,950 kg: 2,400 + (2,655 − 2,360) ÷ 590 × 160 = 2,400 + 80 = 2,480 mm. The aft limit is 2,680 mm at every weight."
+  references: ["POPC 2.1", "Workbook p16"]
+  difficulty: 3
+- id: POPC-W018
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system ECHO: zero fuel weight 2,600 kg. The trip will burn 150 kg of fuel. What is the most fuel, in kg, you can carry at take-off?"
+  answer: 275
+  tolerance: 0
+  unit: kg
+  workbook_page: 16
+  explanation: "Three limits: MZFW 2,630 kg (2,600 is fine); MTOW 2,950 kg allows 350 kg of fuel; MLW 2,725 kg means landing at most 2,725 kg, so take-off at most 2,725 + 150 = 2,875 kg, which allows 275 kg. The lowest wins: 275 kg."
+  references: ["POPC 2.1", "Workbook p16"]
+  difficulty: 3
+- id: POPC-W019
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system ECHO: you remove one row 3 passenger seat to carry cargo. What must you do to the empty weight and empty moment?"
+  options:
+    - "Subtract 5 kg and 2.15 index units"
+    - "Add 5 kg and 2.15 index units"
+    - "Subtract 82 kg"
+    - "Nothing: seats are part of the basic empty weight and stay in the figures"
+  answer: 0
+  workbook_page: 17
+  explanation: "Each passenger seat weighs 5 kg (page 17). At the row 3 arm of 4,300 mm its index is 5 × 4,300 ÷ 10,000 = 2.15. Take both off the empty figures. 82 kg is the maximum load allowed where the seat was."
+  references: ["POPC 2.1", "Workbook p16-17"]
+  difficulty: 2
+- id: POPC-W020
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system ALPHA: two row 3 occupants weigh 231 kg in total. Using the 77 kg per division scale, how many divisions do you move along the row 3 scale?"
+  answer: 3
+  tolerance: 0
+  unit: div
+  workbook_page: 10
+  explanation: "231 ÷ 77 = 3 divisions, in the direction of the scale's arrow. Choose the scale (50 or 77 kg per division) that divides the load most cleanly; the instructions' own example is 154 kg at 77 kg per division = 2 divisions."
+  references: ["POPC 2.1", "Workbook p9-10"]
+  difficulty: 1
+- id: POPC-W021
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "In the workbook's ALPHA example (page 9) the zero fuel weight is 1,520 kg and the take-off weight 1,633 kg. How many litres of fuel is that, to the nearest litre?"
+  answer: 157
+  tolerance: 1
+  unit: L
+  workbook_page: 9
+  explanation: "Fuel = 1,633 − 1,520 = 113 kg. 113 ÷ 0.72 = 156.9 L, about 157 L. The example loads exactly to the 1,633 kg MTOW."
+  references: ["POPC 2.1", "Workbook p9"]
+  difficulty: 2
+- id: POPC-W022
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system ALPHA: zero fuel weight 1,450 kg. What is the most fuel, in whole litres, you can load without exceeding the maximum take-off weight?"
+  answer: 254
+  tolerance: 0
+  unit: L
+  workbook_page: 10
+  explanation: "MTOW 1,633 kg (marked on the Fig 7 envelope) − 1,450 = 183 kg. 183 ÷ 0.72 = 254.2 L, so 254 L. That is under the 356 L tank maximum printed on the fuel line, so weight is the limit."
+  references: ["POPC 2.1", "Workbook p10"]
+  difficulty: 2
+- id: POPC-W023
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "On the ALPHA chart (Fig 7) the fuel line is marked 'NIL SCALE'. What does that mean for the loading?"
+  options:
+    - "Fuel changes the weight but not the index, so the ZFW and take-off points lie on the same vertical line"
+    - "Fuel must not be carried"
+    - "Fuel is entered on the nose baggage scale"
+    - "Fuel is ignored when checking the take-off weight"
+  answer: 0
+  workbook_page: 10
+  explanation: "The fuel's arm is close enough to the CG that the system treats its index effect as nil. You still add its weight to get the take-off weight; you then read both points on one vertical line, against the ZFW and take-off weight lines."
+  references: ["POPC 2.1", "Workbook p9-10"]
+  difficulty: 2

@@ -1,0 +1,204 @@
+# POPA: the CASA workbook take-off and landing charts, Figs 3 to 6, 12 and 13 (workbook_page shows the page in the quiz).
+- id: POPA-W001
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Refer to the take-off weight chart, Fig 3. What take-off safety speed and flap setting does the chart assume?"
+  options:
+    - "60 KIAS, 10 degrees of flap"
+    - "64 KIAS, zero flap"
+    - "65 KIAS, 40 degrees of flap"
+    - "58 KIAS, 30 degrees of flap"
+  answer: 0
+  workbook_page: 5
+  explanation: "Fig 3's conditions box: full throttle, 10 degrees of flap, 60 KIAS safety speed, distance factor 1.15, 15 kt crosswind limit. 64 KIAS and zero flap are Fig 5's; 65 KIAS and 40 degrees are Fig 4's; 58 KIAS and 30 degrees are Fig 6's."
+  references: ["POPA 2.4", "Workbook p5"]
+  difficulty: 1
+- id: POPA-W002
+  kind: numeric
+  elements: ["POPA 2.4.1"]
+  stem: "Refer to Fig 3. Whatever the runway and the weather, what is the highest take-off weight the chart ever permits?"
+  answer: 1090
+  tolerance: 0
+  unit: kg
+  workbook_page: 5
+  explanation: "Note (2) on Fig 3: the maximum take-off weight is 1,090 kg, also drawn as the line across the top of the weight panel. No combination of runway, wind and slope lifts the answer above it."
+  references: ["POPA 2.4", "Workbook p5"]
+  difficulty: 1
+- id: POPA-W003
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Fig 3 gives two weights, (A) and (B). Which take-off weight may you use?"
+  options:
+    - "The lesser of (A) and (B), and never more than 1,090 kg"
+    - "The greater of (A) and (B)"
+    - "(A) only: (B) is for landing"
+    - "The average of (A) and (B)"
+  answer: 0
+  workbook_page: 5
+  explanation: "Note (1): the gross weight at take-off shall not exceed the lesser of (A) and (B). (A) is the weight the runway, wind, slope and surface allow; (B) is the second limit the chart draws in the weight panel. Note (2) caps everything at 1,090 kg."
+  references: ["POPA 2.4", "Workbook p5"]
+  difficulty: 2
+- id: POPA-W004
+  kind: numeric
+  elements: ["POPA 2.4.2"]
+  stem: "Follow the dashed worked example printed on Fig 3 to the take-off weight scale. What weight (A) does it give, to the nearest 5 kg or so?"
+  answer: 1009
+  tolerance: 8
+  unit: kg
+  workbook_page: 5
+  explanation: "The example starts at about 4,600 ft pressure height (START HERE), goes across to the temperature, up to the TODA, through the surface and slope panels and down into the wind panel, then left to (A) just above the 1,000 kg line: about 1,009 kg. Reading within a few kilograms is what the exam needs; use a ruler."
+  references: ["POPA 2.4", "Workbook p5"]
+  difficulty: 2
+- id: POPA-W005
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Refer to Fig 3 (maximum permitted crosswind 15 kt). Runway 32. Which reported wind exceeds the chart's crosswind limit?"
+  options:
+    - "020 degrees at 20 kt"
+    - "350 degrees at 25 kt"
+    - "290 degrees at 20 kt"
+    - "320 degrees at 30 kt"
+  answer: 0
+  workbook_page: 5
+  explanation: "Crosswind = wind speed × sin(angle off the runway). 020 is 60 degrees off 320: 20 × 0.87 = 17 kt, over 15. 350 at 25 kt: 30 degrees, 12.5 kt. 290 at 20 kt: 30 degrees, 10 kt. 320 at 30 kt: straight down the runway, no crosswind."
+  references: ["POPA 2.4", "Workbook p5"]
+  difficulty: 2
+- id: POPA-W006
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Refer to the landing distance chart, Fig 4. How does the landing weight affect the landing distance required from this chart?"
+  options:
+    - "It does not: the chart says the distance is independent of landing weight"
+    - "Each 100 kg adds about 50 m"
+    - "Enter the weight first, before the temperature"
+    - "Weight is applied in the slope panel"
+  answer: 0
+  workbook_page: 6
+  explanation: "The note on Fig 4: landing distance required is independent of landing weight. Weight still matters for the climb limit: the scale at the bottom left caps the landing weight for the pressure height."
+  references: ["POPA 2.4", "Workbook p6"]
+  difficulty: 1
+- id: POPA-W007
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Refer to Fig 4. What approach speed and flap setting does the landing distance assume?"
+  options:
+    - "65 KIAS, 40 degrees"
+    - "58 KIAS, 30 degrees"
+    - "60 KIAS, 10 degrees"
+    - "64 KIAS, zero"
+  answer: 0
+  workbook_page: 6
+  explanation: "Fig 4's conditions box: flap 40 degrees, approach speed 65 KIAS, landing distance factor 1.15, 15 kt crosswind limit. Approach faster or with less flap and the chart's distance no longer applies."
+  references: ["POPA 2.4", "Workbook p6"]
+  difficulty: 1
+- id: POPA-W008
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Refer to the take-off chart, Fig 5. Which conditions does it assume?"
+  options:
+    - "Zero flap, 64 KIAS, full throttle, not less than 2,350 RPM"
+    - "10 degrees of flap, 60 KIAS, full throttle"
+    - "Zero flap, 3,200 RPM and 37.4 inches of manifold pressure"
+    - "30 degrees of flap, 58 KIAS"
+  answer: 0
+  workbook_page: 7
+  explanation: "Fig 5's box: flap zero, take-off safety speed 64 KIAS, full throttle, RPM not less than 2,350, distance factor 1.15, 15 kt crosswind limit. 3,200 RPM and 37.4 in Hg belong to ECHO's Fig 12."
+  references: ["POPA 2.4", "Workbook p7"]
+  difficulty: 1
+- id: POPA-W009
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "On Fig 5 (printed sideways), where do you start, and what do you read at the end?"
+  options:
+    - "Start at the shade temperature and pressure height; finish with the take-off distance required at the top"
+    - "Start at the take-off weight; finish with the climb limit weight"
+    - "Start at the TODA; finish with the take-off weight"
+    - "Start at the wind component; finish with the pressure height"
+  answer: 0
+  workbook_page: 7
+  explanation: "Fig 5 is a distance chart: temperature and pressure height, then surface, slope and wind, then the take-off weight lines, and out at the top on the take-off distance required scale. Compare that with the TODA. The small panel at the bottom left gives the climb limit weight separately."
+  references: ["POPA 2.4", "Workbook p7"]
+  difficulty: 2
+- id: POPA-W010
+  kind: numeric
+  elements: ["POPA 2.4.2"]
+  stem: "Fig 6, bottom right panel: follow the printed dashed example from about 5,400 ft pressure height to the climb weight limit line and down. What landing weight (A) does it give?"
+  answer: 1019
+  tolerance: 8
+  unit: kg
+  workbook_page: 8
+  explanation: "From 5,400 ft across to the climb weight limit line and down: just under 1,020 kg, so about 1,019 kg. Note (1): the landing weight must not exceed (A), however long the runway."
+  references: ["POPA 2.4", "Workbook p8"]
+  difficulty: 2
+- id: POPA-W011
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Refer to the landing chart, Fig 6. What flap setting, approach speed and maximum crosswind does it assume?"
+  options:
+    - "30 degrees, 58 KIAS, 15 kt"
+    - "40 degrees, 65 KIAS, 15 kt"
+    - "45 degrees, approach speed from the scale, 20 kt"
+    - "10 degrees, 60 KIAS, 15 kt"
+  answer: 0
+  workbook_page: 8
+  explanation: "Fig 6's box: flap 30 degrees, 58 KIAS, landing distance factor 1.15, 15 kt crosswind limit. 45 degrees with a speed scale and 20 kt is ECHO's Fig 13."
+  references: ["POPA 2.4", "Workbook p8"]
+  difficulty: 1
+- id: POPA-W012
+  kind: numeric
+  elements: ["POPA 2.4.2"]
+  stem: "Fig 12 (aircraft ECHO): follow the printed dashed example to the take-off weight scale below the wind panel. What take-off weight does it give?"
+  answer: 2785
+  tolerance: 25
+  unit: kg
+  workbook_page: 20
+  explanation: "The example's vertical line meets the take-off weight scale just past the 2,800 kg mark on the light side: about 2,785 kg. The same line gives the take-off safety speed on the scale above, about 95 kt."
+  references: ["POPA 2.4", "Workbook p20"]
+  difficulty: 2
+- id: POPA-W013
+  kind: numeric
+  elements: ["POPA 2.4.2"]
+  stem: "Fig 12 (aircraft ECHO): in the printed example, what take-off safety speed does the top scale give?"
+  answer: 95
+  tolerance: 1
+  unit: kt
+  workbook_page: 20
+  explanation: "The dashed vertical line through the example's weight (about 2,785 kg) reaches the safety speed scale between 96 and 94 kt: about 95 KIAS. Heavier means faster: 2,950 kg sits under 98 kt."
+  references: ["POPA 2.4", "Workbook p20"]
+  difficulty: 2
+- id: POPA-W014
+  kind: numeric
+  elements: ["POPA 2.4.2"]
+  stem: "Fig 13 (aircraft ECHO): follow the printed dashed example to the landing weight scale. What maximum landing weight does it give?"
+  answer: 2510
+  tolerance: 25
+  unit: kg
+  workbook_page: 21
+  explanation: "The example's vertical line meets the landing weight scale just to the heavy side of 2,500 kg: about 2,510 kg. Compare it with the structural MLW of 2,725 kg: the lower one applies."
+  references: ["POPA 2.4", "Workbook p21"]
+  difficulty: 2
+- id: POPA-W015
+  kind: numeric
+  elements: ["POPA 2.4.2"]
+  stem: "Fig 13 (aircraft ECHO): in the printed example, what approach speed does the top scale give?"
+  answer: 87
+  tolerance: 1
+  unit: kt
+  workbook_page: 21
+  explanation: "The vertical line through the example's landing weight (about 2,510 kg) meets the approach speed scale between 88 and 86 kt, nearer 86: about 87 KIAS."
+  references: ["POPA 2.4", "Workbook p21"]
+  difficulty: 2
+- id: POPA-W016
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "How do ECHO's charts (Figs 12 and 13) differ from Figs 3 and 6 in what they assume?"
+  options:
+    - "Higher crosswind limit (20 kt) and larger distance factors (1.22 take-off, 1.26 landing)"
+    - "No crosswind limit"
+    - "They are entered with density height"
+    - "They give distances, not weights"
+  answer: 0
+  workbook_page: 20
+  explanation: "Fig 12: zero flap, 3,200 RPM, 37.4 in Hg, factor 1.22, 20 kt crosswind. Fig 13: 45 degrees of flap, factor 1.26, 20 kt crosswind. Both are weight charts entered with pressure height and temperature, like the others; the speeds come off their own scales."
+  references: ["POPA 2.4", "Workbook p20-21"]
+  difficulty: 2

@@ -473,6 +473,20 @@
   .visual-missing { @apply rounded-xl border border-dashed border-warn/60 bg-warn-soft/30 px-4 py-6 text-sm text-warn-fg; }
   .visual-missing > p { @apply m-0; }
 
+  /* CASA workbook pages: the real exam chart as a paper-white page (white in dark mode too, like the booklet). */
+  .workbook-page { @apply block w-full max-w-[40rem] cursor-zoom-in overflow-hidden rounded-xl border border-line bg-white shadow-(--shadow-card); }
+  .workbook-page img { @apply m-0 block h-auto w-full; }
+  .workbook-source { @apply m-0 max-w-prose text-center text-xs text-fg-faint; }
+  .workbook-source a { @apply text-fg-muted; }
+  /* The same page in a quiz or exam question, folded away until asked for (_study_macros.html). */
+  .workbook-figure { @apply mt-3 rounded-xl border border-line bg-surface-2/60; }
+  .workbook-figure > summary { @apply flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-sm font-semibold text-fg; }
+  .workbook-figure > summary::-webkit-details-marker { display: none; }
+  .workbook-figure[open] > summary { @apply border-b border-line; }
+  .workbook-figure > .workbook-figure-body { @apply flex flex-col items-center gap-2 p-3; }
+  .workbook-figure .workbook-page { @apply w-auto max-w-full; }
+  .workbook-figure .workbook-page img { @apply max-h-[70vh] w-auto max-w-full; }
+
   /* Widgets: an Alpine component inside a sunken card; controls below the picture. */
   .widget { @apply w-full max-w-[44rem] rounded-(--radius-card) border border-line bg-surface-2/60 p-4 sm:p-5; }
   .widget > svg, .widget-stage > svg { @apply h-auto w-full; }

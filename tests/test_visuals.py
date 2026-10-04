@@ -5,7 +5,8 @@ import logging
 from pathlib import Path
 
 from app.seed.loader import render_markdown
-from app.seed.visuals import find_refs, lint_svg, lint_widget
+from app.seed import workbook
+from app.seed.visuals import find_refs, lint_svg, lint_widget, visual_path
 
 GOOD_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" data-prefix="t">
 <title>Test</title><style>.t-a{animation:t-spin 2s linear infinite}@keyframes t-spin{to{transform:rotate(360deg)}}</style>
@@ -54,8 +55,26 @@ def test_ordinary_images_untouched(tmp_path: Path) -> None:
 
 
 def test_find_refs() -> None:
-    body = "![a](diagram:one) text ![b](widget:two \"notice\") ![c](http://x/y.png)"
-    assert find_refs(body) == [("diagram", "one"), ("widget", "two")]
+    body = "![a](diagram:one) text ![b](widget:two \"notice\") ![c](http://x/y.png) ![d](workbook:fig9)"
+    assert find_refs(body) == [("diagram", "one"), ("widget", "two"), ("workbook", "fig9")]
+
+
+def test_workbook_ref_shows_page_image_with_credit(tmp_path: Path) -> None:
+    html = render_markdown("![Which envelope?](workbook:fig9 \"Aft limit 3,004 mm\")", make_content(tmp_path))
+    assert '<figure class="visual visual-workbook" data-visual="workbook:fig9">' in html
+    assert 'src="/static/workbook/p15.webp"' in html
+    assert "rpl-ppl-cpl-aeroplane-workbook.pdf#page=15" in html and "CC BY 4.0" in html
+    assert "<figcaption>Which envelope?<span class=\"visual-notice\">Aft limit 3,004 mm</span></figcaption>" in html
+
+
+def test_workbook_pages_rendered_for_every_figure() -> None:
+    missing = [slug for slug in workbook.FIGURES if not visual_path(Path("content"), "workbook", slug).is_file()]
+    assert not missing, f"run python -m tools.workbook.render; missing pages for {missing}"
+
+
+def test_unknown_workbook_figure_is_placeholder(tmp_path: Path) -> None:
+    html = render_markdown("![Soon](workbook:fig99)", make_content(tmp_path))
+    assert 'class="visual visual-missing"' in html
 
 
 def test_lint_svg_passes_good_file(tmp_path: Path) -> None:

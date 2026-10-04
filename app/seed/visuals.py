@@ -2,11 +2,13 @@
 
     ![Why does stall speed rise in a turn?](diagram:stall-speed-vs-bank "What to notice: ...")
     ![Explore bank angle, load factor and stall speed](widget:bank-angle)
+    ![Which chart does the exam use?](workbook:fig9 "What to notice: ...")
 
 At render time the Markdown extension replaces the <img> with
 
     <figure class="visual visual-diagram"> ...content/diagrams/<slug>.svg... <figcaption>caption</figcaption></figure>
     <figure class="visual visual-widget">  ...content/widgets/<slug>.html...  <figcaption>caption</figcaption></figure>
+    <figure class="visual visual-workbook"> <img> of a CASA workbook page (app/seed/workbook.py)  <figcaption>...</figcaption></figure>
 
 The optional image title becomes a "What to notice" line under the caption. An unknown slug logs a warning
 and renders a dashed placeholder figure instead of failing the seed. SVG ids are prefixed with the slug so
@@ -25,9 +27,13 @@ from markdown import Extension, Markdown
 from markdown.treeprocessors import Treeprocessor
 import xml.etree.ElementTree as etree
 
+from app.seed import workbook
+
 log = logging.getLogger(__name__)
 
-REF_RE = re.compile(r"!\[[^\]]*\]\((diagram|widget):([a-z0-9][a-z0-9-]*)(?:\s+\"[^\"]*\")?\)")
+KINDS = ("diagram", "widget", "workbook")
+STATIC_DIR = Path(__file__).resolve().parents[1] / "static"
+REF_RE = re.compile(r"!\[[^\]]*\]\((diagram|widget|workbook):([a-z0-9][a-z0-9-]*)(?:\s+\"[^\"]*\")?\)")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 XML_PROLOG_RE = re.compile(r"^\s*<\?xml[^>]*\?>\s*", re.S)
 SVG_NS = "http://www.w3.org/2000/svg"
@@ -41,6 +47,9 @@ FONT_SIZE_RE = re.compile(r"font-size\s*[:=]\s*\"?(\d+(?:\.\d+)?)(px)?")
 
 
 def visual_path(content_dir: Path, kind: str, slug: str) -> Path:
+    if kind == "workbook":
+        page = workbook.FIGURES.get(slug, (0, ""))[0]
+        return STATIC_DIR / "workbook" / f"p{page:02d}.webp"
     return Path(content_dir) / ("diagrams" if kind == "diagram" else "widgets") / f"{slug}.{'svg' if kind == 'diagram' else 'html'}"
 
 
@@ -64,10 +73,21 @@ def load_visual(content_dir: Path, kind: str, slug: str) -> str | None:
     path = visual_path(content_dir, kind, slug)
     if not path.is_file():
         return None
+    if kind == "workbook":
+        return workbook_html(slug)
     text = path.read_text(encoding="utf-8")
     if kind == "diagram":
         text = _prefix_ids(XML_PROLOG_RE.sub("", text), slug)
     return text.strip()
+
+
+def workbook_html(slug: str) -> str:
+    """A workbook page as a tappable image (opens full size) with its title, a PDF link and the CC BY credit."""
+    page, title = workbook.FIGURES[slug]
+    return (f'<a class="workbook-page" href="{workbook.image_url(page)}" target="_blank" rel="noopener">'
+            f'<img src="{workbook.image_url(page)}" alt="CASA workbook page {page}: {title}" width="1240" height="1754" loading="lazy"></a>'
+            f'<p class="workbook-source">{title} · <a href="{workbook.pdf_url(page)}" target="_blank" rel="noopener">page {page} in the PDF</a>'
+            f' · Source: {workbook.ATTRIBUTION}</p>')
 
 
 class VisualsTreeprocessor(Treeprocessor):
@@ -80,7 +100,7 @@ class VisualsTreeprocessor(Treeprocessor):
         for img in list(root.iter("img")):
             src = img.get("src", "")
             kind, sep, slug = src.partition(":")
-            if kind not in ("diagram", "widget") or not sep or not SLUG_RE.match(slug):
+            if kind not in KINDS or not sep or not SLUG_RE.match(slug):
                 continue
             figure = self._figure(kind, slug, img.get("alt", ""), img.get("title"))
             parent = parents[img]

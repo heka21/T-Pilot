@@ -1,0 +1,110 @@
+<div class="widget" x-data="{
+  emptyKg: 687, emptyIu: 19522, oil: 7, row1: 140, row2: 160, bag: 20, fuelL: 140, utility: false,
+  arms: { oil: 1230, row1: 2750, row2: 3600, bag: 4210, fuel: 2950 }, sg: 0.72, bagMax: 122, fuelMax: 216,
+  iu(kg, arm) { return kg * arm / 100 },
+  get fuelKg() { return this.fuelL * this.sg },
+  get rows() { return [
+    ['Aircraft empty weight', this.emptyKg, this.emptyIu],
+    ['Oil', this.oil, this.iu(this.oil, this.arms.oil)],
+    ['Row 1', this.row1, this.iu(this.row1, this.arms.row1)],
+    ['Row 2', this.row2, this.iu(this.row2, this.arms.row2)],
+    ['Baggage', this.bag, this.iu(this.bag, this.arms.bag)] ] },
+  get zfw() { return this.rows.reduce((s, r) => s + r[1], 0) },
+  get zfIu() { return this.rows.reduce((s, r) => s + r[2], 0) },
+  get fuelIu() { return this.iu(this.fuelKg, this.arms.fuel) },
+  get tow() { return this.zfw + this.fuelKg },
+  get towIu() { return this.zfIu + this.fuelIu },
+  cg(iu, kg) { return iu * 100 / kg },
+  get zfCg() { return this.cg(this.zfIu, this.zfw) },
+  get towCg() { return this.cg(this.towIu, this.tow) },
+  get mtow() { return this.utility ? 925 : 1115 },
+  get aft() { return this.utility ? 2896 : 3004 },
+  fwd(kg) { return kg <= 820 ? 2744 : 2744 + (kg - 820) * (2891 - 2744) / (1115 - 820) },
+  cgOk(cg, kg) { return cg >= this.fwd(kg) - 0.05 && cg <= this.aft + 0.05 },
+  get overWeight() { return this.tow > this.mtow + 1e-9 },
+  get ok() { return !this.overWeight && this.bag <= this.bagMax && this.cgOk(this.zfCg, this.zfw) && this.cgOk(this.towCg, this.tow) },
+  px(mm) { return (70 + (mm - 2680) / 360 * 540).toFixed(1) },
+  py(kg) { return (320 - (Math.min(Math.max(kg, 700), 1200) - 700) / 500 * 280).toFixed(1) },
+  fmt(n, d) { return n.toLocaleString('en-AU', { minimumFractionDigits: d, maximumFractionDigits: d }) },
+  reset() { this.emptyKg = 687; this.emptyIu = 19522; this.oil = 7; this.row1 = 140; this.row2 = 160; this.bag = 20; this.fuelL = 140; this.utility = false }
+}">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="lc-title" class="widget-stage">
+    <title id="lc-title">Loading system CHARLIE centre of gravity envelope with the zero fuel and take-off points plotted</title>
+    <defs><marker id="lc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- grid: x 2,680 to 3,040 mm, y 700 to 1,200 kg (static: Alpine x-for cannot be used inside <svg>) -->
+    <line x1="130" y1="40" x2="130" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="130" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">2720</text>
+    <line x1="250" y1="40" x2="250" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="250" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">2800</text>
+    <line x1="370" y1="40" x2="370" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="370" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">2880</text>
+    <line x1="490" y1="40" x2="490" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="490" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">2960</text>
+    <line x1="610" y1="40" x2="610" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="610" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">3040</text>
+    <line x1="70" y1="264" x2="610" y2="264" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="268" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">800</text>
+    <line x1="70" y1="208" x2="610" y2="208" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="212" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">900</text>
+    <line x1="70" y1="152" x2="610" y2="152" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="156" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">1000</text>
+    <line x1="70" y1="96" x2="610" y2="96" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="100" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">1100</text>
+    <line x1="70" y1="40" x2="610" y2="40" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="44" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">1200</text>
+    <line x1="70" y1="320" x2="618" y2="320" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#lc-arrow)"/>
+    <line x1="70" y1="320" x2="70" y2="32" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#lc-arrow)"/>
+    <text x="340" y="356" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">Centre of gravity, mm aft of datum</text>
+    <text x="18" y="180" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 18 180)">Weight, kg</text>
+    <!-- envelopes from Fig 9 (workbook p15): normal 1,115 kg, aft limit 3,004 mm; utility 925 kg, aft limit 2,896 mm -->
+    <polygon points="166,320 166,252.8 386.5,87.6 556,87.6 556,320" fill="var(--color-ok)" :fill-opacity="utility ? 0.04 : 0.12" stroke="var(--color-ok)" :stroke-width="utility ? 1 : 2" stroke-linejoin="round"/>
+    <polygon points="166,320 166,252.8 244,194 394,194 394,320" fill="var(--color-info)" :fill-opacity="utility ? 0.16 : 0.05" stroke="var(--color-info)" :stroke-width="utility ? 2 : 1" stroke-dasharray="5 3" stroke-linejoin="round"/>
+    <text x="548" y="306" font-size="12" text-anchor="end" fill="var(--color-ok-fg)">Normal: max 1115 kg, aft 3004</text>
+    <text x="386" y="210" font-size="12" text-anchor="end" fill="var(--color-info)">Utility: max 925 kg, aft 2896</text>
+    <text x="160" y="300" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">fwd 2744</text>
+    <!-- fuel burn: take-off point to zero fuel point -->
+    <line :x1="px(towCg)" :y1="py(tow)" :x2="px(zfCg)" :y2="py(zfw)" stroke="var(--color-info)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#lc-arrow)" x-show="fuelL > 0"/>
+    <circle :cx="px(zfCg)" :cy="py(zfw)" r="5" fill="var(--color-surface)" :stroke="cgOk(zfCg, zfw) ? 'var(--color-info)' : 'var(--color-bad)'" stroke-width="2"/>
+    <text :x="Number(px(zfCg)) - 10" :y="Number(py(zfw)) + 18" font-size="11" text-anchor="end" fill="var(--color-info)">ZFW</text>
+    <circle :cx="px(towCg)" :cy="py(tow)" r="7" :fill="ok ? 'var(--color-brand)' : 'var(--color-bad)'" stroke="var(--color-surface)" stroke-width="2"/>
+    <text :x="Number(px(towCg)) - 12" :y="Number(py(tow)) - 10" font-size="13" font-weight="700" text-anchor="end" class="num" :fill="ok ? 'var(--color-brand)' : 'var(--color-bad)'" x-text="fmt(tow, 1) + ' kg @ ' + fmt(towCg, 0) + ' mm'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control"><label for="lc-ekg">Empty weight <output x-text="emptyKg + ' kg'"></output></label><input id="lc-ekg" type="number" min="500" max="900" step="1" x-model.number="emptyKg"></div>
+    <div class="widget-control"><label for="lc-eiu">Empty index units <output x-text="fmt(emptyIu, 1)"></output></label><input id="lc-eiu" type="number" min="10000" max="30000" step="0.1" x-model.number="emptyIu"></div>
+    <div class="widget-control"><label for="lc-oil">Oil (5, 6 or 7 kg) <output x-text="oil + ' kg'"></output></label><input id="lc-oil" type="range" min="5" max="7" step="1" x-model.number="oil"></div>
+    <div class="widget-control"><label for="lc-r1">Row 1, arm 2750 <output x-text="row1 + ' kg'"></output></label><input id="lc-r1" type="range" min="0" max="200" step="5" x-model.number="row1"></div>
+    <div class="widget-control"><label for="lc-r2">Row 2, arm 3600 <output x-text="row2 + ' kg'"></output></label><input id="lc-r2" type="range" min="0" max="200" step="5" x-model.number="row2"></div>
+    <div class="widget-control"><label for="lc-bag">Baggage, arm 4210 (max 122) <output x-text="bag + ' kg'"></output></label><input id="lc-bag" type="range" min="0" max="140" step="1" x-model.number="bag"></div>
+    <div class="widget-control"><label for="lc-fuel">Fuel, arm 2950 (max 216 L) <output x-text="fuelL + ' L = ' + fmt(fuelKg, 2) + ' kg'"></output></label><input id="lc-fuel" type="range" min="0" max="216" step="2" x-model.number="fuelL"></div>
+  </div>
+
+  <div class="table-wrap mt-4">
+    <table class="table">
+      <thead><tr><th>Item</th><th class="num">KG</th><th class="num">IU</th></tr></thead>
+      <tbody>
+        <template x-for="r in rows" :key="r[0]">
+          <tr><td x-text="r[0]"></td><td class="num" x-text="fmt(r[1], 1)"></td><td class="num" x-text="fmt(r[2], 1)"></td></tr>
+        </template>
+        <tr class="font-semibold"><td>Zero fuel weight</td><td class="num" x-text="fmt(zfw, 1)"></td><td class="num" x-text="fmt(zfIu, 1)"></td></tr>
+        <tr><td x-text="'Fuel ' + fuelL + ' L'"></td><td class="num" x-text="fmt(fuelKg, 2)"></td><td class="num" x-text="fmt(fuelIu, 2)"></td></tr>
+        <tr class="font-semibold"><td>Take-off weight</td><td class="num" x-text="fmt(tow, 1)"></td><td class="num" x-text="fmt(towIu, 1)"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="overWeight ? 'bad' : 'ok'">
+      <dt>Take-off weight</dt><dd><span x-text="fmt(tow, 1) + ' kg'"></span><span class="widget-flag bad" x-show="overWeight" x-text="'Over ' + mtow + ' kg'"></span></dd>
+    </div>
+    <div class="widget-readout" :class="cgOk(zfCg, zfw) ? 'ok' : 'bad'">
+      <dt>CG at zero fuel</dt><dd><span x-text="fmt(zfCg, 1) + ' mm'"></span><span class="widget-flag bad" x-show="!cgOk(zfCg, zfw)" x-text="zfCg > aft ? 'Aft of limit' : 'Forward of limit'"></span></dd>
+    </div>
+    <div class="widget-readout" :class="cgOk(towCg, tow) ? 'ok' : 'bad'">
+      <dt>CG at take-off</dt><dd><span x-text="fmt(towCg, 1) + ' mm'"></span><span class="widget-flag bad" x-show="!cgOk(towCg, tow)" x-text="towCg > aft ? 'Aft of limit' : 'Forward of limit'"></span></dd>
+    </div>
+    <div class="widget-readout" :class="bag > bagMax ? 'bad' : ''">
+      <dt>Baggage</dt><dd><span x-text="bag + ' kg'"></span><span class="widget-flag bad" x-show="bag > bagMax">Over 122 kg</span></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <button type="button" class="btn-secondary" @click="reset()">Reset to the workbook example</button>
+    <button type="button" class="btn-ghost" @click="utility = !utility" x-text="utility ? 'Check against normal category' : 'Check against utility category'"></button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> Each item's index units are its kilograms times its arm divided by 100, and the CG is IU × 100 ÷ weight. Reset gives the workbook's own example from page 13: ZFW 1,014 kg with 30,060.1 IU, take-off 1,114.8 kg with 33,033.7 IU, CG about 2,963 mm. Here the fuel at 2,950 mm sits just forward of the loaded CG, so burning it moves the CG slightly aft (2,963.2 mm at take-off, 2,964.5 mm at zero fuel) and the point drops almost straight down. The utility envelope is much smaller: the same load fails it on weight alone. Arms and limits are CHARLIE's (workbook pages 13 to 15); the forward limit is read from Fig 9.</p>
+  <details class="widget-try"><summary>Try this: the workbook example, but with 100 kg of baggage instead of 20 kg. Legal?</summary><p>Baggage 100 kg is under the 122 kg compartment limit, but the take-off weight becomes 1,194.8 kg, 79.8 kg over the 1,115 kg MTOW. Something must stay behind before the CG even matters.</p></details>
+  <details class="widget-try"><summary>Try this: pilot only (80 kg in row 1), no rear passengers, no bags, full 216 L. Inside the envelope?</summary><p>ZFW 687 + 7 + 80 = 774 kg, IU 19,522 + 86.1 + 2,200 = 21,808.1, CG 2,817.6 mm. Fuel 155.52 kg adds 4,587.84 IU: TOW 929.5 kg, IU 26,395.9, CG 2,839.7 mm. Both points are inside the normal envelope (forward limit about 2,799 mm at 929.5 kg).</p></details>
+</div>

@@ -139,3 +139,19 @@
   elements: ["POPC 2.7.3"]
   front: "Defect statuses on a maintenance release and their effect?"
   back: "Rectified and signed off by an engineer; permissible unserviceability with conditions (e.g. landing light u/s, day VFR only); or uncleared. An uncleared airworthiness defect, or PU conditions you cannot meet, means not airworthy for that flight. PIC endorses defects and records flight time."
+- id: POPC-C036
+  elements: ["POPC 2.1.1"]
+  front: "Loading system CHARLIE (workbook p13-15): limits and arms?"
+  back: "MTOW 1,115 kg normal, 925 kg utility; baggage 122 kg. Arms (mm aft of datum): oil 1,230, row 1 2,750, row 2 3,600, baggage 4,210, fuel 2,950 (216 L max). IU = kg × arm ÷ 100; CG = IU × 100 ÷ kg. Fig 9: aft limit 3,004 mm normal, 2,896 mm utility; forward limit about 2,744 mm up to 820 kg, then sloping aft."
+- id: POPC-C037
+  elements: ["POPC 2.1.1"]
+  front: "Loading system BRAVO (workbook p11-12): limits and arms?"
+  back: "Pounds and inches, moment ÷ 1,000. MTOW 2,200 lb (1,000 kg) normal, 1,850 lb (841 kg) utility; cargo 339 lb (154 kg), baggage 120 lb (54 kg). Arms (in): oil 32, front seats 91, cargo 115, rear seats 126, baggage 151, fuel 91. Litres to pounds × 1.587. Fig 8 plots weight against moment/1,000."
+- id: POPC-C038
+  elements: ["POPC 2.1.1"]
+  front: "Loading system ALPHA (workbook p9-10): how is it worked?"
+  back: "Graphical, 6/7 seats, MTOW 1,633 kg. Mark the empty index on the top scale, step down each station scale by divisions (50 or 77 kg/div for seats, 10 kg/div for baggage, 45 kg max each baggage area) in the arrow's direction, then drop one vertical line into the envelope. Fuel has a nil scale: ZFW and take-off points share that vertical."
+- id: POPC-C039
+  elements: ["POPC 2.1.1"]
+  front: "Loading system ECHO (workbook p16-19): limits and CG range?"
+  back: "MTOW 2,950 kg, MLW 2,725 kg, MZFW 2,630 kg. 1 index unit = 10,000 kg mm. CG range 2,400 to 2,680 mm at 2,360 kg or less, 2,560 to 2,680 mm at 2,950 kg, linear between. Compartments 55 kg forward and each wing, 155 kg rear; seats 5 kg each (82 kg max in a seat space)."

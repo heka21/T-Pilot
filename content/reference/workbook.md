@@ -61,7 +61,7 @@ Page links open at that page in most browser PDF viewers.
 
 ## How to practise with it
 
-- Print the charts, or keep the PDF open next to the quiz. Numeric questions in this app that use the workbook show the page number.
+- Print the charts, or keep the PDF open next to the quiz. Questions in this app that use the workbook show the page above the question (folded away in mock exams, like the booklet on your desk); the loading and chart lessons show the real pages too.
 - Do each chart question **with a ruler and pencil on paper** like the exam. Reading a chart on screen is easier than on paper.
 - For loading systems, write the full table (item, mass, arm or index, moment) every time, even when you think you can skip steps. Most errors are skipped lines or the wrong fuel density.
 - Note the cross-wind limits on the take-off and landing charts: questions can hinge on them.

@@ -1,0 +1,68 @@
+# BAKC: RPL-level questions on the CASA workbook charts (workbook_page shows the page in the quiz).
+- id: BAKC-W001
+  kind: mcq
+  elements: ["BAKC 6.2.3"]
+  stem: "You are about to use the take-off weight chart in Fig 3. Which two values do you enter the chart with?"
+  options:
+    - "Pressure height and shade temperature"
+    - "Density height and shade temperature"
+    - "Elevation and QNH"
+    - "Density height only"
+  answer: 0
+  workbook_page: 5
+  explanation: "The chart starts at the airfield pressure height (START HERE) and the shade temperature lines; it does the density correction for you. Work out pressure height from elevation and QNH, and stop there."
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 1
+- id: BAKC-W002
+  kind: numeric
+  elements: ["BAKC 6.2.3"]
+  stem: "The dashed example on Fig 3 starts at START HERE on the pressure height scale. About what pressure height is that?"
+  answer: 4600
+  tolerance: 150
+  unit: ft
+  workbook_page: 5
+  explanation: "The START HERE line sits about a third of the way from the 4,000 ft line to the 6,000 ft line: roughly 4,600 ft. Each 2,000 ft division has no labelled ticks, so judge the fraction with a ruler."
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 2
+- id: BAKC-W003
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "Fig 6 gives a landing distance and, separately, a weight (A) from the pressure height alone. What is (A)?"
+  options:
+    - "The climb weight limit: the heaviest weight that can still achieve the required climb gradient"
+    - "The structural maximum landing weight"
+    - "The weight at which the landing distance is shortest"
+    - "The zero fuel weight"
+  answer: 0
+  workbook_page: 8
+  explanation: "The bottom right panel is headed CLIMB WEIGHT LIMIT and depends only on the air (pressure height), not the runway. Note (1) says the landing weight shall not exceed it. The structural MLW is a fixed figure from the flight manual."
+  references: ["BAKC 6.2", "Workbook p8"]
+  difficulty: 2
+- id: BAKC-W004
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "On Fig 5, the climb limit weight scale ends at 1,055 kg. A take-off weight chart says the runway allows 1,040 kg and the climb limit panel gives 1,000 kg. What is the most you may take off at?"
+  options:
+    - "1,000 kg"
+    - "1,040 kg"
+    - "1,055 kg"
+    - "1,020 kg"
+  answer: 0
+  workbook_page: 7
+  explanation: "The take-off weight is the lowest of the structural maximum, the runway-limited weight and the climb weight limit: here the climb limit of 1,000 kg."
+  references: ["BAKC 6.2", "Workbook p7"]
+  difficulty: 2
+- id: BAKC-W005
+  kind: mcq
+  elements: ["BAKC 6.4.3"]
+  stem: "On the CHARLIE CG envelope (Fig 9), what are the two axes?"
+  options:
+    - "Weight in kilograms against CG position in mm aft of datum"
+    - "Weight against total moment"
+    - "Index units against fuel"
+    - "Pounds against inches"
+  answer: 0
+  workbook_page: 15
+  explanation: "Fig 9 plots kilograms against CG in mm aft of the datum, so you calculate the CG (IU × 100 ÷ weight) and plot it. BRAVO plots weight against moment/1,000 instead, and ECHO gross weight against total moment index."
+  references: ["BAKC 6.4", "Workbook p15"]
+  difficulty: 1
