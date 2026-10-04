@@ -27,7 +27,21 @@ def minutes_to_hm(minutes: int | float | None) -> str:
     return f"{mins} min"
 
 
+STATIC_DIR = Path(__file__).parent / "static"
+
+
+def static_url(path: str) -> str:
+    """'app.css' -> '/static/app.css?v=<mtime>', so a rebuilt file gets a new URL and browsers never pair new
+    templates with a stale cached stylesheet or script."""
+    try:
+        version = int((STATIC_DIR / path).stat().st_mtime)
+    except OSError:
+        return f"/static/{path}"
+    return f"/static/{path}?v={version}"
+
+
 templates.env.globals["app_name"] = "CASA Theory"
+templates.env.globals["static_url"] = static_url
 templates.env.globals["now"] = datetime.now
 templates.env.filters["minutes_to_hm"] = minutes_to_hm
 
