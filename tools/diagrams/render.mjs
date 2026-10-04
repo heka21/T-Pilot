@@ -16,7 +16,8 @@ const only = new Set(args);
 export function tokens() {
   const css = readFileSync(join(root, "app/static/src/app.css"), "utf8");
   const light = {}, dark = {};
-  const darkStart = css.indexOf("prefers-color-scheme: dark");
+  // Dark values live in the `:root { @variant dark { ... } }` block, after the light @theme tokens.
+  const darkStart = css.search(/^\s*@variant dark \{/m);
   for (const m of css.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{3,8})/g)) {
     (m.index < darkStart ? light : dark)[m[1]] = m[2];
   }

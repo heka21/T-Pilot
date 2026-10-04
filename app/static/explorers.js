@@ -18,7 +18,7 @@ export function themeColours() {
     fg: get("fg"), fgMuted: get("fg-muted"), fgFaint: get("fg-faint"), line: get("line"), lineStrong: get("line-strong"),
     surface: get("surface"), surface2: get("surface-2"), brand: get("brand"), brandSoft: get("brand-soft"), info: get("info"), ok: get("ok"),
     warn: get("warn"), bad: get("bad"), skySoft: get("sky-soft"), skyFg: get("sky-fg"),
-    dark: matchMedia("(prefers-color-scheme: dark)").matches,
+    dark: document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches,
   };
 }
 
@@ -613,7 +613,7 @@ function mount(el) {
   const canvasTest = document.createElement("canvas");
   const gl = canvasTest.getContext("webgl2") || canvasTest.getContext("webgl");
   if (!gl) {
-    holder.innerHTML = '<p class="widget-fallback">This 3D view needs WebGL, which your browser has turned off. The diagrams and notes above cover the same points.</p>';
+    holder.innerHTML = '<p class="widget-fallback">This 3D view needs WebGL, which your browser has turned off. The diagrams and lesson text above cover the same points.</p>';
     return;
   }
   if (!EXPLORERS[name]) { console.warn("unknown explorer", name); return; }

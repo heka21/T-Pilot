@@ -4,27 +4,44 @@
   <div class="mb-3 flex items-center justify-between gap-2">
     <a href="/planner?week={{ prev_week.isoformat() }}" class="btn-secondary btn-sm" aria-label="Previous week" hx-get="/planner/week?week={{ prev_week.isoformat() }}" hx-target="#planner-week"
        hx-swap="outerHTML" hx-push-url="/planner?week={{ prev_week.isoformat() }}">{{ icon("arrow-left", "size-4") }}<span class="hidden sm:inline">Previous week</span></a>
-    <h2 class="section-title text-center">Week of {{ week_start.strftime("%-d %B %Y") }}</h2>
+    <h2 class="section-title flex min-w-0 items-center justify-center gap-2 text-center">{{ icon("calendar", "hidden size-5 shrink-0 text-brand sm:block") }}<span>Week of {{ week_start.strftime("%-d %B %Y") }}</span></h2>
     <a href="/planner?week={{ next_week.isoformat() }}" class="btn-secondary btn-sm" aria-label="Next week" hx-get="/planner/week?week={{ next_week.isoformat() }}" hx-target="#planner-week"
        hx-swap="outerHTML" hx-push-url="/planner?week={{ next_week.isoformat() }}"><span class="hidden sm:inline">Next week</span>{{ icon("arrow-right", "size-4") }}</a>
   </div>
   {% if not (week_start <= today < week_start + (next_week - week_start)) %}
-    <p class="mb-3 text-center text-sm"><a href="/planner" hx-get="/planner/week" hx-target="#planner-week" hx-swap="outerHTML" hx-push-url="/planner">Back to this week</a></p>
+    <p class="mb-3 text-center text-sm"><a href="/planner" class="btn-ghost btn-sm" hx-get="/planner/week" hx-target="#planner-week" hx-swap="outerHTML" hx-push-url="/planner">{{ icon("target", "size-3.5") }} Back to this week</a></p>
   {% endif %}
   <div class="week-grid">
     {% for day in week_days %}
-      <article class="week-day {{ 'today' if day.today }} {{ 'exam-day' if day.exam }}">
-        <h4 class="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-fg-muted">{{ day.date.strftime("%a %-d %b") }}{% if day.today %} <span class="badge badge-brand normal-case tracking-normal">today</span>{% endif %}</h4>
+      {% set past = day.date < today %}
+      <article class="week-day rise flex flex-col {{ 'today' if day.today }} {{ 'exam-day' if day.exam }} {{ 'bg-surface-2/50 shadow-none' if past and not day.exam }}" style="--i: {{ loop.index0 }}">
+        {# Day header: a small calendar tile (weekday over the date number), the month, and the today badge. #}
+        <h4 class="flex flex-wrap items-center gap-2">
+          <span class="sr-only">{{ day.date.strftime("%a %-d %b") }}</span>
+          <span class="flex size-10 shrink-0 flex-col items-center justify-center rounded-xl leading-none
+                       {{ 'bg-grad-brand text-on-brand shadow-(--shadow-brand)' if day.today else ('bg-warn text-white dark:text-bg' if day.exam else 'bg-surface-2 text-fg') }}" aria-hidden="true">
+            <span class="text-[0.6rem] font-bold uppercase tracking-wider {{ '' if day.today or day.exam else 'text-fg-muted' }}">{{ day.date.strftime("%a") }}</span>
+            <span class="mt-0.5 text-base font-extrabold tabular-nums">{{ day.date.day }}</span>
+          </span>
+          <span class="flex min-w-0 flex-col items-start gap-1">
+            <span class="text-xs font-semibold uppercase tracking-wide text-fg-muted" aria-hidden="true">{{ day.date.strftime("%b") }}</span>
+            {% if day.today %}<span class="badge badge-brand px-2 py-px">today</span>{% endif %}
+          </span>
+        </h4>
         {% if day.exam %}
-          <p class="mt-2 text-sm font-semibold text-warn-fg">{{ day.exam }} exam day</p>
+          <p class="mt-3 flex items-center gap-2 rounded-xl bg-surface/70 px-2.5 py-2 text-sm font-bold text-warn-fg dark:bg-warn-soft">
+            <span class="chip chip-sm chip-warn animate-pop">{{ icon("trophy") }}</span>
+            <span class="min-w-0">{{ day.exam }} exam day</span>
+          </p>
         {% endif %}
         {% if day["items"] %}
-          <ul class="m-0 mt-1 p-0">
+          <ul class="m-0 mt-2 p-0">
             {% for item in day["items"] %}{% include "planner_item.html" %}{% endfor %}
           </ul>
-          <p class="mt-1 text-xs text-fg-muted">{{ day["items"] | sum(attribute="estimated_minutes") | minutes_to_hm }}</p>
+          <p class="mt-auto inline-flex items-center gap-1 border-t border-line pt-2 text-xs font-semibold tabular-nums text-fg-muted">{{ icon("clock", "size-3.5") }}{{ day["items"] | sum(attribute="estimated_minutes") | minutes_to_hm }}</p>
         {% elif not day.exam %}
-          <p class="mt-2 text-xs text-fg-muted">{{ "Rest day" if day.date >= plan.start_date and day.date <= plan.ppla_exam_date else "Outside the plan" }}</p>
+          {% set in_plan = day.date >= plan.start_date and day.date <= plan.ppla_exam_date %}
+          <p class="mt-3 flex items-center gap-1.5 text-xs text-fg-muted">{{ icon("sun" if in_plan else "moon", "size-3.5 text-fg-faint") }}{{ "Rest day" if in_plan else "Outside the plan" }}</p>
         {% endif %}
       </article>
     {% endfor %}

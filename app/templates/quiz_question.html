@@ -5,18 +5,22 @@
 {% block title %}{{ attempt.title or "Quiz" }} · {{ app_name }}{% endblock %}
 {% block content %}
 {% if page %}
-{% call page_header(attempt.title or "Practice quiz") %}
-  <a href="/quiz/{{ attempt.id }}/result" class="btn-secondary btn-sm">Finish early and see results</a>
+{% call page_header(attempt.title or "Practice quiz", icon_name="quiz") %}
+  <a href="/quiz/{{ attempt.id }}/result" class="btn-ghost btn-sm">{{ icon("trophy", "size-3.5") }} Finish early and see results</a>
 {% endcall %}
 <div id="quiz-area">
 {% endif %}
-<article id="quiz-question" class="card mx-auto max-w-3xl space-y-4">
-  <div class="space-y-2">
+<article id="quiz-question" class="card mx-auto max-w-3xl animate-rise space-y-5 p-5 sm:p-7">
+  {# Progress header: question count, subtopic and a gradient bar. #}
+  <div class="space-y-3">
     <div class="flex items-center justify-between gap-3">
-      <span class="font-semibold">Question {{ position + 1 }} of {{ total }}</span>
-      <span class="badge">{{ q.subtopic_id or q.unit_code }}</span>
+      <span class="flex min-w-0 items-center gap-2.5">
+        <span class="chip chip-sm chip-grad">{{ icon("quiz") }}</span>
+        <span class="font-semibold">Question {{ position + 1 }} of {{ total }}</span>
+      </span>
+      <span class="badge badge-brand shrink-0">{{ q.subtopic_id or q.unit_code }}</span>
     </div>
-    <progress value="{{ position + (1 if feedback else 0) }}" max="{{ total }}" aria-label="Quiz progress"></progress>
+    <progress class="h-2.5" value="{{ position + (1 if feedback else 0) }}" max="{{ total }}" aria-label="Quiz progress"></progress>
   </div>
 
   <div>
@@ -33,27 +37,25 @@
         {% endfor %}
       </div>
     {% else %}
-      <p class="text-sm">Your answer: <strong>{{ ans.given or "(blank)" }}{% if q.unit_label %} {{ q.unit_label }}{% endif %}</strong></p>
+      <p class="card-sunken text-sm">Your answer: <strong>{{ ans.given or "(blank)" }}{% if q.unit_label %} {{ q.unit_label }}{% endif %}</strong></p>
     {% endif %}
-    <div class="feedback {{ 'correct' if ok else 'incorrect' }}" role="status">
-      {{ icon("check" if ok else "alert", "mt-0.5 size-5 shrink-0") }}
-      <div>
+    <div class="feedback {{ 'correct' if ok else 'incorrect' }} items-center" role="status"{% if ok %} data-celebrate="small"{% endif %}>
+      <span class="grid size-9 shrink-0 place-items-center rounded-full {{ 'bg-ok animate-pop' if ok else 'bg-bad' }} text-white dark:text-bg">{{ icon("check" if ok else "alert", "size-5") }}</span>
+      <div class="min-w-0">
         <strong>{{ "Correct." if ok else "Incorrect." }}</strong>
         Correct answer: <strong>{{ correct_answer(q) }}</strong>
       </div>
     </div>
     {{ details_block(q) }}
-    <div class="btn-row">
+    <div class="btn-row justify-end border-t border-line pt-4">
       {% if is_last %}
-        <a href="/quiz/{{ attempt.id }}/result" class="btn-primary">See results {{ icon("arrow-right", "size-4") }}</a>
+        <a href="/quiz/{{ attempt.id }}/result" class="btn-primary btn-lg w-full sm:w-auto">See results {{ icon("arrow-right", "size-4") }}</a>
       {% else %}
-        <button type="button" class="btn-primary" hx-get="/quiz/{{ attempt.id }}/q/{{ position + 1 }}" hx-target="#quiz-question" hx-swap="outerHTML">Next {{ icon("arrow-right", "size-4") }}</button>
+        <button type="button" class="btn-primary btn-lg w-full sm:w-auto" hx-get="/quiz/{{ attempt.id }}/q/{{ position + 1 }}" hx-target="#quiz-question" hx-swap="outerHTML">Next {{ icon("arrow-right", "size-4") }}</button>
       {% endif %}
     </div>
-    {% set flag_kind = "question" %}{% set flag_ref = q.id %}
-    {% include "_flag_form.html" %}
   {% else %}
-    <form hx-post="/quiz/{{ attempt.id }}/answer" hx-target="#quiz-question" hx-swap="outerHTML" class="space-y-4">
+    <form hx-post="/quiz/{{ attempt.id }}/answer" hx-target="#quiz-question" hx-swap="outerHTML" class="space-y-5">
       <input type="hidden" name="position" value="{{ position }}">
       {% if q.kind == "mcq" %}
         <fieldset class="options">
@@ -64,16 +66,18 @@
           {% endfor %}
         </fieldset>
       {% else %}
-        <div class="field">
+        <div class="field card-sunken">
           <label class="label" for="given-{{ position }}">Your answer</label>
           <div class="flex items-center gap-2">
-            <input id="given-{{ position }}" class="w-40" type="number" step="any" inputmode="numeric" name="given" required autofocus>
-            {% if q.unit_label %}<span class="text-sm text-fg-muted">{{ q.unit_label }}</span>{% endif %}
+            <input id="given-{{ position }}" class="w-40 text-lg font-semibold tabular-nums" type="number" step="any" inputmode="numeric" name="given" required autofocus>
+            {% if q.unit_label %}<span class="text-sm font-semibold text-fg-muted">{{ q.unit_label }}</span>{% endif %}
           </div>
           <span class="text-xs text-fg-muted">Enter a whole number, like the real exam.</span>
         </div>
       {% endif %}
-      <button type="submit" class="btn-primary">Check answer</button>
+      <div class="flex justify-end border-t border-line pt-4">
+        <button type="submit" class="btn-primary btn-lg w-full sm:w-auto">{{ icon("check", "size-4") }} Check answer</button>
+      </div>
     </form>
   {% endif %}
 </article>

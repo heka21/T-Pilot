@@ -5,10 +5,12 @@
   <button type="button" class="tick" hx-post="/planner/item/{{ item.id }}/toggle" hx-target="closest li" hx-swap="outerHTML"
           aria-pressed="{{ 'true' if item.done_at else 'false' }}" title="{{ 'Mark not done' if item.done_at else 'Mark done' }}"
           aria-label="{{ 'Mark not done' if item.done_at else 'Mark done' }}: {{ item.label }}">{% if item.done_at %}{{ icon("check", "size-3.5") }}{% endif %}</button>
-  <span class="min-w-0 flex-1">
-    {% if show_date %}<span class="mr-1 text-xs text-fg-muted">{{ item.date.strftime("%a %-d %b") }}</span>{% endif %}
-    <span class="kind kind-{{ item.kind }}">{{ kind_labels.get(item.kind, item.kind) }}</span>
-    <span class="plan-label">{% if link %}<a href="{{ link }}">{{ item.label or kind_labels.get(item.kind) }}</a>{% else %}{{ item.label }}{% endif %}</span>
-    {% if item.estimated_minutes %}<span class="text-xs text-fg-muted">· {{ item.estimated_minutes | minutes_to_hm }}</span>{% endif %}
+  <span class="flex min-w-0 flex-1 flex-col gap-1">
+    <span class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+      {% if show_date %}<span class="inline-flex items-center gap-1 text-xs font-semibold text-fg-muted">{{ icon("calendar", "size-3") }}{{ item.date.strftime("%a %-d %b") }}</span>{% endif %}
+      <span class="kind kind-{{ item.kind }}">{{ kind_labels.get(item.kind, item.kind) }}</span>
+      {% if item.estimated_minutes %}<span class="inline-flex items-center gap-0.5 text-xs tabular-nums text-fg-muted">{{ icon("clock", "size-3") }}{{ item.estimated_minutes | minutes_to_hm }}</span>{% endif %}
+    </span>
+    <span class="plan-label break-words font-medium leading-snug">{% if link %}<a href="{{ link }}" class="text-current no-underline decoration-brand/40 underline-offset-2 hover:text-brand hover:underline">{{ item.label or kind_labels.get(item.kind) }}</a>{% else %}{{ item.label }}{% endif %}</span>
   </span>
 </li>

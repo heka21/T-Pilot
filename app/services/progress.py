@@ -4,12 +4,12 @@ from __future__ import annotations
 from app.util import utcnow
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import STATUSES, Attempt, AttemptAnswer, Element, Exam, Progress, Question, QuestionElement, Subtopic, Unit
+from app.models import STATUSES, Attempt, AttemptAnswer, CardReview, Element, Exam, PlanItem, Progress, Question, QuestionElement, Subtopic, Unit
 
 
 def set_status(session: Session, subtopic_id: str, status: str) -> Progress:
@@ -91,3 +91,37 @@ def recent_attempts(session: Session, limit: int = 5, mode: str | None = None) -
     if mode:
         q = q.where(Attempt.mode == mode)
     return list(session.scalars(q))
+
+
+def _local_date(ts: datetime) -> date:
+    """Naive UTC timestamp -> the server's local calendar date (the planner's date.today() uses the same clock)."""
+    return ts.replace(tzinfo=timezone.utc).astimezone().date()
+
+
+def activity_streak(session: Session, today: date | None = None) -> dict:
+    """Study streak from every kind of activity: answered questions, card reviews, ticked plan items and status changes.
+
+    Card reviews only keep their latest timestamp, so a day counts when any card was last reviewed on it; that is
+    exact for today and a slight undercount for older days. The streak runs back from today, or from yesterday when
+    nothing has happened yet today (so it is not shown as broken first thing in the morning).
+    Returns {current, today, week: [{label, on, today}] for the last seven days ending today}.
+    """
+    today = today or date.today()
+    stamps = [
+        select(AttemptAnswer.answered_at).where(AttemptAnswer.answered_at.is_not(None)),
+        select(CardReview.last_reviewed).where(CardReview.last_reviewed.is_not(None)),
+        select(PlanItem.done_at).where(PlanItem.done_at.is_not(None)),
+        select(Progress.updated_at).where(Progress.status != "not_started"),
+    ]
+    days = {_local_date(ts) for q in stamps for ts in session.scalars(q) if ts is not None}
+    day = today if today in days else today - timedelta(days=1)
+    current = 0
+    while day in days:
+        current += 1
+        day -= timedelta(days=1)
+    week = [today - timedelta(days=i) for i in range(6, -1, -1)]
+    return {
+        "current": current,
+        "today": today in days,
+        "week": [{"label": d.strftime("%a")[0], "on": d in days, "today": d == today} for d in week],
+    }

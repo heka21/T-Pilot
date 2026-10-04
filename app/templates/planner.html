@@ -3,109 +3,137 @@
 {% from "_icons.html" import icon %}
 {% block title %}Planner · {{ app_name }}{% endblock %}
 
+{# A small heading inside the settings form: icon chip, title. #}
+{% macro form_group_title(icon_name, title, tone="chip-brand") -%}
+<p class="mb-3 flex items-center gap-2.5 text-sm font-bold text-fg"><span class="chip chip-sm {{ tone }}">{{ icon(icon_name) }}</span>{{ title }}</p>
+{%- endmacro %}
+
 {% macro settings_form(form) %}
-<form method="post" action="/planner/generate" class="flex flex-col gap-5">
+<form method="post" action="/planner/generate" class="flex flex-col gap-6">
   {% if errors %}
-    <div class="errors" role="alert"><ul class="list-disc space-y-1 pl-5">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+    <div class="errors flex items-start gap-3" role="alert">
+      {{ icon("alert", "mt-0.5 size-5 shrink-0 text-bad") }}
+      <ul class="list-disc space-y-1 pl-5">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
   {% endif %}
-  <div class="grid gap-4 sm:grid-cols-3">
-    <label class="field"><span class="label">Start date</span><input type="date" name="start_date" value="{{ form.start_date }}" required></label>
-    <label class="field"><span class="label">RPLA exam date</span><input type="date" name="rpla_exam_date" value="{{ form.rpla_exam_date }}" required></label>
-    <label class="field"><span class="label">PPLA exam date</span><input type="date" name="ppla_exam_date" value="{{ form.ppla_exam_date }}" required></label>
+  <div>
+    {{ form_group_title("flag", "Dates", "chip-warn") }}
+    <div class="grid gap-4 sm:grid-cols-3">
+      <label class="field"><span class="label">Start date</span><input type="date" name="start_date" value="{{ form.start_date }}" required></label>
+      <label class="field"><span class="label">RPLA exam date</span><input type="date" name="rpla_exam_date" value="{{ form.rpla_exam_date }}" required></label>
+      <label class="field"><span class="label">PPLA exam date</span><input type="date" name="ppla_exam_date" value="{{ form.ppla_exam_date }}" required></label>
+    </div>
   </div>
-  <fieldset>
-    <legend class="label mb-2">Study days</legend>
+  <fieldset class="min-w-0 border-t border-line pt-5">
+    <legend class="sr-only">Study days</legend>
+    <p class="mb-3 flex items-center gap-2.5 text-sm font-bold text-fg" aria-hidden="true"><span class="chip chip-sm chip-brand">{{ icon("calendar") }}</span>Study days</p>
     <div class="flex flex-wrap gap-2">
       {% for name in weekdays %}
         <label class="pill-radio"><input type="checkbox" name="study_weekdays" value="{{ loop.index0 }}" {% if loop.index0 in form.study_weekdays %}checked{% endif %}>{{ name }}</label>
       {% endfor %}
     </div>
   </fieldset>
-  <div class="grid gap-4 sm:grid-cols-2">
-    <label class="field"><span class="label">Minutes per session</span><input type="number" name="minutes_per_session" min="20" step="5" value="{{ form.minutes_per_session }}" required></label>
-    <label class="field"><span class="label">Revision days before each exam</span><input type="number" name="revision_days_before_exam" min="0" max="14" value="{{ form.revision_days_before_exam }}" required></label>
+  <div class="border-t border-line pt-5">
+    {{ form_group_title("clock", "Sessions", "chip-sky") }}
+    <div class="grid gap-4 sm:grid-cols-2">
+      <label class="field"><span class="label">Minutes per session</span><input type="number" name="minutes_per_session" min="20" step="5" value="{{ form.minutes_per_session }}" required></label>
+      <label class="field"><span class="label">Revision days before each exam</span><input type="number" name="revision_days_before_exam" min="0" max="14" value="{{ form.revision_days_before_exam }}" required></label>
+    </div>
   </div>
-  <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-    <button type="submit" class="btn-primary">{{ "Build a new plan" if plan else "Build my plan" }}</button>
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-5">
+    <button type="submit" class="btn-primary">{{ icon("sparkle", "size-4") }} {{ "Build a new plan" if plan else "Build my plan" }}</button>
     {% if plan %}<span class="text-xs text-fg-muted">This replaces the current plan. Ticked items in the old plan are not carried over; use Re-plan for that.</span>{% endif %}
   </div>
 </form>
 {% endmacro %}
 
 {% block content %}
-{{ page_header("Study planner", today.strftime("%A %-d %B %Y")) }}
+{{ page_header("Study planner", today.strftime("%A %-d %B %Y"), "calendar") }}
 
 {% if not plan %}
-  <section class="card mb-6">
-    <h2 class="card-title mb-3">How the plan is built</h2>
-    <ul class="list-disc space-y-1.5 pl-5 text-sm">
-      <li>Every syllabus subtopic is spread over your study days in syllabus order: the RPLA units first, then the PPLA units. Reading time is estimated from each lesson's length (about 100 words a minute, plus time for diagrams, widgets, worked examples and self-check questions).</li>
-      <li>Each study day starts with the flashcards due, and from the third study day adds a short quiz on recent topics.</li>
-      <li>The last few study days before each exam are revision only: flashcards, weak-areas quizzes and a full mock exam two study days out. There is also a midway mock in each block.</li>
-      <li>If everything doesn't fit, the plan tells you how many extra minutes per session or extra days you need.</li>
-      <li>Ticks happen automatically when you mark a subtopic as studied, finish a quiz or mock, or clear your cards; you can also tick items by hand.</li>
+  <section class="card rise mb-6 border-brand/30 bg-brand-soft/30">
+    <h2 class="card-title mb-4 flex items-center gap-2.5">{{ icon("compass", "size-5 text-brand") }} How the plan is built</h2>
+    <ul class="flex flex-col gap-3 text-sm">
+      {% for icon_name, tone, text in [
+          ("book", "chip-brand", "Every syllabus subtopic is spread over your study days in syllabus order: the RPLA units first, then the PPLA units. Reading time is estimated from each lesson's length (about 100 words a minute, plus time for diagrams, widgets, worked examples and self-check questions)."),
+          ("cards", "chip-sky", "Each study day starts with the flashcards due, and from the third study day adds a short quiz on recent topics."),
+          ("trophy", "chip-warn", "The last few study days before each exam are revision only: flashcards, weak-areas quizzes and a full mock exam two study days out. There is also a midway mock in each block."),
+          ("alert", "chip-bad", "If everything doesn't fit, the plan tells you how many extra minutes per session or extra days you need."),
+          ("check", "chip-ok", "Ticks happen automatically when you mark a subtopic as studied, finish a quiz or mock, or clear your cards; you can also tick items by hand.")] %}
+        <li class="flex items-start gap-3"><span class="chip chip-sm {{ tone }}">{{ icon(icon_name) }}</span><span class="min-w-0 pt-1 leading-relaxed">{{ text }}</span></li>
+      {% endfor %}
     </ul>
   </section>
-  <section class="card">
+  <section class="card rise" style="--i: 1">
     {{ settings_form(form) }}
   </section>
 {% else %}
   {% set s = status %}
+  {# ------------------------------------------------------------------ stat tiles #}
   <div class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
-    <div class="stat">
-      <span class="stat-label">Plan progress</span>
+    <div class="stat rise" style="--i: 1">
+      <div class="mb-1 flex items-center justify-between gap-2"><span class="stat-label">Plan progress</span><span class="chip chip-sm chip-brand">{{ icon("chart") }}</span></div>
       <span class="stat-value">{{ s.percent }}%</span>
+      <progress value="{{ s.percent }}" max="100" aria-label="Plan progress: {{ s.percent }}%" class="my-1"></progress>
       <span class="text-xs text-fg-muted">{{ s.study_done }} of {{ s.study_total }} study sessions done</span>
     </div>
     {% if s.next_exam %}
-      <div class="stat">
-        <span class="stat-label">Next exam</span>
+      <div class="stat rise" style="--i: 2">
+        <div class="mb-1 flex items-center justify-between gap-2"><span class="stat-label">Next exam</span><span class="chip chip-sm chip-warn">{{ icon("trophy") }}</span></div>
         <span class="stat-value">{{ s.days_to_next_exam }}<span class="ml-1 text-sm font-medium text-fg-muted">day{{ "s" if s.days_to_next_exam != 1 }}</span></span>
         <span class="text-xs text-fg-muted">days to the {{ s.next_exam[0] }} exam ({{ s.next_exam[1].strftime("%-d %b") }})</span>
       </div>
     {% endif %}
-    <div class="stat col-span-2 lg:col-span-1">
-      <span class="stat-label">Pace</span>
+    <div class="stat rise col-span-2 lg:col-span-1" style="--i: 3">
+      <div class="mb-1 flex items-center justify-between gap-2"><span class="stat-label">Pace</span><span class="chip chip-sm {{ 'chip-bad' if s.behind else 'chip-ok' }}">{{ icon("alert" if s.behind else "plane") }}</span></div>
       <span class="py-1">
         {% if s.behind %}<span class="badge bad text-sm">{{ s.days_behind }} days behind</span>
-        {% elif s.days_ahead %}<span class="badge ok text-sm">{{ s.days_ahead }} days ahead</span>
-        {% else %}<span class="badge ok text-sm">On track</span>{% endif %}
+        {% elif s.days_ahead %}<span class="badge ok text-sm">{{ icon("zap", "size-3.5") }}{{ s.days_ahead }} days ahead</span>
+        {% else %}<span class="badge ok text-sm">{{ icon("check", "size-3.5") }}On track</span>{% endif %}
       </span>
       <span class="text-xs text-fg-muted">{{ s.overdue | length }} overdue item{{ '' if s.overdue | length == 1 else 's' }}</span>
     </div>
   </div>
-  <progress value="{{ s.percent }}" max="100" aria-label="Plan progress: {{ s.percent }}%" class="mb-4"></progress>
   <div class="btn-row mb-2">
-    <form method="post" action="/planner/replan" class="m-0"><button type="submit" class="{{ 'btn-primary' if s.overdue else 'btn-secondary' }}">Re-plan from today</button></form>
-    <a href="#settings" class="btn-secondary" onclick="document.getElementById('settings').open = true">Change settings</a>
+    <form method="post" action="/planner/replan" class="m-0"><button type="submit" class="{{ 'btn-primary' if s.overdue else 'btn-secondary' }}">{{ icon("compass", "size-4") }} Re-plan from today</button></form>
+    <a href="#settings" class="btn-ghost" onclick="document.getElementById('settings').open = true">Change settings</a>
   </div>
   {% if s.behind %}<p class="text-xs text-fg-muted">You're behind: <strong class="text-fg">Re-plan from today</strong> spreads the unfinished work over the days you have left.</p>{% endif %}
 
   {% if plan.shortfall %}
-    <div class="errors mt-4" role="alert">
-      <p class="font-semibold">The syllabus does not fit in the time available.</p>
-      <ul class="mt-2 list-disc space-y-1 pl-5">
-        {% for code, sf in plan.shortfall.items() %}
-          <li>{{ code }}: about {{ sf.gap_minutes | minutes_to_hm }} short. Add <strong>{{ sf.extra_minutes_per_session }} min per session</strong>
-            or <strong>{{ sf.extra_study_days }} more study day{{ '' if sf.extra_study_days == 1 else 's' }}</strong>. Until then, days are overfilled evenly.</li>
-        {% endfor %}
-      </ul>
-      <p class="mt-2"><a href="#settings" onclick="document.getElementById('settings').open = true">Change settings</a></p>
+    <div class="errors mt-4 flex items-start gap-3" role="alert">
+      {{ icon("alert", "mt-0.5 size-5 shrink-0 text-bad") }}
+      <div class="min-w-0">
+        <p class="font-semibold">The syllabus does not fit in the time available.</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5">
+          {% for code, sf in plan.shortfall.items() %}
+            <li>{{ code }}: about {{ sf.gap_minutes | minutes_to_hm }} short. Add <strong>{{ sf.extra_minutes_per_session }} min per session</strong>
+              or <strong>{{ sf.extra_study_days }} more study day{{ '' if sf.extra_study_days == 1 else 's' }}</strong>. Until then, days are overfilled evenly.</li>
+          {% endfor %}
+        </ul>
+        <p class="mt-2"><a href="#settings" onclick="document.getElementById('settings').open = true">Change settings</a></p>
+      </div>
     </div>
   {% endif %}
 
+  {# ------------------------------------------------------------------ today #}
   <section class="mb-8 mt-8">
-    <h2 class="section-title mb-3">Today</h2>
-    <div class="card">
+    <div class="card rise border-brand/30" style="--i: 4">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h2 class="flex items-center gap-2.5 text-lg font-bold">{{ icon("target", "size-5 text-brand") }} Today</h2>
+        {% if s.today_items %}<span class="badge badge-brand tabular-nums">{{ s.today_items | sum(attribute="estimated_minutes") | minutes_to_hm }}</span>{% endif %}
+      </div>
       {% if s.today_items %}
         <ul class="m-0 p-0">{% for item in s.today_items %}{% include "planner_item.html" %}{% endfor %}</ul>
       {% else %}
-        <p class="text-sm text-fg-muted">Nothing planned today.</p>
+        <div class="flex items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-surface-2/40 px-4 py-4 text-sm text-fg-muted">
+          {{ icon("sun", "size-5 shrink-0 text-fg-faint") }}<p>Nothing planned today.</p>
+        </div>
       {% endif %}
     </div>
     {% if s.overdue %}
-      <details class="disclosure mt-3">
-        <summary><span class="flex items-center gap-2">{{ icon("alert", "size-4 text-bad") }}{{ s.overdue | length }} overdue</span></summary>
+      <details class="disclosure mt-3 border-bad/30">
+        <summary><span class="flex items-center gap-2.5"><span class="chip chip-sm chip-bad">{{ icon("alert") }}</span>{{ s.overdue | length }} overdue</span></summary>
         <ul class="m-0 p-0">{% for item in s.overdue %}{% set show_date = true %}{% include "planner_item.html" %}{% endfor %}</ul>
       </details>
     {% endif %}
@@ -113,12 +141,13 @@
 
   {% include "planner_week.html" %}
 
+  {# ------------------------------------------------------------------ whole plan #}
   <section class="mb-8">
-    <h2 class="section-title mb-3">Whole plan</h2>
+    <h2 class="section-title mb-3 flex items-center gap-2.5">{{ icon("chart", "size-5 text-brand") }} Whole plan</h2>
     <div class="card">
       <div class="cal-strip" role="list">
         {% for c in calendar %}
-          <a role="listitem" href="/planner?week={{ c.week }}" class="cal-cell {{ c.state }} {{ 'today' if c.today }} {{ 'month-start' if c.month_start }}"
+          <a role="listitem" href="/planner?week={{ c.week }}" class="cal-cell {{ c.state }} {{ 'today' if c.today }} {{ 'month-start' if c.month_start }} transition-transform hover:scale-125"
              title="{{ c.title }}" aria-label="{{ c.title }}"></a>
         {% endfor %}
       </div>
@@ -130,14 +159,17 @@
         <span><span class="cal-cell exam"></span>exam</span>
         <span><span class="cal-cell today"></span>today</span>
       </div>
-      <p class="mt-4 border-t border-line pt-3 text-xs text-fg-muted">RPLA exam {{ plan.rpla_exam_date.strftime("%a %-d %b %Y") }} · PPLA exam {{ plan.ppla_exam_date.strftime("%a %-d %b %Y") }} ·
-        {{ plan.minutes_per_session | minutes_to_hm }} sessions on {% for d in plan.study_weekdays | sort %}{{ weekdays[d] }}{{ ", " if not loop.last }}{% endfor %}</p>
+      <div class="mt-4 flex flex-wrap gap-2 border-t border-line pt-4 text-xs">
+        <span class="badge badge-warn">{{ icon("trophy", "size-3") }}RPLA exam {{ plan.rpla_exam_date.strftime("%a %-d %b %Y") }}</span>
+        <span class="badge badge-warn">{{ icon("trophy", "size-3") }}PPLA exam {{ plan.ppla_exam_date.strftime("%a %-d %b %Y") }}</span>
+        <span class="badge whitespace-normal">{{ icon("clock", "size-3 shrink-0") }}{{ plan.minutes_per_session | minutes_to_hm }} sessions on {% for d in plan.study_weekdays | sort %}{{ weekdays[d] }}{{ ", " if not loop.last }}{% endfor %}</span>
+      </div>
     </div>
   </section>
 
   <details id="settings" class="disclosure" {% if show_form or errors %}open{% endif %}>
-    <summary>Change settings</summary>
-    {{ settings_form(form) }}
+    <summary><span class="flex items-center gap-2.5"><span class="chip chip-sm">{{ icon("menu") }}</span>Change settings</span></summary>
+    <div class="border-t border-line pt-5">{{ settings_form(form) }}</div>
   </details>
 {% endif %}
 {% endblock %}

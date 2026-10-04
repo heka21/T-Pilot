@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import Card, Element, Question, Subtopic
 
 KINDS = {
-    "note": "Notes",
+    "note": "Lessons",
     "subtopic": "Syllabus",
     "element": "Knowledge elements",
     "reference": "Reference",
@@ -94,7 +94,7 @@ def _sub_url(sub_id: str) -> str:
 
 def _note_url(sub_id: str) -> str:
     unit, _, number = sub_id.partition(" ")
-    return f"/notes/{unit}/{number}"
+    return f"/lessons/{unit}/{number}"
 
 
 def build_index(session: Session, content_dir: Path | str = "content") -> list[Entry]:
@@ -244,7 +244,7 @@ _CODE_QUERY_RE = re.compile(r"^[a-z]{3,5} \d+(\.\d+)*$")
 SUGGEST_BONUS = {"note": 4, "subtopic": 2, "reference": 2, "element": 0, "question": -1, "card": -1}
 SUGGEST_PER_KIND = {"note": 3, "subtopic": 2, "reference": 2, "element": 2, "question": 2, "card": 2}
 KIND_SINGULAR = {
-    "note": "Note",
+    "note": "Lesson",
     "subtopic": "Syllabus",
     "element": "Element",
     "reference": "Reference",

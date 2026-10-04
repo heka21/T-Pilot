@@ -1,30 +1,53 @@
-{% from "_macros.html" import empty %}
+{% from "_icons.html" import icon %}
+{# Same icon per kind as the top-bar suggestions (_search_suggest.html); colours come from .suggest-icon-*. #}
+{% set kind_icons = {"note": "notes", "subtopic": "book", "element": "target", "reference": "reference", "question": "quiz", "card": "cards"} %}
 {% if not terms %}
-  <div class="card-sunken text-sm text-fg-muted">
-    <p class="mb-2 font-medium text-fg">What you can find</p>
-    <ul class="grid gap-1.5 sm:grid-cols-2">
-      <li><b class="font-medium text-fg">Notes</b> · any word in the study notes</li>
-      <li><b class="font-medium text-fg">Syllabus</b> · subtopic ids and titles like <code>RBKA 3.6</code></li>
-      <li><b class="font-medium text-fg">Knowledge elements</b> · verbatim MOS text and codes like <code>RBKA 3.6.2</code></li>
-      <li><b class="font-medium text-fg">Questions</b> · stems, options and explanations</li>
-      <li><b class="font-medium text-fg">Flashcards</b> · front and back</li>
-      <li><b class="font-medium text-fg">Reference</b> · exam formats, permitted materials, checklists</li>
+  <div class="card rise">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="chip chip-sm chip-brand">{{ icon("sparkle") }}</span>
+      <p class="font-semibold text-fg">What you can find</p>
+    </div>
+    <ul class="grid gap-2 text-sm text-fg-muted sm:grid-cols-2">
+      {% for kind, label, text in [
+        ("note", "Lessons", "any word in the lessons"),
+        ("subtopic", "Syllabus", "subtopic ids and titles like <code>RBKA 3.6</code>"),
+        ("element", "Knowledge elements", "verbatim MOS text and codes like <code>RBKA 3.6.2</code>"),
+        ("question", "Questions", "stems, options and explanations"),
+        ("card", "Flashcards", "front and back"),
+        ("reference", "Reference", "exam formats, permitted materials, checklists"),
+      ] %}
+        <li class="flex items-start gap-3 rounded-xl bg-surface-2/50 p-3">
+          <span class="suggest-icon suggest-icon-{{ kind }}">{{ icon(kind_icons[kind], "size-4") }}</span>
+          <span class="min-w-0"><b class="block font-semibold text-fg">{{ label }}</b> {{ text | safe }}</span>
+        </li>
+      {% endfor %}
     </ul>
-    <p class="mt-3 text-xs text-fg-faint">Tip: press <kbd>/</kbd> anywhere to jump to the search box.</p>
+    <p class="mt-4 text-xs text-fg-muted">Tip: press <kbd>/</kbd> anywhere to jump to the search box.</p>
   </div>
 {% elif total == 0 %}
-  {{ empty("Nothing matches “" ~ query ~ "”. Try fewer or shorter words, or a unit code like RBKA.") }}
+  <div class="flex animate-rise flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-line bg-surface-2/40 px-4 py-10 text-center">
+    <span class="chip chip-lg">{{ icon("search") }}</span>
+    <p class="max-w-md text-sm text-fg-muted"><span class="font-semibold text-fg">Nothing matches “{{ query }}”.</span> Try fewer or shorter words, or a unit code like RBKA.</p>
+    <div class="btn-row justify-center">
+      <a href="/lessons" class="btn-ghost btn-sm">{{ icon("notes", "size-3.5") }} Browse lessons</a>
+      <a href="/syllabus" class="btn-ghost btn-sm">{{ icon("compass", "size-3.5") }} Open the syllabus</a>
+    </div>
+  </div>
 {% else %}
-  <nav class="search-kinds mb-5" aria-label="Filter by type">
+  <nav class="search-kinds mb-6" aria-label="Filter by type">
     <a href="/search?q={{ query | urlencode }}" class="search-kind"{% if not kind %} aria-current="true"{% endif %}>All</a>
     {% for g in groups %}
-      <a href="/search?q={{ query | urlencode }}&kind={{ g.kind }}" class="search-kind"{% if kind == g.kind %} aria-current="true"{% endif %}>{{ g.label }} <b>{{ g.count }}</b></a>
+      <a href="/search?q={{ query | urlencode }}&kind={{ g.kind }}" class="search-kind"{% if kind == g.kind %} aria-current="true"{% endif %}>{{ icon(kind_icons[g.kind], "size-3.5") }} {{ g.label }} <b>{{ g.count }}</b></a>
     {% endfor %}
   </nav>
   <p class="sr-only">{{ total }} result{{ "s" if total != 1 }}</p>
   {% for g in groups %}
-    <section class="mb-6">
-      <h2 class="section-title mb-3">{{ g.label }} <span class="text-sm font-normal text-fg-muted">· {{ g.count }}</span></h2>
+    <section class="rise mb-6" style="--i: {{ [loop.index0, 10] | min }}" aria-labelledby="results-{{ g.kind }}">
+      <div class="mb-3 flex items-center gap-3">
+        <span class="suggest-icon suggest-icon-{{ g.kind }}">{{ icon(kind_icons[g.kind], "size-4") }}</span>
+        <h2 id="results-{{ g.kind }}" class="section-title">{{ g.label }}</h2>
+        <span class="badge tabular-nums">{{ g.count }}</span>
+      </div>
       <div class="card">
         <ol class="row-list">
           {% for h in g.hits %}
@@ -38,7 +61,9 @@
           {% endfor %}
         </ol>
         {% if g.more %}
-          <p class="mt-3 text-sm"><a href="/search?q={{ query | urlencode }}&kind={{ g.kind }}">Show all {{ g.count }} {{ g.label | lower }} →</a></p>
+          <div class="mt-4 border-t border-line pt-3">
+            <a href="/search?q={{ query | urlencode }}&kind={{ g.kind }}" class="btn-ghost btn-sm">Show all {{ g.count }} {{ g.label | lower }} {{ icon("arrow-right", "size-3.5") }}</a>
+          </div>
         {% endif %}
       </div>
     </section>

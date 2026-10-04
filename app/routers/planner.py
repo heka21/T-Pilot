@@ -20,7 +20,7 @@ KIND_LABELS = {"study": "Study", "quiz": "Quiz", "cards": "Cards", "mock_exam": 
 
 def item_link(item: PlanItem) -> str | None:
     if item.kind == "study" and item.subtopic is not None:
-        return f"/notes/{item.subtopic.unit_code}/{item.subtopic.number}"
+        return f"/lessons/{item.subtopic.unit_code}/{item.subtopic.number}"
     return {"quiz": "/quiz", "revision": "/quiz?weak=1", "cards": "/cards", "mock_exam": "/exam"}.get(item.kind)
 
 

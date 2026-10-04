@@ -1,35 +1,54 @@
 {% extends "base.html" %}
-{% from "_macros.html" import stack_bar, counts, page_header, empty %}
+{% from "_macros.html" import stack_bar, counts, ring, page_header, empty %}
 {% from "_icons.html" import icon %}
 {% block title %}Syllabus · {{ app_name }}{% endblock %}
 {% block content %}
-{% call page_header("Syllabus", "Part 61 MOS Schedule 3 units for each exam") %}
+{% call page_header("Syllabus", "Part 61 MOS Schedule 3 units for each exam", "compass") %}
   <a href="/progress" class="btn-secondary">{{ icon("chart", "size-4") }} Progress overview</a>
 {% endcall %}
-<div class="grid gap-4 md:grid-cols-2">
+<div class="flex flex-col gap-10">
   {% for exam in exams %}
     {% set p = progress[exam.code] %}
-    <section class="card flex flex-col gap-4">
-      <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0">
-          <h2 class="text-xl font-bold">{{ exam.code }}</h2>
-          <p class="text-sm text-fg-muted">{{ exam.name }}</p>
+    {% set outer = loop %}
+    <section aria-labelledby="exam-{{ exam.code | lower }}">
+      {# Exam summary: ring, name, the stacked bar and the exam's vital statistics. #}
+      <div class="card rise relative mb-4 overflow-hidden" style="--i: {{ outer.index0 * 4 }}">
+        <span class="absolute inset-x-0 top-0 h-1 bg-grad-brand" aria-hidden="true"></span>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-4">
+          <div class="flex min-w-0 flex-1 basis-64 items-center gap-4">
+            {{ ring(p.percent, exam.code ~ " syllabus confident") }}
+            <div class="min-w-0">
+              <h2 id="exam-{{ exam.code | lower }}" class="text-2xl font-extrabold tracking-tight">{{ exam.code }}</h2>
+              <p class="text-sm text-fg-muted">{{ exam.name }}</p>
+              <p class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-fg-muted">
+                <span class="inline-flex items-center gap-1">{{ icon("book", "size-3.5") }} {{ exam.units | length }} units</span>
+                {% if exam.duration_minutes %}<span class="inline-flex items-center gap-1">{{ icon("clock", "size-3.5") }} {{ exam.duration_minutes | minutes_to_hm }}</span>{% endif %}
+                {% if exam.pass_mark_percent %}<span class="inline-flex items-center gap-1">{{ icon("target", "size-3.5") }} pass {{ exam.pass_mark_percent }}%</span>{% endif %}
+              </p>
+            </div>
+          </div>
+          <div class="w-full sm:w-72">
+            {{ stack_bar(p, exam.code) }}
+            <div class="mt-2">{{ counts(p) }}</div>
+          </div>
         </div>
-        <span class="text-2xl font-bold tabular-nums">{{ p.percent }}%</span>
       </div>
-      <div>
-        {{ stack_bar(p, exam.code) }}
-        <div class="mt-2">{{ counts(p) }}</div>
-      </div>
-      <ul class="row-list -mx-2 text-sm">
+
+      {# One clickable card per unit. #}
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {% for eu in exam.units %}
           {% set up = p.units[eu.unit_code] %}
-          <li>
-            <a href="/syllabus/unit/{{ eu.unit_code }}" class="group flex items-center gap-3 rounded-lg px-2 py-2.5 text-fg no-underline hover:bg-surface-2">
-              <span class="w-14 shrink-0 font-semibold text-brand group-hover:underline">{{ eu.unit_code }}</span>
-              <span class="min-w-0 flex-1 truncate text-fg-muted">{{ eu.unit.number }} {{ eu.unit.title }}</span>
-              <span class="w-24 shrink-0 sm:w-32">{{ stack_bar(up, eu.unit_code) }}</span>
-              <span class="w-10 shrink-0 text-right text-xs tabular-nums text-fg-muted">{{ up.percent }}%</span>
+          <li class="rise" style="--i: {{ [outer.index0 * 4 + loop.index, 10] | min }}">
+            <a href="/syllabus/unit/{{ eu.unit_code }}" class="card-link group flex h-full flex-col gap-3 p-4">
+              <div class="flex items-center gap-3">
+                <span class="grid h-9 min-w-14 shrink-0 place-items-center rounded-xl bg-brand-soft px-2 text-sm font-extrabold tracking-tight text-brand-fg transition-colors group-hover:bg-grad-brand group-hover:text-on-brand">{{ eu.unit_code }}</span>
+                <span class="ml-auto text-sm font-bold tabular-nums">{{ up.percent }}%</span>
+              </div>
+              <p class="line-clamp-2 min-h-10 text-sm font-semibold leading-snug"><span class="font-medium text-fg-muted">{{ eu.unit.number }}</span> {{ eu.unit.title }}</p>
+              <div class="mt-auto flex items-center gap-2">
+                <div class="min-w-0 flex-1">{{ stack_bar(up, eu.unit_code) }}</div>
+                {{ icon("arrow-right", "size-4 shrink-0 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand") }}
+              </div>
             </a>
           </li>
         {% endfor %}

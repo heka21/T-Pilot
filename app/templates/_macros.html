@@ -32,12 +32,15 @@
 </span>
 {%- endmacro %}
 
-{# Page header: title, optional subtitle, optional right-hand actions (pass as caller). #}
-{% macro page_header(title, sub="") -%}
-<div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-  <div class="min-w-0">
-    <h1 class="page-title">{{ title }}</h1>
-    {% if sub %}<p class="page-sub">{{ sub }}</p>{% endif %}
+{# Page header: title, optional subtitle, optional icon chip (an _icons.html name), optional right-hand actions (pass as caller). #}
+{% macro page_header(title, sub="", icon_name="") -%}
+<div class="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+  <div class="flex min-w-0 items-center gap-4">
+    {% if icon_name %}<span class="chip chip-lg chip-grad hidden sm:grid">{{ icon(icon_name) }}</span>{% endif %}
+    <div class="min-w-0">
+      <h1 class="page-title">{{ title }}</h1>
+      {% if sub %}<p class="page-sub">{{ sub }}</p>{% endif %}
+    </div>
   </div>
   {% if caller %}<div class="btn-row">{{ caller() }}</div>{% endif %}
 </div>
@@ -60,9 +63,10 @@
 </nav>
 {%- endmacro %}
 
-{# Empty state. #}
-{% macro empty(text, href="", link_text="") -%}
-<div class="card-sunken text-center text-sm text-fg-muted">
-  {{ text }}{% if href %} <a href="{{ href }}">{{ link_text }}</a>{% endif %}
+{# Empty state: a dashed tray with a faint icon. #}
+{% macro empty(text, href="", link_text="", icon_name="compass") -%}
+<div class="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-line bg-surface-2/40 px-4 py-6 text-center text-sm text-fg-muted">
+  {{ icon(icon_name, "size-6 text-fg-faint") }}
+  <p>{{ text }}{% if href %} <a href="{{ href }}" class="font-semibold">{{ link_text }}</a>{% endif %}</p>
 </div>
 {%- endmacro %}

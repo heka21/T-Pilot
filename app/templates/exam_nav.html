@@ -1,8 +1,12 @@
 {# Partial: question navigator. With `oob` it replaces the existing navigator out of band. #}
+{% from "_icons.html" import icon %}
 <div id="exam-nav-wrap" class="space-y-3" {% if oob %}hx-swap-oob="true"{% endif %}>
   {% set nflag = attempt.answers | selectattr("flagged") | list | length %}
-  <p class="text-sm text-fg-muted"><strong class="text-fg">{{ total - unanswered }}</strong> of {{ total }} answered{% if nflag %} · <strong class="text-warn-fg">{{ nflag }}</strong> flagged{% endif %}</p>
-  <nav class="exam-nav" aria-label="Questions" data-unanswered="{{ unanswered }}" data-flagged="{{ nflag }}">
+  <div class="space-y-2">
+    <p class="flex flex-wrap items-baseline gap-x-1 text-sm text-fg-muted"><strong class="text-lg font-extrabold tabular-nums text-fg">{{ total - unanswered }}</strong> of {{ total }} answered{% if nflag %} · <span class="badge warn">{{ icon("flag", "size-3") }}<strong>{{ nflag }}</strong> flagged</span>{% endif %}</p>
+    <progress value="{{ total - unanswered }}" max="{{ total }}" aria-label="Questions answered"></progress>
+  </div>
+  <nav class="exam-nav [&>button]:min-h-10 lg:[&>button]:min-h-8" aria-label="Questions" data-unanswered="{{ unanswered }}" data-flagged="{{ nflag }}">
     {% for a in attempt.answers %}
       <button type="button"
               class="{{ 'answered' if answered[loop.index0] }} {{ 'flagged' if a.flagged }} {{ 'current' if loop.index0 == position }}"
@@ -17,4 +21,4 @@
     <span class="inline-flex items-center gap-1.5"><i class="inline-block size-3 rounded-sm ring-2 ring-brand"></i>Current</span>
   </p>
 </div>
-{% if saved %}<span id="save-status" class="block min-h-4 text-xs text-fg-muted" aria-live="polite" hx-swap-oob="true">Answer to question {{ position + 1 }} saved.</span>{% endif %}
+{% if saved %}<span id="save-status" class="flex min-h-4 items-center gap-1 text-xs font-medium text-ok-fg" aria-live="polite" hx-swap-oob="true">{{ icon("check", "size-3.5 shrink-0") }}Answer to question {{ position + 1 }} saved.</span>{% endif %}

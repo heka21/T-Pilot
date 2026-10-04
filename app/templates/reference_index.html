@@ -3,18 +3,31 @@
 {% from "_icons.html" import icon %}
 {% block title %}Reference · {{ app_name }}{% endblock %}
 {% block content %}
-{{ page_header("Reference", "Exam formats, permitted materials and exam-day notes from CASA's published pages.") }}
+{# An icon and chip colour per page; anything new falls back to the bookmark. #}
+{% set ref_style = {
+  "exam-formats": ("timer", "chip-brand"),
+  "permitted-materials": ("check", "chip-ok"),
+  "exam-day-checklist": ("plane", "chip-accent"),
+  "workbook": ("book", "chip-sky"),
+  "sources-and-disclaimer": ("external", "chip-info"),
+} %}
+{{ page_header("Reference", "Exam formats, permitted materials and exam-day notes from CASA's published pages.", "reference") }}
 <div class="grid gap-4 sm:grid-cols-2">
   {% for page in pages %}
-    <a href="/reference/{{ page.slug }}" class="card group flex items-start gap-3 text-fg no-underline transition-colors hover:border-line-strong">
+    {% set ic, chip = ref_style.get(page.slug, ("reference", "chip-warn")) %}
+    <a href="/reference/{{ page.slug }}" class="card-link rise group flex items-start gap-4" style="--i: {{ [loop.index, 10] | min }}">
+      <span class="chip chip-lg {{ chip }} transition-transform group-hover:-rotate-6 group-hover:scale-105">{{ icon(ic) }}</span>
       <div class="min-w-0 flex-1">
-        <p class="font-semibold group-hover:text-brand">{{ page.title }}</p>
+        <p class="font-bold leading-snug group-hover:text-brand">{{ page.title }}</p>
         {% if page.summary %}<p class="mt-1 text-sm text-fg-muted">{{ page.summary }}</p>{% endif %}
       </div>
-      {{ icon("chevron-right", "mt-0.5 size-5 shrink-0 text-fg-faint group-hover:text-brand") }}
+      {{ icon("arrow-right", "mt-0.5 size-4 shrink-0 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand") }}
     </a>
   {% else %}
-    <div class="card-sunken text-center text-sm text-fg-muted sm:col-span-2">No reference pages found in <code>content/reference/</code>.</div>
+    <div class="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-line bg-surface-2/40 px-4 py-6 text-center text-sm text-fg-muted sm:col-span-2">
+      {{ icon("reference", "size-6 text-fg-faint") }}
+      <p>No reference pages found in <code>content/reference/</code>.</p>
+    </div>
   {% endfor %}
 </div>
 {% endblock %}

@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f3f5f9" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4f6fc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#080d1c" media="(prefers-color-scheme: dark)">
+  {# Apply a saved light/dark choice before first paint (app.js owns the toggle). #}
+  <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ static_url('app.css') }}">
   <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
@@ -23,39 +25,41 @@
   {% set active = (path == "/" if href == "/" else path.startswith(href)) %}
   <a href="{{ href }}" class="{{ cls }}"{% if active %} aria-current="page"{% endif %}>{{ icon(name) }}<span>{{ label }}</span></a>
 {%- endmacro %}
+{% macro logo(size="size-9") -%}
+  <span class="grid {{ size }} shrink-0 place-items-center rounded-xl bg-grad-brand text-on-brand shadow-(--shadow-brand)">{{ icon("plane", "size-[55%] -rotate-12") }}</span>
+{%- endmacro %}
 <body class="min-h-dvh lg:flex" hx-boost="true">
 
   {# ---------------------------------------------------------------- sidebar (desktop) / drawer (mobile) #}
-  <div id="drawer-backdrop" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden" data-drawer-close></div>
+  <div id="drawer-backdrop" class="fixed inset-0 z-30 hidden bg-fg/30 backdrop-blur-sm lg:hidden" data-drawer-close></div>
   <aside id="sidebar"
-         class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r border-line bg-surface transition-transform duration-200
-                lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:translate-x-0 lg:shrink-0"
+         class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r border-line/70 bg-surface transition-transform duration-200
+                lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:translate-x-0 lg:shrink-0 lg:bg-surface/60 lg:backdrop-blur-xl"
          aria-label="Main navigation">
-    <div class="flex h-16 items-center justify-between gap-3 px-5">
-      <a href="/" class="flex items-center gap-2.5 no-underline">
-        <span class="grid size-8 place-items-center rounded-lg bg-brand text-on-brand">{{ icon("plane", "size-[18px]") }}</span>
-        <span class="text-base font-bold tracking-tight text-fg">{{ app_name }}</span>
+    <div class="flex h-16 items-center justify-between gap-3 px-4">
+      <a href="/" class="group flex items-center gap-2.5 no-underline">
+        {{ logo() }}
+        <span class="flex flex-col leading-none">
+          <span class="text-[0.95rem] font-extrabold tracking-tight text-fg">{{ app_name }}</span>
+          <span class="mt-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-fg-faint">RPL · PPL ground school</span>
+        </span>
       </a>
-      <button type="button" class="btn-ghost btn-sm -mr-2 lg:hidden" data-drawer-close aria-label="Close menu">{{ icon("close") }}</button>
+      <button type="button" class="btn-icon -mr-1 size-9 lg:hidden" data-drawer-close aria-label="Close menu">{{ icon("close") }}</button>
     </div>
-    <nav class="flex-1 overflow-y-auto px-3 pb-4">
-      <p class="eyebrow px-3 pb-1 pt-2">Study</p>
+    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4">
+      <p class="eyebrow px-2 pb-1.5 pt-3 text-[0.65rem] text-fg-faint">Study</p>
       {{ nav_link("/", "Dashboard", "home") }}
       {{ nav_link("/planner", "Planner", "calendar") }}
       {{ nav_link("/syllabus", "Syllabus", "book") }}
-      {{ nav_link("/notes", "Notes", "notes") }}
-      <p class="eyebrow px-3 pb-1 pt-5">Practise</p>
+      {{ nav_link("/lessons", "Lessons", "notes") }}
+      <p class="eyebrow px-2 pb-1.5 pt-5 text-[0.65rem] text-fg-faint">Practise</p>
       {{ nav_link("/quiz", "Quiz", "quiz") }}
       {{ nav_link("/exam", "Mock exam", "timer") }}
       {{ nav_link("/cards", "Flashcards", "cards") }}
-      <p class="eyebrow px-3 pb-1 pt-5">Track</p>
+      <p class="eyebrow px-2 pb-1.5 pt-5 text-[0.65rem] text-fg-faint">Track</p>
       {{ nav_link("/progress", "Progress", "chart") }}
       {{ nav_link("/reference", "Reference", "reference") }}
-      {{ nav_link("/flags", "Issues", "flag") }}
     </nav>
-    <p class="border-t border-line px-5 py-3 text-[0.7rem] leading-snug text-fg-faint">
-      Study aid only, not CASA material. Check regulatory numbers against the current AIP, Part 91 MOS and VFRG.
-    </p>
   </aside>
 
   <div class="flex min-w-0 flex-1 flex-col">
@@ -63,15 +67,15 @@
     {% set on_search = path == "/search" %}
     <header class="topbar">
       <a href="/" class="flex shrink-0 items-center gap-2 no-underline lg:hidden" aria-label="{{ app_name }} home">
-        <span class="grid size-8 place-items-center rounded-lg bg-brand text-on-brand">{{ icon("plane", "size-4") }}</span>
-        <span class="hidden text-sm font-bold text-fg sm:inline">{{ app_name }}</span>
+        {{ logo("size-9") }}
+        <span class="hidden text-sm font-extrabold tracking-tight text-fg sm:inline">{{ app_name }}</span>
       </a>
       <form action="/search" method="get" role="search" class="topsearch" data-topsearch
             {%- if on_search %} hx-get="/search" hx-trigger="input changed delay:250ms from:[data-global-search], submit"
             hx-target="#search-results" hx-swap="innerHTML" hx-replace-url="true"{% endif %}>
         <label class="topsearch-box">
           {{ icon("search", "size-[18px] shrink-0 text-fg-faint") }}
-          <input type="search" name="q" placeholder="Search notes, questions, cards…" autocomplete="off" spellcheck="false"
+          <input type="search" name="q" placeholder="Search lessons, questions, cards…" autocomplete="off" spellcheck="false"
                  enterkeyhint="search" aria-label="Search" data-global-search{% if on_search and not request.query_params.get("q") %} autofocus{% endif %}
                  value="{{ request.query_params.get('q', '') if on_search else '' }}"
                  {%- if not on_search %}
@@ -83,22 +87,25 @@
         {% if on_search and request.query_params.get('kind') %}<input type="hidden" name="kind" value="{{ request.query_params.get('kind') }}">{% endif %}
         {% if not on_search %}<div id="search-suggest" class="suggest-panel" aria-live="polite"></div>{% endif %}
       </form>
-      <button type="button" class="btn-secondary btn-sm shrink-0 lg:hidden" data-drawer-open aria-controls="sidebar" aria-expanded="false" aria-label="Menu">
-        {{ icon("menu", "size-4") }}<span class="hidden sm:inline">Menu</span>
+      <button type="button" class="btn-icon" data-theme-toggle aria-label="Colour theme: follow system" title="Colour theme">
+        {{ icon("monitor", "theme-icon theme-icon-system") }}{{ icon("sun", "theme-icon theme-icon-light") }}{{ icon("moon", "theme-icon theme-icon-dark") }}
+      </button>
+      <button type="button" class="btn-icon lg:hidden" data-drawer-open aria-controls="sidebar" aria-expanded="false" aria-label="Menu">
+        {{ icon("menu") }}
       </button>
     </header>
 
-    <main class="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 pb-32 pt-6 sm:px-6 lg:px-10 lg:pb-16 lg:pt-8">
       {% block content %}{% endblock %}
     </main>
 
-    {# -------------------------------------------------------------- bottom tabs (mobile only) #}
-    <nav class="fixed inset-x-0 bottom-0 z-20 flex border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Quick navigation">
+    {# -------------------------------------------------------------- bottom tabs (mobile only): a floating dock #}
+    <nav class="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 flex rounded-3xl border border-line/80 bg-surface/90 p-1 shadow-(--shadow-pop) backdrop-blur-xl lg:hidden" aria-label="Quick navigation">
       {{ nav_link("/", "Home", "home", "tab-link") }}
       {{ nav_link("/planner", "Plan", "calendar", "tab-link") }}
-      {{ nav_link("/notes", "Notes", "notes", "tab-link") }}
-      {{ nav_link("/syllabus", "Syllabus", "book", "tab-link") }}
+      {{ nav_link("/lessons", "Lessons", "notes", "tab-link") }}
       {{ nav_link("/quiz", "Quiz", "quiz", "tab-link") }}
+      {{ nav_link("/cards", "Cards", "cards", "tab-link") }}
     </nav>
   </div>
 

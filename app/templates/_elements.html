@@ -2,7 +2,8 @@
 {% macro render_elements(elements) %}
 <ol class="elements">
   {% for el in elements %}
-    <li id="el-{{ el.number | dom_id }}">
+    {# A search hit links to #el-…: the element lights up when it is the URL target. #}
+    <li id="el-{{ el.number | dom_id }}" class="-mx-2 scroll-mt-24 rounded-xl px-2 py-1 transition-colors target:bg-warn-soft/60 target:ring-2 target:ring-warn/30">
       <code>{{ el.number }}</code>
       <div class="min-w-0">
         <span>{{ el.text }}</span>

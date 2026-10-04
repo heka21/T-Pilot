@@ -42,49 +42,50 @@
 {%- endmacro %}
 
 {% macro details_block(q) %}
-  <div class="card-sunken mt-4 space-y-2">
-    <p class="eyebrow">Explanation</p>
+  <div class="card-sunken mt-4 space-y-2 border-brand/15">
+    <p class="eyebrow flex items-center gap-1.5 text-brand-fg">{{ icon("sparkle", "size-3.5") }}Explanation</p>
     <p class="explanation">{{ q.explanation }}</p>
     {% if q.references %}<p class="text-xs text-fg-muted"><strong class="text-fg">References:</strong> {{ q.references | join("; ") }}</p>{% endif %}
-    {% if q.element_codes %}<p class="flex flex-wrap items-center gap-1 text-xs text-fg-muted"><strong class="mr-1 text-fg">Elements tested:</strong>
+    {% if q.element_codes %}<p class="flex flex-wrap items-center gap-1 text-xs text-fg-muted [&>code]:bg-brand-soft [&>code]:text-brand-fg"><strong class="mr-1 text-fg">Elements tested:</strong>
       {% for c in q.element_codes %}<code>{{ c }}</code>{% endfor %}</p>{% endif %}
   </div>
 {% endmacro %}
 
 {% macro note_link(sub) -%}
-  /notes/{{ sub.unit_code }}/{{ sub.number }}
+  /lessons/{{ sub.unit_code }}/{{ sub.number }}
 {%- endmacro %}
 
 {% macro kdr_list(kdr) %}
   {% if kdr %}
-    <ul class="kdr">
+    <ul class="kdr grid gap-3 md:grid-cols-2">
       {% for g in kdr %}
-        <li>
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <a href="{{ note_link(g.subtopic) }}" class="font-semibold no-underline hover:underline"><span class="text-fg-muted">{{ g.subtopic.id }}</span> {{ g.subtopic.title }}</a>
-            <span class="badge bad">{{ g.questions | length }} wrong</span>
+        <li class="relative flex flex-col justify-between gap-3 overflow-hidden border-line bg-surface py-4 pl-5 pr-4 shadow-(--shadow-card)
+                   before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-bad">
+          <div class="flex items-start justify-between gap-3">
+            <a href="{{ note_link(g.subtopic) }}" class="flex min-w-0 items-start gap-2 font-semibold text-fg no-underline hover:text-brand hover:underline">{{ icon("book", "mt-0.5 size-4 shrink-0 text-bad") }}<span class="min-w-0"><span class="text-fg-muted">{{ g.subtopic.id }}</span> {{ g.subtopic.title }}</span></a>
+            <span class="badge bad shrink-0">{{ g.questions | length }} wrong</span>
           </div>
-          <p class="mt-1.5 flex flex-wrap gap-1">{% for c in g.elements %}<code>{{ c }}</code>{% endfor %}</p>
+          <p class="flex flex-wrap gap-1 [&>code]:bg-bad-soft [&>code]:text-bad-fg">{% for c in g.elements %}<code>{{ c }}</code>{% endfor %}</p>
         </li>
       {% endfor %}
     </ul>
   {% else %}
-    <div class="callout callout-ok text-ok-fg">No knowledge deficiencies: every question was answered correctly.</div>
+    <div class="callout callout-ok flex items-center gap-3 text-ok-fg"><span class="chip chip-sm chip-ok">{{ icon("sparkle") }}</span>No knowledge deficiencies: every question was answered correctly.</div>
   {% endif %}
 {% endmacro %}
 
 {% macro review_list(answers, open_wrong=False) %}
-  <div class="divide-y divide-line rounded-(--radius-card) border border-line bg-surface">
+  <div class="divide-y divide-line overflow-hidden rounded-(--radius-card) border border-line bg-surface shadow-(--shadow-card)">
   {% for a in answers %}
     {% set q = a.question %}
     <details class="review-item group" {% if open_wrong and not a.correct %}open{% endif %}>
-      <summary class="flex items-start gap-3 px-4 py-3 text-sm hover:bg-surface-2/60">
-        <span class="badge {{ 'ok' if a.correct else 'bad' }} mt-0.5 w-16 justify-center">{{ "Correct" if a.correct else "Wrong" }}</span>
+      <summary class="flex items-start gap-3 px-4 py-3.5 text-sm transition-colors hover:bg-surface-2/60 group-open:bg-surface-2/40">
+        <span class="badge {{ 'ok' if a.correct else 'bad' }} mt-0.5 w-[5.5rem] shrink-0 justify-center">{{ icon("check" if a.correct else "close", "size-3") }}{{ "Correct" if a.correct else "Wrong" }}</span>
         <span class="min-w-0 flex-1"><strong class="text-fg-muted">Q{{ a.position + 1 }}.</strong> {{ q.stem | truncate(110) }}</span>
-        {% if a.flagged %}<span class="badge warn">Flagged</span>{% endif %}
+        {% if a.flagged %}<span class="badge warn shrink-0">{{ icon("flag", "size-3") }}Flagged</span>{% endif %}
         {{ icon("chevron-right", "mt-0.5 size-4 shrink-0 text-fg-faint transition-transform group-open:rotate-90") }}
       </summary>
-      <div class="border-t border-line bg-surface-2/30 px-4 py-4">
+      <div class="animate-rise border-t border-line bg-surface-2/30 px-4 py-4 sm:px-5">
         <p class="question-stem text-base">{{ q.stem }}</p>
         {% if q.kind == "mcq" %}
           <div class="options mt-3">
@@ -94,14 +95,12 @@
             {% endfor %}
           </div>
         {% endif %}
-        <dl class="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-          <div><dt class="eyebrow">Your answer</dt><dd>{{ given_answer(q, a.given) }}</dd></div>
-          <div><dt class="eyebrow">Correct answer</dt><dd class="font-semibold">{{ correct_answer(q) }}</dd></div>
+        <dl class="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          <div class="rounded-xl border px-3 py-2 {{ 'border-ok/30 bg-ok-soft/40' if a.correct else 'border-bad/30 bg-bad-soft/40' }}"><dt class="eyebrow">Your answer</dt><dd>{{ given_answer(q, a.given) }}</dd></div>
+          <div class="rounded-xl border border-ok/30 bg-ok-soft/40 px-3 py-2"><dt class="eyebrow">Correct answer</dt><dd class="font-semibold">{{ correct_answer(q) }}</dd></div>
         </dl>
         {{ details_block(q) }}
         <p class="mt-2 text-xs text-fg-faint">{{ q.id }}{% if q.subtopic_id %} · {{ q.subtopic_id }}{% endif %}</p>
-        {% set flag_kind = "question" %}{% set flag_ref = q.id %}
-        {% include "_flag_form.html" %}
       </div>
     </details>
   {% endfor %}

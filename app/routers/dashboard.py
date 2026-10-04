@@ -64,6 +64,8 @@ def build_dashboard(session: Session) -> dict[str, Any]:
         "weak": progress.weak_subtopics(session, 5),
         "weak_areas": {e.code: weak_area_links(e) for e in exams},
         "start_here": next_unstudied(session) if plan is None else None,
+        "next_lesson": next_unstudied(session),
+        "streak": progress.activity_streak(session),
     }
 
 

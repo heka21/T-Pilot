@@ -3,42 +3,76 @@
 {% from "_icons.html" import icon %}
 {% block title %}Flashcards · {{ app_name }}{% endblock %}
 {% block content %}
-{{ page_header("Flashcards", "Spaced repetition: cards you know come back less often, cards you miss come back sooner.") }}
+{{ page_header("Flashcards", "Spaced repetition: cards you know come back less often, cards you miss come back sooner.", "cards") }}
 
+{# ------------------------------------------------------------------ counts #}
 <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <div class="stat"><span class="stat-label">Due for review</span><span class="stat-value">{{ counts.due }}</span></div>
-  <div class="stat"><span class="stat-label">New today</span><span class="stat-value">{{ counts.new }}</span></div>
-  <div class="stat"><span class="stat-label">Learnt</span><span class="stat-value">{{ counts.seen }}</span></div>
-  <div class="stat"><span class="stat-label">Total cards</span><span class="stat-value">{{ counts.total }}</span></div>
+  {% for label, value, icon_name, tone in [
+      ("Due for review", counts.due, "clock", "chip-warn"),
+      ("New today", counts.new, "sparkle", "chip-brand"),
+      ("Learnt", counts.seen, "check", "chip-ok"),
+      ("Total cards", counts.total, "cards", "chip-sky")] %}
+    <div class="stat rise" style="--i: {{ loop.index }}">
+      <div class="mb-1 flex items-center justify-between gap-2"><span class="stat-label">{{ label }}</span><span class="chip chip-sm {{ tone }}">{{ icon(icon_name) }}</span></div>
+      <span class="stat-value">{{ value }}</span>
+    </div>
+  {% endfor %}
 </div>
 
-<form method="get" action="/cards/review" class="card mb-8 flex flex-col gap-4">
+{# ------------------------------------------------------------------ deck picker + start #}
+<form method="get" action="/cards/review" class="card rise mb-10 flex flex-col gap-5" style="--i: 5">
   {% if subtopic %}
     <input type="hidden" name="subtopic" value="{{ subtopic.id }}">
-    <p class="text-sm">Reviewing subtopic <strong>{{ subtopic.id }}</strong> {{ subtopic.title }} · <a href="/cards">all units</a></p>
+    <div class="callout callout-brand flex items-center gap-3">
+      <span class="chip chip-sm chip-brand">{{ icon("target") }}</span>
+      <p class="min-w-0 text-sm">Reviewing subtopic <strong>{{ subtopic.id }}</strong> {{ subtopic.title }} · <a href="/cards">all units</a></p>
+    </div>
   {% else %}
-    <details class="disclosure" {% if units %}open{% endif %}>
-      <summary><span>Filter by unit {% if units %}({{ units | join(", ") }}){% else %}<span class="text-xs font-normal text-fg-muted">(all units)</span>{% endif %}</span></summary>
-      <div class="flex flex-wrap gap-2">
+    <fieldset class="min-w-0">
+      <legend class="mb-1 flex flex-wrap items-baseline gap-x-2 text-base font-semibold text-fg">
+        <span>Filter by unit</span>
+        {% if units %}<span class="text-xs font-normal text-fg-muted">({{ units | join(", ") }})</span>{% else %}<span class="text-xs font-normal text-fg-muted">(all units)</span>{% endif %}
+      </legend>
+      <p class="mb-4 text-xs text-fg-muted">Pick one or more decks, or leave them all unticked to review every unit.</p>
+      {# Each unit is a deck: a tile with two cards stacked under it. The checkbox is visually hidden; the tile shows the state. #}
+      <div class="grid grid-cols-2 gap-x-3 gap-y-5 pb-2 sm:grid-cols-3 lg:grid-cols-4">
         {% for u in all_units if by_unit.get(u.code) %}
-          <label class="pill-radio gap-1.5"><input type="checkbox" name="unit" value="{{ u.code }}" {% if u.code in units %}checked{% endif %}>
-            {{ u.code }} <span class="text-xs font-normal opacity-70">({{ by_unit[u.code] | length }})</span></label>
+          <label class="group relative flex min-w-0 cursor-pointer select-none flex-col gap-1 rounded-2xl border border-line bg-surface p-3
+                        shadow-[0_5px_0_-2px_var(--color-surface-2),0_5px_0_-1px_var(--color-line),0_10px_0_-5px_var(--color-surface-2),0_10px_0_-4px_var(--color-line)]
+                        transition-[transform,border-color,background-color] duration-200 hover:-translate-y-0.5 hover:border-line-strong active:scale-[0.98]
+                        has-checked:border-brand/60 has-checked:bg-brand-soft/60 has-focus-visible:ring-4 has-focus-visible:ring-brand/25">
+            <input type="checkbox" class="sr-only" name="unit" value="{{ u.code }}" {% if u.code in units %}checked{% endif %}>
+            <span class="flex items-center justify-between gap-2">
+              <span class="truncate text-sm font-extrabold tracking-tight text-fg group-has-checked:text-brand-fg">{{ u.code }}</span>
+              <span class="grid size-5 shrink-0 place-items-center rounded-full border-2 border-line-strong text-transparent transition-colors
+                           group-has-checked:animate-pop group-has-checked:border-transparent group-has-checked:bg-grad-brand group-has-checked:text-on-brand" aria-hidden="true">{{ icon("check", "size-3") }}</span>
+            </span>
+            <span class="truncate text-xs text-fg-muted">{{ u.title }}</span>
+            <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold tabular-nums text-fg-muted">{{ icon("cards", "size-3.5") }}{{ by_unit[u.code] | length }}<span class="sr-only"> cards</span></span>
+          </label>
         {% endfor %}
       </div>
-    </details>
+    </fieldset>
   {% endif %}
-  <div>
-    <button type="submit" class="btn-primary btn-lg">{{ icon("cards", "size-5") }} Start review{% if queue_len %} ({{ queue_len }} card{{ '' if queue_len == 1 else 's' }}){% endif %}</button>
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-5">
+    <button type="submit" class="btn-primary btn-lg max-w-full">{{ icon("cards", "size-5") }} Start review{% if queue_len %} ({{ queue_len }} card{{ '' if queue_len == 1 else 's' }}){% endif %}</button>
   </div>
 </form>
 
+{# ------------------------------------------------------------------ browse #}
 <section class="mb-8">
-  <h2 class="section-title mb-3">Browse</h2>
+  <h2 class="section-title mb-3 flex items-center gap-2.5">{{ icon("book", "size-5 text-brand") }} Browse</h2>
   <div class="flex flex-col gap-2">
   {% for u in all_units if by_unit.get(u.code) %}
     {% set cards = by_unit[u.code] %}
     <details class="disclosure">
-      <summary><span class="min-w-0 flex-1"><strong>{{ u.code }}</strong> <span class="text-fg-muted">{{ u.title }}</span></span><span class="badge">{{ cards | length }}</span></summary>
+      <summary>
+        <span class="flex min-w-0 flex-1 items-center gap-3">
+          <span class="chip chip-sm chip-sky">{{ icon("cards") }}</span>
+          <span class="min-w-0 truncate"><strong>{{ u.code }}</strong> <span class="font-normal text-fg-muted">{{ u.title }}</span></span>
+        </span>
+        <span class="badge">{{ cards | length }}</span>
+      </summary>
       <div class="table-wrap">
         <table class="table">
           <thead><tr><th>Front</th><th>Back</th><th>Next review</th></tr></thead>
@@ -47,7 +81,7 @@
               <tr>
                 <td class="align-top"><span class="block text-xs text-fg-muted">{{ c.subtopic_id }}</span>{{ c.front }}</td>
                 <td class="align-top">{{ c.back }}</td>
-                <td class="align-top whitespace-nowrap text-xs text-fg-muted">{% if c.review %}{{ c.review.due.strftime("%-d %b") }}{% else %}new{% endif %}</td>
+                <td class="align-top whitespace-nowrap text-xs">{% if c.review %}<span class="text-fg-muted">{{ c.review.due.strftime("%-d %b") }}</span>{% else %}<span class="badge badge-brand">new</span>{% endif %}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -55,7 +89,7 @@
       </div>
     </details>
   {% else %}
-    {{ empty("No flashcards yet. Add some in content/cards/.") }}
+    {{ empty("No flashcards yet. Add some in content/cards/.", icon_name="cards") }}
   {% endfor %}
   </div>
 </section>

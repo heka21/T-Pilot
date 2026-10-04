@@ -5,26 +5,57 @@
 {% block title %}{{ sub.id }} · {{ app_name }}{% endblock %}
 {% block content %}
 {{ breadcrumb([("Syllabus", "/syllabus"), (sub.unit_code, "/syllabus/unit/" ~ sub.unit_code), (sub.number, None)]) }}
-{{ page_header(sub.id ~ " · " ~ sub.title, sub.topic.number ~ ". " ~ sub.topic.title ~ " · " ~ sub.unit.title) }}
-<div class="mb-6">
+{{ page_header(sub.id ~ " · " ~ sub.title, sub.topic.number ~ ". " ~ sub.topic.title ~ " · " ~ sub.unit.title, "target") }}
+<div class="rise mb-6">
   {% with sid = sub.id, status = status_of(sub) %}{% include "_status.html" %}{% endwith %}
 </div>
 
-<section class="card mb-6">
-  <p class="eyebrow">Verbatim from Part 61 MOS Schedule 3</p>
-  <h2 class="card-title mb-4 mt-1">Knowledge elements</h2>
+{# Study actions as three tiles; the lesson is the main one. #}
+<nav class="rise mb-6 grid gap-3 sm:grid-cols-3" style="--i: 1" aria-label="Study this subtopic">
+  {% if sub.note %}
+    <a href="{{ note_url(sub) }}" class="card-link group flex items-center gap-3 border-brand/30 bg-brand-soft/30 p-4">
+      <span class="chip chip-grad">{{ icon("notes") }}</span>
+      <span class="min-w-0 flex-1">
+        <span class="block font-bold">Read the lesson</span>
+        {% if sub.note.minutes %}<span class="block text-xs text-fg-muted">about {{ sub.note.minutes | minutes_to_hm }}</span>{% endif %}
+      </span>
+      {{ icon("arrow-right", "size-4 shrink-0 text-brand transition-transform group-hover:translate-x-0.5") }}
+    </a>
+  {% else %}
+    <a href="{{ note_url(sub) }}" class="card-link group flex items-center gap-3 p-4">
+      <span class="chip">{{ icon("notes") }}</span>
+      <span class="min-w-0 flex-1 font-semibold text-fg-muted">Lesson (not written yet)</span>
+    </a>
+  {% endif %}
+  <a href="/quiz?subtopic={{ sub.id | urlencode }}" class="card-link group flex items-center gap-3 p-4">
+    <span class="chip chip-info">{{ icon("quiz") }}</span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-bold">Quiz</span>
+      <span class="block text-xs text-fg-muted">Test yourself on {{ sub.id }}</span>
+    </span>
+    {{ icon("arrow-right", "size-4 shrink-0 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand") }}
+  </a>
+  <a href="/cards?subtopic={{ sub.id | urlencode }}" class="card-link group flex items-center gap-3 p-4">
+    <span class="chip chip-sky">{{ icon("cards") }}</span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-bold">Cards</span>
+      <span class="block text-xs text-fg-muted">Flashcards for {{ sub.id }}</span>
+    </span>
+    {{ icon("arrow-right", "size-4 shrink-0 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand") }}
+  </a>
+</nav>
+
+<section class="card rise" style="--i: 2">
+  <div class="mb-5 flex items-center gap-3">
+    <span class="chip chip-sm chip-brand">{{ icon("target") }}</span>
+    <div class="min-w-0">
+      <p class="eyebrow">Verbatim from Part 61 MOS Schedule 3</p>
+      <h2 class="card-title">Knowledge elements</h2>
+    </div>
+    <span class="badge ml-auto tabular-nums">{{ sub.elements | length }}</span>
+  </div>
   {{ render_elements(sub.elements) }}
 </section>
-
-<nav class="btn-row mb-2" aria-label="Study this subtopic">
-  {% if sub.note %}
-    <a href="{{ note_url(sub) }}" class="btn-primary">{{ icon("notes", "size-4") }} Read the note</a>
-  {% else %}
-    <a href="{{ note_url(sub) }}" class="btn-secondary">{{ icon("notes", "size-4") }} Note (not written yet)</a>
-  {% endif %}
-  <a href="/quiz?subtopic={{ sub.id | urlencode }}" class="btn-secondary">{{ icon("quiz", "size-4") }} Quiz</a>
-  <a href="/cards?subtopic={{ sub.id | urlencode }}" class="btn-secondary">{{ icon("cards", "size-4") }} Cards</a>
-</nav>
 
 {{ prev_next(prev, next, subtopic_url) }}
 {% endblock %}

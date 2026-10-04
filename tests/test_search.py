@@ -50,7 +50,7 @@ def test_search_page(client: TestClient) -> None:
     assert "What you can find" in r.text
     r = client.get("/search", params={"q": "stall"})
     assert r.status_code == 200
-    assert "<mark>" in r.text and "/notes/RBKA/3.6" in r.text
+    assert "<mark>" in r.text and "/lessons/RBKA/3.6" in r.text
     assert 'value="stall"' in r.text  # both the page box and the sidebar box echo the query
 
 
@@ -78,7 +78,7 @@ def test_suggest_ranks_across_kinds() -> None:
     kinds = [h.kind for h in res["hits"]]
     assert 0 < len(kinds) <= svc.SUGGEST_LIMIT
     assert all(kinds.count(k) <= svc.SUGGEST_PER_KIND[k] for k in kinds)
-    assert any(h.entry.url == "/notes/RBKA/3.6" for h in res["hits"])
+    assert any(h.entry.url == "/lessons/RBKA/3.6" for h in res["hits"])
     assert res["total"] >= len(kinds)
 
 

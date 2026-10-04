@@ -18,7 +18,7 @@ from app.services import search
 log = logging.getLogger("app")
 
 STATIC_DIR = Path(__file__).parent / "static"
-ROUTER_MODULES = ["dashboard", "syllabus", "notes", "quiz", "exam", "cards", "planner", "progress", "reference", "flags", "search"]
+ROUTER_MODULES = ["dashboard", "syllabus", "notes", "quiz", "exam", "cards", "planner", "progress", "reference", "search"]
 
 
 @asynccontextmanager

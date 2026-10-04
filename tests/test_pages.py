@@ -20,7 +20,7 @@ def test_unit_page(client: TestClient) -> None:
     assert r.status_code == 200
     assert "Stalling" in r.text
     assert "/progress/RBKA%203.6" in r.text
-    assert "/notes/RBKA/3.6" in r.text
+    assert "/lessons/RBKA/3.6" in r.text
 
 
 def test_shared_unit_mentions_both_exams(client: TestClient) -> None:
@@ -43,12 +43,11 @@ def test_subtopic_page(client: TestClient) -> None:
 
 
 def test_note_page(client: TestClient) -> None:
-    r = client.get("/notes/RBKA/3.6")
+    r = client.get("/lessons/RBKA/3.6")
     assert r.status_code == 200
     assert "critical angle" in r.text
     assert "<details" in r.text and "3.6.2" in r.text
     assert "In this lesson" in r.text and 'href="#' in r.text
-    assert 'name="kind" value="note"' in r.text
 
 
 def test_missing_note_is_200(client: TestClient) -> None:
@@ -62,16 +61,16 @@ def test_missing_note_is_200(client: TestClient) -> None:
         sub = s.scalar(select(Subtopic).where(~Subtopic.note.has()).order_by(Subtopic.position))
         if sub is None:
             return  # every subtopic has a note
-        url = f"/notes/{sub.unit_code}/{sub.number}"
+        url = f"/lessons/{sub.unit_code}/{sub.number}"
     r = client.get(url)
     assert r.status_code == 200
     assert "not written yet" in r.text.lower()
 
 
 def test_notes_index(client: TestClient) -> None:
-    r = client.get("/notes")
+    r = client.get("/lessons")
     assert r.status_code == 200
-    assert "/notes/RBKA/3.6" in r.text
+    assert "/lessons/RBKA/3.6" in r.text
 
 
 def test_set_status_roundtrip(client: TestClient) -> None:
@@ -138,5 +137,12 @@ def test_dashboard_start_here_without_plan(client: TestClient) -> None:
     r = client.get("/")
     assert r.status_code == 200
     assert "Start here" in r.text
-    assert "Read the next note" in r.text
-    assert "/notes/BAKC/2.1" in r.text  # first subtopic in syllabus order, nothing studied yet
+    assert "Read the next lesson" in r.text
+    assert "/lessons/BAKC/2.1" in r.text  # first subtopic in syllabus order, nothing studied yet
+
+
+def test_old_notes_urls_redirect(client: TestClient) -> None:
+    r = client.get("/notes/RBKA/3.6", follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == "/lessons/RBKA/3.6"
+    r = client.get("/notes", follow_redirects=False)
+    assert r.headers["location"] == "/lessons"

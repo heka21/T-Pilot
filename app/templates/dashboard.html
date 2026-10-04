@@ -1,46 +1,101 @@
 {% extends "base.html" %}
-{% from "_macros.html" import stack_bar, counts, page_header, empty %}
+{% from "_macros.html" import stack_bar, counts, ring, empty %}
 {% from "_icons.html" import icon %}
 {% block title %}Dashboard · {{ app_name }}{% endblock %}
 {% block content %}
-{% call page_header("Dashboard", now().strftime("%A %-d %B %Y")) %}
-  <a href="/quiz" class="btn-secondary">{{ icon("quiz", "size-4") }} Quick quiz</a>
-  <a href="/cards/review" class="btn-primary">{{ icon("cards", "size-4") }} Review cards</a>
-{% endcall %}
+{% set hour = now().hour %}
+{% set greeting = "Good morning" if hour < 12 else ("Good afternoon" if hour < 18 else "Good evening") %}
+{% set ps = plan_status %}
 
-{% if plan_status %}
-  {% set ps = plan_status %}
+{# ------------------------------------------------------------------ hero: greeting, next step, streak #}
+<section class="rise relative mb-6 overflow-hidden rounded-3xl bg-grad-hero p-6 text-white shadow-(--shadow-lift) sm:p-8">
+  {# Decoration: a dashed flight path climbing to a drifting aeroplane, and a few soft clouds. #}
+  <svg class="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 800 260" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+    <circle cx="690" cy="40" r="70" fill="white" opacity="0.06"/>
+    <circle cx="610" cy="250" r="90" fill="white" opacity="0.05"/>
+    <circle cx="760" cy="200" r="50" fill="white" opacity="0.07"/>
+    <path d="M-20 250 C 240 240, 420 170, 560 110 S 760 30, 820 20" fill="none" stroke="white" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/>
+  </svg>
+  <span class="pointer-events-none absolute right-6 top-5 hidden animate-float text-white/90 sm:block" aria-hidden="true">{{ icon("plane", "size-10 rotate-12") }}</span>
+
+  <div class="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
+    <div class="min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-wider text-white/75">{{ now().strftime("%A %-d %B") }}</p>
+      <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-white text-balance sm:text-4xl">{{ greeting }}. Ready for some theory?</h1>
+      <p class="mt-2 max-w-xl text-sm text-white/85 sm:text-base">
+        {% if ps and ps.next_exam %}
+          Your {{ ps.next_exam[0] }} exam is in <strong class="text-white">{{ ps.days_to_next_exam }} day{{ "s" if ps.days_to_next_exam != 1 }}</strong>.
+          {% if today_items %}{{ today_items | rejectattr("done_at") | list | length }} of {{ today_items | length }} items left on today's plan.{% endif %}
+        {% elif next_lesson %}
+          Pick up where you left off, one lesson at a time.
+        {% else %}
+          Every lesson is under way. Keep the cards ticking over and sit a mock exam.
+        {% endif %}
+      </p>
+      <div class="mt-5 flex flex-wrap items-center gap-2">
+        {% if next_lesson %}
+          <a href="{{ note_url(next_lesson) }}" class="btn btn-lg max-w-full border-transparent bg-white text-[#1c2c94] shadow-(--shadow-pop) hover:bg-white hover:text-[#1c2c94] hover:brightness-95">
+            {{ icon("play", "size-4 shrink-0") }}<span class="truncate">Continue: {{ next_lesson.id }}</span>
+          </a>
+        {% endif %}
+        <a href="/cards/review" class="btn btn-lg border-white/30 bg-white/15 text-white backdrop-blur hover:bg-white/25 hover:text-white">
+          {{ icon("cards", "size-4") }} Review cards{% if due_cards.due %} <span class="rounded-full bg-white/25 px-2 py-px text-xs tabular-nums">{{ due_cards.due }}</span>{% endif %}
+        </a>
+        <a href="/quiz" class="btn btn-lg border-transparent bg-transparent text-white hover:bg-white/15 hover:text-white">{{ icon("zap", "size-4") }} Quick quiz</a>
+      </div>
+    </div>
+
+    {# Streak card #}
+    <div class="w-full rounded-2xl bg-surface/95 p-4 text-fg shadow-(--shadow-pop) backdrop-blur sm:w-auto lg:min-w-64">
+      <div class="flex items-center gap-3">
+        <span class="chip chip-accent">{{ icon("flame", "size-5 text-accent " ~ ("animate-flicker" if streak.today else "")) }}</span>
+        <div>
+          <p class="text-2xl font-extrabold leading-none tabular-nums">{{ streak.current }}<span class="ml-1 text-sm font-semibold text-fg-muted">day streak</span></p>
+          <p class="mt-1 text-xs text-fg-muted">{% if streak.today %}You studied today. Nice work!{% elif streak.current %}Study today to keep it going.{% else %}Answer a question to start one.{% endif %}</p>
+        </div>
+      </div>
+      <div class="streak-days mt-3 justify-between" role="img" aria-label="Study activity over the last seven days">
+        {% for d in streak.week %}<span class="streak-day{{ ' on' if d.on }}{{ ' today' if d.today }}"><i></i>{{ d.label }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if ps %}
   {% if ps.behind %}
-    <div class="callout callout-bad mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="callout callout-bad rise mb-6 flex flex-wrap items-center justify-between gap-3">
       <span class="flex items-center gap-2">{{ icon("alert", "size-4 text-bad") }}
         You are about <strong>{{ ps.days_behind }} study day{{ "s" if ps.days_behind != 1 }}</strong> behind
         ({{ ps.overdue | length }} overdue item{{ "s" if ps.overdue | length != 1 }}).</span>
       <a href="/planner" class="btn-secondary btn-sm">Re-plan</a>
     </div>
   {% elif ps.days_ahead >= 1 %}
-    <div class="callout callout-ok mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="callout callout-ok rise mb-6 flex flex-wrap items-center justify-between gap-3">
       <span class="flex items-center gap-2">{{ icon("sparkle", "size-4 text-ok") }}
         You are about <strong>{{ ps.days_ahead }} study day{{ "s" if ps.days_ahead != 1 }}</strong> ahead of plan.</span>
       <a href="/planner" class="btn-secondary btn-sm">View plan</a>
     </div>
   {% endif %}
   {% if ps.shortfall %}
-    <p class="callout callout-warn mb-6">The plan does not fit all content before the exam dates. <a href="/planner">Adjust it in the planner</a>.</p>
+    <p class="callout callout-warn rise mb-6">The plan does not fit all content before the exam dates. <a href="/planner">Adjust it in the planner</a>.</p>
   {% endif %}
 {% endif %}
 
 {% if start_here %}
-  <section class="card mb-6 border-brand/40 bg-brand-soft/30">
+  <section class="card rise mb-6 border-brand/30 bg-brand-soft/30" style="--i: 1">
     <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="min-w-0 flex-1">
-        <p class="eyebrow text-brand-fg">Start here</p>
-        <h2 class="card-title mt-1">The notes are the study material: read them in syllabus order, then quiz each subtopic.</h2>
-        <p class="mt-2 text-sm text-fg-muted">Each note covers one syllabus subtopic with its knowledge elements, worked examples, diagrams and exam tips.
-          Next up: <a href="{{ note_url(start_here) }}" class="font-medium">{{ start_here.id }} · {{ start_here.note.title }}</a>.</p>
+      <div class="flex min-w-0 flex-1 gap-4">
+        <span class="chip chip-lg chip-grad hidden sm:grid">{{ icon("compass") }}</span>
+        <div class="min-w-0">
+          <p class="eyebrow text-brand-fg">Start here</p>
+          <h2 class="card-title mt-1">The lessons are the study material: read them in syllabus order, then quiz each subtopic.</h2>
+          <p class="mt-2 text-sm text-fg-muted">Each lesson covers one syllabus subtopic with its knowledge elements, worked examples, diagrams and exam tips.
+            Next up: <a href="{{ note_url(start_here) }}" class="font-semibold">{{ start_here.id }} · {{ start_here.note.title }}</a>.</p>
+        </div>
       </div>
       <div class="btn-row">
-        <a href="{{ note_url(start_here) }}" class="btn-primary">{{ icon("notes", "size-4") }} Read the next note</a>
-        <a href="/notes" class="btn-secondary">All notes</a>
+        <a href="{{ note_url(start_here) }}" class="btn-primary">{{ icon("notes", "size-4") }} Read the next lesson</a>
+        <a href="/lessons" class="btn-secondary">All lessons</a>
         <a href="/planner" class="btn-secondary">{{ icon("calendar", "size-4") }} Make a plan</a>
       </div>
     </div>
@@ -49,138 +104,152 @@
 
 {# ------------------------------------------------------------------ stat tiles #}
 <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <div class="stat">
-    <span class="stat-label">Next exam</span>
-    {% if plan_status and plan_status.next_exam %}
-      <span class="stat-value">{{ plan_status.days_to_next_exam }}<span class="ml-1 text-sm font-medium text-fg-muted">day{{ "s" if plan_status.days_to_next_exam != 1 }}</span></span>
-      <span class="text-xs text-fg-muted">{{ plan_status.next_exam[0] }} exam in {{ plan_status.days_to_next_exam }} day{{ "s" if plan_status.days_to_next_exam != 1 }} · {{ plan_status.next_exam[1].strftime("%-d %b %Y") }}</span>
+  <div class="stat rise" style="--i: 1">
+    <div class="mb-1 flex items-center justify-between"><span class="stat-label">Next exam</span><span class="chip chip-sm chip-warn">{{ icon("timer") }}</span></div>
+    {% if ps and ps.next_exam %}
+      <span class="stat-value">{{ ps.days_to_next_exam }}<span class="ml-1 text-sm font-semibold text-fg-muted">day{{ "s" if ps.days_to_next_exam != 1 }}</span></span>
+      <span class="text-xs text-fg-muted">{{ ps.next_exam[0] }} exam in {{ ps.days_to_next_exam }} day{{ "s" if ps.days_to_next_exam != 1 }} · {{ ps.next_exam[1].strftime("%-d %b %Y") }}</span>
     {% else %}
       <span class="stat-value text-fg-faint">–</span>
-      <a href="/planner" class="text-xs">Set exam dates</a>
+      <a href="/planner" class="text-xs font-semibold">Set exam dates</a>
     {% endif %}
   </div>
-  <a href="/cards" class="stat no-underline hover:border-line-strong">
-    <span class="stat-label">Cards due</span>
+  <a href="/cards" class="stat rise" style="--i: 2">
+    <div class="mb-1 flex items-center justify-between"><span class="stat-label">Cards due</span><span class="chip chip-sm chip-sky">{{ icon("cards") }}</span></div>
     <span class="stat-value">{{ due_cards.due }}</span>
     <span class="text-xs text-fg-muted">+ {{ due_cards.new }} new · {{ due_cards.seen }}/{{ due_cards.total }} seen</span>
   </a>
-  <div class="stat">
-    <span class="stat-label">Plan progress</span>
-    {% if plan_status %}
-      <span class="stat-value">{{ plan_status.percent }}%</span>
-      <progress value="{{ plan_status.percent }}" max="100" aria-label="Plan progress" class="mt-1"></progress>
-      <span class="text-xs text-fg-muted">{{ plan_status.study_done }} of {{ plan_status.study_total }} sessions</span>
+  <div class="stat rise" style="--i: 3">
+    <div class="mb-1 flex items-center justify-between"><span class="stat-label">Plan progress</span><span class="chip chip-sm chip-brand">{{ icon("calendar") }}</span></div>
+    {% if ps %}
+      <span class="stat-value">{{ ps.percent }}%</span>
+      <progress value="{{ ps.percent }}" max="100" aria-label="Plan progress" class="mt-1"></progress>
+      <span class="text-xs text-fg-muted">{{ ps.study_done }} of {{ ps.study_total }} sessions</span>
     {% else %}
       <span class="stat-value text-fg-faint">–</span>
-      <a href="/planner" class="text-xs">Create a plan</a>
+      <a href="/planner" class="text-xs font-semibold">Create a plan</a>
     {% endif %}
   </div>
-  <div class="stat">
-    <span class="stat-label">Last attempt</span>
+  <div class="stat rise" style="--i: 4">
+    <div class="mb-1 flex items-center justify-between"><span class="stat-label">Last attempt</span><span class="chip chip-sm chip-info">{{ icon("trophy") }}</span></div>
     {% if last_attempt %}
       <span class="stat-value">{% if last_attempt.score_percent is not none %}{{ last_attempt.score_percent | round | int }}%{% else %}–{% endif %}</span>
       <span class="truncate text-xs text-fg-muted">{{ last_attempt.title or last_attempt.mode }}
         {% if last_attempt.passed is not none %}· <span class="{{ 'pass' if last_attempt.passed else 'fail' }}">{{ "pass" if last_attempt.passed else "fail" }}</span>{% endif %}</span>
     {% else %}
       <span class="stat-value text-fg-faint">–</span>
-      <a href="/quiz" class="text-xs">Take a quiz</a>
+      <a href="/quiz" class="text-xs font-semibold">Take a quiz</a>
     {% endif %}
   </div>
 </div>
 
 {# ------------------------------------------------------------------ today + weak areas #}
-<div class="mb-8 grid gap-4 lg:grid-cols-5">
-  <section class="card lg:col-span-3">
-    <div class="mb-3 flex items-center justify-between">
-      <h2 class="card-title">Today</h2>
-      {% if plan_status %}<a href="/planner" class="text-sm">Full plan</a>{% endif %}
+<div class="mb-10 grid gap-4 lg:grid-cols-5">
+  <section class="card rise lg:col-span-3" style="--i: 5">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <h2 class="flex items-center gap-2.5 text-lg font-bold">{{ icon("calendar", "size-5 text-brand") }} Today</h2>
+      {% if ps %}<a href="/planner" class="btn-ghost btn-sm">Full plan {{ icon("arrow-right", "size-3.5") }}</a>{% endif %}
     </div>
-    {% if plan_status %}
+    {% if ps %}
       {% if today_items %}
-        <ul class="row-list">
+        <ul class="flex flex-col gap-1.5">
           {% for item in today_items %}
             {% set href = note_url(item.subtopic_id) if item.kind == "study" and item.subtopic_id else item_links.get(item.kind, "/planner") %}
-            <li class="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 {{ 'opacity-60' if item.done_at }}">
-              <span class="grid size-6 shrink-0 place-items-center rounded-full {{ 'bg-ok text-white' if item.done_at else 'border border-line-strong text-transparent' }}">{{ icon("check", "size-3.5") }}</span>
-              <a href="{{ href }}" class="min-w-0 flex-1 truncate text-sm font-medium text-fg no-underline hover:text-brand {{ 'line-through' if item.done_at }}">{{ item.label or item.kind }}</a>
-              {% if item.exam_code %}<span class="badge">{{ item.exam_code }}</span>{% endif %}
-              {% if item.estimated_minutes %}<span class="shrink-0 text-xs tabular-nums text-fg-muted">{{ item.estimated_minutes | minutes_to_hm }}</span>{% endif %}
+            <li>
+              <a href="{{ href }}" class="group flex items-center gap-3 rounded-xl px-2 py-2 text-fg no-underline transition-colors hover:bg-surface-2/70 hover:text-fg {{ 'opacity-60' if item.done_at }}">
+                <span class="grid size-6 shrink-0 place-items-center rounded-full {{ 'bg-ok text-white dark:text-bg' if item.done_at else 'border-2 border-line-strong text-transparent group-hover:border-brand' }}">{{ icon("check", "size-3.5") }}</span>
+                <span class="kind kind-{{ item.kind }} hidden sm:inline-block">{{ item.kind | replace("_", " ") }}</span>
+                <span class="min-w-0 flex-1 truncate text-sm font-semibold {{ 'line-through' if item.done_at }}">{{ item.label or item.kind }}</span>
+                {% if item.exam_code %}<span class="badge">{{ item.exam_code }}</span>{% endif %}
+                {% if item.estimated_minutes %}<span class="shrink-0 text-xs tabular-nums text-fg-muted">{{ item.estimated_minutes | minutes_to_hm }}</span>{% endif %}
+              </a>
             </li>
           {% endfor %}
         </ul>
       {% else %}
-        {{ empty("Nothing scheduled today. Review your cards or take a quiz.") }}
+        {{ empty("Nothing scheduled today. Review your cards or take a quiz.", icon_name="sparkle") }}
       {% endif %}
     {% else %}
-      {{ empty("No study plan yet.", "/planner", "Create one in the planner to get a daily schedule.") }}
+      {{ empty("No study plan yet.", "/planner", "Create one in the planner to get a daily schedule.", "calendar") }}
     {% endif %}
   </section>
 
-  <section class="card lg:col-span-2">
-    <div class="mb-3 flex items-center justify-between">
-      <h2 class="card-title">Weak areas</h2>
-      {% if weak %}<a href="/quiz?weak=1" class="text-sm">Quiz them</a>{% endif %}
+  <section class="card rise lg:col-span-2" style="--i: 6">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <h2 class="flex items-center gap-2.5 text-lg font-bold">{{ icon("target", "size-5 text-bad") }} Weak areas</h2>
+      {% if weak %}<a href="/quiz?weak=1" class="btn-ghost btn-sm">Quiz them {{ icon("arrow-right", "size-3.5") }}</a>{% endif %}
     </div>
     {% if weak %}
-      <ul class="row-list">
+      <ul class="flex flex-col gap-3">
         {% for w in weak %}
-          <li class="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-            <a href="{{ note_url(w.subtopic) }}" class="min-w-0 flex-1 text-sm no-underline hover:text-brand"><span class="text-fg-muted">{{ w.subtopic.id }}</span> <span class="font-medium text-fg">{{ w.subtopic.title }}</span></a>
-            <span class="badge {{ 'bad' if w.percent < 50 else 'warn' }}">{{ w.percent }}%</span>
+          <li>
+            <a href="{{ note_url(w.subtopic) }}" class="flex items-center gap-3 text-sm text-fg no-underline hover:text-brand">
+              <span class="min-w-0 flex-1 truncate"><span class="font-semibold text-fg-muted">{{ w.subtopic.id }}</span> <span class="font-semibold">{{ w.subtopic.title }}</span></span>
+              <span class="badge {{ 'bad' if w.percent < 50 else 'warn' }}">{{ w.percent }}%</span>
+            </a>
+            <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2"><i class="block h-full rounded-full {{ 'bg-bad' if w.percent < 50 else 'bg-warn' }}" style="width: {{ w.percent }}%"></i></div>
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="text-sm text-fg-muted">Weak areas appear after a few quiz or exam answers per subtopic.</p>
+      {{ empty("Weak areas appear after a few quiz or exam answers per subtopic.", icon_name="target") }}
     {% endif %}
   </section>
 </div>
 
 {# ------------------------------------------------------------------ exams #}
 <section class="mb-8">
-  <div class="mb-3 flex items-center justify-between">
-    <h2 class="section-title">Exams</h2>
-    <a href="/syllabus" class="text-sm">Open the syllabus</a>
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="section-title text-xl">Your exams</h2>
+    <a href="/syllabus" class="btn-ghost btn-sm">Open the syllabus {{ icon("arrow-right", "size-3.5") }}</a>
   </div>
   <div class="grid gap-4 md:grid-cols-2">
     {% for exam in exams %}
       {% set p = exam_progress[exam.code] %}
-      <article class="card flex flex-col gap-4">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h3 class="text-xl font-bold">{{ exam.code }}</h3>
+      <article class="card rise flex flex-col gap-5" style="--i: {{ loop.index + 6 }}">
+        <div class="flex items-center gap-4">
+          {{ ring(p.percent, exam.code ~ " syllabus confident") }}
+          <div class="min-w-0">
+            <h3 class="text-2xl font-extrabold tracking-tight">{{ exam.code }}</h3>
             <p class="text-sm text-fg-muted">{{ exam.name }}</p>
           </div>
-          <span class="text-2xl font-bold tabular-nums">{{ p.percent }}%</span>
         </div>
         <div>
           {{ stack_bar(p, exam.code) }}
           <div class="mt-2">{{ counts(p) }}</div>
         </div>
-        <ul class="row-list text-sm">
+        <ul class="flex flex-col gap-2.5 text-sm">
           {% for eu in exam.units %}
-            <li class="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
-              <a href="/syllabus/unit/{{ eu.unit_code }}" class="w-14 shrink-0 font-semibold no-underline">{{ eu.unit_code }}</a>
-              <span class="min-w-0 flex-1 truncate text-fg-muted">{{ eu.unit.title }}</span>
-              <span class="w-10 shrink-0 text-right text-xs tabular-nums text-fg-muted">{{ p.units[eu.unit_code].percent }}%</span>
+            {% set up = p.units[eu.unit_code].percent %}
+            <li>
+              <a href="/syllabus/unit/{{ eu.unit_code }}" class="group flex items-center gap-3 text-fg no-underline hover:text-fg">
+                <span class="w-14 shrink-0 font-bold text-brand group-hover:underline">{{ eu.unit_code }}</span>
+                <span class="min-w-0 flex-1 truncate text-fg-muted group-hover:text-fg">{{ eu.unit.title }}</span>
+                <span class="hidden h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2 sm:block"><i class="block h-full rounded-full bg-grad-brand" style="width: {{ up }}%"></i></span>
+                <span class="w-10 shrink-0 text-right text-xs font-semibold tabular-nums text-fg-muted">{{ up }}%</span>
+              </a>
             </li>
           {% endfor %}
         </ul>
         {% if exam.casa_weak_areas %}
           <details class="disclosure">
-            <summary>CASA's common errors in this exam</summary>
+            <summary><span class="flex items-center gap-2">{{ icon("alert", "size-4 text-warn") }} CASA's common errors in this exam</span></summary>
             <ul class="space-y-1.5 text-sm">
               {% for wa in weak_areas[exam.code] %}
                 <li>{% if wa.subtopic_id %}{{ wa.area }}
-                  <span class="text-xs text-fg-muted">· <a href="{{ note_url(wa.subtopic_id) }}">note</a> · <a href="/quiz?subtopic={{ wa.subtopic_id | urlencode }}">quiz {{ wa.subtopic_id }}</a></span>
+                  <span class="text-xs text-fg-muted">· <a href="{{ note_url(wa.subtopic_id) }}">lesson</a> · <a href="/quiz?subtopic={{ wa.subtopic_id | urlencode }}">quiz {{ wa.subtopic_id }}</a></span>
                   {% else %}{{ wa.area }}{% endif %}</li>
               {% endfor %}
             </ul>
             <p class="mt-2 text-xs"><a href="/reference/exam-formats">Source and context</a></p>
           </details>
         {% endif %}
-        <div class="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4 text-xs text-fg-muted">
-          <span>{{ exam.duration_minutes | minutes_to_hm }} · pass mark {{ exam.pass_mark_percent }}% · {{ exam.question_count }} questions</span>
+        <div class="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-xs text-fg-muted">
+          <span class="flex flex-wrap gap-x-3 gap-y-1">
+            <span class="inline-flex items-center gap-1">{{ icon("clock", "size-3.5") }} {{ exam.duration_minutes | minutes_to_hm }}</span>
+            <span class="inline-flex items-center gap-1">{{ icon("target", "size-3.5") }} pass {{ exam.pass_mark_percent }}%</span>
+            <span class="inline-flex items-center gap-1">{{ icon("quiz", "size-3.5") }} {{ exam.question_count }} questions</span>
+          </span>
           <a href="/exam?exam={{ exam.code }}" class="btn-primary btn-sm">{{ icon("timer", "size-3.5") }} Mock {{ exam.code }} exam</a>
         </div>
       </article>
@@ -190,6 +259,4 @@
   </div>
 </section>
 
-{% set flag_kind = "other" %}{% set flag_ref = "dashboard" %}
-{% include "_flag_form.html" %}
 {% endblock %}

@@ -1,18 +1,32 @@
 {% extends "base.html" %}
 {% from "_macros.html" import page_header, breadcrumb %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ page.title }} · {{ app_name }}{% endblock %}
 {% block content %}
+{# Same icon per page as the reference index. #}
+{% set ref_style = {
+  "exam-formats": ("timer", "chip-brand"),
+  "permitted-materials": ("check", "chip-ok"),
+  "exam-day-checklist": ("plane", "chip-accent"),
+  "workbook": ("book", "chip-sky"),
+  "sources-and-disclaimer": ("external", "chip-info"),
+} %}
 <div class="mx-auto max-w-3xl">
 {{ breadcrumb([("Reference", "/reference"), (page.title, None)]) }}
-{{ page_header(page.title) }}
-<article class="note-body card p-6 sm:p-10">{{ page.html | safe }}</article>
-<nav aria-label="Other reference pages" class="mt-6">
-  <p class="eyebrow mb-2">Other reference pages</p>
-  <div class="btn-row">
-    {% for p in pages if p.slug != page.slug %}<a href="/reference/{{ p.slug }}" class="btn-secondary btn-sm">{{ p.title }}</a>{% endfor %}
+{{ page_header(page.title, "", ref_style.get(page.slug, ("reference",))[0]) }}
+<article class="note-body card rise p-6 sm:p-10">{{ page.html | safe }}</article>
+<nav aria-label="Other reference pages" class="mt-8">
+  <p class="eyebrow mb-3">Other reference pages</p>
+  <div class="grid gap-3 sm:grid-cols-2">
+    {% for p in pages if p.slug != page.slug %}
+      {% set ic, chip = ref_style.get(p.slug, ("reference", "chip-warn")) %}
+      <a href="/reference/{{ p.slug }}" class="card-link group flex items-center gap-3 p-3.5">
+        <span class="chip chip-sm {{ chip }}">{{ icon(ic) }}</span>
+        <span class="min-w-0 flex-1 truncate text-sm font-semibold">{{ p.title }}</span>
+        {{ icon("arrow-right", "size-4 shrink-0 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand") }}
+      </a>
+    {% endfor %}
   </div>
 </nav>
-{% set flag_kind = "other" %}{% set flag_ref = "reference/" ~ page.slug %}
-{% include "_flag_form.html" %}
 </div>
 {% endblock %}

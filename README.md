@@ -8,16 +8,15 @@ What it does:
 
 - **Syllabus** browser built from the Part 61 MOS Schedule 3 units (BAKC, RBKA, RFRC, ...), with a
   study status per subtopic (not started / studying / confident).
-- **Notes** for each subtopic, written in Markdown.
-- **Search** across notes, syllabus subtopics, MOS knowledge elements, questions, flashcards and
+- **Lessons** for each subtopic, written in Markdown.
+- **Search** across lessons, syllabus subtopics, MOS knowledge elements, questions, flashcards and
   reference pages (search box in the sidebar, or press `/`).
 - **Quiz** practice by unit or subtopic, and timed **mock exams** in the RPLA/PPLA format with a
   knowledge deficiency report at the end.
 - **Flashcards** with spaced repetition.
 - **Planner** that spreads the syllabus over the days you have before your exam dates.
-- **Issues**: every page has a small "report a problem" box; reports are listed under *Issues*.
 
-> **Disclaimer.** This is a study aid only. All notes, questions and flashcards are original study
+> **Disclaimer.** This is a study aid only. All lessons, questions and flashcards are original study
 > material written for this app. They are **not** CASA exam questions and not CASA material.
 > Always check regulatory numbers against the current AIP, Part 91 MOS and VFRG.
 
@@ -59,9 +58,8 @@ The image is built on the Mac and the app is reachable at <http://localhost:8081
 
 ## Where your progress is stored
 
-Your progress (study status, quiz and exam attempts, flashcard schedule, study plan, reported
-issues) lives in a SQLite database inside the Docker named volume **`casa_data`**, mounted at
-`/app/data` in the container. It survives restarts, rebuilds and `docker compose down`.
+Your progress (study status, quiz and exam attempts, flashcard schedule, study plan) lives in a SQLite
+database inside the Docker named volume **`casa_data`**, mounted at `/app/data` in the container. It survives restarts, rebuilds and `docker compose down`.
 (`docker compose down -v` **deletes** it.)
 
 ### Back up

@@ -5,65 +5,85 @@
 {% block title %}{{ note.title if note else sub.title }} · {{ app_name }}{% endblock %}
 {% block content %}
 <div class="mx-auto max-w-3xl">
-{{ breadcrumb([("Notes", "/notes"), (sub.unit_code, "/syllabus/unit/" ~ sub.unit_code), (sub.number, subtopic_url(sub))]) }}
-<div class="mb-4 min-w-0">
-  <h1 class="page-title">{{ note.title if note else sub.title }}</h1>
-  <p class="page-sub flex flex-wrap items-center gap-x-1.5">
-    <span>{{ sub.id }}</span><span aria-hidden="true">·</span><span>{{ sub.unit.title }}</span>
-    {% if note and note.minutes %}<span aria-hidden="true">·</span><span class="inline-flex items-center gap-1">{{ icon("clock", "size-3.5") }} about {{ note.minutes | minutes_to_hm }}</span>{% endif %}
-  </p>
-</div>
-<div class="mb-6">
-  {% with sid = sub.id, status = status_of(sub) %}{% include "_status.html" %}{% endwith %}
-</div>
+{{ breadcrumb([("Lessons", "/lessons"), (sub.unit_code, "/syllabus/unit/" ~ sub.unit_code), (sub.number, subtopic_url(sub))]) }}
 
-<details class="disclosure mb-6"{% if not note %} open{% endif %}>
-  <summary>Syllabus checklist: {{ sub.elements | length }} knowledge element{{ "s" if sub.elements | length != 1 }}</summary>
+{# Lesson header: unit badge, id and reading time above the title; the status control along the bottom. #}
+<header class="card rise relative mb-6 overflow-hidden p-5 sm:p-7">
+  <span class="absolute inset-x-0 top-0 h-1.5 bg-grad-brand" aria-hidden="true"></span>
+  <span class="pointer-events-none absolute -right-3 -top-3 hidden text-brand opacity-[0.07] sm:block" aria-hidden="true">{{ icon("notes", "size-36 -rotate-12") }}</span>
+  <div class="relative min-w-0">
+    <p class="mb-3 flex flex-wrap items-center gap-2">
+      <a href="/syllabus/unit/{{ sub.unit_code }}" class="badge badge-brand no-underline hover:text-brand-fg">{{ icon("book", "size-3.5") }} {{ sub.unit_code }}</a>
+      <span class="badge font-mono">{{ sub.id }}</span>
+      {% if note and note.minutes %}<span class="badge badge-accent">{{ icon("clock", "size-3.5") }} about {{ note.minutes | minutes_to_hm }}</span>{% endif %}
+    </p>
+    <h1 class="page-title">{{ note.title if note else sub.title }}</h1>
+    <p class="page-sub">{{ sub.unit.title }}</p>
+  </div>
+  <div class="relative mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+    <span class="eyebrow">Your status</span>
+    {% with sid = sub.id, status = status_of(sub) %}{% include "_status.html" %}{% endwith %}
+  </div>
+</header>
+
+<details class="disclosure rise mb-4" style="--i: 1"{% if not note %} open{% endif %}>
+  <summary><span class="flex min-w-0 items-center gap-2.5"><span class="chip chip-sm chip-brand">{{ icon("target") }}</span> <span>Syllabus checklist: {{ sub.elements | length }} knowledge element{{ "s" if sub.elements | length != 1 }}</span></span></summary>
   {{ render_elements(sub.elements) }}
 </details>
 
 {% if toc %}
-<details class="disclosure lesson-toc mb-6" open>
-  <summary>In this lesson</summary>
-  <ol>{% for h in toc %}<li><a href="#{{ h.id }}">{{ h.text }}</a></li>{% endfor %}</ol>
+<details class="disclosure lesson-toc rise mb-6 border-brand/20 bg-linear-to-br from-brand-soft/40 to-surface" style="--i: 2" open>
+  <summary><span class="flex min-w-0 items-center gap-2.5"><span class="chip chip-sm chip-grad">{{ icon("compass") }}</span> <span>In this lesson</span> <span class="badge font-normal tabular-nums">{{ toc | length }} sections</span></span></summary>
+  <ol class="sm:grid sm:grid-cols-2 sm:gap-x-3">{% for h in toc %}<li class="min-w-0"><a href="#{{ h.id }}">{{ h.text }}</a></li>{% endfor %}</ol>
 </details>
 {% endif %}
 
 {% if note %}
-  <article class="note-body card p-6 sm:p-10">{{ note.html | safe }}</article>
+  <article class="note-body card rise p-6 sm:p-10" style="--i: 3">{{ note.html | safe }}</article>
   {% if note.references %}
     <section class="card-sunken mt-6">
-      <p class="eyebrow mb-2">References</p>
+      <p class="eyebrow mb-2 flex items-center gap-1.5">{{ icon("reference", "size-3.5") }} References</p>
       <ul class="list-disc space-y-1 pl-5 text-sm text-fg-muted">{% for ref in note.references %}<li>{{ ref }}</li>{% endfor %}</ul>
     </section>
   {% endif %}
 {% else %}
   <div class="callout callout-warn flex items-start gap-2">
     {{ icon("alert", "mt-0.5 size-4 shrink-0 text-warn") }}
-    <p><strong>Note not written yet.</strong> Use the knowledge elements above with the workbook,
+    <p><strong>Lesson not written yet.</strong> Use the knowledge elements above with the workbook,
       VFRG and your textbook for now. Quiz questions and cards for this subtopic may still exist.</p>
   </div>
 {% endif %}
 
-<section class="card-sunken mt-6 flex flex-wrap items-center justify-between gap-3">
-  <p class="text-sm font-medium">Finished with this one?</p>
-  <div class="btn-row">
-    {% for value in ["studying", "confident"] %}
-      <button type="button" class="{{ 'btn-secondary' if value == 'studying' else 'btn-ok' }}"
-              hx-post="/progress/{{ sub.id | urlencode }}" hx-vals='{"status": "{{ value }}"}'
-              hx-target="#status-{{ sub.id | dom_id }}" hx-swap="outerHTML">{% if value == 'confident' %}{{ icon("check", "size-4") }} {% endif %}Mark as {{ value }}</button>
-    {% endfor %}
+{# Finish line: mark the status, then practise. #}
+<section class="card mt-8 flex flex-col gap-5 border-ok/25 bg-linear-to-br from-ok-soft/40 to-surface">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex min-w-0 items-center gap-3">
+      <span class="chip chip-ok">{{ icon("trophy") }}</span>
+      <p class="font-semibold">Finished with this one?</p>
+    </div>
+    <div class="btn-row">
+      {% for value in ["studying", "confident"] %}
+        <button type="button" class="{{ 'btn-secondary' if value == 'studying' else 'btn-ok' }}"
+                hx-post="/progress/{{ sub.id | urlencode }}" hx-vals='{"status": "{{ value }}"}'
+                hx-target="#status-{{ sub.id | dom_id }}" hx-swap="outerHTML">{% if value == 'confident' %}{{ icon("check", "size-4") }} {% endif %}Mark as {{ value }}</button>
+      {% endfor %}
+    </div>
   </div>
+  <nav class="grid gap-3 sm:grid-cols-2" aria-label="Practise this subtopic">
+    <a href="/quiz?subtopic={{ sub.id | urlencode }}" class="card-link group flex items-center gap-3 p-3.5">
+      <span class="chip chip-sm chip-info">{{ icon("quiz") }}</span>
+      <span class="min-w-0 flex-1 truncate text-sm font-semibold">Quiz on {{ sub.id }}</span>
+      {{ icon("arrow-right", "size-4 shrink-0 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand") }}
+    </a>
+    <a href="/cards?subtopic={{ sub.id | urlencode }}" class="card-link group flex items-center gap-3 p-3.5">
+      <span class="chip chip-sm chip-sky">{{ icon("cards") }}</span>
+      <span class="min-w-0 flex-1 truncate text-sm font-semibold">Cards for {{ sub.id }}</span>
+      {{ icon("arrow-right", "size-4 shrink-0 text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-brand") }}
+    </a>
+  </nav>
 </section>
-
-<nav class="btn-row mt-4" aria-label="Practise this subtopic">
-  <a href="/quiz?subtopic={{ sub.id | urlencode }}" class="btn-secondary">{{ icon("quiz", "size-4") }} Quiz on {{ sub.id }}</a>
-  <a href="/cards?subtopic={{ sub.id | urlencode }}" class="btn-secondary">{{ icon("cards", "size-4") }} Cards for {{ sub.id }}</a>
-</nav>
 
 {{ prev_next(prev, next, note_url) }}
 
-{% set flag_kind = "note" %}{% set flag_ref = sub.id %}
-{% include "_flag_form.html" %}
 </div>
 {% endblock %}

@@ -37,6 +37,8 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 def init_db() -> None:
     from app import models  # noqa: F401  (register tables)
     Base.metadata.create_all(engine)
+    with engine.begin() as conn:
+        conn.exec_driver_sql("DROP TABLE IF EXISTS flags")  # the issue-report feature was removed
 
 
 def get_session() -> Iterator[Session]:

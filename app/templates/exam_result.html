@@ -4,52 +4,73 @@
 {% from "_icons.html" import icon %}
 {% block title %}{{ attempt.title }} results · {{ app_name }}{% endblock %}
 {% block content %}
-{{ page_header(attempt.title ~ ": results", "Submitted " ~ attempt.submitted_at.strftime("%-d %B %Y %H:%M") ~ " UTC") }}
+{{ page_header(attempt.title ~ ": results", "Submitted " ~ attempt.submitted_at.strftime("%-d %B %Y %H:%M") ~ " UTC", "trophy") }}
+{% set pct = (attempt.score_percent or 0) | round | int %}
 
-<section class="card mb-8 space-y-5">
-  <div class="flex flex-wrap items-center justify-between gap-4">
-    <div>
-      <div class="score-big">{{ (attempt.score_percent or 0) | round | int }}%</div>
-      <p class="mt-1 text-sm text-fg-muted">{{ attempt.correct_count }} of {{ attempt.question_count }} correct · pass mark {{ pass_mark }}%</p>
+{# The score moment: big number, a meter with the pass mark, confetti on a pass. #}
+<section class="card rise relative mb-8 overflow-hidden p-6 sm:p-8"{% if attempt.passed %} data-celebrate="big"{% endif %}>
+  <div class="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full {{ 'bg-ok-soft' if attempt.passed else 'bg-bad-soft' }} opacity-70 blur-3xl" aria-hidden="true"></div>
+  <div class="relative space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div class="flex min-w-0 items-center gap-4 sm:gap-5">
+        <span class="chip chip-lg {{ 'chip-grad animate-float' if attempt.passed else 'chip-bad' }} size-14 sm:size-16">{{ icon("trophy" if attempt.passed else "target", "size-7 sm:size-8") }}</span>
+        <div>
+          <div class="score-big">{{ (attempt.score_percent or 0) | round | int }}%</div>
+          <p class="mt-1 text-sm text-fg-muted">{{ attempt.correct_count }} of {{ attempt.question_count }} correct · pass mark {{ pass_mark }}%</p>
+        </div>
+      </div>
+      <span class="badge {{ 'ok' if attempt.passed else 'bad' }} gap-1.5 px-5 py-1.5 text-base tracking-wider">{{ icon("check" if attempt.passed else "close", "size-4") }}{{ "PASS" if attempt.passed else "FAIL" }}</span>
     </div>
-    <span class="badge {{ 'ok' if attempt.passed else 'bad' }} text-base px-4 py-1">{{ "PASS" if attempt.passed else "FAIL" }}</span>
-  </div>
-  {% if minutes_used is not none %}
-    <p class="flex items-center gap-1.5 text-sm text-fg-muted">{{ icon("clock", "size-4") }} Time used: <strong class="text-fg">{{ "under 1 min" if minutes_used < 1 else minutes_used | minutes_to_hm }}</strong>{% if exam %} of {{ exam.duration_minutes | minutes_to_hm }}{% endif %}</p>
-  {% endif %}
-  <div class="btn-row">
-    <a href="/quiz?weak=1" class="btn-primary">{{ icon("target", "size-4") }} Quiz the weak areas</a>
-    <a href="/exam" class="btn-secondary">Back to mock exams</a>
+
+    <div role="img" aria-label="Score {{ pct }}%, pass mark {{ pass_mark }}%">
+      <div class="relative h-3 rounded-full bg-surface-2">
+        <i class="block h-full rounded-full {{ 'bg-ok' if attempt.passed else 'bg-bad' }} transition-[width] duration-700" style="width: {{ pct }}%"></i>
+        <span class="absolute -inset-y-1 w-0.5 rounded-full bg-fg-muted" style="left: {{ pass_mark }}%"></span>
+      </div>
+      <div class="relative mt-1.5 h-4 text-xs font-semibold text-fg-muted" aria-hidden="true"><span class="absolute -translate-x-1/2 whitespace-nowrap" style="left: {{ pass_mark }}%">{{ pass_mark }}%</span></div>
+    </div>
+
+    {% if minutes_used is not none %}
+      <p class="flex flex-wrap items-center gap-1.5 text-sm text-fg-muted"><span class="chip chip-sm chip-warn mr-1">{{ icon("clock") }}</span> Time used: <strong class="text-fg">{{ "under 1 min" if minutes_used < 1 else minutes_used | minutes_to_hm }}</strong>{% if exam %} of {{ exam.duration_minutes | minutes_to_hm }}{% endif %}</p>
+    {% endif %}
+    <div class="btn-row">
+      <a href="/quiz?weak=1" class="btn-primary btn-lg w-full sm:w-auto">{{ icon("target", "size-4") }} Quiz the weak areas</a>
+      <a href="/exam" class="btn-secondary btn-lg w-full sm:w-auto">Back to mock exams</a>
+    </div>
   </div>
 </section>
 
-<section class="mb-8">
-  <h2 class="section-title mb-3">By unit</h2>
-  <div class="table-wrap">
-    <table class="table">
-      <thead><tr><th>Unit</th><th class="num">Correct</th><th class="num">Score</th></tr></thead>
-      <tbody>
-        {% for u in breakdown %}
-          <tr>
-            <td><strong>{{ u.unit_code }}</strong> <span class="text-fg-muted">{{ units[u.unit_code].title if u.unit_code in units }}</span></td>
-            <td class="num">{{ u.correct }}/{{ u.total }}</td>
-            <td class="num"><span class="badge {{ 'ok' if u.percent >= pass_mark else 'bad' }}">{{ u.percent }}%</span></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<section class="rise mb-10" style="--i: 2">
+  <h2 class="section-title mb-4 flex items-center gap-2.5">{{ icon("chart", "size-5 text-brand") }} By unit</h2>
+  <ul class="grid gap-3 sm:grid-cols-2">
+    {% for u in breakdown %}
+      {% set unit_ok = u.percent >= pass_mark %}
+      <li class="card flex flex-col gap-3 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <p class="min-w-0 text-sm"><strong>{{ u.unit_code }}</strong> <span class="text-fg-muted">{{ units[u.unit_code].title if u.unit_code in units }}</span></p>
+          <span class="badge {{ 'ok' if unit_ok else 'bad' }} shrink-0">{{ u.percent }}%</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="relative h-2 flex-1 rounded-full bg-surface-2" role="img" aria-label="{{ u.unit_code }}: {{ u.correct }} of {{ u.total }} correct">
+            <i class="block h-full rounded-full {{ 'bg-ok' if unit_ok else 'bg-bad' }}" style="width: {{ u.percent }}%"></i>
+            <span class="absolute -inset-y-0.5 w-0.5 rounded-full bg-fg-faint" style="left: {{ pass_mark }}%"></span>
+          </div>
+          <span class="shrink-0 text-xs font-semibold tabular-nums text-fg-muted">{{ u.correct }}/{{ u.total }}</span>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
 </section>
 
-<section class="mb-8">
-  <h2 class="section-title">Knowledge Deficiency Report</h2>
-  <p class="mb-3 mt-1 text-sm text-fg-muted">Like CASA's KDR: the syllabus subtopics and knowledge element codes behind the questions you got wrong. Revise these notes first.</p>
+<section class="rise mb-10" style="--i: 3">
+  <h2 class="section-title flex items-center gap-2.5">{{ icon("target", "size-5 text-bad") }} Knowledge Deficiency Report</h2>
+  <p class="mb-4 mt-1 text-sm text-fg-muted">Like CASA's KDR: the syllabus subtopics and knowledge element codes behind the questions you got wrong. Revise these lessons first.</p>
   {{ kdr_list(kdr) }}
 </section>
 
-<section>
-  <h2 class="section-title">Question review</h2>
-  <p class="mb-3 mt-1 text-sm text-fg-muted">Tap a question to see your answer, the correct answer and the explanation.</p>
+<section class="rise" style="--i: 4">
+  <h2 class="section-title flex items-center gap-2.5">{{ icon("quiz", "size-5 text-brand") }} Question review</h2>
+  <p class="mb-4 mt-1 text-sm text-fg-muted">Tap a question to see your answer, the correct answer and the explanation.</p>
   {{ review_list(attempt.answers) }}
 </section>
 {% endblock %}

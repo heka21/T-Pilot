@@ -2,7 +2,7 @@
 
 Content tables (Exam, Unit, Topic, Subtopic, Element, Note, Question, Card) are re-seeded from
 content/ on every start using stable string ids, so content edits never touch progress tables
-(Progress, Attempt, AttemptAnswer, CardReview, Flag, StudyPlan, PlanItem).
+(Progress, Attempt, AttemptAnswer, CardReview, StudyPlan, PlanItem).
 """
 from __future__ import annotations
 
@@ -201,16 +201,6 @@ class CardReview(Base):
     last_reviewed: Mapped[datetime | None] = mapped_column(DateTime)
     lapses: Mapped[int] = mapped_column(Integer, default=0)
 
-
-class Flag(Base):
-    """User-reported problem with a note, question or card."""
-    __tablename__ = "flags"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    kind: Mapped[str] = mapped_column(String(16))  # note | question | card | other
-    ref: Mapped[str] = mapped_column(String(80))  # subtopic id, question id, card id
-    message: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-    resolved: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class StudyPlan(Base):

@@ -3,7 +3,7 @@
 {% block title %}{% if query %}“{{ query }}” · {% endif %}Search · {{ app_name }}{% endblock %}
 {% block content %}
 {# The search box is the one in the top bar; on this page it updates the results below as you type. #}
-{{ page_header("Search", "Notes, syllabus, MOS knowledge elements, questions, flashcards and reference pages.") }}
+{{ page_header("Search", "Lessons, syllabus, MOS knowledge elements, questions, flashcards and reference pages.", "search") }}
 <div id="search-results" aria-live="polite">
   {% include "_search_results.html" %}
 </div>

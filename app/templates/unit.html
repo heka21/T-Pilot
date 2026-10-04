@@ -1,36 +1,55 @@
 {% extends "base.html" %}
-{% from "_macros.html" import stack_bar, counts, page_header, breadcrumb %}
+{% from "_macros.html" import stack_bar, counts, ring, page_header, breadcrumb %}
 {% from "_icons.html" import icon %}
 {% block title %}{{ unit.code }} · {{ app_name }}{% endblock %}
 {% block content %}
 {{ breadcrumb([("Syllabus", "/syllabus"), (unit.code, None)]) }}
-{{ page_header(unit.code ~ " · " ~ unit.title, "MOS unit " ~ unit.number ~ " · examined in " ~ (exam_codes | join(" and ") or "no exam")) }}
+{% call page_header(unit.code ~ " · " ~ unit.title, "MOS unit " ~ unit.number ~ " · examined in " ~ (exam_codes | join(" and ") or "no exam"), "book") %}
+  <a href="/quiz?unit={{ unit.code | urlencode }}" class="btn-secondary">{{ icon("quiz", "size-4") }} Quiz this unit</a>
+{% endcall %}
 {% if exam_codes | length > 1 %}
-  <p class="callout callout-brand mb-6">This unit is shared by {{ exam_codes | join(" and ") }}: your status here counts towards both exams.</p>
+  <p class="callout callout-brand rise mb-6 flex items-start gap-2.5">{{ icon("sparkle", "mt-0.5 size-4 shrink-0 text-brand") }}<span>This unit is shared by {{ exam_codes | join(" and ") }}: your status here counts towards both exams.</span></p>
 {% endif %}
-<div class="card mb-8">
-  <div class="mb-2 flex items-center justify-between gap-3">
-    <span class="eyebrow">Unit progress</span>
-    <span class="text-lg font-bold tabular-nums">{{ unit_progress.percent }}%</span>
+
+{# Unit progress: ring plus the stacked bar. #}
+<div class="card rise mb-10 flex flex-wrap items-center gap-x-6 gap-y-4" style="--i: 1">
+  {{ ring(unit_progress.percent, unit.code ~ " confident") }}
+  <div class="min-w-0 flex-1 basis-56">
+    <div class="mb-2 flex items-center justify-between gap-3">
+      <span class="eyebrow">Unit progress</span>
+      <span class="text-xs font-semibold tabular-nums text-fg-muted">{{ unit_progress.confident }} / {{ unit_progress.total }} confident</span>
+    </div>
+    {{ stack_bar(unit_progress, unit.code) }}
+    <div class="mt-2">{{ counts(unit_progress) }}</div>
   </div>
-  {{ stack_bar(unit_progress, unit.code) }}
-  <div class="mt-2">{{ counts(unit_progress) }}</div>
 </div>
 
 {% for topic in unit.topics %}
-  <section class="mb-8">
-    <div class="mb-3">
-      <h2 class="section-title">{{ topic.number }}. {{ topic.title }}</h2>
-      {% if topic.note %}<p class="mt-1 text-sm text-fg-muted">{{ topic.note }}</p>{% endif %}
+  <section class="rise mb-8" style="--i: {{ [loop.index + 1, 10] | min }}" aria-labelledby="topic-{{ loop.index }}">
+    <div class="mb-3 flex items-start gap-3">
+      <span class="chip chip-sm chip-brand text-sm font-extrabold tabular-nums" aria-hidden="true">{{ topic.number }}</span>
+      <div class="min-w-0">
+        <h2 id="topic-{{ loop.index }}" class="section-title">{{ topic.number }}. {{ topic.title }}</h2>
+        {% if topic.note %}<p class="mt-1 text-sm text-fg-muted">{{ topic.note }}</p>{% endif %}
+      </div>
     </div>
-    <div class="card">
-      <ul class="row-list">
+    <div class="card p-2 sm:p-3">
+      <ul class="flex flex-col gap-1">
         {% for sub in topic.subtopics %}
-          <li class="row">
-            <div class="min-w-0 flex-1 basis-60">
-              <a href="{{ subtopic_url(sub) }}" class="text-fg no-underline hover:text-brand"><span class="text-fg-muted">{{ sub.number }}</span> <strong>{{ sub.title }}</strong></a>
-              <div class="mt-0.5 text-xs">
-                {% if sub.note %}<a href="{{ note_url(sub) }}" class="inline-flex items-center gap-1">{{ icon("notes", "size-3.5") }} Read note</a>{% else %}<a href="{{ note_url(sub) }}" class="text-fg-faint no-underline hover:text-fg-muted">No note yet</a>{% endif %}
+          {# The row tints itself from the status badge inside it, so it follows the HTMX swap. #}
+          <li class="group flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl px-3 py-3 transition-colors hover:bg-surface-2/50 has-[.status-confident]:bg-ok-soft/25 has-[.status-studying]:bg-warn-soft/25">
+            <div class="flex min-w-0 flex-1 basis-60 items-start gap-3">
+              <span class="mt-1.5 size-2.5 shrink-0 rounded-full border-2 border-line-strong transition-colors group-has-[.status-studying]:border-warn group-has-[.status-studying]:bg-warn group-has-[.status-confident]:border-ok group-has-[.status-confident]:bg-ok" aria-hidden="true"></span>
+              <div class="min-w-0">
+                <a href="{{ subtopic_url(sub) }}" class="text-fg no-underline hover:text-brand"><span class="text-fg-muted">{{ sub.number }}</span> <strong>{{ sub.title }}</strong></a>
+                <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                  {% if sub.note %}
+                    <a href="{{ note_url(sub) }}" class="inline-flex items-center gap-1 font-semibold">{{ icon("notes", "size-3.5") }} Read lesson</a>
+                    {% if sub.note.minutes %}<span class="inline-flex items-center gap-1 text-fg-muted">{{ icon("clock", "size-3.5") }} {{ sub.note.minutes | minutes_to_hm }}</span>{% endif %}
+                  {% else %}
+                    <a href="{{ note_url(sub) }}" class="text-fg-faint no-underline hover:text-fg-muted">No lesson yet</a>
+                  {% endif %}
+                </div>
               </div>
             </div>
             {% with sid = sub.id, status = status_of(sub) %}{% include "_status.html" %}{% endwith %}

@@ -21,6 +21,6 @@
       <kbd aria-hidden="true">↵</kbd>
     </a>
   {% else %}
-    <p class="suggest-empty">Nothing matches “{{ query }}”. Try fewer or shorter words, or a code like <code>RBKA 3.6</code>.</p>
+    <p class="suggest-empty flex items-start gap-2.5">{{ icon("search", "mt-0.5 size-4 shrink-0 text-fg-faint") }}<span>Nothing matches “{{ query }}”. Try fewer or shorter words, or a code like <code>RBKA 3.6</code>.</span></p>
   {% endif %}
 {% endif %}

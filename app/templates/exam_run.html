@@ -2,20 +2,31 @@
 {% from "_icons.html" import icon %}
 {% block title %}{{ attempt.title }} · {{ app_name }}{% endblock %}
 {% block content %}
-<div class="exam-timer sticky top-14 lg:top-0 z-10 -mx-4 mb-4 flex items-center justify-between gap-3 border-b border-line bg-bg/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10" id="exam-timer" data-seconds="{{ seconds_left }}">
-  <span class="min-w-0 flex-1 truncate text-sm">{{ attempt.title }}</span>
-  <span class="flex shrink-0 items-center gap-1.5 text-sm tabular-nums">{{ icon("clock", "size-4") }} <span class="font-normal text-fg-muted">Time left</span> <span id="timer-text">{{ (seconds_left // 3600) }}:{{ "%02d" | format(seconds_left % 3600 // 60) }}:{{ "%02d" | format(seconds_left % 60) }}</span></span>
+{# Cockpit panel: sticky under the top bar, the clock in a sunken instrument readout that turns red in the last five minutes. #}
+<div class="exam-timer group sticky top-[4.75rem] z-10 mb-5 flex items-center gap-2.5 rounded-2xl border border-line bg-surface/90 p-2 pl-3 shadow-(--shadow-lift) backdrop-blur-xl sm:gap-3 sm:p-2.5" id="exam-timer" data-seconds="{{ seconds_left }}">
+  <span class="chip chip-sm chip-grad hidden sm:grid">{{ icon("plane") }}</span>
+  <span class="min-w-0 flex-1">
+    <span class="eyebrow hidden text-[0.6rem] sm:block">Mock exam in progress</span>
+    <span class="block truncate text-sm">{{ attempt.title }}</span>
+  </span>
+  <span class="flex shrink-0 items-center gap-2 rounded-xl bg-surface-2 px-2.5 py-1.5 text-sm tabular-nums ring-1 ring-inset ring-line-strong/60 transition-colors
+               group-[.low]:bg-bad-soft group-[.low]:ring-bad/40 sm:px-3">
+    {{ icon("clock", "hidden size-4 text-fg-muted group-[.low]:text-bad-fg sm:block") }}
+    <span class="sr-only font-normal text-fg-muted sm:not-sr-only sm:text-xs sm:font-semibold">Time left</span>
+    <span id="timer-text" class="font-mono text-base font-bold text-brand-fg group-[.low]:text-bad-fg sm:text-lg">{{ (seconds_left // 3600) }}:{{ "%02d" | format(seconds_left % 3600 // 60) }}:{{ "%02d" | format(seconds_left % 60) }}</span>
+  </span>
   <form id="submit-form" method="post" action="/exam/{{ attempt.id }}/submit" class="shrink-0" hx-boost="false">
     <button type="submit" class="btn-danger btn-sm">Submit exam</button>
   </form>
 </div>
 
-<div id="exam-root" class="grid gap-4 lg:grid-cols-[16rem_1fr]">
-  <aside class="card order-2 h-fit space-y-4 p-4 lg:order-1">
+<div id="exam-root" class="grid gap-5 lg:grid-cols-[17rem_1fr]">
+  <aside class="card order-2 h-fit space-y-4 p-4 lg:sticky lg:top-[9.5rem] lg:order-1 lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto">
+    <p class="flex items-center gap-2 text-sm font-bold">{{ icon("compass", "size-4 text-brand") }} Navigator</p>
     {% include "exam_nav.html" %}
     {% if exam %}
       <details class="disclosure">
-        <summary>Exam conditions</summary>
+        <summary><span class="flex items-center gap-2">{{ icon("alert", "size-4 shrink-0 text-fg-muted") }} Exam conditions</span></summary>
         <p class="text-xs text-fg-muted">{{ exam.duration_minutes | minutes_to_hm }}, pass mark {{ exam.pass_mark_percent }}%. No feedback until you submit. Unanswered questions count as wrong.
         <a href="/reference">Permitted materials</a>.</p>
       </details>
