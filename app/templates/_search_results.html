@@ -1,0 +1,46 @@
+{% from "_macros.html" import empty %}
+{% if not terms %}
+  <div class="card-sunken text-sm text-fg-muted">
+    <p class="mb-2 font-medium text-fg">What you can find</p>
+    <ul class="grid gap-1.5 sm:grid-cols-2">
+      <li><b class="font-medium text-fg">Notes</b> · any word in the study notes</li>
+      <li><b class="font-medium text-fg">Syllabus</b> · subtopic ids and titles like <code>RBKA 3.6</code></li>
+      <li><b class="font-medium text-fg">Knowledge elements</b> · verbatim MOS text and codes like <code>RBKA 3.6.2</code></li>
+      <li><b class="font-medium text-fg">Questions</b> · stems, options and explanations</li>
+      <li><b class="font-medium text-fg">Flashcards</b> · front and back</li>
+      <li><b class="font-medium text-fg">Reference</b> · exam formats, permitted materials, checklists</li>
+    </ul>
+    <p class="mt-3 text-xs text-fg-faint">Tip: press <kbd>/</kbd> anywhere to jump to the search box.</p>
+  </div>
+{% elif total == 0 %}
+  {{ empty("Nothing matches “" ~ query ~ "”. Try fewer or shorter words, or a unit code like RBKA.") }}
+{% else %}
+  <nav class="search-kinds mb-5" aria-label="Filter by type">
+    <a href="/search?q={{ query | urlencode }}" class="search-kind"{% if not kind %} aria-current="true"{% endif %}>All</a>
+    {% for g in groups %}
+      <a href="/search?q={{ query | urlencode }}&kind={{ g.kind }}" class="search-kind"{% if kind == g.kind %} aria-current="true"{% endif %}>{{ g.label }} <b>{{ g.count }}</b></a>
+    {% endfor %}
+  </nav>
+  <p class="sr-only">{{ total }} result{{ "s" if total != 1 }}</p>
+  {% for g in groups %}
+    <section class="mb-6">
+      <h2 class="section-title mb-3">{{ g.label }} <span class="text-sm font-normal text-fg-muted">· {{ g.count }}</span></h2>
+      <div class="card">
+        <ol class="row-list">
+          {% for h in g.hits %}
+            <li class="search-hit">
+              <a href="{{ h.entry.url }}">
+                <span class="search-hit-title block">{{ h.entry.title | highlight_terms(terms) }}</span>
+                {% if h.entry.context and h.entry.context != h.entry.title %}<span class="search-hit-context block">{{ h.entry.context }}</span>{% endif %}
+              </a>
+              {% if h.snippet %}<p class="search-hit-snippet">{{ h.snippet | safe }}</p>{% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+        {% if g.more %}
+          <p class="mt-3 text-sm"><a href="/search?q={{ query | urlencode }}&kind={{ g.kind }}">Show all {{ g.count }} {{ g.label | lower }} →</a></p>
+        {% endif %}
+      </div>
+    </section>
+  {% endfor %}
+{% endif %}

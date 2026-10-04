@@ -1,0 +1,27 @@
+{
+  "name": "casa-theory-ui",
+  "private": true,
+  "description": "Builds app/static/app.css with Tailwind and vendors front-end libraries into app/static (npm run vendor). The Python app does not need Node at runtime.",
+  "scripts": {
+    "css": "tailwindcss -i app/static/src/app.css -o app/static/app.css --minify",
+    "css:watch": "tailwindcss -i app/static/src/app.css -o app/static/app.css --watch",
+    "vendor": "node tools/vendor.mjs",
+    "sketch": "node tools/diagrams/sketch.mjs",
+    "build": "npm run vendor && npm run sketch && npm run css",
+    "render": "node tools/diagrams/render.mjs",
+    "smoke": "node tools/widgets/smoke.mjs"
+  },
+  "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "@tailwindcss/cli": "^4.1.0",
+    "@tailwindcss/typography": "^0.5.16",
+    "alpinejs": "^3.17.4",
+    "jsdom": "^30.1.1",
+    "katex": "^0.19.0",
+    "roughjs": "^4.6.6",
+    "tailwindcss": "^4.1.0",
+    "three": "^0.186.1"
+  }
+}

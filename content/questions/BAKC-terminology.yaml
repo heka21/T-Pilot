@@ -1,0 +1,294 @@
+# Questions for unit BAKC, terminology subtopics 2.1-2.5. See content/README.md for the format.
+- id: BAKC-T001
+  kind: mcq
+  elements: ["BAKC 2.1.1"]
+  stem: "You are heading 270. Another aircraft is reported at 'three o'clock, same level'. Approximately what direction is the traffic from you?"
+  options: ["090", "180", "360", "270"]
+  answer: 3
+  explanation: "The clock code is relative to the nose. 3 o'clock is 90 degrees right of the nose: 270 + 90 = 360. 090 is the reciprocal of your heading (6 o'clock is behind you, which would be 090), 180 would be 9 o'clock (left), and 270 is straight ahead (12 o'clock)."
+  references: ["BAKC 2.1"]
+  difficulty: 2
+
+- id: BAKC-T002
+  kind: mcq
+  elements: ["BAKC 2.1.1"]
+  stem: "A runway is aligned 064 degrees magnetic. What are the designators at each end?"
+  options: ["06 and 24", "064 and 244", "07 and 25", "6 and 24"]
+  answer: 0
+  explanation: "Runway designators are 2-figure groups: the magnetic direction rounded to the nearest 10 degrees with the last digit dropped. 064 rounds to 060, giving runway 06; the reciprocal 244 rounds to 240, runway 24. 3-figure groups are not used for runway designators, 064 does not round to 070, and the designator always has two figures with a leading zero."
+  references: ["BAKC 2.1"]
+  difficulty: 1
+
+- id: BAKC-T003
+  kind: mcq
+  elements: ["BAKC 2.1.2"]
+  stem: "An aircraft's heading is best defined as:"
+  options:
+    - "The direction the aircraft is moving over the ground."
+    - "The direction in which the aircraft's longitudinal axis (nose) is pointing, measured clockwise from north."
+    - "The direction from which the wind is blowing relative to the aircraft."
+    - "The bearing of the destination from the departure point."
+  answer: 1
+  explanation: "Heading is where the nose points, in degrees clockwise from true, magnetic or compass north. The direction of movement over the ground is the track, which differs from heading by the drift caused by wind. The wind direction and the bearing of the destination are different quantities altogether."
+  references: ["BAKC 2.1"]
+  difficulty: 1
+
+- id: BAKC-T004
+  kind: numeric
+  elements: ["BAKC 2.1.3"]
+  stem: "A true track is 230°T. Variation is 2°E. What is the magnetic track, in degrees?"
+  answer: 228
+  tolerance: 0
+  unit: "°M"
+  explanation: "Variation east, magnetic least: subtract easterly variation going from true to magnetic. 230 − 2 = 228°M. Adding the variation (232) is the common mistake; that rule applies to westerly variation."
+  references: ["BAKC 2.1"]
+  difficulty: 2
+
+- id: BAKC-T005
+  kind: mcq
+  elements: ["BAKC 2.1.3"]
+  stem: "Which statement about compass deviation is correct?"
+  options:
+    - "It is the angle between true north and magnetic north and changes with geographic position."
+    - "It is the same for every aircraft at a given location."
+    - "It is caused by the aircraft's own magnetic fields, varies with heading, and is shown on the compass deviation card."
+    - "It only applies when the aircraft is turning."
+  answer: 2
+  explanation: "Deviation is the compass error caused by magnetic fields in the aircraft itself (engine, radios, steel). It differs between aircraft and changes with heading, and is recorded on the deviation card. The angle between true and magnetic north is variation, which depends on location and is the same for every aircraft there. Turning errors are a separate compass error."
+  references: ["BAKC 2.1"]
+  difficulty: 2
+
+- id: BAKC-T006
+  kind: mcq
+  elements: ["BAKC 2.2.1"]
+  stem: "In Australian aviation, distances between places for navigation and visibility are respectively measured in:"
+  options:
+    - "Nautical miles; metres or kilometres"
+    - "Kilometres; nautical miles"
+    - "Statute miles; feet"
+    - "Nautical miles; nautical miles"
+  answer: 0
+  explanation: "Navigation distance is in nautical miles (1 NM = 1852 m). Visibility is in metres and kilometres, for example 5000 m or 10 km. Statute miles and feet are not used for either in Australia, and visibility is not given in nautical miles."
+  references: ["BAKC 2.2"]
+  difficulty: 1
+
+- id: BAKC-T007
+  kind: numeric
+  elements: ["BAKC 2.2.2"]
+  stem: "A knot is one nautical mile per hour, and one nautical mile is 1852 m. Convert 95 kt to km/h, to the nearest whole number."
+  answer: 176
+  tolerance: 1
+  unit: "km/h"
+  explanation: "95 NM per hour × 1.852 km per NM = 175.9 km/h, so 176 km/h. A common error is to treat a knot as a statute mile per hour (153 km/h) or to divide instead of multiply (51)."
+  references: ["BAKC 2.2"]
+  difficulty: 2
+
+- id: BAKC-T008
+  kind: mcq
+  elements: ["BAKC 2.2.3"]
+  stem: "A forecast wind velocity of 090/25 means:"
+  options:
+    - "A wind blowing towards the east at 25 kt."
+    - "A wind blowing from the east at 25 kt."
+    - "A wind from the east at 25 km/h."
+    - "A wind 90 degrees to the runway at 25 kt."
+  answer: 1
+  explanation: "Wind velocity gives the direction the wind blows FROM, as a 3-figure group, then the speed in knots. 090/25 is an easterly of 25 kt (blowing towards the west). Wind speeds are in knots, not km/h, and the direction is relative to north, not to a runway."
+  references: ["BAKC 2.2"]
+  difficulty: 1
+
+- id: BAKC-T009
+  kind: mcq
+  elements: ["BAKC 2.2.4"]
+  stem: "Calibrated airspeed (CAS) is:"
+  options:
+    - "Indicated airspeed corrected for instrument and position (installation) error."
+    - "Indicated airspeed corrected for air density."
+    - "True airspeed corrected for wind."
+    - "The speed of the aircraft over the ground."
+  answer: 0
+  explanation: "IAS corrected for instrument and position error gives CAS. Correcting CAS for density (pressure altitude and temperature) gives TAS, and TAS corrected for wind gives groundspeed. The order is always IAS, CAS, TAS, GS."
+  references: ["BAKC 2.2"]
+  difficulty: 1
+
+- id: BAKC-T010
+  kind: mcq
+  elements: ["BAKC 2.2.4"]
+  stem: "At 7000 ft the airspeed indicator shows 100 kt. Using the rule of thumb of about 2 percent per 1000 ft, and with a 15 kt tailwind, the groundspeed is approximately:"
+  options: ["100 kt", "114 kt", "129 kt", "99 kt"]
+  answer: 2
+  explanation: "TAS ≈ 100 + (7 × 2%) = 114 kt. A tailwind adds to TAS: 114 + 15 = 129 kt groundspeed. 100 kt ignores both density and wind; 114 kt is the TAS but ignores the tailwind; 99 kt subtracts the wind as if it were a headwind."
+  references: ["BAKC 2.2"]
+  difficulty: 3
+
+- id: BAKC-T011
+  kind: mcq
+  elements: ["BAKC 2.3.1"]
+  stem: "How is 4:05 pm written as a 4-figure group?"
+  options: ["0405", "1605", "1645", "4.05"]
+  answer: 1
+  explanation: "Add 12 to pm hours from 1 pm onward: 4 + 12 = 16, so 1605. 0405 is 4:05 am, 1645 misreads the minutes, and aviation time is never written with a point or colon."
+  references: ["BAKC 2.3"]
+  difficulty: 1
+
+- id: BAKC-T012
+  kind: numeric
+  elements: ["BAKC 2.3.2"]
+  stem: "You plan to depart Jandakot at 1415 WST. What is the departure time in UTC, as a 4-figure group (enter digits only, e.g. 0615 as 615)?"
+  answer: 615
+  tolerance: 0
+  unit: "UTC"
+  explanation: "WST is UTC + 8 with no daylight saving, so subtract 8 hours: 1415 − 0800 = 0615 UTC on the same date. Adding 8 (2215) is the classic mistake."
+  references: ["BAKC 2.3", "AIP GEN 2.1"]
+  difficulty: 1
+
+- id: BAKC-T013
+  kind: mcq
+  elements: ["BAKC 2.3.2"]
+  stem: "A flight departs Perth at 0630 WST on Friday 10 October. The departure time in UTC is:"
+  options:
+    - "1430 UTC Friday 10 October"
+    - "2230 UTC Friday 10 October"
+    - "2230 UTC Thursday 9 October"
+    - "0630 UTC Friday 10 October"
+  answer: 2
+  explanation: "0630 − 0800 goes below midnight, so add 24: 3030 − 0800 = 2230, and the date goes back one day to Thursday 9 October. 1430 adds 8 instead of subtracting; 2230 on the Friday forgets the date change; 0630 ignores the offset."
+  references: ["BAKC 2.3"]
+  difficulty: 2
+
+- id: BAKC-T014
+  kind: numeric
+  elements: ["BAKC 2.3.3"]
+  stem: "A NOTAM restricts an area from 0130 UTC. What is this in WST, as a 4-figure group (digits only, e.g. 0930 as 930)?"
+  answer: 930
+  tolerance: 0
+  unit: "WST"
+  explanation: "UTC to WST: add 8 hours. 0130 + 0800 = 0930 WST, same date. Subtracting gives 1730 the previous day, which is wrong."
+  references: ["BAKC 2.3"]
+  difficulty: 1
+
+- id: BAKC-T015
+  kind: mcq
+  elements: ["BAKC 2.3.3"]
+  stem: "A TAF for Perth is valid from 1800 UTC on 14 March. In WST this is:"
+  options:
+    - "1000 WST on 14 March"
+    - "0200 WST on 14 March"
+    - "0200 WST on 15 March"
+    - "2600 WST on 14 March"
+  answer: 2
+  explanation: "1800 + 0800 = 2600, which passes midnight: subtract 24 to get 0200 and move the date forward to 15 March. 1000 subtracts instead of adding, 0200 on 14 March forgets the date change, and 2600 is not a valid time."
+  references: ["BAKC 2.3"]
+  difficulty: 2
+
+- id: BAKC-T016
+  kind: mcq
+  elements: ["BAKC 2.4.1"]
+  stem: "The vertical distance of an aircraft above mean sea level, read on an altimeter set to QNH, is its:"
+  options: ["Height", "Elevation", "Altitude", "Flight level"]
+  answer: 2
+  explanation: "Altitude is measured from mean sea level, using QNH. Height is measured from a specified datum, usually the ground (AGL). Elevation is the height above MSL of a point on or fixed to the Earth's surface, not an aircraft. A flight level is a pressure altitude with 1013.2 hPa set."
+  references: ["BAKC 2.4"]
+  difficulty: 1
+
+- id: BAKC-T017
+  kind: numeric
+  elements: ["BAKC 2.4.1"]
+  stem: "Your altimeter, set to local QNH, reads 1850 ft as you fly over an aerodrome with an elevation of 850 ft. What is your height above the aerodrome, in feet?"
+  answer: 1000
+  tolerance: 0
+  unit: "ft"
+  explanation: "Height = altitude − elevation of the ground below = 1850 − 850 = 1000 ft AGL. Adding them (2700) confuses which way the relationship works."
+  references: ["BAKC 2.4"]
+  difficulty: 1
+
+- id: BAKC-T018
+  kind: mcq
+  elements: ["BAKC 2.4.2"]
+  stem: "In Australia, which set of units is correct for runway length, atmospheric pressure and fuel volume?"
+  options:
+    - "Feet; inches of mercury; US gallons"
+    - "Metres; hectopascals; litres"
+    - "Metres; millibars; kilograms"
+    - "Feet; hectopascals; litres"
+  answer: 1
+  explanation: "Runway dimensions are in metres, pressure in hectopascals (numerically equal to millibars) and liquid volume in litres. Feet are for vertical distance, not runway length; inches of mercury and US gallons are not Australian standard units; kilograms are for weight, not volume."
+  references: ["BAKC 2.4", "AIP GEN 2.1"]
+  difficulty: 1
+
+- id: BAKC-T019
+  kind: numeric
+  elements: ["BAKC 2.4.2"]
+  stem: "Using a specific gravity of 0.72 for avgas, what is the weight in kilograms of 150 litres of fuel (nearest whole number)?"
+  answer: 108
+  tolerance: 1
+  unit: "kg"
+  explanation: "Fuel volume is measured in litres but weight in kilograms. Weight = litres × specific gravity = 150 × 0.72 = 108 kg. Dividing (208) is the error to avoid: a litre of avgas weighs less than a kilogram."
+  references: ["BAKC 2.4"]
+  difficulty: 2
+
+- id: BAKC-T020
+  kind: mcq
+  elements: ["BAKC 2.5.1"]
+  stem: "If an aircraft's airspeed doubles, its kinetic energy:"
+  options: ["Doubles", "Halves", "Increases four times", "Is unchanged"]
+  answer: 2
+  explanation: "Kinetic energy = ½mv². Speed is squared, so doubling it gives 2² = 4 times the kinetic energy. This is why a fast touchdown needs so much more runway to stop. Potential energy, not kinetic, varies in direct proportion (with height)."
+  references: ["BAKC 2.5"]
+  difficulty: 1
+
+- id: BAKC-T021
+  kind: mcq
+  elements: ["BAKC 2.5.1"]
+  stem: "During a glide with the engine at idle, the energy needed to overcome drag comes mainly from:"
+  options:
+    - "The aircraft's potential energy, as it loses height."
+    - "The aircraft's kinetic energy, as the speed steadily decreases."
+    - "The engine at idle power."
+    - "The wing's lift."
+  answer: 0
+  explanation: "In a steady glide the airspeed is constant, so kinetic energy is unchanged; the aircraft descends and potential energy (height) is converted into the work done against drag. Idle power contributes very little, and lift does no work along the flight path."
+  references: ["BAKC 2.5"]
+  difficulty: 2
+
+- id: BAKC-T022
+  kind: mcq
+  elements: ["BAKC 2.5.2"]
+  stem: "The 'aircraft energy state' refers to:"
+  options:
+    - "The amount of fuel remaining."
+    - "The total of the aircraft's kinetic energy (speed) and potential energy (height)."
+    - "The engine's power output as a percentage of maximum."
+    - "The aircraft's weight relative to maximum take-off weight."
+  answer: 1
+  explanation: "Energy state is the aircraft's total mechanical energy: kinetic from airspeed plus potential from height. Fuel and power are sources of energy that can change the energy state, and weight affects the amounts, but none of them is the energy state itself."
+  references: ["BAKC 2.5"]
+  difficulty: 1
+
+- id: BAKC-T023
+  kind: mcq
+  elements: ["BAKC 2.5.3"]
+  stem: "With power unchanged, a pilot raises the nose and the aircraft climbs while the airspeed decreases. The aircraft's energy state:"
+  options:
+    - "Increases, because height is gained."
+    - "Remains roughly the same, as kinetic energy is traded for potential energy."
+    - "Decreases, because airspeed is lost."
+    - "Increases, because the angle of attack increases."
+  answer: 1
+  explanation: "Without extra power the pilot can only trade one form of energy for the other: kinetic energy (speed) is converted to potential energy (height), so the total stays roughly the same (slightly less due to drag). Looking only at height or only at speed gives the wrong answer, and angle of attack is not a form of energy."
+  references: ["BAKC 2.5"]
+  difficulty: 2
+
+- id: BAKC-T024
+  kind: mcq
+  elements: ["BAKC 2.5.3"]
+  stem: "An aircraft accelerates in level flight from 80 kt to 100 kt. Which is correct?"
+  options:
+    - "Kinetic energy increases, potential energy is unchanged, total energy increases."
+    - "Kinetic energy is unchanged, potential energy increases."
+    - "Both kinetic and potential energy decrease."
+    - "Kinetic energy increases and potential energy decreases by the same amount."
+  answer: 0
+  explanation: "Level flight means no height change, so potential energy is constant. Higher speed means more kinetic energy, so total energy increases; the engine supplied it by producing thrust greater than drag. The last option describes a dive, where height is traded for speed."
+  references: ["BAKC 2.5"]
+  difficulty: 1

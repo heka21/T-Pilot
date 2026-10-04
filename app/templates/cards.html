@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Flashcards · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header("Flashcards", "Spaced repetition: cards you know come back less often, cards you miss come back sooner.") }}
+
+<div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="stat"><span class="stat-label">Due for review</span><span class="stat-value">{{ counts.due }}</span></div>
+  <div class="stat"><span class="stat-label">New today</span><span class="stat-value">{{ counts.new }}</span></div>
+  <div class="stat"><span class="stat-label">Learnt</span><span class="stat-value">{{ counts.seen }}</span></div>
+  <div class="stat"><span class="stat-label">Total cards</span><span class="stat-value">{{ counts.total }}</span></div>
+</div>
+
+<form method="get" action="/cards/review" class="card mb-8 flex flex-col gap-4">
+  {% if subtopic %}
+    <input type="hidden" name="subtopic" value="{{ subtopic.id }}">
+    <p class="text-sm">Reviewing subtopic <strong>{{ subtopic.id }}</strong> {{ subtopic.title }} · <a href="/cards">all units</a></p>
+  {% else %}
+    <details class="disclosure" {% if units %}open{% endif %}>
+      <summary><span>Filter by unit {% if units %}({{ units | join(", ") }}){% else %}<span class="text-xs font-normal text-fg-muted">(all units)</span>{% endif %}</span></summary>
+      <div class="flex flex-wrap gap-2">
+        {% for u in all_units if by_unit.get(u.code) %}
+          <label class="pill-radio gap-1.5"><input type="checkbox" name="unit" value="{{ u.code }}" {% if u.code in units %}checked{% endif %}>
+            {{ u.code }} <span class="text-xs font-normal opacity-70">({{ by_unit[u.code] | length }})</span></label>
+        {% endfor %}
+      </div>
+    </details>
+  {% endif %}
+  <div>
+    <button type="submit" class="btn-primary btn-lg">{{ icon("cards", "size-5") }} Start review{% if queue_len %} ({{ queue_len }} card{{ '' if queue_len == 1 else 's' }}){% endif %}</button>
+  </div>
+</form>
+
+<section class="mb-8">
+  <h2 class="section-title mb-3">Browse</h2>
+  <div class="flex flex-col gap-2">
+  {% for u in all_units if by_unit.get(u.code) %}
+    {% set cards = by_unit[u.code] %}
+    <details class="disclosure">
+      <summary><span class="min-w-0 flex-1"><strong>{{ u.code }}</strong> <span class="text-fg-muted">{{ u.title }}</span></span><span class="badge">{{ cards | length }}</span></summary>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Front</th><th>Back</th><th>Next review</th></tr></thead>
+          <tbody>
+            {% for c in cards %}
+              <tr>
+                <td class="align-top"><span class="block text-xs text-fg-muted">{{ c.subtopic_id }}</span>{{ c.front }}</td>
+                <td class="align-top">{{ c.back }}</td>
+                <td class="align-top whitespace-nowrap text-xs text-fg-muted">{% if c.review %}{{ c.review.due.strftime("%-d %b") }}{% else %}new{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  {% else %}
+    {{ empty("No flashcards yet. Add some in content/cards/.") }}
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}

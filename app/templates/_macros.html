@@ -1,0 +1,68 @@
+{# Small display macros shared by syllabus, notes, progress and dashboard pages. #}
+{% from "_icons.html" import icon %}
+
+{% macro badge(status) -%}
+<span class="status-badge status-{{ status }}">{{ STATUS_LABELS[status] | lower }}</span>
+{%- endmacro %}
+
+{# Plain brand-coloured <progress> (kept for plan and quiz progress). #}
+{% macro bar(p, label="") -%}
+<progress value="{{ p.percent }}" max="100" aria-label="{{ label or 'Progress' }}: {{ p.percent }}%"></progress>
+{%- endmacro %}
+
+{# Stacked syllabus bar: green = confident, amber = studying, track = not started. #}
+{% macro stack_bar(p, label="") -%}
+{% set total = p.total if p.total else 1 %}
+<div class="stack-bar" role="img" aria-label="{{ label or 'Progress' }}: {{ p.confident }} confident, {{ p.studying }} studying, {{ p.not_started }} not started">
+  <i class="seg-ok" style="width: {{ (100 * p.confident / total) | round(1) }}%"></i>
+  <i class="seg-warn" style="width: {{ (100 * p.studying / total) | round(1) }}%"></i>
+</div>
+{%- endmacro %}
+
+{% macro ring(percent, label="") -%}
+<span class="ring" style="--p: {{ percent }}" role="img" aria-label="{{ label }} {{ percent }}%"><span>{{ percent }}%</span></span>
+{%- endmacro %}
+
+{# Legend-style counts under a stacked bar. #}
+{% macro counts(p) -%}
+<span class="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
+  <span class="inline-flex items-center gap-1"><i class="size-2 rounded-full bg-ok"></i>{{ p.confident }} confident</span>
+  <span class="inline-flex items-center gap-1"><i class="size-2 rounded-full bg-warn/80"></i>{{ p.studying }} studying</span>
+  <span class="inline-flex items-center gap-1"><i class="size-2 rounded-full bg-line-strong"></i>{{ p.not_started }} not started</span>
+</span>
+{%- endmacro %}
+
+{# Page header: title, optional subtitle, optional right-hand actions (pass as caller). #}
+{% macro page_header(title, sub="") -%}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+  <div class="min-w-0">
+    <h1 class="page-title">{{ title }}</h1>
+    {% if sub %}<p class="page-sub">{{ sub }}</p>{% endif %}
+  </div>
+  {% if caller %}<div class="btn-row">{{ caller() }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{# Breadcrumb: pass a list of (label, href-or-None) pairs; the last one is the current page. #}
+{% macro breadcrumb(items) -%}
+<nav aria-label="Breadcrumb" class="mb-3 flex flex-wrap items-center gap-1 text-sm text-fg-muted">
+  {% for label, href in items %}
+    {% if not loop.first %}{{ icon("chevron-right", "size-3.5 text-fg-faint") }}{% endif %}
+    {% if href %}<a href="{{ href }}" class="text-fg-muted no-underline hover:text-fg">{{ label }}</a>{% else %}<span class="text-fg">{{ label }}</span>{% endif %}
+  {% endfor %}
+</nav>
+{%- endmacro %}
+
+{% macro prev_next(prev, next, url) -%}
+<nav class="prev-next" aria-label="Previous and next">
+  {% if prev %}<a href="{{ url(prev) }}" rel="prev"><span class="eyebrow">&larr; Previous</span><span class="font-medium text-fg">{{ prev.id }} · {{ prev.title }}</span></a>{% endif %}
+  {% if next %}<a href="{{ url(next) }}" rel="next"><span class="eyebrow">Next &rarr;</span><span class="font-medium text-fg">{{ next.id }} · {{ next.title }}</span></a>{% endif %}
+</nav>
+{%- endmacro %}
+
+{# Empty state. #}
+{% macro empty(text, href="", link_text="") -%}
+<div class="card-sunken text-center text-sm text-fg-muted">
+  {{ text }}{% if href %} <a href="{{ href }}">{{ link_text }}</a>{% endif %}
+</div>
+{%- endmacro %}

@@ -1,0 +1,97 @@
+# PFRA 2.8: security, ADIZ, interception and powers of the pilot in command.
+- id: PFRA-X001
+  kind: mcq
+  elements: ["PFRA 2.8.1"]
+  stem: "An ADIZ is:"
+  options:
+    - "A zone around an aerodrome where flight training is prohibited."
+    - "Airspace of defined dimensions within which aircraft must be identified, located and controlled for national security."
+    - "A danger area for military firing."
+    - "Controlled airspace above FL245."
+  answer: 1
+  explanation: "An Air Defence Identification Zone requires identification of aircraft for defence purposes, in addition to normal ATS procedures. Its boundaries and rules are in AIP ENR 2.2."
+  references: ["PFRA 2.8", "AIP ENR 2.2"]
+  difficulty: 1
+- id: PFRA-X002
+  kind: mcq
+  elements: ["PFRA 2.8.1"]
+  stem: "Which is a general requirement for flight into an ADIZ?"
+  options:
+    - "A flight notification with the planned entry point and time, and two-way radio communication."
+    - "A minimum height of 10,000 ft."
+    - "Night flight only."
+    - "Flight under IFR only."
+  answer: 0
+  explanation: "Defence must be able to identify the aircraft, which relies on a flight notification giving entry details, position reports within tolerances, radio contact and transponder operation. Check AIP ENR 2.2 for the current details."
+  references: ["PFRA 2.8", "AIP ENR 2.2"]
+  difficulty: 2
+- id: PFRA-X003
+  kind: mcq
+  elements: ["PFRA 2.8.1"]
+  stem: "An intercepting aircraft rocks its wings ahead of you and then makes a slow level turn. This means, and you should:"
+  options:
+    - "You may proceed; rock your wings."
+    - "You have been intercepted, follow me; rock your wings and follow."
+    - "Land at this aerodrome; lower the gear."
+    - "Climb immediately; flash your lights."
+  answer: 1
+  explanation: "Wing rocking followed by a slow level turn onto the desired heading means 'you have been intercepted, follow me'. Acknowledge by rocking wings and follow."
+  references: ["PFRA 2.8", "AIP ENR 1.12"]
+  difficulty: 2
+- id: PFRA-X004
+  kind: mcq
+  elements: ["PFRA 2.8.1"]
+  stem: "When intercepted, the pilot should attempt radio contact on:"
+  options: ["The CTAF", "121.5 MHz", "126.7 MHz", "The ATIS frequency"]
+  answer: 1
+  explanation: "The intercepted aircraft should try to establish contact with the interceptor on 121.5 MHz, notify ATS if possible, follow the interceptor's instructions and select transponder code 7700 unless instructed otherwise."
+  references: ["PFRA 2.8", "AIP ENR 1.12"]
+  difficulty: 1
+- id: PFRA-X005
+  kind: mcq
+  elements: ["PFRA 2.8.2"]
+  stem: "Which best states the authority of the pilot in command under CASR Part 91?"
+  options:
+    - "Final authority over the operation of the aircraft and responsibility for the safety of the aircraft and everyone on board."
+    - "Authority only over the flight crew, not passengers."
+    - "Authority that applies only in controlled airspace."
+    - "Authority shared equally with ATC."
+  answer: 0
+  explanation: "The PIC is responsible for the safe operation of the aircraft and has final authority, including giving safety directions that passengers must obey."
+  references: ["PFRA 2.8", "CASR Part 91"]
+  difficulty: 1
+- id: PFRA-X006
+  kind: mcq
+  elements: ["PFRA 2.8.2"]
+  stem: "A passenger becomes violent in flight and threatens the safety of the aircraft. The pilot in command may:"
+  options:
+    - "Take no action until landing."
+    - "Take reasonable measures, including restraint, and have the person disembarked."
+    - "Only ask ATC for permission to act."
+    - "Divert only with the passenger's consent."
+  answer: 1
+  explanation: "The PIC may take reasonable action, including restraint, against a person endangering the aircraft, and may disembark them. The Crimes (Aviation) Act 1991 and the Tokyo Convention protect reasonable good-faith action."
+  references: ["PFRA 2.8"]
+  difficulty: 2
+- id: PFRA-X007
+  kind: mcq
+  elements: ["PFRA 2.8.2"]
+  stem: "The transponder code to indicate unlawful interference (such as a hijacking) is:"
+  options: ["7500", "7600", "7700", "2000"]
+  answer: 0
+  explanation: "7500 unlawful interference, 7600 radio failure, 7700 emergency. 2000 is used in Australia by IFR aircraft in Class G without an assigned code."
+  references: ["PFRA 2.8", "AIP ENR 1.6"]
+  difficulty: 1
+- id: PFRA-X008
+  kind: mcq
+  elements: ["PFRA 2.8.2"]
+  stem: "A passenger arrives with a can of spare petrol to put in the baggage compartment. As pilot in command you should:"
+  options:
+    - "Accept it if the lid is tight."
+    - "Refuse to carry it unless the dangerous goods rules expressly permit it."
+    - "Carry it in the cabin where you can watch it."
+    - "Accept it on a VFR flight only."
+  answer: 1
+  explanation: "Fuel is a dangerous good. The PIC may refuse any cargo that is unsafe, and carriage of dangerous goods is governed by CASR Part 92; check the rules before carrying anything doubtful."
+  references: ["PFRA 2.8", "CASR Part 92"]
+  difficulty: 2

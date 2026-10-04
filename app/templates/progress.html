@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stack_bar, ring, counts, page_header, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Progress · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header("Progress") }}
+<div class="mb-8 grid gap-4 md:grid-cols-2">
+  {% for exam in exams %}
+    {% set p = exam_progress[exam.code] %}
+    <section class="card flex items-center gap-5">
+      {{ ring(p.percent, exam.code) }}
+      <div class="min-w-0">
+        <h2 class="text-xl font-bold">{{ exam.code }}</h2>
+        <p class="mb-2 text-sm text-fg-muted">{{ exam.name }}</p>
+        {{ counts(p) }}
+      </div>
+    </section>
+  {% endfor %}
+</div>
+
+<section class="mb-8">
+  <h2 class="section-title mb-3">Units</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Unit</th><th>Progress</th><th class="num">Confident</th><th class="num">Studying</th><th class="num">Not started</th></tr></thead>
+      <tbody>
+        {% for unit, p in units %}
+          <tr>
+            <td class="min-w-48"><a href="/syllabus/unit/{{ unit.code }}" class="font-bold no-underline hover:underline">{{ unit.code }}</a> <span class="text-fg-muted">{{ unit.title }}</span></td>
+            <td><div class="flex items-center gap-2"><span class="w-32 shrink-0">{{ stack_bar(p, unit.code) }}</span><span class="text-xs tabular-nums text-fg-muted">{{ p.percent }}%</span></div></td>
+            <td class="num">{{ p.confident }}</td><td class="num">{{ p.studying }}</td><td class="num">{{ p.not_started }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card mb-8">
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <h2 class="card-title">Weak subtopics</h2>
+    {% if weak %}<a href="/quiz?weak=1" class="btn-primary btn-sm">{{ icon("target", "size-3.5") }} Quiz my weak areas</a>{% endif %}
+  </div>
+  {% if weak %}
+    <ul class="row-list">
+      {% for w in weak %}
+        <li class="row">
+          <a href="{{ note_url(w.subtopic) }}" class="min-w-0 flex-1 basis-56 text-sm no-underline hover:text-brand"><span class="text-fg-muted">{{ w.subtopic.id }}</span> <span class="font-medium text-fg">{{ w.subtopic.title }}</span></a>
+          <span class="flex shrink-0 items-center gap-2">
+            <span class="text-xs tabular-nums text-fg-muted">{{ w.correct }}/{{ w.answered }}</span>
+            <span class="badge {{ 'bad' if w.percent < 50 else 'warn' }}">{{ w.percent }}% correct</span>
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-fg-muted">Not enough answers yet. Weak areas show up after a few quiz or exam answers per subtopic.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2 class="section-title mb-3">Recent attempts</h2>
+  {% if attempts %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>When</th><th>Attempt</th><th>Mode</th><th class="num">Score</th><th>Result</th></tr></thead>
+        <tbody>
+          {% for a in attempts %}
+            <tr>
+              <td class="whitespace-nowrap text-xs tabular-nums text-fg-muted">{{ a.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>{{ a.title or a.mode }}</td>
+              <td class="text-fg-muted">{{ a.mode }}</td>
+              <td class="num">{% if a.score_percent is not none %}{{ a.score_percent | round | int }}%{% endif %}</td>
+              <td>{% if a.passed is none %}<span class="text-fg-faint">-</span>{% elif a.passed %}<span class="pass">Pass</span>{% else %}<span class="fail">Fail</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty("No submitted quizzes or exams yet.", "/quiz", "Start a quiz.") }}
+  {% endif %}
+</section>
+{% endblock %}

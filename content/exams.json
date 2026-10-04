@@ -1,0 +1,53 @@
+{
+  "_source": "CASA exam pages for RPLA and PPLA (casa.gov.au, retrieved 2026-10-03). Question counts are not published by CASA; 60 is used for both simulators, matching the 55-60 typically reported by candidates.",
+  "exams": [
+    {
+      "code": "RPLA",
+      "name": "Recreational pilot licence (aeroplane)",
+      "duration_minutes": 120,
+      "pass_mark_percent": 70,
+      "question_count": 60,
+      "units": [
+        {"code": "BAKC", "weight": 30},
+        {"code": "RBKA", "weight": 25},
+        {"code": "RFRC", "weight": 25},
+        {"code": "RMTC", "weight": 8},
+        {"code": "PHFC", "weight": 12}
+      ],
+      "casa_weak_areas": [
+        "glide speeds and lift/drag ratio",
+        "effect of wind shear on aircraft performance",
+        "interpretation of meteorological forecasts and requirements",
+        "local winds: sea breeze, land breeze, anabatic and katabatic winds",
+        "use of the take-off and landing charts"
+      ],
+      "fuel_policy": "Fuel reserves per CASR Part 91 MOS Chapter 19, table 19.02(2) item 1 (aeroplane below 5,700 kg, VFR by day). Avoid rounding at intermediate stages."
+    },
+    {
+      "code": "PPLA",
+      "name": "Private pilot licence (aeroplane)",
+      "duration_minutes": 210,
+      "pass_mark_percent": 70,
+      "question_count": 60,
+      "units": [
+        {"code": "PAKC", "weight": 12},
+        {"code": "PAKA", "weight": 6},
+        {"code": "GNSSC", "weight": 2},
+        {"code": "PFRA", "weight": 20},
+        {"code": "PHFC", "weight": 10},
+        {"code": "PNVC", "weight": 18},
+        {"code": "PMTC", "weight": 14},
+        {"code": "POPC", "weight": 10},
+        {"code": "POPA", "weight": 8}
+      ],
+      "casa_weak_areas": [
+        "correct use of the take-off and landing charts",
+        "finding time/distance and revision of estimates",
+        "working out density height and/or pressure height",
+        "correct use of the loading systems (ALPHA, BRAVO and CHARLIE)",
+        "interpretation of meteorological forecasts"
+      ],
+      "fuel_policy": "Fuel reserves per CASR Part 91 MOS Chapter 19, table 19.02(2) item 1 (aeroplane below 5,700 kg, VFR by day). Avoid rounding at intermediate stages."
+    }
+  ]
+}

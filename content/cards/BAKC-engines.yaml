@@ -1,0 +1,121 @@
+# BAKC 3.x flashcards.
+- id: BAKC-EC001
+  elements: ["BAKC 3.1.1"]
+  front: "Four strokes of a piston engine cycle, in order?"
+  back: "Induction, compression, power, exhaust. Only the power stroke does work. Two crankshaft turns per cycle; the camshaft turns at half crankshaft speed."
+- id: BAKC-EC002
+  elements: ["BAKC 3.1.2"]
+  front: "Why does engine power fall with altitude and temperature?"
+  back: "Lower air density means less oxygen per induction stroke. Roughly 3 percent of power is lost per 1,000 ft; a hot day costs power the same way."
+- id: BAKC-EC003
+  elements: ["BAKC 3.1.3"]
+  front: "What does the impulse coupling do?"
+  back: "Retards and intensifies the magneto spark at cranking speed for easy starting and prevents kick-back."
+- id: BAKC-EC004
+  elements: ["BAKC 3.1.3"]
+  front: "Why two magnetos and two plugs per cylinder?"
+  back: "Better combustion (two flame fronts) and redundancy: the engine keeps running on one magneto if the other fails."
+- id: BAKC-EC005
+  elements: ["BAKC 3.1.4"]
+  front: "Oil temperature rising slowly, oil pressure falling slowly: meaning?"
+  back: "Oil loss or oil system failure; engine failure is likely. Reduce power and land as soon as possible."
+- id: BAKC-EC006
+  elements: ["BAKC 3.1.5"]
+  front: "Two jobs of engine oil?"
+  back: "Lubricate (reduce friction and wear, seal rings) and cool the internal parts the airflow cannot reach, shedding the heat in the oil cooler."
+- id: BAKC-EC007
+  elements: ["BAKC 3.1.6"]
+  front: "Symptoms of too rich versus too lean a mixture?"
+  back: "Rich: rough, power loss, high fuel burn, cool running, plug fouling, black smoke. Lean: power loss, high CHT and EGT, detonation risk."
+- id: BAKC-EC008
+  elements: ["BAKC 3.1.7"]
+  front: "Main advantage and main disadvantage of fuel injection over a carburettor?"
+  back: "Advantage: no carburettor ice and an even mixture to each cylinder. Disadvantage: complexity, cost, hot-start vapour lock and dependence on a fuel pump."
+- id: BAKC-EC009
+  elements: ["BAKC 3.1.8"]
+  front: "Which instruments run on vacuum, electricity and pressure in a typical trainer?"
+  back: "Vacuum: attitude indicator and directional indicator. Electric: turn coordinator. Pressure (no power): ASI, altimeter, VSI."
+- id: BAKC-EC010
+  elements: ["BAKC 3.2.1"]
+  front: "AVGAS 100LL colour? Jet A-1 appearance?"
+  back: "100LL is blue (100/130 is green). Jet A-1 is clear to straw coloured and smells of kerosene. A clear sample from an AVGAS aeroplane means water or jet fuel."
+- id: BAKC-EC011
+  elements: ["BAKC 3.2.1"]
+  front: "Main source of water in fuel tanks and the defence against it?"
+  back: "Condensation in partly filled tanks overnight. Fill the tanks before overnight parking and drain-check before flight and after refuelling."
+- id: BAKC-EC012
+  elements: ["BAKC 3.3.1"]
+  front: "Three causes of detonation named in the syllabus?"
+  back: "Lean mixture at high power, high manifold pressure with low RPM, and fuel of too low an octane. High CHT makes all of them worse."
+- id: BAKC-EC013
+  elements: ["BAKC 3.3.2"]
+  front: "Effect of prolonged idling?"
+  back: "Spark plug fouling (lead and carbon) from a cool, rich-running engine, giving rough running and a poor magneto check."
+- id: BAKC-EC014
+  elements: ["BAKC 3.3.3"]
+  front: "Why warm the engine before high power, and why avoid a long idle descent?"
+  back: "Cold oil is thick and does not flow (pressure may read high). A long idle descent shock-cools the cylinders and invites carburettor ice: keep some power on and use carburettor heat."
+- id: BAKC-EC015
+  elements: ["BAKC 3.3.3"]
+  front: "Purpose of the dead-cut check at shutdown?"
+  back: "Confirms the ignition switch earths both magnetos, so a live magneto cannot fire the engine if the propeller is moved by hand."
+- id: BAKC-EC016
+  elements: ["BAKC 3.3.4"]
+  front: "Blue exhaust smoke versus black exhaust smoke?"
+  back: "Blue: burning oil (worn rings or valve guides). Black: over-rich mixture."
+- id: BAKC-EC017
+  elements: ["BAKC 3.4.1"]
+  front: "Alternator fails in flight: what do you lose and what do you keep?"
+  back: "Battery runs down in roughly 30 to 60 minutes, then radios, transponder, electric flaps, lights and fuel pump are lost. The engine (magnetos) and vacuum gyros keep working."
+- id: BAKC-EC018
+  elements: ["BAKC 3.4.2"]
+  front: "Unexplained slow loss of RPM in cruise, humid air: cause and action?"
+  back: "Carburettor ice. Apply full carburettor heat and leave it on; expect rougher running briefly as the ice melts. Do not chase the RPM with throttle."
+- id: BAKC-EC019
+  elements: ["BAKC 3.4.3"]
+  front: "What do you look for during the carburettor heat check at run-up?"
+  back: "An RPM drop with heat on (system works). A rise while still on means ice was present. RPM returns to normal when cold is reselected."
+- id: BAKC-EC020
+  elements: ["BAKC 3.4.4"]
+  front: "Conditions for serious carburettor (throttle) ice?"
+  back: "High humidity, temperatures roughly minus 5 to plus 20 degrees (possible up to 30), and low power with the throttle butterfly nearly closed: descents, approaches, taxi."
+- id: BAKC-EC021
+  elements: ["BAKC 3.4.5"]
+  front: "Why not just open the throttle when RPM drops from undiagnosed ice?"
+  back: "Each increment hides the symptom while ice keeps building, until full throttle gives nothing and the engine stops."
+- id: BAKC-EC022
+  elements: ["BAKC 3.4.6", "BAKC 3.4.8"]
+  front: "Effect of carburettor heat on the engine, and why avoid it on the ground?"
+  back: "Hot air is less dense: power drops, mixture richens. The hot air is unfiltered, so on the ground it draws in dust; use it only for the check and select cold for take-off."
+- id: BAKC-EC023
+  elements: ["BAKC 3.4.7"]
+  front: "Alternate air versus carburettor heat?"
+  back: "Carburettor heat: hot air into a carburettor to prevent or melt ice. Alternate air: on fuel-injected engines, an unfiltered bypass for a blocked intake filter (impact ice, dust)."
+- id: BAKC-EC024
+  elements: ["BAKC 3.4.9"]
+  front: "Symptoms and fix for fuel vaporisation (vapour lock)?"
+  back: "Fluctuating fuel pressure and flow, surging, rough running, hard hot start. Booster pump on, enrich, follow the POH hot-start procedure."
+- id: BAKC-EC025
+  elements: ["BAKC 3.5.1"]
+  front: "ASI colour arcs and the speeds at their ends?"
+  back: "White: VSO to VFE. Green: VS1 to VNO. Yellow: VNO to VNE (smooth air only). Red line: VNE. VA is not marked."
+- id: BAKC-EC026
+  elements: ["BAKC 3.5.2"]
+  front: "What pressure does each pressure instrument use?"
+  back: "ASI: pitot minus static. Altimeter: static. VSI: rate of change of static via a calibrated leak (it lags)."
+- id: BAKC-EC027
+  elements: ["BAKC 3.5.3"]
+  front: "Static vent blocked: effect on altimeter, VSI and ASI?"
+  back: "Altimeter freezes, VSI reads zero, ASI under-reads in a climb and over-reads in a descent."
+- id: BAKC-EC028
+  elements: ["BAKC 3.5.3"]
+  front: "Pitot tube and drain both blocked: ASI behaviour?"
+  back: "Acts like an altimeter: over-reads in a climb, under-reads in a descent. Drain clear and tube blocked: reads towards zero."
+- id: BAKC-EC029
+  elements: ["BAKC 3.5.3"]
+  front: "When and why do you reset the directional indicator to the compass?"
+  back: "About every 10 to 15 minutes and before turns, in straight, level, unaccelerated flight, because the gyro drifts and the compass is only accurate when not turning or accelerating."
+- id: BAKC-EC030
+  elements: ["BAKC 3.5.4"]
+  front: "Turn coordinator check during taxi turns?"
+  back: "Aircraft symbol banks into the turn, ball moves to the outside. DI heading should change the correct way; compass swings freely."

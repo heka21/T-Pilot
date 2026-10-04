@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" data-prefix="eye">
+<title>The eye: cones in the centre, rods around the edge</title>
+<desc>Cross-section of the eye with light entering from the left through the cornea, the pupil set by the iris, and the lens, which focuses it on the retina. Cones are concentrated in the fovea at the centre: daylight, colour and fine detail. Rods lie around the periphery and none are in the fovea: low light, black and white, movement. Where the optic nerve leaves there are no receptors: the blind spot. At night look 10 to 15 degrees off-centre so the image falls on the rods.</desc>
+<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+<!-- optic nerve -->
+<path class="sketch" d="M332.8 226.1 L422.8 256.1 L415.1 277.3 L325.1 247.3 Z" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2" data-fill-style="solid"/>
+<!-- eyeball -->
+<circle class="sketch" cx="228" cy="200" r="108" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" data-fill-style="solid"/>
+<!-- cornea bulge -->
+<path class="sketch" d="M134.5 146.0 C86 160 86 240 134.5 254.0" fill="var(--color-sky-soft)" stroke="var(--color-fg)" stroke-width="2" data-fill-style="solid"/>
+<!-- iris -->
+<line x1="144" y1="144" x2="144" y2="178" stroke="var(--color-warn)" stroke-width="5" stroke-linecap="round"/>
+<line x1="144" y1="222" x2="144" y2="256" stroke="var(--color-warn)" stroke-width="5" stroke-linecap="round"/>
+<!-- lens -->
+<ellipse class="sketch" cx="158" cy="200" rx="14" ry="34" fill="var(--color-sky-soft)" stroke="var(--color-fg)" stroke-width="2" data-fill-style="solid"/>
+<!-- retina: rods (info) round the edge, cones (brand) at the fovea -->
+<path d="M177.0 111.7 A102 102 0 0 1 329.0 185.8" fill="none" stroke="var(--color-info)" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 4"/>
+<path d="M329.0 214.2 A102 102 0 0 1 177.0 288.3" fill="none" stroke="var(--color-info)" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 4"/>
+<path d="M329.4 189.3 A102 102 0 0 1 329.4 210.7" fill="none" stroke="var(--color-brand)" stroke-width="9" stroke-linecap="round"/>
+<!-- blind spot -->
+<circle cx="325.5" cy="234.9" r="7" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="2"/>
+<!-- day ray: straight to the fovea -->
+<line x1="24" y1="200" x2="318.0" y2="200" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="24" y="190" font-size="12" font-weight="700" fill="var(--color-brand)">day:</text><text x="24" y="218" font-size="11" fill="var(--color-brand)">straight on</text>
+<!-- night ray: off-centre, lands on the rods -->
+<path d="M24 272 L158 206 L319.0 179.3" fill="none" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+<text x="24" y="296" font-size="12" font-weight="700" fill="var(--color-info-fg)">night:</text><text x="24" y="311" font-size="11" fill="var(--color-info-fg)">10 to 15° off-centre</text>
+<!-- labels -->
+<text x="90" y="88" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">cornea</text>
+<line x1="90" y1="94" x2="102" y2="140" stroke="var(--color-fg-muted)" stroke-width="1"/>
+<text x="148" y="332" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)">iris and pupil</text>
+<line x1="144" y1="318" x2="144" y2="260" stroke="var(--color-fg-muted)" stroke-width="1"/>
+<text x="182" y="80" font-size="12" text-anchor="start" fill="var(--color-fg-muted)">lens</text>
+<line x1="182" y1="86" x2="164" y2="164" stroke="var(--color-fg-muted)" stroke-width="1"/>
+<text x="248" y="78" font-size="12" font-weight="600" fill="var(--color-info-fg)">retina: rods round the edge</text>
+<text x="342.0" y="194" font-size="13" font-weight="700" fill="var(--color-brand)">fovea</text>
+<text x="342.0" y="209" font-size="11" fill="var(--color-brand)">all cones</text>
+<text x="347.5" y="288.9" font-size="12" font-weight="600" fill="var(--color-bad)">blind spot:</text>
+<text x="347.5" y="302.9" font-size="11" fill="var(--color-bad)">optic nerve leaves, no receptors</text>
+<!-- panel -->
+<rect x="440" y="24" width="184" height="104" rx="10" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25"/>
+<text x="452" y="46" font-size="14" font-weight="700" fill="var(--color-brand-fg)">Cones: day</text>
+<text x="452" y="64" font-size="11" fill="var(--color-brand-fg)">packed in the fovea</text>
+<text x="452" y="79" font-size="11" fill="var(--color-brand-fg)">colour and fine detail</text>
+<text x="452" y="94" font-size="11" fill="var(--color-brand-fg)">only the fovea sees sharply</text>
+<text x="452" y="112" font-size="11" fill="var(--color-brand-fg)">adapt in 7 to 10 min</text>
+<rect x="440" y="138" width="184" height="104" rx="10" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25"/>
+<text x="452" y="160" font-size="14" font-weight="700" fill="var(--color-info-fg)">Rods: night</text>
+<text x="452" y="178" font-size="11" fill="var(--color-info-fg)">periphery, none in the fovea</text>
+<text x="452" y="193" font-size="11" fill="var(--color-info-fg)">black and white, movement</text>
+<text x="452" y="208" font-size="11" fill="var(--color-info-fg)">night blind spot at centre</text>
+<text x="452" y="226" font-size="11" fill="var(--color-info-fg)">full sensitivity: 30 min</text>
+<text x="320" y="378" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">At night: look 10 to 15° to one side of an object and keep the eyes moving; a stared-at image fades.</text>
+<text x="320" y="396" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">One glance at a bright light undoes dark adaptation. Hypoxia degrades night vision from about 5,000 ft.</text>
+</svg>

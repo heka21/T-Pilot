@@ -1,0 +1,128 @@
+<div class="widget" x-data="{
+  tr: 70, tas: 110, wd: 20, ws: 25, vr: 2,
+  rad(d) { return d * Math.PI / 180 },
+  get theta() { return ((this.wd - this.tr + 540) % 360) - 180 },
+  get cross() { return this.ws * Math.sin(this.rad(this.theta)) },
+  get head() { return this.ws * Math.cos(this.rad(this.theta)) },
+  get delta() { return Math.asin(Math.max(-1, Math.min(1, this.cross / this.tas))) * 180 / Math.PI },
+  get hdgT() { return this.tr + this.delta },
+  get hdgM() { return this.hdgT + this.vr },
+  get gs() { return this.tas * Math.cos(this.rad(this.delta)) - this.head },
+  get driftSide() { return this.delta < 0 ? 'right' : 'left' },
+  get drift() { return Math.abs(this.delta) },
+  get mentalDrift() { return Math.abs(this.cross) * 60 / this.tas },
+  get mentalGs() { return this.tas - this.head },
+  three(d) { d = ((Math.round(d) % 360) + 360) % 360; return String(d === 0 ? 360 : d).padStart(3, '0') },
+  varText(v) { return v === 0 ? 'nil' : Math.abs(v) + '° ' + (v > 0 ? 'W' : 'E') },
+  dir(b) { return [Math.sin(this.rad(b)), -Math.cos(this.rad(b))] },
+  get raw() {
+    const h = this.dir(this.hdgT), w = this.dir(this.wd + 180);
+    const H = [h[0] * this.tas, h[1] * this.tas];
+    const G = [H[0] + w[0] * this.ws, H[1] + w[1] * this.ws];
+    return { H, G };
+  },
+  get sc() {
+    const xs = [0, this.raw.H[0], this.raw.G[0]], ys = [0, this.raw.H[1], this.raw.G[1]];
+    const w = Math.max(...xs) - Math.min(...xs) || 1, h = Math.max(...ys) - Math.min(...ys) || 1;
+    return Math.min(4, 470 / w, 210 / h);
+  },
+  get off() {
+    const xs = [0, this.raw.H[0], this.raw.G[0]], ys = [0, this.raw.H[1], this.raw.G[1]];
+    return [340 - this.sc * (Math.max(...xs) + Math.min(...xs)) / 2, 160 - this.sc * (Math.max(...ys) + Math.min(...ys)) / 2];
+  },
+  get O() { return this.off },
+  get H() { return [this.off[0] + this.sc * this.raw.H[0], this.off[1] + this.sc * this.raw.H[1]] },
+  get G() { return [this.off[0] + this.sc * this.raw.G[0], this.off[1] + this.sc * this.raw.G[1]] },
+  get arcD() {
+    const r = 70, a0 = this.rad(this.hdgT - 90), a1 = this.rad(this.tr - 90), O = this.O;
+    return 'M' + (O[0] + r * Math.cos(a0)).toFixed(1) + ' ' + (O[1] + r * Math.sin(a0)).toFixed(1) + ' A' + r + ' ' + r + ' 0 0 ' + (this.delta < 0 ? 1 : 0) + ' ' + (O[0] + r * Math.cos(a1)).toFixed(1) + ' ' + (O[1] + r * Math.sin(a1)).toFixed(1);
+  },
+  lbl(P, Q, side, d) {
+    const mx = (P[0] + Q[0]) / 2, my = (P[1] + Q[1]) / 2, dx = Q[0] - P[0], dy = Q[1] - P[1], L = Math.hypot(dx, dy) || 1;
+    return [mx - side * dy / L * d, my + side * dx / L * d];
+  },
+  get hSide() { return this.delta < 0 ? -1 : 1 },
+  get hL() { return this.lbl(this.O, this.H, this.hSide, 40) },
+  get gL() { return this.lbl(this.O, this.G, -this.hSide, 36) },
+  get wL() { return this.lbl(this.H, this.G, this.hSide, 62) },
+  set(p) { Object.assign(this, p) },
+  reset() { this.tr = 70; this.tas = 110; this.wd = 20; this.ws = 25; this.vr = 2 }
+}">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="wt-title" class="widget-stage">
+    <title id="wt-title">Triangle of velocities: the heading and TAS vector, the wind vector from its tip, and the track and groundspeed vector closing the triangle, with the drift angle between heading and track</title>
+    <defs>
+      <marker id="wt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- true north -->
+    <line x1="34" y1="78" x2="34" y2="30" stroke="var(--color-fg-muted)" stroke-width="1.5" marker-end="url(#wt-arrow)"/>
+    <text x="34" y="96" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">N (true)</text>
+    <!-- drift arc -->
+    <path :d="arcD" fill="none" stroke="var(--color-warn)" stroke-width="2.5" x-show="drift >= 0.5"/>
+    <!-- vectors -->
+    <line :x1="O[0]" :y1="O[1]" :x2="G[0]" :y2="G[1]" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round" marker-end="url(#wt-arrow)"/>
+    <line :x1="H[0]" :y1="H[1]" :x2="G[0]" :y2="G[1]" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#wt-arrow)" x-show="ws > 0"/>
+    <line :x1="O[0]" :y1="O[1]" :x2="H[0]" :y2="H[1]" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#wt-arrow)"/>
+    <circle :cx="O[0]" :cy="O[1]" r="5" fill="var(--color-fg)"/>
+    <!-- labels -->
+    <text :x="hL[0]" :y="hL[1]" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand)" class="num" x-text="'HDG ' + three(hdgT) + '°T · TAS ' + tas"></text>
+    <text :x="gL[0]" :y="gL[1] + 4" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'TR ' + three(tr) + '°T · GS ' + Math.round(gs)"></text>
+    <text :x="wL[0]" :y="wL[1] + 4" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" class="num" x-show="ws > 0" x-text="'W/V ' + three(wd) + '/' + ws"></text>
+    <text x="620" y="300" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-warn-fg)" x-text="drift >= 0.5 ? 'Drift ' + Math.round(drift) + '° ' + driftSide + ' (amber arc)' : 'No drift'"></text>
+    <text x="20" y="300" font-size="12" fill="var(--color-fg-muted)">The wind arrow points where the air goes.</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wt-tr">Track required <output for="wt-tr" x-text="three(tr) + '° T'"></output></label>
+      <input id="wt-tr" type="range" min="1" max="360" step="1" x-model.number="tr">
+    </div>
+    <div class="widget-control">
+      <label for="wt-tas">True airspeed <output for="wt-tas" x-text="tas + ' kt'"></output></label>
+      <input id="wt-tas" type="range" min="60" max="160" step="1" x-model.number="tas">
+    </div>
+    <div class="widget-control">
+      <label for="wt-wd">Wind direction (from, true) <output for="wt-wd" x-text="three(wd) + '° T'"></output></label>
+      <input id="wt-wd" type="range" min="10" max="360" step="10" x-model.number="wd">
+    </div>
+    <div class="widget-control">
+      <label for="wt-ws">Wind speed <output for="wt-ws" x-text="ws + ' kt'"></output></label>
+      <input id="wt-ws" type="range" min="0" max="50" step="1" x-model.number="ws">
+    </div>
+    <div class="widget-control">
+      <label for="wt-var">Variation (positive west) <output for="wt-var" x-text="varText(vr)"></output></label>
+      <input id="wt-var" type="range" min="-15" max="15" step="1" x-model.number="vr">
+    </div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt>Drift</dt>
+      <dd x-text="drift < 0.5 ? 'nil' : Math.round(drift) + '° ' + driftSide + ' (wind from the ' + (delta < 0 ? 'left' : 'right') + ')'"></dd>
+    </div>
+    <div class="widget-readout ok">
+      <dt>Heading to steer</dt>
+      <dd x-text="three(hdgT) + '° T = ' + three(hdgM) + '° M'"></dd>
+    </div>
+    <div class="widget-readout" :class="gs < tas ? 'warn' : 'ok'">
+      <dt>Groundspeed (triangle solved exactly)</dt>
+      <dd x-text="Math.round(gs) + ' kt'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt>Mental check: crosswind × 60 ÷ TAS, TAS − headwind</dt>
+      <dd x-text="'drift ≈ ' + Math.round(mentalDrift) + '°, GS ≈ ' + Math.round(mentalGs) + ' kt'"></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Worked examples from the lesson">
+      <button type="button" @click="set({ tr: 70, tas: 110, wd: 20, ws: 25, vr: 2 })">070°T, 110 kt, 020/25</button>
+      <button type="button" @click="set({ tr: 160, tas: 100, wd: 230, ws: 20, vr: 0 })">160°T, 100 kt, 230/20</button>
+      <button type="button" @click="set({ wd: (Math.round(tr / 10) * 10) || 360, ws: 25 })">Wind on the nose</button>
+    </div>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> The blue heading always points into the wind, upwind of the track: wind from the left gives right drift and a heading left of track. Solve the triangle in true (forecast winds are true), and only then apply the variation: west is best, east is least.</p>
+  <details class="widget-try"><summary>Try this: track 160°T, TAS 100 kt, wind 230/20. What heading and groundspeed?</summary><p>The wind is 70° right of track: crosswind 20 × 0.94 = 18.8 kt, drift about 11° left, so steer 160 + 11 = 171°T. Headwind 20 × 0.34 = 6.8 kt; GS ≈ 100 × cos 11° − 6.8 ≈ 91 kt.</p></details>
+  <details class="widget-try"><summary>Try this: put the wind exactly on the nose. What happens to drift and groundspeed?</summary><p>No crosswind, so no drift: heading and track are the same, and the groundspeed is the TAS minus the full wind speed.</p></details>
+</div>

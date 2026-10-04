@@ -1,0 +1,170 @@
+# POPA: PPL operations, performance and planning (aeroplane).
+- id: POPA-001
+  kind: mcq
+  elements: ["POPA 2.1.1"]
+  stem: "Take-off distance required (TODR) is measured:"
+  options:
+    - "From the start of the take-off run to lift-off."
+    - "From the start of the take-off run to the point where the aircraft reaches 50 ft at the take-off safety speed."
+    - "From lift-off to 500 ft."
+    - "From the threshold to touchdown."
+  answer: 1
+  explanation: "TODR (to 50 ft) must not exceed TODA. LDR is from 50 ft over the threshold to a stop and must not exceed LDA."
+  references: ["POPA 2.1"]
+  difficulty: 1
+- id: POPA-002
+  kind: mcq
+  elements: ["POPA 2.1.1"]
+  stem: "A runway has a displaced threshold 150 m from the runway end. Compared with the full runway length, the landing distance available in that direction is:"
+  options: ["Unchanged", "Reduced by 150 m", "Increased by 150 m", "Reduced by 300 m"]
+  answer: 1
+  explanation: "The LDA starts at the displaced threshold. The take-off run available in that direction is unchanged, since the surface before the threshold may be used for take-off."
+  references: ["POPA 2.1", "PFRA 2.5"]
+  difficulty: 2
+- id: POPA-003
+  kind: mcq
+  elements: ["POPA 2.1.2"]
+  stem: "Under the CASA guidelines for places suitable for take-off and landing (AC 91-02, formerly CAAP 92-1), an ALA is unsuitable if:"
+  options:
+    - "It has a windsock."
+    - "Its length is less than the chart TODR or LDR for the conditions, or its approach slopes, width, surface or slope do not meet the guideline minima."
+    - "It is a grass surface."
+    - "It is marked with cones."
+  answer: 1
+  explanation: "The pilot in command decides suitability against the guidelines: dimensions, obstacle-free approach and take-off slopes, surface, slope, wind indicator and markings. Any one failing makes it unsuitable at that weight."
+  references: ["POPA 2.1", "AC 91-02"]
+  difficulty: 1
+- id: POPA-004
+  kind: mcq
+  elements: ["POPA 2.2.1"]
+  stem: "For a take-off from a short strip, the most favourable combination is:"
+  options:
+    - "Downslope, headwind, cool morning, high QNH."
+    - "Upslope, tailwind, hot afternoon, low QNH."
+    - "Level, calm, hot afternoon."
+    - "Upslope, headwind, hot afternoon."
+  answer: 0
+  explanation: "Downslope and headwind shorten the run; cool air and high QNH lower the density height. Note slope and wind may conflict in practice; the chart resolves it."
+  references: ["POPA 2.2", "PAKA 3.1"]
+  difficulty: 1
+- id: POPA-005
+  kind: mcq
+  elements: ["POPA 2.2.2", "POPA 2.2.3"]
+  stem: "With the aerodrome QNH set, the altimeter should read:"
+  options: ["Zero", "The aerodrome elevation (within 100 ft for VFR)", "The pressure height", "The density height"]
+  answer: 1
+  explanation: "QNH set gives elevation; 1013 set gives pressure height; dial set to elevation gives local QNH. Density height is pressure height corrected for temperature."
+  references: ["POPA 2.2"]
+  difficulty: 1
+- id: POPA-006
+  kind: mcq
+  elements: ["POPA 2.2.4", "POPA 2.2.5"]
+  stem: "The climb weight limit from the take-off chart is 1,020 kg, the structural MTOW is 1,055 kg and the runway-limited weight is 1,040 kg. The maximum take-off weight today is:"
+  options: ["1,055 kg", "1,040 kg", "1,020 kg", "1,038 kg"]
+  answer: 2
+  explanation: "The lowest limit governs: 1,020 kg. Exceeding it means the required climb gradient cannot be achieved at today's density height."
+  references: ["POPA 2.2", "POPA 2.4"]
+  difficulty: 1
+- id: POPA-007
+  kind: numeric
+  elements: ["POPA 2.3.1", "POPA 2.3.2"]
+  stem: "With 1013.2 hPa set the altimeter reads 3,100 ft on the ground and the OAT is 26 degrees. What is the density height in feet?"
+  answer: 5140
+  tolerance: 80
+  unit: ft
+  explanation: "Pressure height 3,100 ft. ISA temperature = 15 − 6.2 = 8.8 degrees; deviation 17.2 degrees. Density height = 3,100 + 120 × 17.2 = 5,164 ft (about 5,100 to 5,200 ft)."
+  references: ["POPA 2.3", "BAKC 6.2"]
+  difficulty: 2
+- id: POPA-008
+  kind: mcq
+  elements: ["POPA 2.3.2"]
+  stem: "On the navigation computer, density altitude is found by:"
+  options:
+    - "Setting the QNH against the elevation."
+    - "Setting the pressure height against the outside air temperature in the airspeed window and reading the density altitude window."
+    - "Setting TAS against CAS."
+    - "It cannot be found on the computer."
+  answer: 1
+  explanation: "The same setting converts CAS to TAS. The mathematics (120 ft per degree from ISA) gives a cross-check."
+  references: ["POPA 2.3"]
+  difficulty: 1
+- id: POPA-009
+  kind: mcq
+  elements: ["POPA 2.4.1"]
+  stem: "The maximum structural take-off and landing weights for the aircraft are found in:"
+  options: ["The TAF", "Section 2 (limitations) of the flight manual, or the loading system page in the exam workbook", "ERSA", "The maintenance release"]
+  answer: 1
+  explanation: "The structural limits are flight manual limitations; the workbook prints MTOW on each loading system's envelope (and MLW for ECHO)."
+  references: ["POPA 2.4"]
+  difficulty: 1
+- id: POPA-010
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "On the CASA take-off weight chart, the inputs are entered in the order:"
+  options:
+    - "Weight, then wind, then temperature."
+    - "Pressure height and temperature, then the take-off distance available, then wind component, slope and surface, reading the maximum take-off weight."
+    - "Slope first, then temperature."
+    - "Any order."
+  answer: 1
+  explanation: "Follow the chart's arrows: the density grid first, then the runway corrections. The chart also gives the climb weight limit without the runway corrections."
+  references: ["POPA 2.4", "Workbook Figs 3 and 5"]
+  difficulty: 2
+- id: POPA-011
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "The take-off and landing charts in the CASA workbook assume, among other conditions:"
+  options:
+    - "Idle power and flaps up for take-off."
+    - "Full throttle, the stated flap setting, the take-off safety speed reached by 50 ft, and factored distances; landing with full flap at the threshold speed from 50 ft with maximum braking."
+    - "A 10 kt tailwind."
+    - "A wet runway."
+  answer: 1
+  explanation: "Every chart prints its conditions; the exam asks for them. Wind, slope and surface corrections are applied on the chart from the still-air, level, sealed baseline."
+  references: ["POPA 2.4"]
+  difficulty: 2
+- id: POPA-012
+  kind: mcq
+  elements: ["POPA 2.4.2"]
+  stem: "Using the wind component for the take-off chart, a wind of 20 kt at 60 degrees to the runway gives a headwind component of about:"
+  options: ["20 kt", "17 kt", "10 kt", "0 kt"]
+  answer: 2
+  explanation: "Headwind = 20 × cos 60 = 10 kt; the crosswind is 20 × sin 60 = 17 kt. Enter the chart with the headwind component, not the full wind speed."
+  references: ["POPA 2.4", "PNVC 2.4"]
+  difficulty: 2
+- id: POPA-013
+  kind: numeric
+  elements: ["POPA 2.5.1"]
+  stem: "The climb table gives: to 3,000 ft, 5 min, 3 L, 7 nm; to 8,000 ft, 16 min, 8 L, 22 nm. What is the still-air distance in nautical miles to climb from 3,000 ft to 8,000 ft?"
+  answer: 15
+  tolerance: 0
+  unit: nm
+  explanation: "Subtract the lower altitude's figures: 22 − 7 = 15 nm (and 11 minutes, 5 L). Correct for temperature and wind afterwards."
+  references: ["POPA 2.5"]
+  difficulty: 1
+- id: POPA-014
+  kind: mcq
+  elements: ["POPA 2.5.1"]
+  stem: "To obtain maximum range in a headwind, the aircraft should be flown:"
+  options:
+    - "Slower than the still-air best range speed."
+    - "Faster than the still-air best range speed, to spend less time in the headwind."
+    - "At the maximum endurance speed."
+    - "At VNE."
+  answer: 1
+  explanation: "Range speed is the best lift-to-drag speed in still air; increase it in a headwind and reduce it in a tailwind. Endurance speed (minimum power) is slower than range speed."
+  references: ["POPA 2.5"]
+  difficulty: 2
+- id: POPA-015
+  kind: mcq
+  elements: ["POPA 2.5.1"]
+  stem: "The cruise performance table is entered with:"
+  options:
+    - "Groundspeed and wind."
+    - "Pressure altitude and RPM (or manifold pressure and RPM), giving percent power, TAS and fuel flow for the temperature column."
+    - "Density altitude and weight only."
+    - "The QNH."
+  answer: 1
+  explanation: "The mixture must be leaned as the table assumes, otherwise the fuel flow is higher than planned."
+  references: ["POPA 2.5"]
+  difficulty: 1

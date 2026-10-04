@@ -1,0 +1,29 @@
+# Flashcards for PAKA 2.x. See content/README.md for the format.
+- id: PAKA-SC001
+  elements: ["PAKA 2.1.1"]
+  front: "Why does a fixed-pitch propeller overspeed in a dive?"
+  back: "Higher airspeed reduces the blade angle of attack, so the propeller absorbs less torque and the engine speeds up past the red line."
+- id: PAKA-SC002
+  elements: ["PAKA 2.1.1"]
+  front: "Causes of fixed-pitch propeller overspeed?"
+  back: "Diving or descending with high power, high power at high airspeed, recovering from a spiral dive or unusual attitude with power on, a fine-pitch (climb) propeller, propeller damage."
+- id: PAKA-SC003
+  elements: ["PAKA 2.1.1"]
+  front: "Remedial action for a fixed-pitch overspeed?"
+  back: "Reduce power (throttle back) and raise the nose to reduce airspeed; reduce power before descending in future; record any red-line exceedance on the maintenance release."
+- id: PAKA-SC004
+  elements: ["PAKA 2.2.1"]
+  front: "Reed versus vane stall warning?"
+  back: "Reed: leading-edge opening, suction at high AoA sounds a reed horn, no electrical power needed. Vane: tab lifted by airflow as the stagnation point moves aft, closes a microswitch, needs electrical power."
+- id: PAKA-SC005
+  elements: ["PAKA 2.2.1"]
+  front: "Why not overpower an engaged autopilot?"
+  back: "Servos slip, but auto-trim trims against your force, building a large out-of-trim load released as a pitch upset at disconnect. Disconnect first, then fly by hand."
+- id: PAKA-SC006
+  elements: ["PAKA 2.2.1"]
+  front: "Autopilot cut-out (disconnect) means?"
+  back: "Control wheel A/P disconnect button, AP button on the mode controller, autopilot circuit breaker, avionics master, trim interrupt/CWS, plus automatic disconnects for failures or limits."
+- id: PAKA-SC007
+  elements: ["PAKA 2.2.1"]
+  front: "What does an autopilot trim annunciator warn of?"
+  back: "The servo is holding a control force because the aircraft is out of trim. Disconnecting now causes a sudden pitch change: retrim and hold the controls firmly at disconnect."

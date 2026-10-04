@@ -1,0 +1,91 @@
+<div class="widget" x-data="{
+  bank: 30, vs: 52, limit: 3.8,
+  get rad() { return this.bank * Math.PI / 180 },
+  get n() { return 1 / Math.cos(this.rad) },
+  get vsTurn() { return this.vs * Math.sqrt(this.n) },
+  get pct() { return (Math.sqrt(this.n) - 1) * 100 },
+  get tipX() { return 320 - 70 * Math.tan(this.rad) },
+  get over() { return this.n > this.limit },
+  get near() { return !this.over && this.n > this.limit * 0.8 },
+  arc() { const r = 150, a = this.rad; return 'M320 ' + (210 - r) + ' A' + r + ' ' + r + ' 0 0 0 ' + (320 - r * Math.sin(a)).toFixed(1) + ' ' + (210 - r * Math.cos(a)).toFixed(1) },
+  reset() { this.bank = 30; this.vs = 52; this.limit = 3.8 }
+}">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ba-title" class="widget-stage">
+    <title id="ba-title">Rear view of an aeroplane in a level turn with its lift and weight vectors</title>
+    <defs>
+      <marker id="ba-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- horizon and turn centre -->
+    <line x1="20" y1="210" x2="620" y2="210" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="24" y="226" font-size="11" fill="var(--color-fg-faint)">horizon</text>
+    <text x="40" y="150" font-size="11" fill="var(--color-fg-faint)">← centre of the turn</text>
+    <!-- bank angle arc -->
+    <path :d="arc()" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <line x1="320" y1="210" x2="320" y2="56" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text :x="320 - 170 * Math.sin(rad / 2)" :y="210 - 170 * Math.cos(rad / 2) + 4" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="bank + '°'"></text>
+    <!-- aeroplane, rear view, left wing down for a left turn -->
+    <g :transform="'translate(320 210) rotate(' + (-bank) + ')'">
+      <path d="M-50 -1 L-8 3 L-8 7 L-50 3 Z M50 -1 L8 3 L8 7 L50 3 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round" transform="scale(1.5)"/>
+      <path d="M-2 -8 L0 -28 L3 -28 L3 -8 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round" transform="scale(1.5)"/>
+      <path d="M-17 -5 L17 -5 L17 -2 L-17 -2 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round" transform="scale(1.5)"/>
+      <circle r="13.5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path d="M-5 -6 L5 -6 L4 -2 L-4 -2 Z" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="1" transform="scale(1.5)"/>
+    </g>
+    <!-- vectors: weight down, lift along the aeroplane's vertical axis, components dashed -->
+    <line x1="320" y1="210" x2="320" y2="282" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#ba-arrow)"/>
+    <text x="330" y="270" font-size="13" font-weight="600" fill="var(--color-info)">Weight</text>
+    <line x1="320" y1="210" :x2="tipX" y2="140" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line :x1="tipX" y1="140" :x2="tipX" y2="210" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="320" y1="210" x2="320" y2="140" stroke="var(--color-ok)" stroke-width="2" stroke-linecap="round" marker-end="url(#ba-arrow)" x-show="bank > 0"/>
+    <text x="330" y="148" font-size="12" fill="var(--color-ok)" x-show="bank > 0">vertical = weight</text>
+    <line x1="320" y1="210" :x2="tipX" y2="210" stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round" marker-end="url(#ba-arrow)" x-show="bank > 4"/>
+    <text :x="(320 + tipX) / 2" y="230" font-size="12" text-anchor="middle" fill="var(--color-warn)" x-show="bank > 14">turning force</text>
+    <line x1="320" y1="210" :x2="tipX" y2="140" :stroke="over ? 'var(--color-bad)' : 'var(--color-brand)'" stroke-width="3" stroke-linecap="round" marker-end="url(#ba-arrow)"/>
+    <text :x="tipX - 10" y="132" font-size="14" font-weight="700" text-anchor="end" :fill="over ? 'var(--color-bad)' : 'var(--color-brand)'" x-text="'Lift = ' + n.toFixed(2) + ' × weight'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ba-bank">Angle of bank <output for="ba-bank" x-text="bank + '°'"></output></label>
+      <input id="ba-bank" type="range" min="0" max="80" step="1" x-model.number="bank">
+      <div class="widget-presets" role="group" aria-label="Bank presets">
+        <template x-for="b in [0, 30, 45, 60, 75]" :key="b">
+          <button type="button" @click="bank = b" :aria-pressed="bank === b" x-text="b + '°'"></button>
+        </template>
+      </div>
+    </div>
+    <div class="widget-control">
+      <label for="ba-vs">Level-flight stall speed <output for="ba-vs" x-text="vs + ' kt'"></output></label>
+      <input id="ba-vs" type="range" min="35" max="90" step="1" x-model.number="vs">
+      <label for="ba-limit" class="mt-2">Limit load factor</label>
+      <select id="ba-limit" x-model.number="limit">
+        <option value="3.8">+3.8 g · normal category</option>
+        <option value="4.4">+4.4 g · utility category</option>
+        <option value="6">+6.0 g · aerobatic category</option>
+      </select>
+    </div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="over ? 'bad' : near ? 'warn' : ''">
+      <dt>Load factor</dt>
+      <dd><span x-text="n.toFixed(2) + ' g'"></span><span class="widget-flag bad" x-show="over">Over limit</span><span class="widget-flag warn" x-show="near">Near limit</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt>Stall speed in the turn</dt>
+      <dd x-text="Math.round(vsTurn) + ' kt'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt>Stall speed increase</dt>
+      <dd x-text="'+' + Math.round(pct) + '%  (× ' + Math.sqrt(n).toFixed(2) + ')'"></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> The vertical part of lift never changes: it always equals weight. Banking tilts lift, so total lift must grow to keep that vertical part. Load factor $n = 1/\cos\theta$ creeps to 1.41 at 45°, doubles by 60° and reaches the normal-category limit near 75°. Stall speed rises with $\sqrt{n}$.</p>
+  <details class="widget-try"><summary>Try this: set 60° of bank. What are the load factor and the stall speed?</summary><p>2.0 g, because 1 ÷ cos 60° = 2. Stall speed = 52 × √2 = 52 × 1.41 ≈ 74 kt.</p></details>
+  <details class="widget-try"><summary>Try this: at what bank does a normal-category aeroplane reach its +3.8 g limit in a level turn?</summary><p>About 75°: cos θ = 1 ÷ 3.8 = 0.263, θ ≈ 75°. Any gust or pull on top of that risks structural damage.</p></details>
+</div>

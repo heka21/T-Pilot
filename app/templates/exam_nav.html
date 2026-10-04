@@ -1,0 +1,20 @@
+{# Partial: question navigator. With `oob` it replaces the existing navigator out of band. #}
+<div id="exam-nav-wrap" class="space-y-3" {% if oob %}hx-swap-oob="true"{% endif %}>
+  {% set nflag = attempt.answers | selectattr("flagged") | list | length %}
+  <p class="text-sm text-fg-muted"><strong class="text-fg">{{ total - unanswered }}</strong> of {{ total }} answered{% if nflag %} · <strong class="text-warn-fg">{{ nflag }}</strong> flagged{% endif %}</p>
+  <nav class="exam-nav" aria-label="Questions" data-unanswered="{{ unanswered }}" data-flagged="{{ nflag }}">
+    {% for a in attempt.answers %}
+      <button type="button"
+              class="{{ 'answered' if answered[loop.index0] }} {{ 'flagged' if a.flagged }} {{ 'current' if loop.index0 == position }}"
+              hx-get="/exam/{{ attempt.id }}/q/{{ loop.index0 }}" hx-target="#exam-question" hx-swap="outerHTML"
+              hx-sync="#exam-root:queue all"
+              aria-label="Question {{ loop.index }}{{ ', answered' if answered[loop.index0] }}{{ ', flagged' if a.flagged }}">{{ loop.index }}</button>
+    {% endfor %}
+  </nav>
+  <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
+    <span class="inline-flex items-center gap-1.5"><i class="inline-block size-3 rounded-sm border border-brand/40 bg-brand-soft"></i>Answered</span>
+    <span class="inline-flex items-center gap-1.5"><i class="inline-block size-1.5 rounded-full bg-warn"></i>Flagged</span>
+    <span class="inline-flex items-center gap-1.5"><i class="inline-block size-3 rounded-sm ring-2 ring-brand"></i>Current</span>
+  </p>
+</div>
+{% if saved %}<span id="save-status" class="block min-h-4 text-xs text-fg-muted" aria-live="polite" hx-swap-oob="true">Answer to question {{ position + 1 }} saved.</span>{% endif %}

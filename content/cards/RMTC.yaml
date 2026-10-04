@@ -1,0 +1,52 @@
+- id: RMTC-C001
+  elements: ["RMTC 2.1.1"]
+  front: "Three ingredients of a thunderstorm?"
+  back: "Moisture, instability, and a trigger that lifts the air (heating, front, trough, terrain, convergence)."
+- id: RMTC-C002
+  elements: ["RMTC 2.1.1"]
+  front: "When does radiation fog form?"
+  back: "Clear, calm, humid nights: the ground radiates heat, air cools to its dew point. Common in south-west WA winter mornings; clears mid-morning."
+- id: RMTC-C003
+  elements: ["RMTC 2.1.1"]
+  front: "When is thermal turbulence worst?"
+  back: "Hot afternoons over bare, dark ground, inland in summer."
+- id: RMTC-C004
+  elements: ["RMTC 2.1.1"]
+  front: "Correct response to a lowering cloud base over rising terrain?"
+  back: "Turn back early while there is room. Never get squeezed between cloud and terrain."
+- id: RMTC-C005
+  elements: ["RMTC 2.2.1"]
+  front: "TAF change groups FM, BECMG, TEMPO, INTER, PROB?"
+  back: "FM: permanent change from a time. BECMG: gradual change over a period. TEMPO: fluctuations under 1 hour each. INTER: fluctuations under 30 min. PROB30/40: probability."
+- id: RMTC-C006
+  elements: ["RMTC 2.2.1"]
+  front: "Cloud height reference in a GAF versus a TAF/METAR?"
+  back: "GAF: above mean sea level. TAF and METAR: above aerodrome level."
+- id: RMTC-C007
+  elements: ["RMTC 2.2.1"]
+  front: "Cloud amounts FEW, SCT, BKN, OVC?"
+  back: "FEW 1-2 oktas, SCT 3-4, BKN 5-7, OVC 8. BKN and OVC form a ceiling."
+- id: RMTC-C008
+  elements: ["RMTC 2.2.1"]
+  front: "CAVOK definition?"
+  back: "Visibility 10 km or more, no cloud below 5,000 ft or the highest MSA, no CB, no significant weather."
+- id: RMTC-C009
+  elements: ["RMTC 2.2.1"]
+  front: "Forecast wind direction: true or magnetic?"
+  back: "True in TAF, METAR and GAF. Magnetic from the tower and ATIS."
+- id: RMTC-C010
+  elements: ["RMTC 2.3.1"]
+  front: "What does a dust devil tell you?"
+  back: "A strong narrow thermal with sharp wind changes around it: avoid it on take-off and landing."
+- id: RMTC-C011
+  elements: ["RMTC 2.3.1"]
+  front: "Descending through a wind gradient into a strong headwind: effect?"
+  back: "Headwind decreases, airspeed decays, sink rate increases: add power or the aeroplane undershoots."
+- id: RMTC-C012
+  elements: ["RMTC 2.3.1"]
+  front: "Sequence through a microburst?"
+  back: "Headwind (airspeed up), downdraught, then tailwind (airspeed and lift down) close to the ground."
+- id: RMTC-C013
+  elements: ["RMTC 2.3.1"]
+  front: "Visible signs of mountain wave and rotor?"
+  back: "Lenticular clouds in the wave crests and ragged rotor cloud downwind of the ridge in a strong wind across it."

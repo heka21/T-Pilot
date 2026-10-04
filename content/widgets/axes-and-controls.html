@@ -1,0 +1,27 @@
+<div class="widget" data-widget="explorer" data-explorer="axes">
+  <div class="widget-canvas" data-canvas aria-label="3D aeroplane that rolls, pitches and yaws as you move the controls"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="ax-aileron">Ailerons <output data-out="aileron">neutral</output></label><input id="ax-aileron" type="range" min="-1" max="1" step="0.05" value="0" data-param="aileron"><span class="text-xs text-fg-faint">stick left ← → stick right</span></div>
+    <div class="widget-control"><label for="ax-elevator">Elevator <output data-out="elevator">neutral</output></label><input id="ax-elevator" type="range" min="-1" max="1" step="0.05" value="0" data-param="elevator"><span class="text-xs text-fg-faint">stick forward ← → stick back</span></div>
+    <div class="widget-control"><label for="ax-rudder">Rudder <output data-out="rudder">neutral</output></label><input id="ax-rudder" type="range" min="-1" max="1" step="0.05" value="0" data-param="rudder"><span class="text-xs text-fg-faint">left pedal ← → right pedal</span></div>
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="axes" checked> Show the three axes</label>
+      <label class="check"><input type="checkbox" data-param="adverseYaw"> Show adverse yaw</label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Roll (longitudinal axis)</dt><dd data-out="roll">0°</dd></div>
+    <div class="widget-readout"><dt>Pitch (lateral axis)</dt><dd data-out="pitch">0°</dd></div>
+    <div class="widget-readout"><dt>Yaw (normal axis)</dt><dd data-out="yaw">0°</dd></div>
+  </dl>
+  <p class="widget-value mt-3 text-sm text-fg" data-out="effect">Controls neutral: straight and level.</p>
+  <div class="widget-actions">
+    <button type="button" class="btn-secondary" data-action="reset">Reset</button>
+    <button type="button" class="btn-ghost" data-set='{"aileron": 0.8, "adverseYaw": true}'>Roll right with adverse yaw</button>
+    <button type="button" class="btn-ghost" data-set='{"elevator": 0.7}'>Stick back</button>
+    <button type="button" class="btn-ghost" data-set='{"rudder": -0.7}'>Left rudder</button>
+    <span class="text-xs text-fg-faint">Drag the picture to look around.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each primary control rotates the aeroplane about one axis through the centre of gravity: ailerons roll about the longitudinal axis, elevator pitches about the lateral axis, rudder yaws about the normal axis. Turn on adverse yaw and roll: the down-going aileron makes more drag, so the nose swings the wrong way until rudder is used to balance.</p>
+  <details class="widget-try"><summary>Try this: stick back only. Which axis does the aeroplane rotate about, and which control surface moved?</summary><p>The lateral axis (wing tip to wing tip); the elevator trailing edge moved up, pushing the tail down and the nose up.</p></details>
+</div>

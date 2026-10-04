@@ -1,0 +1,65 @@
+# Flashcards for PAKC 2.1 to 2.3 (engines, supercharging, flight instruments). See content/README.md for the format.
+- id: PAKC-EC001
+  elements: ["PAKC 2.1.1"]
+  front: "What is full throttle height?"
+  back: "The altitude at which the throttle is fully open and the engine is only just making a chosen power setting. Above it power can only fall. It is specific to the power setting: higher for 65 percent than for 75 percent."
+- id: PAKC-EC002
+  elements: ["PAKC 2.1.1", "PAKC 2.1.3"]
+  front: "What is the critical altitude of a supercharged or turbocharged engine?"
+  back: "The highest altitude at which the supercharger can maintain rated manifold pressure with the throttle fully open, typically 12,000 to 20,000 ft for a light aeroplane turbocharger. Above it power falls as in a normally aspirated engine."
+- id: PAKC-EC003
+  elements: ["PAKC 2.1.2"]
+  front: "Effect of altitude and temperature on normally aspirated engine power? Rule of thumb?"
+  back: "Power depends on air density, which falls with height and with temperature. About 3 percent of sea-level power is lost per 1,000 ft of density height: roughly 75 percent available at 8,000 ft and 55 percent at 15,000 ft. Hot days also worsen cooling."
+- id: PAKC-EC004
+  elements: ["PAKC 2.1.3"]
+  front: "Mixture strength for best power, best economy, and the effects of too rich or too lean?"
+  back: "Best power slightly richer than the chemically ideal ratio; best economy slightly leaner. Too rich wastes fuel, fouls plugs and reduces power; too lean raises temperatures, loses power and risks detonation. Lean with altitude to restore the ratio."
+- id: PAKC-EC005
+  elements: ["PAKC 2.1.3"]
+  front: "Service ceiling versus absolute ceiling?"
+  back: "Service ceiling: rate of climb has fallen to 100 ft per minute. Absolute ceiling: rate of climb is zero."
+- id: PAKC-EC006
+  elements: ["PAKC 2.2.1"]
+  front: "Purpose of supercharging?"
+  back: "To compress intake air so the cylinders get a denser charge: maintain sea-level power at altitude and, in some engines, boost power above the normally aspirated value (ground boosting). Manifold pressure can then exceed ambient, typically 35 to 40 inHg or more."
+- id: PAKC-EC007
+  elements: ["PAKC 2.2.2"]
+  front: "Mechanical supercharger versus turbocharger?"
+  back: "Supercharger: gear-driven from the crankshaft, instant response, but absorbs engine power and output is tied to RPM. Turbocharger: driven by an exhaust turbine, uses wasted energy, but has turbo lag and runs very hot. An intercooler cools the compressed air, raising density and reducing detonation risk."
+- id: PAKC-EC008
+  elements: ["PAKC 2.2.3"]
+  front: "How is turbocharger boost limited?"
+  back: "Wastegate: an exhaust valve that diverts gas around the turbine, often modulated by an automatic wastegate (density) controller. Also a manifold pressure relief (pop-off) valve, overboost warning and red line, and absolute or sloped pressure controllers."
+- id: PAKC-EC009
+  elements: ["PAKC 2.2.4"]
+  front: "Pilot actions after an overboost?"
+  back: "Reduce throttle smoothly into limits; check mixture rich at high power and keep RPM up; monitor CHT, EGT and TIT and reduce power if high; note the exceedance and duration and record it in the maintenance release for engineering inspection."
+- id: PAKC-EC010
+  elements: ["PAKC 2.2.4"]
+  front: "Why idle a turbocharged engine before shutdown?"
+  back: "To let the hot turbocharger cool for a few minutes (time in the POH) so the bearings are not starved of oil. Also avoid rapid throttle movements."
+- id: PAKC-EC011
+  elements: ["PAKC 2.3.1", "PAKC 2.3.2"]
+  front: "Pitot and static pressure, pressure error, alternate static source; IAS, CAS and TAS?"
+  back: "Pitot pressure is static plus dynamic pressure; static is ambient pressure from an undisturbed vent. Pressure error (largest at low speed with flap) is removed by the POH table, turning IAS into CAS; the cabin alternate static source makes instruments read slightly high. TAS is CAS corrected for density, about 2 percent more per 1,000 ft of density height."
+- id: PAKC-EC012
+  elements: ["PAKC 2.3.3"]
+  front: "ASI and VSI errors: blockages, manoeuvres, lag and the IVSI?"
+  back: "ASI with pitot and drain blocked over-reads in a climb (acts as an altimeter); static blocked over-reads in a descent and under-reads in a climb. VSI with static blocked reads zero and lags 6 to 9 seconds, possibly showing the reverse trend; an IVSI's accelerometer piston removes most lag. Abrupt manoeuvres upset all pressure instruments for a few seconds."
+- id: PAKC-EC013
+  elements: ["PAKC 2.3.3"]
+  front: "Altimeter: static blockage, subscale error and temperature error?"
+  back: "Static blockage freezes the reading. About 30 ft per hPa: set 1023 with QNH 1013 and you are 300 ft lower than indicated. High to low or hot to cold, look out below: in air colder than ISA true altitude is lower than indicated, about 4 percent per 10 degrees."
+- id: PAKC-EC014
+  elements: ["PAKC 2.3.4", "PAKC 2.3.6"]
+  front: "Direct-reading compass construction, and the compass correction card?"
+  back: "Needles align with magnetic north; fluid damps oscillation and friction; a bubble makes it unserviceable; the pendulous magnet system resists dip but causes turning and acceleration errors. The deviation card from a compass swing gives the compass heading to steer for each magnetic heading (e.g. for 090 steer 092): deviation east, compass least."
+- id: PAKC-EC015
+  elements: ["PAKC 2.3.5"]
+  front: "Southern hemisphere compass turning and acceleration errors?"
+  back: "Turning error is largest through north and south: through south the compass lags, so roll out early; through north it leads, so roll out late (ONUS: overshoot north, undershoot south; about 30 degrees at rate one). Acceleration error is largest on east and west: SAND, South on Acceleration, North on Deceleration."
+- id: PAKC-EC016
+  elements: ["PAKC 2.3.7"]
+  front: "Pre-flight serviceability checks of the primary flight instruments?"
+  back: "Altimeter with QNH set reads elevation within 100 ft (VFR, AIP ENR 1.7); ASI and VSI read zero at rest. AI erect within about 5 minutes, suction green, no flags; DI set to compass and steady; turn coordinator correct in taxi turns. Compass full, no bubbles, reads runway heading, deviation card present."

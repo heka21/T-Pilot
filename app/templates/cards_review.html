@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header %}
+{% block title %}Flashcard review · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+  <div class="min-w-0">
+    <h1 class="page-title">Flashcard review</h1>
+    <p class="page-sub">
+      {% if subtopic %}{{ subtopic.id }} {{ subtopic.title }}{% elif units %}{{ units | join(", ") }}{% else %}All units{% endif %}
+      · <a href="/cards">change</a>
+    </p>
+  </div>
+</div>
+{% include "card.html" %}
+<p class="mx-auto mt-4 max-w-2xl text-center text-xs text-fg-muted">Again: see it again today. Hard, Good and Easy push the next review further out (SM-2).</p>
+{% endblock %}

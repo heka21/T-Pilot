@@ -1,0 +1,754 @@
+# PMTC: PPL meteorology. Southern hemisphere conventions throughout. See content/README.md for the format.
+# 2.1 Composition of the atmosphere
+- id: PMTC-001
+  kind: mcq
+  elements: ["PMTC 2.1.1"]
+  stem: "The ICAO International Standard Atmosphere assumes, at mean sea level:"
+  options:
+    - "1013.25 hPa and +15 °C"
+    - "1013.25 hPa and +20 °C"
+    - "1000 hPa and +15 °C"
+    - "1013.25 hPa and 0 °C"
+  answer: 0
+  explanation: "ISA mean sea level conditions are a pressure of 1013.25 hPa (29.92 inHg) and a temperature of +15 °C, with a density of 1.225 kg/m³. The other options mix in values that are not part of the standard."
+  references: ["PMTC 2.1", "ICAO Doc 7488"]
+  difficulty: 1
+- id: PMTC-002
+  kind: mcq
+  elements: ["PMTC 2.1.2"]
+  stem: "The ISA temperature lapse rate in the troposphere is closest to:"
+  options:
+    - "3 °C per 1,000 ft"
+    - "1.5 °C per 1,000 ft"
+    - "2 °C per 1,000 ft"
+    - "1 hPa per 30 ft"
+  answer: 2
+  explanation: "The ISA lapse rate is 1.98 °C per 1,000 ft (6.5 °C per km), rounded to 2 °C per 1,000 ft for calculations. 3 °C is the dry adiabatic lapse rate, about 1.5 °C is the saturated adiabatic lapse rate, and 1 hPa per 30 ft is the approximate pressure lapse near sea level, not a temperature lapse."
+  references: ["PMTC 2.1"]
+  difficulty: 1
+- id: PMTC-003
+  kind: numeric
+  elements: ["PMTC 2.1.2"]
+  stem: "Using a lapse rate of 2 °C per 1,000 ft, what is the ISA temperature at 7,000 ft? (°C, enter a negative number if below zero)"
+  answer: 1
+  tolerance: 0
+  unit: "°C"
+  explanation: "Fall in temperature = 7 × 2 = 14 °C. ISA at 7,000 ft = 15 − 14 = +1 °C."
+  references: ["PMTC 2.1"]
+  difficulty: 1
+- id: PMTC-004
+  kind: numeric
+  elements: ["PMTC 2.1.2", "PMTC 2.2.4"]
+  stem: "At 9,500 ft on a QNH 1013 day the outside air temperature is +2 °C. Using 2 °C per 1,000 ft, by how many degrees is the actual temperature warmer than ISA? (°C)"
+  answer: 6
+  tolerance: 0
+  unit: "°C"
+  explanation: "ISA at 9,500 ft = 15 − (9.5 × 2) = 15 − 19 = −4 °C. Actual +2 °C is 6 °C warmer: ISA +6."
+  references: ["PMTC 2.1", "PMTC 2.2"]
+  difficulty: 2
+- id: PMTC-005
+  kind: mcq
+  elements: ["PMTC 2.1.3"]
+  stem: "Which statement about the tropopause is correct?"
+  options:
+    - "It is higher over the poles than over the equator."
+    - "It is the boundary where temperature stops decreasing with height, about 36,000 ft in the ISA, and higher over the equator."
+    - "It is the level at which temperature begins to fall with height."
+    - "It is at a constant height of 36,090 ft everywhere."
+  answer: 1
+  explanation: "The tropopause marks the top of the troposphere, where the fall of temperature with height stops. The ISA places it at 36,090 ft (−56.5 °C), but in reality it is about 26,000 ft over the poles and 52,000 to 59,000 ft over the equator, where strong heating and convection push it up."
+  references: ["PMTC 2.1"]
+  difficulty: 2
+- id: PMTC-006
+  kind: mcq
+  elements: ["PMTC 2.1.4", "PMTC 2.1.3"]
+  stem: "Why does almost all weather occur in the troposphere rather than the stratosphere?"
+  options:
+    - "The stratosphere contains more water vapour, but it is too cold for cloud."
+    - "The troposphere holds nearly all the water vapour and is heated from below, allowing convection; the stratosphere is a stable inversion layer."
+    - "Coriolis force does not act in the stratosphere."
+    - "Air pressure in the stratosphere is too high for rising air."
+  answer: 1
+  explanation: "Weather needs moisture and vertical motion. The troposphere contains almost all the water vapour and, being heated from the ground, has temperature falling with height so air can rise and convect. In the stratosphere temperature is constant then increases with height: a strong inversion that stops rising air, which is why Cb tops spread into anvils at the tropopause."
+  references: ["PMTC 2.1"]
+  difficulty: 1
+# 2.2 Heat, temperature, pressure and humidity
+- id: PMTC-007
+  kind: mcq
+  elements: ["PMTC 2.2.1"]
+  stem: "The METAR for an inland aerodrome on a sunny summer afternoon reports 36 °C. The air temperature just above the bitumen runway is most likely to be:"
+  options:
+    - "Exactly 36 °C, because the sensor is beside the runway."
+    - "Lower than 36 °C, because the sensor is in the sun."
+    - "Higher than 36 °C, because the reported temperature is measured in shade about 1.2 m above grass, and dark bitumen heats the air above it."
+    - "Higher than 36 °C only at night."
+  answer: 2
+  explanation: "Surface air temperature is measured in a shaded, ventilated instrument shelter about 1.2 m above short grass. Over sun-heated bitumen the air can be several degrees hotter, so density and take-off performance are worse than the reported figure suggests. At night the opposite usually applies under a radiation inversion."
+  references: ["PMTC 2.2"]
+  difficulty: 2
+- id: PMTC-008
+  kind: mcq
+  elements: ["PMTC 2.2.2"]
+  stem: "The dew point is:"
+  options:
+    - "The temperature at which the relative humidity is 50 percent."
+    - "The temperature to which air must be cooled, at constant pressure and moisture content, to become saturated."
+    - "The temperature at which water freezes in cloud."
+    - "The difference between the dry and wet bulb temperatures."
+  answer: 1
+  explanation: "Cooling air raises its relative humidity without changing its water content; at the dew point it reaches 100 percent and condensation begins. A small temperature/dew point spread means fog or low cloud is likely."
+  references: ["PMTC 2.2"]
+  difficulty: 1
+- id: PMTC-009
+  kind: mcq
+  elements: ["PMTC 2.2.2"]
+  stem: "A temperature inversion is a layer in which:"
+  options:
+    - "Temperature decreases with height faster than the DALR."
+    - "Temperature increases with height, making the air very stable."
+    - "Relative humidity decreases with height."
+    - "The wind reverses direction."
+  answer: 1
+  explanation: "In an inversion temperature rises with height. A parcel lifted into it is colder than its surroundings and sinks back, so inversions are very stable: they trap haze, smoke and fog beneath them and can have wind shear at their top. Temperature falling faster than the DALR is absolute instability, the opposite."
+  references: ["PMTC 2.2"]
+  difficulty: 1
+- id: PMTC-010
+  kind: mcq
+  elements: ["PMTC 2.2.2"]
+  stem: "When water vapour condenses into cloud droplets, latent heat is:"
+  options:
+    - "Absorbed, cooling the air, which is why the SALR is greater than the DALR."
+    - "Released, warming the air, which is why saturated air cools more slowly as it rises than dry air."
+    - "Neither absorbed nor released."
+    - "Released, but only below 0 °C."
+  answer: 1
+  explanation: "Condensation (and freezing) release latent heat; evaporation and melting absorb it. The heat released partly offsets the expansion cooling of rising saturated air, so the SALR (about 1.5 °C per 1,000 ft) is less than the DALR (3 °C per 1,000 ft). This heat is the energy source of thunderstorms."
+  references: ["PMTC 2.2"]
+  difficulty: 2
+- id: PMTC-011
+  kind: mcq
+  elements: ["PMTC 2.2.3"]
+  stem: "Which combination gives the lowest air density, and so the poorest take-off performance?"
+  options:
+    - "Low temperature, high pressure, dry air"
+    - "High temperature, high pressure, dry air"
+    - "High temperature, low pressure, humid air"
+    - "Low temperature, low pressure, humid air"
+  answer: 2
+  explanation: "Density decreases as temperature rises, increases as pressure rises, and decreases slightly as humidity rises (water vapour is lighter than nitrogen and oxygen). Hot, low-pressure (high elevation) and humid is the worst combination."
+  references: ["PMTC 2.2"]
+  difficulty: 1
+- id: PMTC-012
+  kind: numeric
+  elements: ["PMTC 2.2.4"]
+  stem: "An aerodrome has an elevation of 2,000 ft and the QNH is 1003 hPa. Using 30 ft per hPa, what is the pressure height of the aerodrome? (ft)"
+  answer: 2300
+  tolerance: 30
+  unit: "ft"
+  explanation: "Pressure height = elevation + (1013 − QNH) × 30 = 2,000 + (10 × 30) = 2,300 ft. With QNH below 1013 the pressure height is higher than the elevation."
+  references: ["PMTC 2.2"]
+  difficulty: 2
+- id: PMTC-013
+  kind: numeric
+  elements: ["PMTC 2.2.4"]
+  stem: "An aerodrome's pressure height is 2,500 ft. Using 2 °C per 1,000 ft, what is the ISA temperature at that pressure height? (°C)"
+  answer: 10
+  tolerance: 0
+  unit: "°C"
+  explanation: "ISA temperature = 15 − (2.5 × 2) = 15 − 5 = +10 °C. Compare this with the actual temperature to find the ISA deviation for the performance charts."
+  references: ["PMTC 2.2"]
+  difficulty: 1
+- id: PMTC-014
+  kind: mcq
+  elements: ["PMTC 2.2.5"]
+  stem: "With QFE set on the subscale, an altimeter on the ground at the aerodrome reads:"
+  options:
+    - "The aerodrome elevation"
+    - "Zero"
+    - "The pressure height of the aerodrome"
+    - "The density height"
+  answer: 1
+  explanation: "QFE is the aerodrome-level pressure, so the altimeter reads zero on the aerodrome and height above the aerodrome in flight. QNH makes it read elevation on the ground (altitude in flight); 1013.2 makes it read pressure height."
+  references: ["PMTC 2.2", "AIP ENR 1.7"]
+  difficulty: 1
+- id: PMTC-015
+  kind: numeric
+  elements: ["PMTC 2.2.5"]
+  stem: "An aerodrome's elevation is 600 ft and the QNH is 1018 hPa. Using 30 ft per hPa, what is the approximate QFE? (hPa)"
+  answer: 998
+  tolerance: 1
+  unit: "hPa"
+  explanation: "Pressure falls about 1 hPa per 30 ft, so 600 ft is 20 hPa. QFE = QNH − 20 = 1018 − 20 = 998 hPa."
+  references: ["PMTC 2.2"]
+  difficulty: 2
+- id: PMTC-016
+  kind: mcq
+  elements: ["PMTC 2.2.5"]
+  stem: "Elevation is defined as the vertical distance of:"
+  options:
+    - "An aircraft above mean sea level."
+    - "An aircraft above the ground."
+    - "A point on the earth's surface above mean sea level."
+    - "An aircraft above the 1013.2 hPa pressure level."
+  answer: 2
+  explanation: "Elevation is used for things on the surface (runways, terrain). Altitude is an aircraft's vertical distance above mean sea level, height is measured from a specified datum such as the ground, and the distance above the 1013.2 hPa level is pressure height."
+  references: ["PMTC 2.2"]
+  difficulty: 1
+- id: PMTC-017
+  kind: mcq
+  elements: ["PMTC 2.2.2"]
+  stem: "The environmental lapse rate on a given day is 1 °C per 1,000 ft. The atmosphere is:"
+  options:
+    - "Absolutely unstable"
+    - "Absolutely stable"
+    - "Conditionally unstable"
+    - "Neutral"
+  answer: 1
+  explanation: "A lifted parcel cools at 3 °C per 1,000 ft if dry and about 1.5 °C if saturated. Both are faster than the environment's 1 °C, so the parcel is always colder than its surroundings and sinks back: absolutely stable. An ELR between 1.5 and 3 would be conditionally unstable; above 3, absolutely unstable."
+  references: ["PMTC 2.2"]
+  difficulty: 3
+# 2.3 Clouds and precipitation
+- id: PMTC-018
+  kind: mcq
+  elements: ["PMTC 2.3.1"]
+  stem: "Which group contains only high clouds?"
+  options:
+    - "Cirrus, cirrocumulus, cirrostratus"
+    - "Cirrus, altostratus, altocumulus"
+    - "Cirrostratus, nimbostratus, stratus"
+    - "Cumulus, cumulonimbus, cirrus"
+  answer: 0
+  explanation: "The high genera all carry the prefix cirro- or are cirrus: Ci, Cc, Cs, with bases above about 20,000 ft and made of ice crystals. Alto- clouds are middle level, stratus is low, and Cu and Cb have low bases."
+  references: ["PMTC 2.3"]
+  difficulty: 1
+- id: PMTC-019
+  kind: mcq
+  elements: ["PMTC 2.3.2"]
+  stem: "In a METAR, the group BKN008 means:"
+  options:
+    - "Broken cloud, 1 to 2 oktas, at 800 ft AMSL"
+    - "Broken cloud, 5 to 7 oktas, base 800 ft above the aerodrome"
+    - "Broken cloud, 3 to 4 oktas, base 8,000 ft above the aerodrome"
+    - "Broken cloud, 5 to 7 oktas, base 8,000 ft AMSL"
+  answer: 1
+  explanation: "Cloud amount is in oktas: FEW 1 to 2, SCT 3 to 4, BKN 5 to 7, OVC 8. The base is in hundreds of feet above aerodrome level in a TAF or METAR (008 = 800 ft). GAF cloud bases are AMSL."
+  references: ["PMTC 2.3", "RMTC 2.2"]
+  difficulty: 1
+- id: PMTC-020
+  kind: mcq
+  elements: ["PMTC 2.3.2"]
+  stem: "Which cloud types are named in a TAF or METAR cloud group?"
+  options:
+    - "All ten genera"
+    - "Only stratus and cumulus"
+    - "Only cumulonimbus (CB) and towering cumulus (TCU)"
+    - "Only nimbostratus"
+  answer: 2
+  explanation: "Only CB and TCU are appended to a cloud group (for example SCT050CB), because they are the hazardous convective types. Other cloud is reported by amount and base only."
+  references: ["PMTC 2.3"]
+  difficulty: 2
+- id: PMTC-021
+  kind: mcq
+  elements: ["PMTC 2.3.3"]
+  stem: "Continuous moderate rain falling from a thick, dark, featureless layer with ragged low cloud beneath is typical of:"
+  options:
+    - "Cumulonimbus"
+    - "Nimbostratus"
+    - "Stratocumulus"
+    - "Cirrostratus"
+  answer: 1
+  explanation: "Nimbostratus is the thick, stable layer cloud of continuous rain, with poor visibility and stratus fractus beneath. Cumulonimbus gives heavy showers that start and stop, stratocumulus at most light drizzle, and cirrostratus no precipitation (it gives a halo)."
+  references: ["PMTC 2.3"]
+  difficulty: 1
+- id: PMTC-022
+  kind: mcq
+  elements: ["PMTC 2.3.3"]
+  stem: "Altocumulus castellanus (turreted altocumulus) seen on a summer morning is a sign of:"
+  options:
+    - "A stable atmosphere and a smooth day"
+    - "Instability at middle levels, and likely thunderstorms later in the day"
+    - "Radiation fog the next morning"
+    - "An approaching warm front only"
+  answer: 1
+  explanation: "Turrets growing from an altocumulus layer show that the middle levels are unstable. As the surface heats, convection can link up with that instability, so ACC in the morning is a classic warning of afternoon thunderstorms."
+  references: ["PMTC 2.3"]
+  difficulty: 2
+- id: PMTC-023
+  kind: numeric
+  elements: ["PMTC 2.3.1"]
+  stem: "At midday a METAR reports temperature/dew point 31/15. Assuming the spread closes at 2.5 °C per 1,000 ft (400 ft per °C), estimate the base of convective cloud above the aerodrome. (ft)"
+  answer: 6400
+  tolerance: 100
+  unit: "ft"
+  explanation: "Spread = 31 − 15 = 16 °C. Rising air cools at 3 °C per 1,000 ft while its dew point falls about 0.5 °C, so the spread closes at 2.5 °C per 1,000 ft: 16 ÷ 2.5 × 1,000 = 6,400 ft AGL. (The cruder ÷3 rule gives about 5,300 ft.)"
+  references: ["PMTC 2.3"]
+  difficulty: 2
+- id: PMTC-024
+  kind: numeric
+  elements: ["PMTC 2.3.1", "PMTC 2.2.2"]
+  stem: "Unsaturated air at 30 °C at the surface is forced to rise to 4,000 ft without reaching its dew point. Using the dry adiabatic lapse rate, what is its temperature at 4,000 ft? (°C)"
+  answer: 18
+  tolerance: 0
+  unit: "°C"
+  explanation: "Unsaturated air cools at the DALR of 3 °C per 1,000 ft: 4 × 3 = 12 °C, so 30 − 12 = 18 °C."
+  references: ["PMTC 2.3", "PMTC 2.2"]
+  difficulty: 2
+- id: PMTC-025
+  kind: mcq
+  elements: ["PMTC 2.3.1"]
+  stem: "Moist westerly air flowing up the Darling Scarp forms a layer of stratus on the ridge. The lifting process is:"
+  options:
+    - "Convection"
+    - "Orographic lifting"
+    - "Frontal lifting"
+    - "Radiation cooling"
+  answer: 1
+  explanation: "Air forced up rising ground is orographic lifting. Stable air lifted this way gives layer cloud (cap cloud, stratus) on the windward slope and summit. Convection is lifting by surface heating; frontal lifting occurs at an air mass boundary; radiation cooling is not lifting at all."
+  references: ["PMTC 2.3"]
+  difficulty: 1
+# 2.4 Visibility
+- id: PMTC-026
+  kind: mcq
+  elements: ["PMTC 2.4.1"]
+  stem: "In a TAF the visibility group 9999 means:"
+  options:
+    - "Visibility 9,999 m exactly"
+    - "Visibility 10 km or more"
+    - "Visibility not reported"
+    - "Visibility 9 nm"
+  answer: 1
+  explanation: "9999 is the code for 10 km or more. Visibility in TAFs and METARs is in metres; values below 10 km are given directly, for example 4000."
+  references: ["PMTC 2.4", "RMTC 2.2"]
+  difficulty: 1
+- id: PMTC-027
+  kind: mcq
+  elements: ["PMTC 2.4.1"]
+  stem: "Flying below 10,000 ft in Class G, you can first recognise a town ahead only when the chart shows it is 2 nm away. The flight visibility is about:"
+  options:
+    - "More than 5,000 m, so VMC"
+    - "About 3,700 m (2 nm), below the 5,000 m VMC minimum"
+    - "About 1,850 m, but VMC because you are clear of cloud"
+    - "Impossible to judge in flight"
+  answer: 1
+  explanation: "You first recognise the town when it is 2 nm away, so flight visibility is about 2 nm, roughly 3,700 m. The minimum below 10,000 ft is 5,000 m (about 2.7 nm), so conditions are below VMC regardless of cloud clearance. Measuring the distance to recognisable features is the standard in-flight method."
+  references: ["PMTC 2.4", "Part 91 MOS chapter 2"]
+  difficulty: 2
+- id: PMTC-028
+  kind: mcq
+  elements: ["PMTC 2.4.2"]
+  stem: "Radiation fog is most likely to form:"
+  options:
+    - "On a cloudy, windy winter night over the sea"
+    - "On a clear night with a light wind (about 2 to 8 kt) and moist air over land"
+    - "On a hot afternoon with strong convection"
+    - "In dead calm conditions with a large temperature/dew point spread"
+  answer: 1
+  explanation: "Radiation fog needs the ground to lose heat to a clear sky, moist air with a small dew point spread, and a light wind to spread the cooling through a shallow layer. Cloud cover stops the cooling, strong wind mixes it into stratus, dead calm gives only dew or frost, and it does not form over the sea because the water's temperature hardly changes overnight."
+  references: ["PMTC 2.4"]
+  difficulty: 1
+- id: PMTC-029
+  kind: mcq
+  elements: ["PMTC 2.4.2"]
+  stem: "Fog lies over a coastal aerodrome all day despite sunshine, with a 12 kt onshore wind. It is most likely to be:"
+  options:
+    - "Radiation fog, which will clear by mid-morning"
+    - "Advection (sea) fog, which will clear only when the wind direction or air mass changes"
+    - "Steaming fog, which clears in a few minutes"
+    - "Frontal fog ahead of a cold front"
+  answer: 1
+  explanation: "Advection fog forms when moist air moves over a colder surface, so it can exist with moderate wind and persists through the day; sunshine does little, especially when the fog is fed from the sea. It clears when the wind changes direction or a different air mass arrives. Radiation fog needs light wind and burns off after sunrise."
+  references: ["PMTC 2.4"]
+  difficulty: 2
+- id: PMTC-030
+  kind: mcq
+  elements: ["PMTC 2.4.2"]
+  stem: "A METAR reports BR with visibility 3000. BR means:"
+  options:
+    - "Mist: visibility between 1,000 and 5,000 m in moist air"
+    - "Blowing rain"
+    - "Fog: visibility below 1,000 m"
+    - "Haze: dry particles"
+  answer: 0
+  explanation: "BR is mist (from the French brume): visibility 1,000 to 5,000 m with high humidity. FG is fog (below 1,000 m), HZ is haze (dry particles), FU smoke, DU dust. 3,000 m is below the 5,000 m VMC minimum."
+  references: ["PMTC 2.4", "RMTC 2.2"]
+  difficulty: 1
+- id: PMTC-031
+  kind: mcq
+  elements: ["PMTC 2.4.2"]
+  stem: "Visibility is generally poorest in:"
+  options:
+    - "Unstable air between showers"
+    - "Stable air under an inversion, where haze, smoke and dust are trapped"
+    - "Cold maritime polar air behind a cold front"
+    - "The stratosphere"
+  answer: 1
+  explanation: "An inversion stops vertical mixing, so pollutants and moisture build up below it. Unstable air mixes particles away and gives good visibility outside showers; the showery air behind a cold front is the classic example."
+  references: ["PMTC 2.4", "PMTC 2.2"]
+  difficulty: 1
+# 2.5 Winds
+- id: PMTC-032
+  kind: mcq
+  elements: ["PMTC 2.5.1"]
+  stem: "In the southern hemisphere, the wind above the friction layer blows:"
+  options:
+    - "Clockwise around a high and anticlockwise around a low"
+    - "Clockwise around a low and anticlockwise around a high, roughly parallel to the isobars"
+    - "Directly from high to low across the isobars"
+    - "Clockwise around both highs and lows"
+  answer: 1
+  explanation: "The pressure gradient force pushes air towards low pressure and the Coriolis force deflects it to the left in the southern hemisphere. The balance gives flow parallel to the isobars, clockwise around lows and anticlockwise around highs. The northern hemisphere is the reverse."
+  references: ["PMTC 2.5"]
+  difficulty: 1
+- id: PMTC-033
+  kind: mcq
+  elements: ["PMTC 2.5.1"]
+  stem: "Flying in the southern hemisphere with a steady easterly wind at your back, Buys Ballot's law places the area of low pressure:"
+  options:
+    - "To the north"
+    - "To the south"
+    - "Ahead, to the west"
+    - "Behind, to the east"
+  answer: 0
+  explanation: "Southern hemisphere: back to the wind, low on the right. With an easterly wind at your back you face west, and your right hand points north. So pressure is lower to the north."
+  references: ["PMTC 2.5"]
+  difficulty: 2
+- id: PMTC-034
+  kind: mcq
+  elements: ["PMTC 2.5.1"]
+  stem: "On a synoptic chart, closely spaced isobars indicate:"
+  options:
+    - "Light winds"
+    - "A strong pressure gradient and strong winds"
+    - "High pressure"
+    - "Fog"
+  answer: 1
+  explanation: "The closer the isobars, the steeper the pressure gradient and the stronger the pressure gradient force, so the wind is stronger. Widely spaced isobars mean light winds."
+  references: ["PMTC 2.5"]
+  difficulty: 1
+- id: PMTC-035
+  kind: mcq
+  elements: ["PMTC 2.5.2"]
+  stem: "The wind changes from 270° to 230°. This change is described as:"
+  options:
+    - "Veering"
+    - "Backing"
+    - "Gusting"
+    - "A squall"
+  answer: 1
+  explanation: "An anticlockwise change of direction (270 to 230) is backing; clockwise is veering. The definitions are the same in both hemispheres. A gust is a brief speed increase; a squall is a sudden, sustained speed increase."
+  references: ["PMTC 2.5"]
+  difficulty: 1
+- id: PMTC-036
+  kind: mcq
+  elements: ["PMTC 2.5.2"]
+  stem: "What distinguishes a squall from a gust?"
+  options:
+    - "A squall is a brief increase lasting a few seconds; a gust lasts at least a minute."
+    - "A squall is a sudden increase of at least 16 kt to 22 kt or more, lasting at least one minute; a gust is a brief fluctuation of a few seconds."
+    - "Squalls occur only at night."
+    - "There is no difference."
+  answer: 1
+  explanation: "Gusts are short-lived turbulent fluctuations in speed. A squall is a sudden increase of at least 16 kt, reaching 22 kt or more and lasting at least a minute, usually with a direction change, temperature drop and heavy rain at a cold front or thunderstorm."
+  references: ["PMTC 2.5"]
+  difficulty: 2
+- id: PMTC-037
+  kind: mcq
+  elements: ["PMTC 2.5.3"]
+  stem: "Over land in the southern hemisphere the 2,000 ft gradient wind is 270/30. The surface wind is most likely to be about:"
+  options:
+    - "240/15"
+    - "300/15"
+    - "270/40"
+    - "240/40"
+  answer: 1
+  explanation: "Friction slows the surface wind, which weakens Coriolis, so the pressure gradient turns the wind towards low pressure. In the southern hemisphere (low on the right with your back to the wind) that is a clockwise turn: the surface wind is veered about 30° over land and reduced to about half to two-thirds. 240/15 is the northern hemisphere answer."
+  references: ["PMTC 2.5", "BoM, Interpreting the gradient level wind analysis"]
+  difficulty: 3
+- id: PMTC-038
+  kind: mcq
+  elements: ["PMTC 2.5.4"]
+  stem: "Over land on a clear day, the surface wind is typically strongest:"
+  options:
+    - "Around dawn"
+    - "In the early to mid afternoon"
+    - "Around midnight"
+    - "It does not vary"
+  answer: 1
+  explanation: "Daytime heating makes the lower air unstable, and thermals mix the stronger gradient-level wind down to the surface, so the surface wind increases (and backs towards the gradient direction in the southern hemisphere), peaking in the early afternoon. At night an inversion decouples the surface and the wind drops, lightest around dawn."
+  references: ["PMTC 2.5"]
+  difficulty: 1
+- id: PMTC-039
+  kind: mcq
+  elements: ["PMTC 2.5.4"]
+  stem: "Which factor would reduce the diurnal variation of surface wind?"
+  options:
+    - "Clear skies"
+    - "A dry, bare inland surface"
+    - "Overcast skies or flight over the sea"
+    - "Strong summer sunshine"
+  answer: 2
+  explanation: "The daily swing comes from heating by day and cooling at night. Cloud cover reduces both, and the sea's temperature barely changes in a day, so over the sea or under overcast the surface wind varies little. Clear skies, strong sun and dry ground make the variation larger."
+  references: ["PMTC 2.5"]
+  difficulty: 2
+# 2.6 Air masses and fronts
+- id: PMTC-040
+  kind: mcq
+  elements: ["PMTC 2.6.1", "PMTC 2.6.2"]
+  stem: "As a typical cold front passes Perth in winter, the surface wind and temperature change from:"
+  options:
+    - "North-westerly and warm to south-westerly and colder (wind backs)"
+    - "South-westerly and cold to north-westerly and warmer (wind veers)"
+    - "Easterly and warm to westerly and warmer"
+    - "North-westerly to north-easterly with no temperature change"
+  answer: 0
+  explanation: "Ahead of a southern hemisphere cold front the wind is north-westerly, strengthening, and relatively warm. Behind it the wind is south-westerly and the air is colder. North-west to south-west is an anticlockwise change: the wind backs. In the northern hemisphere the wind veers at a cold front."
+  references: ["PMTC 2.6"]
+  difficulty: 2
+- id: PMTC-041
+  kind: mcq
+  elements: ["PMTC 2.6.1", "PMTC 2.6.2"]
+  stem: "The cloud sequence Ci, Cs, As, Ns with steadily lowering bases and long periods of continuous rain indicates the approach of:"
+  options:
+    - "A cold front"
+    - "A warm front"
+    - "A tropical cyclone"
+    - "A high pressure system"
+  answer: 1
+  explanation: "At a warm front warm air rises slowly over a shallow wedge of cold air, so the cloud is layered and extends far ahead of the surface front: cirrus, then cirrostratus, altostratus and nimbostratus, with continuous rain, poor visibility and possible frontal fog. The air is mostly stable, though Cb may be embedded."
+  references: ["PMTC 2.6"]
+  difficulty: 1
+- id: PMTC-042
+  kind: mcq
+  elements: ["PMTC 2.6.1"]
+  stem: "An occluded front is particularly hazardous to a VFR pilot because:"
+  options:
+    - "It always gives clear skies and strong winds"
+    - "It combines widespread layer cloud and rain with cumulonimbus that may be embedded and hidden"
+    - "It brings radiation fog"
+    - "It produces only high cloud"
+  answer: 1
+  explanation: "When the cold front overtakes the warm front the warm air is lifted off the surface. The weather combines warm-front layer cloud, rain, low cloud and icing with cold-front instability, so Cb can be embedded in the layer cloud and invisible until you are in it."
+  references: ["PMTC 2.6"]
+  difficulty: 2
+- id: PMTC-043
+  kind: mcq
+  elements: ["PMTC 2.6.1"]
+  stem: "Which set of conditions favours tropical cyclone formation?"
+  options:
+    - "Sea surface temperature at least about 26.5 °C, at least about 5° from the equator, weak vertical wind shear"
+    - "Cold sea, directly over the equator, strong wind shear"
+    - "Over the inland in winter"
+    - "Any sea temperature, as long as the air is stable"
+  answer: 0
+  explanation: "A cyclone draws its energy from warm water (about 26.5 °C or more), needs Coriolis to start the rotation (so not within about 5° of the equator) and needs low shear so the storm column is not torn apart. In WA the season is November to April and the Pilbara coast is most affected; circulation is clockwise."
+  references: ["PMTC 2.6"]
+  difficulty: 2
+- id: PMTC-044
+  kind: mcq
+  elements: ["PMTC 2.6.1", "PMTC 2.6.2"]
+  stem: "Typical flying weather near the equatorial (monsoon) trough over northern Australia in summer is:"
+  options:
+    - "Strong steady winds, stable layer cloud, drizzle"
+    - "Light variable winds with Cu and Cb, heavy showers and thunderstorms, high freezing level"
+    - "Clear skies and frost"
+    - "Dust storms and dry cold air"
+  answer: 1
+  explanation: "The trough is a zone of convergence in hot, humid, unstable air, so it produces Cu and Cb, heavy showers and storms, with light and variable winds near the axis (squally near storms). The freezing level is high in the tropics."
+  references: ["PMTC 2.6"]
+  difficulty: 2
+- id: PMTC-045
+  kind: mcq
+  elements: ["PMTC 2.6.2"]
+  stem: "Cold maritime polar air moving over a warmer sea surface becomes:"
+  options:
+    - "More stable, with fog and drizzle"
+    - "Unstable, with cumulus, showers and good visibility between them"
+    - "Unchanged"
+    - "Drier and cloudless"
+  answer: 1
+  explanation: "Heating from below steepens the lapse rate, so the air becomes unstable: Cu and Cb, showers, gusty winds and turbulence, with good visibility outside the showers. Warm air over a cold surface does the opposite: stable, with stratus, drizzle and fog."
+  references: ["PMTC 2.6"]
+  difficulty: 2
+- id: PMTC-046
+  kind: mcq
+  elements: ["PMTC 2.6.1"]
+  stem: "In the warm sector of a wave depression, typical weather is:"
+  options:
+    - "Cold unstable air with hail"
+    - "Warm, humid, stable air: low stratus, drizzle and poor visibility"
+    - "Clear skies and excellent visibility"
+    - "Thunderstorms in a narrow line only"
+  answer: 1
+  explanation: "The warm sector, between the warm front and the cold front, contains maritime tropical air that is being cooled from below as it moves poleward over cooler water: stable, with low St, drizzle, mist and poor visibility."
+  references: ["PMTC 2.6"]
+  difficulty: 2
+# 2.7 Flight considerations
+- id: PMTC-047
+  kind: mcq
+  elements: ["PMTC 2.7.1"]
+  stem: "Which conditions favour mountain waves downwind of a ridge?"
+  options:
+    - "Unstable air and a light wind parallel to the ridge"
+    - "Stable air and a strong wind (about 20 kt or more) roughly perpendicular to the ridge, increasing with height"
+    - "Calm conditions at night"
+    - "Any wind over flat ground"
+  answer: 1
+  explanation: "Stable air disturbed by a ridge oscillates downwind as a standing wave. It needs a strong wind across the ridge that increases with height with little change of direction. Lenticular cloud at the crests and rotor cloud below them are the visible signs; the hazards are strong down-draughts and severe rotor turbulence in the lee."
+  references: ["PMTC 2.7"]
+  difficulty: 2
+- id: PMTC-048
+  kind: mcq
+  elements: ["PMTC 2.7.1"]
+  stem: "Which stage of a thunderstorm begins when precipitation reaches the ground, and is the most hazardous?"
+  options:
+    - "Cumulus stage"
+    - "Mature stage"
+    - "Dissipating stage"
+    - "Anvil stage"
+  answer: 1
+  explanation: "In the mature stage updraughts and down-draughts exist side by side, rain and hail reach the ground, and lightning, gust fronts, microbursts and severe turbulence are at their worst. The cumulus stage has only updraughts; the dissipating stage only down-draughts."
+  references: ["PMTC 2.7"]
+  difficulty: 1
+- id: PMTC-049
+  kind: mcq
+  elements: ["PMTC 2.7.1"]
+  stem: "On final approach near a thunderstorm you notice a sudden increase in airspeed and the aeroplane rising above the glidepath. The best action is:"
+  options:
+    - "Reduce power to regain the glidepath"
+    - "Go around immediately with full power, expecting a down-draught and tailwind to follow"
+    - "Lower full flap and continue"
+    - "Continue; a headwind gain is always favourable"
+  answer: 1
+  explanation: "A microburst first gives a headwind (airspeed gain), then a strong down-draught, then a tailwind (airspeed loss) close to the ground. Reducing power for the gain leaves the aeroplane low and slow when the loss arrives. Go around early at full power and stay clear of the storm."
+  references: ["PMTC 2.7", "RMTC 2.3"]
+  difficulty: 2
+- id: PMTC-050
+  kind: mcq
+  elements: ["PMTC 2.7.1"]
+  stem: "A line of cumulus forming parallel to the coast a few kilometres inland in the early afternoon, with a change from a light easterly to a fresh south-westerly at Jandakot, indicates:"
+  options:
+    - "A land breeze"
+    - "The sea breeze front (the Fremantle Doctor) moving inland"
+    - "A katabatic wind"
+    - "A warm front"
+  answer: 1
+  explanation: "By day the land heats faster than the sea and cool sea air flows inland. Its leading edge is a convergence line marked by cumulus, wind shear and turbulence. In Perth the south-westerly summer sea breeze is the Fremantle Doctor; expect a runway change and crosswind when it arrives. A land breeze blows offshore at night."
+  references: ["PMTC 2.7", "PMTC 2.5"]
+  difficulty: 1
+- id: PMTC-051
+  kind: mcq
+  elements: ["PMTC 2.7.1"]
+  stem: "Clear ice is most likely when flying through:"
+  options:
+    - "Stratus at −15 °C"
+    - "Large supercooled drops in cumulus or freezing rain between about 0 and −10 °C"
+    - "Clear air at −30 °C"
+    - "Cirrus cloud"
+  answer: 1
+  explanation: "Large supercooled drops freeze slowly, spreading back over the surface before they freeze, forming heavy, hard, transparent clear ice. Small drops in stratiform cloud at colder temperatures freeze instantly as rime. Cirrus is ice crystals, which do not stick, and clear air gives no structural ice."
+  references: ["PMTC 2.7"]
+  difficulty: 2
+- id: PMTC-052
+  kind: mcq
+  elements: ["PMTC 2.7.2"]
+  stem: "Under the Part 91 MOS, when must the pilot in command of a VFR flight study authorised weather forecasts and reports?"
+  options:
+    - "Only for flights beyond 50 nm"
+    - "Before every flight, for the route, departure, destination and any alternate, with an update if studied more than 1 hour before departure"
+    - "Only for flights in controlled airspace"
+    - "Only when the weather looks doubtful"
+  answer: 1
+  explanation: "Part 91 MOS chapter 7 requires authorised forecasts and reports to be studied before the flight, and updated if they were studied more than an hour before. The only relief is when no forecast is available and the weather allows a return to land at the departure aerodrome within 1 hour; a destination forecast must then be obtained within 30 minutes of take-off or the aircraft must return."
+  references: ["PMTC 2.7", "Part 91 MOS 7.02 and 7.03"]
+  difficulty: 2
+- id: PMTC-053
+  kind: mcq
+  elements: ["PMTC 2.7.3"]
+  stem: "METAR YBLN 140300Z 21012KT 9999 FEW035 22/14 Q1019. For a Class G arrival below 3,000 ft AMSL, this report shows:"
+  options:
+    - "Below VMC because of the cloud"
+    - "VMC: visibility 10 km or more, few cloud at 3,500 ft above the aerodrome"
+    - "VMC only with a special VFR clearance"
+    - "Below VMC because the dew point is 14"
+  answer: 1
+  explanation: "9999 is 10 km or more (above 5,000 m) and FEW035 is 1 to 2 oktas at 3,500 ft above the aerodrome, well above the circuit. Wind 210° true at 12 kt, temperature 22, dew point 14, QNH 1019. Conditions are comfortably VMC."
+  references: ["PMTC 2.7", "RMTC 2.2"]
+  difficulty: 1
+- id: PMTC-054
+  kind: mcq
+  elements: ["PMTC 2.7.3"]
+  stem: "TAF YPKG 030500Z 0306/0318 25015G25KT 9999 SCT040 TEMPO 0308/0312 2000 DS. For a VFR arrival at 0930 UTC, the TEMPO group means:"
+  options:
+    - "Dust storm conditions with 2,000 m visibility will last the whole period"
+    - "There may be periods of less than an hour of 2,000 m visibility in dust storm, below VMC, between 0800 and 1200 UTC"
+    - "The dust storm will start at 0800 and conditions improve permanently from 1200"
+    - "There is a 20 percent chance of dust"
+  answer: 1
+  explanation: "TEMPO is temporary fluctuations lasting less than an hour at a time within the period given. 2000 DS is 2,000 m in dust storm, below the 5,000 m VMC minimum. The 0930 ETA is inside the TEMPO period, so plan to arrive outside it, delay, or carry the holding fuel and alternate the rules require."
+  references: ["PMTC 2.7", "RMTC 2.2"]
+  difficulty: 2
+- id: PMTC-055
+  kind: mcq
+  elements: ["PMTC 2.7.3"]
+  stem: "A TTF (trend forecast) attached to a METAR at a major aerodrome:"
+  options:
+    - "Is valid for 24 hours and is advisory only"
+    - "Is valid for 3 hours from the observation and supersedes the TAF for that period"
+    - "Applies only to IFR flights"
+    - "Gives area forecasts for the route"
+  answer: 1
+  explanation: "The TTF is a 3-hour trend appended to the routine report at major aerodromes, and for its validity it replaces the TAF as the aerodrome forecast."
+  references: ["PMTC 2.7", "AIP GEN 3.5"]
+  difficulty: 2
+- id: PMTC-056
+  kind: mcq
+  elements: ["PMTC 2.7.3"]
+  stem: "A GAF subdivision gives cloud BKN 1500/8000 FT. A TAF for an aerodrome of elevation 1,000 ft in that area gives BKN015. Comparing the two:"
+  options:
+    - "Both give the base at 1,500 ft AMSL"
+    - "The GAF base is 1,500 ft AMSL (500 ft above the aerodrome); the TAF base is 1,500 ft above the aerodrome (2,500 ft AMSL)"
+    - "Both give the base 1,500 ft above ground"
+    - "The GAF is in metres"
+  answer: 1
+  explanation: "GAF cloud heights are above mean sea level, while TAF and METAR cloud heights are above aerodrome level. Mixing the two up on an elevated aerodrome gives an error equal to the elevation."
+  references: ["PMTC 2.7", "RMTC 2.2"]
+  difficulty: 3
+- id: PMTC-057
+  kind: mcq
+  elements: ["PMTC 2.7.3"]
+  stem: "METAR YBLN 140900Z 27020G32KT 4000 SHRA BKN012 SCT030CB 15/13 Q1006. For a VFR arrival in Class G:"
+  options:
+    - "VMC, because the cloud is above 1,000 ft"
+    - "Below VMC: visibility 4,000 m is less than the 5,000 m minimum, with showers and Cb in the area"
+    - "VMC, because the wind is from the west"
+    - "Below VMC only because of the gusts"
+  answer: 1
+  explanation: "Visibility 4000 is 4,000 m, below the 5,000 m VMC minimum whatever the cloud. Also present: rain showers, broken cloud at 1,200 ft, Cb, and a gusty westerly: post-frontal conditions. Hold off or divert until a later report shows improvement."
+  references: ["PMTC 2.7", "RMTC 2.2"]
+  difficulty: 2
+- id: PMTC-058
+  kind: mcq
+  elements: ["PMTC 2.7.4"]
+  stem: "Which encounter requires a special AIREP?"
+  options:
+    - "Light turbulence in cumulus"
+    - "Severe turbulence"
+    - "A wind 5 kt stronger than forecast"
+    - "Light rain"
+  answer: 1
+  explanation: "A special AIREP is required for severe turbulence, severe icing, severe mountain wave, significant thunderstorms (obscured, embedded, widespread or in squall lines, with or without hail), heavy dust or sand storm, and volcanic ash or pre-eruption volcanic activity. Light conditions and small differences from forecast do not require one."
+  references: ["PMTC 2.7", "AIP GEN 3.5"]
+  difficulty: 1
+- id: PMTC-059
+  kind: mcq
+  elements: ["PMTC 2.7.4"]
+  stem: "Which of the following is NOT on the list of conditions requiring a special AIREP?"
+  options:
+    - "Severe icing"
+    - "Severe mountain wave"
+    - "Heavy dust storm"
+    - "Scattered fair-weather cumulus"
+  answer: 3
+  explanation: "Fair-weather cumulus is normal weather. Severe icing, severe mountain wave, heavy dust or sand storm, severe turbulence, significant thunderstorms and volcanic ash all require a special AIREP."
+  references: ["PMTC 2.7", "AIP GEN 3.5"]
+  difficulty: 1

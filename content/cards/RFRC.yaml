@@ -1,0 +1,145 @@
+# RFRC flashcards.
+- id: RFRC-C001
+  elements: ["RFRC 2.1.1"]
+  front: "Why keep a logbook, and what goes in each entry?"
+  back: "Legal evidence of experience and recency. Date, aircraft type and registration, PIC and your role, route, flight time by day/night and dual/solo/command, instrument time, signatures for tests and reviews."
+- id: RFRC-C002
+  elements: ["RFRC 2.1.2"]
+  front: "Where are the VFR operating rules, aerodrome data and licence privileges found?"
+  back: "Rules: CASR Part 91 and its MOS (VFRG summary). Aerodrome data and PRD: ERSA. Licences: CASR Part 61."
+- id: RFRC-C003
+  elements: ["RFRC 2.1.3"]
+  front: "What is the maintenance release?"
+  back: "The document certifying the aircraft is airworthy for a stated period (typically 100 hours or 12 months), with maintenance due, daily inspection certifications and defect endorsements."
+- id: RFRC-C004
+  elements: ["RFRC 2.2.1"]
+  front: "RPL(A) basic limits?"
+  back: "Single-engine aeroplane up to 1,500 kg MTOW, day VFR, private or training, within 25 nm (unless navigation endorsement), no controlled airspace or controlled aerodromes without the endorsements."
+- id: RFRC-C005
+  elements: ["RFRC 2.2.2"]
+  front: "Recency to carry passengers? Flight review interval?"
+  back: "3 take-offs and 3 landings in the previous 90 days. Flight review every 24 months."
+- id: RFRC-C006
+  elements: ["RFRC 2.2.3"]
+  front: "RAMPC limits?"
+  back: "Single-engine piston up to 1,500 kg, day VFR, below 10,000 ft, private, no aerobatics, no more than 1 passenger."
+- id: RFRC-C007
+  elements: ["RFRC 2.2.4"]
+  front: "What may a pilot sign on the maintenance release?"
+  back: "The daily inspection (if authorised), flight time, and defect endorsements. A pilot cannot issue a maintenance release or clear a defect."
+- id: RFRC-C008
+  elements: ["RFRC 2.3.1"]
+  front: "Rules of the air: converging, head-on, overtaking, landing?"
+  back: "Converging: give way to the aircraft on your right. Head-on: both turn right. Overtaking: overtaken has right of way, overtaker turns right. Landing: lower aircraft has right of way but must not cut in."
+- id: RFRC-C009
+  elements: ["RFRC 2.3.1"]
+  front: "Turn after take-off not below? Circuit height?"
+  back: "500 ft above aerodrome level. Standard circuit height 1,000 ft above aerodrome level for light aeroplanes."
+- id: RFRC-C010
+  elements: ["RFRC 2.3.1"]
+  front: "Take-off separation at a non-controlled aerodrome?"
+  back: "Preceding aircraft has landed and vacated, or crossed the upwind end, or commenced a turn, or is airborne 1,800 m ahead (600 m if both aircraft are under 2,000 kg)."
+- id: RFRC-C011
+  elements: ["RFRC 2.3.1"]
+  front: "VMC below 10,000 ft: Class C/D/E and Class G above 3,000 ft AMSL or 1,000 ft AGL?"
+  back: "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+- id: RFRC-C012
+  elements: ["RFRC 2.3.1"]
+  front: "VMC in Class G at or below 3,000 ft AMSL / 1,000 ft AGL?"
+  back: "5,000 m visibility, clear of cloud, in sight of ground or water."
+- id: RFRC-C013
+  elements: ["RFRC 2.3.1"]
+  front: "Altimeter setting below 10,000 ft and the VFR cruising levels?"
+  back: "QNH (local within 100 nm or area QNH). Above 5,000 ft: tracks 000-179 odd thousands + 500; 180-359 even thousands + 500."
+- id: RFRC-C014
+  elements: ["RFRC 2.3.2"]
+  front: "Alcohol rule?"
+  back: "No flying within 8 hours of drinking, never under the influence, blood alcohol limit 0.02 g/100 mL."
+- id: RFRC-C015
+  elements: ["RFRC 2.3.3"]
+  front: "Light signals to an aircraft in flight?"
+  back: "Steady green: cleared to land. Steady red: give way, keep circling. Green flashes: return for landing. Red flashes: aerodrome unsafe, do not land. White flashes: land here and go to the apron."
+- id: RFRC-C016
+  elements: ["RFRC 2.3.3"]
+  front: "Light signals to an aircraft on the ground?"
+  back: "Steady green: cleared for take-off. Steady red: stop. Green flashes: cleared to taxi. Red flashes: taxi clear of the landing area. White flashes: return to starting point."
+- id: RFRC-C017
+  elements: ["RFRC 2.3.4"]
+  front: "Minimum heights?"
+  back: "Populous area or public gathering: 1,000 ft above the highest obstacle within 600 m. Elsewhere: 500 ft AGL and 500 ft from any person, vessel, vehicle or structure."
+- id: RFRC-C018
+  elements: ["RFRC 2.3.5"]
+  front: "Aerobatics minimum height and restrictions?"
+  back: "Not below 3,000 ft AGL unless approved; certified aircraft, day VMC, endorsement held; never over populous areas or public gatherings."
+- id: RFRC-C019
+  elements: ["RFRC 2.3.6"]
+  front: "Daylight planning rule for VFR?"
+  back: "Plan to land at least 10 minutes before last light, allowing for holding."
+- id: RFRC-C020
+  elements: ["RFRC 2.4.1"]
+  front: "Who may not carry passengers?"
+  back: "Student pilots solo; pilots without 3 take-offs and landings in 90 days; test and some ferry flights; RAMPC holders beyond 1 passenger."
+- id: RFRC-C021
+  elements: ["RFRC 2.4.2"]
+  front: "Passenger briefing items?"
+  back: "Seat belts and when to wear them, exits, smoking, emergency equipment, brace position, follow the pilot's instructions."
+- id: RFRC-C022
+  elements: ["RFRC 2.4.2"]
+  front: "Refuelling precautions?"
+  back: "No smoking or naked flames, engines off, aircraft bonded to the bowser, fire extinguisher at hand, passengers off or supervised, no HF or radar transmissions, caps secure and drain check afterwards."
+- id: RFRC-C023
+  elements: ["RFRC 2.4.3"]
+  front: "When must seat belts be worn?"
+  back: "Take-off, landing, below 1,000 ft AGL, in turbulence, and when the PIC directs. PIC harness fastened at all times."
+- id: RFRC-C024
+  elements: ["RFRC 2.4.3"]
+  front: "When is a fuel drain check required?"
+  back: "Before the first flight of the day and after each refuelling, after letting the fuel settle."
+- id: RFRC-C025
+  elements: ["RFRC 2.5.1"]
+  front: "Colour of runway markings? Taxiway markings?"
+  back: "Runway: white. Taxiway: yellow. Mandatory signs red with white letters; information signs yellow with black letters."
+- id: RFRC-C026
+  elements: ["RFRC 2.5.2"]
+  front: "Circuit legs in order from take-off?"
+  back: "Upwind, crosswind, downwind, base, final. Dead side is the side opposite the circuit."
+- id: RFRC-C027
+  elements: ["RFRC 2.5.3"]
+  front: "White cross on the movement area?"
+  back: "Unserviceable: do not use that runway, taxiway or area."
+- id: RFRC-C028
+  elements: ["RFRC 2.5.4"]
+  front: "Cone markers versus gable markers?"
+  back: "Cones: runway (landing area) edges. Gables: runway strip boundary."
+- id: RFRC-C029
+  elements: ["RFRC 2.5.4"]
+  front: "Double white cross beside the windsock?"
+  back: "Gliding operations in progress."
+- id: RFRC-C030
+  elements: ["RFRC 2.6.1"]
+  front: "Which airspace classes are controlled, and where does VFR need a clearance?"
+  back: "A, C, D, E are controlled; G is not. VFR needs a clearance in C and D (A is IFR only); not in E, but E has controlled-airspace VMC minima."
+- id: RFRC-C031
+  elements: ["RFRC 2.6.2"]
+  front: "How do you know if a control zone or restricted area is active?"
+  back: "ERSA hours (aerodrome entry or PRD section), charts for the boundaries, NOTAMs for changes, and call the controlling authority if in doubt."
+- id: RFRC-C032
+  elements: ["RFRC 2.7.1"]
+  front: "Aircraft flashing its landing or navigation lights repeatedly?"
+  back: "It is in difficulty and compelled to land. Give way."
+- id: RFRC-C033
+  elements: ["RFRC 2.7.2"]
+  front: "Accident versus incident?"
+  back: "Accident: death or serious injury, serious structural damage, or missing aircraft. Incident: any other occurrence affecting safety; serious incident is a near-accident."
+- id: RFRC-C034
+  elements: ["RFRC 2.7.3"]
+  front: "Reporting an accident or serious incident?"
+  back: "To the ATSB immediately by phone (1800 011 034), then a written report within 72 hours. Routine reportable matters: written within 72 hours."
+- id: RFRC-C035
+  elements: ["RFRC 2.7.4"]
+  front: "SARTIME?"
+  back: "A nominated UTC time by which you report arrival; extend before it expires, cancel on landing, or SAR action begins."
+- id: RFRC-C036
+  elements: ["RFRC 2.7.5"]
+  front: "Document containing emergency procedures?"
+  back: "ERSA EMERG section (pink pages); fuller text in AIP GEN 3.6 and ENR 1.14."

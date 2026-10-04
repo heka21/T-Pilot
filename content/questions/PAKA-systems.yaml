@@ -1,0 +1,128 @@
+# PAKA 2.x: propellers and aircraft systems.
+- id: PAKA-S001
+  kind: mcq
+  elements: ["PAKA 2.1.1"]
+  stem: "In an aeroplane with a fixed-pitch propeller, with the throttle unchanged, lowering the nose to descend will cause the RPM to:"
+  options: ["Decrease", "Increase", "Remain constant", "Fluctuate, then return to the original value"]
+  answer: 1
+  explanation: "Higher airspeed reduces the blade angle of attack, so the propeller absorbs less torque and the engine speeds up. A constant-speed propeller would hold RPM; a fixed-pitch one cannot."
+  references: ["PAKA 2.1"]
+  difficulty: 1
+- id: PAKA-S002
+  kind: mcq
+  elements: ["PAKA 2.1.1"]
+  stem: "The correct response to an RPM overspeed in a fixed-pitch aeroplane during a descent is to:"
+  options:
+    - "Apply carburettor heat."
+    - "Reduce power and raise the nose to reduce airspeed."
+    - "Lean the mixture fully."
+    - "Increase the descent angle to cool the engine."
+  answer: 1
+  explanation: "Closing the throttle reduces engine power and raising the nose reduces airspeed, which increases the blade angle of attack and loads the propeller. A steeper dive would make it worse."
+  references: ["PAKA 2.1"]
+  difficulty: 1
+- id: PAKA-S003
+  kind: mcq
+  elements: ["PAKA 2.1.1"]
+  stem: "Which is a likely cause of a fixed-pitch propeller overspeed?"
+  options: ["A climb at full power", "Carburettor icing", "Recovering from a spiral dive with power still applied", "A rich mixture at low altitude"]
+  answer: 2
+  explanation: "High airspeed with power on drives the RPM over the red line. A climb lowers RPM, and carburettor ice and an over-rich mixture reduce power and RPM."
+  references: ["PAKA 2.1"]
+  difficulty: 2
+- id: PAKA-S004
+  kind: mcq
+  elements: ["PAKA 2.1.1"]
+  stem: "After an inadvertent RPM exceedance above the red line, the pilot should:"
+  options:
+    - "Do nothing if the engine still runs normally."
+    - "Record it on the maintenance release so the engine can be assessed for inspection."
+    - "Reset the tachometer."
+    - "Report it only if it lasted over 10 minutes."
+  answer: 1
+  explanation: "Overspeed over-stresses the engine and propeller. The maintenance manual sets inspections depending on the magnitude and duration, so the exceedance must be recorded as a defect."
+  references: ["PAKA 2.1"]
+  difficulty: 2
+- id: PAKA-S005
+  kind: mcq
+  elements: ["PAKA 2.1.1"]
+  stem: "Why does a fine-pitch ('climb') fixed-pitch propeller reach its RPM limit sooner in cruise than a coarse ('cruise') propeller?"
+  options:
+    - "Its blades are heavier."
+    - "Its smaller blade angle means it absorbs less torque at high forward speed, so the engine turns faster."
+    - "It runs a richer mixture."
+    - "It has a governor."
+  answer: 1
+  explanation: "A fine-pitch blade reaches a low angle of attack as speed builds, offering little resistance, so the RPM rises quickly. A cruise propeller's larger blade angle loads the engine more at high speed."
+  references: ["PAKA 2.1"]
+  difficulty: 3
+- id: PAKA-S006
+  kind: mcq
+  elements: ["PAKA 2.2.1"]
+  stem: "A reed-type (pneumatic) stall warning operates by:"
+  options:
+    - "A vane on the leading edge closing a microswitch."
+    - "Low pressure at the leading edge at high angle of attack drawing air through a reed horn."
+    - "Pitot pressure falling below a set value."
+    - "An accelerometer sensing buffet."
+  answer: 1
+  explanation: "At high angle of attack the low pressure near the leading-edge opening sucks air through the reed, sounding the horn without electrical power. The vane type uses a microswitch and needs power."
+  references: ["PAKA 2.2"]
+  difficulty: 1
+- id: PAKA-S007
+  kind: mcq
+  elements: ["PAKA 2.2.1"]
+  stem: "The vane-type stall warning is lifted at high angle of attack because:"
+  options:
+    - "The stagnation point moves below and behind the vane, so airflow pushes it up."
+    - "Airspeed falls below a preset value."
+    - "The fuel flow decreases."
+    - "The pitot tube becomes blocked."
+  answer: 0
+  explanation: "As angle of attack increases, the stagnation point moves down and aft under the leading edge. Air then flows up past the vane, lifting it and closing the switch. It senses angle of attack, not airspeed."
+  references: ["PAKA 2.2"]
+  difficulty: 2
+- id: PAKA-S008
+  kind: mcq
+  elements: ["PAKA 2.2.1"]
+  stem: "The autopilot misbehaves and starts pitching the aeroplane up. The pilot's first action should be to:"
+  options:
+    - "Push forward firmly to overpower the autopilot."
+    - "Hold the control column firmly and disconnect the autopilot with the disconnect switch."
+    - "Change the autopilot to heading mode."
+    - "Reduce power to idle."
+  answer: 1
+  explanation: "Overpowering an engaged autopilot can cause its auto-trim to trim against you, creating a large out-of-trim force released at disconnect. Hold the controls and disconnect, then fly manually; use the circuit breaker if the disconnect fails."
+  references: ["PAKA 2.2"]
+  difficulty: 2
+- id: PAKA-S009
+  kind: mcq
+  elements: ["PAKA 2.2.1"]
+  stem: "An autopilot trim annunciator shows 'TRIM DN' (trim nose down needed). If the autopilot is disconnected now, the aeroplane will likely:"
+  options: ["Pitch nose up", "Pitch nose down", "Roll left", "Remain in balance"]
+  answer: 0
+  explanation: "The annunciator shows the elevator servo is holding a nose-down force because the aircraft is trimmed too nose-up. When the servo releases, the out-of-trim force pitches the nose up. Retrim before, or be ready at, disconnect."
+  references: ["PAKA 2.2"]
+  difficulty: 3
+- id: PAKA-S010
+  kind: mcq
+  elements: ["PAKA 2.2.1"]
+  stem: "Which is NOT a normal means of disconnecting a light-aircraft autopilot?"
+  options: ["The A/P disconnect button on the control wheel", "The autopilot circuit breaker", "The avionics master switch", "The magneto switch"]
+  answer: 3
+  explanation: "The control wheel disconnect, autopilot button, circuit breaker and avionics master all remove the autopilot. The magneto switch controls ignition and would stop the engine."
+  references: ["PAKA 2.2"]
+  difficulty: 1
+- id: PAKA-S011
+  kind: mcq
+  elements: ["PAKA 2.2.1"]
+  stem: "An autopilot heading (HDG) mode:"
+  options:
+    - "Holds altitude."
+    - "Turns the aeroplane to and holds the heading set on the heading bug."
+    - "Tracks a VOR radial with wind correction."
+    - "Keeps the wings level only."
+  answer: 1
+  explanation: "HDG follows the heading bug; NAV tracks a radial or GNSS course; ALT holds altitude; ROL (wing leveller) keeps the wings level."
+  references: ["PAKA 2.2"]
+  difficulty: 1

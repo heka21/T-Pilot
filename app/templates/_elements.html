@@ -1,0 +1,30 @@
+{# Macro: knowledge elements verbatim from Part 61 MOS Schedule 3. #}
+{% macro render_elements(elements) %}
+<ol class="elements">
+  {% for el in elements %}
+    <li id="el-{{ el.number | dom_id }}">
+      <code>{{ el.number }}</code>
+      <div class="min-w-0">
+        <span>{{ el.text }}</span>
+        {% if el.items %}
+          <ol class="element-items">
+            {% for item in el.items %}
+              <li><span class="label">({{ item.label }})</span> {{ item.text }}
+                {% if item.subitems %}
+                  <ol class="element-items pl-4">
+                    {% for sub in item.subitems %}
+                      <li><span class="label">({{ sub.label }})</span> {{ sub.text }}</li>
+                    {% endfor %}
+                  </ol>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </div>
+    </li>
+  {% else %}
+    <li class="text-fg-muted">No knowledge elements listed for this subtopic.</li>
+  {% endfor %}
+</ol>
+{% endmacro %}

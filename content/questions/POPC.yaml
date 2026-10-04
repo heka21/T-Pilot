@@ -1,0 +1,320 @@
+# POPC: PPL operations, performance and planning (all categories).
+- id: POPC-001
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "In loading system CHARLIE, one index unit equals:"
+  options: ["1 kg mm", "100 kg mm", "1,000 kg mm", "1 kg per mm"]
+  answer: 1
+  explanation: "CHARLIE defines 1 IU = 100 kg mm, so CG (mm) = IU × 100 ÷ weight (kg). Each system defines its own index unit; read the instructions page."
+  references: ["POPC 2.1", "Workbook p13"]
+  difficulty: 1
+- id: POPC-002
+  kind: numeric
+  elements: ["POPC 2.1.1"]
+  stem: "Loading system CHARLIE: total weight 1,050 kg, total index units 31,185. What is the centre of gravity in millimetres aft of the datum, to the nearest millimetre?"
+  answer: 2970
+  tolerance: 1
+  unit: mm
+  explanation: "CG = 31,185 × 100 ÷ 1,050 = 2,970 mm. Check it against the envelope at both ZFW and take-off weight."
+  references: ["POPC 2.1"]
+  difficulty: 2
+- id: POPC-003
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Why must the CG be checked at zero fuel weight as well as at take-off weight?"
+  options:
+    - "Because fuel is weightless."
+    - "Because burning fuel moves the CG, and the aircraft must remain within limits at every stage of flight including landing."
+    - "Because the exam requires two answers."
+    - "It need not be checked at ZFW."
+  answer: 1
+  explanation: "The fuel arm is rarely at the CG, so the CG moves as fuel burns. Checking ZFW and take-off weight brackets the flight."
+  references: ["POPC 2.1"]
+  difficulty: 1
+- id: POPC-004
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "A 45 kg toolbox with a base of 0.3 m by 0.25 m is placed on a compartment floor rated at 450 kg per square metre. The floor loading is:"
+  options: ["Within limits at 150 kg/m²", "Exceeded at 600 kg/m²", "Within limits at 45 kg/m²", "Not relevant for baggage"]
+  answer: 1
+  explanation: "Area = 0.075 m²; 45 ÷ 0.075 = 600 kg/m², above the 450 limit even though the compartment's weight limit may not be exceeded. Spread the load on a board."
+  references: ["POPC 2.1"]
+  difficulty: 2
+- id: POPC-005
+  kind: mcq
+  elements: ["POPC 2.1.1"]
+  stem: "Ramp weight is:"
+  options:
+    - "The weight on landing."
+    - "The take-off weight plus the fuel used for start, taxi and run-up."
+    - "The empty weight plus oil."
+    - "The maximum weight in the hangar."
+  answer: 1
+  explanation: "Ramp weight is the weight at engine start; some aircraft have a maximum ramp weight slightly above MTOW."
+  references: ["POPC 2.1"]
+  difficulty: 1
+- id: POPC-006
+  kind: numeric
+  elements: ["POPC 2.2.1"]
+  stem: "An aeroplane stalls at 50 kt at maximum weight and has a limit load factor of 3.8 g. What is its manoeuvring speed VA at maximum weight, to the nearest knot?"
+  answer: 97
+  tolerance: 1
+  unit: kt
+  explanation: "VA = VS × √(limit load factor) = 50 × √3.8 = 50 × 1.949 = 97 kt. At lower weight VA is lower."
+  references: ["POPC 2.2", "BAKC 6.3"]
+  difficulty: 3
+- id: POPC-007
+  kind: mcq
+  elements: ["POPC 2.2.2"]
+  stem: "Descending from cruise with the power still set, the airspeed enters the yellow arc in turbulence from mountain waves. The correct action is:"
+  options:
+    - "Continue; the yellow arc is acceptable in turbulence."
+    - "Reduce power and slow to VA or the turbulence penetration speed; the yellow arc is for smooth air only."
+    - "Extend flap to slow down."
+    - "Increase speed to get through the turbulence quickly."
+  answer: 1
+  explanation: "Gust loads at speeds above VA can exceed the limit load. Slow down before the rough air, and never use flap above VFE."
+  references: ["POPC 2.2"]
+  difficulty: 1
+- id: POPC-008
+  kind: mcq
+  elements: ["POPC 2.3.1"]
+  stem: "The declared take-off and landing distances (TORA, TODA, LDA) for an aerodrome are found in:"
+  options: ["The TAF", "The ERSA runway distances supplement (and the FAC entry)", "The WAC", "The compass card"]
+  answer: 1
+  explanation: "ERSA FAC gives runway dimensions; the runway distances supplement gives the declared distances for the performance charts."
+  references: ["POPC 2.3"]
+  difficulty: 1
+- id: POPC-009
+  kind: mcq
+  elements: ["POPC 2.3.1"]
+  stem: "An ERSA entry shows 'RWY 14 right-hand circuit' and 'PAL 126.7'. This means:"
+  options:
+    - "All circuits are right-hand and the tower frequency is 126.7."
+    - "Circuits on runway 14 are right-hand, and the runway lighting is pilot activated on 126.7 MHz."
+    - "Runway 14 is closed at night."
+    - "The AWIS is on 126.7."
+  answer: 1
+  explanation: "Local traffic regulations list non-standard circuits by runway; PAL is pilot-activated lighting, activated by keying the microphone on the stated frequency."
+  references: ["POPC 2.3"]
+  difficulty: 2
+- id: POPC-010
+  kind: mcq
+  elements: ["POPC 2.4.1"]
+  stem: "If the forecasts were obtained more than one hour before departure, the pilot in command should:"
+  options:
+    - "Depart; forecasts are valid for 24 hours."
+    - "Obtain updated forecasts before departure."
+    - "Cancel the flight."
+    - "Ask the passengers."
+  answer: 1
+  explanation: "The Part 91 MOS requires the pilot to study the forecasts before flight and update them if studied more than an hour before departure (check the current wording)."
+  references: ["POPC 2.4", "PMTC 2.7"]
+  difficulty: 2
+- id: POPC-011
+  kind: mcq
+  elements: ["POPC 2.4.2"]
+  stem: "The preferred method of submitting a VFR flight notification or SARTIME is:"
+  options: ["By post", "Electronically through NAIPS (web or app), otherwise by phone to Airservices or by radio in flight", "By NOTAM", "Through the flying school only"]
+  answer: 1
+  explanation: "NAIPS is the primary channel for flight plans, SARTIMEs and briefings; phone and radio are the alternatives."
+  references: ["POPC 2.4", "AIP ENR 1.10"]
+  difficulty: 1
+- id: POPC-012
+  kind: mcq
+  elements: ["POPC 2.4.2"]
+  stem: "For a cross-country flight to another aerodrome, a meteorological briefing is:"
+  options: ["Optional", "Required: the pilot in command must obtain the forecasts for the route and destination", "Required only in winter", "Required only above 5,000 ft"]
+  answer: 1
+  explanation: "A briefing is mandatory for flights beyond the vicinity of the departure aerodrome and whenever the weather could affect the flight. Sources: NAIPS, BoM, the briefing office, FIS, ATIS and AWIS."
+  references: ["POPC 2.4"]
+  difficulty: 1
+- id: POPC-013
+  kind: numeric
+  elements: ["POPC 2.4.3"]
+  stem: "The destination TAF has an INTER group with conditions below the VFR alternate minima during the arrival period. The holding fuel flow is 30 litres per hour. How many litres of holding fuel are required?"
+  answer: 15
+  tolerance: 0
+  unit: L
+  explanation: "INTER requires 30 minutes of holding: 0.5 h × 30 L/h = 15 L. A TEMPO would require 60 minutes (30 L). The 30-minute fixed reserve is additional."
+  references: ["POPC 2.4"]
+  difficulty: 2
+- id: POPC-014
+  kind: mcq
+  elements: ["POPC 2.4.3"]
+  stem: "The destination TAF shows 'FM0500 2000 FG' and your ETA is 0530 UTC. You should:"
+  options:
+    - "Carry 30 minutes of holding fuel."
+    - "Plan an alternate that meets the alternate minima, with fuel to reach it, because the deterioration is permanent (FM), not temporary."
+    - "Ignore the fog; it will clear."
+    - "Carry 60 minutes of holding fuel."
+  answer: 1
+  explanation: "FM is a permanent change. Fog with 2,000 m visibility is below the minima, and holding fuel only covers temporary (TEMPO/INTER) deteriorations."
+  references: ["POPC 2.4"]
+  difficulty: 2
+- id: POPC-015
+  kind: mcq
+  elements: ["POPC 2.5.1", "POPC 2.5.2"]
+  stem: "A VFR flight above 5,000 ft on a magnetic track of 075 degrees should cruise at:"
+  options: ["6,500 ft", "7,000 ft", "7,500 ft", "8,500 ft"]
+  answer: 2
+  explanation: "Tracks 000 to 179 magnetic: odd thousands plus 500 (5,500, 7,500, 9,500). Tracks 180 to 359: even thousands plus 500."
+  references: ["POPC 2.5", "AIP ENR 1.7"]
+  difficulty: 1
+- id: POPC-016
+  kind: numeric
+  elements: ["POPC 2.5.2"]
+  stem: "Flight fuel 84 L, taxi 3 L, holding required 60 minutes at 28 L/h, no alternate, fixed reserve 30 minutes at 28 L/h. What is the minimum fuel required in litres?"
+  answer: 129
+  tolerance: 1
+  unit: L
+  explanation: "Taxi 3 + trip 84 + holding 28 + reserve 14 = 129 L. Do not use the reserve for holding."
+  references: ["POPC 2.5"]
+  difficulty: 2
+- id: POPC-017
+  kind: numeric
+  elements: ["POPC 2.5.2"]
+  stem: "Last light at the destination is 1810 WST. Total flight time is 2 h 25 min including a stop, and the TAF requires 30 minutes of holding. What is the latest time of departure in WST, as a four-figure time, allowing the 10-minute rule?"
+  answer: 1505
+  tolerance: 0
+  unit: WST
+  explanation: "Latest arrival 1810 − 10 = 1800. Subtract 2 h 25 min and the 30 min of possible holding: 1800 − 2:55 = 1505 WST."
+  references: ["POPC 2.5", "RFRC 2.3"]
+  difficulty: 2
+- id: POPC-018
+  kind: mcq
+  elements: ["POPC 2.5.2"]
+  stem: "When selecting a route and cruising level for a VFR flight plan, the pilot must ensure the level:"
+  options:
+    - "Is the highest possible."
+    - "Keeps the aircraft in VMC, above the lowest safe altitude for terrain, clear of controlled airspace it cannot enter, and complies with the table of cruising levels."
+    - "Is a flight level."
+    - "Is below 1,000 ft."
+  answer: 1
+  explanation: "The route and level must satisfy VFR, terrain clearance, airspace and the hemispherical cruising levels, and the oxygen rules above 10,000 ft."
+  references: ["POPC 2.5"]
+  difficulty: 1
+- id: POPC-019
+  kind: mcq
+  elements: ["POPC 2.6.1"]
+  stem: "A point of no return (PNR) differs from an equi-time point (ETP) in that the PNR is:"
+  options:
+    - "A time limit: equal time to go on or back."
+    - "A fuel limit: the furthest point from which the aircraft can return to departure with reserves intact."
+    - "Always at the midpoint."
+    - "Only used by IFR flights."
+  answer: 1
+  explanation: "The ETP is where the time to continue equals the time to return. The PNR depends on the fuel available for the round trip."
+  references: ["POPC 2.6"]
+  difficulty: 1
+- id: POPC-020
+  kind: numeric
+  elements: ["POPC 2.6.2"]
+  stem: "In still air at a constant TAS, how far along a 150 nm track from departure is the equi-time point, in nautical miles?"
+  answer: 75
+  tolerance: 0
+  unit: nm
+  explanation: "With equal groundspeeds each way the ETP is at the midpoint. With a headwind outbound it moves towards the destination; with a tailwind it moves back towards departure."
+  references: ["POPC 2.6"]
+  difficulty: 1
+- id: POPC-021
+  kind: numeric
+  elements: ["POPC 2.6.2"]
+  stem: "Track length 200 nm, groundspeed on to destination 80 kt, groundspeed back to departure 120 kt. How far from departure is the ETP, in nautical miles?"
+  answer: 120
+  tolerance: 1
+  unit: nm
+  explanation: "ETP distance = D × GS back ÷ (GS on + GS back) = 200 × 120 ÷ 200 = 120 nm, beyond the midpoint because the headwind outbound makes returning faster."
+  references: ["POPC 2.6"]
+  difficulty: 3
+- id: POPC-022
+  kind: mcq
+  elements: ["POPC 2.6.3"]
+  stem: "You have 50 L on board, fuel flow 36 L/h, reserve 18 L. Continuing to the destination takes 55 minutes; returning takes 40 minutes; an alternate is 25 minutes away. Which options are available with the reserve intact?"
+  options:
+    - "All three."
+    - "Returning (24 L) and the alternate (15 L), but not continuing (33 L needed plus 18 L reserve = 51 L)."
+    - "Only the alternate."
+    - "None."
+  answer: 1
+  explanation: "Fuel needed: continue 33 + 18 = 51 L (not available); return 24 + 18 = 42 L; alternate 15 + 18 = 33 L. The alternate uses the least fuel."
+  references: ["POPC 2.6"]
+  difficulty: 2
+- id: POPC-023
+  kind: mcq
+  elements: ["POPC 2.7.1"]
+  stem: "The certificate of airworthiness:"
+  options:
+    - "Proves who owns the aircraft."
+    - "Certifies the aircraft conforms to its type design and is safe to operate, remaining valid while it is maintained as required and operated within its flight manual."
+    - "Is reissued every 100 hours."
+    - "Replaces the maintenance release."
+  answer: 1
+  explanation: "Registration identifies the aircraft and its operator; the C of A certifies the airworthiness standard; the maintenance release shows day-to-day serviceability."
+  references: ["POPC 2.7"]
+  difficulty: 1
+- id: POPC-024
+  kind: mcq
+  elements: ["POPC 2.7.2"]
+  stem: "A private day VFR flight from Jandakot to Esperance passes over a designated remote area and more than 50 nm from the departure aerodrome. The required emergency equipment includes:"
+  options:
+    - "Nothing beyond a fire extinguisher."
+    - "An ELT, a first aid kit, and the prescribed remote area survival equipment including water and signalling equipment."
+    - "A life raft."
+    - "Oxygen."
+  answer: 1
+  explanation: "ELT for flights beyond the vicinity, survival equipment over remote areas, life jackets and rafts only for over-water sectors, oxygen only above 10,000 ft. Check the Part 91 MOS equipment chapter for the current detail."
+  references: ["POPC 2.7", "PFRA 2.4"]
+  difficulty: 2
+- id: POPC-025
+  kind: mcq
+  elements: ["POPC 2.7.2"]
+  stem: "A transponder is required for a VFR flight:"
+  options:
+    - "Only at night."
+    - "In Class A, C and E airspace and above 10,000 ft (with altitude encoding)."
+    - "Never for private flights."
+    - "Only below 1,000 ft."
+  answer: 1
+  explanation: "Transponders are required in the airspace classes and above the altitude the rules specify; Class D requires it where fitted. ADS-B rules also apply where prescribed."
+  references: ["POPC 2.7"]
+  difficulty: 2
+- id: POPC-026
+  kind: mcq
+  elements: ["POPC 2.7.3"]
+  stem: "Which of the following may a PPL holder carry out and certify on a Class B aircraft under CAR Schedule 8?"
+  options:
+    - "Replacing a cylinder."
+    - "Replacing spark plugs, tyres, bulbs and fuses, replenishing oil and fuel, and removing and refitting cowlings and inspection panels."
+    - "Adjusting the magneto timing."
+    - "Repairing the flight controls."
+  answer: 1
+  explanation: "Schedule 8 lists simple maintenance a competent pilot may do and record; anything needing engineering judgement, special tools or a test flight needs a LAME."
+  references: ["POPC 2.7", "CAR 1988 Schedule 8"]
+  difficulty: 2
+- id: POPC-027
+  kind: mcq
+  elements: ["POPC 2.7.3"]
+  stem: "A maintenance release lists 'landing light U/S, permissible unserviceability, day VFR only'. Your planned flight arrives 20 minutes before last light. The aircraft is:"
+  options:
+    - "Airworthy for the flight as planned."
+    - "Airworthy for the flight, which is by day, but you must land before last light with no option of a night arrival; any delay beyond last light would breach the condition."
+    - "Not airworthy for any flight."
+    - "Airworthy only with a second pilot."
+  answer: 1
+  explanation: "A permissible unserviceability is valid only within its conditions. Reading the validity, the classes of operation and the endorsements is the examinable skill."
+  references: ["POPC 2.7"]
+  difficulty: 2
+- id: POPC-028
+  kind: mcq
+  elements: ["POPC 2.7.3"]
+  stem: "A maintenance release was issued on 2 March with an expiry of 100 hours or 12 months, at 2,340.0 hours total time. The aircraft now shows 2,438.5 hours and the date is 10 August. A 2-hour flight is:"
+  options:
+    - "Permitted; the release is valid until 2 March next year."
+    - "Not permitted: the flight would take the aircraft to 2,440.5 hours, beyond the 100-hour limit of 2,440.0 hours."
+    - "Permitted if the pilot does a daily inspection."
+    - "Permitted with a 10-hour extension."
+  answer: 1
+  explanation: "The release expires at whichever limit comes first. Only 1.5 hours remain; the aircraft must not fly beyond the expiry time."
+  references: ["POPC 2.7"]
+  difficulty: 3

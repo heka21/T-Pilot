@@ -1,0 +1,13 @@
+.venv
+venv
+data
+tests
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+.pytest_cache
+*.db
+*.tgz
+node_modules
+package-lock.json

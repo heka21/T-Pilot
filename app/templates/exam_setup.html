@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Mock exam · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header("Mock exam", "A timed exam in the RPLA or PPLA format. No feedback until you submit, then a Knowledge Deficiency Report.") }}
+
+{% if open_attempt %}
+  <div class="callout callout-warn mb-6 flex flex-wrap items-center justify-between gap-3" role="alert">
+    <span class="flex items-start gap-2">{{ icon("alert", "mt-0.5 size-4 shrink-0 text-warn") }}
+      <span>You have an exam in progress: <strong>{{ open_attempt.title }}</strong>, started {{ open_attempt.started_at.strftime("%-d %b %H:%M") }} UTC.
+        Starting a new one leaves it open until its time runs out.</span></span>
+    <a href="/exam/{{ open_attempt.id }}" class="btn-secondary btn-sm">Resume it</a>
+  </div>
+{% endif %}
+
+<div class="grid gap-4 md:grid-cols-2">
+  {% for exam in exams %}
+    {% set wsum = exam.units | sum(attribute="weight") %}
+    <section class="card flex flex-col gap-4">
+      <div>
+        <h2 class="text-xl font-bold">{{ exam.code }}</h2>
+        <p class="text-sm text-fg-muted">{{ exam.name }}</p>
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        <span class="badge">{{ icon("clock", "size-3") }} {{ exam.duration_minutes | minutes_to_hm }}</span>
+        <span class="badge">pass mark {{ exam.pass_mark_percent }}%</span>
+        <span class="badge">{{ exam.question_count }} questions</span>
+      </div>
+      <div class="table-wrap">
+        <table class="table text-xs">
+          <thead><tr><th>Unit</th><th class="num">Weight</th><th class="num">≈ Qs</th></tr></thead>
+          <tbody>
+            {% for eu in exam.units %}
+              <tr>
+                <td><strong>{{ eu.unit_code }}</strong> <span class="text-fg-muted">{{ eu.unit.title }}</span></td>
+                <td class="num">{{ eu.weight }}</td>
+                <td class="num">{{ ((exam.question_count * eu.weight / wsum) if wsum else 0) | round | int }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if exam.casa_weak_areas %}
+        <details class="disclosure">
+          <summary>Areas CASA reports candidates find hard</summary>
+          <ul class="list-disc space-y-1 pl-5 text-sm">{% for w in exam.casa_weak_areas %}<li>{{ w }}</li>{% endfor %}</ul>
+        </details>
+      {% endif %}
+      {% if exam.fuel_policy %}<p class="text-xs text-fg-muted"><strong class="text-fg">Fuel policy:</strong> {{ exam.fuel_policy }}</p>{% endif %}
+      <form method="post" action="/exam/start" class="mt-auto">
+        <input type="hidden" name="exam_code" value="{{ exam.code }}">
+        <button type="submit" class="btn-primary w-full">{{ icon("timer", "size-4") }} Start {{ exam.code }} mock exam</button>
+      </form>
+    </section>
+  {% else %}
+    {{ empty("No exams loaded. Check the content directory.") }}
+  {% endfor %}
+</div>
+<p class="mb-8 mt-3 text-xs text-fg-muted">Questions are drawn by unit weight; if a unit has too few questions in the bank, the gap is filled from the other units.</p>
+
+<section>
+  <h2 class="section-title mb-3">Recent mock exams</h2>
+  {% if recent %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Date</th><th>Exam</th><th class="num">Score</th><th>Result</th><th></th></tr></thead>
+        <tbody>
+          {% for a in recent %}
+            <tr>
+              <td class="whitespace-nowrap">{{ a.submitted_at.strftime("%-d %b %Y") }}</td>
+              <td>{{ a.exam_code }}</td>
+              <td class="num whitespace-nowrap">{{ a.correct_count }}/{{ a.question_count }} ({{ (a.score_percent or 0) | round | int }}%)</td>
+              <td><span class="badge {{ 'ok' if a.passed else 'bad' }}">{{ "Pass" if a.passed else "Fail" }}</span></td>
+              <td class="text-right"><a href="/exam/{{ a.id }}/result">Review</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty("No mock exams yet.") }}
+  {% endif %}
+</section>
+{% endblock %}

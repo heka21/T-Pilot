@@ -1,0 +1,83 @@
+{% extends "base.html" if page else "_partial.html" %}
+{% from "_study_macros.html" import letter, correct_answer, workbook_link, details_block, option_card %}
+{% from "_macros.html" import page_header %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ attempt.title or "Quiz" }} · {{ app_name }}{% endblock %}
+{% block content %}
+{% if page %}
+{% call page_header(attempt.title or "Practice quiz") %}
+  <a href="/quiz/{{ attempt.id }}/result" class="btn-secondary btn-sm">Finish early and see results</a>
+{% endcall %}
+<div id="quiz-area">
+{% endif %}
+<article id="quiz-question" class="card mx-auto max-w-3xl space-y-4">
+  <div class="space-y-2">
+    <div class="flex items-center justify-between gap-3">
+      <span class="font-semibold">Question {{ position + 1 }} of {{ total }}</span>
+      <span class="badge">{{ q.subtopic_id or q.unit_code }}</span>
+    </div>
+    <progress value="{{ position + (1 if feedback else 0) }}" max="{{ total }}" aria-label="Quiz progress"></progress>
+  </div>
+
+  <div>
+    <p class="question-stem">{{ q.stem }}</p>
+    {{ workbook_link(q) }}
+  </div>
+
+  {% if feedback %}
+    {% set ok = ans.correct %}
+    {% if q.kind == "mcq" %}
+      <div class="options">
+        {% for o in q.options %}
+          {{ option_card(loop.index0, o, 'correct' if loop.index0 == q.answer | int else ('wrong' if ans.given == loop.index0 | string else '')) }}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm">Your answer: <strong>{{ ans.given or "(blank)" }}{% if q.unit_label %} {{ q.unit_label }}{% endif %}</strong></p>
+    {% endif %}
+    <div class="feedback {{ 'correct' if ok else 'incorrect' }}" role="status">
+      {{ icon("check" if ok else "alert", "mt-0.5 size-5 shrink-0") }}
+      <div>
+        <strong>{{ "Correct." if ok else "Incorrect." }}</strong>
+        Correct answer: <strong>{{ correct_answer(q) }}</strong>
+      </div>
+    </div>
+    {{ details_block(q) }}
+    <div class="btn-row">
+      {% if is_last %}
+        <a href="/quiz/{{ attempt.id }}/result" class="btn-primary">See results {{ icon("arrow-right", "size-4") }}</a>
+      {% else %}
+        <button type="button" class="btn-primary" hx-get="/quiz/{{ attempt.id }}/q/{{ position + 1 }}" hx-target="#quiz-question" hx-swap="outerHTML">Next {{ icon("arrow-right", "size-4") }}</button>
+      {% endif %}
+    </div>
+    {% set flag_kind = "question" %}{% set flag_ref = q.id %}
+    {% include "_flag_form.html" %}
+  {% else %}
+    <form hx-post="/quiz/{{ attempt.id }}/answer" hx-target="#quiz-question" hx-swap="outerHTML" class="space-y-4">
+      <input type="hidden" name="position" value="{{ position }}">
+      {% if q.kind == "mcq" %}
+        <fieldset class="options">
+          <legend class="sr-only">Choose an answer</legend>
+          {% for o in q.options %}
+            {% set inp %}<input type="radio" name="given" value="{{ loop.index0 }}" required>{% endset %}
+            {{ option_card(loop.index0, o, "", inp) }}
+          {% endfor %}
+        </fieldset>
+      {% else %}
+        <div class="field">
+          <label class="label" for="given-{{ position }}">Your answer</label>
+          <div class="flex items-center gap-2">
+            <input id="given-{{ position }}" class="w-40" type="number" step="any" inputmode="numeric" name="given" required autofocus>
+            {% if q.unit_label %}<span class="text-sm text-fg-muted">{{ q.unit_label }}</span>{% endif %}
+          </div>
+          <span class="text-xs text-fg-muted">Enter a whole number, like the real exam.</span>
+        </div>
+      {% endif %}
+      <button type="submit" class="btn-primary">Check answer</button>
+    </form>
+  {% endif %}
+</article>
+{% if page %}
+</div>
+{% endif %}
+{% endblock %}

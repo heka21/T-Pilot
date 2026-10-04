@@ -1,0 +1,158 @@
+Source: casa.gov.au, retrieved 2026-10-03
+
+Find out what you need when sitting your private pilot licence (aeroplane) exam including permitted materials and pass rates.
+The PPLA exam includes multiple-choice questions and questions where you type a whole number in a box.
+You have 3.5 hours to complete the exam and to pass, you will need to get at least 70% of the marks.
+The exams cost $217.24 each ($152.24 invigilator fee and $65 CASA fee).
+Preparing for your exam
+The exams will test your knowledge on the syllabus in 
+Part 61 Manual of Standards (MOS)
+ schedule 3.
+Permitted material
+You may use either the Airservices or Jeppesen list of permitted materials. You need to supply these materials.
+You cannot use a combination of materials from both the Airservices List and the Jeppesen List.
+Airservices list
+CAR 1988
+Part 61 of CASR
+CASR Part 61 Guide for aeroplane category flight crew licensing
+ – Note 1
+Part 91 of CASR and Part 91 MOS
+CASR Part 91 Plain English guide for general operating and flight rules
+ – Note 1
+AC 91-02
+AIP Book
+ERSA
+AUS PCA
+Visual Flight Rules Guide (VFRG) – Note 1
+Sydney, Townsville and Bourke WACs
+Navigation equipment
+A 
+basic calculator
+Jeppesen list
+CAR 1988
+Part 61 of CASR
+CASR Part 61 Guide for aeroplane category flight crew licensing
+ – Note 1
+Part 91 of CASR and Part 91 MOS
+CASR Part 91 Plain English guide for general operating and flight rules
+ – Note 1
+AC 91-02
+Jeppesen Airway Manual
+AUS PCA
+Visual Flight Rules Guide (VFRG) – Note 1
+Sydney, Townsville and Bourke WACs
+Navigation equipment
+A 
+basic calculator
+Note 1:
+ The 
+Visual Flight Rules Guide (VFRG)
+ and the CASR Part 91 plain English Guide may not have current information. If you choose to use these documents, make sure you also have other materials to help with current laws and procedures.
+The VFRG referred to in the lists of permitted material is the document produced by CASA and not by another party or organisation.
+These ‘guides’ include the following notice:
+Disclaimer: 
+The guide has been prepared by CASA for information purposes only, and while every effort has been made to ensure that the contents accurately conform to the civil aviation legislation, this guide is not the law. CASA accepts no liability for damages or liability of any kind resulting from its use. You should ensure you are using the most current version of the guide, which can be found on the CASA website.
+Your invigilator will give you some things before the exam, which you must hand back at the end. These include:
+pen
+pencil
+ruler
+eraser
+scribble pad
+The 
+RPL, PPL and CPL (aeroplane) workbook
+ (PDF 643kB).
+Pass rates
+You can see how candidates performed in their PPLA exam.
+Year
+0 - 54%
+55 - 59%
+60 - 64%
+65 - 69%
+70 - 74%
+75 - 79%
+80+%
+Pass rate
+2020
+5.30
+5.36
+7.38
+15.01
+15.95
+16.90
+34.11
+66.96%
+2021
+6.17
+4.61
+8.92
+17.68
+17.01
+15.53
+30.09
+62.63%
+2022
+6.16
+6.23
+10.38
+15.47
+16.92
+15.72
+29.12
+61.76%
+2023
+7.46
+5.24
+8.04
+13.44
+15.61
+15.82
+34.39
+65.82%
+2024
+7.13
+5.84
+7.69
+15.13
+16.24
+13.96
+34.01
+64.21%
+2025
+7.69
+5.09
+9.13
+15.95
+13.99
+14.91
+33.24
+62.14%
+Check the results of candidates from 
+previous years
+.
+Fuel policy in PPLA exams
+Our Flight Crew Licence exams reference policies related to fuel usage and reserves.
+In your PPLA exam, fuel reserves will be carried in accordance with CASR Part 91 MOS, Chapter 19, table 19.02 (2), Item 1. This applies to aeroplanes with MTOW less than 5,700 kg (piston engine or turboprop) under VFR by day.
+We recommend you avoid rounding off at intermediate stages of your workings when calculating fuel requirements in your exam.
+Common errors:
+The following areas have been weak areas for candidates:
+correct use of the take-off and landing charts
+find time/distance and revision of estimates
+work out density height and/or pressure height
+correct use of the various loading systems (ALPHA, BRAVO and CHARLIE)
+interpretation of meteorological forecasts.
+Related content
+Prepare for your exam
+Practice using PEXO exam system
+Materials allowed in exams
+Pilot exams
+Exam results from previous years
+Related rules and publications
+Part 61 of CASR Flight crew licensing
+Part 61 Manual of Standards schedule 3
+Civil Aviation Regulations (CAR) 1988
+AC 91-02 Guidelines for aeroplanes with MTOW not exceeding 5 700 kg - suitable places to take off and land
+Download 
+AC 91-02 Guidelines for aeroplanes with MTOW not exceeding 5,700 kg - suitable places to take off and land
+ pdf, 850.58 KB
+Last updated:
+7 May 2026

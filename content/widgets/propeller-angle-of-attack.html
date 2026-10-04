@@ -1,0 +1,75 @@
+<div class="widget" x-data="{
+  tas: 80, blade: 21, u: 345, k: 1.2,
+  get phi() { return Math.atan(this.tas / this.u) * 180 / Math.PI },
+  get aoa() { return this.blade - this.phi },
+  get windmill() { return this.aoa <= 0 },
+  get hx() { return 130 + this.u * this.k },
+  m(n) { const r = Math.round(n); return (r < 0 ? '−' : '') + Math.abs(r) },
+  get hy() { return 250 - this.tas * this.k },
+  px(a, r) { return (130 + r * Math.cos(a * Math.PI / 180)).toFixed(1) },
+  py(a, r) { return (250 - r * Math.sin(a * Math.PI / 180)).toFixed(1) },
+  arc(r) { return 'M' + this.px(this.phi, r) + ' ' + this.py(this.phi, r) + ' A' + r + ' ' + r + ' 0 0 ' + (this.aoa >= 0 ? 0 : 1) + ' ' + this.px(this.blade, r) + ' ' + this.py(this.blade, r) },
+  helixArc() { return 'M' + this.px(0, 150) + ' 250 A150 150 0 0 0 ' + this.px(this.phi, 150) + ' ' + this.py(this.phi, 150) },
+  reset() { this.tas = 80; this.blade = 21 }
+}">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="paa-title" class="widget-stage">
+    <title id="paa-title">A propeller blade section three-quarters out along the blade, with its velocity triangle: rotational speed along the plane of rotation, forward speed at right angles, and the helical path between them</title>
+    <defs><marker id="paa-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- plane of rotation -->
+    <line x1="20" y1="250" x2="620" y2="250" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="620" y="270" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">plane of rotation</text>
+    <!-- velocity triangle -->
+    <line x1="130" y1="250" :x2="hx - 4" y2="250" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#paa-arrow)"/>
+    <text x="337" y="288" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">round: 345 kt at 2,400 RPM</text>
+    <line :x1="hx" y1="250" :x2="hx" :y2="hy + 4" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#paa-arrow)" x-show="tas > 4"/>
+    <text :x="hx + 10" :y="(250 + hy) / 2 + 4" font-size="13" font-weight="600" fill="var(--color-fg)" class="num" x-text="tas + ' kt'"></text>
+    <line x1="130" y1="250" :x2="hx" :y2="hy" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round"/>
+    <text :x="130 + 0.7 * (hx - 130)" :y="250 - 0.7 * (250 - hy) + 20" font-size="12" font-weight="600" fill="var(--color-info)" x-show="tas > 30">helical path</text>
+    <path :d="helixArc()" fill="none" stroke="var(--color-info)" stroke-width="1.25" x-show="phi > 2"/>
+    <text :x="px(phi / 2, 162)" :y="+py(phi / 2, 162) + 5" font-size="12" font-weight="600" fill="var(--color-info)" class="num" x-text="'helix ' + Math.round(phi) + '°'" x-show="phi > 4"></text>
+    <!-- chord line at the blade angle -->
+    <line x1="130" y1="250" :x2="px(blade, 470)" :y2="py(blade, 470)" stroke="var(--color-fg)" stroke-width="1" stroke-dasharray="6 4"/>
+    <text :x="px(blade, 470) - 4" :y="+py(blade, 470) - 8" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="'chord: blade angle ' + blade + '°'"></text>
+    <!-- angle of attack between the helical path and the chord -->
+    <path :d="arc(400)" fill="none" :stroke="windmill ? 'var(--color-bad)' : 'var(--color-brand)'" stroke-width="4" stroke-linecap="round"/>
+    <text :x="px(Math.max(blade, phi), 400) - 4" :y="+py(Math.max(blade, phi), 400) - 12" font-size="14" font-weight="700" text-anchor="end" :fill="windmill ? 'var(--color-bad)' : 'var(--color-brand)'" class="num" x-text="'AoA ' + m(aoa) + '°'"></text>
+    <!-- blade section, leading edge at the origin pointing along the chord -->
+    <g :transform="'translate(130 250) rotate(' + (-blade) + ')'">
+      <path d="M0 0 C-8 -14 -40 -16 -100 -2 C-60 4 -20 8 0 0 Z" transform="scale(0.9)" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2.2" stroke-linejoin="round"/>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="paa-tas">Forward speed (true airspeed) <output for="paa-tas" x-text="tas + ' kt'"></output></label>
+      <input id="paa-tas" type="range" min="0" max="160" step="1" x-model.number="tas">
+    </div>
+    <div class="widget-control">
+      <label for="paa-blade">Blade angle (fixed pitch) <output for="paa-blade" x-text="blade + '°'"></output></label>
+      <input id="paa-blade" type="range" min="12" max="30" step="1" x-model.number="blade">
+    </div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt>Helix angle</dt>
+      <dd x-text="Math.round(phi) + '°'"></dd>
+    </div>
+    <div class="widget-readout" :class="windmill ? 'bad' : ''">
+      <dt>Blade angle of attack</dt>
+      <dd><span x-text="blade + '° − ' + Math.round(phi) + '° = ' + m(aoa) + '°'"></span><span class="widget-flag bad" x-show="windmill">Windmilling: the air drives the propeller</span></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Airspeed presets">
+      <button type="button" @click="tas = 80" :aria-pressed="tas === 80">80 kt climb</button>
+      <button type="button" @click="tas = 120" :aria-pressed="tas === 120">120 kt fast descent</button>
+    </div>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> The blade angle never moves, but the helical path swings forward as the airspeed rises, so the angle of attack $=$ blade angle $-$ helix angle shrinks. A blade at a small angle of attack absorbs little torque, so with the throttle untouched the RPM climbs: that is a fixed-pitch overspeed in the making. (Shown at the instant the speed changes, before the RPM responds; the 21° blade angle is illustrative.)</p>
+  <details class="widget-try"><summary>Try this: at a 21° blade angle, go from 80 kt to 120 kt. What happens to the angle of attack?</summary><p>Helix angle $\tan^{-1}(80/345) = 13°$, so the angle of attack is $21° - 13° = 8°$. At 120 kt the helix angle is $\tan^{-1}(120/345) = 19°$, leaving only $21° - 19° = 2°$. The blade has gone from working hard to barely working, so it absorbs far less torque and the RPM rises.</p></details>
+  <details class="widget-try"><summary>Try this: stay at 120 kt and make the blade finer, 18°. Why does a fine-pitch propeller overspeed sooner?</summary><p>$18° - 19° = -1°$: the blade is already at a negative angle of attack and the air is driving it round. A smaller blade angle means a lower angle of attack at every airspeed, so the propeller unloads, and the RPM reaches the red line, at a lower airspeed.</p></details>
+</div>

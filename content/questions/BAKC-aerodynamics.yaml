@@ -1,0 +1,367 @@
+# Questions for unit BAKC, aerodynamics subtopics 4.1-4.5. See content/README.md for the format.
+- id: BAKC-A001
+  kind: mcq
+  elements: ["BAKC 4.1.1"]
+  stem: "Inertia is best described as:"
+  options:
+    - "The energy an aircraft has because of its height."
+    - "The tendency of a body to resist any change in its state of motion, which increases with mass."
+    - "The force that opposes the motion of an aircraft through the air."
+    - "The energy of motion, which increases with the square of speed."
+  answer: 1
+  explanation: "Inertia is resistance to a change of motion (Newton's first law) and depends on mass: a heavier aircraft is slower to accelerate, stop or change its flight path. Energy from height is potential energy, energy of motion is kinetic energy, and the force opposing motion is drag."
+  references: ["BAKC 4.1"]
+  difficulty: 1
+
+- id: BAKC-A002
+  kind: mcq
+  elements: ["BAKC 4.1.1"]
+  stem: "On approach, an aircraft flies into a sudden decrease in headwind. Because of inertia, the immediate effect is:"
+  options:
+    - "Groundspeed falls immediately and airspeed is unchanged."
+    - "Airspeed falls momentarily because the aircraft's groundspeed does not change instantly."
+    - "Airspeed rises momentarily."
+    - "There is no effect, because the aircraft moves with the air mass."
+  answer: 1
+  explanation: "Inertia keeps the aircraft moving at the same groundspeed for a moment. With less headwind, the same groundspeed means less airspeed, so the IAS drops and the aircraft sinks. An increasing headwind would raise the airspeed. The aircraft eventually adjusts to the new air mass, but not instantly."
+  references: ["BAKC 4.1"]
+  difficulty: 2
+
+- id: BAKC-A003
+  kind: mcq
+  elements: ["BAKC 4.1.2"]
+  stem: "The angle of attack is the angle between:"
+  options:
+    - "The longitudinal axis and the horizon."
+    - "The chord line and the relative airflow."
+    - "The chord line and the longitudinal axis."
+    - "The flight path and the horizon."
+  answer: 1
+  explanation: "Angle of attack is measured between the wing's chord line and the relative airflow. The longitudinal axis to the horizon is the pitch attitude; chord line to longitudinal axis is the fixed rigging (incidence) angle; flight path to horizon is the climb or descent angle."
+  references: ["BAKC 4.1"]
+  difficulty: 1
+
+- id: BAKC-A004
+  kind: mcq
+  elements: ["BAKC 4.1.2"]
+  stem: "Which statement about the centre of pressure (CP) and centre of gravity (CG) is correct?"
+  options:
+    - "Lift acts through the CG and weight acts through the CP."
+    - "The CP moves forward as the angle of attack increases in the normal flight range; weight acts through the CG."
+    - "The CP is fixed; the CG moves with angle of attack."
+    - "The CP and CG are always at the same point in level flight."
+  answer: 1
+  explanation: "Lift (the total aerodynamic force) acts through the centre of pressure, which moves forward as angle of attack increases until the stall, when it moves rapidly rearward. Weight acts through the centre of gravity, which depends on loading, not angle of attack. CP and CG normally do not coincide, which is why the tailplane provides a balancing force."
+  references: ["BAKC 4.1"]
+  difficulty: 2
+
+- id: BAKC-A005
+  kind: mcq
+  elements: ["BAKC 4.1.2"]
+  stem: "Lift is defined as the component of the total aerodynamic force acting:"
+  options:
+    - "Vertically upward, opposite to weight."
+    - "Parallel to the relative airflow."
+    - "At right angles to the relative airflow."
+    - "Along the chord line."
+  answer: 2
+  explanation: "Lift is perpendicular to the relative airflow; drag is the component parallel to it. Lift is only vertical when the flight path is horizontal and the wings are level, which is why the 'vertically upward' option is a trap."
+  references: ["BAKC 4.1"]
+  difficulty: 2
+
+- id: BAKC-A006
+  kind: mcq
+  elements: ["BAKC 4.1.3"]
+  stem: "The camber of an aerofoil is:"
+  options:
+    - "The straight line from leading edge to trailing edge."
+    - "The distance from wing tip to wing tip."
+    - "The curvature of the aerofoil section, measured from the chord line to the mean camber line."
+    - "The angle between the wing and the fuselage."
+  answer: 2
+  explanation: "Camber is the curvature of the section. The straight line from leading to trailing edge is the chord line, tip to tip is the span, and the wing to fuselage angle is the angle of incidence."
+  references: ["BAKC 4.1"]
+  difficulty: 1
+
+- id: BAKC-A007
+  kind: mcq
+  elements: ["BAKC 4.1.3"]
+  stem: "An aerodynamic stall occurs when:"
+  options:
+    - "The airspeed falls below the published stall speed, whatever the angle of attack."
+    - "The critical angle of attack is exceeded and the airflow separates from the upper surface."
+    - "The nose attitude is more than about 15 degrees above the horizon."
+    - "The engine power is reduced to idle at low speed."
+  answer: 1
+  explanation: "A stall is caused by exceeding the critical angle of attack (about 15 to 18 degrees), so the airflow separates from the upper surface and lift falls. It can happen at any airspeed and any attitude; the published stall speed only applies to the stated weight, configuration and 1 g. Attitude and power alone do not define a stall."
+  references: ["BAKC 4.1", "RBKA 3.6"]
+  difficulty: 1
+
+- id: BAKC-A008
+  kind: mcq
+  elements: ["BAKC 4.2.1"]
+  stem: "At a constant angle of attack, if the airspeed is doubled, lift will:"
+  options: ["Double", "Increase four times", "Halve", "Stay the same"]
+  answer: 1
+  explanation: "Lift = CL × ½ρV² × S. At constant angle of attack CL is constant, so lift varies with V². Doubling V gives 2² = 4 times the lift. Drag would also increase four times."
+  references: ["BAKC 4.2"]
+  difficulty: 1
+
+- id: BAKC-A009
+  kind: mcq
+  elements: ["BAKC 4.2.1"]
+  stem: "As the angle of attack is increased from 4 degrees up to just below the critical angle, at constant airspeed:"
+  options:
+    - "Lift increases and drag decreases."
+    - "Lift decreases and drag increases."
+    - "Both lift and drag increase."
+    - "Both lift and drag decrease."
+  answer: 2
+  explanation: "Below the critical angle, increasing the angle of attack increases the lift coefficient, and drag (especially induced drag) also increases. Beyond the critical angle lift falls sharply while drag keeps rising. Drag never decreases as angle of attack is increased."
+  references: ["BAKC 4.2"]
+  difficulty: 2
+
+- id: BAKC-A010
+  kind: mcq
+  elements: ["BAKC 4.2.2"]
+  stem: "Drag caused by the disturbed airflow where the wing joins the fuselage, or a strut meets the wing, is called:"
+  options: ["Induced drag", "Skin friction drag", "Interference drag", "Form drag"]
+  answer: 2
+  explanation: "Interference drag arises at junctions where airflows meet and disturb each other. Skin friction is due to air viscosity in the boundary layer, form drag due to the shape and wake of a body, and induced drag is the by-product of producing lift (tip vortices and downwash)."
+  references: ["BAKC 4.2"]
+  difficulty: 1
+
+- id: BAKC-A011
+  kind: mcq
+  elements: ["BAKC 4.2.2"]
+  stem: "Induced drag is greatest when the aircraft is:"
+  options:
+    - "At high speed with a low angle of attack."
+    - "At low speed with a high angle of attack."
+    - "In a dive at maximum speed."
+    - "Taxiing on the ground."
+  answer: 1
+  explanation: "Induced drag is lift-dependent: it is greatest at high angle of attack, which occurs at low speed (and high weight), when the pressure difference and tip vortices are strongest. At high speed the angle of attack is small, so induced drag is small and parasite drag dominates. On the ground the wing produces little lift."
+  references: ["BAKC 4.2"]
+  difficulty: 2
+
+- id: BAKC-A012
+  kind: mcq
+  elements: ["BAKC 4.2.3"]
+  stem: "As airspeed is increased from just above the stall to the maximum level-flight speed, total drag:"
+  options:
+    - "Increases steadily throughout."
+    - "Decreases steadily throughout."
+    - "First decreases to a minimum, then increases."
+    - "Remains constant."
+  answer: 2
+  explanation: "Total drag is the sum of induced drag (falling with speed) and parasite drag (rising with V²). At low speed induced drag dominates so total drag falls as speed increases, reaches a minimum where the two are equal (the best L/D speed), then rises as parasite drag dominates. That gives the U-shaped drag curve."
+  references: ["BAKC 4.2"]
+  difficulty: 2
+
+- id: BAKC-A013
+  kind: mcq
+  elements: ["BAKC 4.3.1"]
+  stem: "Rate of climb is a measure of:"
+  options:
+    - "Height gained per unit of horizontal distance, achieved at Vx."
+    - "Height gained per unit of time, achieved best at Vy."
+    - "The angle between the flight path and the horizon."
+    - "Height gained per unit of fuel used."
+  answer: 1
+  explanation: "Rate of climb is height per unit time (feet per minute), maximised at Vy. Height per unit distance is the angle (gradient) of climb, maximised at Vx, and is what matters for obstacle clearance. Fuel efficiency is a different measure."
+  references: ["BAKC 4.3"]
+  difficulty: 1
+
+- id: BAKC-A014
+  kind: numeric
+  elements: ["BAKC 4.3.1"]
+  stem: "An aeroplane climbs at 540 fpm with a groundspeed of 72 kt. What is its climb gradient over the ground in feet per nautical mile?"
+  answer: 450
+  tolerance: 2
+  unit: "ft/NM"
+  explanation: "At 72 kt the aeroplane covers 72 ÷ 60 = 1.2 NM per minute. Gradient = rate ÷ distance per minute = 540 ÷ 1.2 = 450 ft per NM (equivalently 540 × 60 ÷ 72)."
+  references: ["BAKC 4.3"]
+  difficulty: 2
+
+- id: BAKC-A015
+  kind: mcq
+  elements: ["BAKC 4.3.1"]
+  stem: "To clear a tall obstacle close to the end of the runway after take-off, the pilot should climb at:"
+  options:
+    - "Vy, because it gives the greatest height in the shortest time."
+    - "Vx, because it gives the greatest height in the shortest horizontal distance."
+    - "Cruise climb speed for better engine cooling."
+    - "The highest possible speed to build energy."
+  answer: 1
+  explanation: "Obstacle clearance depends on height gained per distance travelled, the angle of climb, which is greatest at Vx. Vy gives the best rate (height per minute) but a flatter path. A cruise climb or high speed gives an even flatter path."
+  references: ["BAKC 4.3"]
+  difficulty: 1
+
+- id: BAKC-A016
+  kind: mcq
+  elements: ["BAKC 4.4.1"]
+  stem: "Wing-tip vortices are strongest behind an aircraft that is:"
+  options:
+    - "Light, fast and with flaps extended."
+    - "Heavy, slow and in a clean configuration."
+    - "Light, slow and in a landing configuration."
+    - "Heavy, fast and with flaps extended."
+  answer: 1
+  explanation: "Vortex strength depends on how hard the wing is working. Heavy needs more lift; slow needs a high angle of attack; a clean wing concentrates the vortex at the tips, whereas flaps and other devices tend to spread and weaken it. Heavy, clean and slow is the worst case, as in the climb just after take-off."
+  references: ["BAKC 4.4", "VFRG"]
+  difficulty: 1
+
+- id: BAKC-A017
+  kind: mcq
+  elements: ["BAKC 4.4.2"]
+  stem: "The primary control hazard to a light aircraft encountering the wake vortex of a large aircraft is:"
+  options:
+    - "Engine overheating."
+    - "An induced roll that may exceed the aircraft's roll control authority."
+    - "Airframe icing."
+    - "Loss of radio communications."
+  answer: 1
+  explanation: "A vortex can roll the following aircraft faster than its ailerons can correct, especially a light aircraft with a short span sitting inside the vortex. Near the ground there may be no height to recover. Loss of height and structural loads are secondary effects; the other options are not wake turbulence hazards."
+  references: ["BAKC 4.4"]
+  difficulty: 1
+
+- id: BAKC-A018
+  kind: mcq
+  elements: ["BAKC 4.4.3"]
+  stem: "Viewed from behind the generating aircraft, the vortex from its LEFT wing tip rotates:"
+  options:
+    - "Clockwise, with air flowing outward under the wing, up around the tip and inward over the top."
+    - "Anticlockwise, with air flowing inward under the wing and outward over the top."
+    - "Clockwise, with air flowing inward under the wing and outward over the top."
+    - "There is no consistent direction."
+  answer: 0
+  explanation: "Air spills from the high pressure below the wing, outward and up around the tip, then inward over the top. Seen from behind, that is clockwise for the left tip and anticlockwise for the right. Between the vortices the air moves down; just outside them it moves up."
+  references: ["BAKC 4.4"]
+  difficulty: 2
+
+- id: BAKC-A019
+  kind: mcq
+  elements: ["BAKC 4.4.3"]
+  stem: "You are taking off after a heavier aircraft has just departed from the same runway. To avoid its wake you should:"
+  options:
+    - "Rotate after its rotation point and stay below its flight path."
+    - "Rotate before its rotation point and climb above its flight path, or wait for the vortices to decay."
+    - "Rotate at its exact rotation point and follow its flight path."
+    - "Use a reduced-power take-off to stay behind it."
+  answer: 1
+  explanation: "The heavier aircraft's vortices start at its rotation point and sink below and behind its flight path. Rotating before that point and climbing above its path keeps you clear; waiting allows the vortices to decay. Rotating later or staying below puts you into the vortices. Specific time separations are in the AIP; check the current edition."
+  references: ["BAKC 4.4", "AIP ENR (wake turbulence separation)"]
+  difficulty: 2
+
+- id: BAKC-A020
+  kind: mcq
+  elements: ["BAKC 4.4.3"]
+  stem: "When landing behind a heavier aircraft that has just landed, you should:"
+  options:
+    - "Fly below its approach path and land before its touchdown point."
+    - "Stay at or above its approach path and land beyond its touchdown point."
+    - "Land exactly at its touchdown point."
+    - "Approach with a tailwind to move the vortices away."
+  answer: 1
+  explanation: "Its vortices stop at its touchdown point and lie below its approach path. Staying at or above its path and touching down beyond its touchdown point keeps you clear. Flying below the path or landing short of its touchdown point puts you in the vortices, and a light tailwind can carry them into your touchdown zone."
+  references: ["BAKC 4.4"]
+  difficulty: 1
+
+- id: BAKC-A021
+  kind: mcq
+  elements: ["BAKC 4.4.4"]
+  stem: "Which conditions are most likely to allow wake vortices to persist over the runway for the longest time?"
+  options:
+    - "Strong gusty winds and thermal turbulence."
+    - "Calm air, or a light crosswind of a few knots."
+    - "A strong crosswind of 25 kt."
+    - "Moderate turbulence in the circuit."
+  answer: 1
+  explanation: "Vortices last longest in calm, stable air. A light crosswind can cancel the outward drift of the upwind vortex and hold it over the runway. Strong wind and atmospheric turbulence break the vortices up and move them away quickly."
+  references: ["BAKC 4.4"]
+  difficulty: 2
+
+- id: BAKC-A022
+  kind: mcq
+  elements: ["BAKC 4.4.4"]
+  stem: "In the cruise, wake vortices from an aircraft crossing ahead will:"
+  options:
+    - "Rise above its flight path and drift upwind."
+    - "Sink below its flight path and drift with the wind."
+    - "Stay exactly at its level and remain stationary."
+    - "Move ahead of the aircraft."
+  answer: 1
+  explanation: "Vortices sink behind the generating aircraft, levelling off some hundreds of feet below its path, and move with the air mass, so they drift downwind. The danger area is behind, below and downwind of the other aircraft. They do not rise or move ahead of it."
+  references: ["BAKC 4.4"]
+  difficulty: 2
+
+- id: BAKC-A023
+  kind: mcq
+  elements: ["BAKC 4.5.1"]
+  stem: "The hazard from jet blast behind a large jet aircraft on the ground is greatest:"
+  options:
+    - "At idle power, far behind the aircraft."
+    - "At breakaway or take-off power, close behind the aircraft."
+    - "At idle power, close behind the aircraft."
+    - "It does not vary with power or distance."
+  answer: 1
+  explanation: "Thrust stream turbulence increases with engine power and decreases with distance from the source. Breakaway and take-off power produce much stronger blast than idle, and the blast is fastest close behind the engines. Idle close behind is still hazardous, but less so than high power."
+  references: ["BAKC 4.5"]
+  difficulty: 1
+
+- id: BAKC-A024
+  kind: mcq
+  elements: ["BAKC 4.5.1"]
+  stem: "You are taxiing behind a stationary regional jet whose beacon is on and which is about to start moving. Compared with following it while it taxis steadily at idle, the hazard is:"
+  options:
+    - "Lower, because it is stationary."
+    - "The same, because power does not affect jet blast."
+    - "Higher, because it will need breakaway thrust to start moving."
+    - "Nil, because jet blast only occurs on take-off."
+  answer: 2
+  explanation: "Breakaway thrust, the power needed to start moving from rest, is considerably higher than idle, so the blast behind a jet about to move is stronger. Jet blast exists whenever the engines run and increases with power, so 'nil' and 'the same' are wrong."
+  references: ["BAKC 4.5"]
+  difficulty: 2
+
+- id: BAKC-A025
+  kind: mcq
+  elements: ["BAKC 4.5.1"]
+  stem: "Rotor downwash from a hovering helicopter:"
+  options:
+    - "Is only directed straight down, so it is safe to pass close by."
+    - "Spreads outward along the ground in all directions, and the hazard decreases with distance from the helicopter."
+    - "Increases in strength the further you are from the helicopter."
+    - "Only affects other helicopters."
+  answer: 1
+  explanation: "Downwash is blown down and then outward along the surface in all directions, strongest close to the helicopter and decreasing with distance, and stronger for larger, heavier helicopters at high power. It can upset light aircraft and throw debris, so keep well clear and do not taxi downwind of a hovering helicopter."
+  references: ["BAKC 4.5"]
+  difficulty: 1
+
+- id: BAKC-A026
+  kind: mcq
+  elements: ["BAKC 4.3.1"]
+  stem: "An aeroplane climbs at Vy with a 20 kt headwind. Compared with a climb at Vy in still air, the rate of climb and the angle of climb over the ground are:"
+  options:
+    - "Rate unchanged; angle over the ground steeper."
+    - "Rate increased; angle unchanged."
+    - "Both increased."
+    - "Rate decreased; angle over the ground flatter."
+  answer: 0
+  explanation: "Rate of climb is relative to the air mass, so wind does not change it. The headwind reduces groundspeed, so the aircraft covers less ground for each foot gained and the path over the ground is steeper. A tailwind would flatten the path, again without changing the rate."
+  references: ["BAKC 4.3"]
+  difficulty: 2
+
+- id: BAKC-A027
+  kind: mcq
+  elements: ["BAKC 4.5.1"]
+  stem: "How does the hazard from propeller or jet thrust stream turbulence change as you move further behind the source aircraft at a constant power setting?"
+  options:
+    - "It increases, because the blast spreads over a wider area."
+    - "It decreases, because the blast slows and spreads out with distance, although it can remain significant a long way behind a large aircraft at high power."
+    - "It stays constant until a fixed distance and then stops."
+    - "It reverses direction beyond 50 m."
+  answer: 1
+  explanation: "The thrust stream slows down as it spreads, so the hazard decreases with distance. The decrease is gradual: behind a large jet at high power the blast can still be dangerous well over a hundred metres back. There is no fixed cut-off distance and the flow does not reverse."
+  references: ["BAKC 4.5"]
+  difficulty: 1

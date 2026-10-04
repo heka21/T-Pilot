@@ -1,0 +1,469 @@
+# PNVC: PPL navigation.
+- id: PNVC-001
+  kind: mcq
+  elements: ["PNVC 2.1.1"]
+  stem: "One nautical mile is, for practical navigation purposes, equal to:"
+  options: ["One minute of longitude", "One minute of latitude", "One degree of latitude", "1,000 metres"]
+  answer: 1
+  explanation: "A nautical mile is 1,852 m and equals one minute of latitude, which is why distance is measured on the latitude scale of a meridian. Minutes of longitude shrink towards the poles."
+  references: ["PNVC 2.1"]
+  difficulty: 1
+- id: PNVC-002
+  kind: mcq
+  elements: ["PNVC 2.1.1"]
+  stem: "Variation is the angle between:"
+  options: ["True north and compass north", "True north and magnetic north", "Magnetic north and compass north", "The heading and the track"]
+  answer: 1
+  explanation: "Variation: true to magnetic (from isogonals on the chart). Deviation: magnetic to compass (from the correction card). Drift: heading to track."
+  references: ["PNVC 2.1"]
+  difficulty: 1
+- id: PNVC-003
+  kind: numeric
+  elements: ["PNVC 2.1.1"]
+  stem: "A track measured on the chart is 312 degrees true. Variation is 3 degrees west. What is the magnetic track in degrees?"
+  answer: 315
+  tolerance: 0
+  unit: degrees
+  explanation: "Variation west, magnetic best: 312 + 3 = 315 M. With variation east you would subtract."
+  references: ["PNVC 2.1"]
+  difficulty: 1
+- id: PNVC-004
+  kind: numeric
+  elements: ["PNVC 2.1.1"]
+  stem: "Heading 240 degrees magnetic. A town is seen 40 degrees to the right of the nose (relative bearing 040). What is the magnetic bearing of the town from the aircraft, in degrees?"
+  answer: 280
+  tolerance: 0
+  unit: degrees
+  explanation: "MB = MH + RB = 240 + 40 = 280 M. For a relative bearing to the left, add the relative bearing (e.g. 320) and subtract 360 if over 360."
+  references: ["PNVC 2.1"]
+  difficulty: 2
+- id: PNVC-005
+  kind: mcq
+  elements: ["PNVC 2.1.1"]
+  stem: "The earth rotates:"
+  options: ["From east to west", "From west to east", "From north to south", "It does not rotate"]
+  answer: 1
+  explanation: "West to east rotation makes the sun appear to rise in the east and puts eastern time zones ahead of UTC."
+  references: ["PNVC 2.1"]
+  difficulty: 1
+- id: PNVC-006
+  kind: mcq
+  elements: ["PNVC 2.2.1"]
+  stem: "Local mean time differs from UTC by:"
+  options:
+    - "A whole number of hours set by law."
+    - "The longitude converted to time at 15 degrees per hour (4 minutes per degree), ahead of UTC for east longitude."
+    - "One hour in summer."
+    - "Nothing; they are the same."
+  answer: 1
+  explanation: "LMT is based on the local meridian. Standard time is the legal zone time (WST is UTC plus 8); summer time adds an hour where observed, which excludes WA."
+  references: ["PNVC 2.2"]
+  difficulty: 1
+- id: PNVC-007
+  kind: numeric
+  elements: ["PNVC 2.2.2", "PNVC 2.2.3"]
+  stem: "The daylight graph gives the end of daylight at a place on longitude 117 degrees east as 1820 LMT. What is the end of daylight in WST (UTC plus 8), as a four-figure time?"
+  answer: 1832
+  tolerance: 2
+  unit: WST
+  explanation: "Arc to time: 117 ÷ 15 = 7 h 48 min. UTC = 1820 − 0748 = 1032 UTC. WST = 1032 + 0800 = 1832 WST. The flight must be on the ground by 1822."
+  references: ["PNVC 2.2"]
+  difficulty: 2
+- id: PNVC-008
+  kind: numeric
+  elements: ["PNVC 2.2.3"]
+  stem: "A flight departs Sydney at 0730 Eastern Daylight Time (UTC plus 11). What is the departure time in UTC, as a four-figure group?"
+  answer: 2030
+  tolerance: 0
+  unit: UTC
+  explanation: "0730 − 11 h = 2030 UTC on the previous day. Watch the date change."
+  references: ["PNVC 2.2"]
+  difficulty: 2
+- id: PNVC-009
+  kind: mcq
+  elements: ["PNVC 2.2.4"]
+  stem: "Daylight may effectively end earlier than the AIP graph indicates when:"
+  options:
+    - "The sky is clear and the terrain flat."
+    - "There is high terrain to the west, heavy cloud, or poor visibility from haze, smoke or dust."
+    - "The aircraft is at high altitude."
+    - "The destination is further west."
+  answer: 1
+  explanation: "The graphs assume a clear sky and a flat horizon. Terrain, cloud and poor visibility all cut the useful light; plan a margin beyond the 10-minute rule."
+  references: ["PNVC 2.2"]
+  difficulty: 1
+- id: PNVC-010
+  kind: mcq
+  elements: ["PNVC 2.3.1"]
+  stem: "An obstacle on the WAC is marked '1,420 (310)'. This means:"
+  options:
+    - "The obstacle is 1,420 ft tall on ground at 310 ft."
+    - "The top of the obstacle is 1,420 ft above mean sea level and 310 ft above the ground."
+    - "The obstacle is at 1,420 m elevation."
+    - "The obstacle is lit and 310 m high."
+  answer: 1
+  explanation: "The large figure is the elevation of the top AMSL; the bracketed figure is the height above ground. Ground elevation here is 1,110 ft."
+  references: ["PNVC 2.3"]
+  difficulty: 1
+- id: PNVC-011
+  kind: numeric
+  elements: ["PNVC 2.3.1"]
+  stem: "A track drawn on a 1:1,000,000 WAC measures 185 mm. What is the distance in nautical miles, to the nearest mile?"
+  answer: 100
+  tolerance: 1
+  unit: nm
+  explanation: "185 mm × 1,000,000 = 185 km; 185 ÷ 1.852 = 99.9 nm. In practice measure against the latitude scale, where 1 minute = 1 nm."
+  references: ["PNVC 2.3"]
+  difficulty: 2
+- id: PNVC-012
+  kind: mcq
+  elements: ["PNVC 2.3.1"]
+  stem: "The true track should be measured with the protractor aligned with:"
+  options: ["The nearest parallel of latitude", "A meridian near the middle of the track", "The isogonal", "The edge of the chart"]
+  answer: 1
+  explanation: "Meridians converge on the chart, so the angle changes slightly along a long track; the mid-meridian gives the mean true track."
+  references: ["PNVC 2.3"]
+  difficulty: 2
+- id: PNVC-013
+  kind: mcq
+  elements: ["PNVC 2.3.1"]
+  stem: "The reason for orienting the chart track-up in flight is:"
+  options:
+    - "It makes the chart easier to fold."
+    - "Ground features then appear on the chart in the same relative positions as they appear outside, reducing errors."
+    - "North-up is illegal."
+    - "It is required by the AIP."
+  answer: 1
+  explanation: "Track-up orientation removes the mental rotation that causes left-right errors in map reading."
+  references: ["PNVC 2.3", "PNVC 2.5"]
+  difficulty: 1
+- id: PNVC-014
+  kind: mcq
+  elements: ["PNVC 2.3.2"]
+  stem: "On a VNC, airspace boundaries and their vertical limits are decoded using:"
+  options: ["The TAF", "The chart legend, which shows the line styles for each class and the LL/UL format", "The ERSA EMERG section", "The WAC"]
+  answer: 1
+  explanation: "The legend gives the symbols; the limits are printed at the boundaries (for example C LL 4500). The WAC shows no airspace."
+  references: ["PNVC 2.3", "BAKC 5.1"]
+  difficulty: 1
+- id: PNVC-015
+  kind: mcq
+  elements: ["PNVC 2.3.3"]
+  stem: "To find whether a restricted area on your track will be active at your ETA you use:"
+  options: ["The TAF", "ERSA PRD (hours of activity in UTC) and the current NOTAMs", "The compass deviation card", "The GAF"]
+  answer: 1
+  explanation: "ERSA PRD gives limits, hours, status and the controlling authority; NOTAMs activate, deactivate or amend them. Convert the UTC hours to local for your ETA."
+  references: ["PNVC 2.3", "BAKC 5.2"]
+  difficulty: 1
+- id: PNVC-016
+  kind: numeric
+  elements: ["PNVC 2.4.1"]
+  stem: "At a groundspeed of 120 kt, how many minutes will it take to fly 46 nm?"
+  answer: 23
+  tolerance: 0
+  unit: min
+  explanation: "120 kt is 2 nm per minute, so 46 nm takes 23 minutes. Time = distance × 60 ÷ GS."
+  references: ["PNVC 2.4"]
+  difficulty: 1
+- id: PNVC-017
+  kind: numeric
+  elements: ["PNVC 2.4.1"]
+  stem: "Fuel on board 110 litres, fixed reserve 15 litres, fuel flow 32 litres per hour. What is the endurance available for flight, excluding the reserve, in minutes?"
+  answer: 178
+  tolerance: 2
+  unit: min
+  explanation: "Usable fuel = 110 − 15 = 95 L. 95 ÷ 32 = 2.97 h = 178 minutes."
+  references: ["PNVC 2.4"]
+  difficulty: 2
+- id: PNVC-018
+  kind: numeric
+  elements: ["PNVC 2.4.2"]
+  stem: "A heading of 085 degrees magnetic is flown where the variation is 4 degrees east. What is the true heading in degrees?"
+  answer: 89
+  tolerance: 0
+  unit: degrees
+  explanation: "Variation east, magnetic least: magnetic is 4 less than true, so true = 085 + 4 = 089 T."
+  references: ["PNVC 2.4"]
+  difficulty: 2
+- id: PNVC-019
+  kind: numeric
+  elements: ["PNVC 2.4.3"]
+  stem: "Convert 37 US gallons of AVGAS to kilograms (6 lb per US gallon, 1 kg = 2.205 lb). Give the answer to the nearest kilogram."
+  answer: 101
+  tolerance: 1
+  unit: kg
+  explanation: "37 × 6 = 222 lb; 222 ÷ 2.205 = 100.7 kg. Alternatively 37 × 3.785 = 140 L × 0.72 = 100.8 kg."
+  references: ["PNVC 2.4"]
+  difficulty: 2
+- id: PNVC-020
+  kind: numeric
+  elements: ["PNVC 2.4.3"]
+  stem: "A runway is 1,340 m long. What is its length in feet, to the nearest 10 ft?"
+  answer: 4400
+  tolerance: 10
+  unit: ft
+  explanation: "1,340 × 3.28 = 4,395 ft, about 4,400 ft. 1 m = 3.28 ft; 1 ft = 0.3048 m."
+  references: ["PNVC 2.4"]
+  difficulty: 1
+- id: PNVC-021
+  kind: numeric
+  elements: ["PNVC 2.4.4"]
+  stem: "Runway 09, surface wind 050 degrees magnetic at 18 kt. What is the crosswind component in knots, to the nearest knot? (Use the clock rule or sine of the angle.)"
+  answer: 12
+  tolerance: 1
+  unit: kt
+  explanation: "Angle = 40 degrees; crosswind = 18 × sin 40 = 18 × 0.64 = 11.6 kt from the left. Headwind = 18 × cos 40 = 13.8 kt."
+  references: ["PNVC 2.4"]
+  difficulty: 2
+- id: PNVC-022
+  kind: mcq
+  elements: ["PNVC 2.4.4"]
+  stem: "When calculating wind components for a runway from a forecast wind, remember that:"
+  options:
+    - "Forecast winds are magnetic and runways are true."
+    - "Forecast winds (TAF, GAF) are in degrees true while runway directions and tower winds are magnetic, so convert to a common reference first."
+    - "Both are true."
+    - "Both are magnetic."
+  answer: 1
+  explanation: "Mixing references puts the variation into the wind angle. In WA the variation is small, but on the east coast it is over 10 degrees."
+  references: ["PNVC 2.4", "RMTC 2.2"]
+  difficulty: 2
+- id: PNVC-023
+  kind: numeric
+  elements: ["PNVC 2.4.5"]
+  stem: "Track 180 degrees true, TAS 100 kt, wind 270 degrees true at 20 kt. Using the 1 in 60 approximation (drift in degrees ≈ crosswind × 60 ÷ TAS), what drift in degrees should be expected?"
+  answer: 12
+  tolerance: 1
+  unit: degrees
+  explanation: "The wind is at 90 degrees to track, so the crosswind is 20 kt: 20 × 60 ÷ 100 = 12 degrees of drift to the left (wind from the right pushes the aircraft left), so steer about 192 T."
+  references: ["PNVC 2.4"]
+  difficulty: 2
+- id: PNVC-024
+  kind: numeric
+  elements: ["PNVC 2.4.5"]
+  stem: "Climbing from an aerodrome at 200 ft to a cruise level of 6,700 ft at 500 ft per minute with a climb groundspeed of 80 kt, how far from the aerodrome is the top of climb, in nautical miles?"
+  answer: 17
+  tolerance: 1
+  unit: nm
+  explanation: "Height to gain 6,500 ft ÷ 500 = 13 minutes. 13 min at 80 kt (1.33 nm/min) = 17.3 nm."
+  references: ["PNVC 2.4"]
+  difficulty: 2
+- id: PNVC-025
+  kind: numeric
+  elements: ["PNVC 2.4.5"]
+  stem: "Descending from 7,500 ft to 1,500 ft at 500 ft per minute with a groundspeed of 120 kt, how many nautical miles before the destination should the descent begin?"
+  answer: 24
+  tolerance: 1
+  unit: nm
+  explanation: "6,000 ft ÷ 500 = 12 minutes; at 2 nm per minute that is 24 nm."
+  references: ["PNVC 2.4"]
+  difficulty: 1
+- id: PNVC-026
+  kind: numeric
+  elements: ["PNVC 2.4.5"]
+  stem: "Using the rule of 2 percent per 1,000 ft, what is the TAS in knots for a CAS of 95 kt at a density height of 5,000 ft?"
+  answer: 105
+  tolerance: 1
+  unit: kt
+  explanation: "95 × (1 + 0.02 × 5) = 95 × 1.10 = 104.5 kt."
+  references: ["PNVC 2.4", "PAKC 2.3"]
+  difficulty: 1
+- id: PNVC-027
+  kind: mcq
+  elements: ["PNVC 2.5.1"]
+  stem: "A road crossing the track at right angles is most useful for determining:"
+  options: ["Track error", "Groundspeed, when timed against the previous fix", "The wind direction", "The magnetic variation"]
+  answer: 1
+  explanation: "A position line across track gives a timing point for groundspeed; a line parallel to track shows track error; two crossing lines give a fix."
+  references: ["PNVC 2.5"]
+  difficulty: 1
+- id: PNVC-028
+  kind: mcq
+  elements: ["PNVC 2.5.1"]
+  stem: "Flying at 5,000 ft over the WA wheatbelt, the best map reading features are:"
+  options:
+    - "Fence lines and individual farm dams."
+    - "Large features such as towns, salt lakes, major roads and railways, and ranges."
+    - "Minor tracks."
+    - "Single trees."
+  answer: 1
+  explanation: "At 2,000 to 10,000 ft small features are lost; use large, distinctive features. At low level, use small close features; in sparsely settled country rely on salt lakes, rivers and the few roads plus DR."
+  references: ["PNVC 2.5"]
+  difficulty: 1
+- id: PNVC-029
+  kind: mcq
+  elements: ["PNVC 2.5.1"]
+  stem: "'Reading from ground to map' is appropriate when:"
+  options:
+    - "You are confident of your position and anticipating the next feature."
+    - "You are uncertain of your position and must identify a feature seen outside on the chart, confirming with a second feature and the DR position."
+    - "Flying in cloud."
+    - "Using GNSS."
+  answer: 1
+  explanation: "Map to ground is the normal method when position is known. Ground to map is for regaining position and is more error-prone."
+  references: ["PNVC 2.5"]
+  difficulty: 2
+- id: PNVC-030
+  kind: mcq
+  elements: ["PNVC 2.5.2"]
+  stem: "Track error (fan) lines drawn at 10 degrees either side of track from the departure and destination points are used to:"
+  options:
+    - "Mark the lowest safe altitude."
+    - "Read off the track error and closing angle by eye when a fix shows the aircraft off track."
+    - "Define the CTA boundary."
+    - "Show the forecast wind."
+  answer: 1
+  explanation: "With fan lines and 10 nm distance marks, the 1 in 60 corrections can be estimated quickly without calculation."
+  references: ["PNVC 2.5"]
+  difficulty: 1
+- id: PNVC-031
+  kind: numeric
+  elements: ["PNVC 2.5.3"]
+  stem: "After flying 40 nm a fix shows the aircraft 4 nm right of track with 80 nm to go. By how many degrees should the heading be altered to the left to reach the destination?"
+  answer: 9
+  tolerance: 0
+  unit: degrees
+  explanation: "Track error = 4 × 60 ÷ 40 = 6 degrees. Closing angle = 4 × 60 ÷ 80 = 3 degrees. Alter left by 6 + 3 = 9 degrees."
+  references: ["PNVC 2.5"]
+  difficulty: 2
+- id: PNVC-032
+  kind: numeric
+  elements: ["PNVC 2.5.3"]
+  stem: "A leg of 90 nm was planned at 100 kt. The first 30 nm took 21 minutes. What is the revised time in minutes for the remaining 60 nm?"
+  answer: 42
+  tolerance: 0
+  unit: min
+  explanation: "By proportion: 60 × 21 ÷ 30 = 42 minutes. Equivalently GS = 30 ÷ 21 × 60 = 86 kt, and 60 ÷ 86 × 60 = 42 min."
+  references: ["PNVC 2.5"]
+  difficulty: 2
+- id: PNVC-033
+  kind: mcq
+  elements: ["PNVC 2.5.3"]
+  stem: "Having altered heading to regain track and reached it, the pilot should:"
+  options:
+    - "Return to the original heading."
+    - "Take off the closing angle but keep the track error correction, since the original heading was wrong by the track error."
+    - "Take off the track error correction only."
+    - "Fly the reciprocal."
+  answer: 1
+  explanation: "The track error reflects the actual wind; the closing angle was only needed to converge on the track."
+  references: ["PNVC 2.5"]
+  difficulty: 2
+- id: PNVC-034
+  kind: mcq
+  elements: ["PNVC 2.5.3"]
+  stem: "A DR (dead reckoning) position is established from:"
+  options:
+    - "A GNSS fix."
+    - "The last fix, the track made good and the groundspeed applied for the time elapsed."
+    - "Two VOR radials."
+    - "The forecast wind only."
+  answer: 1
+  explanation: "DR uses the latest known TMG and GS from the last fix. Then look for features around the DR position to confirm it."
+  references: ["PNVC 2.5"]
+  difficulty: 1
+- id: PNVC-035
+  kind: mcq
+  elements: ["PNVC 2.6.1"]
+  stem: "The rated coverage of a VOR for an aircraft between 5,000 ft and 10,000 ft is:"
+  options: ["30 nm", "60 nm", "90 nm", "120 nm"]
+  answer: 2
+  explanation: "AIP GEN 1.5: below 5,000 ft 60 nm; 5,000 to 10,000 ft 90 nm; 10,000 to 15,000 ft 120 nm; 15,000 to 20,000 ft 150 nm. NDB coverage is published per aid in ERSA."
+  references: ["PNVC 2.6", "AIP GEN 1.5"]
+  difficulty: 1
+- id: PNVC-036
+  kind: mcq
+  elements: ["PNVC 2.6.1"]
+  stem: "The frequency, identifier, position and hours of an NDB are found in:"
+  options: ["The TAF", "ERSA NAV/COMM (and the ERC frequency box)", "The WAC legend", "The maintenance release"]
+  answer: 1
+  explanation: "ERSA NAV/COMM lists every aid; the ERC-L and VNC show the aid with its frequency and Morse ident."
+  references: ["PNVC 2.6"]
+  difficulty: 1
+- id: PNVC-037
+  kind: mcq
+  elements: ["PNVC 2.7.1", "PNVC 2.7.3"]
+  stem: "VOR/DME area navigation determines position from:"
+  options:
+    - "Satellite pseudoranges."
+    - "A radial (bearing) from a VOR and a distance from its DME, allowing waypoints to be defined as a bearing and distance from the station."
+    - "Inertial sensors only."
+    - "Two NDB bearings."
+  answer: 1
+  explanation: "This rho-theta fix lets the computer present steering to a phantom waypoint. Accuracy falls with distance from the station and range is line of sight."
+  references: ["PNVC 2.7"]
+  difficulty: 1
+- id: PNVC-038
+  kind: mcq
+  elements: ["PNVC 2.7.2"]
+  stem: "Typical outputs of an area navigation system include:"
+  options:
+    - "Only the aircraft's altitude."
+    - "Present position, track and groundspeed, bearing and distance to the waypoint, time to go, cross-track error and the computed wind."
+    - "The engine power setting."
+    - "The QNH."
+  answer: 1
+  explanation: "Inputs are air data, heading, sensor data (VOR/DME or GNSS) and the database; the outputs support navigation, situational awareness and diversions."
+  references: ["PNVC 2.7"]
+  difficulty: 1
+- id: PNVC-039
+  kind: mcq
+  elements: ["PNVC 2.7.3"]
+  stem: "A limitation of VOR/DME RNAV is that:"
+  options:
+    - "It works anywhere in the world."
+    - "The position error grows with distance from the station, and the station must be within line of sight (rated coverage)."
+    - "It needs four satellites."
+    - "It cannot display distance."
+  answer: 1
+  explanation: "A 2 degree VOR error at 60 nm is a 2 nm position error; terrain blocks VHF signals."
+  references: ["PNVC 2.7"]
+  difficulty: 2
+- id: PNVC-040
+  kind: mcq
+  elements: ["PNVC 2.7.5"]
+  stem: "How many satellites must a GNSS receiver track for a three-dimensional position fix, and how many for RAIM?"
+  options: ["3 and 4", "4 and 5", "5 and 6", "2 and 3"]
+  answer: 1
+  explanation: "Four satellites solve latitude, longitude, altitude and the receiver clock error; a fifth allows RAIM to detect a faulty satellite (six to exclude it)."
+  references: ["PNVC 2.7", "GNSSC 2.1"]
+  difficulty: 1
+- id: PNVC-041
+  kind: mcq
+  elements: ["PNVC 2.7.5"]
+  stem: "For a VFR pilot, GNSS should be regarded as:"
+  options:
+    - "The sole means of navigation."
+    - "An aid to visual navigation, with the position cross-checked against map reading; below 2,000 ft AGL navigation must be by visual reference."
+    - "A replacement for carrying charts."
+    - "Unusable in Australia."
+  answer: 1
+  explanation: "Over-reliance is the main hazard. IFR use as a sole means needs a certified installation, current database, integrity (RAIM or SBAS) and a trained pilot."
+  references: ["PNVC 2.7"]
+  difficulty: 1
+- id: PNVC-042
+  kind: mcq
+  elements: ["PNVC 2.7.5"]
+  stem: "SBAS such as WAAS improves GNSS by:"
+  options:
+    - "Adding more GPS satellites."
+    - "Broadcasting corrections and integrity information via geostationary satellites, improving accuracy and enabling approaches with vertical guidance."
+    - "Replacing the ground control segment."
+    - "Removing the need for a database."
+  answer: 1
+  explanation: "DGNSS uses a ground station for corrections; SBAS uses satellites; GLS uses a ground station at the aerodrome for precision approaches. Australia's SouthPAN is the local SBAS; check its aviation status."
+  references: ["PNVC 2.7"]
+  difficulty: 2
+- id: PNVC-043
+  kind: mcq
+  elements: ["PNVC 2.7.6"]
+  stem: "A pilot might inhibit automatic position updating of an area navigation system when:"
+  options:
+    - "The weather is good."
+    - "The sensor data is known to be unreliable, for example a DME behind terrain or an area of GNSS interference, so a bad update does not corrupt a good position."
+    - "The aircraft is on the ground."
+    - "The database is current."
+  answer: 1
+  explanation: "Updating corrects drift from external references; manual, automatic and inhibited modes exist, and an update shows as a jump in position or a change in track, groundspeed and ETA."
+  references: ["PNVC 2.7"]
+  difficulty: 2

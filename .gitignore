@@ -1,0 +1,16 @@
+.venv/
+venv/
+data/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+*.db-wal
+*.db-shm
+*.tgz
+
+node_modules/
+
+# diagram review renders (tools/diagrams/render.mjs)
+.renders/
+*.egg-info/

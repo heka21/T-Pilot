@@ -1,0 +1,13 @@
+# Flashcards for unit RBKA. See content/README.md for the format.
+- id: RBKA-C001
+  elements: ["RBKA 3.6.1"]
+  front: "What causes a wing to stall?"
+  back: "Exceeding the critical angle of attack (about 15 to 18 degrees). It can happen at any airspeed and any attitude."
+- id: RBKA-C002
+  elements: ["RBKA 3.6.2"]
+  front: "Stall speed in a level 60 degree banked turn compared with level flight?"
+  back: "About 41 percent higher. Load factor is 2, and stall speed rises with the square root of load factor (√2 = 1.41)."
+- id: RBKA-C003
+  elements: ["RBKA 3.6.4"]
+  front: "Quickest way to tell a spin from a spiral dive?"
+  back: "Airspeed. Spin: low and steady (wings stalled). Spiral dive: high and increasing (not stalled). Spiral recovery is roll level first, then ease out."

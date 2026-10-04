@@ -1,0 +1,112 @@
+<div class="widget" x-data="{
+  h: 2000, v: 65, ld: 9.8, wind: 0, target: 3.0,
+  x0: 104, plotW: 500, gy: 220,
+  get stillNm() { return this.h * this.ld / 6076 },
+  get rod() { return this.v * 6076 / 60 / this.ld },
+  get mins() { return this.h / this.rod },
+  get gs() { return this.v - this.wind },
+  get groundNm() { return this.mins * this.gs / 60 },
+  get short() { return this.groundNm < this.target },
+  get marginal() { return !this.short && this.groundNm < this.target * 1.1 },
+  get state() { return this.short ? 'bad' : this.marginal ? 'warn' : 'ok' },
+  get stateColor() { return 'var(--color-' + this.state + ')' },
+  get axisMax() { const m = 1.15 * Math.max(this.stillNm, this.groundNm, this.target); for (const c of [2, 4, 6, 8, 10, 12, 16, 20, 24, 32]) { if (c >= m) return c } return 40 },
+  tick(f) { const t = this.axisMax * f; return Number.isInteger(t) ? String(t) : t.toFixed(1) },
+  xs(d) { return this.x0 + d / this.axisMax * this.plotW },
+  get yTop() { return this.gy - this.h / 5000 * 170 },
+  clampX(x) { return Math.min(550, Math.max(90, x)) },
+  get windText() { return this.wind > 0 ? this.wind + ' kt headwind' : this.wind < 0 ? (-this.wind) + ' kt tailwind' : 'calm' },
+  preset(p) { Object.assign(this, p) },
+  reset() { this.h = 2000; this.v = 65; this.ld = 9.8; this.wind = 0; this.target = 3.0 }
+}">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="grw-title" class="widget-stage">
+    <title id="grw-title">Side view of a glide from height: the still-air glide path, the path over the ground with the wind, and the target field</title>
+    <defs>
+      <marker id="grw-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- distance grid (static: Alpine x-for cannot be used inside <svg>) -->
+    <line x1="104" y1="50" x2="104" y2="220" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="229" y1="50" x2="229" y2="220" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="354" y1="50" x2="354" y2="220" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="479" y1="50" x2="479" y2="220" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="604" y1="50" x2="604" y2="220" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="104" y="238" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="tick(0)">0</text>
+    <text x="229" y="238" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="tick(0.25)"></text>
+    <text x="354" y="238" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="tick(0.5)"></text>
+    <text x="479" y="238" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="tick(0.75)"></text>
+    <text x="604" y="238" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="tick(1) + ' NM'"></text>
+    <!-- ground and height axis -->
+    <line x1="20" y1="220" x2="624" y2="220" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <text x="8" y="20" font-size="11" fill="var(--color-fg-faint)">vertical scale exaggerated</text>
+    <text x="64" :y="yTop + 4" font-size="13" font-weight="600" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="h + ' ft'"></text>
+    <text x="64" :y="yTop - 12" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">AGL</text>
+    <!-- wind arrow: points where the wind blows to -->
+    <line :x1="wind > 0 ? 380 : 300" y1="24" :x2="wind > 0 ? 300 : 380" y2="24" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#grw-arrow)" x-show="wind !== 0"/>
+    <text x="392" y="28" font-size="13" font-weight="600" fill="var(--color-sky-fg)" class="num" x-text="windText" x-show="wind !== 0"></text>
+    <!-- target field -->
+    <g :transform="'translate(' + xs(target).toFixed(1) + ' 220)'">
+      <line x1="0" y1="0" x2="0" y2="-30" :stroke="stateColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M0 -30 L16 -25 L0 -20 Z" :fill="stateColor" :stroke="stateColor" stroke-width="1" stroke-linejoin="round"/>
+    </g>
+    <!-- glide paths -->
+    <line :x1="x0" :y1="yTop" :x2="xs(stillNm)" :y2="gy" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>
+    <line :x1="x0" :y1="yTop" :x2="xs(groundNm)" :y2="gy" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle :cx="xs(stillNm)" cy="220" r="4" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <circle :cx="xs(groundNm)" cy="220" r="4.5" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
+    <!-- aeroplane (plane_side at half scale, nose slightly down) -->
+    <g :transform="'translate(' + x0 + ' ' + yTop.toFixed(1) + ') rotate(6) scale(0.5)'" stroke="var(--color-fg)" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M-40 1 L-58 2 L-58 5 L-38 5 Z" fill="var(--color-surface)" stroke-width="2"/>
+      <path d="M-29 -4 L-39 -26 L-47 -26 L-48 -3 Z" fill="var(--color-surface)" stroke-width="2"/>
+      <path d="M50 0 C50 -4 46 -7 40 -8 L8 -10 C-4 -10 -22 -7 -40 -4 L-48 -3 L-48 3 L-40 4 C-22 6 -4 7 8 7 L42 6 C47 5 50 4 50 0 Z" fill="var(--color-surface)" stroke-width="2"/>
+      <path d="M18 2 C14 -1 -6 -1 -12 2 L-16 7 L14 7 C18 6 20 4 18 2 Z" fill="var(--color-surface)" stroke-width="2"/>
+      <path d="M18 -9 L30 -9 L35 -5 L14 -5 Z" fill="var(--color-surface-2)" stroke-width="1"/>
+      <path d="M50 -3 L57 0 L50 3 Z" fill="var(--color-surface)" stroke-width="2"/>
+      <line x1="55" y1="-16" x2="55" y2="16" stroke-width="1.5"/>
+      <line x1="10" y1="7" x2="10" y2="13" stroke-width="1.5"/><circle cx="10" cy="15" r="3.5" fill="none" stroke-width="1.5"/>
+      <line x1="38" y1="6" x2="38" y2="12" stroke-width="1.5"/><circle cx="38" cy="14" r="3" fill="none" stroke-width="1.5"/>
+    </g>
+    <!-- touchdown and field labels, one row each below the ground -->
+    <text :x="clampX(xs(groundNm))" y="256" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand)" class="num" x-text="'over the ground ' + groundNm.toFixed(2) + ' NM'"></text>
+    <text :x="clampX(xs(stillNm))" y="272" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="'still air ' + stillNm.toFixed(2) + ' NM'"></text>
+    <text :x="clampX(xs(target))" y="288" font-size="12" font-weight="600" text-anchor="middle" :fill="stateColor" class="num" x-text="'field ' + target.toFixed(1) + ' NM'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control"><label for="grw-height">Height AGL <output for="grw-height" x-text="h + ' ft'"></output></label><input id="grw-height" type="range" min="500" max="5000" step="100" x-model.number="h"></div>
+    <div class="widget-control"><label for="grw-tas">Glide speed (TAS) <output for="grw-tas" x-text="v + ' kt'"></output></label><input id="grw-tas" type="range" min="50" max="100" step="1" x-model.number="v"></div>
+    <div class="widget-control"><label for="grw-ld">Glide ratio (L/D) <output for="grw-ld" x-text="ld.toFixed(1) + ' : 1'"></output></label><input id="grw-ld" type="range" min="5" max="14" step="0.1" x-model.number="ld"></div>
+    <div class="widget-control"><label for="grw-wind">Wind (right = headwind) <output for="grw-wind" x-text="windText"></output></label><input id="grw-wind" type="range" min="-30" max="30" step="1" x-model.number="wind"></div>
+    <div class="widget-control"><label for="grw-target">Distance to the field <output for="grw-target" x-text="target.toFixed(1) + ' NM'"></output></label><input id="grw-target" type="range" min="0.5" max="12" step="0.1" x-model.number="target"></div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt>Still-air glide distance</dt><dd x-text="stillNm.toFixed(2) + ' NM'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt>Rate of descent</dt><dd x-text="'about ' + Math.round(rod / 10) * 10 + ' fpm'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt>Time to the ground</dt><dd x-text="mins.toFixed(1) + ' min'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt>Groundspeed</dt><dd x-text="gs + ' kt'"></dd>
+    </div>
+    <div class="widget-readout" :class="state">
+      <dt>Distance over the ground</dt>
+      <dd><span x-text="groundNm.toFixed(2) + ' NM'"></span><span class="widget-flag bad" x-show="short">Field out of reach</span><span class="widget-flag warn" x-show="marginal">Marginal</span></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions"><button type="button" class="btn-secondary" @click="reset()">Reset</button>
+    <button type="button" class="btn-ghost" @click="preset({ h: 2000, v: 65, ld: 9.8, wind: 0 })">Note example: 2000 ft, 65 kt</button>
+    <button type="button" class="btn-ghost" @click="wind = 20">20 kt headwind</button>
+    <button type="button" class="btn-ghost" @click="wind = -20">20 kt tailwind</button>
+    <button type="button" class="btn-ghost" @click="preset({ h: 3000, ld: 9, wind: 0 })">3000 ft at 9:1</button>
+    <button type="button" class="btn-ghost" @click="ld = 7">Mishandled: 7:1</button></div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> Wind moves the air, not the glide through it: rate of descent, time to the ground and still-air distance never change, but a headwind cuts the groundspeed and shortens the distance over the ground while a tailwind lengthens it. Still-air distance is height × L/D, and only the best glide speed gives the best L/D (some textbooks add: fly slightly faster than best glide in a strong headwind, slightly slower in a tailwind).</p>
+  <details class="widget-try"><summary>Try this: 2000 ft, 65 kt, 9.8 : 1. How far in still air, into a 20 kt headwind and with a 20 kt tailwind?</summary><p>Rate of descent $= 65 \times 6076 \div 60 \div 9.8 \approx 670$ fpm, so the time is $2000 \div 672 \approx 2.98$ min. Still air: $2.98 \times 65 \div 60 \approx 3.23$ NM. Headwind (GS 45 kt): $3.226 \times 45 \div 65 \approx 2.23$ NM. Tailwind (GS 85 kt): $3.226 \times 85 \div 65 \approx 4.22$ NM. The note rounds the time to 3 minutes and gets 3.25, 2.25 and 4.25 NM: same answer, rounder numbers.</p></details>
+  <details class="widget-try"><summary>Try this: 3000 ft with a best L/D of 9 : 1, then mishandled at a speed giving only 7 : 1. How much distance is lost?</summary><p>$3000 \times 9 = 27{,}000$ ft $\div 6076 \approx 4.4$ NM. At 7 : 1: $3000 \times 7 = 21{,}000$ ft $\approx 3.5$ NM. Almost a nautical mile gone, in still air, just from flying the wrong speed.</p></details>
+  <details class="widget-try"><summary>Try this: with a 20 kt headwind, does the rate of descent change?</summary><p>No. It stays about 670 fpm because the aeroplane glides through the air exactly as before; only the groundspeed (45 kt) and so the path over the ground change. The glide over the ground is steeper and shorter.</p></details>
+</div>

@@ -1,0 +1,97 @@
+# GNSSC 2.1: GNSS operation.
+- id: GNSSC-001
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "What is the minimum number of satellites needed for a GNSS receiver to compute a three-dimensional position?"
+  options: ["3", "4", "5", "6"]
+  answer: 1
+  explanation: "Four pseudoranges solve four unknowns: latitude, longitude, altitude and the receiver clock error. RAIM fault detection needs a fifth satellite, and fault exclusion a sixth."
+  references: ["GNSSC 2.1"]
+  difficulty: 1
+- id: GNSSC-002
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "RAIM provides:"
+  options:
+    - "Correction of ionospheric errors from geostationary satellites."
+    - "Integrity monitoring by the receiver, detecting a faulty satellite using redundant measurements."
+    - "Automatic database updates."
+    - "A backup VOR signal."
+  answer: 1
+  explanation: "Receiver autonomous integrity monitoring compares position solutions from different satellite combinations to detect (and with six satellites exclude) a faulty one. Correction from geostationary satellites is SBAS."
+  references: ["GNSSC 2.1"]
+  difficulty: 2
+- id: GNSSC-003
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "A high dilution of precision (DOP) value indicates:"
+  options:
+    - "Many satellites in good geometry and high accuracy."
+    - "Poor satellite geometry, which magnifies ranging errors and reduces accuracy."
+    - "The database has expired."
+    - "The receiver is using SBAS corrections."
+  answer: 1
+  explanation: "When the satellites in view are bunched together the range spheres intersect at shallow angles and errors are magnified. Low DOP is good; high DOP is bad."
+  references: ["GNSSC 2.1"]
+  difficulty: 2
+- id: GNSSC-004
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "Before a VFR flight using a panel-mounted GNSS receiver, which check is most important?"
+  options:
+    - "That the receiver shows a 3D fix, the displayed position matches the aircraft's known position, and the database is current."
+    - "That the unit is set to magnetic variation zero."
+    - "That the GNSS altitude matches QNH exactly."
+    - "That a RAIM prediction has been obtained from ATC by radio."
+  answer: 0
+  explanation: "Serviceability checks include the self-test, a 3D fix, a position check against a known location and a current database. GNSS altitude is geometric and will not match the altimeter exactly."
+  references: ["GNSSC 2.1"]
+  difficulty: 2
+- id: GNSSC-005
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "Which indication typically shows that a GNSS waypoint has been passed?"
+  options:
+    - "The TO/FROM indicator changes to FROM and the receiver sequences to the next leg."
+    - "The RAIM annunciator lights."
+    - "The altitude display flashes."
+    - "The CDI centres permanently."
+  answer: 0
+  explanation: "Waypoint passage is shown by the waypoint alert, the TO/FROM change, distance counting through zero, and automatic sequencing to the next leg (unless OBS/hold mode is selected). A RAIM annunciator indicates an integrity problem."
+  references: ["GNSSC 2.1"]
+  difficulty: 2
+- id: GNSSC-006
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "Which practice best guards against loss of situational awareness when using GNSS on a VFR cross-country?"
+  options:
+    - "Programming the route in flight to save time on the ground."
+    - "Following the magenta line and putting the chart away."
+    - "Plotting the route on a chart and cross-checking GNSS against visual fixes throughout."
+    - "Relying on GNSS altitude for terrain clearance."
+  answer: 2
+  explanation: "GNSS errors and failures, data entry mistakes and complacency are guarded against by independent cross-checks. Programming in flight increases head-down time, and GNSS altitude is not a substitute for the altimeter."
+  references: ["GNSSC 2.1"]
+  difficulty: 1
+- id: GNSSC-007
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "A pilot enters a waypoint and the receiver shows a track of 087 degrees and 640 nm for what should be a 45 nm leg. The most likely cause is:"
+  options: ["Ionospheric delay", "A data entry error, such as a similarly named waypoint", "Poor DOP", "Multipath error"]
+  answer: 1
+  explanation: "A gross track or distance error almost always comes from a wrong or similarly named waypoint. Checking track and distance against the flight plan for each leg catches it. Ranging errors are measured in metres, not hundreds of miles."
+  references: ["GNSSC 2.1"]
+  difficulty: 2
+- id: GNSSC-008
+  kind: mcq
+  elements: ["GNSSC 2.1.1"]
+  stem: "For a private pilot on a VFR flight using a handheld GNSS receiver, GNSS is best described as:"
+  options:
+    - "An approved primary means of navigation that replaces map reading."
+    - "An aid to navigation; the pilot must still be able to navigate by visual reference to the ground or water."
+    - "Prohibited in Australia."
+    - "Permitted only above 5,000 ft."
+  answer: 1
+  explanation: "A non-approved handheld is an aid. Australian VFR rules require the pilot to be able to navigate visually (and expect visual navigation at or below 2,000 ft above ground or water); check the VFRG and AIP ENR 1.1 for the exact conditions under which GNSS may be the primary means."
+  references: ["GNSSC 2.1", "VFRG", "AIP ENR 1.1"]
+  difficulty: 2

@@ -1,0 +1,20 @@
+<div class="widget" data-widget="explorer" data-explorer="turn">
+  <div class="widget-canvas" data-canvas aria-label="3D aeroplane seen from behind in a banked turn, with lift and weight vectors"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="bt-bank">Angle of bank <output data-out="bank">30°</output></label><input id="bt-bank" type="range" min="0" max="75" step="1" value="30" data-param="bank">
+      <div class="widget-presets" role="group" aria-label="Bank presets"><button type="button" data-set='{"bank": 0}'>0°</button><button type="button" data-set='{"bank": 30}'>30°</button><button type="button" data-set='{"bank": 45}'>45°</button><button type="button" data-set='{"bank": 60}'>60°</button><button type="button" data-set='{"bank": 75}'>75°</button></div></div>
+    <div class="widget-control"><label for="bt-ball">Rudder balance <output data-out="ballText">balanced: ball centred</output></label><input id="bt-ball" type="range" min="-1" max="1" step="0.1" value="0" data-param="ball">
+      <svg viewBox="0 0 320 40" class="mt-1 h-10 w-full max-w-xs" aria-label="Balance indicator"><path d="M20 8 Q160 44 300 8" fill="none" stroke="var(--color-line-strong)" stroke-width="12" stroke-linecap="round"/><line x1="148" y1="2" x2="148" y2="38" stroke="var(--color-fg-muted)" stroke-width="1.5"/><line x1="172" y1="2" x2="172" y2="38" stroke="var(--color-fg-muted)" stroke-width="1.5"/><circle data-out="ball" cx="160" cy="24" r="8" fill="var(--color-fg)"/></svg></div>
+    <div class="widget-control"><label for="bt-vs">Level-flight stall speed <output data-out="vs">52 kt</output></label><input id="bt-vs" type="range" min="35" max="90" step="1" value="52" data-param="vs"></div>
+    <div class="widget-control"><label for="bt-tas">True airspeed in the turn <output data-out="tas">100 kt</output></label><input id="bt-tas" type="range" min="60" max="160" step="5" value="100" data-param="tas"></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Load factor</dt><dd><span data-out="n">1.15 g</span><span class="widget-flag bad" data-flag="over" style="display:none">Over +3.8 g</span></dd></div>
+    <div class="widget-readout"><dt>Stall speed in the turn</dt><dd data-out="vsTurn">56 kt</dd></div>
+    <div class="widget-readout"><dt>Rate of turn</dt><dd data-out="rate">–</dd></div>
+    <div class="widget-readout"><dt>Turn radius</dt><dd data-out="radius">–</dd></div>
+  </dl>
+  <div class="widget-actions"><button type="button" class="btn-secondary" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag the picture to look around; the ground turns faster as the bank steepens.</span></div>
+  <p class="widget-notice"><strong>What to notice.</strong> Lift tilts with the wings. Its vertical part must still equal weight, so total lift grows: the load factor is $1/\cos\theta$. The horizontal part is what turns the aeroplane, so a steeper bank turns faster and tighter. The ball tells you whether the turn is balanced: slip is ball in, skid is ball out, and the fix is rudder on the side the ball is on.</p>
+  <details class="widget-try"><summary>Try this: at 60° of bank, how much does the stall speed rise, and how does the rate of turn compare with 30°?</summary><p>Load factor 2.0, stall speed × √2 = ×1.41 (52 kt becomes about 74 kt). The rate of turn is proportional to tan θ: tan 60° ÷ tan 30° = 3, so the 60° turn is three times as fast at the same airspeed.</p></details>
+</div>

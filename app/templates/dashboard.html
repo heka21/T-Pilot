@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stack_bar, counts, page_header, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+{% block content %}
+{% call page_header("Dashboard", now().strftime("%A %-d %B %Y")) %}
+  <a href="/quiz" class="btn-secondary">{{ icon("quiz", "size-4") }} Quick quiz</a>
+  <a href="/cards/review" class="btn-primary">{{ icon("cards", "size-4") }} Review cards</a>
+{% endcall %}
+
+{% if plan_status %}
+  {% set ps = plan_status %}
+  {% if ps.behind %}
+    <div class="callout callout-bad mb-6 flex flex-wrap items-center justify-between gap-3">
+      <span class="flex items-center gap-2">{{ icon("alert", "size-4 text-bad") }}
+        You are about <strong>{{ ps.days_behind }} study day{{ "s" if ps.days_behind != 1 }}</strong> behind
+        ({{ ps.overdue | length }} overdue item{{ "s" if ps.overdue | length != 1 }}).</span>
+      <a href="/planner" class="btn-secondary btn-sm">Re-plan</a>
+    </div>
+  {% elif ps.days_ahead >= 1 %}
+    <div class="callout callout-ok mb-6 flex flex-wrap items-center justify-between gap-3">
+      <span class="flex items-center gap-2">{{ icon("sparkle", "size-4 text-ok") }}
+        You are about <strong>{{ ps.days_ahead }} study day{{ "s" if ps.days_ahead != 1 }}</strong> ahead of plan.</span>
+      <a href="/planner" class="btn-secondary btn-sm">View plan</a>
+    </div>
+  {% endif %}
+  {% if ps.shortfall %}
+    <p class="callout callout-warn mb-6">The plan does not fit all content before the exam dates. <a href="/planner">Adjust it in the planner</a>.</p>
+  {% endif %}
+{% endif %}
+
+{% if start_here %}
+  <section class="card mb-6 border-brand/40 bg-brand-soft/30">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0 flex-1">
+        <p class="eyebrow text-brand-fg">Start here</p>
+        <h2 class="card-title mt-1">The notes are the study material: read them in syllabus order, then quiz each subtopic.</h2>
+        <p class="mt-2 text-sm text-fg-muted">Each note covers one syllabus subtopic with its knowledge elements, worked examples, diagrams and exam tips.
+          Next up: <a href="{{ note_url(start_here) }}" class="font-medium">{{ start_here.id }} · {{ start_here.note.title }}</a>.</p>
+      </div>
+      <div class="btn-row">
+        <a href="{{ note_url(start_here) }}" class="btn-primary">{{ icon("notes", "size-4") }} Read the next note</a>
+        <a href="/notes" class="btn-secondary">All notes</a>
+        <a href="/planner" class="btn-secondary">{{ icon("calendar", "size-4") }} Make a plan</a>
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------------ stat tiles #}
+<div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="stat">
+    <span class="stat-label">Next exam</span>
+    {% if plan_status and plan_status.next_exam %}
+      <span class="stat-value">{{ plan_status.days_to_next_exam }}<span class="ml-1 text-sm font-medium text-fg-muted">day{{ "s" if plan_status.days_to_next_exam != 1 }}</span></span>
+      <span class="text-xs text-fg-muted">{{ plan_status.next_exam[0] }} exam in {{ plan_status.days_to_next_exam }} day{{ "s" if plan_status.days_to_next_exam != 1 }} · {{ plan_status.next_exam[1].strftime("%-d %b %Y") }}</span>
+    {% else %}
+      <span class="stat-value text-fg-faint">–</span>
+      <a href="/planner" class="text-xs">Set exam dates</a>
+    {% endif %}
+  </div>
+  <a href="/cards" class="stat no-underline hover:border-line-strong">
+    <span class="stat-label">Cards due</span>
+    <span class="stat-value">{{ due_cards.due }}</span>
+    <span class="text-xs text-fg-muted">+ {{ due_cards.new }} new · {{ due_cards.seen }}/{{ due_cards.total }} seen</span>
+  </a>
+  <div class="stat">
+    <span class="stat-label">Plan progress</span>
+    {% if plan_status %}
+      <span class="stat-value">{{ plan_status.percent }}%</span>
+      <progress value="{{ plan_status.percent }}" max="100" aria-label="Plan progress" class="mt-1"></progress>
+      <span class="text-xs text-fg-muted">{{ plan_status.study_done }} of {{ plan_status.study_total }} sessions</span>
+    {% else %}
+      <span class="stat-value text-fg-faint">–</span>
+      <a href="/planner" class="text-xs">Create a plan</a>
+    {% endif %}
+  </div>
+  <div class="stat">
+    <span class="stat-label">Last attempt</span>
+    {% if last_attempt %}
+      <span class="stat-value">{% if last_attempt.score_percent is not none %}{{ last_attempt.score_percent | round | int }}%{% else %}–{% endif %}</span>
+      <span class="truncate text-xs text-fg-muted">{{ last_attempt.title or last_attempt.mode }}
+        {% if last_attempt.passed is not none %}· <span class="{{ 'pass' if last_attempt.passed else 'fail' }}">{{ "pass" if last_attempt.passed else "fail" }}</span>{% endif %}</span>
+    {% else %}
+      <span class="stat-value text-fg-faint">–</span>
+      <a href="/quiz" class="text-xs">Take a quiz</a>
+    {% endif %}
+  </div>
+</div>
+
+{# ------------------------------------------------------------------ today + weak areas #}
+<div class="mb-8 grid gap-4 lg:grid-cols-5">
+  <section class="card lg:col-span-3">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="card-title">Today</h2>
+      {% if plan_status %}<a href="/planner" class="text-sm">Full plan</a>{% endif %}
+    </div>
+    {% if plan_status %}
+      {% if today_items %}
+        <ul class="row-list">
+          {% for item in today_items %}
+            {% set href = note_url(item.subtopic_id) if item.kind == "study" and item.subtopic_id else item_links.get(item.kind, "/planner") %}
+            <li class="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 {{ 'opacity-60' if item.done_at }}">
+              <span class="grid size-6 shrink-0 place-items-center rounded-full {{ 'bg-ok text-white' if item.done_at else 'border border-line-strong text-transparent' }}">{{ icon("check", "size-3.5") }}</span>
+              <a href="{{ href }}" class="min-w-0 flex-1 truncate text-sm font-medium text-fg no-underline hover:text-brand {{ 'line-through' if item.done_at }}">{{ item.label or item.kind }}</a>
+              {% if item.exam_code %}<span class="badge">{{ item.exam_code }}</span>{% endif %}
+              {% if item.estimated_minutes %}<span class="shrink-0 text-xs tabular-nums text-fg-muted">{{ item.estimated_minutes | minutes_to_hm }}</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        {{ empty("Nothing scheduled today. Review your cards or take a quiz.") }}
+      {% endif %}
+    {% else %}
+      {{ empty("No study plan yet.", "/planner", "Create one in the planner to get a daily schedule.") }}
+    {% endif %}
+  </section>
+
+  <section class="card lg:col-span-2">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="card-title">Weak areas</h2>
+      {% if weak %}<a href="/quiz?weak=1" class="text-sm">Quiz them</a>{% endif %}
+    </div>
+    {% if weak %}
+      <ul class="row-list">
+        {% for w in weak %}
+          <li class="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+            <a href="{{ note_url(w.subtopic) }}" class="min-w-0 flex-1 text-sm no-underline hover:text-brand"><span class="text-fg-muted">{{ w.subtopic.id }}</span> <span class="font-medium text-fg">{{ w.subtopic.title }}</span></a>
+            <span class="badge {{ 'bad' if w.percent < 50 else 'warn' }}">{{ w.percent }}%</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-fg-muted">Weak areas appear after a few quiz or exam answers per subtopic.</p>
+    {% endif %}
+  </section>
+</div>
+
+{# ------------------------------------------------------------------ exams #}
+<section class="mb-8">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="section-title">Exams</h2>
+    <a href="/syllabus" class="text-sm">Open the syllabus</a>
+  </div>
+  <div class="grid gap-4 md:grid-cols-2">
+    {% for exam in exams %}
+      {% set p = exam_progress[exam.code] %}
+      <article class="card flex flex-col gap-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-bold">{{ exam.code }}</h3>
+            <p class="text-sm text-fg-muted">{{ exam.name }}</p>
+          </div>
+          <span class="text-2xl font-bold tabular-nums">{{ p.percent }}%</span>
+        </div>
+        <div>
+          {{ stack_bar(p, exam.code) }}
+          <div class="mt-2">{{ counts(p) }}</div>
+        </div>
+        <ul class="row-list text-sm">
+          {% for eu in exam.units %}
+            <li class="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+              <a href="/syllabus/unit/{{ eu.unit_code }}" class="w-14 shrink-0 font-semibold no-underline">{{ eu.unit_code }}</a>
+              <span class="min-w-0 flex-1 truncate text-fg-muted">{{ eu.unit.title }}</span>
+              <span class="w-10 shrink-0 text-right text-xs tabular-nums text-fg-muted">{{ p.units[eu.unit_code].percent }}%</span>
+            </li>
+          {% endfor %}
+        </ul>
+        {% if exam.casa_weak_areas %}
+          <details class="disclosure">
+            <summary>CASA's common errors in this exam</summary>
+            <ul class="space-y-1.5 text-sm">
+              {% for wa in weak_areas[exam.code] %}
+                <li>{% if wa.subtopic_id %}{{ wa.area }}
+                  <span class="text-xs text-fg-muted">· <a href="{{ note_url(wa.subtopic_id) }}">note</a> · <a href="/quiz?subtopic={{ wa.subtopic_id | urlencode }}">quiz {{ wa.subtopic_id }}</a></span>
+                  {% else %}{{ wa.area }}{% endif %}</li>
+              {% endfor %}
+            </ul>
+            <p class="mt-2 text-xs"><a href="/reference/exam-formats">Source and context</a></p>
+          </details>
+        {% endif %}
+        <div class="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4 text-xs text-fg-muted">
+          <span>{{ exam.duration_minutes | minutes_to_hm }} · pass mark {{ exam.pass_mark_percent }}% · {{ exam.question_count }} questions</span>
+          <a href="/exam?exam={{ exam.code }}" class="btn-primary btn-sm">{{ icon("timer", "size-3.5") }} Mock {{ exam.code }} exam</a>
+        </div>
+      </article>
+    {% else %}
+      {{ empty("No exams loaded. Check the content directory.") }}
+    {% endfor %}
+  </div>
+</section>
+
+{% set flag_kind = "other" %}{% set flag_ref = "dashboard" %}
+{% include "_flag_form.html" %}
+{% endblock %}

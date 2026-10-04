@@ -1,0 +1,89 @@
+# BAKC 5.x and 6.x flashcards.
+- id: BAKC-OC001
+  elements: ["BAKC 5.1.2"]
+  front: "Which charts show controlled airspace and PRD areas, and which does not?"
+  back: "VTC, VNC and ERC-L show them. The WAC shows no airspace at all."
+- id: BAKC-OC002
+  elements: ["BAKC 5.1.1"]
+  front: "What is an isogonal?"
+  back: "A dashed line on the chart joining points of equal magnetic variation, labelled in degrees east or west; used to convert true to magnetic."
+- id: BAKC-OC003
+  elements: ["BAKC 5.2.1"]
+  front: "Units for runway length and width in ERSA?"
+  back: "Metres. Elevation is in feet; navigation distances are in nautical miles."
+- id: BAKC-OC004
+  elements: ["BAKC 5.2.2"]
+  front: "RA1, RA2 and RA3 restricted area status?"
+  back: "RA1: clearance normally available, plan through. RA2: clearance unlikely at short notice. RA3: no clearance available."
+- id: BAKC-OC005
+  elements: ["BAKC 5.2.3"]
+  front: "ERSA hours of activity abbreviations H24, HJ, HN, NOTAM?"
+  back: "H24 continuous; HJ daylight (sunrise to sunset); HN night; NOTAM means activated by NOTAM. Times are UTC: add 8 hours for WST."
+- id: BAKC-OC006
+  elements: ["BAKC 6.1.1"]
+  front: "Four things to check on the maintenance release before flight?"
+  back: "Within hours and date limits; no maintenance overdue; daily inspection certified today; no uncleared defect that grounds the aircraft."
+- id: BAKC-OC007
+  elements: ["BAKC 6.1.2"]
+  front: "Daily inspection versus pre-flight inspection?"
+  back: "Daily: once a day, to a schedule, certified on the maintenance release by an authorised person. Pre-flight: before every flight, by the pilot, not certified."
+- id: BAKC-OC008
+  elements: ["BAKC 6.1.3"]
+  front: "How is a defect recorded?"
+  back: "In Part 2 of the maintenance release: description, date, aircraft time, signature. The aircraft does not fly until an engineer clears it or endorses a permissible unserviceability."
+- id: BAKC-OC009
+  elements: ["BAKC 6.2.1"]
+  front: "Pressure height versus density height?"
+  back: "Pressure height: altimeter reading with 1013 set. Density height: pressure height corrected for temperature; the figure that governs performance."
+- id: BAKC-OC010
+  elements: ["BAKC 6.2.3"]
+  front: "Formula for pressure height from elevation and QNH?"
+  back: "PH = elevation + (1013 − QNH) × 30 ft. Low QNH raises the pressure height."
+- id: BAKC-OC011
+  elements: ["BAKC 6.2.3"]
+  front: "Formula for density height?"
+  back: "DH = PH + 120 × (OAT − ISA temp), where ISA temp = 15 − 2 × PH/1,000."
+- id: BAKC-OC012
+  elements: ["BAKC 6.2.2"]
+  front: "Altimeter subscale settings to read elevation, pressure height and local QNH?"
+  back: "Aerodrome QNH set: reads elevation. 1013 set: reads pressure height. Dial set to elevation: subscale shows local QNH."
+- id: BAKC-OC013
+  elements: ["BAKC 6.2.4"]
+  front: "Effect of a tailwind of 10 percent of lift-off speed on take-off distance?"
+  back: "About 20 percent longer. Headwind shortens, tailwind lengthens, both markedly."
+- id: BAKC-OC014
+  elements: ["BAKC 6.2.5"]
+  front: "What is the climb weight limit?"
+  back: "The performance-limited (WAT) weight at which the required climb gradient can still be achieved at the day's density height; may be below structural MTOW. Take-off weight is the lowest of all limits."
+- id: BAKC-OC015
+  elements: ["BAKC 6.3.1"]
+  front: "Limit load factors for normal, utility and aerobatic category? Design load factor?"
+  back: "+3.8/−1.52, +4.4/−1.76, +6.0/−3.0. Design (ultimate) load = limit × 1.5."
+- id: BAKC-OC016
+  elements: ["BAKC 6.3.1"]
+  front: "How does VA change with weight?"
+  back: "VA decreases as weight decreases: a lighter aeroplane reaches the limit load factor at a lower speed."
+- id: BAKC-OC017
+  elements: ["BAKC 6.3.2"]
+  front: "Most common ways to exceed structural limits?"
+  back: "Spiral dives and harsh pull-outs, steep turns at speed, turbulence above VA, flap above VFE, flying the yellow arc in rough air."
+- id: BAKC-OC018
+  elements: ["BAKC 6.4.1"]
+  front: "Define arm, moment and CG."
+  back: "Arm: distance from datum. Moment: weight × arm. CG: total moment ÷ total weight."
+- id: BAKC-OC019
+  elements: ["BAKC 6.4.2"]
+  front: "AVGAS litres to kilograms?"
+  back: "Multiply by the SG: 0.72 kg per litre in the CASA workbook (0.71 in some manuals; use the figure given). Kilograms to litres: divide."
+- id: BAKC-OC020
+  elements: ["BAKC 6.4.3"]
+  front: "CG aft of the limit, weight under MTOW: what do you do?"
+  back: "Move weight forward or remove rear weight, then recalculate the CG (the divisor changes too)."
+- id: BAKC-OC021
+  elements: ["BAKC 6.4.4"]
+  front: "Effects of a forward CG? Of an aft CG?"
+  back: "Forward: nose heavy, higher stall speed, may lack elevator to flare, very stable. Aft: light pitch control, unstable, poor or impossible stall and spin recovery."
+- id: BAKC-OC022
+  elements: ["BAKC 6.4.4"]
+  front: "Consequences of taking off over MTOW?"
+  back: "Longer take-off, lower climb, higher stall and landing speeds, longer landing, reduced range, structural loads beyond certification."

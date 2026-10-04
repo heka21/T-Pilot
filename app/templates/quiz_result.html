@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_study_macros.html" import kdr_list, review_list %}
+{% from "_macros.html" import page_header %}
+{% from "_icons.html" import icon %}
+{% block title %}Quiz results · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header("Quiz results", attempt.title) }}
+
+<section class="card mb-8 space-y-5">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <div class="score-big">{{ attempt.score_percent | round | int }}%</div>
+      <p class="mt-1 text-sm text-fg-muted">{{ attempt.correct_count }} of {{ attempt.question_count }} correct</p>
+    </div>
+    <span class="badge {{ 'ok' if attempt.passed else 'bad' }}">{{ "70% or better" if attempt.passed else "Below 70%" }}</span>
+  </div>
+  <div class="btn-row">
+    <a href="/quiz?weak=1" class="btn-primary">{{ icon("target", "size-4") }} Quiz the weak areas again</a>
+    <a href="/syllabus" class="btn-secondary">Back to syllabus</a>
+  </div>
+</section>
+
+<section class="mb-8">
+  <h2 class="section-title">Knowledge Deficiency Report</h2>
+  <p class="mb-3 mt-1 text-sm text-fg-muted">Subtopics you got wrong, with the knowledge element codes. Follow the links to revise the notes.</p>
+  {{ kdr_list(kdr) }}
+</section>
+
+<section>
+  <h2 class="section-title mb-3">Review</h2>
+  {{ review_list(attempt.answers, open_wrong=True) }}
+</section>
+{% endblock %}

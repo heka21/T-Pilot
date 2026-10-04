@@ -1,0 +1,91 @@
+<div class="widget" x-data="{
+  front: 160, rear: 0, bag: 10, fuelL: 120,
+  bew: 770, arms: { bew: 1.00, front: 0.94, rear: 1.85, bag: 2.41, fuel: 1.22 }, mtow: 1157, bagMax: 54, fuelMax: 200, density: 0.72,
+  get fuel() { return this.fuelL * this.density },
+  get rows() { return [
+    ['Basic empty weight', this.bew, this.arms.bew], ['Front seats', this.front, this.arms.front], ['Rear seats', this.rear, this.arms.rear],
+    ['Baggage', this.bag, this.arms.bag], ['Fuel (' + this.fuelL + ' L × 0.72)', this.fuel, this.arms.fuel] ] },
+  get weight() { return this.rows.reduce((s, r) => s + r[1], 0) },
+  get moment() { return this.rows.reduce((s, r) => s + r[1] * r[2], 0) },
+  get cg() { return this.moment / this.weight },
+  get zfw() { return this.weight - this.fuel },
+  get zfcg() { return (this.moment - this.fuel * this.arms.fuel) / this.zfw },
+  fwd(w) { return w <= 885 ? 0.89 : 0.89 + (w - 885) / (this.mtow - 885) * 0.15 },
+  get overWeight() { return this.weight > this.mtow },
+  get cgOut() { return this.cg < this.fwd(Math.min(this.weight, this.mtow)) - 1e-9 || this.cg > 1.20 + 1e-9 },
+  get ok() { return !this.overWeight && !this.cgOut },
+  px(a) { return (70 + (a - 0.85) / 0.40 * 540).toFixed(1) },
+  py(w) { return (320 - (w - 700) / 500 * 280).toFixed(1) },
+  reset() { this.front = 160; this.rear = 0; this.bag = 10; this.fuelL = 120 }
+}">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="wb-title" class="widget-stage">
+    <title id="wb-title">Centre of gravity envelope with the loaded aeroplane plotted</title>
+    <defs><marker id="wb-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- grid and axes (static: Alpine x-for cannot be used inside <svg>) -->
+    <line x1="137.5" y1="40" x2="137.5" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="137.5" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">0.90</text>
+    <line x1="272.5" y1="40" x2="272.5" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="272.5" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">1.00</text>
+    <line x1="407.5" y1="40" x2="407.5" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="407.5" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">1.10</text>
+    <line x1="542.5" y1="40" x2="542.5" y2="320" stroke="var(--color-line)" stroke-width="1"/><text x="542.5" y="338" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">1.20</text>
+    <line x1="70" y1="264" x2="610" y2="264" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="268" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">800</text>
+    <line x1="70" y1="208" x2="610" y2="208" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="212" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">900</text>
+    <line x1="70" y1="152" x2="610" y2="152" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="156" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">1000</text>
+    <line x1="70" y1="96" x2="610" y2="96" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="100" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">1100</text>
+    <line x1="70" y1="40" x2="610" y2="40" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="44" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">1200</text>
+    <line x1="70" y1="320" x2="618" y2="320" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#wb-arrow)"/>
+    <line x1="70" y1="320" x2="70" y2="32" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#wb-arrow)"/>
+    <text x="340" y="356" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">Centre of gravity, metres aft of datum</text>
+    <text x="18" y="180" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 18 180)">Weight, kg</text>
+    <!-- envelope -->
+    <polygon points="124,320 124,216.4 326.5,64.1 542.5,64.1 542.5,320" fill="var(--color-ok)" fill-opacity="0.12" stroke="var(--color-ok)" stroke-width="2" stroke-linejoin="round"/>
+    <line x1="70" y1="64.1" x2="610" y2="64.1" stroke="var(--color-bad)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="606" y="58" font-size="12" text-anchor="end" fill="var(--color-bad)">MTOW 1157 kg</text>
+    <text x="340" y="180" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)">inside the envelope</text>
+    <text x="190" y="104" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">forward limit slopes in</text>
+    <text x="548" y="208" font-size="11" text-anchor="start" fill="var(--color-fg-faint)">aft limit</text>
+    <!-- fuel burn line: from loaded to zero-fuel -->
+    <line :x1="px(cg)" :y1="py(weight)" :x2="px(zfcg)" :y2="py(zfw)" stroke="var(--color-info)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#wb-arrow)" x-show="fuelL > 0"/>
+    <circle :cx="px(zfcg)" :cy="py(zfw)" r="4" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2"/>
+    <text :x="Number(px(zfcg)) + 8" :y="Number(py(zfw)) + 4" font-size="11" fill="var(--color-info)">zero fuel</text>
+    <!-- loaded point -->
+    <circle :cx="px(cg)" :cy="py(weight)" r="7" :fill="ok ? 'var(--color-brand)' : 'var(--color-bad)'" stroke="var(--color-surface)" stroke-width="2"/>
+    <text :x="Number(px(cg)) + 12" :y="Number(py(weight)) - 8" font-size="13" font-weight="700" class="num" :fill="ok ? 'var(--color-brand)' : 'var(--color-bad)'" x-text="Math.round(weight) + ' kg @ ' + cg.toFixed(3) + ' m'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control"><label for="wb-front">Front seats <output x-text="front + ' kg'"></output></label><input id="wb-front" type="range" min="0" max="220" step="5" x-model.number="front"></div>
+    <div class="widget-control"><label for="wb-rear">Rear seats <output x-text="rear + ' kg'"></output></label><input id="wb-rear" type="range" min="0" max="220" step="5" x-model.number="rear"></div>
+    <div class="widget-control"><label for="wb-bag">Baggage (max 54 kg) <output x-text="bag + ' kg'"></output></label><input id="wb-bag" type="range" min="0" max="80" step="1" x-model.number="bag"></div>
+    <div class="widget-control"><label for="wb-fuel">Fuel <output x-text="fuelL + ' L = ' + Math.round(fuel) + ' kg'"></output></label><input id="wb-fuel" type="range" min="0" max="200" step="5" x-model.number="fuelL"></div>
+  </div>
+
+  <div class="table-wrap mt-4">
+    <table class="table">
+      <thead><tr><th>Item</th><th class="num">Weight kg</th><th class="num">Arm m</th><th class="num">Moment kg·m</th></tr></thead>
+      <tbody>
+        <template x-for="r in rows" :key="r[0]">
+          <tr><td x-text="r[0]"></td><td class="num" x-text="r[1].toFixed(1)"></td><td class="num" x-text="r[2].toFixed(2)"></td><td class="num" x-text="(r[1] * r[2]).toFixed(1)"></td></tr>
+        </template>
+        <tr class="font-semibold"><td>Total</td><td class="num" x-text="weight.toFixed(1)"></td><td class="num" x-text="cg.toFixed(3)"></td><td class="num" x-text="moment.toFixed(1)"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="overWeight ? 'bad' : (weight > mtow - 30 ? 'warn' : 'ok')">
+      <dt>Take-off weight</dt><dd><span x-text="Math.round(weight) + ' kg'"></span><span class="widget-flag bad" x-show="overWeight">Over MTOW</span></dd>
+    </div>
+    <div class="widget-readout" :class="cgOut ? 'bad' : 'ok'">
+      <dt>Centre of gravity</dt><dd><span x-text="cg.toFixed(3) + ' m'"></span><span class="widget-flag bad" x-show="cgOut" x-text="cg > 1.2 ? 'Aft of limit' : 'Forward of limit'"></span></dd>
+    </div>
+    <div class="widget-readout" :class="bag > bagMax ? 'bad' : ''">
+      <dt>Baggage</dt><dd><span x-text="bag + ' kg'"></span><span class="widget-flag bad" x-show="bag > bagMax">Over 54 kg</span></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions"><button type="button" class="btn-secondary" @click="reset()">Reset</button>
+    <button type="button" class="btn-ghost" @click="front = 170; rear = 180; bag = 30; fuelL = 200">Load it up: 4 adults, full fuel</button></div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> Weight × arm = moment; add the moments, divide by the total weight and you have the CG. The forward limit slopes inwards at high weight, so a load that is fine at 900 kg can be out at 1100 kg. Burning fuel moves the point along the dashed line: both the take-off and the landing point must stay inside. Figures are for an example four-seat trainer, not your aeroplane: always use the POH.</p>
+  <details class="widget-try"><summary>Try this: two 85 kg adults in front, 30 kg of baggage, full fuel. Within limits?</summary><p>Weight 770 + 170 + 30 + 144 = 1114 kg (under 1157). Moment 770 + 159.8 + 72.3 + 175.7 = 1177.8 kg·m, CG = 1.057 m. Forward limit at 1114 kg is about 1.016 m, aft limit 1.20 m: inside.</p></details>
+  <details class="widget-try"><summary>Try this: add two 90 kg passengers in the rear. What has to change?</summary><p>Weight becomes 1294 kg, 137 kg over MTOW. You must leave people, baggage or fuel behind: 137 kg of fuel is 190 L, almost the tanks, so the answer is a passenger or two, not fuel alone. Check the CG again after each change.</p></details>
+</div>

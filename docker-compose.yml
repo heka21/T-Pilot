@@ -1,0 +1,13 @@
+services:
+  casa-theory:
+    build: .
+    ports:
+      - "8081:8080"
+    volumes:
+      - casa_data:/app/data
+      # Uncomment to edit content/ on the host and pick it up with `docker compose restart`:
+      # - ./content:/app/content:ro
+    restart: unless-stopped
+
+volumes:
+  casa_data:

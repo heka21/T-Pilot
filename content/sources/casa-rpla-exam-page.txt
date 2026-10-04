@@ -1,0 +1,159 @@
+Source: casa.gov.au, retrieved 2026-10-03
+
+Find out what you need when sitting your recreational pilot licence (aeroplane) exam including permitted materials and pass rates.
+The RPLA exam includes multiple-choice questions and questions where you type a whole number in a box.
+You have 2 hours to complete the exam and to pass, you need to get at least 70% of the marks.
+The exams cost $189.53 each ($124.53 invigilator fee and $65 CASA fee).
+Preparing for your exam
+The exams will test your knowledge on the syllabus in 
+Part 61 Manual of Standards (MOS)
+ schedule 3 - units 1.1.1 BAKC, 1.1.2 RBKA, unit 1.5.1 RFRC, unit 1.8.1 RMTC and 1.6.1 PHFC.
+You should also know the 
+RPL, PPL and CPL (Aeroplane) workbook
+ (PDF 643kB).
+Permitted material
+You may use either the Airservices list or Jeppesen list of permitted materials. You need to supply these materials.
+You cannot use a combination of materials from both the Airservices list and the Jeppesen list.
+Airservices list
+CAR 1988
+Part 61 of CASR
+Part 91 of CASR and Part 91 MOS
+AIP Book
+ERSA
+AUS PCA
+CASR Part 61 Guide for aeroplane category flight crew licensing
+ – Note 1
+CASR Part 91 Plain English guide for general operating and flight rules
+ – Note 1
+Visual Flight Rules Guide
+ (VFRG) – Note 1
+Navigation equipment
+A 
+basic calculator
+Jeppesen list
+CAR 1988
+Part 61 of CASR
+Part 91 of CASR and Part 91 MOS
+Jeppesen Airway Manual
+AUS PCA
+CASR Part 61 plain English guide
+ – Note 1
+CASR Part 91 plain English guide
+ – Note 1
+Visual Flight Rules Guide
+ (VFRG) – Note 1
+Navigation equipment
+A 
+basic calculator
+Note 1:
+ The 
+Visual Flight Rules Guide (VFRG)
+ and the CASR Part 91 plain English guide may not have current information. If you choose to use these documents, make sure you also have other materials to help with current laws and procedures.
+The VFRG referred to in the lists of permitted material is the document produced by CASA and not by another party or organisation.
+These ‘guides’ include the following notice:
+Disclaimer:
+ The guide has been prepared by CASA for information purposes only, and while every effort has been made to ensure that the contents accurately conform to the civil aviation legislation, this guide is not the law. CASA accepts no liability for damages or liability of any kind resulting from its use. You should ensure you are using the most current version of the guide, which can be found on the CASA website.
+Your invigilator will give you some things before the exam, which you must hand back at the end. These include:
+pen
+pencil
+ruler
+eraser
+scribble pad
+The 
+RPL, PPL and CPL (Aeroplane) workbook
+ (PDF, 643 kB).
+Pass rates
+You can see how candidates performed in their RPLA exam.
+Year
+0 - 54%
+55 - 59%
+60 - 64%
+65 - 69%
+70 - 74%
+75 - 79%
+80+%
+Pass rate
+2020
+12.23
+7.66
+11.92
+12.83
+13.75
+13.75
+27.86
+55.35%
+2021
+16.44
+8.98
+9.82
+12.33
+14.61
+14.16
+23.67
+52.44%
+2022
+15.99
+7.18
+10.64
+12.27
+13.71
+12.53
+27.68
+53.92%
+2023
+15.01
+8.26
+9.63
+12.88
+13.32
+13.63
+27.27
+54.22%
+2024
+14.15
+6.92
+11.35
+13.24
+13.24
+12.20
+28.90
+54.34%
+2025
+13.49
+7.19
+9.73
+10.68
+12.33
+14.18
+32.40
+58.90%
+Check the results of candidates from 
+previous years
+.
+Fuel policy in RPLA exams
+Our Flight Crew Licence exams reference policies related to fuel usage and reserves.
+In your RPLA exam, fuel reserves will be carried in accordance with CASR Part 91 MOS, Chapter 19, table 19.02 (2), Item 1. This applies to aeroplanes with MTOW less than 5,700 kg (piston engine or turboprop) under VFR by day.
+We recommend you avoid rounding off at intermediate stages of your workings when calculating fuel requirements in your exam.
+Common errors
+The following areas have been weak areas for candidates:
+glide speeds and lift/drag ratio
+effect of wind shear on aircraft performance
+interpretation of meteorological forecasts and requirements
+local winds; sea breeze, land breeze, anabatic and katabatic winds, etc.
+use of the take-off and landing charts.
+Related content
+Prepare for your exam
+Learn about using PEXO
+Materials allowed in exams
+Pilot exams
+Related rules and publications
+Civil Aviation Safety Regulations (CAR) 1998
+Part 61 of CASR Flight crew licensing
+RPL, PPL and CPL (Aeroplane) Workbook
+Download 
+RPL, PPL and CPL (Aeroplane) Workbook
+ pdf, 402.34 KB
+Part 91 of CASR General operating and flight rules
+Part 91 Manual of Standards
+Last updated:
+7 May 2026

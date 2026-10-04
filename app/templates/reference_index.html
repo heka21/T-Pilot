@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header %}
+{% from "_icons.html" import icon %}
+{% block title %}Reference · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header("Reference", "Exam formats, permitted materials and exam-day notes from CASA's published pages.") }}
+<div class="grid gap-4 sm:grid-cols-2">
+  {% for page in pages %}
+    <a href="/reference/{{ page.slug }}" class="card group flex items-start gap-3 text-fg no-underline transition-colors hover:border-line-strong">
+      <div class="min-w-0 flex-1">
+        <p class="font-semibold group-hover:text-brand">{{ page.title }}</p>
+        {% if page.summary %}<p class="mt-1 text-sm text-fg-muted">{{ page.summary }}</p>{% endif %}
+      </div>
+      {{ icon("chevron-right", "mt-0.5 size-5 shrink-0 text-fg-faint group-hover:text-brand") }}
+    </a>
+  {% else %}
+    <div class="card-sunken text-center text-sm text-fg-muted sm:col-span-2">No reference pages found in <code>content/reference/</code>.</div>
+  {% endfor %}
+</div>
+{% endblock %}

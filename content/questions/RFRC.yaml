@@ -1,0 +1,653 @@
+# RFRC: RPL flight rules and air law. Regulatory figures should be checked against the current VFRG / Part 91 MOS.
+- id: RFRC-001
+  kind: mcq
+  elements: ["RFRC 2.1.1"]
+  stem: "The main reason a pilot must keep a logbook is:"
+  options:
+    - "To calculate fuel used."
+    - "To provide legal evidence of aeronautical experience and recency for licences, ratings, flight reviews and passenger carriage."
+    - "To record aircraft defects."
+    - "To record the aircraft's maintenance."
+  answer: 1
+  explanation: "The logbook proves hours and recency to CASA, examiners and employers. Defects go in the maintenance release, and maintenance in the aircraft logbooks."
+  references: ["RFRC 2.1", "CASR Part 61"]
+  difficulty: 1
+- id: RFRC-002
+  kind: mcq
+  elements: ["RFRC 2.1.1"]
+  stem: "Which of the following must be recorded for each flight in a pilot's logbook?"
+  options:
+    - "The fuel uplifted and the QNH."
+    - "The date, aircraft type and registration, pilot in command, route, and the flight time split by day/night and dual/solo/command."
+    - "The names of all passengers."
+    - "The maintenance release number."
+  answer: 1
+  explanation: "The required entries identify the flight and the experience gained. Passenger names and fuel are not logbook items."
+  references: ["RFRC 2.1"]
+  difficulty: 1
+- id: RFRC-003
+  kind: mcq
+  elements: ["RFRC 2.1.2"]
+  stem: "The VMC criteria, fuel requirements and altimetry procedures for VFR flight are set out in:"
+  options:
+    - "The Civil Aviation Act 1988."
+    - "CASR Part 91 and the Part 91 Manual of Standards, summarised in the Visual Flight Rules Guide."
+    - "ERSA FAC."
+    - "The aircraft's certificate of airworthiness."
+  answer: 1
+  explanation: "Part 91 holds the general operating and flight rules; its MOS holds the operational detail; the VFRG is CASA's plain-language summary and is permitted in the exam."
+  references: ["RFRC 2.1"]
+  difficulty: 1
+- id: RFRC-004
+  kind: mcq
+  elements: ["RFRC 2.1.2"]
+  stem: "Aerodrome data such as runway dimensions, frequencies and local procedures are published in:"
+  options: ["CASR Part 61", "ERSA", "The Part 91 MOS", "A NOTAM"]
+  answer: 1
+  explanation: "The En Route Supplement Australia carries aerodrome entries, PRD areas and emergency procedures. NOTAMs amend the published information temporarily."
+  references: ["RFRC 2.1"]
+  difficulty: 1
+- id: RFRC-005
+  kind: mcq
+  elements: ["RFRC 2.1.3"]
+  stem: "Before flight, the pilot in command checks the maintenance release to confirm that:"
+  options:
+    - "The aircraft has been washed."
+    - "It is within its hours and date limits, no maintenance is overdue, the daily inspection is certified, and no uncleared defect grounds the aircraft."
+    - "The pilot's licence is current."
+    - "The fuel has been drained."
+  answer: 1
+  explanation: "The maintenance release is the aircraft's serviceability document. Each of those four checks must be satisfied before the aircraft may fly."
+  references: ["RFRC 2.1", "BAKC 6.1"]
+  difficulty: 1
+- id: RFRC-006
+  kind: mcq
+  elements: ["RFRC 2.2.1"]
+  stem: "Without any additional endorsements, the holder of an RPL(A) may fly as pilot in command:"
+  options:
+    - "Any single-engine aeroplane by day or night within 50 nm."
+    - "A single-engine aeroplane of not more than 1,500 kg MTOW, by day under VFR, within 25 nm of the departure aerodrome or in a training area, outside controlled airspace."
+    - "A twin-engine aeroplane up to 5,700 kg by day."
+    - "Any aeroplane in Class G airspace anywhere in Australia."
+  answer: 1
+  explanation: "The RPL(A) limits are 1,500 kg, day VFR, private or training operations, 25 nm without the navigation endorsement, and no controlled airspace or controlled aerodromes without those endorsements."
+  references: ["RFRC 2.2", "CASR 61.425-61.450"]
+  difficulty: 1
+- id: RFRC-007
+  kind: mcq
+  elements: ["RFRC 2.2.1"]
+  stem: "An RPL holder wants to fly 60 nm to another aerodrome. They need:"
+  options: ["A PPL", "A recreational navigation endorsement", "A controlled airspace endorsement", "Nothing extra; the RPL has no distance limit"]
+  answer: 1
+  explanation: "Flights beyond 25 nm of the departure aerodrome require the navigation endorsement on the RPL."
+  references: ["RFRC 2.2"]
+  difficulty: 1
+- id: RFRC-008
+  kind: mcq
+  elements: ["RFRC 2.2.2"]
+  stem: "To carry a passenger, a pilot must have completed within the previous 90 days:"
+  options:
+    - "A flight review."
+    - "At least 3 take-offs and 3 landings in the same category of aircraft."
+    - "At least 10 hours of flying."
+    - "A medical examination."
+  answer: 1
+  explanation: "CASR 61.395 sets the 3 take-offs and landings in 90 days rule for passenger carriage. The flight review is a separate 24-month requirement."
+  references: ["RFRC 2.2", "CASR 61.395"]
+  difficulty: 1
+- id: RFRC-009
+  kind: mcq
+  elements: ["RFRC 2.2.2"]
+  stem: "A flight review for an RPL(A) holder must be completed at least every:"
+  options: ["12 months", "24 months", "36 months", "5 years"]
+  answer: 1
+  explanation: "An aeroplane flight review is required within the previous 24 months to exercise the privileges of the licence."
+  references: ["RFRC 2.2"]
+  difficulty: 1
+- id: RFRC-010
+  kind: mcq
+  elements: ["RFRC 2.2.3"]
+  stem: "An RPL holder flying on a RAMPC (recreational aviation medical practitioner's certificate) may carry:"
+  options: ["No passengers", "No more than 1 passenger", "Up to 5 passengers", "Any number of passengers"]
+  answer: 1
+  explanation: "The RAMPC limits the holder to single-engine piston aircraft up to 1,500 kg, day VFR, below 10,000 ft, no aerobatics and no more than 1 passenger."
+  references: ["RFRC 2.2", "CASR Part 67"]
+  difficulty: 2
+- id: RFRC-011
+  kind: mcq
+  elements: ["RFRC 2.2.3"]
+  stem: "A pilot who develops a medically significant condition that could affect their ability to fly safely must:"
+  options:
+    - "Continue flying until the next medical examination."
+    - "Stop flying and inform CASA or a DAME, who decide when the pilot may resume."
+    - "Fly solo only."
+    - "Inform the flying school only."
+  answer: 1
+  explanation: "CASR 67.265 obliges the holder not to exercise licence privileges and to report the condition. Temporary unfitness also grounds the pilot until it resolves."
+  references: ["RFRC 2.2", "CASR 67.265"]
+  difficulty: 1
+- id: RFRC-012
+  kind: mcq
+  elements: ["RFRC 2.2.4"]
+  stem: "Regarding the maintenance release, a pilot licence holder may:"
+  options:
+    - "Issue a new maintenance release after a 100-hourly inspection."
+    - "Certify a daily inspection they are authorised to perform, record flight time, and endorse defects, but not issue a maintenance release."
+    - "Clear a defect endorsed by another pilot."
+    - "Extend the maintenance release by 10 hours."
+  answer: 1
+  explanation: "Only a licensed engineer or approved organisation issues or extends a maintenance release or clears a defect. Pilots certify daily inspections (when authorised), flight time and defects."
+  references: ["RFRC 2.2", "CAR 1988 Part 4A"]
+  difficulty: 2
+- id: RFRC-013
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "Two aeroplanes are converging at the same level. Which one must give way?"
+  options:
+    - "The one that has the other on its left."
+    - "The one that has the other on its right."
+    - "The faster one."
+    - "The one at the higher weight."
+  answer: 1
+  explanation: "The aircraft with the other on its right gives way. Head-on, both turn right; overtaking, the overtaking aircraft keeps clear by turning right."
+  references: ["RFRC 2.3", "CASR Part 91"]
+  difficulty: 1
+- id: RFRC-014
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "Two aircraft are approaching to land at the same time. Right of way belongs to:"
+  options:
+    - "The higher aircraft."
+    - "The lower aircraft, which must not cut in front of or overtake an aircraft on final."
+    - "The faster aircraft."
+    - "The aircraft that called first."
+  answer: 1
+  explanation: "The lower aircraft has right of way, but the rule cannot be used to cut in front of another aircraft already on final."
+  references: ["RFRC 2.3"]
+  difficulty: 1
+- id: RFRC-015
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "After take-off at a non-controlled aerodrome, a turn should not normally be commenced below:"
+  options: ["200 ft above aerodrome level", "500 ft above aerodrome level", "1,000 ft above aerodrome level", "1,500 ft above aerodrome level"]
+  answer: 1
+  explanation: "Climb straight ahead to at least 500 ft before turning, unless a turn is required to avoid terrain or follow a published procedure, and then turn in the circuit direction."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 1
+- id: RFRC-016
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "At a non-controlled aerodrome, two aeroplanes each under 2,000 kg are using the same runway. The second may begin its take-off when the first:"
+  options:
+    - "Has started its take-off roll."
+    - "Is airborne and at least 600 m ahead of the second aircraft's intended lift-off point, or has crossed the upwind end, or has commenced a turn."
+    - "Is at least 100 m ahead."
+    - "Has reached 500 ft."
+  answer: 1
+  explanation: "The separation rule: the preceding aircraft has landed and vacated, or taken off and crossed the upwind end or commenced a turn, or is airborne 1,800 m ahead (600 m where both aircraft are under 2,000 kg)."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 2
+- id: RFRC-017
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "Smoking in an aircraft is prohibited:"
+  options:
+    - "Only during refuelling."
+    - "During take-off, landing and refuelling, whenever the no-smoking signs are on, and whenever the pilot in command prohibits it."
+    - "Only in controlled airspace."
+    - "Never; it is permitted at the pilot's discretion."
+  answer: 1
+  explanation: "These are the standard restrictions. Smoking near an aircraft being refuelled is also prohibited."
+  references: ["RFRC 2.3"]
+  difficulty: 1
+- id: RFRC-018
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "VMC for an aeroplane in Class G airspace at 2,500 ft AMSL over flat terrain requires:"
+  options:
+    - "8 km visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+    - "5,000 m visibility, clear of cloud and in sight of ground or water."
+    - "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+    - "1,600 m visibility, clear of cloud."
+  answer: 1
+  explanation: "At or below 3,000 ft AMSL or 1,000 ft AGL (whichever is higher) in Class G, VMC is 5,000 m visibility, clear of cloud, in sight of ground or water. Above that, the 1,500 m and 1,000 ft separation applies. 8 km applies above 10,000 ft."
+  references: ["RFRC 2.3", "AIP ENR 1.2"]
+  difficulty: 2
+- id: RFRC-019
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "VMC for an aeroplane in Class C or D airspace below 10,000 ft requires:"
+  options:
+    - "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+    - "5,000 m visibility, clear of cloud."
+    - "8 km visibility, clear of cloud."
+    - "3,000 m visibility, 500 ft from cloud."
+  answer: 0
+  explanation: "In controlled airspace below 10,000 ft the VMC criteria are 5 km, 1,500 m horizontally and 1,000 ft vertically from cloud. A clearance is also required."
+  references: ["RFRC 2.3"]
+  difficulty: 2
+- id: RFRC-020
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "Flying VFR below 10,000 ft away from any aerodrome, the altimeter subscale should be set to:"
+  options: ["1013 hPa", "The area QNH, or the local QNH of a station within 100 nm", "The QNH of the departure aerodrome for the whole flight", "Zero"]
+  answer: 1
+  explanation: "Below the transition altitude of 10,000 ft flights use QNH: a local QNH within 100 nm or the area QNH, which is valid for 3-hour periods. 1013 is set above 10,000 ft."
+  references: ["RFRC 2.3", "AIP ENR 1.7"]
+  difficulty: 1
+- id: RFRC-021
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "A VFR flight above 5,000 ft on a magnetic track of 260 degrees should cruise at:"
+  options: ["5,500 ft", "6,500 ft", "7,000 ft", "7,500 ft"]
+  answer: 1
+  explanation: "Tracks 180 to 359 degrees magnetic use even thousands plus 500 ft (6,500, 8,500). Tracks 000 to 179 use odd thousands plus 500 ft."
+  references: ["RFRC 2.3", "AIP ENR 1.7"]
+  difficulty: 2
+- id: RFRC-022
+  kind: mcq
+  elements: ["RFRC 2.3.2"]
+  stem: "The minimum time between consuming alcohol and departing as a flight crew member is:"
+  options: ["4 hours", "8 hours", "12 hours", "24 hours"]
+  answer: 1
+  explanation: "8 hours from bottle to throttle, and the pilot must not be under the influence; the blood alcohol limit is 0.02 g per 100 mL (CASR 91.520 and Part 99, verify current text)."
+  references: ["RFRC 2.3"]
+  difficulty: 1
+- id: RFRC-023
+  kind: mcq
+  elements: ["RFRC 2.3.2"]
+  stem: "A pilot has a head cold and is taking an over-the-counter decongestant. They should:"
+  options:
+    - "Fly as normal; the medication is not prescription."
+    - "Not fly while unfit, and check any medication with a DAME before flying."
+    - "Fly only below 5,000 ft."
+    - "Fly only with another pilot."
+  answer: 1
+  explanation: "Temporary unfitness and the effects of medication both ground a pilot. A cold also risks ear and sinus barotrauma on descent."
+  references: ["RFRC 2.3", "PHFC 2.1"]
+  difficulty: 1
+- id: RFRC-024
+  kind: mcq
+  elements: ["RFRC 2.3.3"]
+  stem: "A steady red light directed at an aircraft in flight means:"
+  options: ["Cleared to land", "Give way to other aircraft and continue circling", "Aerodrome unsafe, do not land", "Return for landing"]
+  answer: 1
+  explanation: "Steady red in flight: give way and continue circling. Red flashes: aerodrome unsafe, do not land. Green flashes: return for landing. Steady green: cleared to land."
+  references: ["RFRC 2.3", "ERSA EMERG"]
+  difficulty: 1
+- id: RFRC-025
+  kind: mcq
+  elements: ["RFRC 2.3.3"]
+  stem: "White flashes directed at an aircraft on the ground mean:"
+  options: ["Cleared to taxi", "Return to the starting point on the aerodrome", "Stop", "Taxi clear of the landing area"]
+  answer: 1
+  explanation: "On the ground: steady green cleared for take-off, steady red stop, green flashes cleared to taxi, red flashes taxi clear of the landing area, white flashes return to the starting point."
+  references: ["RFRC 2.3"]
+  difficulty: 2
+- id: RFRC-026
+  kind: mcq
+  elements: ["RFRC 2.3.4"]
+  stem: "Over a town, the minimum height is:"
+  options:
+    - "500 ft above ground level."
+    - "1,000 ft above the highest obstacle within a 600 m radius of the aircraft."
+    - "1,500 ft above mean sea level."
+    - "2,000 ft above the highest building."
+  answer: 1
+  explanation: "Populous areas and public gatherings: 1,000 ft above the highest obstacle within 600 m. Elsewhere: 500 ft AGL and 500 ft from any person, vessel, vehicle or structure, with exceptions for take-off, landing and approved operations."
+  references: ["RFRC 2.3", "CASR 91.265-91.267"]
+  difficulty: 1
+- id: RFRC-027
+  kind: mcq
+  elements: ["RFRC 2.3.4"]
+  stem: "Over open farmland away from people and buildings, the minimum height for a VFR flight (other than take-off and landing) is:"
+  options: ["200 ft AGL", "500 ft AGL", "1,000 ft AGL", "1,500 ft AGL"]
+  answer: 1
+  explanation: "500 ft above ground or water outside populous areas, and not within 500 ft of any person, vessel, vehicle or structure."
+  references: ["RFRC 2.3"]
+  difficulty: 1
+- id: RFRC-028
+  kind: mcq
+  elements: ["RFRC 2.3.5"]
+  stem: "Aerobatic flight is not permitted below:"
+  options: ["500 ft AGL", "1,000 ft AGL", "3,000 ft AGL unless CASA has approved a lower height", "5,000 ft AMSL"]
+  answer: 2
+  explanation: "Aerobatics require a certified aircraft, day VMC, the aerobatic endorsement, not below 3,000 ft AGL without approval, and never over a populous area or public gathering."
+  references: ["RFRC 2.3"]
+  difficulty: 1
+- id: RFRC-029
+  kind: mcq
+  elements: ["RFRC 2.3.6"]
+  stem: "A VFR pilot without a night rating must plan to be on the ground at the destination:"
+  options:
+    - "Before sunset."
+    - "At least 10 minutes before the end of daylight (last light), after allowing for any holding."
+    - "Within 30 minutes after last light."
+    - "Before first light."
+  answer: 1
+  explanation: "The planning rule is arrival at least 10 minutes before last light. Last light is later than sunset and is published for each location."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 1
+- id: RFRC-030
+  kind: mcq
+  elements: ["RFRC 2.4.1"]
+  stem: "A student pilot flying solo:"
+  options:
+    - "May carry one passenger if the instructor agrees."
+    - "Must not carry any passenger."
+    - "May carry passengers within 25 nm."
+    - "May carry a family member only."
+  answer: 1
+  explanation: "Solo student flights are training flights; no passengers may be carried. After licensing, passenger carriage also needs 3 take-offs and landings in 90 days."
+  references: ["RFRC 2.4", "CASR Part 61"]
+  difficulty: 1
+- id: RFRC-031
+  kind: mcq
+  elements: ["RFRC 2.4.2"]
+  stem: "Before flight, the pilot in command's responsibility regarding fuel is to:"
+  options:
+    - "Read the fuel gauges."
+    - "Ensure sufficient fuel and oil of the correct grade for the flight plus the required reserves, confirmed by a physical check of the quantity."
+    - "Fill the tanks completely for every flight."
+    - "Ask the previous pilot how much fuel is on board."
+  answer: 1
+  explanation: "A physical quantity check (dipstick or visual) is required, not just the gauges. The fixed reserve for a day VFR piston aeroplane is 30 minutes (Part 91 MOS chapter 19)."
+  references: ["RFRC 2.4"]
+  difficulty: 1
+- id: RFRC-032
+  kind: mcq
+  elements: ["RFRC 2.4.2"]
+  stem: "A pre-take-off passenger briefing must include:"
+  options:
+    - "The route and estimated time of arrival only."
+    - "Seat belts and when to wear them, exits and their operation, smoking rules, emergency equipment, the brace position, and that passengers must follow the pilot's instructions."
+    - "The aircraft's maintenance history."
+    - "The weather forecast."
+  answer: 1
+  explanation: "These are the standard briefing items required of the pilot in command before take-off."
+  references: ["RFRC 2.4", "CASR Part 91"]
+  difficulty: 1
+- id: RFRC-033
+  kind: mcq
+  elements: ["RFRC 2.4.2"]
+  stem: "Dropping an article from an aircraft in flight is:"
+  options:
+    - "Permitted at any time over unpopulated areas."
+    - "Prohibited where it could endanger people or property, unless done under a CASA approval or the specific rules for that activity."
+    - "Permitted above 3,000 ft."
+    - "Permitted if the article weighs less than 1 kg."
+  answer: 1
+  explanation: "Nothing may be dropped that could endanger persons or property; approved operations such as supply dropping have their own rules."
+  references: ["RFRC 2.4"]
+  difficulty: 1
+- id: RFRC-034
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "Before a solo flight in a dual-control aircraft, the harness of the unoccupied control seat must be:"
+  options:
+    - "Removed from the aircraft."
+    - "Secured so it cannot foul the controls."
+    - "Left loose on the seat."
+    - "Fastened around a passenger."
+  answer: 1
+  explanation: "A loose harness can jam the control column or rudder pedals. Securing it is a legislative pre-flight requirement."
+  references: ["RFRC 2.4"]
+  difficulty: 1
+- id: RFRC-035
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "Seat belts must be worn by all occupants:"
+  options:
+    - "Only during take-off and landing."
+    - "During take-off and landing, below 1,000 ft above ground, in turbulence, and whenever the pilot in command directs."
+    - "Only when the pilot in command is wearing one."
+    - "At all times above 5,000 ft."
+  answer: 1
+  explanation: "Those are the standard seat belt requirements; the pilot in command must have the harness fastened at all times in a control seat."
+  references: ["RFRC 2.4"]
+  difficulty: 1
+- id: RFRC-036
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "A fuel system inspection (drain check) must be carried out:"
+  options:
+    - "Once a week."
+    - "Before the first flight of the day and after each refuelling, after allowing the fuel to settle."
+    - "Only when water is suspected."
+    - "Only by an engineer."
+  answer: 1
+  explanation: "Drain each sump and the strainer into a clear tester, check for water, sediment, colour and smell. Settling time lets water sink before sampling."
+  references: ["RFRC 2.4", "BAKC 3.2"]
+  difficulty: 1
+- id: RFRC-037
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "During flight, the aircraft's controls may be manipulated by:"
+  options:
+    - "Any passenger the pilot trusts."
+    - "Only a pilot qualified on the type or a student under instruction; the pilot in command must not allow an unauthorised person to operate them."
+    - "Anyone seated in a control seat."
+    - "A passenger above 3,000 ft."
+  answer: 1
+  explanation: "Handling the controls is restricted to authorised pilots. Passengers in a control seat must be briefed to keep clear of the controls."
+  references: ["RFRC 2.4"]
+  difficulty: 1
+- id: RFRC-038
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "Frost on the wings before flight:"
+  options:
+    - "May be left if it is thin and the take-off run is long."
+    - "Must be completely removed, because it reduces lift and raises the stall speed."
+    - "Will melt during the take-off run."
+    - "Only matters if the temperature is below zero."
+  answer: 1
+  explanation: "The aircraft must be clean of frost, ice and snow before flight. Even a thin layer can prevent a safe take-off."
+  references: ["RFRC 2.4", "BAKC 6.2"]
+  difficulty: 1
+- id: RFRC-039
+  kind: mcq
+  elements: ["RFRC 2.5.1"]
+  stem: "The manoeuvring area of an aerodrome consists of:"
+  options:
+    - "The runways and taxiways, but not the apron."
+    - "The apron only."
+    - "The runways, taxiways and apron."
+    - "The terminal and car parks."
+  answer: 0
+  explanation: "Movement area = manoeuvring area (runways and taxiways) + apron (parking, loading, refuelling)."
+  references: ["RFRC 2.5"]
+  difficulty: 2
+- id: RFRC-040
+  kind: mcq
+  elements: ["RFRC 2.5.1"]
+  stem: "Taxiway markings are painted:"
+  options: ["White", "Yellow", "Red", "Blue"]
+  answer: 1
+  explanation: "Runway markings are white; taxiway markings (centreline, holding positions, edges) are yellow."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+- id: RFRC-041
+  kind: mcq
+  elements: ["RFRC 2.5.2"]
+  stem: "In a left-hand circuit, the dead side is:"
+  options:
+    - "The side of the runway on which the circuit is flown."
+    - "The side of the runway opposite the circuit, kept clear of circuit traffic and used for descending to join crosswind from overhead."
+    - "The upwind end of the runway."
+    - "The area beyond the end of the downwind leg."
+  answer: 1
+  explanation: "For a left-hand circuit the circuit is on the left of the runway (looking along the landing direction) and the dead side is to the right."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+- id: RFRC-042
+  kind: mcq
+  elements: ["RFRC 2.5.2"]
+  stem: "The leg of the circuit flown parallel to the runway in the opposite direction to landing is the:"
+  options: ["Base leg", "Crosswind leg", "Downwind leg", "Upwind leg"]
+  answer: 2
+  explanation: "Upwind is along the runway heading after take-off, crosswind is the first 90 degree turn, downwind is parallel and opposite, base is the turn towards the runway before final."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+- id: RFRC-043
+  kind: mcq
+  elements: ["RFRC 2.5.3"]
+  stem: "A large white cross painted on a runway means:"
+  options: ["Helicopters only", "The runway or that part of the movement area is unserviceable and must not be used", "Gliding in progress", "Right-hand circuits"]
+  answer: 1
+  explanation: "White crosses mark unserviceable areas. A double white cross beside the windsock means gliding operations."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+- id: RFRC-044
+  kind: mcq
+  elements: ["RFRC 2.5.4"]
+  stem: "At an unsealed aerodrome, white gable markers indicate:"
+  options:
+    - "The edges of the runway (landing area)."
+    - "The boundary of the runway strip, the graded area that must be kept clear."
+    - "The threshold."
+    - "The taxiway centreline."
+  answer: 1
+  explanation: "Cone markers mark the runway edges; gable markers mark the strip boundary. Land between the cones, not out to the gables."
+  references: ["RFRC 2.5"]
+  difficulty: 2
+- id: RFRC-045
+  kind: mcq
+  elements: ["RFRC 2.5.4"]
+  stem: "A double white cross displayed next to the primary wind indicator means:"
+  options: ["The aerodrome is closed", "Gliding operations are in progress", "Use sealed surfaces only", "Right-hand circuits are in use"]
+  answer: 1
+  explanation: "Expect gliders, tugs and winch cables. A single white cross on the surface marks an unserviceable area, and a white dumb-bell means sealed surfaces only."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+- id: RFRC-046
+  kind: mcq
+  elements: ["RFRC 2.5.4"]
+  stem: "White arrows painted along a runway pointing towards a line across it indicate:"
+  options:
+    - "A displaced threshold: the paved area before the line may be used for take-off and roll-out but not for landing."
+    - "The runway is closed."
+    - "The take-off direction only."
+    - "A taxiway crossing."
+  answer: 0
+  explanation: "A displaced threshold moves the landing point along the runway, usually for obstacle clearance on approach, while the surface before it remains usable for take-off."
+  references: ["RFRC 2.5"]
+  difficulty: 2
+- id: RFRC-047
+  kind: mcq
+  elements: ["RFRC 2.6.1"]
+  stem: "The essential difference between controlled and non-controlled airspace is:"
+  options:
+    - "Controlled airspace is above 10,000 ft only."
+    - "In controlled airspace an ATC clearance is required to enter and operate; in non-controlled (Class G) airspace pilots separate themselves using lookout and radio."
+    - "Radio is not required in controlled airspace."
+    - "Non-controlled airspace has no VMC requirements."
+  answer: 1
+  explanation: "Classes A, C, D and E are controlled; VFR needs a clearance in C and D (not in E). Class G is non-controlled."
+  references: ["RFRC 2.6", "AIP ENR 1.4"]
+  difficulty: 1
+- id: RFRC-048
+  kind: mcq
+  elements: ["RFRC 2.6.1"]
+  stem: "In Class E airspace a VFR flight:"
+  options:
+    - "Requires an ATC clearance."
+    - "Does not require a clearance but must meet the VMC criteria for controlled airspace."
+    - "Is not permitted."
+    - "May fly in IMC."
+  answer: 1
+  explanation: "Class E is controlled for IFR only. VFR flights operate without a clearance but under the controlled airspace VMC minima (5 km, 1,500 m, 1,000 ft) and should carry a transponder."
+  references: ["RFRC 2.6"]
+  difficulty: 2
+- id: RFRC-049
+  kind: mcq
+  elements: ["RFRC 2.6.2"]
+  stem: "A Class D control zone around a regional tower outside the tower's published hours:"
+  options:
+    - "Remains Class D at all times."
+    - "Reverts to non-controlled airspace and the aerodrome becomes a CTAF aerodrome; hours are in ERSA and may be changed by NOTAM."
+    - "Becomes Class A."
+    - "Is closed to all traffic."
+  answer: 1
+  explanation: "Tower hours are published in ERSA. Outside them the airspace reverts (usually to Class G) and CTAF procedures apply."
+  references: ["RFRC 2.6"]
+  difficulty: 2
+- id: RFRC-050
+  kind: mcq
+  elements: ["RFRC 2.6.2"]
+  stem: "To find the lateral boundaries and vertical limits of controlled airspace near Perth you would use:"
+  options: ["The WAC", "The VTC or VNC (or ERC-L)", "The TAF", "The maintenance release"]
+  answer: 1
+  explanation: "The VTC and VNC show CTA steps, control zones and PRD areas. The WAC shows no airspace."
+  references: ["RFRC 2.6", "BAKC 5.1"]
+  difficulty: 1
+- id: RFRC-051
+  kind: mcq
+  elements: ["RFRC 2.7.1"]
+  stem: "An aircraft repeatedly switching its landing lights or navigation lights on and off is indicating that it:"
+  options: ["Is testing its lights", "Is in difficulty and compelled to land", "Has completed its circuit", "Wants other aircraft to follow it"]
+  answer: 1
+  explanation: "Intermittent use of the lights signals an aircraft in difficulty, for example after radio failure, which needs to land. Give way to it."
+  references: ["RFRC 2.7", "ERSA EMERG"]
+  difficulty: 1
+- id: RFRC-052
+  kind: mcq
+  elements: ["RFRC 2.7.2"]
+  stem: "Which occurrence is classified as an accident rather than an incident?"
+  options:
+    - "A bird strike with a small dent in the leading edge."
+    - "A landing in which the aircraft suffers structural damage requiring major repair and a passenger is seriously injured."
+    - "A near collision in the circuit."
+    - "A precautionary landing with no damage."
+  answer: 1
+  explanation: "An accident involves death or serious injury, serious structural damage, or a missing aircraft. A near collision is a serious incident; the others are incidents."
+  references: ["RFRC 2.7", "Transport Safety Investigation Regulations"]
+  difficulty: 1
+- id: RFRC-053
+  kind: mcq
+  elements: ["RFRC 2.7.3"]
+  stem: "After an accident, the pilot in command (or the operator) must report to:"
+  options:
+    - "CASA only, within 7 days."
+    - "The ATSB as soon as practicable by the quickest means, followed by a written report within 72 hours."
+    - "The local police only."
+    - "Airservices Australia by NOTAM."
+  answer: 1
+  explanation: "Accidents and other immediately reportable matters go to the ATSB (phone, 24 hours) then in writing within 72 hours. Routine reportable matters need the written report within 72 hours."
+  references: ["RFRC 2.7"]
+  difficulty: 1
+- id: RFRC-054
+  kind: mcq
+  elements: ["RFRC 2.7.4"]
+  stem: "A SARTIME is:"
+  options:
+    - "The time of sunset at the destination."
+    - "A time nominated by the pilot by which they will report arrival; if not cancelled or extended, search and rescue action begins."
+    - "The time a NOTAM expires."
+    - "The maximum time an aircraft may fly without a fuel check."
+  answer: 1
+  explanation: "Lodge a SARTIME with Airservices for flights where nobody else would raise the alarm, extend it before it expires if delayed, and cancel it on arrival."
+  references: ["RFRC 2.7", "AIP ENR 1.10"]
+  difficulty: 1
+- id: RFRC-055
+  kind: mcq
+  elements: ["RFRC 2.7.4"]
+  stem: "You land safely 20 minutes before your SARTIME but forget to cancel it. The result is:"
+  options:
+    - "Nothing; SARTIMEs cancel automatically on landing."
+    - "At the SARTIME the SAR system begins alerting action, including attempts to contact you and ultimately a search."
+    - "Your licence is suspended."
+    - "The NOTAM office is informed."
+  answer: 1
+  explanation: "Nobody knows you have landed unless you tell them. Cancelling the SARTIME on arrival is the pilot's responsibility and prevents a wasted search."
+  references: ["RFRC 2.7"]
+  difficulty: 1
+- id: RFRC-056
+  kind: mcq
+  elements: ["RFRC 2.7.5"]
+  stem: "In-flight emergency procedures such as distress calls, transponder emergency codes and interception signals are found in:"
+  options: ["The ERSA EMERG section", "The TAF", "The WAC legend", "The maintenance release"]
+  answer: 0
+  explanation: "ERSA EMERG (the pink pages) is the in-flight emergency reference; AIP GEN 3.6 and ENR 1.14 carry the fuller text."
+  references: ["RFRC 2.7"]
+  difficulty: 1

@@ -1,0 +1,100 @@
+{# Shared macros for quiz and exam pages. #}
+{% from "_icons.html" import icon %}
+{% macro letter(i) %}{{ "ABCD"[i] }}{% endmacro %}
+
+{% macro correct_answer(q) -%}
+  {%- if q.kind == "mcq" -%}
+    {{ letter(q.answer | int) }}. {{ q.options[q.answer | int] }}
+  {%- else -%}
+    {{ q.answer }}{% if q.unit_label %} {{ q.unit_label }}{% endif %}{% if q.tolerance %} <span class="text-xs font-normal text-fg-muted">(accepted ± {{ q.tolerance | round(2) | string | replace(".0", "") }})</span>{% endif %}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro given_answer(q, given) -%}
+  {%- if given is none or given == "" -%}
+    <em class="text-fg-muted">not answered</em>
+  {%- elif q.kind == "mcq" and given | int(-1) in range(q.options | length) -%}
+    {{ letter(given | int) }}. {{ q.options[given | int] }}
+  {%- else -%}
+    {{ given }}{% if q.unit_label %} {{ q.unit_label }}{% endif %}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro workbook_link(q) -%}
+  {%- if q.workbook_page -%}
+    <p class="mt-2 text-sm"><a href="/static/rpl-ppl-cpl-aeroplane-workbook.pdf#page={{ q.workbook_page }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1">
+      {{ icon("external", "size-3.5") }} CASA workbook, page {{ q.workbook_page }}</a></p>
+  {%- endif -%}
+{%- endmacro %}
+
+{# Answer option as a card: pass the option index and text; `state` is "", "correct" or "wrong"; `input` is the radio HTML or empty. #}
+{% macro option_card(i, text, state="", input="") -%}
+<label class="option {{ state }}">{{ input | safe }}<span class="option-letter">{{ letter(i) }}</span><span class="min-w-0 flex-1">{{ text }}</span></label>
+{%- endmacro %}
+
+{% macro details_block(q) %}
+  <div class="card-sunken mt-4 space-y-2">
+    <p class="eyebrow">Explanation</p>
+    <p class="explanation">{{ q.explanation }}</p>
+    {% if q.references %}<p class="text-xs text-fg-muted"><strong class="text-fg">References:</strong> {{ q.references | join("; ") }}</p>{% endif %}
+    {% if q.element_codes %}<p class="flex flex-wrap items-center gap-1 text-xs text-fg-muted"><strong class="mr-1 text-fg">Elements tested:</strong>
+      {% for c in q.element_codes %}<code>{{ c }}</code>{% endfor %}</p>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro note_link(sub) -%}
+  /notes/{{ sub.unit_code }}/{{ sub.number }}
+{%- endmacro %}
+
+{% macro kdr_list(kdr) %}
+  {% if kdr %}
+    <ul class="kdr">
+      {% for g in kdr %}
+        <li>
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <a href="{{ note_link(g.subtopic) }}" class="font-semibold no-underline hover:underline"><span class="text-fg-muted">{{ g.subtopic.id }}</span> {{ g.subtopic.title }}</a>
+            <span class="badge bad">{{ g.questions | length }} wrong</span>
+          </div>
+          <p class="mt-1.5 flex flex-wrap gap-1">{% for c in g.elements %}<code>{{ c }}</code>{% endfor %}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="callout callout-ok text-ok-fg">No knowledge deficiencies: every question was answered correctly.</div>
+  {% endif %}
+{% endmacro %}
+
+{% macro review_list(answers, open_wrong=False) %}
+  <div class="divide-y divide-line rounded-(--radius-card) border border-line bg-surface">
+  {% for a in answers %}
+    {% set q = a.question %}
+    <details class="review-item group" {% if open_wrong and not a.correct %}open{% endif %}>
+      <summary class="flex items-start gap-3 px-4 py-3 text-sm hover:bg-surface-2/60">
+        <span class="badge {{ 'ok' if a.correct else 'bad' }} mt-0.5 w-16 justify-center">{{ "Correct" if a.correct else "Wrong" }}</span>
+        <span class="min-w-0 flex-1"><strong class="text-fg-muted">Q{{ a.position + 1 }}.</strong> {{ q.stem | truncate(110) }}</span>
+        {% if a.flagged %}<span class="badge warn">Flagged</span>{% endif %}
+        {{ icon("chevron-right", "mt-0.5 size-4 shrink-0 text-fg-faint transition-transform group-open:rotate-90") }}
+      </summary>
+      <div class="border-t border-line bg-surface-2/30 px-4 py-4">
+        <p class="question-stem text-base">{{ q.stem }}</p>
+        {% if q.kind == "mcq" %}
+          <div class="options mt-3">
+            {% for o in q.options %}
+              {% set state = 'correct' if loop.index0 == q.answer | int else ('wrong' if a.given == loop.index0 | string else '') %}
+              {{ option_card(loop.index0, o, state) }}
+            {% endfor %}
+          </div>
+        {% endif %}
+        <dl class="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+          <div><dt class="eyebrow">Your answer</dt><dd>{{ given_answer(q, a.given) }}</dd></div>
+          <div><dt class="eyebrow">Correct answer</dt><dd class="font-semibold">{{ correct_answer(q) }}</dd></div>
+        </dl>
+        {{ details_block(q) }}
+        <p class="mt-2 text-xs text-fg-faint">{{ q.id }}{% if q.subtopic_id %} · {{ q.subtopic_id }}{% endif %}</p>
+        {% set flag_kind = "question" %}{% set flag_ref = q.id %}
+        {% include "_flag_form.html" %}
+      </div>
+    </details>
+  {% endfor %}
+  </div>
+{% endmacro %}

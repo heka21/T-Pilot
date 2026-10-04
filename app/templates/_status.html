@@ -1,0 +1,12 @@
+{# Partial: status badge + three-way toggle. Needs `sid` (subtopic id) and `status`. Returned by POST /progress/{sid}. #}
+<div class="status-control" id="status-{{ sid | dom_id }}">
+  <span class="status-badge status-{{ status }}">{{ STATUS_LABELS[status] | lower }}</span>
+  <form method="post" action="/progress/{{ sid | urlencode }}" class="m-0"
+        hx-post="/progress/{{ sid | urlencode }}" hx-target="#status-{{ sid | dom_id }}" hx-swap="outerHTML">
+    <div role="group" class="status-toggle" aria-label="Set study status for {{ sid }}">
+      {% for value, label in STATUS_LABELS.items() %}
+        <button type="submit" name="status" value="{{ value }}"{% if value == status %} aria-current="true"{% endif %}>{{ label }}</button>
+      {% endfor %}
+    </div>
+  </form>
+</div>

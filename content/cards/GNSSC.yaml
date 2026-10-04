@@ -1,0 +1,29 @@
+# Flashcards for GNSSC 2.1. See content/README.md for the format.
+- id: GNSSC-C001
+  elements: ["GNSSC 2.1.1"]
+  front: "How many satellites for a 3D fix, RAIM fault detection, and fault exclusion?"
+  back: "4 for a 3D fix (lat, long, altitude and receiver clock), 5 for RAIM fault detection, 6 for fault detection and exclusion."
+- id: GNSSC-C002
+  elements: ["GNSSC 2.1.1"]
+  front: "Main GNSS error sources?"
+  back: "Ionospheric (largest) and tropospheric delay, satellite clock and ephemeris errors, multipath, receiver noise, magnified by poor geometry (high DOP); also masking and interference/jamming."
+- id: GNSSC-C003
+  elements: ["GNSSC 2.1.1"]
+  front: "SBAS in Australia?"
+  back: "SBAS (like WAAS) broadcasts corrections and integrity from geostationary satellites. Australia/NZ are rolling out SouthPAN; check its current status for aviation use. Otherwise receivers rely on RAIM."
+- id: GNSSC-C004
+  elements: ["GNSSC 2.1.1"]
+  front: "GNSS pre-flight serviceability checks?"
+  back: "Self-test passed, database current, 3D fix on the satellite page, position matches known location, settings (units, datum WGS-84, CDI scale) correct, NOTAMs for GNSS outages."
+- id: GNSSC-C005
+  elements: ["GNSSC 2.1.1"]
+  front: "Indications of waypoint passage?"
+  back: "Waypoint alert message, TO/FROM changes to FROM, distance counts down to zero then up, automatic sequencing to the next leg (unless OBS/hold mode)."
+- id: GNSSC-C006
+  elements: ["GNSSC 2.1.1"]
+  front: "GNSS human factors traps?"
+  back: "Automation complacency, head-down programming, data entry errors (similar waypoint names), mode confusion (OBS, Direct-To), loss of situational awareness on failure, skill fade."
+- id: GNSSC-C007
+  elements: ["GNSSC 2.1.1"]
+  front: "GNSS status for a private VFR pilot with a handheld?"
+  back: "An aid, not a sole means: keep navigating visually and cross-checking with the chart; visual navigation expected at or below 2,000 ft AGL. Primary-means use needs approved equipment and training; check VFRG and AIP ENR 1.1."

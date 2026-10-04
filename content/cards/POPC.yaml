@@ -1,0 +1,141 @@
+# Flashcards for POPC 2.1 to 2.7 (flight operations and planning). See content/README.md for the format.
+- id: POPC-C001
+  elements: ["POPC 2.1.1"]
+  front: "Define datum, arm, moment and station."
+  back: "Datum: the reference point from which arms are measured. Arm: distance of an item from the datum. Moment: weight x arm. Station: a loading position (seat row, baggage, fuel) at a given arm."
+- id: POPC-C002
+  elements: ["POPC 2.1.1"]
+  front: "What is an index unit in loading system CHARLIE? Example: 70 kg at 3,300 mm."
+  back: "1 IU = 100 kg mm. 70 x 3,300 = 231,000 kg mm = 2,310 IU. Always use the system's own definition."
+- id: POPC-C003
+  elements: ["POPC 2.1.1"]
+  front: "CHARLIE CG formula? Example: ZFW 1,014 kg, 30,060.1 IU."
+  back: "CG (mm aft of datum) = index units x 100 / weight. 30,060.1 x 100 / 1,014 = 2,964.5 mm. Check against the envelope at ZFW and take-off weight; MTOW 1,115 kg normal, baggage 122 kg."
+- id: POPC-C004
+  elements: ["POPC 2.1.1"]
+  front: "Ramp weight versus zero fuel weight?"
+  back: "Ramp weight: weight at engine start, take-off weight plus taxi and run-up fuel. ZFW: everything except usable fuel. Check CG at ZFW and take-off weight because burning fuel moves the CG."
+- id: POPC-C005
+  elements: ["POPC 2.1.1"]
+  front: "What is a floor loading limit and how is it checked?"
+  back: "Maximum weight per square metre a floor can carry (e.g. 450 kg/m2 in ECHO). Floor loading = weight / contact area; spread a dense item on a board."
+- id: POPC-C006
+  elements: ["POPC 2.1.1"]
+  front: "AVGAS specific gravity in the loading systems, and BRAVO conversions?"
+  back: "0.72 kg per litre in all systems. BRAVO is in pounds and inches: kg x 2.205 = lb; litres x 1.587 = lb. BRAVO MTOW 1,000 kg (2,200 lb) normal category."
+- id: POPC-C007
+  elements: ["POPC 2.2.1"]
+  front: "VNO, VNE, VFE and VFO: meaning and ASI marking?"
+  back: "VNO: max structural cruising speed, smooth air only above it; top of green arc. VNE: never exceed, red line. VFE: max speed flaps extended, top of white arc. VFO: max speed to move the flaps, not marked."
+- id: POPC-C008
+  elements: ["POPC 2.2.1"]
+  front: "VA and VB? Formula for VA."
+  back: "VA: manoeuvring speed, full deflection stalls the wing before limit load; lower at lower weight. VB: design speed for maximum gust intensity (turbulence penetration). VA = VS x square root of limit load factor: 55 kt x 1.95 = 107 kt."
+- id: POPC-C009
+  elements: ["POPC 2.2.1"]
+  front: "Limit and design load factors?"
+  back: "Limit: normal +3.8/-1.52 g, utility +4.4/-1.76, aerobatic +6.0/-3.0; no permanent deformation. Design (ultimate) = limit x 1.5; failure possible beyond it."
+- id: POPC-C010
+  elements: ["POPC 2.2.2"]
+  front: "Situations that can exceed speed or load factor limits?"
+  back: "Spiral dives and nose-low upsets, harsh pull-outs, steep turns, turbulence above VA, yellow arc in rough air, flap above limits (e.g. go-around with full flap above VFE), high-power descents, wake or mountain-wave turbulence at cruise speed."
+- id: POPC-C011
+  elements: ["POPC 2.3.1"]
+  front: "What is in the ERSA GEN and FAC sections?"
+  back: "GEN: conversion and wind component tables, sunrise and sunset tables, flight planning, SARTIME, remote areas and survival equipment, phone numbers. FAC: aerodrome entries with elevation, PPR, runways, lighting, frequencies, aids, fuel, local traffic regulations."
+- id: POPC-C012
+  elements: ["POPC 2.3.1"]
+  front: "Units and times in ERSA?"
+  back: "Times are UTC, runway dimensions metres, elevations feet. Everything can be changed by NOTAM, so always check NOTAMs last."
+- id: POPC-C013
+  elements: ["POPC 2.3.1"]
+  front: "Order for working an ERSA entry for an unfamiliar aerodrome?"
+  back: "Can I use it (PPR, hours, fuel); runways (wind, length, TODA/LDA, surface, slope, lighting); procedures (circuit direction, CTAF, radio); services (AWIS/ATIS); airspace (PRD, CTR); time (UTC to WST, last light); emergency and alternate; then NOTAMs."
+- id: POPC-C014
+  elements: ["POPC 2.4.1"]
+  front: "PIC briefing responsibility before a VFR flight?"
+  back: "Obtain weather and operational information reasonably necessary for safety. Forecasts must be current; refresh if studied more than an hour before departure. Operational briefing: NOTAMs for departure, destination, alternates and route, plus AIP SUPs and head office NOTAMs."
+- id: POPC-C015
+  elements: ["POPC 2.4.2"]
+  front: "When is a meteorological briefing mandatory, and where are weather products obtained?"
+  back: "For flights beyond the vicinity of the departure aerodrome (more than 50 nm or to another aerodrome) and whenever weather could affect the flight. Sources: NAIPS (web or app), BoM aviation site, Airservices briefing by phone, in flight from FIS, ATIS and AWIS."
+- id: POPC-C016
+  elements: ["POPC 2.4.2"]
+  front: "Charts for Jandakot to Kalgoorlie?"
+  back: "Perth VTC for departure, Perth VNC through the Perth and Pearce airspace, and the Perth and Kalgoorlie WACs (from the WAC index on the PCA), plus ERSA."
+- id: POPC-C017
+  elements: ["POPC 2.4.2"]
+  front: "VFR flight notification options and preferred submission method?"
+  back: "Leave a SAR watch: a flight plan with Airservices, a SARTIME with Airservices, or a flight note with a responsible person. A flight plan is needed for controlled airspace. Preferred: NAIPS, then phone to the briefing office, then radio to FIS in flight."
+- id: POPC-C018
+  elements: ["POPC 2.4.3"]
+  front: "Holding or alternate decision from a destination TAF?"
+  back: "Test the window 30 min before to 60 min after ETA against the alternate minima. TEMPO below minima: 60 min holding. INTER: 30 min. PROB: as the group it qualifies. Permanent (FM, BECMG or base) below minima: an alternate that itself meets the minima."
+- id: POPC-C019
+  elements: ["POPC 2.4.3"]
+  front: "How are holding and alternate fuel calculated?"
+  back: "Holding fuel at the POH holding fuel flow (cruise flow if none given). Alternate fuel: diversion distance at cruise consumption. The 30-minute fixed reserve is on top and never used for holding or diversion. E.g. 60 min TEMPO at 28 L/h = 28 L."
+- id: POPC-C020
+  elements: ["POPC 2.5.1"]
+  front: "Planning sequence for a VFR flight plan problem?"
+  back: "Route, weather, cruising level, performance per leg, fuel, weight and balance, take-off and landing performance, latest departure time, notification."
+- id: POPC-C021
+  elements: ["POPC 2.5.2"]
+  front: "Route and LSALT selection for a VFR plan?"
+  back: "Stay clear of controlled airspace you cannot enter, active restricted areas and terrain, over map-readable features. LSALT per leg: highest terrain or obstacle within the track tolerance plus 1,000 ft, or at least the VFR minimum heights."
+- id: POPC-C022
+  elements: ["POPC 2.5.2"]
+  front: "VFR table of cruising levels (AIP ENR 1.7)?"
+  back: "Above 5,000 ft (and above 3,000 ft as good practice): magnetic tracks 000 to 179, odd thousands plus 500 (5,500, 7,500, 9,500); 180 to 359, even thousands plus 500 (6,500, 8,500)."
+- id: POPC-C023
+  elements: ["POPC 2.5.2"]
+  front: "Fuel ledger for day VFR private piston flight?"
+  back: "Taxi (typically 2 to 4 L) + trip (climb, cruise, descent) + holding if required + alternate if required + fixed reserve 30 min at holding flow (Part 91 MOS table 19.02). Contingency (often 10 percent of trip) is good practice. Convert litres x 0.72 for kg."
+- id: POPC-C024
+  elements: ["POPC 2.5.2"]
+  front: "Weight and balance checks in the flight plan?"
+  back: "MTOW, climb weight limit from the take-off chart, CG at ZFW and take-off weight, and landing weight at each landing point. If overweight, reduce baggage, passengers or fuel (within minimum) and recompute."
+- id: POPC-C025
+  elements: ["POPC 2.5.2"]
+  front: "How is latest departure time calculated?"
+  back: "Last light at the final landing point minus 10 minutes gives latest arrival; subtract total flight time including possible holding and ground time at stops."
+- id: POPC-C026
+  elements: ["POPC 2.6.1"]
+  front: "ETP versus PNR: definitions and when each matters?"
+  back: "ETP: point from which time to destination equals time back to departure (or between two alternates); for engine trouble, sick passenger, weather at both ends. PNR: furthest point from which you can return with reserves intact; a fuel limit, for remote or over-water legs or a doubtful destination."
+- id: POPC-C027
+  elements: ["POPC 2.6.2"]
+  front: "ETP formula, and its position in still air?"
+  back: "Distance to ETP = D x GS back / (GS on + GS back). In still air it is halfway (D / 2); with wind it moves into wind. Example: 180 nm, GS on 90, GS back 130: 180 x 130 / 220 = 106 nm."
+- id: POPC-C028
+  elements: ["POPC 2.6.2"]
+  front: "PNR formula?"
+  back: "Distance to PNR = E x GS on x GS back / (GS on + GS back), where E is endurance in hours after reserves."
+- id: POPC-C029
+  elements: ["POPC 2.6.3"]
+  front: "Method for choosing the least-fuel option: destination, return or alternate?"
+  back: "For each: time = distance / GS, fuel = time x flow; add the 30-minute fixed reserve and any holding; reject options that leave less than the reserve; choose least fuel subject to weather, daylight and suitability. A headwind can make returning cheaper than continuing."
+- id: POPC-C030
+  elements: ["POPC 2.7.1"]
+  front: "Purpose of the certificate of registration and certificate of airworthiness?"
+  back: "Registration: entry on the Australian register with VH- marks, identifying the registered operator. Airworthiness: aircraft conforms to type design and was safe when issued, valid while maintained and operated per its flight manual, issued in a category (normal, utility, aerobatic)."
+- id: POPC-C031
+  elements: ["POPC 2.7.2"]
+  front: "Required instruments and communications for day VFR private flight?"
+  back: "ASI, altimeter, magnetic compass, clock showing hours, minutes and seconds, engine instruments and fuel quantity. VHF radio in controlled airspace, at certified/registered aerodromes and above 5,000 ft; transponder in Class A, C and E and above 10,000 ft."
+- id: POPC-C032
+  elements: ["POPC 2.7.2"]
+  front: "Required emergency equipment for day VFR private flight?"
+  back: "ELT beyond 50 nm of departure, first aid kit, fire extinguisher (seat count, check MOS), life jackets beyond gliding distance of land, rafts for extended over-water, survival equipment over remote areas, oxygen above 10,000 ft per the rules."
+- id: POPC-C033
+  elements: ["POPC 2.7.3"]
+  front: "Maintenance a PPL holder may carry out (CAR Schedule 8)?"
+  back: "On a Class B aircraft they may fly, if competent and recorded: replenish oil, fluids and fuel, batteries, tyres and tubes, bulbs, fuses, spark plugs, cleaning and lubrication, seats and belts, cowlings and panels, simple filters, and the daily inspection. Nothing needing special tools, engineer judgement or a test flight."
+- id: POPC-C034
+  elements: ["POPC 2.7.3"]
+  front: "How do you decide if a maintenance release is valid?"
+  back: "Within issue/expiry date and hours (e.g. 12 months or 100 hours, whichever first), no inspection or airworthiness directive due and passed, daily inspection certified today, and the class of operation matches (private cannot be used for charter)."
+- id: POPC-C035
+  elements: ["POPC 2.7.3"]
+  front: "Defect statuses on a maintenance release and their effect?"
+  back: "Rectified and signed off by an engineer; permissible unserviceability with conditions (e.g. landing light u/s, day VFR only); or uncleared. An uncleared airworthiness defect, or PU conditions you cannot meet, means not airworthy for that flight. PIC endorses defects and records flight time."

@@ -1,0 +1,24 @@
+- id: RBKA-PC001
+  elements: ["RBKA 3.6.3"]
+  front: "Effect on stall IAS of: power, flap, weight, manoeuvres, ice, altitude?"
+  back: "Power: decreases. Flap: decreases. Weight: increases. Manoeuvres (load factor): increases. Frost/ice: increases. Altitude: nil."
+- id: RBKA-PC002
+  elements: ["RBKA 3.6.5"]
+  front: "Where can an aeroplane stall at an unexpected attitude?"
+  back: "Steep turns and pull-ups, harsh dive recoveries, the skidding turn onto final, wind shear on approach. Attitude is not a stall cue."
+- id: RBKA-PC003
+  elements: ["RBKA 3.6.6"]
+  front: "Spin recovery sequence?"
+  back: "Throttle closed, ailerons neutral, full opposite rudder, stick centrally forward until rotation stops, centralise rudder, ease out of the dive. Follow the POH."
+- id: RBKA-PC004
+  elements: ["RBKA 4.1.1"]
+  front: "Runway slope effects?"
+  back: "Uphill: longer take-off, shorter landing. Downhill: shorter take-off, longer landing (and floating)."
+- id: RBKA-PC005
+  elements: ["RBKA 4.1.1"]
+  front: "Wet and slushy runway effects?"
+  back: "Wet: longer landing (poor braking), longer take-off on grass. Slush: greatly longer take-off (wheel drag) and landing (aquaplaning, no braking)."
+- id: RBKA-PC006
+  elements: ["RBKA 4.2.1"]
+  front: "VFO versus VFE?"
+  back: "VFO: maximum speed to move (operate) the flaps. VFE: maximum speed with flaps extended, top of the white arc."

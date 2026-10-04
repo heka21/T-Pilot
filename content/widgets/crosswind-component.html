@@ -1,0 +1,109 @@
+<div class="widget" x-data="{
+  rwy: 240, wdir: 280, wspd: 20, limit: 15,
+  get rel() { return ((this.wdir - this.rwy + 540) % 360) - 180 },
+  get off() { return Math.abs(this.rel) },
+  get rad() { return this.rel * Math.PI / 180 },
+  get head() { return this.wspd * Math.cos(this.rad) },
+  get cross() { return Math.abs(this.wspd * Math.sin(this.rad)) },
+  get side() { return this.rel > 0 ? 'right' : 'left' },
+  get over() { return Math.round(this.cross) > this.limit },
+  get near() { return !this.over && this.cross > this.limit * 0.8 },
+  get tail() { return Math.round(this.head) < 0 },
+  get num() { const n = Math.round(this.rwy / 10); return String(n).padStart(2, '0') },
+  get recip() { const n = Math.round(((this.rwy + 180 - 1) % 360 + 1) / 10); return String(n).padStart(2, '0') },
+  get sx() { return 320 + 120 * Math.sin(this.rad) },
+  get sy() { return 175 - 120 * Math.cos(this.rad) },
+  three(d) { return String(d % 360 === 0 ? 360 : d).padStart(3, '0') },
+  setOff(a) { this.wdir = (this.rwy + a + 360) % 360 || 360 },
+  reset() { this.rwy = 240; this.wdir = 280; this.wspd = 20; this.limit = 15 }
+}">
+  <svg viewBox="0 0 640 350" role="img" aria-labelledby="xw-title" class="widget-stage">
+    <title id="xw-title">Runway in plan view with the wind arrow split into headwind and crosswind components</title>
+    <defs>
+      <marker id="xw-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- runway, always drawn pointing up the page (the pilot's view lined up for take-off) -->
+    <rect x="302" y="20" width="36" height="310" rx="2" fill="var(--color-fg-muted)"/>
+    <line x1="320" y1="70" x2="320" y2="280" stroke="var(--color-surface)" stroke-width="3" stroke-dasharray="14 12"/>
+    <text x="320" y="318" font-size="15" font-weight="700" text-anchor="middle" fill="var(--color-surface)" class="num" x-text="num"></text>
+    <text x="320" y="44" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-surface)" class="num" x-text="recip"></text>
+    <!-- rule-of-thumb guides: ticks on the wind circle at 30, 45, 60 and 90 degrees off the runway heading -->
+    <circle cx="320" cy="175" r="120" fill="none" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="377.0" y1="76.3" x2="383.0" y2="65.9" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <line x1="400.6" y1="94.4" x2="409.1" y2="85.9" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <line x1="418.7" y1="118.0" x2="429.1" y2="112.0" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <line x1="434.0" y1="175.0" x2="446.0" y2="175.0" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <line x1="263.0" y1="76.3" x2="257.0" y2="65.9" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <line x1="239.4" y1="94.4" x2="230.9" y2="85.9" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <line x1="221.3" y1="118.0" x2="210.9" y2="112.0" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <line x1="206.0" y1="175.0" x2="194.0" y2="175.0" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    <text x="452" y="290" font-size="12" font-weight="600" fill="var(--color-fg-muted)">Ticks: 30°, 45°, 60°, 90° off</text>
+    <text x="452" y="306" font-size="12" fill="var(--color-fg-muted)">crosswind ≈ ½, 0.7, 0.9</text>
+    <text x="452" y="322" font-size="12" fill="var(--color-fg-muted)">and all of the wind speed</text>
+    <!-- components: crosswind across, then head or tail along the runway -->
+    <line :x1="sx" :y1="sy" x2="320" :y2="sy" :stroke="over ? 'var(--color-bad)' : 'var(--color-warn)'" stroke-width="3" stroke-linecap="round" marker-end="url(#xw-arrow)" x-show="cross >= 1"/>
+    <text :x="sx + (rel > 0 ? 12 : -12)" :y="sy - 8" font-size="13" font-weight="700" :text-anchor="rel > 0 ? 'start' : 'end'" :fill="over ? 'var(--color-bad)' : 'var(--color-warn-fg)'" class="num" x-show="cross >= 1" x-text="Math.round(cross) + ' kt cross'"></text>
+    <line x1="320" :y1="sy" x2="320" y2="175" :stroke="tail ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="3" stroke-linecap="round" marker-end="url(#xw-arrow)" x-show="Math.abs(head) >= 1"/>
+    <text :x="rel > 0 ? 294 : 346" :y="(sy + 175) / 2 + 4" font-size="13" font-weight="700" :text-anchor="rel > 0 ? 'end' : 'start'" :fill="tail ? 'var(--color-bad)' : 'var(--color-ok-fg)'" class="num" x-show="Math.abs(head) >= 1" x-text="Math.abs(Math.round(head)) + ' kt ' + (tail ? 'tail' : 'head')"></text>
+    <!-- the wind itself: blows from the source point towards the runway -->
+    <line :x1="sx" :y1="sy" x2="320" y2="175" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round" marker-end="url(#xw-arrow)"/>
+    <circle :cx="sx" :cy="sy" r="5" fill="var(--color-brand)"/>
+    <text :x="sx + (rel > 0 ? 12 : -12)" :y="sy + 20" font-size="14" font-weight="700" :text-anchor="rel > 0 ? 'start' : 'end'" fill="var(--color-brand)" class="num" x-text="three(wdir) + '/' + String(wspd).padStart(2, '0')"></text>
+    <text x="24" y="306" font-size="12" fill="var(--color-fg-muted)">Runway drawn pointing up the page:</text>
+    <text x="24" y="322" font-size="12" fill="var(--color-fg-muted)">you are lined up on it. The wind arrow</text>
+    <text x="24" y="338" font-size="12" fill="var(--color-fg-muted)">points where the air goes.</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="xw-rwy">Runway heading <output for="xw-rwy" x-text="three(rwy) + '° (runway ' + num + ')'"></output></label>
+      <input id="xw-rwy" type="range" min="10" max="360" step="10" x-model.number="rwy">
+    </div>
+    <div class="widget-control">
+      <label for="xw-wdir">Wind direction (from) <output for="xw-wdir" x-text="three(wdir) + '°'"></output></label>
+      <input id="xw-wdir" type="range" min="10" max="360" step="10" x-model.number="wdir">
+      <div class="widget-presets" role="group" aria-label="Angle off the runway">
+        <button type="button" @click="setOff(30)">30° off</button>
+        <button type="button" @click="setOff(45)">45° off</button>
+        <button type="button" @click="setOff(60)">60° off</button>
+        <button type="button" @click="setOff(90)">90° off</button>
+        <button type="button" @click="setOff(150)">behind</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <label for="xw-wspd">Wind speed <output for="xw-wspd" x-text="wspd + ' kt'"></output></label>
+      <input id="xw-wspd" type="range" min="0" max="40" step="1" x-model.number="wspd">
+    </div>
+    <div class="widget-control">
+      <label for="xw-limit">Max demonstrated crosswind (your POH) <output for="xw-limit" x-text="limit + ' kt'"></output></label>
+      <input id="xw-limit" type="range" min="5" max="25" step="1" x-model.number="limit">
+    </div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt>Angle off the runway</dt>
+      <dd x-text="off + '° from the ' + (off === 0 || off === 180 ? 'runway line' : side)"></dd>
+    </div>
+    <div class="widget-readout" :class="tail ? 'bad' : 'ok'">
+      <dt x-text="tail ? 'Tailwind component' : 'Headwind component'"></dt>
+      <dd><span x-text="Math.abs(Math.round(head)) + ' kt'"></span><span class="widget-flag bad" x-show="tail">Tailwind</span></dd>
+    </div>
+    <div class="widget-readout" :class="over ? 'bad' : near ? 'warn' : 'ok'">
+      <dt>Crosswind component</dt>
+      <dd><span x-text="Math.round(cross) + ' kt' + (cross >= 0.5 ? ' from the ' + side : '')"></span><span class="widget-flag bad" x-show="over">Over your limit</span><span class="widget-flag warn" x-show="near">Near your limit</span></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Worked examples">
+      <button type="button" @click="rwy = 240; wdir = 280; wspd = 20">Rwy 24, wind 280/20</button>
+      <button type="button" @click="rwy = 210; wdir = 240; wspd = 4">Rwy 21, wind 240/04</button>
+    </div>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> Crosswind $= V \sin\theta$ and headwind $= V \cos\theta$, where $\theta$ is the angle between the wind and the runway. The crosswind grows fast at first: 30° off already gives half the wind across, 60° gives nine-tenths, while the headwind is still half. Use the runway and wind in the same reference (both magnetic) before you subtract.</p>
+  <details class="widget-try"><summary>Try this: runway 24, wind 280/20. What are the components?</summary><p>40° off from the right. Crosswind = 20 × sin 40° = 20 × 0.64 ≈ 13 kt; headwind = 20 × cos 40° = 20 × 0.77 ≈ 15 kt.</p></details>
+  <details class="widget-try"><summary>Try this: runway 06, wind 360/15, demonstrated crosswind 12 kt. Can you use it?</summary><p>60° off from the left: crosswind = 15 × 0.87 ≈ 13 kt, over a 12 kt demonstrated figure; headwind only 15 × 0.5 ≈ 8 kt. Look for a more into-wind runway.</p></details>
+</div>

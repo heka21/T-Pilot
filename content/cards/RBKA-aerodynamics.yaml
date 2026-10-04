@@ -1,0 +1,105 @@
+# Flashcards for unit RBKA, piston engine (2.1) and aerodynamics subtopics 3.1-3.5, 3.7, 3.8. See content/README.md for the format.
+- id: RBKA-AC001
+  elements: ["RBKA 2.1.1"]
+  front: "Leaning method with a fixed-pitch propeller?"
+  back: "At cruise power, lean slowly: RPM rises to a peak then falls/roughens. Enrich back to peak RPM, then slightly rich as the POH directs. Re-lean after power or altitude changes."
+- id: RBKA-AC002
+  elements: ["RBKA 2.1.1"]
+  front: "Why lean in the climb/cruise and enrich in the descent?"
+  back: "Climbing: less dense air, same fuel → mixture richer → lean. Descending: denser air → mixture leaner → enrich. Full rich for take-off (unless POH says otherwise) and before landing."
+- id: RBKA-AC003
+  elements: ["RBKA 2.1.2"]
+  front: "Indications of carburettor ice (fixed-pitch propeller)?"
+  back: "Gradual RPM drop at constant throttle, loss of airspeed or altitude, then rough running. Most likely in high humidity, about −10 to +30°C, at low power."
+- id: RBKA-AC004
+  elements: ["RBKA 2.1.2"]
+  front: "Carb heat test: what confirms ice was present?"
+  back: "Heat on: RPM drops, may run rough, then rises as ice melts. Heat off: RPM rises above the pre-heat value. With no ice it just returns to the original RPM."
+- id: RBKA-AC005
+  elements: ["RBKA 3.1.1"]
+  front: "Effect of lowering flap on lift, drag and stall speed?"
+  back: "Lift up (more camber, higher CLmax), drag up, stall speed down. Early stages: mostly lift; later stages: mostly drag."
+- id: RBKA-AC006
+  elements: ["RBKA 3.1.2", "RBKA 3.1.3"]
+  front: "Key angles of attack and the speeds they relate to?"
+  back: "About 4 degrees: best L/D, gives best glide speed. About 16 degrees: maximum lift (critical angle), gives the stall speed. Both speeds rise with weight; the angles do not change."
+- id: RBKA-AC007
+  elements: ["RBKA 3.1.4"]
+  front: "Attitude, AoA and airspeed in level flight?"
+  back: "Each airspeed needs one AoA (at a given weight). Slower = higher AoA = higher nose attitude; faster = lower AoA = lower nose. Only valid in level flight (relative airflow horizontal)."
+- id: RBKA-AC008
+  elements: ["RBKA 3.2.1"]
+  front: "Primary and further effects of aileron and rudder?"
+  back: "Aileron: roll (longitudinal axis); further: adverse yaw first, then yaw towards the low wing. Rudder: yaw (normal axis); further: roll the same way. Elevator: pitch (lateral axis); further: airspeed change."
+- id: RBKA-AC009
+  elements: ["RBKA 3.2.2"]
+  front: "Effect of power and airspeed on control effectiveness and trim?"
+  back: "Higher airspeed: all controls more effective. More power: slipstream makes elevator and rudder more effective (ailerons little change); typical trainer pitches nose-up and yaws. Every change of speed or power needs re-trimming."
+- id: RBKA-AC010
+  elements: ["RBKA 3.2.3"]
+  front: "Purpose of trim?"
+  back: "To remove sustained control pressure so the aircraft holds attitude hands-off. Attitude first, then trim. Not a primary control."
+- id: RBKA-AC011
+  elements: ["RBKA 3.2.4"]
+  front: "Lowering and raising flap: lift, drag, attitude?"
+  back: "Lowering: lift and drag up; nose lower for the same IAS level; many high-wing types balloon (pitch up) initially. Raising: lift and drag down, aeroplane sinks, stall speed up, raise nose to hold height."
+- id: RBKA-AC012
+  elements: ["RBKA 3.3.1"]
+  front: "What decreases both rate and angle of climb?"
+  back: "More weight, less power, speed away from Vx/Vy, flap, bank, higher altitude/density altitude, and a sudden loss of headwind (shear)."
+- id: RBKA-AC013
+  elements: ["RBKA 3.3.1"]
+  front: "Effect of a steady headwind or tailwind on climb?"
+  back: "Rate of climb: no change. Angle over the ground: headwind steeper, tailwind flatter."
+- id: RBKA-AC014
+  elements: ["RBKA 3.4.1"]
+  front: "Descent at constant IAS: effect of more power, and of more flap?"
+  back: "More power: rate and angle of descent decrease, nose higher. More flap: rate and angle of descent increase, nose lower."
+- id: RBKA-AC015
+  elements: ["RBKA 3.4.2"]
+  front: "Effect of wind on a glide?"
+  back: "Headwind: steeper path over the ground, less glide distance. Tailwind: flatter, more distance. Rate of descent unchanged in both."
+- id: RBKA-AC016
+  elements: ["RBKA 3.4.3"]
+  front: "Why does any speed other than best glide reduce glide distance?"
+  back: "Distance = height × L/D; best L/D only at the best glide speed. Faster: more parasite drag. Slower: more induced drag (and less stall margin). Either way L/D falls."
+- id: RBKA-AC017
+  elements: ["RBKA 3.5.1", "RBKA 3.5.2"]
+  front: "Balanced turn; load factor; wing loading?"
+  back: "Balanced: no slip or skid, ball centred (slip: ball to low wing; skid: ball to high wing). Load factor n = lift ÷ weight, in g. Wing loading = weight ÷ wing area, effectively × n in a manoeuvre."
+- id: RBKA-AC018
+  elements: ["RBKA 3.5.3", "RBKA 3.5.6"]
+  front: "Load factor and stall speed increase at 45 and 60 degrees of bank?"
+  back: "45°: n = 1.41, stall speed × 1.19 (+19%). 60°: n = 2, stall speed × 1.41 (+41%). Increase accelerates with bank. Normal category limit +3.8 g (about 75° level turn); exceeding it risks permanent deformation."
+- id: RBKA-AC019
+  elements: ["RBKA 3.5.4"]
+  front: "Why avoid steep turns after take-off and on approach?"
+  back: "Low speed near the raised turning stall speed, reduced climb or increased descent rate, no height to recover from a stall/spin or engine failure; skidding turns onto final cause stall-spin accidents."
+- id: RBKA-AC020
+  elements: ["RBKA 3.5.5"]
+  front: "Why does a balanced low-level turn appear to slip or skid in wind?"
+  back: "Drift relative to the ground: turning downwind it appears to slip inward and speed up; turning into wind it appears to skid outward. The turn is balanced in the air mass; fly by ball and ASI, not ground cues."
+- id: RBKA-AC021
+  elements: ["RBKA 3.7.1"]
+  front: "Wheelbarrowing: cause and action?"
+  back: "Too much weight on the nosewheel at speed (fast, flat landing; forward pressure on take-off or landing roll). Landing: close throttle, ease back, or go around. Take-off: relax forward pressure."
+- id: RBKA-AC022
+  elements: ["RBKA 3.7.2"]
+  front: "Crosswind: high-wing versus low-wing, and taxi control positions?"
+  back: "Wind weathercocks into wind and lifts the upwind wing; high-wing more prone to wing lifting on taxi; low-wing has less tip/flap clearance in a wing-down landing. Taxi: headwind quadrant aileron into wind; tailwind quadrant 'dive away from the wind'."
+- id: RBKA-AC023
+  elements: ["RBKA 3.7.3"]
+  front: "Advantages of taking off and landing into wind?"
+  back: "Lower groundspeed, shorter distances, steeper climb/approach over the ground, better directional control, less tyre and brake wear, lower energy if something goes wrong."
+- id: RBKA-AC024
+  elements: ["RBKA 3.7.4"]
+  front: "Flapless approach versus flap approach?"
+  back: "Flapless: nose higher, approach path flatter, threshold and touchdown speeds higher, landing roll longer (more float)."
+- id: RBKA-AC025
+  elements: ["RBKA 3.7.5"]
+  front: "Wind gradient and ground effect on landing?"
+  back: "Wind gradient: headwind decreases near the ground → IAS falls, sink, undershoot (add speed margin). Ground effect (within about one span): less induced drag, more lift → float on landing, early lift-off on take-off."
+- id: RBKA-AC026
+  elements: ["RBKA 3.8.1"]
+  front: "Effect of wing damage (e.g. bird strike) on stall and control, and the response?"
+  back: "Stall speed rises, damaged wing may stall first (wing drop/spin), stall warning unreliable; control authority may be reduced or asymmetric. Keep speed up, gentle bank, avoid configuration changes, controllability check at height, land as soon as practicable."

@@ -1,0 +1,19 @@
+<div class="widget" data-widget="explorer" data-explorer="circuit">
+  <div class="widget-canvas" data-canvas aria-label="3D view of an aeroplane flying the circuit around a runway"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="c3-speed">Animation speed <output data-out="speedText"></output></label><input id="c3-speed" type="range" min="0.3" max="3" step="0.1" value="1" data-param="speed"></div>
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="runway06"> Use runway 06 instead of 24 (wind from the other end)</label>
+      <label class="check"><input type="checkbox" data-param="rightHand"> Right-hand circuit (only where ERSA publishes one)</label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Leg</dt><dd data-out="leg">upwind</dd></div>
+    <div class="widget-readout"><dt>Height</dt><dd data-out="height">0 ft above aerodrome level</dd></div>
+    <div class="widget-readout"><dt>Runway in use</dt><dd data-out="runway" class="text-sm">runway 24</dd></div>
+  </dl>
+  <p class="widget-value mt-2 text-sm text-fg-muted" data-out="circuit">left-hand (standard): all turns to the left</p>
+  <div class="widget-actions"><button type="button" class="btn-secondary" data-action="play">Pause</button><button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom.</span></div>
+  <p class="widget-notice"><strong>What to notice.</strong> The circuit is flown into wind on the runway in use: upwind straight ahead climbing, the first left turn onto crosswind at or above 500 ft, downwind at 1,000 ft parallel to the runway, base descending, and final lined up. The dead side is the other side of the runway; change the runway and the whole circuit flips so the turns stay to the left.</p>
+  <details class="widget-try"><summary>Try this: switch to runway 06. Which side of the runway is the circuit now, looking along the landing direction?</summary><p>Still on the left, because the circuit is defined by the direction of landing. On the ground the pattern has swapped sides, which is why you always work out the circuit from the runway in use, not from a fixed picture.</p></details>
+</div>

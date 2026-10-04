@@ -1,0 +1,6473 @@
+{
+ "source": "Part 61 Manual of Standards Schedule 3, Aeronautical knowledge standards (CASA PDF, compilation F2021C00449; unchanged for RPL/PPL units by the 19 Nov 2024 amendment)",
+ "exam_units": {
+  "RPLA": [
+   "BAKC",
+   "RBKA",
+   "RFRC",
+   "RMTC",
+   "PHFC"
+  ],
+  "PPLA": [
+   "PAKC",
+   "PAKA",
+   "GNSSC",
+   "PFRA",
+   "PNVC",
+   "PMTC",
+   "POPC",
+   "POPA"
+  ]
+ },
+ "units": [
+  {
+   "code": "BAKC",
+   "number": "1.1.1",
+   "title": "Basic aeronautical knowledge – all aircraft categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Terminology",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Direction of flight",
+       "elements": [
+        {
+         "code": "BAKC 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe direction using the following methods:",
+         "items": [
+          {
+           "label": "a",
+           "text": "as a 3 figure group;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "as a 2 figure group;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "in the clock code.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 2.1.2",
+         "number": "2.1.2",
+         "text": "Define the meaning of aircraft heading (HDG).",
+         "items": []
+        },
+        {
+         "code": "BAKC 2.1.3",
+         "number": "2.1.3",
+         "text": "Describe the differences between the following terms when used to describe direction:",
+         "items": [
+          {
+           "label": "a",
+           "text": "true (T);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "magnetic (M);",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "compass (C).",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Distance, speed and velocity",
+       "elements": [
+        {
+         "code": "BAKC 2.2.1",
+         "number": "2.2.1",
+         "text": "State the units used for lateral distance in respect of the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "navigation;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "visibility.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 2.2.2",
+         "number": "2.2.2",
+         "text": "Define the meaning of knot (kt) when used to express aircraft speed.",
+         "items": []
+        },
+        {
+         "code": "BAKC 2.2.3",
+         "number": "2.2.3",
+         "text": "Define wind velocity (W/V).",
+         "items": []
+        },
+        {
+         "code": "BAKC 2.2.4",
+         "number": "2.2.4",
+         "text": "Differentiate between the following acronyms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "IAS;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "CAS;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "TAS;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "GS.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Time",
+       "elements": [
+        {
+         "code": "BAKC 2.3.1",
+         "number": "2.3.1",
+         "text": "Express time as a 4 figure group (24 hour time).",
+         "items": []
+        },
+        {
+         "code": "BAKC 2.3.2",
+         "number": "2.3.2",
+         "text": "Convert local standard time to UTC.",
+         "items": []
+        },
+        {
+         "code": "BAKC 2.3.3",
+         "number": "2.3.3",
+         "text": "Convert UTC to local standard time.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Units of measurement",
+       "elements": [
+        {
+         "code": "BAKC 2.4.1",
+         "number": "2.4.1",
+         "text": "State the units used to describe vertical measurement and the differences between the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "height;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "altitude;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "elevation.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 2.4.2",
+         "number": "2.4.2",
+         "text": "State the unit of measurement used to express:",
+         "items": [
+          {
+           "label": "a",
+           "text": "runway dimensions;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "temperature;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "atmospheric pressure;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "weight;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "volume (liquids);",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "visibility.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "Basic physics",
+       "elements": [
+        {
+         "code": "BAKC 2.5.1",
+         "number": "2.5.1",
+         "text": "Describe the meaning of kinetic and potential energy and the relationship to basic aircraft operations.",
+         "items": []
+        },
+        {
+         "code": "BAKC 2.5.2",
+         "number": "2.5.2",
+         "text": "Describe the meaning of ‘aircraft energy state’ with respect to kinetic and potential energy.",
+         "items": []
+        },
+        {
+         "code": "BAKC 2.5.3",
+         "number": "2.5.3",
+         "text": "Describe the effects on ‘aircraft energy state’ of acceleration, deceleration, climb and descent.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 3,
+     "title": "Power plants and systems – basics",
+     "subtopics": [
+      {
+       "number": "3.1",
+       "title": "Piston engine aircraft",
+       "elements": [
+        {
+         "code": "BAKC 3.1.1",
+         "number": "3.1.1",
+         "text": "Describe the basic principle of operation of a 4 stroke cycle internal combustion engine and state the purpose and function of the following components:",
+         "items": [
+          {
+           "label": "a",
+           "text": "cylinders;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "pistons;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "piston rings;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "inlet/exhaust valves;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "crank shaft;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "cam shaft;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "spark plugs.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.1.2",
+         "number": "3.1.2",
+         "text": "Describe the effect of increasing altitude and temperature on engine performance and how the following affect the power output of an engine:",
+         "items": [
+          {
+           "label": "a",
+           "text": "throttle lever position;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "RPM.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.1.3",
+         "number": "3.1.3",
+         "text": "State the function of the following engine components and/or features:",
+         "items": [
+          {
+           "label": "a",
+           "text": "carburettor;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "throttle;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "magneto, dual ignition;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "alternator;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "battery, battery compartment vent;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "propeller;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "circuit breaker, fuse, bus bar;",
+           "subitems": []
+          },
+          {
+           "label": "h",
+           "text": "impulse start;",
+           "subitems": []
+          },
+          {
+           "label": "i",
+           "text": "oil cooler;",
+           "subitems": []
+          },
+          {
+           "label": "j",
+           "text": "fuel tank vents.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.1.4",
+         "number": "3.1.4",
+         "text": "In relation to power plants and systems, state the purpose and importance of monitoring the following gauges:",
+         "items": [
+          {
+           "label": "a",
+           "text": "RPM (tachometer);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "CHT and EGT;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "voltmeter, ammeter, loadmeter;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "fuel pressure;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "oil temperature and pressure.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.1.5",
+         "number": "3.1.5",
+         "text": "Describe the purpose and function of an engine lubrication system in relation to engine cooling.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.1.6",
+         "number": "3.1.6",
+         "text": "State the purpose of mixture control and describe the effect of excessively rich and lean mixture strengths on engine operation.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.1.7",
+         "number": "3.1.7",
+         "text": "Describe the advantages and disadvantages of a simple carburettor and a direct injection system.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.1.8",
+         "number": "3.1.8",
+         "text": "List typical services provided by the following systems in a light aircraft and the actions a pilot would take to rectify or detect a malfunction:",
+         "items": [
+          {
+           "label": "a",
+           "text": "hydraulic system;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "electrical system;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "ignition system;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "vacuum system.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "3.2",
+       "title": "Fuels and oils",
+       "elements": [
+        {
+         "code": "BAKC 3.2.1",
+         "number": "3.2.1",
+         "text": "Describe the following in relation to fuels:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the sources of fuel contamination;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the advantages and disadvantages of fuelling prior to overnight parking;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "how to identify different grades of aviation fuel;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "the hazards/problems with:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "mixing different hydraulic fluids;"
+            },
+            {
+             "label": "ii",
+             "text": "using incorrect grades of fuel."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "3.3",
+       "title": "Engine handling",
+       "elements": [
+        {
+         "code": "BAKC 3.3.1",
+         "number": "3.3.1",
+         "text": "State the causes and effects of detonation, limited to improper use of mixture control, MP/RPM, and use of incorrect fuel octane.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.3.2",
+         "number": "3.3.2",
+         "text": "Describe the effect on an engine of the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "prolonged idling;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "using incorrect mixture settings in flight.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.3.3",
+         "number": "3.3.3",
+         "text": "State reasons for the following limitations/actions:",
+         "items": [
+          {
+           "label": "a",
+           "text": "minimum oil pressure;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "minimum/maximum oil temperature;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "minimum/maximum CHT;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "maximum RPM;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "ignition checks: pre-take-off and shutdown;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "prolonged use of starter motor;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "use of pitot heat on the ground;",
+           "subitems": []
+          },
+          {
+           "label": "h",
+           "text": "engine warm up on prolonged descents.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.3.4",
+         "number": "3.3.4",
+         "text": "Explain the significance of blue or black exhaust smoke produced by an aircraft piston engine.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.4",
+       "title": "Malfunctions",
+       "elements": [
+        {
+         "code": "BAKC 3.4.1",
+         "number": "3.4.1",
+         "text": "For paragraphs (a), (b) and (c), the components are listed in paragraph (d):",
+         "items": [
+          {
+           "label": "a",
+           "text": "describe the cockpit indications which may suggest a malfunction or failure of a component;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "state the actions (if any) a pilot should take to rectify a malfunction or failure of a component;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "describe the consequences if a malfunction or failure of a component listed above cannot be rectified;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "the following is a list of components that applies to paragraphs (a), (b) and (c):",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "alternator;"
+            },
+            {
+             "label": "i",
+             "text": "magneto;"
+            },
+            {
+             "label": "ii",
+             "text": "battery;"
+            },
+            {
+             "label": "iii",
+             "text": "ignition switch;"
+            },
+            {
+             "label": "iv",
+             "text": "fuel vent (blockage), fuel/booster pump;"
+            },
+            {
+             "label": "v",
+             "text": "oil cooler, cowl flaps;"
+            },
+            {
+             "label": "vi",
+             "text": "vacuum pump;"
+            },
+            {
+             "label": "vii",
+             "text": "hydraulic brakes."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.4.2",
+         "number": "3.4.2",
+         "text": "For paragraphs (a) and (b), the piston-engine gauges are listed in paragraph (c):",
+         "items": [
+          {
+           "label": "a",
+           "text": "with reference to engine gauge indications, identify reasons for an abnormality and state pilot actions (if any) to rectify a problem;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "state the consequences if the problem cannot be rectified by the pilot;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "the following is a list of piston-engine gauges that applies to paragraphs (a) and (b):",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "oil temperature and pressure;"
+            },
+            {
+             "label": "i",
+             "text": "CHT;"
+            },
+            {
+             "label": "ii",
+             "text": "fuel pressure;"
+            },
+            {
+             "label": "iii",
+             "text": "tachometer;"
+            },
+            {
+             "label": "iv",
+             "text": "ammeter/load meter;"
+            },
+            {
+             "label": "v",
+             "text": "voltmeter;"
+            },
+            {
+             "label": "vi",
+             "text": "engine icing."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.4.3",
+         "number": "3.4.3",
+         "text": "Describe the method for checking the operation of carburettor heat prior to take-off.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.4.4",
+         "number": "3.4.4",
+         "text": "State the atmospheric conditions of outside air temperature and relative humidity, engine control settings and power conditions which are conducive to the formation in a carburettor, including the severity of the icing, of the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "throttle ice;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "fuel evaporation ice;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "impact ice.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.4.5",
+         "number": "3.4.5",
+         "text": "State the danger of progressive throttle increments if engine icing is not diagnosed.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.4.6",
+         "number": "3.4.6",
+         "text": "Describe the use of carburettor heat for:",
+         "items": [
+          {
+           "label": "a",
+           "text": "anti-icing;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "de-icing;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "ground operation.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.4.7",
+         "number": "3.4.7",
+         "text": "Describe the difference between the use of ‘alternate air’ and ‘carburettor heat’ controls.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.4.8",
+         "number": "3.4.8",
+         "text": "State the effect of the application of carburettor heat on engine performance and engine instrument indications.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.4.9",
+         "number": "3.4.9",
+         "text": "Describe the symptoms of fuel vaporisation and the method of rectification.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.5",
+       "title": "Flight instruments",
+       "elements": [
+        {
+         "code": "BAKC 3.5.1",
+         "number": "3.5.1",
+         "text": "Explain the colour code markings on an airspeed indicator (ASI).",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.5.2",
+         "number": "3.5.2",
+         "text": "Describe the basic operation of the primary flight instruments and associated systems.",
+         "items": []
+        },
+        {
+         "code": "BAKC 3.5.3",
+         "number": "3.5.3",
+         "text": "State:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the effect of a blockage of the pitot or static source on the indications displayed by each pressure instrument; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the effect of using an alternate static source located inside the cockpit, on the reliability of pressure instrument indications; and",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "the effect of low suction and loss of electrical power on the reliability of the gyroscopic flight instruments; and",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "the causes of toppling of gyroscopic instruments and identify conditions under which they would re-erect; and",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "how, when and why a directional indicating gyro should be synchronised with the magnetic compass.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 3.5.4",
+         "number": "3.5.4",
+         "text": "Describe the methods to determine the serviceability of the primary flight instruments and magnetic compass.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 4,
+     "title": "Aerodynamics",
+     "subtopics": [
+      {
+       "number": "4.1",
+       "title": "Basic aerodynamics",
+       "elements": [
+        {
+         "code": "BAKC 4.1.1",
+         "number": "4.1.1",
+         "text": "Basic physics – aircraft energy state in terms of the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "kinetic energy;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "potential energy;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "inertia.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 4.1.2",
+         "number": "4.1.2",
+         "text": "Explain the meaning of the following terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "aerofoil, angle of attack, relative airflow;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "centre of pressure, centre of gravity;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "lift, weight, thrust, drag.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 4.1.3",
+         "number": "4.1.3",
+         "text": "Describe the meaning of the following terms in respect of an aerofoil:",
+         "items": [
+          {
+           "label": "a",
+           "text": "chord;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "span;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "camber;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "aerodynamic stall.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "4.2",
+       "title": "Lift and drag",
+       "elements": [
+        {
+         "code": "BAKC 4.2.1",
+         "number": "4.2.1",
+         "text": "State whether lift and drag of an aerofoil will increase or decrease with changes in the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "airspeed;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "angle of attack.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 4.2.2",
+         "number": "4.2.2",
+         "text": "Explain the following types of drag which affect a subsonic aircraft in flight:",
+         "items": [
+          {
+           "label": "a",
+           "text": "parasite (zero lift) – form, interference, skin friction;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "induced (lift dependent).",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 4.2.3",
+         "number": "4.2.3",
+         "text": "State how total drag varies with airspeed.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "4.3",
+       "title": "Climbing",
+       "elements": [
+        {
+         "code": "BAKC 4.3.1",
+         "number": "4.3.1",
+         "text": "Describe the difference between rate of climb and angle of climb.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "4.4",
+       "title": "Wake turbulence",
+       "elements": [
+        {
+         "code": "BAKC 4.4.1",
+         "number": "4.4.1",
+         "text": "List the factors that affect the strength of vortex flow with respect to the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "aircraft weight;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "speed;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "wing shape.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 4.4.2",
+         "number": "4.4.2",
+         "text": "State the primary control hazard that may result from a vortex encounter.",
+         "items": []
+        },
+        {
+         "code": "BAKC 4.4.3",
+         "number": "4.4.3",
+         "text": "Describe the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "approximate flow direction around each vortex; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "approximate location of vortices (in still air) generated by a preceding aeroplane during:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "cruise flight; and"
+            },
+            {
+             "label": "ii",
+             "text": "take-off and landing; and"
+            }
+           ]
+          },
+          {
+           "label": "c",
+           "text": "approximate take-off/touchdown points and flight profiles which should be used to avoid wake turbulence.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 4.4.4",
+         "number": "4.4.4",
+         "text": "State the effect of wind and atmospheric turbulence on the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "strength of vortices;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "longevity of vortices;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "location and direction of movement of vortices.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "4.5",
+       "title": "Thrust stream turbulence (jet blast or rotor downwash)",
+       "elements": [
+        {
+         "code": "BAKC 4.5.1",
+         "number": "4.5.1",
+         "text": "Describe how the hazard from thrust stream turbulence varies with changes in engine power and distance from the source.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 5,
+     "title": "Navigation",
+     "subtopics": [
+      {
+       "number": "5.1",
+       "title": "Charts",
+       "elements": [
+        {
+         "code": "BAKC 5.1.1",
+         "number": "5.1.1",
+         "text": "Identify the major features displayed on visual charts.",
+         "items": []
+        },
+        {
+         "code": "BAKC 5.1.2",
+         "number": "5.1.2",
+         "text": "State the charts used to identify controlled airspace (CTA) and prohibited, restricted and danger (PRD) areas.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "5.2",
+       "title": "Documentation",
+       "elements": [
+        {
+         "code": "BAKC 5.2.1",
+         "number": "5.2.1",
+         "text": "Determine runway data from ERSA for a given airport.",
+         "items": []
+        },
+        {
+         "code": "BAKC 5.2.2",
+         "number": "5.2.2",
+         "text": "Determine data pertaining to Prohibited, Restricted and Danger areas.",
+         "items": []
+        },
+        {
+         "code": "BAKC 5.2.3",
+         "number": "5.2.3",
+         "text": "Use ERSA to determine the time a restricted area is active.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 6,
+     "title": "Operations, performance and planning",
+     "subtopics": [
+      {
+       "number": "6.1",
+       "title": "Airworthiness and aircraft equipment",
+       "elements": [
+        {
+         "code": "BAKC 6.1.1",
+         "number": "6.1.1",
+         "text": "State the documents required to determine the serviceability of an aircraft.",
+         "items": []
+        },
+        {
+         "code": "BAKC 6.1.2",
+         "number": "6.1.2",
+         "text": "Describe how to certify the aircraft for flight.",
+         "items": []
+        },
+        {
+         "code": "BAKC 6.1.3",
+         "number": "6.1.3",
+         "text": "Describe the process to record an aircraft defect on a release to service document (maintenance release).",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "6.2",
+       "title": "Take-off and landing performance",
+       "elements": [
+        {
+         "code": "BAKC 6.2.1",
+         "number": "6.2.1",
+         "text": "Differentiate between pressure height and density height.",
+         "items": []
+        },
+        {
+         "code": "BAKC 6.2.2",
+         "number": "6.2.2",
+         "text": "Describe how to use an altimeter to obtain:",
+         "items": [
+          {
+           "label": "a",
+           "text": "local QNH at an aerodrome;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "pressure height of an aerodrome;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "elevation of an aerodrome.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 6.2.3",
+         "number": "6.2.3",
+         "text": "Calculate the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "density altitude given pressure altitude (or elevation and QNH) and temperature;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "pressure altitude given airfield elevation and QNH.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 6.2.4",
+         "number": "6.2.4",
+         "text": "State the effect (increase/decrease) of the following factors on take-off, landing, and take-off climb performance:",
+         "items": [
+          {
+           "label": "a",
+           "text": "strength of headwind/tailwind component;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "air temperature;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "QNH;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "airfield elevation;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "ground effect and windshear;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "frost on an aircraft.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 6.2.5",
+         "number": "6.2.5",
+         "text": "Explain the following terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "maximum structural take-off and landing weight;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "climb weight limit.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "6.3",
+       "title": "Speed limitations",
+       "elements": [
+        {
+         "code": "BAKC 6.3.1",
+         "number": "6.3.1",
+         "text": "Explain the following terms/abbreviations:",
+         "items": [
+          {
+           "label": "a",
+           "text": "normal operating speed (VNO);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "never exceed speed (VNE);",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "maximum manoeuvre speed (VA);",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "turbulence penetration speed (VB);",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "limit and design load factors.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 6.3.2",
+         "number": "6.3.2",
+         "text": "Describe situations which may result in an aircraft exceeding speed limits and load factor limits.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "6.4",
+       "title": "Weight and balance",
+       "elements": [
+        {
+         "code": "BAKC 6.4.1",
+         "number": "6.4.1",
+         "text": "Explain the meaning of the following terms used in the computation of weight and balance data:",
+         "items": [
+          {
+           "label": "a",
+           "text": "datum;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "arm;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "moment;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "station;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "centre of gravity and limits;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "empty weight;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "operating weight;",
+           "subitems": []
+          },
+          {
+           "label": "h",
+           "text": "MTOW;",
+           "subitems": []
+          },
+          {
+           "label": "i",
+           "text": "zero fuel weight (MZFW);",
+           "subitems": []
+          },
+          {
+           "label": "j",
+           "text": "MLW.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 6.4.2",
+         "number": "6.4.2",
+         "text": "Calculate the following weight and balance information:",
+         "items": [
+          {
+           "label": "a",
+           "text": "MTOW;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "capacity and arm of the baggage lockers;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "capacity, arm, grade and specific gravity of the fuel;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "location and arms of the seating.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "BAKC 6.4.3",
+         "number": "6.4.3",
+         "text": "Determine if an aircraft is loaded within the prescribed CG for the aircraft.",
+         "items": []
+        },
+        {
+         "code": "BAKC 6.4.4",
+         "number": "6.4.4",
+         "text": "State the likely results of exceeding aircraft weight limits.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "RBKA",
+   "number": "1.1.2",
+   "title": "Basic aeronautical knowledge – aeroplane",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Power plants and systems",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Piston engine",
+       "elements": [
+        {
+         "code": "RBKA 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe the method of using a manual mixture control for an aircraft piston engine fitted with a fixed pitch propeller.",
+         "items": []
+        },
+        {
+         "code": "RBKA 2.1.2",
+         "number": "2.1.2",
+         "text": "State what indications would signify the presence of engine icing in an aircraft fitted with a fixed pitch propeller.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 3,
+     "title": "Aerodynamics",
+     "subtopics": [
+      {
+       "number": "3.1",
+       "title": "Lift and drag",
+       "elements": [
+        {
+         "code": "RBKA 3.1.1",
+         "number": "3.1.1",
+         "text": "State whether lift and drag of an aerofoil will increase or decrease with changes in flap settings.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.1.2",
+         "number": "3.1.2",
+         "text": "For the following, recall the typical angles of attack at which a basic low-speed aerofoil:",
+         "items": [
+          {
+           "label": "a",
+           "text": "generates maximum lift (16 o );",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "is most efficient (best L/D: 4 o ).",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.1.3",
+         "number": "3.1.3",
+         "text": "Describe how the angles of attack relate to the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "stall speed;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "best glide speed.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.1.4",
+         "number": "3.1.4",
+         "text": "State the relationship between attitude, angle of attack and airspeed in level flight.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.2",
+       "title": "Flight controls",
+       "elements": [
+        {
+         "code": "RBKA 3.2.1",
+         "number": "3.2.1",
+         "text": "Describe the primary and further effects of the elevator, rudder and aileron on an aeroplane’s movement about its longitudinal, lateral and normal (vertical) axes.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.2.2",
+         "number": "3.2.2",
+         "text": "Describe the effect of changes in power and airspeed on pitch trim and on the effectiveness of the elevator, rudder and ailerons.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.2.3",
+         "number": "3.2.3",
+         "text": "Describe the purpose of trim controls.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.2.4",
+         "number": "3.2.4",
+         "text": "State the effect of lowering or raising flap on lift, drag and attitude.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.3",
+       "title": "Climbing",
+       "elements": [
+        {
+         "code": "RBKA 3.3.1",
+         "number": "3.3.1",
+         "text": "State the effect (increase/decrease) on climb rate and angle resulting from changes in the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "weight;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "power;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "airspeed (changed from recommended);",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "flap deflection;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "headwind/tailwind component, windshear;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "bank angle;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "altitude and density altitude.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "3.4",
+       "title": "Descents",
+       "elements": [
+        {
+         "code": "RBKA 3.4.1",
+         "number": "3.4.1",
+         "text": "State the effect on rate, angle of descent and attitude resulting from changes in the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "power – constant IAS;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "flap – constant IAS.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.4.2",
+         "number": "3.4.2",
+         "text": "State the effect of headwind/tailwind on the glide path and glide distance (relevant to the earth’s surface).",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.4.3",
+         "number": "3.4.3",
+         "text": "Explain why gliding at any indicated airspeed other than the recommended glide speed will reduce the distance that can be achieved in still air.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.5",
+       "title": "Turning",
+       "elements": [
+        {
+         "code": "RBKA 3.5.1",
+         "number": "3.5.1",
+         "text": "Describe what is meant by a balanced turn.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.5.2",
+         "number": "3.5.2",
+         "text": "Describe the terms ‘g’ wing loading load factor.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.5.3",
+         "number": "3.5.3",
+         "text": "During a level turn, state the effect (increase/decrease) of bank angle on the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "stall IAS, including the rate of increase of stall speed with increasing bank;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the aircraft’s structure (load factor) and possible airframe damage if limits are exceeded.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.5.4",
+         "number": "3.5.4",
+         "text": "List reasons for avoiding steep turns:",
+         "items": [
+          {
+           "label": "a",
+           "text": "shortly after take-off; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "during a glide, particularly on approach to land.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.5.5",
+         "number": "3.5.5",
+         "text": "Explain why an aeroplane executing balanced level turns at low level may appear to slip or skid when turning downwind or into wind.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.5.6",
+         "number": "3.5.6",
+         "text": "Given level flight stall speed, determine the stall speed and load factor during turns at 45 and 60 degrees bank.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.6",
+       "title": "Stalling, spinning and spiral dives",
+       "elements": [
+        {
+         "code": "RBKA 3.6.1",
+         "number": "3.6.1",
+         "text": "Describe:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the symptoms when approaching the stall; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the characteristics of a stall.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.6.2",
+         "number": "3.6.2",
+         "text": "Explain:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the effect of using ailerons when approaching and during the stall; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "why an aeroplane may stall at different speeds.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.6.3",
+         "number": "3.6.3",
+         "text": "State the effect (increase/decrease/nil) of the following variables on the level flight stall IAS:",
+         "items": [
+          {
+           "label": "a",
+           "text": "power;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "flap;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "wind shear vertical gusts;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "manoeuvres;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "weight;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "frost and ice;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "altitude.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.6.4",
+         "number": "3.6.4",
+         "text": "Describe the aerodynamic principles of stall recovery.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.6.5",
+         "number": "3.6.5",
+         "text": "Describe manoeuvres during which an aeroplane may stall at an angle which appears to be different to the true stalling angle.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.6.6",
+         "number": "3.6.6",
+         "text": "Differentiate between a spin and a spiral dive in a light aeroplane and describe the standard recovery technique from each.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.7",
+       "title": "Taxi, take-off, landing",
+       "elements": [
+        {
+         "code": "RBKA 3.7.1",
+         "number": "3.7.1",
+         "text": "Describe situations which may cause an aeroplane to ‘wheel barrow’ and state the recommended pilot action in the event of such an occurrence.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.7.2",
+         "number": "3.7.2",
+         "text": "Describe the effect of a cross-wind on high- and low-wing aeroplanes during taxi, take-off and landing.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.7.3",
+         "number": "3.7.3",
+         "text": "List the advantages of taking-off and landing into wind.",
+         "items": []
+        },
+        {
+         "code": "RBKA 3.7.4",
+         "number": "3.7.4",
+         "text": "Compare a flapless approach to an approach with flap in terms of:",
+         "items": [
+          {
+           "label": "a",
+           "text": "attitude during descent; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "approach path angle; and",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "threshold and touchdown speeds; and",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "landing roll.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RBKA 3.7.5",
+         "number": "3.7.5",
+         "text": "Describe the effect of wind shear (wind gradient) and ground effect on aerodynamic and flight characteristics and identify.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.8",
+       "title": "Structural damage",
+       "elements": [
+        {
+         "code": "RBKA 3.8.1",
+         "number": "3.8.1",
+         "text": "Describe the effect of structural damage, including bird strikes, with emphasis on:",
+         "items": [
+          {
+           "label": "a",
+           "text": "stall characteristics; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "controllability.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 4,
+     "title": "Operations and performance",
+     "subtopics": [
+      {
+       "number": "4.1",
+       "title": "Take-off and landing performance",
+       "elements": [
+        {
+         "code": "RBKA 4.1.1",
+         "number": "4.1.1",
+         "text": "State the effect (increase/decrease) of the following factors on take-off, landing, and take-off climb performance:",
+         "items": [
+          {
+           "label": "a",
+           "text": "runway slope;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "wet runway surface;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "slushy runway surface.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "4.2",
+       "title": "Aircraft limitations",
+       "elements": [
+        {
+         "code": "RBKA 4.2.1",
+         "number": "4.2.1",
+         "text": "Explain the following terms/abbreviations:",
+         "items": [
+          {
+           "label": "a",
+           "text": "flap operating speed (VFO);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "flap extended speed (VFE).",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "RFRC",
+   "number": "1.5.1",
+   "title": "RPL flight rules and air law – all aircraft categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Elements",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Documentation",
+       "elements": [
+        {
+         "code": "RFRC 2.1.1",
+         "number": "2.1.1",
+         "text": "Explain the reason for recording flight time in a logbook and state what other information that must be recorded.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.1.2",
+         "number": "2.1.2",
+         "text": "State the different documents that contain aviation legislation, aeronautical information and general operating rules.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.1.3",
+         "number": "2.1.3",
+         "text": "Explain the purpose of the aircraft maintenance release and how it is used.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Licence privileges and limitations (RPL)",
+       "elements": [
+        {
+         "code": "RFRC 2.2.1",
+         "number": "2.2.1",
+         "text": "State the limitations of the RPL.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.2.2",
+         "number": "2.2.2",
+         "text": "Describe the requirements for maintaining the privileges of the RPL.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.2.3",
+         "number": "2.2.3",
+         "text": "State the medical standards and limitations for the holder of an RPL.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.2.4",
+         "number": "2.2.4",
+         "text": "State the privileges of a licence holder with respect to the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "conducting daily inspections;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "signing a maintenance release;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "reporting defects.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Conditions of flight",
+       "elements": [
+        {
+         "code": "RFRC 2.3.1",
+         "number": "2.3.1",
+         "text": "Recall/apply the following rules/requirements:",
+         "items": [
+          {
+           "label": "a",
+           "text": "rules of the air;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the requirements relating to the operation of aircraft on, and in the vicinity of, an aerodrome and the conditions relating to turns after take-off;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "separation minima between a/c for take-off and landing at a non-controlled aerodrome;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "rules relating to restrictions on smoking in aircraft during take-off, landing and refuelling;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "VFR and visual meteorology conditions (aeroplanes) for operations below 10,000 ft;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "altimetry procedures for flight below 10,000 ft.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.3.2",
+         "number": "2.3.2",
+         "text": "State the rules relating to the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the use of drugs and alcohol, and recall the minimum period between alcohol consumption and flight departure;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "temporary medical unfitness.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.3.3",
+         "number": "2.3.3",
+         "text": "Recall the meaning of the following light signals directed at an aircraft:",
+         "items": [
+          {
+           "label": "a",
+           "text": "steady ‘green’ and steady ‘red’;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "‘green’, ‘red’ and ‘white’ flashes.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.3.4",
+         "number": "2.3.4",
+         "text": "Recall regulations relating to the minimum heights for flights over the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "populated areas;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "other areas.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.3.5",
+         "number": "2.3.5",
+         "text": "State the limitations imposed on the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "acrobatic flight;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "flight over public gatherings.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.3.6",
+         "number": "2.3.6",
+         "text": "Recall the requirements for landing prior to the end of daylight.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Air service operations",
+       "elements": [
+        {
+         "code": "RFRC 2.4.1",
+         "number": "2.4.1",
+         "text": "Extract from legislation references, the restrictions pertaining to the carriage of passengers on certain flights.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.4.2",
+         "number": "2.4.2",
+         "text": "Apply the following regulations/rules/orders relating to the responsibilities of a pilot in command:",
+         "items": [
+          {
+           "label": "a",
+           "text": "before flight, requirements regarding the following:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "fuels and oils;"
+            },
+            {
+             "label": "ii",
+             "text": "fuelling of aircraft;"
+            },
+            {
+             "label": "iii",
+             "text": "starting and ground operation of engines;"
+            },
+            {
+             "label": "iv",
+             "text": "appropriate passenger briefing;"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "during flight, requirements and regulations regarding:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "the operation and safety of the aircraft and the authority of the pilot in command;"
+            },
+            {
+             "label": "ii",
+             "text": "dropping of articles from an aircraft in flight."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.4.3",
+         "number": "2.4.3",
+         "text": "Recall the legislation requirements that apply during the following phases of a flight:",
+         "items": [
+          {
+           "label": "a",
+           "text": "before flight:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "removal of locking devices;"
+            },
+            {
+             "label": "ii",
+             "text": "security of doors, hatches;"
+            },
+            {
+             "label": "iii",
+             "text": "tank caps;"
+            },
+            {
+             "label": "iv",
+             "text": "testing of flight controls;"
+            },
+            {
+             "label": "v",
+             "text": "removal of frost and ice;"
+            },
+            {
+             "label": "vi",
+             "text": "instrument checks;"
+            },
+            {
+             "label": "vii",
+             "text": "security of safety harness prior to solo flight in a dual control aircraft;"
+            },
+            {
+             "label": "viii",
+             "text": "when and how a fuel system inspection is performed;"
+            },
+            {
+             "label": "ix",
+             "text": "carriage of passengers in a control seat;"
+            },
+            {
+             "label": "x",
+             "text": "carriage of infants and children;"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "during flight:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "occupation of seats;"
+            },
+            {
+             "label": "ii",
+             "text": "wearing of seat belts;"
+            },
+            {
+             "label": "iii",
+             "text": "adjustment of seats;"
+            },
+            {
+             "label": "iv",
+             "text": "manipulation of aircraft controls by pilots, and by unauthorised persons."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "Aerodromes",
+       "elements": [
+        {
+         "code": "RFRC 2.5.1",
+         "number": "2.5.1",
+         "text": "With reference to a diagram of the aerodrome(s) used for training:",
+         "items": [
+          {
+           "label": "a",
+           "text": "identify movement areas; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "explain the significance of the following markings:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "taxiway;"
+            },
+            {
+             "label": "ii",
+             "text": "runway;"
+            },
+            {
+             "label": "iii",
+             "text": "helipad."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.5.2",
+         "number": "2.5.2",
+         "text": "With reference to a diagram, identify the following positions in a circuit:",
+         "items": [
+          {
+           "label": "a",
+           "text": "downwind leg;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "base leg;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "cross-wind leg;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "upwind leg;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "dead side of the circuit.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "RFRC 2.5.3",
+         "number": "2.5.3",
+         "text": "Explain the significance of a white cross on the movement area.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.5.4",
+         "number": "2.5.4",
+         "text": "Identify and explain the purpose of the following aerodrome markings:",
+         "items": [
+          {
+           "label": "a",
+           "text": "runway markings;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "runway threshold markings;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "runway end markings;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "cone and gable markers;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "taxiway markings;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "holding points/bays;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "a double white cross adjacent to a primary wind indicator.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.6",
+       "title": "Airspace",
+       "elements": [
+        {
+         "code": "RFRC 2.6.1",
+         "number": "2.6.1",
+         "text": "Describe the difference between controlled airspace and non-controlled airspace.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.6.2",
+         "number": "2.6.2",
+         "text": "State which documents are used to identify controlled airspace and explain if a prescribed airspace is active or inactive.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.7",
+       "title": "Emergencies and SAR",
+       "elements": [
+        {
+         "code": "RFRC 2.7.1",
+         "number": "2.7.1",
+         "text": "Describe what the intermittent use of navigation and landing lights by an aircraft are used to indicate.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.7.2",
+         "number": "2.7.2",
+         "text": "State the difference between an incident and an accident.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.7.3",
+         "number": "2.7.3",
+         "text": "Determine the reporting requirements following an incident or accident.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.7.4",
+         "number": "2.7.4",
+         "text": "Explain the term SARTIME and how it might be used.",
+         "items": []
+        },
+        {
+         "code": "RFRC 2.7.5",
+         "number": "2.7.5",
+         "text": "State the document that contains emergency procedures.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "RMTC",
+   "number": "1.8.1",
+   "title": "RPL meteorology – all aircraft categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Basic meteorology",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Knowledge of local weather",
+       "elements": [
+        {
+         "code": "RMTC 2.1.1",
+         "number": "2.1.1",
+         "text": "Demonstrate a basic knowledge of local weather, in particular the likely occurrence of the following phenomena and how they may affect the safety of a flight:",
+         "items": [
+          {
+           "label": "a",
+           "text": "thunderstorms;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "low cloud;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "poor visibility;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "turbulence.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Knowledge of forecasts and reports",
+       "elements": [
+        {
+         "code": "RMTC 2.2.1",
+         "number": "2.2.1",
+         "text": "Demonstrate an understanding of weather forecasts, reports and broadcasts that are pertinent to the area of operation.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Understand significance of observations",
+       "elements": [
+        {
+         "code": "RMTC 2.3.1",
+         "number": "2.3.1",
+         "text": "Recognise signs, including forecast condition and pilot observations, which may indicate the presence of:",
+         "items": [
+          {
+           "label": "a",
+           "text": "turbulence, thermals, dust devils; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "wind gradient, wind shear and describe the effect of these phenomena on flight characteristics.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "PHFC",
+   "number": "1.6.1",
+   "title": "PPL human factors – all categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Fitness for flight",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Basic health",
+       "elements": [
+        {
+         "code": "PHFC 2.1.1",
+         "number": "2.1.1",
+         "text": "Relate the effect on pilot performance of the following factors:",
+         "items": [
+          {
+           "label": "a",
+           "text": "diet, exercise;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "coronary risk factors – smoking, cholesterol, obesity, hereditary factors;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "upper respiratory tract infection, for example, colds, hay fever, congestion of air passages and sinuses;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "food poisoning and other digestive problems;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "headaches and migraines;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "pregnancy:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "when to stop flying;"
+            },
+            {
+             "label": "ii",
+             "text": "impact on cockpit ergonomics;"
+            }
+           ]
+          },
+          {
+           "label": "g",
+           "text": "injuries;",
+           "subitems": []
+          },
+          {
+           "label": "h",
+           "text": "ageing;",
+           "subitems": []
+          },
+          {
+           "label": "i",
+           "text": "alcohol and smoking;",
+           "subitems": []
+          },
+          {
+           "label": "j",
+           "text": "blood donations;",
+           "subitems": []
+          },
+          {
+           "label": "k",
+           "text": "dehydration;",
+           "subitems": []
+          },
+          {
+           "label": "l",
+           "text": "emotional:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "anxiety;"
+            },
+            {
+             "label": "ii",
+             "text": "depression;"
+            },
+            {
+             "label": "iii",
+             "text": "fears."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.1.2",
+         "number": "2.1.2",
+         "text": "Recall pilot obligations for a medical clearance from a DME when on any medication.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.1.3",
+         "number": "2.1.3",
+         "text": "Enumerate the responsibilities of pilots with regard to being medically fit for flight.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Health and fitness",
+       "elements": [
+        {
+         "code": "PHFC 2.2.1",
+         "number": "2.2.1",
+         "text": "Medical standards",
+         "items": [
+          {
+           "label": "a",
+           "text": "state the reasons for and frequency of physical examinations and how to locate DAMEs;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "describe the process of obtaining a medical examination;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "state the role of the CASA with regard to medical fitness and that only those conditions which present a flight safety hazard are disqualifying.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.2.2",
+         "number": "2.2.2",
+         "text": "Alcohol:",
+         "items": [
+          {
+           "label": "a",
+           "text": "recall how alcohol is absorbed and excreted;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "outline what a ‘hangover’ is;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "explain the effect a ‘hangover’ may have on flying performance;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "explain the relationship between a ‘hangover’ and level of blood alcohol in a person;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "recall the relationship between the level of blood alcohol and the recovery period from a ‘hangover’;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "state the factors that affect the elimination of alcohol from the body and describe the effects of illicit drugs and alcohol on judgment, comprehension, attention to detail the senses, coordination and reaction times;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "describe the symptoms of dehydration;",
+           "subitems": []
+          },
+          {
+           "label": "h",
+           "text": "list fluids suitable for rehydration, and explain why.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.2.3",
+         "number": "2.2.3",
+         "text": "Drugs:",
+         "items": [
+          {
+           "label": "a",
+           "text": "describe why drug abuse is a behavioural problem and is independent of:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "dependence (addiction);"
+            },
+            {
+             "label": "ii",
+             "text": "frequent use;"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "define illicit or non-illicit psychoactive substances;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "state the adverse effects of illicit or non-illicit psychoactive substances;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "recall the effects and duration of such effects on human performance related to perception, speed of processing information, and reaction time of such drugs as:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "cannabis-based substances, for example, marijuana, ganja;"
+            },
+            {
+             "label": "ii",
+             "text": "amphetamine-based substances, for example, ecstasy;"
+            },
+            {
+             "label": "iii",
+             "text": "opium-based substances, for example, codeine, heroin;"
+            }
+           ]
+          },
+          {
+           "label": "e",
+           "text": "state the undesirable effects of over-the-counter and prescription drugs. In particular, the side effects of:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "aspirin, antihistamines, nasal decongestants;"
+            },
+            {
+             "label": "ii",
+             "text": "amphetamines, tranquillisers, sedatives, antibiotics."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.2.4",
+         "number": "2.2.4",
+         "text": "Blood donations:",
+         "items": [
+          {
+           "label": "a",
+           "text": "state the effect on flying after giving a blood donation;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "state the recommended period between giving blood and the next flight and how this period can vary between individuals.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Hyperventilation",
+       "elements": [
+        {
+         "code": "PHFC 2.3.1",
+         "number": "2.3.1",
+         "text": "Recognise and state how to combat hyperventilation.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.3.2",
+         "number": "2.3.2",
+         "text": "Define hyperventilation and recall its causes.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Atmospheric pressure changes",
+       "elements": [
+        {
+         "code": "PHFC 2.4.1",
+         "number": "2.4.1",
+         "text": "Trapped gases:",
+         "items": [
+          {
+           "label": "a",
+           "text": "recall the effect of changes in pressure on gases trapped in the body cavities;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "state the effect on normal bodily function;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "list measures for prevention and treatment.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.4.2",
+         "number": "2.4.2",
+         "text": "Recall the effects of flying after a period of underwater diving and state the precautions to be taken if intending to fly after underwater diving.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "Basic knowledge of the anatomy of the ear",
+       "elements": [
+        {
+         "code": "PHFC 2.5.1",
+         "number": "2.5.1",
+         "text": "Outline the basic operation.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.5.2",
+         "number": "2.5.2",
+         "text": "Explain the purpose of the eustachian tube and effects of atmospheric/cabin pressure changes.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.5.3",
+         "number": "2.5.3",
+         "text": "State the effects of noise exposure on:",
+         "items": [
+          {
+           "label": "a",
+           "text": "hearing loss: long- and short-term;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "speech intelligibility;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "fatigue.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.6",
+       "title": "State recommended methods of hearing protection",
+       "elements": [
+        {
+         "code": "PHFC 2.6.1",
+         "number": "2.6.1",
+         "text": "State recommended methods of hearing protection",
+         "items": [],
+         "synthesised": true
+        }
+       ]
+      },
+      {
+       "number": "2.7",
+       "title": "Vision, spatial disorientation, illusions",
+       "elements": [
+        {
+         "code": "PHFC 2.7.1",
+         "number": "2.7.1",
+         "text": "Outline the anatomy of the eye and its functioning during the day and at night.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.7.2",
+         "number": "2.7.2",
+         "text": "State the factors that affect night vision and identify methods of ‘dark adaptation’.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.7.3",
+         "number": "2.7.3",
+         "text": "Recall the limitations of the eye in discerning objects at night and the ‘off-centre’ method of identifying objects at night.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.7.4",
+         "number": "2.7.4",
+         "text": "Recall the limitations of the eye with respect to:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the ability to discern objects during flight, for example, other aircraft, transmission lines etc.;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "empty field myopia;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "glare;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "colour vision in aviation;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "common visual problems, viz:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "myopia, hyperopia, astigmatism, presbyopia;"
+            }
+           ]
+          },
+          {
+           "label": "f",
+           "text": "flicker vertigo.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.7.5",
+         "number": "2.7.5",
+         "text": "Outline the importance of:",
+         "items": [
+          {
+           "label": "a",
+           "text": "updating spectacle prescriptions;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "selecting suitable sunglasses.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.7.6",
+         "number": "2.7.6",
+         "text": "Recall the factors which are conducive to mid-air collisions and describe techniques for visual ‘scanning’.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.7.7",
+         "number": "2.7.7",
+         "text": "Define the term ‘disorientation’.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.7.8",
+         "number": "2.7.8",
+         "text": "Recall the sensory systems involved in maintaining body equilibrium i.e. equilibrium is normally maintained by use of the eyes, inner ear and proprioceptive system (‘seat of pants’).",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.7.9",
+         "number": "2.7.9",
+         "text": "Recall that these mechanisms do not provide reliable information under all conditions of flight.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.7.10",
+         "number": "2.7.10",
+         "text": "Describe illusion(s) that may be associated with the factors listed below:",
+         "items": [
+          {
+           "label": "a",
+           "text": "‘leans’;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "linear and angular accelerations;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "unperceived changes in the pitch; roll; yaw;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "autokinetic illusions;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "‘graveyard spin’ illusion.",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "somatogravic illusion.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.7.11",
+         "number": "2.7.11",
+         "text": "Explain:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the conditions under which illusions may occur;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the conflict in perception of an artificial reference system and a pilot's senses when illusions are experienced;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "the factors that may make a person more susceptible to disorientation;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "how to overcome sensory illusions.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.7.12",
+         "number": "2.7.12",
+         "text": "Recall the illusions that may result from the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "false horizontal clues, for example, sloping cloud formations and sloping terrain;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "depth perception, for example, flying over water, snow, desert and other featureless terrain effect of fog; haze; dust;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "optical characteristics of windscreens;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "landing illusions:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "approach angles – steep; shallow;"
+            },
+            {
+             "label": "ii",
+             "text": "width and slope of runway;"
+            },
+            {
+             "label": "iii",
+             "text": "slope of (approach);"
+            },
+            {
+             "label": "iv",
+             "text": "terrain approaches over water;"
+            }
+           ]
+          },
+          {
+           "label": "e",
+           "text": "relative motion between objects.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.8",
+       "title": "Motion sickness",
+       "elements": [
+        {
+         "code": "PHFC 2.8.1",
+         "number": "2.8.1",
+         "text": "State the basic cause of motion sickness.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.8.2",
+         "number": "2.8.2",
+         "text": "List factors that may aggravate motion sickness.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.8.3",
+         "number": "2.8.3",
+         "text": "List methods of combating motion sickness in flight.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.9",
+       "title": "Acceleration ‘g’ effects",
+       "elements": [
+        {
+         "code": "PHFC 2.9.1",
+         "number": "2.9.1",
+         "text": "Describe the effects of positive and negative accelerations on:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the cardiovascular systems; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "vision; and",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "consciousness.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.10",
+       "title": "Toxic hazards",
+       "elements": [
+        {
+         "code": "PHFC 2.10.1",
+         "number": "2.10.1",
+         "text": "State the sources, symptoms, effects and treatment of carbon monoxide poisoning.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.10.2",
+         "number": "2.10.2",
+         "text": "Recall the effect of breathing air contaminated by fuel and other noxious or toxic aviation products.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.11",
+       "title": "The atmosphere and associated problems",
+       "elements": [
+        {
+         "code": "PHFC 2.11.1",
+         "number": "2.11.1",
+         "text": "State the chemical composition of the atmosphere and recall the variation of temperature and pressure with altitude.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.11.2",
+         "number": "2.11.2",
+         "text": "Outline how the circulatory and respiratory systems distribute oxygen and excrete carbon dioxide.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.11.3",
+         "number": "2.11.3",
+         "text": "State what is meant by the partial pressure of oxygen.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.12",
+       "title": "Hypoxia",
+       "elements": [
+        {
+         "code": "PHFC 2.12.1",
+         "number": "2.12.1",
+         "text": "List the causes of hypoxia and describe:",
+         "items": [
+          {
+           "label": "a",
+           "text": "its effect on night vision;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the dangers of behavioural changes, for example, lack of self-criticism, over-confidence and a false sense of security;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "state the symptoms and their development as altitude is increased;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "list factors which may increase a person's susceptibility to hypoxia;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "list methods of combating various forms of hypoxia.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.13",
+       "title": "Human factors considerations",
+       "elements": [
+        {
+         "code": "PHFC 2.13.1",
+         "number": "2.13.1",
+         "text": "List the basic concepts of information processing and decision making, including:",
+         "items": [
+          {
+           "label": "a",
+           "text": "how sensory information is used to form mental images;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the influence of the following factors on the decision-making process:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "personality traits, for example, introvert/extrovert;"
+            },
+            {
+             "label": "ii",
+             "text": "pride, peer pressure;"
+            },
+            {
+             "label": "iii",
+             "text": "the desire to get the flight flown;"
+            },
+            {
+             "label": "iv",
+             "text": "anxiety, overconfidence, boredom, complacency;"
+            },
+            {
+             "label": "v",
+             "text": "types of memory – long- and short-term;"
+            },
+            {
+             "label": "vi",
+             "text": "memory limitations;"
+            },
+            {
+             "label": "vii",
+             "text": "aides memoire, rules of thumb;"
+            },
+            {
+             "label": "viii",
+             "text": "work load/overload;"
+            },
+            {
+             "label": "ix",
+             "text": "skill, experience, currency."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.13.2",
+         "number": "2.13.2",
+         "text": "Recall the general concepts behind decision-making and list the methods of enhancing decision-making skills.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.13.3",
+         "number": "2.13.3",
+         "text": "Concepts of stress:",
+         "items": [
+          {
+           "label": "a",
+           "text": "recall the interaction between stress and arousal and the effects of short- and long-term stress on pilot performance and health;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "recall the symptoms, causes and effects of environmental stress:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "working in an excessively hot, cold, vibrating or noisy environment;"
+            }
+           ]
+          },
+          {
+           "label": "c",
+           "text": "state the effects of stress on performance;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "describe the effect of stress on human performance;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "apply the basic principles of stress management.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PHFC 2.13.4",
+         "number": "2.13.4",
+         "text": "Concepts of fatigue:",
+         "items": [
+          {
+           "label": "a",
+           "text": "identify causes of fatigue and describe its effects on pilot performance;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "relate coping strategies, for example:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "sleep management;"
+            },
+            {
+             "label": "ii",
+             "text": "relaxation;"
+            },
+            {
+             "label": "iii",
+             "text": "fitness and diet;"
+            }
+           ]
+          },
+          {
+           "label": "c",
+           "text": "describe the differences between acute and chronic fatigue.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.14",
+       "title": "Principles of first aid and survival",
+       "elements": [
+        {
+         "code": "PHFC 2.14.1",
+         "number": "2.14.1",
+         "text": "Recall first aid and survival information contained in ERSA.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.15",
+       "title": "Threat and error management",
+       "elements": [
+        {
+         "code": "PHFC 2.15.1",
+         "number": "2.15.1",
+         "text": "Describe the basic principles of TEM.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.2",
+         "number": "2.15.2",
+         "text": "Explain the principles of TEM and detail a process to identify and manage threats and errors during single-pilot operations.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.3",
+         "number": "2.15.3",
+         "text": "Define ‘threat’ and give examples of threats.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.4",
+         "number": "2.15.4",
+         "text": "Give an example of a committed error and how action could be taken to ensure safe flight.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.5",
+         "number": "2.15.5",
+         "text": "Explain how the use of checklists and standard operating procedures can prevent errors.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.6",
+         "number": "2.15.6",
+         "text": "Give examples of how an undesired aircraft state can develop from an unmanaged threat or error.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.7",
+         "number": "2.15.7",
+         "text": "Explain what resources a pilot could identify and use to avoid or manage an undesired aircraft, state such as being lost or entering adverse weather.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.8",
+         "number": "2.15.8",
+         "text": "Explain the importance of ensuring that tasks are prioritised to manage an undesired aircraft state.",
+         "items": []
+        },
+        {
+         "code": "PHFC 2.15.9",
+         "number": "2.15.9",
+         "text": "Give examples of how establishing and maintaining interpersonal relationships can promote safe flight.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "PAKC",
+   "number": "1.2.2",
+   "title": "PPL aeronautical knowledge – all aircraft categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Power plants and systems",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Piston engines",
+       "elements": [
+        {
+         "code": "PAKC 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe the meaning of full throttle height.",
+         "items": []
+        },
+        {
+         "code": "PAKC 2.1.2",
+         "number": "2.1.2",
+         "text": "Describe the effect of increasing altitude and temperature on engine performance.",
+         "items": []
+        },
+        {
+         "code": "PAKC 2.1.3",
+         "number": "2.1.3",
+         "text": "Describe the effect of the following factors on engine performance:",
+         "items": [
+          {
+           "label": "a",
+           "text": "fuel/air mixture strength;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "density height and altitude for:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "normally aspirated engines; and"
+            },
+            {
+             "label": "ii",
+             "text": "turbocharged/supercharged engines."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Supercharging",
+       "elements": [
+        {
+         "code": "PAKC 2.2.1",
+         "number": "2.2.1",
+         "text": "Describe the purpose of supercharging.",
+         "items": []
+        },
+        {
+         "code": "PAKC 2.2.2",
+         "number": "2.2.2",
+         "text": "Describe the common methods used to achieve supercharging.",
+         "items": []
+        },
+        {
+         "code": "PAKC 2.2.3",
+         "number": "2.2.3",
+         "text": "Describe the device(s) used to limit supercharging of the intake system.",
+         "items": []
+        },
+        {
+         "code": "PAKC 2.2.4",
+         "number": "2.2.4",
+         "text": "Describe the actions a pilot should take if engine limits are exceeded due to supercharging.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Flight instruments",
+       "elements": [
+        {
+         "code": "PAKC 2.3.1",
+         "number": "2.3.1",
+         "text": "Explain the following terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "pitot-static system;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "pitot pressure static pressure;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "alternate static source;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "pressure error;",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PAKC 2.3.2",
+         "number": "2.3.2",
+         "text": "Describe the meaning of the following airspeeds:",
+         "items": [
+          {
+           "label": "a",
+           "text": "indicated (IAS);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "calibrated (CAS);",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "true (TAS).",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PAKC 2.3.3",
+         "number": "2.3.3",
+         "text": "For the following pressure instruments, state the effect of the factors listed under each instrument on the accuracy of the indications for that instrument:",
+         "items": [
+          {
+           "label": "a",
+           "text": "ASI:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "blockage/leaks (pitot or static);"
+            },
+            {
+             "label": "ii",
+             "text": "manoeuvre induced errors (for example, sharp pull out from a dive);"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "VSI:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "blockage of the static source;"
+            },
+            {
+             "label": "ii",
+             "text": "lag;"
+            },
+            {
+             "label": "iii",
+             "text": "the benefits of a IVSI;"
+            }
+           ]
+          },
+          {
+           "label": "c",
+           "text": "Altimeter:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "blockage of the static source;"
+            },
+            {
+             "label": "ii",
+             "text": "lag;"
+            },
+            {
+             "label": "iii",
+             "text": "incorrect subscale settings;"
+            },
+            {
+             "label": "iv",
+             "text": "errors due to changes in atmospheric temperature and pressure."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PAKC 2.3.4",
+         "number": "2.3.4",
+         "text": "For a direct reading magnetic compass, describe the principles of construction in relation to the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "magnetic needles point to magnetic north;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "fluid decreases oscillations and friction;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "fluid in the compass should not contain bubbles;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "pendulosity of magnet systems causes errors.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PAKC 2.3.5",
+         "number": "2.3.5",
+         "text": "State the effect of the following errors on compass indications in the southern hemisphere:",
+         "items": [
+          {
+           "label": "a",
+           "text": "turning errors;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "acceleration errors.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PAKC 2.3.6",
+         "number": "2.3.6",
+         "text": "State the purpose and use of a compass correction card to determine magnetic heading.",
+         "items": []
+        },
+        {
+         "code": "PAKC 2.3.7",
+         "number": "2.3.7",
+         "text": "Describe the methods used to determine the serviceability of the primary flight instruments before commencing a flight.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 3,
+     "title": "Aeronautical radio telephony",
+     "subtopics": [
+      {
+       "number": "3.1",
+       "title": "Operation of aeronautical radio systems",
+       "elements": [
+        {
+         "code": "PAKC 3.1.1",
+         "number": "3.1.1",
+         "text": "Operation of aeronautical radio systems",
+         "items": [
+          {
+           "label": "a",
+           "text": "recall the phonetic alphabet and the method of transmitting numerals;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "recall the correct use of aircraft call-signs;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "state standard radio procedures for OCTA;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "state how time is transmitted in a message;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "state how to effectively listen to the radio;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "state how to establish and maintain communications;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "state the hazards of clipped transmissions and the consequences.",
+           "subitems": []
+          }
+         ],
+         "synthesised": true
+        }
+       ]
+      },
+      {
+       "number": "3.2",
+       "title": "Routine pre-flight test of an aircraft radio-telephone",
+       "elements": [
+        {
+         "code": "PAKC 3.2.1",
+         "number": "3.2.1",
+         "text": "Routine pre-flight test of an aircraft radio-telephone",
+         "items": [
+          {
+           "label": "a",
+           "text": "for the following, describe the correct technique and procedure for conducting a routine pre-flight test of an aircraft radio telephone:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "use of radio transmit and receive selector switches;"
+            },
+            {
+             "label": "ii",
+             "text": "turning radio on;"
+            },
+            {
+             "label": "iii",
+             "text": "selecting correct frequencies;"
+            },
+            {
+             "label": "iv",
+             "text": "use of squelch control;"
+            },
+            {
+             "label": "v",
+             "text": "selection of radio nav equipment;"
+            },
+            {
+             "label": "vi",
+             "text": "correct use of a microphone;"
+            },
+            {
+             "label": "vii",
+             "text": "use of intercom and public address system;"
+            },
+            {
+             "label": "viii",
+             "text": "voice activated systems."
+            }
+           ]
+          }
+         ],
+         "synthesised": true
+        }
+       ]
+      },
+      {
+       "number": "3.3",
+       "title": "Fault finding and corrective action",
+       "elements": [
+        {
+         "code": "PAKC 3.3.1",
+         "number": "3.3.1",
+         "text": "State the correct procedure for routine fault finding and the corrective actions a pilot should take in relation to a fault.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.4",
+       "title": "Reporting position in circuit and for local flights",
+       "elements": [
+        {
+         "code": "PAKC 3.4.1",
+         "number": "3.4.1",
+         "text": "State the standard phraseology to be used to report the position of an aircraft in the circuit and required calls for local flights.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.5",
+       "title": "Responsibilities of an aeronautical radio operator",
+       "elements": [
+        {
+         "code": "PAKC 3.5.1",
+         "number": "3.5.1",
+         "text": "State the responsibility of an aeronautical radio operator for the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "secrecy of communications;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "unauthorised transmissions.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "3.6",
+       "title": "State the function of the following components of an aeronautical radio system",
+       "elements": [
+        {
+         "code": "PAKC 3.6.1",
+         "number": "3.6.1",
+         "text": "State the function of the following components of an aeronautical radio system",
+         "items": [
+          {
+           "label": "a",
+           "text": "power source/battery switch;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "radio master;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "fuses and circuit breakers;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "microphone;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "transmitter;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "receiver;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "antenna;",
+           "subitems": []
+          },
+          {
+           "label": "h",
+           "text": "headphones and speaker.",
+           "subitems": []
+          }
+         ],
+         "synthesised": true
+        }
+       ]
+      },
+      {
+       "number": "3.7",
+       "title": "Distress and emergency messages",
+       "elements": [
+        {
+         "code": "PAKC 3.7.1",
+         "number": "3.7.1",
+         "text": "Describe the difference between a distress and emergency message and the standard phrases used.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.8",
+       "title": "Radio failure procedures",
+       "elements": [
+        {
+         "code": "PAKC 3.8.1",
+         "number": "3.8.1",
+         "text": "Extract and use the radio failure procedures from ERSA.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.9",
+       "title": "Radiotelephone controls",
+       "elements": [
+        {
+         "code": "PAKC 3.9.1",
+         "number": "3.9.1",
+         "text": "In relation to the use of an aeronautical radiotelephone, describe the controls used to transmit and receive, including audio panel selections.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "3.10",
+       "title": "Radio waves",
+       "elements": [
+        {
+         "code": "PAKC 3.10.1",
+         "number": "3.10.1",
+         "text": "Describe the basic principles and characteristics of radio waves, wave propagation, transmission and reception:",
+         "items": [
+          {
+           "label": "a",
+           "text": "radio frequency band ranges (MF, HF, VHF, UHF);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "properties of radio waves and the effective range of transmissions;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "propagation of paths of radio waves:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "ground waves;"
+            },
+            {
+             "label": "ii",
+             "text": "sky waves."
+            }
+           ]
+          },
+          {
+           "label": "d",
+           "text": "factors affecting the propagation of radio waves and reception:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "terrain;"
+            },
+            {
+             "label": "ii",
+             "text": "ionosphere;"
+            },
+            {
+             "label": "iii",
+             "text": "sun spot activity;"
+            },
+            {
+             "label": "iv",
+             "text": "interference from electrical equipment;"
+            },
+            {
+             "label": "v",
+             "text": "thunderstorms;"
+            },
+            {
+             "label": "vi",
+             "text": "power attenuation;"
+            }
+           ]
+          },
+          {
+           "label": "e",
+           "text": "radio antennas:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "characteristics of antennas;"
+            },
+            {
+             "label": "ii",
+             "text": "use of antennas."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PAKC 3.10.2",
+         "number": "3.10.2",
+         "text": "Describe the limitations of VHF and HF signals and factors affecting quality of reception and range of signal.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "PAKA",
+   "number": "1.2.4",
+   "title": "PPL aeronautical knowledge – aeroplane",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Power plants and systems",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Propellers",
+       "elements": [
+        {
+         "code": "PAKA 2.1.1",
+         "number": "2.1.1",
+         "text": "List reasons for propeller overspeed in aeroplanes fitted with a fixed pitch propeller and state the remedial action a pilot should take in the event of an overspeed.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Aircraft systems",
+       "elements": [
+        {
+         "code": "PAKA 2.2.1",
+         "number": "2.2.1",
+         "text": "Describe or state the function of the following typical components installed in aeroplanes, including the possibility of ‘overpowering the system and associated precautions a pilot should take:",
+         "items": [
+          {
+           "label": "a",
+           "text": "stall warning devices;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "auto-pilot components, including the following:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "roll attitude heading pitch controls;"
+            },
+            {
+             "label": "ii",
+             "text": "trim indicator;"
+            },
+            {
+             "label": "iii",
+             "text": "cut-out mechanisms."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "number": 3,
+     "title": "Take-off and landing performance",
+     "subtopics": [
+      {
+       "number": "3.1",
+       "title": "Take-off and landing performance",
+       "elements": [
+        {
+         "code": "PAKA 3.1.1",
+         "number": "3.1.1",
+         "text": "State the effect (increase/decrease) of the following factors on take-off, landing, and take-off climb performance:",
+         "items": [
+          {
+           "label": "a",
+           "text": "strength of headwind/tailwind component;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "air temperature;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "QNH;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "density height (non-standard conditions);",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "airfield elevation;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "runway slope;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "surface conditions, including the following:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "wet runway;"
+            },
+            {
+             "label": "ii",
+             "text": "dry runway;"
+            },
+            {
+             "label": "iii",
+             "text": "slushy runway;"
+            }
+           ]
+          },
+          {
+           "label": "h",
+           "text": "ground effect and windshear;",
+           "subitems": []
+          },
+          {
+           "label": "i",
+           "text": "frost on an aircraft.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PAKA 3.1.2",
+         "number": "3.1.2",
+         "text": "Differentiate between pressure height and density height.",
+         "items": []
+        },
+        {
+         "code": "PAKA 3.1.3",
+         "number": "3.1.3",
+         "text": "Describe how to use an altimeter to obtain the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "local QNH at an aerodrome;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "pressure height of an aerodrome;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "elevation of an aerodrome.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PAKA 3.1.4",
+         "number": "3.1.4",
+         "text": "Explain the following terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "maximum structural take-off and landing weight;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "climb weight limit.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PAKA 3.1.5",
+         "number": "3.1.5",
+         "text": "State the likely results of exceeding aircraft weight limits.",
+         "items": []
+        }
+       ]
+      }
+     ],
+     "note": "Note: Use of take-off and landing charts is included in ‘Type’ training."
+    }
+   ]
+  },
+  {
+   "code": "GNSSC",
+   "number": "1.2.3",
+   "title": "Basic GNSS and en route GPS navigation principles – all categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Global navigation satellite system (GNSS)",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "GNSS operation",
+       "elements": [
+        {
+         "code": "GNSSC 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe the principles of operation, performance limitations and errors of a GNSS system, including the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "methods of position fixing using a GNSS system;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the GNSS operating procedures which provide safeguards against navigational error and loss of situational awareness;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "GNSS operating procedures for typical navigational tasks using a specific type of aircraft equipment;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "indications of waypoint passage;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "GNSS operational and serviceability checks;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "the human factors limitations associated with the use of GNSS equipment;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "the requirements applicable to pilots and equipment for GNSS operations.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "PFRA",
+   "number": "1.5.3",
+   "title": "PPL flight rules and air law – aeroplane",
+   "topics": [
+    {
+     "number": 2,
+     "title": "Elements",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Documentation",
+       "elements": [
+        {
+         "code": "PFRA 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe the method of obtaining publications and know why it is important to update these documents.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.1.2",
+         "number": "2.1.2",
+         "text": "Given an item of operational significance:",
+         "items": [
+          {
+           "label": "a",
+           "text": "select the appropriate reference document – CAR, CAO, AIP (Book), CAAP; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "extract relevant and current information from these documents.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.1.3",
+         "number": "2.1.3",
+         "text": "Decode information contained in ERSA, NOTAM and AIP supplements.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.1.4",
+         "number": "2.1.4",
+         "text": "Understand the terms and abbreviations in AIP GEN that are relevant to flight in accordance with VFR.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Pilot licences, privileges and limitations (PPL)",
+       "elements": [
+        {
+         "code": "PFRA 2.2.1",
+         "number": "2.2.1",
+         "text": "For the PPL with aeroplane category rating, describe the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "privileges and limitations of the licence;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "recent experience requirements;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "classification of operations.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.2.2",
+         "number": "2.2.2",
+         "text": "Apply the rules pertaining to flight and duty time limitations for PPL licence holders.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Flight rules and conditions of flight",
+       "elements": [
+        {
+         "code": "PFRA 2.3.1",
+         "number": "2.3.1",
+         "text": "Describe which documents must be carried on board an aircraft during flight in Australian airspace.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.3.2",
+         "number": "2.3.2",
+         "text": "Apply the relevant rules that relate to the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "carriage and discharge of firearms;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "aerodromes where operations are not restricted to runways;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "the conditions relating to flight in PRD areas.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.3.3",
+         "number": "2.3.3",
+         "text": "Give examples of situations which would require a ‘security’ prefix prior to a radio call.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Air service operations",
+       "elements": [
+        {
+         "code": "PFRA 2.4.1",
+         "number": "2.4.1",
+         "text": "Apply the relevant rules that relate to the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "a pilot’s responsibilities before flight;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "aerodrome meteorological minima;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "carriage of:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "cargo;"
+            },
+            {
+             "label": "ii",
+             "text": "sick and handicapped persons;"
+            },
+            {
+             "label": "iii",
+             "text": "parachutists;"
+            },
+            {
+             "label": "iv",
+             "text": "flotation and survival equipment;"
+            },
+            {
+             "label": "v",
+             "text": "animals and dangerous goods."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.4.2",
+         "number": "2.4.2",
+         "text": "State the requirements to test radio equipment prior to taxi and maintain a listening watch.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "Aerodromes",
+       "elements": [
+        {
+         "code": "PFRA 2.5.1",
+         "number": "2.5.1",
+         "text": "Aerodromes",
+         "items": [
+          {
+           "label": "a",
+           "text": "identify and explain the purpose of the following aerodrome, LA and HLS markings:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "runway markings;"
+            },
+            {
+             "label": "ii",
+             "text": "runway threshold markings;"
+            },
+            {
+             "label": "iii",
+             "text": "runway end markings;"
+            },
+            {
+             "label": "iv",
+             "text": "cone and gable markers;"
+            },
+            {
+             "label": "v",
+             "text": "taxiway markings;"
+            },
+            {
+             "label": "vi",
+             "text": "holding points/bays;"
+            },
+            {
+             "label": "vii",
+             "text": "a double white cross adjacent to a primary wind indicator;"
+            },
+            {
+             "label": "viii",
+             "text": "a horizontal white dumbbell;"
+            },
+            {
+             "label": "ix",
+             "text": "movement areas;"
+            },
+            {
+             "label": "x",
+             "text": "HLS markings."
+            }
+           ]
+          }
+         ],
+         "synthesised": true
+        },
+        {
+         "code": "PFRA 2.5.2",
+         "number": "2.5.2",
+         "text": "Identify the following positions in a circuit:",
+         "items": [
+          {
+           "label": "a",
+           "text": "downwind leg;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "base leg;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "cross-wind leg;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "upwind leg;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "dead side of the circuit.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.5.3",
+         "number": "2.5.3",
+         "text": "Explain the significance of a white cross on the movement area.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.6",
+       "title": "Airspace",
+       "elements": [
+        {
+         "code": "PFRA 2.6.1",
+         "number": "2.6.1",
+         "text": "Differentiate between the various classifications of airspace.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.6.2",
+         "number": "2.6.2",
+         "text": "With respect to the following terms listed in (a) to (g), explain each term and, if applicable, identify airspace boundaries on appropriate charts, and extract vertical limits of designated airspace from charts or ERSA:",
+         "items": [
+          {
+           "label": "a",
+           "text": "flight information service FIR, FIA, OCTA;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "ATC service CTA, CTR;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "radio ‘reports’ and ‘broadcasts’;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "VFR route and lanes of entry;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "PRD areas;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "CTAF areas;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "controlled aerodromes.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.6.3",
+         "number": "2.6.3",
+         "text": "Apply permitted tracking tolerances for VFR aircraft to avoid controlled airspace.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.6.4",
+         "number": "2.6.4",
+         "text": "Know the requirements and procedures to be adopted when operating:",
+         "items": [
+          {
+           "label": "a",
+           "text": "in any class of airspace;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "from or into:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "any licensed aerodrome;"
+            },
+            {
+             "label": "ii",
+             "text": "a CTAF(R)."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.6.5",
+         "number": "2.6.5",
+         "text": "Altimetry:",
+         "items": [
+          {
+           "label": "a",
+           "text": "recall the datum from which an altimeter indicates height when the following are set on the subscale:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "area QNH;"
+            },
+            {
+             "label": "ii",
+             "text": "local QNH;"
+            },
+            {
+             "label": "iii",
+             "text": "QFE;"
+            },
+            {
+             "label": "iv",
+             "text": "standard pressure setting;"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "recall the procedures that are carried out with the altimeter at the transition altitude and the transition layer on climb and descent;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "derive from AIP the transition layer for any given area QNH;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "recall the method of using an altimeter to derive Local QNH;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "calculate height error caused by setting the altimeter subscale incorrectly;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "recall the meaning of the following:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "height;"
+            },
+            {
+             "label": "ii",
+             "text": "altitude;"
+            },
+            {
+             "label": "iii",
+             "text": "flight level;"
+            }
+           ]
+          },
+          {
+           "label": "g",
+           "text": "recall the following parameters from the ICAO standard atmosphere:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "MSL temperature;"
+            },
+            {
+             "label": "ii",
+             "text": "pressure lapse rate."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.7",
+       "title": "Emergencies, accidents, incidents",
+       "elements": [
+        {
+         "code": "PFRA 2.7.1",
+         "number": "2.7.1",
+         "text": "Extract emergency procedures from the ERSA.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.7.2",
+         "number": "2.7.2",
+         "text": "State the conditions under which a pilot may declare a mercy flight and select occasions when a mercy flight must not be undertaken.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.7.3",
+         "number": "2.7.3",
+         "text": "Extract from AIP the responsibilities of a pilot regarding the notification of accidents and incidents.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.7.5",
+         "number": "2.7.5",
+         "text": "Describe examples of ‘hazards to navigation’ that must be reported by pilots.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.8",
+       "title": "Security",
+       "elements": [
+        {
+         "code": "PFRA 2.8.1",
+         "number": "2.8.1",
+         "text": "Explain the term ADIZ and extract:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the general requirements for operations in this zone; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "the action by the pilot of the intercepted aircraft.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PFRA 2.8.2",
+         "number": "2.8.2",
+         "text": "State the powers vested in a pilot in command.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.9",
+       "title": "Emergencies and SAR",
+       "elements": [
+        {
+         "code": "PFRA 2.9.1",
+         "number": "2.9.1",
+         "text": "Describe what the intermittent use of navigation and landing lights by an aircraft are used to indicate.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.9.2",
+         "number": "2.9.2",
+         "text": "State the difference between an incident and an accident.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.9.3",
+         "number": "2.9.3",
+         "text": "Determine the reporting requirements following an incident or accident.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.9.4",
+         "number": "2.9.4",
+         "text": "Explain the term SARTIME and how it might be used.",
+         "items": []
+        },
+        {
+         "code": "PFRA 2.9.5",
+         "number": "2.9.5",
+         "text": "State the document that contains emergency procedures.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "PNVC",
+   "number": "1.7.1",
+   "title": "PPL navigation – all aircraft categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "General navigation",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Form of the earth",
+       "elements": [
+        {
+         "code": "PNVC 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe:",
+         "items": [
+          {
+           "label": "a",
+           "text": "the shape and rotation of the earth;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "latitude, longitude;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "the difference between true and magnetic north;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "how distance and direction are measured and applied to navigation;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "magnetic variation and compass deviation;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "the relationship between magnetic heading, relative heading and magnetic bearing.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Time",
+       "elements": [
+        {
+         "code": "PNVC 2.2.1",
+         "number": "2.2.1",
+         "text": "Explain the terms UTC, local mean time, local (standard) time, local summer time.",
+         "items": []
+        },
+        {
+         "code": "PNVC 2.2.2",
+         "number": "2.2.2",
+         "text": "Determine within +/- 5 min the beginning and end of civil twilight from AIP daylight and darkness graphs.",
+         "items": []
+        },
+        {
+         "code": "PNVC 2.2.3",
+         "number": "2.2.3",
+         "text": "Complete conversions between LMT, UTC, local (standard) times, including local summer time.",
+         "items": []
+        },
+        {
+         "code": "PNVC 2.2.4",
+         "number": "2.2.4",
+         "text": "List factors which may cause daylight to end earlier than the time extracted from AIP darkness graphs.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Basics – Extract information from documents",
+       "elements": [
+        {
+         "code": "PNVC 2.3.1",
+         "number": "2.3.1",
+         "text": "On a WAC and AIP ‘visual’ charts (if applicable) which cover the local area of operation:",
+         "items": [
+          {
+           "label": "a",
+           "text": "identify, without reference to the chart legend:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "major features to assist in map reading, for example, roads, rivers, lakes;"
+            },
+            {
+             "label": "ii",
+             "text": "obstacles and spot heights, including elevation or height above terrain;"
+            },
+            {
+             "label": "iii",
+             "text": "CTA, PRDs, and aerodrome data on VTC/ERC (if applicable);"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "decode other symbols with reference to the chart legend;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "assess the general height of the terrain from hypsometric tints and contours;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "estimate track and distance;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "demonstrate and explain the reason for chart orientation in flight.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.3.2",
+         "number": "2.3.2",
+         "text": "On visual AIP charts identify airspace boundaries and symbols with reference to the chart legend.",
+         "items": []
+        },
+        {
+         "code": "PNVC 2.3.3",
+         "number": "2.3.3",
+         "text": "Use ERSA to extract:",
+         "items": [
+          {
+           "label": "a",
+           "text": "runway data;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "data pertaining to prohibited, restricted and danger areas.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Computation techniques",
+       "elements": [
+        {
+         "code": "PNVC 2.4.1",
+         "number": "2.4.1",
+         "text": "Use mental rules of thumb to estimate:",
+         "items": [
+          {
+           "label": "a",
+           "text": "time interval using estimated GS and distance, for example, 120 kt = 2 nm/min;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "endurance given fuel flow and fuel available (excluding reserve fuel).",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.4.2",
+         "number": "2.4.2",
+         "text": "Apply magnetic variation to obtain magnetic direction.",
+         "items": []
+        },
+        {
+         "code": "PNVC 2.4.3",
+         "number": "2.4.3",
+         "text": "Carry out conversions between:",
+         "items": [
+          {
+           "label": "a",
+           "text": "feet/metres;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "nm/km;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "lbs/kg;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "US gal/litres/kg of avgas.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.4.4",
+         "number": "2.4.4",
+         "text": "Calculate headwind, tailwind and cross-wind components given W/V and HDG using:",
+         "items": [
+          {
+           "label": "a",
+           "text": "a navigation computer; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "conversion and wind component tables in ERSA.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.4.5",
+         "number": "2.4.5",
+         "text": "Calculate the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "CAS and TAS given air temperature and pressure height;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "HDG, GS and drift given TAS, W/V, TR;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "TR given HDG, TAS, W/V;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "climb and decent rates and gradients;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "TOPC and TOPD positions using average airspeed, W/V and rates of climb and descent.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "Pilot navigation",
+       "elements": [
+        {
+         "code": "PNVC 2.5.1",
+         "number": "2.5.1",
+         "text": "Principles of map reading:",
+         "items": [
+          {
+           "label": "a",
+           "text": "describe the method of chart orientation; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "list situations when a pilot should read:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "from map to ground; and"
+            },
+            {
+             "label": "ii",
+             "text": "from ground to map; and"
+            }
+           ]
+          },
+          {
+           "label": "c",
+           "text": "select appropriate position lines to establish:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "ground speed; and"
+            },
+            {
+             "label": "ii",
+             "text": "track error; and"
+            },
+            {
+             "label": "iii",
+             "text": "a fix; and"
+            }
+           ]
+          },
+          {
+           "label": "d",
+           "text": "select appropriate ground features to establish position when flying:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "at low level (500 ft AGL); and"
+            },
+            {
+             "label": "ii",
+             "text": "between (approximately) 2,000 and 10,000 ft; and"
+            },
+            {
+             "label": "iii",
+             "text": "over mountainous terrain, coastal areas, densely populated and sparsely populated areas."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.5.2",
+         "number": "2.5.2",
+         "text": "Chart preparation and selection (practice):",
+         "items": [
+          {
+           "label": "a",
+           "text": "draw tracks, track error lines, time/distance markings; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "given a route – select WAC(s) and appropriate AIP ‘visual charts’.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.5.3",
+         "number": "2.5.3",
+         "text": "With reference to a planned or given track and given appropriate data:",
+         "items": [
+          {
+           "label": "a",
+           "text": "determine track made good (TMG); and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "calculate drift; and",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "determine alteration of heading or HDG(M) to:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "parallel track; and"
+            },
+            {
+             "label": "ii",
+             "text": "intercept track at a nominated point; and"
+            },
+            {
+             "label": "iii",
+             "text": "maintain track once track is intercepted; and"
+            }
+           ]
+          },
+          {
+           "label": "d",
+           "text": "revise/confirm estimates or ETA using latest ground speed or time/distance proportion; and",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "establish a DR position using latest TR and GS; and",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "using a map plotter, employ mental dead reckoning and proportional techniques to solve inflight navigational problems, including:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "mentally apply the 1 in 60 rule; and"
+            },
+            {
+             "label": "ii",
+             "text": "mentally revise estimates/ETA’s; and"
+            },
+            {
+             "label": "iii",
+             "text": "estimate TR and ETI to a selected diversion point."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.6",
+       "title": "Radio navigation aids",
+       "elements": [
+        {
+         "code": "PNVC 2.6.1",
+         "number": "2.6.1",
+         "text": "Extract NDB and VOR information from ERSA or ERC and state the rated coverage of a VOR up to 10,000 ft.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.7",
+       "title": "Area navigation systems",
+       "elements": [
+        {
+         "code": "PNVC 2.7.1",
+         "number": "2.7.1",
+         "text": "Types of systems:",
+         "items": [
+          {
+           "label": "a",
+           "text": "external sensor systems:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "VOR/DME;"
+            },
+            {
+             "label": "ii",
+             "text": "GNSS."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.7.2",
+         "number": "2.7.2",
+         "text": "General principles:",
+         "items": [
+          {
+           "label": "a",
+           "text": "inputs required:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "air data inputs;"
+            },
+            {
+             "label": "ii",
+             "text": "other inputs;"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "outputs generated:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "types of outputs;"
+            },
+            {
+             "label": "ii",
+             "text": "uses."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.7.3",
+         "number": "2.7.3",
+         "text": "RNAV systems:",
+         "items": [
+          {
+           "label": "a",
+           "text": "principle of VOR/DME area navigation (RNAV);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "advantages and disadvantages;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "limitations and restrictions:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "errors, accuracy, reliability;"
+            },
+            {
+             "label": "ii",
+             "text": "coverage;"
+            },
+            {
+             "label": "iii",
+             "text": "range."
+            }
+           ]
+          },
+          {
+           "label": "d",
+           "text": "typical control panel.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.7.5",
+         "number": "2.7.5",
+         "text": "Satellite navigation systems:",
+         "items": [
+          {
+           "label": "a",
+           "text": "principle of GNSS navigation:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "elements of GNSS (for example, GPS, GLONASS);"
+            }
+           ]
+          },
+          {
+           "label": "b",
+           "text": "advantages and disadvantages;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "limitations and restrictions:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "errors, accuracy, reliability;"
+            },
+            {
+             "label": "ii",
+             "text": "coverage;"
+            },
+            {
+             "label": "iii",
+             "text": "range;"
+            }
+           ]
+          },
+          {
+           "label": "d",
+           "text": "typical control panel;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "approvals for IFR Navigation;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "GNSS system enhancements (for example, DGNSS, GLS, WAAS).",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PNVC 2.7.6",
+         "number": "2.7.6",
+         "text": "Updating area navigation systems:",
+         "items": [
+          {
+           "label": "a",
+           "text": "need for updating position;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "requirements for updating:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "manual inserting;"
+            },
+            {
+             "label": "ii",
+             "text": "automatic updating;"
+            },
+            {
+             "label": "iii",
+             "text": "inhibiting updating;"
+            }
+           ]
+          },
+          {
+           "label": "c",
+           "text": "common indications when system updates position.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "PMTC",
+   "number": "1.8.2",
+   "title": "PPL meteorology – all aircraft categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "General meteorology",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Composition of the atmosphere",
+       "elements": [
+        {
+         "code": "PMTC 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe the International Standard Atmosphere (ISA) sea level temperature and pressure.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.1.2",
+         "number": "2.1.2",
+         "text": "State the ISA temperature and pressure lapse rates in the troposphere.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.1.3",
+         "number": "2.1.3",
+         "text": "Describe the vertical division of the atmosphere:",
+         "items": [
+          {
+           "label": "a",
+           "text": "troposphere;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "tropopause;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "stratosphere.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PMTC 2.1.4",
+         "number": "2.1.4",
+         "text": "Explain why most weather effects occur below the stratosphere.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Heat, temperature pressure and humidity",
+       "elements": [
+        {
+         "code": "PMTC 2.2.1",
+         "number": "2.2.1",
+         "text": "State the method of measuring surface air temperature, and relate that to actual temperatures above the runway.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.2.2",
+         "number": "2.2.2",
+         "text": "Explain the meaning of the following terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "temperature inversion;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "saturated air, relative humidity, dew point;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "evaporation, condensation, freezing.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PMTC 2.2.3",
+         "number": "2.2.3",
+         "text": "List the effect of changes in temperature, pressure and humidity on air density.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.2.4",
+         "number": "2.2.4",
+         "text": "Calculate ISA temperature and pressure height.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.2.5",
+         "number": "2.2.5",
+         "text": "Explain the meaning of the following terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "height;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "elevation;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "altitude;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "QNH;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "QFE.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Clouds and precipitation",
+       "elements": [
+        {
+         "code": "PMTC 2.3.1",
+         "number": "2.3.1",
+         "text": "Identify and classify clouds according to height and the 10 genera forms.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.3.2",
+         "number": "2.3.2",
+         "text": "Recall the standard abbreviation for each cloud type, and the method used to report cloud amount.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.3.3",
+         "number": "2.3.3",
+         "text": "Describe the weather associated with each cloud type.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Visibility",
+       "elements": [
+        {
+         "code": "PMTC 2.4.1",
+         "number": "2.4.1",
+         "text": "Determine visibility from either visual sighting or met forecast.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.4.2",
+         "number": "2.4.2",
+         "text": "List meteorological factors that will reduce inflight visibility.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "Winds – general",
+       "elements": [
+        {
+         "code": "PMTC 2.5.1",
+         "number": "2.5.1",
+         "text": "Describe the relationship between pressure and wind and apply Buys Ballot’s law to assess the approximate location of high and low pressure systems.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.5.2",
+         "number": "2.5.2",
+         "text": "Differentiate between:",
+         "items": [
+          {
+           "label": "a",
+           "text": "squalls and gusts; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "backing and veering.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PMTC 2.5.3",
+         "number": "2.5.3",
+         "text": "Compare surface and gradient winds in terms of direction and strength.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.5.4",
+         "number": "2.5.4",
+         "text": "List the ‘factors’ that effect the diurnal variation of wind and describe typical ‘variations’ in surface wind strength during a 24-hour period.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.6",
+       "title": "Air masses and fronts",
+       "elements": [
+        {
+         "code": "PMTC 2.6.1",
+         "number": "2.6.1",
+         "text": "Describe typical ‘flying weather’ associated with the following using the factors described in subclause 2.6.2:",
+         "items": [
+          {
+           "label": "a",
+           "text": "cold fronts;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "warm fronts;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "wave depressions;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "occluded fronts;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "tropical cyclones;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "the equatorial trough.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PMTC 2.6.2",
+         "number": "2.6.2",
+         "text": "For subclause 2.6.1, ‘flying weather’ embraces the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "temperature (warmer/colder);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "wind changes (back/veer, stronger/weaker);",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "stability and turbulence;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "cloud type and approximate amount, precipitation.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.7",
+       "title": "Flight considerations",
+       "elements": [
+        {
+         "code": "PMTC 2.7.1",
+         "number": "2.7.1",
+         "text": "With respect to the phenomena listed below (i) – (vi):",
+         "items": [
+          {
+           "label": "a",
+           "text": "state the conditions favourable to their development and, where applicable, their dispersal;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "recognise signs which may indicate their presence;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "describe their effect on flight characteristics where applicable, state the pilot actions required to minimise their effect on an aircraft in flight:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "turbulence;"
+            },
+            {
+             "label": "ii",
+             "text": "windshear;"
+            },
+            {
+             "label": "iii",
+             "text": "mountain waves;"
+            },
+            {
+             "label": "iv",
+             "text": "land and sea breezes;"
+            },
+            {
+             "label": "v",
+             "text": "thunderstorms;"
+            },
+            {
+             "label": "vi",
+             "text": "downdrafts associated with terrain and cloud."
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "code": "PMTC 2.7.2",
+         "number": "2.7.2",
+         "text": "State/select the conditions under which it is mandatory to obtain a forecast.",
+         "items": []
+        },
+        {
+         "code": "PMTC 2.7.3",
+         "number": "2.7.3",
+         "text": "For information contained in an ARFOR, TAF, TTF, METAR, SPECI, AIRMET or SIGMET, do the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "explain the coded information in plain language;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "decide whether a particular forecast is valid for a flight;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "apply the information to planning and conducting a flight.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "PMTC 2.7.4",
+         "number": "2.7.4",
+         "text": "List the conditions that require a pilot to submit a short AIREP.",
+         "items": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "POPC",
+   "number": "1.9.1",
+   "title": "PPL operations, performance and planning – all aircraft categories",
+   "topics": [
+    {
+     "number": 2,
+     "title": "General flight planning and performance",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Loading",
+       "elements": [
+        {
+         "code": "POPC 2.1.1",
+         "number": "2.1.1",
+         "text": "Describe the following terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "arm, moment, datum, station, index unit;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "centre of gravity (CG) and CG limits;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "empty weight, zero fuel weight (ZFW), ramp weight;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "maximum take-off and maximum landing weights;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "floor loading limits.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Speed limitations",
+       "elements": [
+        {
+         "code": "POPC 2.2.1",
+         "number": "2.2.1",
+         "text": "Explain the following terms/abbreviations:",
+         "items": [
+          {
+           "label": "a",
+           "text": "normal operating speed (Vno);",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "never exceed speed (VNE);",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "maximum manoeuvre speed (VA);",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "turbulence penetration speed (VB);",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "limit and design load factors;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "flap operating speed (VFO) and flap extended speed (VFE).",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPC 2.2.2",
+         "number": "2.2.2",
+         "text": "Describe situations which may result in an aircraft exceeding speed limits and load factor limits.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "ERSA",
+       "elements": [
+        {
+         "code": "POPC 2.3.1",
+         "number": "2.3.1",
+         "text": "Apply all items of information contained in ERSA which are relevant to VFR (day) operations.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Flight plan preparation",
+       "elements": [
+        {
+         "code": "POPC 2.4.1",
+         "number": "2.4.1",
+         "text": "Apply the responsibilities of a pilot in command with regard to weather and operational briefing prior to planning a VFR flight.",
+         "items": []
+        },
+        {
+         "code": "POPC 2.4.2",
+         "number": "2.4.2",
+         "text": "Given a route:",
+         "items": [
+          {
+           "label": "a",
+           "text": "select appropriate visual charts for the flight;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "list the operations for which it is mandatory to obtain meteorological and operational briefing;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "list the weather services available, and nominate the sources and methods of obtaining this information;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "apply CASA requirements/instructions for flight notification of VFR flights and state the preferred methods of submitting this notification;",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPC 2.4.3",
+         "number": "2.4.3",
+         "text": "Given an aerodrome forecast, determine whether holding or alternate requirements apply and if so:",
+         "items": [
+          {
+           "label": "a",
+           "text": "nominate an appropriate alternate aerodrome;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "determine the quantity of additional fuel required for holding or flight to the alternate.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "PPL – completion standard",
+       "elements": [
+        {
+         "code": "POPC 2.5.1",
+         "number": "2.5.1",
+         "text": "Given:",
+         "items": [
+          {
+           "label": "a",
+           "text": "a departure place and 2 landing points;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "weather and operational briefing;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "passenger and/or baggage requirements;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "appropriate performance data.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPC 2.5.2",
+         "number": "2.5.2",
+         "text": "Complete a flight plan form after considering the following aspects:",
+         "items": [
+          {
+           "label": "a",
+           "text": "selection of safe route(s) and cruise levels to comply with VFR;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "selection of cruise levels in accordance with the table of cruising levels;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "fuel for the flight, holding fuel, fuel to an alternate aerodrome, and specified reserves;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "weight limitation and aeroplane balance requirements;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "latest departure time.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.6",
+       "title": "Equi-time point (ETP), point of no return (PNR), diversions",
+       "elements": [
+        {
+         "code": "POPC 2.6.1",
+         "number": "2.6.1",
+         "text": "Describe/recognise situations that may require the calculations of an ETP or PNR.",
+         "items": []
+        },
+        {
+         "code": "POPC 2.6.2",
+         "number": "2.6.2",
+         "text": "Assuming a constant cruise altitude and TAS, indicate the position of an ETP between 2 points in still air.",
+         "items": []
+        },
+        {
+         "code": "POPC 2.6.3",
+         "number": "2.6.3",
+         "text": "Given fuel on board, use planned/given ground speed to decide which of the following courses of action would require the least fuel (including reserves):",
+         "items": [
+          {
+           "label": "a",
+           "text": "proceed to destination;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "return to the departure aerodrome;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "proceed to a suitable alternate.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.7",
+       "title": "Airworthiness and equipment",
+       "elements": [
+        {
+         "code": "POPC 2.7.1",
+         "number": "2.7.1",
+         "text": "State the purpose of certificates of airworthiness and registration.",
+         "items": []
+        },
+        {
+         "code": "POPC 2.7.2",
+         "number": "2.7.2",
+         "text": "Given a typical scenario, extract the communication and normal and emergency equipment required to be on board an aircraft.",
+         "items": []
+        },
+        {
+         "code": "POPC 2.7.3",
+         "number": "2.7.3",
+         "text": "State the responsibilities of a pilot in command with regard to:",
+         "items": [
+          {
+           "label": "a",
+           "text": "daily inspections;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "recording/reporting aircraft defects;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "know the types of maintenance that may be carried out by a PPL or CPL holder, as appropriate;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "given a copy of a maintenance release:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "determine its validity;"
+            },
+            {
+             "label": "ii",
+             "text": "list the class(es) of operation applicable to the aircraft;"
+            },
+            {
+             "label": "iii",
+             "text": "list outstanding defects/endorsements and decide whether these affect the airworthiness of the aircraft."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "POPA",
+   "number": "1.9.2",
+   "title": "PPL operations, performance and planning – aeroplane",
+   "topics": [
+    {
+     "number": 2,
+     "title": "General flight planning and performance",
+     "subtopics": [
+      {
+       "number": "2.1",
+       "title": "Aerodromes and aeroplane landing areas (ALAs)",
+       "elements": [
+        {
+         "code": "POPA 2.1.1",
+         "number": "2.1.1",
+         "text": "Explain/apply the following terms used in CASA publications and documents:",
+         "items": [
+          {
+           "label": "a",
+           "text": "take-off safety speed;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "take-off distance available (TODA);",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "take-off distance required (TODR);",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "landing distance available (LDA);",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "landing distance required (LDR).",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPA 2.1.2",
+         "number": "2.1.2",
+         "text": "Determine whether a given ALA is suitable for an aeroplane to take-off and land safety in accordance with guidelines contained in CAAP 92.1.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.2",
+       "title": "Take-off and landing performance",
+       "elements": [
+        {
+         "code": "POPA 2.2.1",
+         "number": "2.2.1",
+         "text": "State the effect (increase/decrease) of the following factors on take-off, landing, and take-off climb performance:",
+         "items": [
+          {
+           "label": "a",
+           "text": "strength of headwind/tailwind component;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "air temperature;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "QNH;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "density height (non-standard conditions);",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "airfield elevation;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "runway slope and surface, including wet and slushy runways;",
+           "subitems": []
+          },
+          {
+           "label": "g",
+           "text": "ground effect and windshear;",
+           "subitems": []
+          },
+          {
+           "label": "h",
+           "text": "frost on an aircraft.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPA 2.2.2",
+         "number": "2.2.2",
+         "text": "Differentiate between pressure height and density height.",
+         "items": []
+        },
+        {
+         "code": "POPA 2.2.3",
+         "number": "2.2.3",
+         "text": "Describe how to use an altimeter to obtain:",
+         "items": [
+          {
+           "label": "a",
+           "text": "local QNH at an aerodrome; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "pressure height of an aerodrome; and",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "elevation of an aerodrome.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPA 2.2.4",
+         "number": "2.2.4",
+         "text": "Explain the terms:",
+         "items": [
+          {
+           "label": "a",
+           "text": "maximum structural take-off and landing weight; and",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "climb weight limit.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPA 2.2.5",
+         "number": "2.2.5",
+         "text": "State the likely results of exceeding aircraft weight limits.",
+         "items": []
+        }
+       ]
+      },
+      {
+       "number": "2.3",
+       "title": "Density height",
+       "elements": [
+        {
+         "code": "POPA 2.3.1",
+         "number": "2.3.1",
+         "text": "Using the methods under subsection 2.3.2, determine density height, given the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "OAT and pressure height;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "using cockpit temperature and an altimeter setting of 1013.2 hPa.",
+           "subitems": []
+          }
+         ]
+        },
+        {
+         "code": "POPA 2.3.2",
+         "number": "2.3.2",
+         "text": "For subsection 2.3.1, the methods are the following:",
+         "items": [
+          {
+           "label": "a",
+           "text": "density altitude charts;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "manual computer;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "flight manual charts;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "mathematics.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.4",
+       "title": "Take-off and landing performance",
+       "elements": [
+        {
+         "code": "POPA 2.4.1",
+         "number": "2.4.1",
+         "text": "Use the flight manual to extract maximum structural take-off and landing weights.",
+         "items": []
+        },
+        {
+         "code": "POPA 2.4.2",
+         "number": "2.4.2",
+         "text": "Given a typical flight scenario, use performance charts to extract:",
+         "items": [
+          {
+           "label": "a",
+           "text": "maximum take-off weight A;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "maximum landing weight A;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "take-off distance required (TODR) B;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "landing distance required (LDR) B;",
+           "subitems": []
+          },
+          {
+           "label": "e",
+           "text": "climb weight limit;",
+           "subitems": []
+          },
+          {
+           "label": "f",
+           "text": "take-off parameters:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "power;"
+            },
+            {
+             "label": "ii",
+             "text": "flap setting;"
+            },
+            {
+             "label": "iii",
+             "text": "take-off safety speed;"
+            }
+           ]
+          },
+          {
+           "label": "g",
+           "text": "landing parameters:",
+           "subitems": [
+            {
+             "label": "i",
+             "text": "flap;"
+            },
+            {
+             "label": "ii",
+             "text": "threshold speed;"
+            }
+           ]
+          },
+          {
+           "label": "h",
+           "text": "State the conditions on which the parameters listed in paragraphs (f) and (g) are based.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "number": "2.5",
+       "title": "Climb, cruise and descent performance",
+       "elements": [
+        {
+         "code": "POPA 2.5.1",
+         "number": "2.5.1",
+         "text": "From typical charts or tables extract/determine the following data for climb, cruise and descent:",
+         "items": [
+          {
+           "label": "a",
+           "text": "time, speed, distance, fuel flow/quantity;",
+           "subitems": []
+          },
+          {
+           "label": "b",
+           "text": "appropriate engine settings;",
+           "subitems": []
+          },
+          {
+           "label": "c",
+           "text": "rates of climb/descent;",
+           "subitems": []
+          },
+          {
+           "label": "d",
+           "text": "the conditions under which an aeroplane will achieve maximum range and endurance.",
+           "subitems": []
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

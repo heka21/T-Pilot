@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ attempt.title }} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="exam-timer sticky top-14 lg:top-0 z-10 -mx-4 mb-4 flex items-center justify-between gap-3 border-b border-line bg-bg/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10" id="exam-timer" data-seconds="{{ seconds_left }}">
+  <span class="min-w-0 flex-1 truncate text-sm">{{ attempt.title }}</span>
+  <span class="flex shrink-0 items-center gap-1.5 text-sm tabular-nums">{{ icon("clock", "size-4") }} <span class="font-normal text-fg-muted">Time left</span> <span id="timer-text">{{ (seconds_left // 3600) }}:{{ "%02d" | format(seconds_left % 3600 // 60) }}:{{ "%02d" | format(seconds_left % 60) }}</span></span>
+  <form id="submit-form" method="post" action="/exam/{{ attempt.id }}/submit" class="shrink-0" hx-boost="false">
+    <button type="submit" class="btn-danger btn-sm">Submit exam</button>
+  </form>
+</div>
+
+<div id="exam-root" class="grid gap-4 lg:grid-cols-[16rem_1fr]">
+  <aside class="card order-2 h-fit space-y-4 p-4 lg:order-1">
+    {% include "exam_nav.html" %}
+    {% if exam %}
+      <details class="disclosure">
+        <summary>Exam conditions</summary>
+        <p class="text-xs text-fg-muted">{{ exam.duration_minutes | minutes_to_hm }}, pass mark {{ exam.pass_mark_percent }}%. No feedback until you submit. Unanswered questions count as wrong.
+        <a href="/reference">Permitted materials</a>.</p>
+      </details>
+    {% endif %}
+  </aside>
+  <div class="order-1 min-w-0 lg:order-2">
+    {% include "exam_question.html" %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var box = document.getElementById("exam-timer");
+  var out = document.getElementById("timer-text");
+  var form = document.getElementById("submit-form");
+  var end = Date.now() + parseInt(box.dataset.seconds, 10) * 1000;
+  var sent = false;
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function tick() {
+    if (!box.isConnected) { clearInterval(timer); return; }  // page was swapped away by a boosted link
+    var s = Math.max(0, Math.round((end - Date.now()) / 1000));
+    out.textContent = Math.floor(s / 3600) + ":" + pad(Math.floor(s % 3600 / 60)) + ":" + pad(s % 60);
+    box.classList.toggle("low", s <= 300);
+    if (s === 0 && !sent) { sent = true; form.submit(); }
+  }
+  var timer = setInterval(tick, 1000);
+  tick();
+  form.addEventListener("submit", function (e) {
+    var nav = document.querySelector(".exam-nav");
+    var left = nav ? parseInt(nav.dataset.unanswered, 10) : 0;
+    var flagged = nav ? parseInt(nav.dataset.flagged, 10) : 0;
+    var msg = "Submit the exam now?";
+    if (left) msg += "\n\n" + left + " question" + (left === 1 ? " is" : "s are") + " unanswered and will be marked wrong.";
+    if (flagged) msg += "\n" + flagged + " question" + (flagged === 1 ? " is" : "s are") + " still flagged for review.";
+    if (!confirm(msg)) e.preventDefault();
+  });
+})();
+</script>
+{% endblock %}

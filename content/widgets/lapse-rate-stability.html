@@ -1,0 +1,125 @@
+<div class="widget" x-data="{
+  elr: 2.5, ts: 26, h: 2000, sat: 'dry',
+  get rate() { return this.sat === 'sat' ? 1.5 : 3 },
+  env(z) { return this.ts - this.elr * z / 1000 },
+  parcel(z) { return this.ts - this.rate * z / 1000 },
+  get pT() { return this.parcel(this.h) },
+  get eT() { return this.env(this.h) },
+  get diff() { return Math.round((this.pT - this.eT) * 10) / 10 },
+  get kind() { return this.elr < 0 ? 'inv' : this.elr <= 1.5 ? 'stable' : this.elr <= 3 ? 'cond' : 'abs' },
+  get kindText() { return { inv: 'Stable: an inversion', stable: 'Stable', cond: 'Conditionally unstable', abs: 'Absolutely unstable' }[this.kind] },
+  get kindClass() { return { inv: 'ok', stable: 'ok', cond: 'warn', abs: 'bad' }[this.kind] },
+  get rises() { return this.diff > 0 },
+  get sinks() { return this.diff < 0 },
+  t(v) { const r = Math.round(v * 10) / 10; return (r < 0 ? '−' : '') + Math.abs(r).toFixed(Number.isInteger(r) ? 0 : 1) },
+  ft(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',') },
+  tx(v) { return 70 + (v - (this.ts - 20)) / 30 * 370 },
+  hy(z) { return 290 - z / 5000 * 240 },
+  set(e, s, z, p) { this.elr = e; this.ts = s; this.h = z; this.sat = p },
+  reset() { this.set(2.5, 26, 2000, 'dry') }
+}">
+  <svg viewBox="0 0 640 336" role="img" aria-labelledby="lrs-title" class="widget-stage">
+    <title id="lrs-title">Temperature against height: the environment's lapse rate line, the dry and saturated adiabatic lines, and a parcel lifted from the surface compared with the air around it</title>
+    <defs><marker id="lrs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- grid: height 0 to 5,000 ft, temperature surface -20 to +10 -->
+    <line x1="70" y1="242" x2="440" y2="242" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="246" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" class="num">1,000</text>
+    <line x1="70" y1="194" x2="440" y2="194" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="198" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" class="num">2,000</text>
+    <line x1="70" y1="146" x2="440" y2="146" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="150" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" class="num">3,000</text>
+    <line x1="70" y1="98" x2="440" y2="98" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="102" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" class="num">4,000</text>
+    <line x1="70" y1="50" x2="440" y2="50" stroke="var(--color-line)" stroke-width="1"/><text x="62" y="54" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" class="num">5,000</text>
+    <text x="62" y="294" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" class="num">0</text>
+    <line x1="131.7" y1="50" x2="131.7" y2="290" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="193.3" y1="50" x2="193.3" y2="290" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="255" y1="50" x2="255" y2="290" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="316.7" y1="50" x2="316.7" y2="290" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="378.3" y1="50" x2="378.3" y2="290" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="70" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="t(ts - 20) + '°'"></text>
+    <text x="131.7" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="t(ts - 15) + '°'"></text>
+    <text x="193.3" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="t(ts - 10) + '°'"></text>
+    <text x="255" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="t(ts - 5) + '°'"></text>
+    <text x="316.7" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg)" font-weight="700" class="num" x-text="t(ts) + '°'"></text>
+    <text x="378.3" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="t(ts + 5) + '°'"></text>
+    <text x="440" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="t(ts + 10) + '°'"></text>
+    <line x1="70" y1="290" x2="448" y2="290" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#lrs-arrow)"/>
+    <line x1="70" y1="290" x2="70" y2="40" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#lrs-arrow)"/>
+    <text x="255" y="328" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">Temperature, °C</text>
+    <text x="14" y="170" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 14 170)">Height above the surface, ft</text>
+    <!-- reference lines: DALR and SALR from the surface temperature -->
+    <line x1="316.7" y1="290" x2="131.7" y2="50" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="316.7" y1="290" x2="224.2" y2="50" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="131.7" y="40" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">DALR 3°</text>
+    <text x="224.2" y="40" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">SALR 1.5°</text>
+    <!-- environment line -->
+    <line x1="316.7" y1="290" :x2="tx(env(5000))" y2="50" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round"/>
+    <text :x="tx(env(5000))" y="22" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-info)" x-text="'Environment ' + t(elr) + '°'"></text>
+    <!-- parcel line up to the lift height -->
+    <line x1="316.7" y1="290" :x2="tx(pT)" :y2="hy(h)" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+    <text :x="tx(pT) - 12" :y="hy(h) + 20" font-size="12" font-weight="700" text-anchor="end" fill="var(--color-brand)">parcel</text>
+    <!-- gap at the lift height -->
+    <line :x1="tx(eT)" :y1="hy(h)" :x2="tx(pT)" :y2="hy(h)" :stroke="rises ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="1.5" stroke-dasharray="4 3" x-show="diff !== 0"/>
+    <circle :cx="tx(eT)" :cy="hy(h)" r="5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2"/>
+    <circle :cx="tx(pT)" :cy="hy(h)" r="6" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2"/>
+    <!-- side column: the parcel and where it goes -->
+    <line x1="540" y1="50" x2="540" y2="290" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="480" y1="290" x2="610" y2="290" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <text x="545" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">lifted from the surface</text>
+    <path d="M540 286 L540 270" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#lrs-arrow)"/>
+    <circle cx="540" :cy="hy(h)" r="17" :fill="rises ? 'var(--color-bad-soft)' : sinks ? 'var(--color-ok-soft)' : 'var(--color-surface-2)'" stroke="var(--color-brand)" stroke-width="2"/>
+    <text x="540" :y="hy(h) + 4" font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="t(pT) + '°'"></text>
+    <path :d="'M540 ' + (hy(h) - 21) + ' L540 ' + (hy(h) - 46)" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#lrs-arrow)" x-show="rises"/>
+    <path :d="'M540 ' + (hy(h) + 21) + ' L540 ' + Math.min(282, hy(h) + 46)" stroke="var(--color-ok)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#lrs-arrow)" x-show="sinks"/>
+    <text x="566" :y="hy(h) - 4" font-size="11" fill="var(--color-info)" class="num" x-text="'air ' + t(eT) + '°'"></text>
+    <text x="566" :y="hy(h) + 12" font-size="12" font-weight="700" :fill="rises ? 'var(--color-bad-fg)' : sinks ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="rises ? 'rises' : sinks ? 'sinks' : 'neutral'"></text>
+    <text x="540" y="22" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-brand)" x-text="sat === 'sat' ? 'Saturated parcel' : 'Dry parcel'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="lrs-elr">Environmental lapse rate (ELR) <output for="lrs-elr" x-text="t(elr) + ' °C per 1,000 ft'"></output></label>
+      <input id="lrs-elr" type="range" min="-2" max="4" step="0.1" x-model.number="elr">
+    </div>
+    <div class="widget-control">
+      <label for="lrs-h">Lift the parcel to <output for="lrs-h" x-text="ft(h) + ' ft'"></output></label>
+      <input id="lrs-h" type="range" min="500" max="5000" step="500" x-model.number="h">
+    </div>
+    <div class="widget-control">
+      <label for="lrs-ts">Surface temperature <output for="lrs-ts" x-text="ts + ' °C'"></output></label>
+      <input id="lrs-ts" type="range" min="5" max="40" step="1" x-model.number="ts">
+      <label for="lrs-sat" class="mt-2">The parcel is</label>
+      <select id="lrs-sat" x-model="sat">
+        <option value="dry">unsaturated: cools at the DALR, 3 °C per 1,000 ft</option>
+        <option value="sat">saturated: cools at the SALR, about 1.5 °C per 1,000 ft</option>
+      </select>
+    </div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="kindClass">
+      <dt>The air is</dt>
+      <dd><span x-text="kindText"></span><span class="widget-flag warn" x-show="kind === 'cond'">Unstable once saturated</span><span class="widget-flag bad" x-show="kind === 'abs'">ELR above the DALR</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt x-text="'At ' + ft(h) + ' ft'"></dt>
+      <dd x-text="'parcel ' + t(pT) + ' °C, air around it ' + t(eT) + ' °C'"></dd>
+    </div>
+    <div class="widget-readout" :class="rises ? 'bad' : sinks ? 'ok' : ''">
+      <dt>The parcel</dt>
+      <dd x-text="rises ? t(diff) + ' °C warmer: keeps rising' : sinks ? t(-diff) + ' °C colder: sinks back' : 'same temperature: neutral'"></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Examples">
+      <button type="button" @click="set(2.5, 26, 2000, 'dry')">Worked example: 26°, ELR 2.5, dry</button>
+      <button type="button" @click="set(2.5, 26, 2000, 'sat')">Same air, saturated parcel</button>
+      <button type="button" @click="set(1.98, 15, 2000, 'dry')">ISA: 1.98</button>
+      <button type="button" @click="set(3.5, 30, 2000, 'dry')">Hot afternoon: 3.5</button>
+      <button type="button" @click="set(-1, 8, 1000, 'dry')">Inversion at dawn</button>
+    </div>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> Stability is a comparison of two slopes. Where the environment line leans further left (cools faster) than the parcel's line, the lifted parcel ends up warmer and keeps rising. ELR below the SALR: stable for every parcel. ELR above the DALR: unstable even for dry air. In between, conditionally unstable: stable while the parcel is dry, unstable once it saturates.</p>
+  <details class="widget-try"><summary>Try this: surface 26 °C, ELR 2.5 °C per 1,000 ft, a dry parcel lifted 2,000 ft. Does it sink back? Then make it saturated.</summary><p>Dry: parcel $26 - 2 \times 3 = 20$ °C, air $26 - 2 \times 2.5 = 21$ °C, so it is 1 °C colder and sinks back. Saturated: parcel $26 - 2 \times 1.5 = 23$ °C, 2 °C warmer than the air, so it keeps rising. Same air, different answer: conditionally unstable.</p></details>
+  <details class="widget-try"><summary>Try this: on a hot afternoon the ELR near the ground is 3.5 °C per 1,000 ft. What happens to a dry thermal?</summary><p>It cools at 3 °C per 1,000 ft while the air around it cools at 3.5, so it gains half a degree on its surroundings every 1,000 ft and keeps rising on its own: absolutely unstable. Expect thermals, bumps and, with enough moisture, cumulus.</p></details>
+</div>

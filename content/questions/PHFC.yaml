@@ -1,0 +1,1299 @@
+# Questions for unit PHFC (human factors). See content/README.md for the format.
+# 2.1 Basic health
+- id: PHFC-001
+  kind: mcq
+  elements: ["PHFC 2.1.1"]
+  stem: "A pilot with a heavy head cold is most likely to suffer severe ear or sinus pain:"
+  options:
+    - "During the descent, as air cannot get back into the middle ear and sinuses."
+    - "During the climb, as trapped air expands."
+    - "In the cruise, as the cabin temperature falls."
+    - "Only above 10,000 ft."
+  answer: 0
+  explanation: "Swollen tissues block the eustachian tubes and sinus openings. On the climb, expanding air can usually still push its way out. On descent the outside pressure rises and air must get back in, which a blocked tube prevents, causing pain and possibly a ruptured eardrum. It can happen at any altitude, and cabin temperature is not the cause."
+  references: ["PHFC 2.1", "PHFC 2.5"]
+  difficulty: 1
+
+- id: PHFC-002
+  kind: mcq
+  elements: ["PHFC 2.1.1"]
+  stem: "Which of the following is a coronary risk factor that increases a pilot's risk of sudden incapacitation?"
+  options:
+    - "Smoking combined with high cholesterol and a family history of heart disease."
+    - "Mild short-sightedness."
+    - "Regular moderate exercise."
+    - "Eating a small meal before flight."
+  answer: 0
+  explanation: "Smoking, high cholesterol, obesity and heredity (family history) are the classic coronary risk factors; they raise the chance of heart attack or stroke, which in a single-pilot aircraft is sudden incapacitation. Exercise reduces the risk, short-sightedness is a vision defect corrected with glasses, and a small meal before flight is good practice."
+  references: ["PHFC 2.1"]
+  difficulty: 1
+
+- id: PHFC-003
+  kind: mcq
+  elements: ["PHFC 2.1.2"]
+  stem: "You have been prescribed a new medication by your GP for a minor condition. Before flying as pilot in command you should:"
+  options:
+    - "Fly, provided the pharmacist says it is non-drowsy."
+    - "Fly only on short local flights for the first week."
+    - "Halve the dose on flying days."
+    - "Get clearance from a DAME (or CASA) and try the medication on the ground first to see how it affects you."
+  answer: 3
+  explanation: "Pilots must seek medical clearance from a DAME for any medication unless already cleared, and should trial new medication on the ground to check for side effects. Neither the pharmacist nor short flights make an uncleared medication acceptable, and changing the prescribed dose is unsafe and does not remove the obligation."
+  references: ["PHFC 2.1", "CASR Part 67 (verify current text)"]
+  difficulty: 1
+
+- id: PHFC-004
+  kind: mcq
+  elements: ["PHFC 2.1.3"]
+  stem: "You hold a current Class 2 medical certificate. Who is responsible for deciding that you are fit to fly a particular flight today?"
+  options:
+    - "You, the pilot in command, by assessing your own fitness before each flight."
+    - "Your DAME, because the certificate is current."
+    - "CASA, through the medical certificate."
+    - "The chief flying instructor at your school."
+  answer: 0
+  explanation: "The certificate shows you met the standard on the day of examination. Under Part 67 you must not exercise licence privileges while you have a condition that could impair safe flight, so the day-to-day decision is yours (IMSAFE). The DAME and CASA set the standard; the CFI authorises training flights but cannot judge how you feel."
+  references: ["PHFC 2.1", "CASR 67.265 obligations (verify current text)"]
+  difficulty: 1
+
+- id: PHFC-005
+  kind: mcq
+  elements: ["PHFC 2.1.1"]
+  stem: "Which statement about emotional state and flying is correct?"
+  options:
+    - "Anxiety improves performance because it keeps a pilot alert at all times."
+    - "Anxiety, depression and fears compete for limited attention and degrade judgement and decision-making."
+    - "Depression mainly affects physical strength, not decision-making."
+    - "Emotional problems are only relevant if they are noted on the medical certificate."
+  answer: 1
+  explanation: "Emotional stressors occupy attention that the pilot needs for flying and slow or bias decisions. A moderate level of arousal helps, but anxiety beyond that degrades performance. Depression affects concentration, motivation and judgement. Whether or not it is on the certificate, the pilot must assess fitness before each flight."
+  references: ["PHFC 2.1"]
+  difficulty: 2
+
+# 2.2 Health and fitness
+- id: PHFC-006
+  kind: numeric
+  elements: ["PHFC 2.2.2"]
+  stem: "A pilot drinks 7 standard drinks during an evening. Assuming the body eliminates about one standard drink per hour, approximately how many hours after the last drink before the alcohol is eliminated? (Ignore absorption time.)"
+  answer: 7
+  tolerance: 1
+  unit: hours
+  explanation: "The liver removes alcohol at a roughly fixed rate of about one standard drink (10 g) per hour, and nothing speeds this up. Seven drinks therefore take about 7 hours. The pilot may still suffer a hangover afterwards, and the regulatory minimum of 8 hours from last drink to flight still applies."
+  references: ["PHFC 2.2", "CASR 91.520 and Part 99 (verify current text)"]
+  difficulty: 2
+
+- id: PHFC-007
+  kind: mcq
+  elements: ["PHFC 2.2.2"]
+  stem: "Which of these will speed up the elimination of alcohol from the body?"
+  options:
+    - "Strong black coffee."
+    - "A cold shower followed by exercise."
+    - "Breathing 100 percent oxygen."
+    - "None of these; the liver eliminates alcohol at a roughly fixed rate."
+  answer: 3
+  explanation: "Alcohol is metabolised mainly by the liver at about one standard drink per hour. Coffee, showers, exercise and oxygen may make a person feel more alert but do not change the blood alcohol level or the elimination rate; only time does."
+  references: ["PHFC 2.2"]
+  difficulty: 1
+
+- id: PHFC-008
+  kind: mcq
+  elements: ["PHFC 2.2.2"]
+  stem: "The morning after heavy drinking a pilot's blood alcohol is zero, but she has a headache, nausea and feels tired. Which statement is correct?"
+  options:
+    - "A hangover can impair performance even with zero blood alcohol; she should not fly until recovered."
+    - "A hangover only affects pilots above 10,000 ft."
+    - "She may fly if she drinks plenty of coffee first."
+    - "She is legally and medically fit, because her blood alcohol is zero."
+  answer: 0
+  explanation: "A hangover is the after-effect of alcohol (dehydration, fatigue, disturbed balance, poor concentration) and continues after blood alcohol has fallen to zero. Recovery takes longer after a higher peak blood alcohol. Coffee does not cure it and altitude only worsens it; the effects are present at any height."
+  references: ["PHFC 2.2"]
+  difficulty: 2
+
+- id: PHFC-009
+  kind: mcq
+  elements: ["PHFC 2.2.1"]
+  stem: "CASA's general approach to medical fitness is that:"
+  options:
+    - "Only conditions that present a hazard to flight safety are disqualifying, and many conditions are acceptable with treatment or restrictions."
+    - "Any medical condition at all disqualifies a pilot."
+    - "Medical certificates are issued by GPs without CASA involvement."
+    - "Private pilots do not need medical examinations."
+  answer: 0
+  explanation: "CASA sets the standards and makes final decisions on difficult cases. Its approach is that only conditions that present a safety hazard are disqualifying; many are acceptable with conditions. Examinations are done by DAMEs, not ordinary GPs, and pilots need an appropriate medical certificate under CASR Part 67."
+  references: ["PHFC 2.2", "CASR Part 67 (verify current text)"]
+  difficulty: 1
+
+- id: PHFC-010
+  kind: mcq
+  elements: ["PHFC 2.2.3"]
+  stem: "A pilot takes an over-the-counter antihistamine for hay fever. The main concern for flying is:"
+  options:
+    - "Improved night vision leading to overconfidence."
+    - "Increased blood alcohol."
+    - "Drowsiness and slowed reactions."
+    - "Reduced fuel consumption calculations."
+  answer: 2
+  explanation: "Many antihistamines cause drowsiness, slowed reaction time and reduced concentration, sometimes lasting into the next day. They do not affect blood alcohol or improve night vision. Check with a DAME before flying on them."
+  references: ["PHFC 2.2"]
+  difficulty: 1
+
+- id: PHFC-011
+  kind: mcq
+  elements: ["PHFC 2.2.3"]
+  stem: "Why is drug abuse described as a behavioural problem, independent of addiction or frequency of use?"
+  options:
+    - "Because it only matters if a pilot is dependent on the drug."
+    - "Because using a substance in a way that compromises safety is abuse even if it happens once and the person is not addicted."
+    - "Because occasional use is always safe for flying."
+    - "Because prescription drugs cannot be abused."
+  answer: 1
+  explanation: "Abuse is defined by the behaviour: using a psychoactive substance in a way that harms safety. One occasion before a flight is abuse regardless of dependence or frequency. Prescription and over-the-counter drugs can be abused too."
+  references: ["PHFC 2.2"]
+  difficulty: 2
+
+- id: PHFC-012
+  kind: mcq
+  elements: ["PHFC 2.2.4"]
+  stem: "After donating a unit of whole blood, a pilot should:"
+  options:
+    - "Fly immediately, as only plasma donation affects flying."
+    - "Not fly for at least 24 hours, recognising that recovery varies between individuals."
+    - "Fly only above 10,000 ft to compensate."
+    - "Wait at least 7 days in all cases."
+  answer: 1
+  explanation: "Blood donation reduces blood volume and oxygen-carrying capacity (anaemic hypoxia) and increases the risk of fainting. The commonly recommended wait is at least 24 hours, longer for some people depending on fitness, size and hydration; check with a DAME. Flying higher would make hypoxia worse."
+  references: ["PHFC 2.2"]
+  difficulty: 1
+
+# 2.3 Hyperventilation
+- id: PHFC-013
+  kind: mcq
+  elements: ["PHFC 2.3.2"]
+  stem: "Hyperventilation is best defined as:"
+  options:
+    - "Breathing in excess of the body's needs, lowering the carbon dioxide level in the blood."
+    - "Poisoning by carbon monoxide from the cabin heater."
+    - "An excess of carbon dioxide in the blood caused by holding the breath."
+    - "A lack of oxygen in the body tissues caused by altitude."
+  answer: 0
+  explanation: "Hyperventilation is over-breathing, which blows off too much CO2. The low CO2 makes the blood alkaline, constricts blood vessels in the brain and makes haemoglobin hold its oxygen more tightly. Lack of oxygen at altitude is hypoxia; carbon monoxide poisoning is anaemic hypoxia."
+  references: ["PHFC 2.3"]
+  difficulty: 1
+
+- id: PHFC-014
+  kind: mcq
+  elements: ["PHFC 2.3.1"]
+  stem: "At 3,500 ft, during a stressful diversion, a student feels dizzy with tingling in the fingers and around the lips. The most likely cause and best action are:"
+  options:
+    - "Hypoxia; climb to clear the condition."
+    - "Carbon monoxide; descend immediately."
+    - "Motion sickness; take an anti-nausea tablet."
+    - "Hyperventilation; consciously slow the breathing rate and talk out loud."
+  answer: 3
+  explanation: "Tingling and dizziness under stress at low level is the classic hyperventilation picture; hypoxia is very unlikely at 3,500 ft. Slowing the breathing and talking (which limits over-breathing) restores CO2. Climbing would not help, the symptoms do not suggest CO without heater use, and pilots should not take anti-nausea medication in flight."
+  references: ["PHFC 2.3"]
+  difficulty: 2
+
+- id: PHFC-015
+  kind: mcq
+  elements: ["PHFC 2.3.1"]
+  stem: "Flying at 12,000 ft with oxygen on board, you notice dizziness, tingling and blurred vision, and cannot tell whether the cause is hypoxia or hyperventilation. You should first:"
+  options:
+    - "Treat it as hyperventilation by breathing into a paper bag."
+    - "Take several deep breaths."
+    - "Ignore it, because the symptoms are temporary."
+    - "Treat it as hypoxia: use oxygen (or descend), then control your breathing rate."
+  answer: 3
+  explanation: "At altitude, hypoxia is the more dangerous possibility and time of useful consciousness is limited, so use oxygen or descend first. Oxygen does no harm if the cause was hyperventilation. Breathing into a bag or taking deep breaths at altitude would worsen hypoxia, and ignoring the symptoms risks incapacitation."
+  references: ["PHFC 2.3", "PHFC 2.12"]
+  difficulty: 2
+
+- id: PHFC-016
+  kind: mcq
+  elements: ["PHFC 2.3.2"]
+  stem: "Which of the following is NOT a common cause of hyperventilation?"
+  options:
+    - "Anxiety or fear."
+    - "Breathing supplemental oxygen at the correct flow rate."
+    - "Pain or motion sickness."
+    - "Hypoxia."
+  answer: 1
+  explanation: "Anxiety, fear, pain, motion sickness and hypoxia (the body's response to low oxygen) can all lead to over-breathing. Using correctly set supplemental oxygen corrects hypoxia and does not cause hyperventilation."
+  references: ["PHFC 2.3"]
+  difficulty: 2
+
+# 2.4 Atmospheric pressure changes
+- id: PHFC-017
+  kind: numeric
+  elements: ["PHFC 2.4.1"]
+  stem: "A 100 mL pocket of gas is trapped in the gut at sea level (1013 hPa). Approximately what volume will it occupy, in mL, at 18,000 ft where the pressure is about 500 hPa? (Ignore temperature.)"
+  answer: 200
+  tolerance: 10
+  unit: mL
+  explanation: "By Boyle's law volume is inversely proportional to pressure: 100 × 1013 ÷ 500 ≈ 203 mL, so about double. This expansion causes abdominal discomfort and pain on the climb."
+  references: ["PHFC 2.4"]
+  difficulty: 2
+
+- id: PHFC-018
+  kind: mcq
+  elements: ["PHFC 2.4.1"]
+  stem: "During a descent a passenger with a cold complains of a sudden severe pain in the forehead. The best action is to:"
+  options:
+    - "Continue descending faster to get it over with."
+    - "Ask the passenger to hold their breath."
+    - "Climb to above 10,000 ft and remain there."
+    - "Level off or climb back until the pain eases, then descend more slowly."
+  answer: 3
+  explanation: "This is a sinus block: air cannot re-enter a blocked sinus as the outside pressure rises. Climbing back reduces the pressure difference and relieves the pain; then descend slowly to give the sinus time to equalise. Descending faster makes it worse, staying high is not a solution, and holding the breath does nothing."
+  references: ["PHFC 2.4"]
+  difficulty: 2
+
+- id: PHFC-019
+  kind: numeric
+  elements: ["PHFC 2.4.2"]
+  stem: "Using the commonly taught guideline, what is the minimum number of hours a pilot should wait before flying after a scuba dive that required decompression stops?"
+  answer: 24
+  tolerance: 0
+  unit: hours
+  explanation: "The common guideline is at least 12 hours after a dive without decompression stops and at least 24 hours after a dive needing decompression stops (or after repeated dives). Nitrogen dissolved under pressure can form bubbles at even moderate cabin altitudes, causing decompression sickness. Check current CASA guidance."
+  references: ["PHFC 2.4"]
+  difficulty: 2
+
+- id: PHFC-020
+  kind: mcq
+  elements: ["PHFC 2.4.2"]
+  stem: "Why is flying soon after scuba diving dangerous?"
+  options:
+    - "Nitrogen dissolved in the body during the dive can come out of solution as bubbles when pressure falls, causing decompression sickness."
+    - "Water in the ears freezes at altitude."
+    - "Excess oxygen absorbed during the dive causes oxygen toxicity at altitude."
+    - "Carbon dioxide from the dive tank remains in the lungs."
+  answer: 0
+  explanation: "Breathing compressed air underwater loads the tissues with nitrogen. Flying reduces the surrounding pressure further, and the nitrogen can form bubbles (the bends, chokes, creeps), even at cabin altitudes of 5,000 to 8,000 ft. The other options are not the mechanism."
+  references: ["PHFC 2.4"]
+  difficulty: 1
+
+# 2.5 Ear
+- id: PHFC-021
+  kind: mcq
+  elements: ["PHFC 2.5.1"]
+  stem: "Which part of the ear senses angular accelerations such as roll and yaw?"
+  options:
+    - "The semicircular canals of the inner ear."
+    - "The cochlea."
+    - "The eardrum."
+    - "The ossicles of the middle ear."
+  answer: 0
+  explanation: "The three fluid-filled semicircular canals, at right angles to each other, sense angular acceleration. The otolith organs sense linear acceleration and gravity. The cochlea is for hearing, and the eardrum and ossicles transmit sound to the inner ear."
+  references: ["PHFC 2.5"]
+  difficulty: 1
+
+- id: PHFC-022
+  kind: mcq
+  elements: ["PHFC 2.5.2"]
+  stem: "The purpose of the eustachian tube is to:"
+  options:
+    - "Carry sound from the outer ear to the cochlea."
+    - "Equalise the pressure in the middle ear with the outside air by connecting it to the throat."
+    - "Drain fluid from the semicircular canals."
+    - "Sense changes in cabin pressure and warn the pilot."
+  answer: 1
+  explanation: "The eustachian tube links the middle ear to the back of the throat, allowing air in or out so the pressure either side of the eardrum is equal. Sound travels through the ear canal, eardrum and ossicles. It does not drain the semicircular canals and is not a sensor."
+  references: ["PHFC 2.5"]
+  difficulty: 1
+
+- id: PHFC-023
+  kind: mcq
+  elements: ["PHFC 2.5.2"]
+  stem: "Why is an ear block more likely during descent than during climb?"
+  options:
+    - "The middle ear fills with fluid as temperature rises."
+    - "Expanding air on the climb damages the eustachian tube."
+    - "Air vents out of the middle ear easily on the climb, but on descent the tube tends to stay closed and must be opened actively to let air back in."
+    - "The eardrum is more flexible at high altitude."
+  answer: 2
+  explanation: "The eustachian tube behaves like a one-way valve. On the climb, expanding middle-ear air pushes out passively. On descent air must be drawn back in, which requires swallowing, yawning or a Valsalva manoeuvre; congestion can prevent this, causing pain and barotrauma."
+  references: ["PHFC 2.5"]
+  difficulty: 2
+
+- id: PHFC-024
+  kind: mcq
+  elements: ["PHFC 2.5.3"]
+  stem: "Long-term exposure to aircraft noise typically causes:"
+  options:
+    - "Improved speech intelligibility through adaptation."
+    - "Temporary hearing loss only, which always recovers overnight."
+    - "Permanent hearing loss, usually first at high frequencies, which develops gradually and painlessly."
+    - "Loss of balance but no hearing effect."
+  answer: 2
+  explanation: "Repeated noise exposure damages the hair cells of the cochlea, causing permanent noise-induced hearing loss, typically around 4,000 Hz first. It is painless, so it often goes unnoticed. Short-term exposure causes a temporary threshold shift. Noise reduces, not improves, speech intelligibility."
+  references: ["PHFC 2.5"]
+  difficulty: 1
+
+- id: PHFC-025
+  kind: mcq
+  elements: ["PHFC 2.5.3"]
+  stem: "Which is an effect of continuous cockpit noise on a long cross-country flight?"
+  options:
+    - "Reduced fatigue because the noise keeps the pilot awake."
+    - "No effect if the flight is less than 8 hours."
+    - "Increased fatigue and reduced ability to understand radio calls."
+    - "Improved hearing of high-frequency sounds."
+  answer: 2
+  explanation: "Noise is an environmental stressor that adds to fatigue and masks speech, particularly high-frequency consonants, so radio calls are misheard. It does not improve hearing, and effects begin well within an 8-hour exposure."
+  references: ["PHFC 2.5", "PHFC 2.6"]
+  difficulty: 1
+
+# 2.6 Hearing protection (no separate elements; tagged to noise exposure 2.5.3)
+- id: PHFC-026
+  kind: mcq
+  elements: ["PHFC 2.6.1"]
+  stem: "Which is the most effective way to reduce the noise reaching a pilot's ears in a piston single?"
+  options:
+    - "Turn up the radio volume to drown out the engine."
+    - "Put cotton wool in the ears."
+    - "Open the side window for ventilation."
+    - "Wear a well-sealed headset, ideally with active noise reduction, and keep the volume low."
+  answer: 3
+  explanation: "A well-sealed headset reduces noise, and ANR is especially effective against low-frequency engine and propeller noise. Turning the volume up adds sound energy; cotton wool gives little protection; an open window increases noise."
+  references: ["PHFC 2.6"]
+  difficulty: 1
+
+- id: PHFC-027
+  kind: mcq
+  elements: ["PHFC 2.6.1"]
+  stem: "Active noise reduction (ANR) headsets are particularly effective at reducing:"
+  options:
+    - "Low-frequency engine and propeller noise."
+    - "High-frequency radio static."
+    - "The need for hearing tests."
+    - "Aural warnings such as the stall warning horn."
+  answer: 0
+  explanation: "ANR uses a microphone and electronics to generate an opposite sound wave, which works best on the steady low-frequency drone of piston engines and propellers. Passive seals do better on higher frequencies. ANR does not replace hearing checks and should not mask warnings."
+  references: ["PHFC 2.6"]
+  difficulty: 2
+
+- id: PHFC-028
+  kind: mcq
+  elements: ["PHFC 2.6.1"]
+  stem: "Which practice reduces the effectiveness of a passive headset?"
+  options:
+    - "Replacing hardened ear seals."
+    - "Wearing earplugs underneath."
+    - "Wearing thick-armed sunglasses that break the ear seal."
+    - "Keeping the intercom volume low."
+  answer: 2
+  explanation: "A passive headset relies on a good seal around the ear. Thick glasses arms, hair or a cap under the seal let noise leak in. New seals and earplugs underneath improve protection, and keeping the volume low reduces the noise dose."
+  references: ["PHFC 2.6"]
+  difficulty: 1
+
+- id: PHFC-029
+  kind: mcq
+  elements: ["PHFC 2.6.1"]
+  stem: "A recommended hearing-protection practice on the ground is to:"
+  options:
+    - "Remove the headset during run-ups to hear the engine better."
+    - "Protect hearing only on flights longer than one hour."
+    - "Rely on the medical examination to detect any damage."
+    - "Wear earmuffs or plugs near running engines and during refuelling around operating aircraft."
+  answer: 3
+  explanation: "Noise exposure on the apron counts towards the total dose, so wear protection near running engines. Hearing tests detect damage after it has happened; they do not prevent it. Protection applies to every exposure, including short flights and run-ups."
+  references: ["PHFC 2.6"]
+  difficulty: 1
+
+# 2.7 Vision, spatial disorientation, illusions
+- id: PHFC-030
+  kind: mcq
+  elements: ["PHFC 2.7.1"]
+  stem: "The rods of the retina:"
+  options:
+    - "Are concentrated in the fovea and provide colour vision."
+    - "Work in low light, detect movement well, give no colour and are absent from the fovea."
+    - "Only function in bright daylight."
+    - "Are located at the blind spot where the optic nerve leaves the eye."
+  answer: 1
+  explanation: "Rods are spread around the periphery of the retina, are very sensitive in low light, detect movement and give black-and-white vision. Cones are concentrated in the fovea, give colour and detail and need good light. The blind spot has no receptors at all."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-031
+  kind: mcq
+  elements: ["PHFC 2.7.2"]
+  stem: "Full dark adaptation of the eye takes approximately:"
+  options:
+    - "1 minute."
+    - "5 minutes."
+    - "30 minutes."
+    - "3 hours."
+  answer: 2
+  explanation: "Cones adapt in about 7 to 10 minutes, but the rods need about 30 minutes for full sensitivity. A single exposure to bright light can undo much of it, so protect your adaptation before and during night flight."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-032
+  kind: mcq
+  elements: ["PHFC 2.7.3"]
+  stem: "To see a faint object at night, a pilot should:"
+  options:
+    - "Look directly at it so the image falls on the fovea."
+    - "Stare at it without moving the eyes."
+    - "Look about 10 to 15 degrees to one side of it and keep the eyes moving slightly."
+    - "Close one eye and look directly at it."
+  answer: 2
+  explanation: "The fovea contains only cones, which do not work well in the dark, creating a night blind spot in the centre of vision. Off-centre viewing puts the image on the rods. Stared-at images fade, so keep the eyes moving."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-033
+  kind: mcq
+  elements: ["PHFC 2.7.4"]
+  stem: "Empty-field myopia is:"
+  options:
+    - "A permanent form of short-sightedness caused by flying."
+    - "The tendency of the eye, with nothing to focus on, to relax to a focus of about 1 to 2 m so distant traffic is missed."
+    - "Glare caused by sun on cloud tops."
+    - "Loss of colour vision at night."
+  answer: 1
+  explanation: "In a featureless field such as haze, cloud tops or blue sky, the eye relaxes to a short focal distance. Distant aircraft are then not seen even though the pilot is looking out. The cure is to periodically focus on a distant object. It is temporary, not a defect, and differs from glare and night colour loss."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-034
+  kind: mcq
+  elements: ["PHFC 2.7.4"]
+  stem: "A pilot in their late 40s finds it increasingly hard to read the chart and instrument labels but distant vision is fine. This is most likely:"
+  options:
+    - "Presbyopia."
+    - "Empty-field myopia."
+    - "Flicker vertigo."
+    - "Myopia."
+  answer: 0
+  explanation: "Presbyopia is the age-related loss of the lens's ability to focus on near objects, usually from about 40. Myopia (short-sightedness) blurs distant objects. Flicker vertigo is dizziness from flickering light, and empty-field myopia is a temporary focusing effect."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-035
+  kind: mcq
+  elements: ["PHFC 2.7.5"]
+  stem: "Which sunglasses are generally recommended for pilots?"
+  options:
+    - "Polarised lenses, to eliminate all reflections."
+    - "Photochromic lenses, which darken automatically in the cockpit."
+    - "Dark blue or green tinted lenses that enhance contrast."
+    - "Neutral grey, non-polarised lenses of good optical quality."
+  answer: 3
+  explanation: "Neutral grey lenses reduce brightness without distorting colours. Polarised lenses can black out instrument displays and hide the glint of other aircraft. Photochromic lenses darken poorly behind a windscreen that blocks UV. Coloured tints distort signal and light colours."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-036
+  kind: mcq
+  elements: ["PHFC 2.7.6"]
+  stem: "An aircraft on a collision course with yours will typically:"
+  options:
+    - "Appear to stay in the same position on the windscreen, growing slowly at first and then very rapidly."
+    - "Move rapidly across the windscreen."
+    - "Always be visible well before collision."
+    - "Appear to move upwards on the windscreen."
+  answer: 0
+  explanation: "Two aircraft on converging tracks with a constant relative bearing will collide, and the other aircraft appears stationary on the windscreen. With no movement, the eye does not notice it; it stays small until very close, then 'blossoms'. That is why systematic scanning is needed."
+  references: ["PHFC 2.7", "ATSB, Limitations of the see-and-avoid principle"]
+  difficulty: 2
+
+- id: PHFC-037
+  kind: mcq
+  elements: ["PHFC 2.7.6"]
+  stem: "The recommended technique for visual scanning is to:"
+  options:
+    - "Sweep the eyes continuously across the horizon without stopping."
+    - "Look straight ahead and rely on peripheral vision."
+    - "Scan only when the radio reports traffic."
+    - "Move the eyes in a series of short stops, each about 1 second, across sectors of about 10 to 15 degrees."
+  answer: 3
+  explanation: "The eye only sees detail during a fixation, so continuous sweeping sees little. A series of short fixations across small sectors covers the sky effectively. Peripheral vision detects movement but a collision-course aircraft does not move. Scanning must be continuous, not only when traffic is reported."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-038
+  kind: mcq
+  elements: ["PHFC 2.7.7", "PHFC 2.7.8"]
+  stem: "Spatial disorientation is an incorrect perception of attitude or motion. Which three systems normally maintain equilibrium?"
+  options:
+    - "The attitude indicator, the turn coordinator and the compass."
+    - "The eyes, the cochlea and the sense of smell."
+    - "The inner ear, the heart rate and the lungs."
+    - "The eyes, the inner ear vestibular organs and the proprioceptive (seat-of-the-pants) senses."
+  answer: 3
+  explanation: "Equilibrium comes from vision (the dominant sense), the vestibular apparatus of the inner ear, and pressure and position senses in muscles, joints and skin. The cochlea is for hearing. Instruments are an artificial reference, not a body system."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-039
+  kind: mcq
+  elements: ["PHFC 2.7.9"]
+  stem: "Why can the inner ear and seat-of-the-pants senses not be relied upon in cloud?"
+  options:
+    - "They stop working above 5,000 ft."
+    - "Cloud moisture affects the fluid in the inner ear."
+    - "They cannot distinguish gravity from acceleration and do not detect slow or sustained changes."
+    - "They only work when the eyes are closed."
+  answer: 2
+  explanation: "The otoliths and the seat of the pants respond to the resultant of gravity and acceleration, so a coordinated turn feels like level flight. The semicircular canals stop sensing a steady rotation after 10 to 20 seconds and miss slow changes. Without a visual horizon these errors go uncorrected."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-040
+  kind: mcq
+  elements: ["PHFC 2.7.10"]
+  stem: "On a dark night take-off over unlit terrain, the rapid forward acceleration may give the pilot a false sensation of:"
+  options:
+    - "Descending, causing them to pitch up into a stall."
+    - "A nose-up pitch attitude, tempting them to push the nose down towards the ground."
+    - "A turn to the left."
+    - "A spin."
+  answer: 1
+  explanation: "This is the somatogravic illusion. Forward acceleration tilts the resultant force backwards, which the otoliths interpret as a nose-up attitude. A pilot without a visible horizon may push forward and fly into the ground. Hold the attitude shown on the attitude indicator."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-041
+  kind: mcq
+  elements: ["PHFC 2.7.10"]
+  stem: "In cloud an aircraft rolls very slowly into a bank without the pilot noticing. The pilot then sees the attitude indicator and quickly rolls level. The pilot now feels banked in the opposite direction. This is:"
+  options:
+    - "The autokinetic illusion."
+    - "The black-hole illusion."
+    - "Flicker vertigo."
+    - "The leans."
+  answer: 3
+  explanation: "The slow roll was below the semicircular canals' threshold, so it went unnoticed; the quick correction is sensed as a roll the other way. The pilot tends to lean into the false 'level' or re-establish the bank. The autokinetic illusion involves a stationary light appearing to move; black-hole is a visual approach illusion."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-042
+  kind: mcq
+  elements: ["PHFC 2.7.10"]
+  stem: "After recovering from a prolonged spin, a pilot without visual references may feel:"
+  options:
+    - "No sensation at all."
+    - "That the aircraft is still spinning in the original direction."
+    - "A strong nose-up pitch."
+    - "A spin in the opposite direction, and may re-enter the original spin to 'correct' it."
+  answer: 3
+  explanation: "This is the graveyard spin illusion. During a sustained spin the canal fluid catches up and the rotation is no longer felt. Stopping the rotation is then sensed as rotation the other way, and the pilot may apply controls that re-enter the original spin."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-043
+  kind: mcq
+  elements: ["PHFC 2.7.11"]
+  stem: "When a pilot's senses disagree with the attitude indicator in cloud, the pilot should:"
+  options:
+    - "Trust the strongest bodily sensation."
+    - "Make large head movements to reorient the inner ear."
+    - "Close their eyes to concentrate on the seat-of-the-pants feeling."
+    - "Believe and fly by the instruments."
+  answer: 3
+  explanation: "Without a visual horizon the vestibular and proprioceptive senses are unreliable, and their false sensations feel very convincing. The flight instruments are the reliable reference. Head movements risk the Coriolis illusion, and relying on body feeling leads to loss of control."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-044
+  kind: mcq
+  elements: ["PHFC 2.7.12"]
+  stem: "On a night approach over dark terrain to a runway with no surrounding lights (a 'black hole' approach), pilots tend to:"
+  options:
+    - "Feel too low and fly a steep, high approach."
+    - "Overshoot the centreline."
+    - "Feel too high and fly a low, shallow approach that may hit terrain short of the runway."
+    - "Judge the approach accurately because the runway lights are bright."
+  answer: 2
+  explanation: "With no ground lights to judge height, the runway lights alone give the impression of being higher than you are. Pilots descend early and fly a dangerously low approach. Use the PAPI or a planned descent profile."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-045
+  kind: mcq
+  elements: ["PHFC 2.7.12"]
+  stem: "An unusually narrow runway, compared with what the pilot is used to, will tend to make the pilot:"
+  options:
+    - "Land long."
+    - "Feel lower than they are and fly a higher approach."
+    - "Feel higher than they are and fly a lower than normal approach."
+    - "Misjudge the crosswind."
+  answer: 2
+  explanation: "A narrow runway looks like a normal runway seen from further away and higher, so the pilot feels high and descends below the correct profile. A wide runway gives the opposite illusion. Upsloping runways also cause a low approach."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-046
+  kind: mcq
+  elements: ["PHFC 2.7.4"]
+  stem: "Flicker vertigo is most likely to be caused by:"
+  options:
+    - "Rain on the windscreen."
+    - "Looking at a single steady light at night."
+    - "Rapid head movements in a turn."
+    - "Sunlight shining through a rotating propeller at about 4 to 20 flashes per second."
+  answer: 3
+  explanation: "Light flickering at around 4 to 20 Hz, for example sun through a propeller or a strobe reflecting in cloud, can cause dizziness, nausea and rarely seizures. Change rpm, look away or turn off the strobe. A steady light gives the autokinetic illusion; head movement in a turn gives the Coriolis illusion."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+# 2.8 Motion sickness
+- id: PHFC-047
+  kind: mcq
+  elements: ["PHFC 2.8.1"]
+  stem: "The basic cause of motion sickness is:"
+  options:
+    - "Low blood sugar."
+    - "Conflicting information between the eyes and the vestibular organs of the inner ear."
+    - "Carbon monoxide in the cabin."
+    - "Lack of oxygen at altitude."
+  answer: 1
+  explanation: "Motion sickness results from a sensory conflict: the eyes report one motion and the inner ear another. Hunger, CO and hypoxia can make nausea worse but are not the basic cause."
+  references: ["PHFC 2.8"]
+  difficulty: 1
+
+- id: PHFC-048
+  kind: mcq
+  elements: ["PHFC 2.8.2"]
+  stem: "Which of the following is likely to aggravate motion sickness?"
+  options:
+    - "Looking at the horizon."
+    - "Reading a chart for long periods in turbulence in a hot cabin."
+    - "Flying the aircraft yourself."
+    - "Opening the fresh-air vents."
+  answer: 1
+  explanation: "Looking down at a chart while the aircraft moves increases the visual-vestibular conflict, and heat and turbulence add to it. Looking at the horizon, flying the aircraft and fresh air all help."
+  references: ["PHFC 2.8"]
+  difficulty: 1
+
+- id: PHFC-049
+  kind: mcq
+  elements: ["PHFC 2.8.3"]
+  stem: "A student pilot is prone to airsickness. Which is the most appropriate advice?"
+  options:
+    - "Use fresh air, keep the eyes outside, minimise head movements, fly the aircraft, and build up exposure gradually."
+    - "Eat a large greasy meal before flying."
+    - "Take an anti-motion-sickness tablet before each lesson."
+    - "Keep the head moving to help the inner ear adapt."
+  answer: 0
+  explanation: "Fresh air, external visual reference, a still head and being in control reduce the sensory conflict, and graduated exposure builds tolerance. Most anti-motion-sickness drugs cause drowsiness and are not suitable for pilots without DAME advice. Heavy meals and head movement make it worse."
+  references: ["PHFC 2.8"]
+  difficulty: 1
+
+- id: PHFC-050
+  kind: mcq
+  elements: ["PHFC 2.8.3"]
+  stem: "Why should a pilot NOT take common motion sickness medication before flying?"
+  options:
+    - "It increases the risk of hyperventilation."
+    - "Most such drugs cause drowsiness, blurred vision and slowed reactions."
+    - "It causes ear block on descent."
+    - "It is ineffective in light aircraft."
+  answer: 1
+  explanation: "Common anti-motion-sickness drugs (antihistamine and hyoscine types) cause drowsiness and other side effects that impair a pilot. Passengers may take them; pilots need DAME advice. They do not cause hyperventilation or ear block."
+  references: ["PHFC 2.8", "PHFC 2.2"]
+  difficulty: 2
+
+# 2.9 g effects
+- id: PHFC-051
+  kind: mcq
+  elements: ["PHFC 2.9.1"]
+  stem: "Under increasing positive g, the usual order of effects is:"
+  options:
+    - "Unconsciousness, then black-out, then grey-out."
+    - "Black-out, then grey-out, then headache."
+    - "Red-out, then black-out."
+    - "Grey-out, tunnel vision, black-out, then loss of consciousness."
+  answer: 3
+  explanation: "Positive g drains blood from the head. The retina is affected first (grey-out and loss of peripheral vision), then all vision is lost (black-out) while still conscious, and finally the brain is affected (G-LOC). Red-out is associated with negative g."
+  references: ["PHFC 2.9"]
+  difficulty: 1
+
+- id: PHFC-052
+  kind: mcq
+  elements: ["PHFC 2.9.1"]
+  stem: "What is the main effect of sustained positive g on the cardiovascular system?"
+  options:
+    - "The heart stops beating temporarily."
+    - "Blood is forced towards the head, raising pressure in the brain."
+    - "Blood pools in the lower body and legs, reducing blood pressure at head level."
+    - "Blood oxygen saturation increases."
+  answer: 2
+  explanation: "Positive g acts head to foot, so blood pools in the lower body and less returns to the heart; blood pressure at eye and brain level falls. Blood forced to the head is the effect of negative g."
+  references: ["PHFC 2.9"]
+  difficulty: 1
+
+- id: PHFC-053
+  kind: mcq
+  elements: ["PHFC 2.9.1"]
+  stem: "Negative g is likely to produce:"
+  options:
+    - "A feeling of fullness in the head, headache, reddened vision and a slowing heart rate."
+    - "Blood pooling in the legs."
+    - "Grey-out and tunnel vision."
+    - "Increased tolerance to subsequent positive g."
+  answer: 0
+  explanation: "Negative g pushes blood towards the head, causing pressure, headache, congested eyes and possible red-out; the body responds to high pressure by slowing the heart. Going from negative to positive g (push-pull) reduces positive g tolerance, not increases it."
+  references: ["PHFC 2.9"]
+  difficulty: 2
+
+- id: PHFC-054
+  kind: numeric
+  elements: ["PHFC 2.9.1"]
+  stem: "What load factor (in g) does a pilot experience in a level, coordinated turn at 60 degrees of bank?"
+  answer: 2
+  tolerance: 0
+  unit: g
+  explanation: "Load factor in a level turn is 1 ÷ cos(bank angle). cos 60° = 0.5, so the load factor is 2. The pilot feels twice their normal weight; this is positive g, with blood draining towards the lower body."
+  references: ["PHFC 2.9"]
+  difficulty: 1
+
+- id: PHFC-055
+  kind: mcq
+  elements: ["PHFC 2.9.1"]
+  stem: "Which of the following increases a pilot's tolerance to positive g?"
+  options:
+    - "Applying g rapidly to get the manoeuvre over quickly."
+    - "Applying g gradually and tensing the leg and abdominal muscles."
+    - "Dehydration and an empty stomach."
+    - "A hangover from the previous evening."
+  answer: 1
+  explanation: "Gradual onset gives the cardiovascular system time to compensate, and muscle tensing (with a straining manoeuvre) raises blood pressure. Rapid onset, dehydration, low blood sugar and hangover all reduce tolerance."
+  references: ["PHFC 2.9"]
+  difficulty: 1
+
+# 2.10 Toxic hazards
+- id: PHFC-056
+  kind: mcq
+  elements: ["PHFC 2.10.1"]
+  stem: "The most common source of carbon monoxide in the cabin of a light piston aeroplane is:"
+  options:
+    - "A cracked exhaust inside the cabin heater muff."
+    - "Hydraulic fluid in the brakes."
+    - "The battery."
+    - "Fuel vapour from the tank vents."
+  answer: 0
+  explanation: "Most light aircraft heaters warm cabin air by passing it over the exhaust. A crack in the exhaust inside the muff lets exhaust gas, including CO, into the cabin. Fuel vapour, batteries and hydraulic fluid are other hazards but are not CO sources."
+  references: ["PHFC 2.10"]
+  difficulty: 1
+
+- id: PHFC-057
+  kind: mcq
+  elements: ["PHFC 2.10.1"]
+  stem: "Which statement about carbon monoxide is correct?"
+  options:
+    - "It has a strong smell, so pilots are warned early."
+    - "It is removed from the blood within a few minutes of breathing fresh air."
+    - "It is colourless and odourless and combines with haemoglobin far more readily than oxygen."
+    - "It only affects pilots above 10,000 ft."
+  answer: 2
+  explanation: "CO cannot be seen or smelled (an exhaust smell may accompany it, but the CO itself is odourless). It binds to haemoglobin about 200 to 250 times more readily than oxygen, causing anaemic hypoxia at any altitude, and it takes hours to clear."
+  references: ["PHFC 2.10"]
+  difficulty: 1
+
+- id: PHFC-058
+  kind: mcq
+  elements: ["PHFC 2.10.1"]
+  stem: "Shortly after selecting cabin heat, you develop a headache and feel drowsy. Your first actions should be to:"
+  options:
+    - "Increase cabin heat to stay alert."
+    - "Turn off the cabin heat, open the fresh-air vents, use oxygen if available, and land as soon as possible."
+    - "Climb to clear the fumes."
+    - "Close all vents to keep the fumes out."
+  answer: 1
+  explanation: "Suspect carbon monoxide. Shut off the source (heater), ventilate with fresh air, use oxygen if carried, and land and seek medical attention. Climbing worsens hypoxia, and closing the fresh-air vents traps the CO."
+  references: ["PHFC 2.10"]
+  difficulty: 1
+
+- id: PHFC-059
+  kind: mcq
+  elements: ["PHFC 2.10.2"]
+  stem: "Breathing AVGAS vapour in the cabin is likely to cause:"
+  options:
+    - "Improved alertness."
+    - "No effects, as fuel vapour is harmless."
+    - "Headache, nausea, dizziness and an intoxicated feeling, with a fire risk."
+    - "Ear block on descent."
+  answer: 2
+  explanation: "Fuel vapour is toxic and can cause headache, dizziness, nausea, impaired judgement similar to intoxication, and drowsiness. It is also a fire hazard. Ventilate, avoid ignition sources and land."
+  references: ["PHFC 2.10"]
+  difficulty: 1
+
+- id: PHFC-060
+  kind: mcq
+  elements: ["PHFC 2.10.2"]
+  stem: "Smoke from burning wiring insulation in the cockpit is particularly dangerous because:"
+  options:
+    - "Burning plastics release toxic gases such as carbon monoxide and cyanide."
+    - "It causes motion sickness."
+    - "It only affects passengers in the rear seats."
+    - "It is harmless but obscures vision."
+  answer: 0
+  explanation: "Electrical fires burn plastics that release CO, hydrogen cyanide and other toxic products, causing rapid incapacitation, as well as reducing visibility. Follow the POH: isolate the source, ventilate if appropriate and land."
+  references: ["PHFC 2.10"]
+  difficulty: 2
+
+# 2.11 Atmosphere
+- id: PHFC-061
+  kind: mcq
+  elements: ["PHFC 2.11.1"]
+  stem: "The approximate composition of dry air is:"
+  options:
+    - "78 percent nitrogen, 21 percent oxygen, 1 percent other gases."
+    - "50 percent nitrogen, 50 percent oxygen."
+    - "21 percent nitrogen, 78 percent oxygen, 1 percent other gases."
+    - "78 percent oxygen, 21 percent carbon dioxide, 1 percent nitrogen."
+  answer: 0
+  explanation: "Dry air is about 78 percent nitrogen, 21 percent oxygen and 1 percent argon, carbon dioxide and other gases. These proportions remain nearly constant through the altitudes at which we fly."
+  references: ["PHFC 2.11"]
+  difficulty: 1
+
+- id: PHFC-062
+  kind: mcq
+  elements: ["PHFC 2.11.1", "PHFC 2.11.3"]
+  stem: "At 18,000 ft compared with sea level:"
+  options:
+    - "The percentage of oxygen in the air has halved."
+    - "Pressure is unchanged but temperature is lower."
+    - "There is more nitrogen in the air."
+    - "The percentage of oxygen is unchanged, but total pressure and oxygen partial pressure are about half."
+  answer: 3
+  explanation: "The proportion of oxygen stays at about 21 percent. Atmospheric pressure at about 18,000 ft is roughly half the sea level value (about 500 hPa), so the oxygen partial pressure, which drives oxygen into the blood, is also halved."
+  references: ["PHFC 2.11"]
+  difficulty: 2
+
+- id: PHFC-063
+  kind: numeric
+  elements: ["PHFC 2.11.3"]
+  stem: "At an altitude where the total atmospheric pressure is 700 hPa, what is the partial pressure of oxygen, to the nearest hPa? (Oxygen is 21 percent of the air.)"
+  answer: 147
+  tolerance: 2
+  unit: hPa
+  explanation: "By Dalton's law the partial pressure is the gas's share of the total pressure: 0.21 × 700 = 147 hPa. This is about 70 percent of the sea level value (about 213 hPa), which is roughly the situation at 10,000 ft."
+  references: ["PHFC 2.11"]
+  difficulty: 2
+
+- id: PHFC-064
+  kind: numeric
+  elements: ["PHFC 2.11.1"]
+  stem: "Using the ISA lapse rate of 2°C per 1,000 ft and 15°C at sea level, what is the ISA temperature at 10,000 ft, in °C?"
+  answer: -5
+  tolerance: 0
+  unit: °C
+  explanation: "15 - (2 × 10) = -5°C. The ISA temperature falls at about 2°C per 1,000 ft up to the tropopause (about 36,000 ft, -56.5°C)."
+  references: ["PHFC 2.11", "ICAO ISA"]
+  difficulty: 1
+
+- id: PHFC-065
+  kind: mcq
+  elements: ["PHFC 2.11.2"]
+  stem: "Oxygen is transported from the lungs to the body tissues mainly:"
+  options:
+    - "Dissolved in the blood plasma."
+    - "By the white blood cells."
+    - "Bound to haemoglobin in the red blood cells."
+    - "Through the lymphatic system."
+  answer: 2
+  explanation: "Oxygen diffuses from the alveoli into the blood and is carried almost entirely by haemoglobin in red blood cells. Only a tiny amount dissolves in plasma. Carbon dioxide returns to the lungs mostly dissolved in plasma as bicarbonate."
+  references: ["PHFC 2.11"]
+  difficulty: 1
+
+- id: PHFC-066
+  kind: mcq
+  elements: ["PHFC 2.11.2"]
+  stem: "The rate and depth of breathing are controlled mainly by:"
+  options:
+    - "The level of oxygen in the blood."
+    - "Conscious decision."
+    - "The amount of nitrogen in the air."
+    - "The level of carbon dioxide in the blood."
+  answer: 3
+  explanation: "The respiratory centre responds mainly to CO2 (and the acidity it causes). This is why falling oxygen at altitude produces little sense of breathlessness, and why over-breathing that lowers CO2 causes hyperventilation."
+  references: ["PHFC 2.11", "PHFC 2.3"]
+  difficulty: 2
+
+# 2.12 Hypoxia
+- id: PHFC-067
+  kind: mcq
+  elements: ["PHFC 2.12.1"]
+  stem: "Carbon monoxide poisoning is an example of which type of hypoxia?"
+  options:
+    - "Hypoxic (altitude) hypoxia."
+    - "Stagnant hypoxia."
+    - "Anaemic (hypaemic) hypoxia."
+    - "Histotoxic hypoxia."
+  answer: 2
+  explanation: "CO occupies haemoglobin so the blood cannot carry enough oxygen: anaemic hypoxia. Hypoxic hypoxia is low oxygen partial pressure (altitude), stagnant is poor circulation (g, cold), and histotoxic is cells unable to use oxygen (alcohol, drugs)."
+  references: ["PHFC 2.12"]
+  difficulty: 2
+
+- id: PHFC-068
+  kind: mcq
+  elements: ["PHFC 2.12.1"]
+  stem: "Why is hypoxia particularly dangerous to a pilot?"
+  options:
+    - "It always causes severe pain that distracts the pilot."
+    - "Its early effects include euphoria, overconfidence and lack of self-criticism, so the pilot may not recognise it."
+    - "It only occurs suddenly, without warning, above 30,000 ft."
+    - "It causes the engine to lose power."
+  answer: 1
+  explanation: "Hypoxia is insidious. It impairs judgement while producing a feeling of well-being and a false sense of security, so the pilot is the last to notice. It develops gradually at lower altitudes, and engine power loss with altitude is a separate issue."
+  references: ["PHFC 2.12"]
+  difficulty: 1
+
+- id: PHFC-069
+  kind: mcq
+  elements: ["PHFC 2.12.1"]
+  stem: "Night vision begins to be degraded by hypoxia from a cabin altitude of about:"
+  options:
+    - "1,000 ft."
+    - "5,000 ft."
+    - "18,000 ft."
+    - "25,000 ft."
+  answer: 1
+  explanation: "The retina's rods are very sensitive to oxygen supply, so night vision starts to deteriorate from about 5,000 ft, well below the altitudes where other hypoxia symptoms become obvious."
+  references: ["PHFC 2.12"]
+  difficulty: 2
+
+- id: PHFC-070
+  kind: mcq
+  elements: ["PHFC 2.12.1"]
+  stem: "The approximate time of useful consciousness for a resting person at 25,000 ft is:"
+  options:
+    - "20 to 30 minutes."
+    - "3 to 5 minutes."
+    - "15 to 20 seconds."
+    - "More than 1 hour."
+  answer: 1
+  explanation: "Standard textbook values: 18,000 ft about 20 to 30 minutes, 25,000 ft about 3 to 5 minutes, 30,000 ft about 1 to 2 minutes, 40,000 ft about 15 to 20 seconds. TUC is shorter with activity and roughly halved after a rapid decompression."
+  references: ["PHFC 2.12"]
+  difficulty: 2
+
+- id: PHFC-071
+  kind: mcq
+  elements: ["PHFC 2.12.1"]
+  stem: "Which factor increases a person's susceptibility to hypoxia?"
+  options:
+    - "Being well rested."
+    - "A slow rate of climb."
+    - "Remaining physically still."
+    - "Smoking before flight."
+  answer: 3
+  explanation: "Smoking loads haemoglobin with CO, reducing oxygen-carrying capacity and raising the 'physiological altitude'. Fatigue, physical activity, a rapid ascent, cold, alcohol and illness also increase susceptibility."
+  references: ["PHFC 2.12"]
+  difficulty: 1
+
+- id: PHFC-072
+  kind: mcq
+  elements: ["PHFC 2.12.1"]
+  stem: "A pilot flying an unpressurised aircraft at 12,500 ft notices difficulty with mental arithmetic and feels unusually cheerful. The best response is:"
+  options:
+    - "Use supplemental oxygen if available and/or descend below 10,000 ft."
+    - "Breathe more slowly into a paper bag."
+    - "Continue, as these are signs of being well adapted to altitude."
+    - "Climb to get above the cloud."
+  answer: 0
+  explanation: "Euphoria and impaired mental performance above 10,000 ft suggest hypoxic hypoxia. Use oxygen or descend. A paper bag would worsen hypoxia, and climbing increases it. Supplemental oxygen requirements above 10,000 ft are in the Part 91 MOS (check the current text)."
+  references: ["PHFC 2.12", "Part 91 MOS (check the current text)"]
+  difficulty: 1
+
+# 2.13 Human factors considerations
+- id: PHFC-073
+  kind: mcq
+  elements: ["PHFC 2.13.1"]
+  stem: "Short-term (working) memory can typically hold about:"
+  options:
+    - "2 items for several hours."
+    - "7 plus or minus 2 items for roughly 15 to 30 seconds unless rehearsed."
+    - "An unlimited number of items for a few seconds."
+    - "50 items for about 1 minute."
+  answer: 1
+  explanation: "Working memory is limited to about 5 to 9 items and fades in seconds unless rehearsed, and interruptions easily erase it. That is why clearances, frequencies and QNH should be written down and checklists used."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-074
+  kind: mcq
+  elements: ["PHFC 2.13.1"]
+  stem: "A pilot continues towards the destination despite deteriorating weather because friends are waiting and they want to complete the trip. This is an example of:"
+  options:
+    - "The desire to get the flight flown ('get-there-itis') influencing decision-making."
+    - "Good situational awareness."
+    - "Boredom."
+    - "Acute fatigue."
+  answer: 0
+  explanation: "External and self-imposed pressure to complete the flight biases decisions towards continuing (plan continuation bias), a major factor in VFR-into-IMC accidents. Peer pressure and pride often add to it. Set personal minimums and decision points before departure."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-075
+  kind: mcq
+  elements: ["PHFC 2.13.2"]
+  stem: "Which of the following is the best method of improving in-flight decision-making?"
+  options:
+    - "Waiting until a problem arises before considering options."
+    - "Relying on the most experienced passenger's opinion."
+    - "Setting personal minimums and planning alternates and decision points before departure."
+    - "Avoiding the use of checklists to save time."
+  answer: 2
+  explanation: "Decisions made on the ground, without pressure, are better than those made under stress in the air. Personal minimums, alternates and decision points, with a structured model such as DECIDE, improve decision-making. Checklists support, not hinder, good decisions."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-076
+  kind: mcq
+  elements: ["PHFC 2.13.3"]
+  stem: "According to the relationship between arousal and performance, a pilot performs best when arousal is:"
+  options:
+    - "As low as possible."
+    - "Unrelated to performance."
+    - "As high as possible."
+    - "At a moderate level."
+  answer: 3
+  explanation: "Performance follows an inverted U (Yerkes-Dodson): low arousal brings boredom and inattention, very high arousal brings anxiety, narrowed attention and poor decisions. Best performance is at a moderate level."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-077
+  kind: mcq
+  elements: ["PHFC 2.13.3"]
+  stem: "Which is an effect of high stress on a pilot's performance?"
+  options:
+    - "Wider attention and better monitoring."
+    - "Narrowed attention, missed information and reverting to old habits."
+    - "Improved short-term memory."
+    - "Slower heart rate."
+  answer: 1
+  explanation: "High stress narrows attention (tunnelling), reduces working memory capacity, causes missed information and rushed decisions, and pilots may revert to old, well-learned habits. Heart rate usually increases."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-078
+  kind: mcq
+  elements: ["PHFC 2.13.4"]
+  stem: "The main difference between acute and chronic fatigue is that:"
+  options:
+    - "Acute fatigue builds up over weeks; chronic fatigue follows one long day."
+    - "Chronic fatigue only affects commercial pilots."
+    - "Acute fatigue is short-term and relieved by sleep or rest; chronic fatigue accumulates over a long period and needs extended rest and often treatment of the underlying cause."
+    - "There is no practical difference."
+  answer: 2
+  explanation: "Acute fatigue results from a single long day, heavy workload or one poor night and is relieved by a good sleep. Chronic fatigue builds over weeks from ongoing sleep loss, stress or illness, and a single night's sleep does not fix it."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-079
+  kind: mcq
+  elements: ["PHFC 2.13.3"]
+  stem: "Which is an example of environmental stress?"
+  options:
+    - "Financial worries."
+    - "Pressure from an employer."
+    - "A hot, noisy, vibrating cockpit on a long summer flight."
+    - "A recent family argument."
+  answer: 2
+  explanation: "Environmental stressors come from the physical surroundings: heat, cold, noise and vibration. They cause fatigue, dehydration, reduced concentration and poorer performance. The other options are life or organisational stressors."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+# 2.14 First aid and survival
+- id: PHFC-080
+  kind: mcq
+  elements: ["PHFC 2.14.1"]
+  stem: "Where would a pilot find first aid, survival and ground-to-air signal information during a flight in Australia?"
+  options:
+    - "The EMERG section of the ERSA."
+    - "The aircraft's maintenance release."
+    - "The aircraft's weight and balance schedule."
+    - "The NOTAM briefing."
+  answer: 0
+  explanation: "The ERSA contains an emergency procedures (EMERG) section with emergency procedures, signals, SAR and first aid and survival information. Check the current ERSA, as content and layout change. The other documents do not contain this information."
+  references: ["PHFC 2.14", "ERSA EMERG (check current edition)"]
+  difficulty: 1
+
+- id: PHFC-081
+  kind: mcq
+  elements: ["PHFC 2.14.1"]
+  stem: "After a forced landing in a remote area with no injuries, the generally recommended action is to:"
+  options:
+    - "Walk towards the nearest town immediately."
+    - "Stay with the aircraft, activate the ELT or PLB, and prepare signals."
+    - "Ration water strictly to a few mouthfuls a day while working in the sun."
+    - "Split up so more ground can be covered."
+  answer: 1
+  explanation: "The aircraft is far easier to spot than people, gives shelter, and searchers will follow the notified route. Activate the ELT/PLB and prepare signals. Conserve water by reducing sweat loss (rest in the shade) rather than by under-drinking. Keep the group together."
+  references: ["PHFC 2.14"]
+  difficulty: 1
+
+- id: PHFC-082
+  kind: mcq
+  elements: ["PHFC 2.14.1"]
+  stem: "Survivors lay out a large 'X' on the ground near the aircraft. Using the standard ground-to-air codes, this means:"
+  options:
+    - "Require medical assistance."
+    - "Require assistance."
+    - "No."
+    - "Proceeding in this direction."
+  answer: 0
+  explanation: "In the standard survivor ground-to-air codes, V means require assistance, X means require medical assistance, N means no, Y means yes, and an arrow means proceeding in this direction. Check the codes in the current ERSA."
+  references: ["PHFC 2.14", "ERSA EMERG (check current edition)"]
+  difficulty: 2
+
+- id: PHFC-083
+  kind: mcq
+  elements: ["PHFC 2.14.1"]
+  stem: "When performing CPR on an adult who is unresponsive and not breathing normally, the recommended ratio is:"
+  options:
+    - "5 compressions to 1 breath."
+    - "15 compressions to 2 breaths."
+    - "30 compressions to 2 breaths."
+    - "Breaths only, no compressions."
+  answer: 2
+  explanation: "Current Australian guidelines (DRSABCD) use 30 compressions to 2 breaths at about 100 to 120 compressions per minute, with defibrillation as soon as an AED is available."
+  references: ["PHFC 2.14", "Australian Resuscitation Council"]
+  difficulty: 1
+
+# 2.15 Threat and error management
+- id: PHFC-084
+  kind: mcq
+  elements: ["PHFC 2.15.1"]
+  stem: "The basic premise of threat and error management is that:"
+  options:
+    - "Well-trained pilots do not make errors."
+    - "Only threats, not errors, need to be managed."
+    - "Errors should be hidden to avoid disciplinary action."
+    - "Threats and errors are inevitable, so safety depends on anticipating, recognising and managing them."
+  answer: 3
+  explanation: "TEM accepts that threats are always present and humans make errors. The goal is to manage them before they produce an undesired aircraft state or accident, using countermeasures such as planning, checklists and monitoring."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-085
+  kind: mcq
+  elements: ["PHFC 2.15.2"]
+  stem: "A simple process for a single pilot to manage threats and errors on each phase of flight is:"
+  options:
+    - "Anticipate, recognise, recover."
+    - "Aviate, delegate, relax."
+    - "Ignore, observe, report."
+    - "Plan, fly, debrief only after landing."
+  answer: 0
+  explanation: "Anticipate threats in planning and briefings, recognise threats, errors and undesired states through monitoring, and recover by taking action to restore safety margins. Debriefing helps learning but management must happen in flight."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-086
+  kind: mcq
+  elements: ["PHFC 2.15.3"]
+  stem: "In TEM terms, which of the following is a threat?"
+  options:
+    - "The pilot selecting the wrong frequency."
+    - "Forgetting to set QNH."
+    - "Flying the approach 15 kt too fast."
+    - "A thunderstorm developing near the destination."
+  answer: 3
+  explanation: "A threat is an event outside the pilot's influence that increases complexity and must be managed, such as weather, traffic, terrain or aircraft defects. Selecting a wrong frequency and forgetting QNH are errors; flying 15 kt fast on approach is an undesired aircraft state."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-087
+  kind: mcq
+  elements: ["PHFC 2.15.4"]
+  stem: "A pilot forgets to change to the fuller tank during the pre-take-off checks. In the cruise, the FREDA check reveals the error. The best action is to:"
+  options:
+    - "Ignore it, since the engine is running normally."
+    - "Immediately make a forced landing."
+    - "Select the correct tank, confirm the fuel state and endurance, and continue only if the plan is still safe."
+    - "Switch tanks repeatedly to balance fuel."
+  answer: 2
+  explanation: "The error has been trapped by a later check. Correct it, verify fuel quantity and endurance against the plan, and adjust if needed. Ignoring it risks fuel starvation, a forced landing is unnecessary, and repeated switching introduces new errors."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-088
+  kind: mcq
+  elements: ["PHFC 2.15.5"]
+  stem: "Checklists and standard operating procedures help prevent errors mainly because they:"
+  options:
+    - "Reduce reliance on memory, standardise actions so deviations stand out, and provide a cross-check that traps errors."
+    - "Make the pilot's memory unnecessary for all tasks."
+    - "Allow the pilot to skip planning."
+    - "Are a legal formality with little practical value."
+  answer: 0
+  explanation: "Memory is unreliable under workload, stress and interruption. Checklists and SOPs standardise actions and make sure critical items are done and verified. Some memory items are still needed in emergencies, and they do not replace planning."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-089
+  kind: mcq
+  elements: ["PHFC 2.15.6"]
+  stem: "Which sequence shows an unmanaged threat leading to an undesired aircraft state?"
+  options:
+    - "Lowering cloud on track, pilot continues below it to get home, ends up low over rising terrain close to cloud."
+    - "Forecast of low cloud, pilot diverts early to an alternate, lands safely."
+    - "A pilot completes the pre-landing checklist and lands normally."
+    - "A pilot notices a rough engine on run-up and cancels the flight."
+  answer: 0
+  explanation: "Continuing under lowering cloud is a mismanaged weather threat, producing the undesired state of low altitude near terrain and cloud. In the other options the threat is either managed or absent."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-090
+  kind: mcq
+  elements: ["PHFC 2.15.7"]
+  stem: "A VFR pilot becomes uncertain of position. Which of the following is the most useful external resource?"
+  options:
+    - "Climbing into cloud to see further."
+    - "A passenger's mobile phone social media app."
+    - "Air traffic services: request assistance, as surveillance may identify the aircraft's position."
+    - "Flying in circles until the fuel gauge reads low."
+  answer: 2
+  explanation: "ATC and FIS can help with position fixing, surveillance identification and relaying, and a PAN PAN call early gives them time. Climbing into cloud creates a worse undesired state, and orbiting until fuel is low wastes the time needed for a precautionary landing."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-091
+  kind: mcq
+  elements: ["PHFC 2.15.8"]
+  stem: "During a radio failure in the circuit, a pilot becomes absorbed in troubleshooting the radio and lets the aircraft descend below circuit height. This illustrates the importance of:"
+  options:
+    - "Prioritising tasks: aviate, navigate, communicate."
+    - "Carrying a spare radio."
+    - "Flying higher circuits."
+    - "Avoiding checklists in an emergency."
+  answer: 0
+  explanation: "Under workload attention narrows and pilots fixate on the problem. Flying the aeroplane always comes first, then navigation, then communication. Troubleshooting a radio is a low priority compared with height and speed control."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-092
+  kind: mcq
+  elements: ["PHFC 2.15.9"]
+  stem: "How can a thorough passenger briefing promote safe flight?"
+  options:
+    - "It is only a legal requirement with no safety benefit."
+    - "It allows the pilot to delegate control of the aircraft."
+    - "It builds rapport so passengers can help (e.g. spotting traffic) and are more accepting of a decision to divert or cancel."
+    - "It removes the need for a pre-flight weather check."
+  answer: 2
+  explanation: "Good interpersonal relationships turn passengers into a resource: extra eyes for traffic, help with charts, and less pressure to continue when the pilot decides to turn back. It does not delegate the pilot's responsibilities."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-093
+  kind: mcq
+  elements: ["PHFC 2.15.3", "PHFC 2.15.6"]
+  stem: "In TEM terms, an aircraft that is 20 kt fast and high on short final is best described as:"
+  options:
+    - "A threat."
+    - "An undesired aircraft state, from which the safest recovery is often a go-around."
+    - "An error."
+    - "A normal approach."
+  answer: 1
+  explanation: "An undesired aircraft state is a position, speed, attitude or configuration that reduces safety margins, resulting from an unmanaged threat or error. Recognise it and recover: an unstable approach should normally become a go-around."
+  references: ["PHFC 2.15"]
+  difficulty: 2

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 440" role="img" data-prefix="cil">
+<title>Where carburettor ice forms</title>
+<desc>The same updraft carburettor showing the three kinds of engine ice. Impact ice forms on the air intake and filter in visible moisture at or below freezing. Fuel evaporation ice forms in the venturi and downstream of the fuel nozzle, where evaporating fuel takes heat from the air. Throttle ice forms on and behind the partly closed throttle butterfly, where the pressure drop is largest; it is the most common and most dangerous. The pressure drop and fuel evaporation together can cool the air by 20 to 30 degrees, so ice forms in air well above freezing. Carburettor heat brings hot air from a muff around the exhaust.</desc>
+<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+<g transform="translate(-40 0)">
+<!-- carburettor body -->
+<path class="sketch" d="M300 380 L300 292 C300 262 336 252 336 232 C336 212 300 202 300 172 L300 34" fill="none" stroke="var(--color-fg)" stroke-width="2.5"/>
+<path class="sketch" d="M420 380 L420 292 C420 262 384 252 384 232 C384 212 420 202 420 172 L420 34" fill="none" stroke="var(--color-fg)" stroke-width="2.5"/>
+<!-- float chamber and fuel path, quiet -->
+<rect class="sketch" x="150" y="226" width="110" height="80" rx="6" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" data-fill-style="solid"/>
+<text x="205" y="272" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">float chamber</text>
+<path d="M260 296 L360 296 L360 240" fill="none" stroke="var(--color-fg-muted)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- air in, and the carburettor heat source -->
+<line x1="360" y1="430" x2="360" y2="390" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text x="372" y="426" font-size="12" fill="var(--color-sky-fg)" font-weight="600">air in</text>
+<rect class="sketch" x="470" y="372" width="120" height="34" rx="8" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.5" data-fill-style="solid"/>
+<text x="530" y="393" font-size="11" text-anchor="middle" fill="var(--color-warn-fg)" font-weight="600">exhaust heat muff</text>
+<path d="M470 389 C 450 389 440 372 424 364" fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text x="470" y="422" font-size="11" fill="var(--color-warn-fg)">carburettor heat:</text>
+<text x="470" y="436" font-size="11" fill="var(--color-warn-fg)">hot, unfiltered air</text>
+<line x1="360" y1="96" x2="360" y2="44" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text x="432" y="48" font-size="11" fill="var(--color-fg-muted)">to the cylinders</text>
+<!-- throttle butterfly, nearly closed (low power) -->
+<line x1="304" y1="134" x2="416" y2="116" stroke="var(--color-fg)" stroke-width="4" stroke-linecap="round"/>
+<circle cx="360" cy="125" r="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+<!-- 1 throttle ice: on and behind the butterfly -->
+<path class="sketch" d="M304 134 C 316 150 340 150 352 136 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" data-fill-style="solid"/>
+<path class="sketch" d="M302 120 C 300 100 312 92 318 112 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" data-fill-style="solid"/>
+<path class="sketch" d="M418 104 C 420 90 410 84 404 104 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" data-fill-style="solid"/>
+<circle cx="440" cy="118" r="11" fill="var(--color-brand)"/>
+<text x="440" y="122" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700">1</text>
+<text x="458" y="114" font-size="13" fill="var(--color-bad)" font-weight="700">Throttle ice</text>
+<text x="458" y="131" font-size="11" fill="var(--color-fg-muted)">on and behind the butterfly; worst</text>
+<text x="458" y="145" font-size="11" fill="var(--color-fg-muted)">at low power, nearly closed:</text>
+<text x="458" y="159" font-size="11" fill="var(--color-bad)" font-weight="600">most common, most dangerous</text>
+<!-- 2 fuel evaporation ice: venturi and downstream of the nozzle -->
+<path class="sketch" d="M336 236 C 346 226 346 210 334 204 C 330 214 330 226 336 236 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" data-fill-style="solid"/>
+<path class="sketch" d="M384 236 C 374 226 374 210 386 204 C 390 214 390 226 384 236 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" data-fill-style="solid"/>
+<path class="sketch" d="M302 186 C 312 180 314 166 302 160 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" data-fill-style="solid"/>
+<g fill="var(--color-fg-muted)"><circle cx="360" cy="230" r="2"/><circle cx="354" cy="218" r="1.6"/><circle cx="366" cy="214" r="1.6"/><circle cx="358" cy="202" r="1.4"/></g>
+<circle cx="440" cy="222" r="11" fill="var(--color-brand)"/>
+<text x="440" y="226" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700">2</text>
+<text x="458" y="218" font-size="13" fill="var(--color-fg)" font-weight="700">Fuel evaporation ice</text>
+<text x="458" y="235" font-size="11" fill="var(--color-fg-muted)">venturi and downstream of the jet,</text>
+<text x="458" y="249" font-size="11" fill="var(--color-fg-muted)">any power: evaporating fuel takes</text>
+<text x="458" y="263" font-size="11" fill="var(--color-fg-muted)">heat from the air. Serious</text>
+<!-- 3 impact ice: intake and filter -->
+<rect class="sketch" x="300" y="372" width="120" height="14" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" data-fill-style="cross-hatch" data-hachure-gap="5"/>
+<path class="sketch" d="M300 372 C 320 362 340 364 360 370 C 380 362 400 364 420 372 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" data-fill-style="solid"/>
+<text x="300" y="400" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">air filter</text>
+<circle cx="282" cy="366" r="11" fill="var(--color-brand)"/>
+<text x="282" y="370" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700">3</text>
+</g>
+<text x="20" y="338" font-size="13" fill="var(--color-fg)" font-weight="700">Impact ice</text>
+<text x="20" y="355" font-size="11" fill="var(--color-fg-muted)">intake, filter and ducting:</text>
+<text x="20" y="369" font-size="11" fill="var(--color-fg-muted)">cloud, rain or sleet at or</text>
+<text x="20" y="383" font-size="11" fill="var(--color-fg-muted)">below freezing</text>
+<!-- why: the cooling -->
+<rect x="16" y="40" width="226" height="98" rx="10" fill="var(--color-sky-soft)"/>
+<text x="28" y="64" font-size="13" fill="var(--color-sky-fg)" font-weight="700">Why it ices on a warm day</text>
+<text x="28" y="84" font-size="11" fill="var(--color-sky-fg)">The pressure drop in the venturi and</text>
+<text x="28" y="98" font-size="11" fill="var(--color-sky-fg)">the evaporating fuel cool the air by</text>
+<text x="28" y="116" font-size="14" fill="var(--color-sky-fg)" font-weight="700" class="num">20 to 30 °C</text>
+<text x="28" y="131" font-size="11" fill="var(--color-sky-fg)">High humidity is the common factor.</text>
+</svg>

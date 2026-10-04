@@ -1,0 +1,26 @@
+{# Top-bar dropdown. Empty output when there is no query, so the panel stays hidden. #}
+{% from "_icons.html" import icon %}
+{% set kind_icons = {"note": "notes", "subtopic": "book", "element": "target", "reference": "reference", "question": "quiz", "card": "cards"} %}
+{% if terms %}
+  {% if hits %}
+    <ul class="suggest-list" role="listbox" aria-label="Suggestions">
+      {% for h in hits %}
+        <li role="presentation">
+          <a href="{{ h.entry.url }}" class="suggest-item" role="option" id="suggest-{{ loop.index }}">
+            <span class="suggest-icon suggest-icon-{{ h.kind }}">{{ icon(kind_icons[h.kind], "size-4") }}</span>
+            <span class="min-w-0 flex-1">
+              <span class="suggest-title">{{ h.entry.title | highlight_terms(terms) }}</span>
+              <span class="suggest-context">{{ kind_labels[h.kind] }}{% if h.entry.context and h.entry.context != h.entry.title %} · {{ h.entry.context }}{% endif %}</span>
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    <a href="/search?q={{ query | urlencode }}" class="suggest-all" id="suggest-all">
+      <span>See all {{ total }} result{{ "s" if total != 1 }} for “{{ query }}”</span>
+      <kbd aria-hidden="true">↵</kbd>
+    </a>
+  {% else %}
+    <p class="suggest-empty">Nothing matches “{{ query }}”. Try fewer or shorter words, or a code like <code>RBKA 3.6</code>.</p>
+  {% endif %}
+{% endif %}

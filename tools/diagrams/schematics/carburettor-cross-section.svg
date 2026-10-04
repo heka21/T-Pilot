@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 440" role="img" data-prefix="ccs">
+<title>Inside a float-type carburettor</title>
+<desc>An updraft float carburettor in cross-section. Air enters at the bottom and speeds up through the venturi, where its pressure drops. Fuel from the tank fills the float chamber, where a float and needle valve hold a constant level. The low pressure in the venturi draws fuel from the float chamber through the main jet and out of the discharge nozzle, where it atomises into the airflow. The mixture control meters the fuel reaching the jet; the throttle butterfly above the venturi controls how much mixture goes to the cylinders.</desc>
+<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+<!-- carburettor body: tube walls with the venturi waist -->
+<path class="sketch" d="M300 396 L300 292 C300 262 336 252 336 232 C336 212 300 202 300 172 L300 34" fill="none" stroke="var(--color-fg)" stroke-width="2.5"/>
+<path class="sketch" d="M420 396 L420 292 C420 262 384 252 384 232 C384 212 420 202 420 172 L420 34" fill="none" stroke="var(--color-fg)" stroke-width="2.5"/>
+<!-- airflow -->
+<line x1="340" y1="400" x2="340" y2="320" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="380" y1="400" x2="380" y2="320" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<line x1="360" y1="96" x2="360" y2="44" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow)"/>
+<text x="436" y="396" font-size="12" fill="var(--color-sky-fg)" font-weight="600">air in, through the filter</text>
+<text x="436" y="40" font-size="12" fill="var(--color-fg)" font-weight="600">mixture to the cylinders</text>
+<text x="436" y="56" font-size="11" fill="var(--color-fg-muted)">(intake manifold)</text>
+<!-- venturi annotation -->
+<text x="436" y="226" font-size="13" fill="var(--color-brand)" font-weight="700">Venturi</text>
+<text x="436" y="243" font-size="11" fill="var(--color-fg-muted)">air speeds up, pressure drops,</text>
+<text x="436" y="257" font-size="11" fill="var(--color-fg-muted)">fuel is drawn out of the nozzle</text>
+<line x1="390" y1="232" x2="430" y2="232" stroke="var(--color-fg-muted)" stroke-width="1"/>
+<!-- throttle butterfly -->
+<line x1="304" y1="138" x2="416" y2="112" stroke="var(--color-fg)" stroke-width="4" stroke-linecap="round"/>
+<circle cx="360" cy="125" r="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+<text x="436" y="120" font-size="13" fill="var(--color-fg)" font-weight="700">Throttle butterfly</text>
+<text x="436" y="137" font-size="11" fill="var(--color-fg-muted)">the throttle lever opens it:</text>
+<text x="436" y="151" font-size="11" fill="var(--color-fg-muted)">more mixture, more power</text>
+<!-- float chamber with fuel -->
+<rect class="sketch" x="70" y="226" width="150" height="104" rx="6" fill="var(--color-brand-soft)" stroke="none" data-fill-style="solid"/>
+<rect class="sketch" x="70" y="186" width="150" height="144" rx="8" fill="none" stroke="var(--color-fg)" stroke-width="2"/>
+<line x1="72" y1="226" x2="218" y2="226" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3"/>
+<rect class="sketch" x="110" y="214" width="60" height="22" rx="8" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5" data-fill-style="solid"/>
+<text x="140" y="229" font-size="11" text-anchor="middle" fill="var(--color-fg)">float</text>
+<!-- needle valve and fuel inlet -->
+<line x1="140" y1="214" x2="140" y2="192" stroke="var(--color-fg)" stroke-width="2"/>
+<path d="M134 186 L146 186 L140 196 Z" fill="var(--color-fg)"/>
+<path d="M140 186 L140 150 L40 150" fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40" y="140" font-size="12" fill="var(--color-brand)" font-weight="600">fuel from the tank</text>
+<text x="20" y="352" font-size="13" fill="var(--color-fg)" font-weight="700">Float chamber</text>
+<text x="20" y="369" font-size="11" fill="var(--color-fg-muted)">the float and needle valve keep the</text>
+<text x="20" y="383" font-size="11" fill="var(--color-fg-muted)">fuel level constant</text>
+<!-- main jet and discharge nozzle -->
+<path d="M210 316 L360 316 L360 236" fill="none" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="244" y="309" width="18" height="14" fill="var(--color-brand)" stroke="var(--color-fg)" stroke-width="1"/>
+<text x="253" y="344" font-size="12" text-anchor="middle" fill="var(--color-fg)" font-weight="700">main jet</text>
+<!-- mixture control needle -->
+<line x1="253" y1="262" x2="253" y2="306" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round"/>
+<circle cx="253" cy="256" r="7" fill="var(--color-bad)"/>
+<text x="20" y="62" font-size="13" fill="var(--color-bad)" font-weight="700">Mixture control (red knob)</text>
+<text x="20" y="79" font-size="11" fill="var(--color-fg-muted)">a needle at the main jet meters the fuel:</text>
+<text x="20" y="93" font-size="11" fill="var(--color-fg-muted)">pull it out to lean as the air thins</text>
+<path d="M200 98 C 240 130 256 200 253 246" fill="none" stroke="var(--color-fg-muted)" stroke-width="1"/>
+<!-- fuel spray from the nozzle into the airflow -->
+<g fill="var(--color-brand)">
+  <circle cx="360" cy="226" r="2.5"/><circle cx="352" cy="214" r="2"/><circle cx="368" cy="212" r="2"/><circle cx="356" cy="198" r="2"/>
+  <circle cx="366" cy="192" r="1.6"/><circle cx="348" cy="186" r="1.6"/><circle cx="362" cy="176" r="1.6"/><circle cx="354" cy="166" r="1.4"/>
+</g>
+<text x="20" y="430" font-size="11" fill="var(--color-fg-faint)">Simplified updraft carburettor, not to scale. Fuel injection has no venturi or float chamber.</text>
+</svg>

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_study_macros.html" import kdr_list, review_list %}
+{% from "_macros.html" import page_header %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ attempt.title }} results · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header(attempt.title ~ ": results", "Submitted " ~ attempt.submitted_at.strftime("%-d %B %Y %H:%M") ~ " UTC") }}
+
+<section class="card mb-8 space-y-5">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <div class="score-big">{{ (attempt.score_percent or 0) | round | int }}%</div>
+      <p class="mt-1 text-sm text-fg-muted">{{ attempt.correct_count }} of {{ attempt.question_count }} correct · pass mark {{ pass_mark }}%</p>
+    </div>
+    <span class="badge {{ 'ok' if attempt.passed else 'bad' }} text-base px-4 py-1">{{ "PASS" if attempt.passed else "FAIL" }}</span>
+  </div>
+  {% if minutes_used is not none %}
+    <p class="flex items-center gap-1.5 text-sm text-fg-muted">{{ icon("clock", "size-4") }} Time used: <strong class="text-fg">{{ "under 1 min" if minutes_used < 1 else minutes_used | minutes_to_hm }}</strong>{% if exam %} of {{ exam.duration_minutes | minutes_to_hm }}{% endif %}</p>
+  {% endif %}
+  <div class="btn-row">
+    <a href="/quiz?weak=1" class="btn-primary">{{ icon("target", "size-4") }} Quiz the weak areas</a>
+    <a href="/exam" class="btn-secondary">Back to mock exams</a>
+  </div>
+</section>
+
+<section class="mb-8">
+  <h2 class="section-title mb-3">By unit</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Unit</th><th class="num">Correct</th><th class="num">Score</th></tr></thead>
+      <tbody>
+        {% for u in breakdown %}
+          <tr>
+            <td><strong>{{ u.unit_code }}</strong> <span class="text-fg-muted">{{ units[u.unit_code].title if u.unit_code in units }}</span></td>
+            <td class="num">{{ u.correct }}/{{ u.total }}</td>
+            <td class="num"><span class="badge {{ 'ok' if u.percent >= pass_mark else 'bad' }}">{{ u.percent }}%</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-8">
+  <h2 class="section-title">Knowledge Deficiency Report</h2>
+  <p class="mb-3 mt-1 text-sm text-fg-muted">Like CASA's KDR: the syllabus subtopics and knowledge element codes behind the questions you got wrong. Revise these notes first.</p>
+  {{ kdr_list(kdr) }}
+</section>
+
+<section>
+  <h2 class="section-title">Question review</h2>
+  <p class="mb-3 mt-1 text-sm text-fg-muted">Tap a question to see your answer, the correct answer and the explanation.</p>
+  {{ review_list(attempt.answers) }}
+</section>
+{% endblock %}

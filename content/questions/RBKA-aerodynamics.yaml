@@ -1,0 +1,621 @@
+# Questions for unit RBKA, piston engine (2.1) and aerodynamics subtopics 3.1-3.5, 3.7, 3.8. See content/README.md for the format.
+- id: RBKA-A001
+  kind: mcq
+  elements: ["RBKA 2.1.1"]
+  stem: "In an aeroplane with a fixed-pitch propeller, the pilot leans the mixture in cruise. The RPM rises slightly, peaks, then begins to fall with some roughness. The pilot should:"
+  options:
+    - "Continue leaning until the engine runs smoothly again."
+    - "Move the mixture to full rich and leave it there."
+    - "Enrich until the RPM returns to the peak and the engine is smooth, then slightly richer as the POH directs."
+    - "Apply carburettor heat."
+  answer: 2
+  explanation: "With a fixed-pitch propeller the RPM shows the effect of mixture. Peak RPM marks the best power mixture; a falling RPM and roughness show the mixture is too lean. Enrich back to the peak and then slightly rich of peak per the POH. Leaning further risks high temperatures and detonation; full rich wastes fuel; carb heat does not address an over-lean mixture."
+  references: ["RBKA 2.1", "POH"]
+  difficulty: 2
+
+- id: RBKA-A002
+  kind: mcq
+  elements: ["RBKA 2.1.1"]
+  stem: "As an aeroplane with a manual mixture control climbs, the fuel/air mixture becomes:"
+  options:
+    - "Leaner, so the mixture should be enriched."
+    - "Richer, so the mixture should be leaned when the POH permits."
+    - "Unchanged, because the carburettor compensates automatically."
+    - "Richer, so carburettor heat should be applied."
+  answer: 1
+  explanation: "Air density falls with altitude but the carburettor meters roughly the same fuel, so the mixture becomes richer. The pilot leans it (in the cruise, or in the climb only if the POH permits). A simple float carburettor does not compensate automatically, and carb heat would make the mixture richer still."
+  references: ["RBKA 2.1"]
+  difficulty: 1
+
+- id: RBKA-A003
+  kind: mcq
+  elements: ["RBKA 2.1.1"]
+  stem: "During the pre-landing checks, the mixture is normally set to:"
+  options: ["Full rich", "Leaned to peak RPM", "Idle cut-off", "Half way"]
+  answer: 0
+  explanation: "Full rich (unless the POH specifies otherwise for a high-elevation aerodrome) ensures full power is available for a go-around without the risk of an over-lean mixture as the aircraft descends into denser air. Idle cut-off stops the engine and is used only for shutdown."
+  references: ["RBKA 2.1", "POH"]
+  difficulty: 1
+
+- id: RBKA-A004
+  kind: mcq
+  elements: ["RBKA 2.1.2"]
+  stem: "In an aeroplane with a fixed-pitch propeller cruising at constant throttle, the first indication of carburettor icing is usually:"
+  options:
+    - "A rise in oil temperature."
+    - "A gradual decrease in RPM, followed by rough running if not corrected."
+    - "An increase in RPM."
+    - "A sudden rise in manifold pressure."
+  answer: 1
+  explanation: "Ice restricts the airflow to the engine, so power and RPM gradually decrease (with a loss of airspeed or altitude), then the engine runs rough. In a fixed-pitch aeroplane the tachometer is the key indication. Oil temperature is not a primary carb ice indication, and RPM does not rise."
+  references: ["RBKA 2.1", "VFRG carburettor icing"]
+  difficulty: 1
+
+- id: RBKA-A005
+  kind: mcq
+  elements: ["RBKA 2.1.2"]
+  stem: "You apply full carburettor heat after noticing an RPM loss. The RPM drops further, the engine runs roughly for a short time, then the RPM increases. When you return the carb heat to cold the RPM is higher than before you applied heat. This indicates:"
+  options:
+    - "There was no carburettor ice."
+    - "Carburettor ice was present and has been melted."
+    - "The mixture was too lean."
+    - "The carburettor heat system has failed."
+  answer: 1
+  explanation: "Warm air is less dense, so the RPM drops at first in every case. If ice is present, it melts (rough running as water passes through) and the RPM recovers; on return to cold the RPM is higher than before because the restriction has gone. With no ice, the RPM would simply return to its original value."
+  references: ["RBKA 2.1"]
+  difficulty: 2
+
+- id: RBKA-A006
+  kind: mcq
+  elements: ["RBKA 3.1.1"]
+  stem: "Lowering flap at a constant airspeed and angle of attack will:"
+  options:
+    - "Increase lift and decrease drag."
+    - "Increase both lift and drag."
+    - "Decrease lift and increase drag."
+    - "Decrease both lift and drag."
+  answer: 1
+  explanation: "Flap increases the wing's camber, increasing the lift coefficient (and CLmax), so lift increases; it also increases drag. Small settings give mostly extra lift, large settings mostly extra drag, but both increase. Raising flap reduces both."
+  references: ["RBKA 3.1"]
+  difficulty: 1
+
+- id: RBKA-A007
+  kind: mcq
+  elements: ["RBKA 3.1.2"]
+  stem: "For a typical low-speed aerofoil, the angles of attack for best lift/drag ratio and for maximum lift are approximately:"
+  options:
+    - "0 degrees and 10 degrees"
+    - "4 degrees and 16 degrees"
+    - "8 degrees and 25 degrees"
+    - "16 degrees and 4 degrees"
+  answer: 1
+  explanation: "The best L/D (most efficient) angle is about 4 degrees, and maximum lift (CLmax, the critical angle) is about 16 degrees. The last option reverses them; the others are not typical values."
+  references: ["RBKA 3.1"]
+  difficulty: 1
+
+- id: RBKA-A008
+  kind: mcq
+  elements: ["RBKA 3.1.3"]
+  stem: "The best glide speed of an aeroplane corresponds to flying the wing at:"
+  options:
+    - "The critical angle of attack."
+    - "The angle of attack for the best lift/drag ratio."
+    - "Zero angle of attack."
+    - "The angle of attack for maximum drag."
+  answer: 1
+  explanation: "The flattest glide and greatest still-air distance come from the best L/D angle of attack (about 4 degrees), which at a given weight corresponds to the best glide speed. The critical angle corresponds to the stall speed. Zero angle of attack would produce almost no lift."
+  references: ["RBKA 3.1", "RBKA 3.4"]
+  difficulty: 1
+
+- id: RBKA-A009
+  kind: mcq
+  elements: ["RBKA 3.1.3"]
+  stem: "Why does the stall speed increase when the aeroplane is heavier?"
+  options:
+    - "The critical angle of attack is smaller at higher weight."
+    - "More lift is required, so the critical angle of attack is reached at a higher airspeed."
+    - "The centre of pressure moves rearward."
+    - "Induced drag decreases at higher weight."
+  answer: 1
+  explanation: "The critical angle stays the same (about 16 degrees). A heavier aeroplane needs more lift; since the maximum lift coefficient is fixed, it needs more dynamic pressure, so the critical angle is reached at a higher IAS. Induced drag increases, not decreases, with weight."
+  references: ["RBKA 3.1"]
+  difficulty: 2
+
+- id: RBKA-A010
+  kind: mcq
+  elements: ["RBKA 3.1.4"]
+  stem: "In straight and level flight at constant weight, as the airspeed is reduced:"
+  options:
+    - "The angle of attack must decrease and the nose attitude lowers."
+    - "The angle of attack must increase and the nose attitude rises."
+    - "The angle of attack stays the same but the nose rises."
+    - "Neither angle of attack nor attitude change."
+  answer: 1
+  explanation: "Lift must equal weight. Less speed means less dynamic pressure, so the angle of attack must increase to keep lift constant. In level flight the relative airflow is horizontal, so a higher angle of attack means a higher nose attitude."
+  references: ["RBKA 3.1"]
+  difficulty: 1
+
+- id: RBKA-A011
+  kind: mcq
+  elements: ["RBKA 3.2.1"]
+  stem: "The further (secondary) effect of applying right rudder in level flight, without aileron, is:"
+  options:
+    - "Pitch up."
+    - "Roll to the left."
+    - "Roll to the right."
+    - "No further effect."
+  answer: 2
+  explanation: "Right rudder yaws the nose right. The left (outer) wing then moves faster and produces more lift, and the sideslip acts on the dihedral, so the aeroplane rolls right. Uncorrected, this leads to a spiral descent. Roll to the left is the wrong direction."
+  references: ["RBKA 3.2"]
+  difficulty: 2
+
+- id: RBKA-A012
+  kind: mcq
+  elements: ["RBKA 3.2.1"]
+  stem: "The ailerons control movement about which axis, and what is their initial further effect?"
+  options:
+    - "Lateral axis; pitch."
+    - "Longitudinal axis; adverse yaw away from the intended turn."
+    - "Normal axis; roll."
+    - "Longitudinal axis; yaw towards the intended turn."
+  answer: 1
+  explanation: "Ailerons roll the aeroplane about the longitudinal axis. The down-going aileron on the rising wing creates more drag, giving adverse yaw away from the turn, which coordinated rudder corrects. Later, the sideslip towards the low wing yaws the nose towards it, but the initial effect is adverse yaw."
+  references: ["RBKA 3.2"]
+  difficulty: 2
+
+- id: RBKA-A013
+  kind: mcq
+  elements: ["RBKA 3.2.2"]
+  stem: "At low airspeed with high power set (for example during a go-around), the control that is LEAST improved by the propeller slipstream is:"
+  options: ["The elevator", "The rudder", "The ailerons", "All are equally improved"]
+  answer: 2
+  explanation: "The slipstream flows over the tail, increasing the effectiveness of the elevator and rudder. The ailerons are mostly outside the slipstream, so at low airspeed they remain relatively ineffective."
+  references: ["RBKA 3.2"]
+  difficulty: 2
+
+- id: RBKA-A014
+  kind: mcq
+  elements: ["RBKA 3.2.2"]
+  stem: "In a typical single-engine trainer, when power is increased the aeroplane tends to:"
+  options:
+    - "Pitch nose-up and require nose-down trim."
+    - "Pitch nose-down and require nose-up trim."
+    - "Roll without any pitch change."
+    - "Show no trim change."
+  answer: 0
+  explanation: "In most light single-engine aeroplanes, increased power gives a nose-up pitch (thrust line and slipstream over the tailplane) and a yaw that needs rudder. The pilot holds the attitude and re-trims nose-down. A power reduction gives the opposite."
+  references: ["RBKA 3.2"]
+  difficulty: 2
+
+- id: RBKA-A015
+  kind: mcq
+  elements: ["RBKA 3.2.3"]
+  stem: "The purpose of the elevator trim is to:"
+  options:
+    - "Provide the primary control of pitch during manoeuvres."
+    - "Remove sustained control pressure so the aircraft holds the selected attitude without pilot effort."
+    - "Increase the aircraft's stall speed."
+    - "Change the position of the centre of gravity."
+  answer: 1
+  explanation: "Trim relieves steady control pressure once the attitude and power are set, reducing workload and fatigue. The elevator is the primary pitch control; trim is not used to manoeuvre. Trim does not change the stall speed or move the CG."
+  references: ["RBKA 3.2"]
+  difficulty: 1
+
+- id: RBKA-A016
+  kind: mcq
+  elements: ["RBKA 3.2.4"]
+  stem: "Flying level at constant IAS, the pilot raises the flap. To maintain height, the pilot must:"
+  options:
+    - "Lower the nose, because lift increases."
+    - "Raise the nose (increase the angle of attack), because lift decreases and the stall speed increases."
+    - "Make no change, because flap only affects drag."
+    - "Reduce power, because drag increases."
+  answer: 1
+  explanation: "Raising flap reduces camber, so lift at the same angle of attack falls and the aeroplane sinks; the stall speed rises. The pilot raises the nose to restore the angle of attack. Drag decreases, not increases, when flap is raised."
+  references: ["RBKA 3.2"]
+  difficulty: 2
+
+- id: RBKA-A017
+  kind: mcq
+  elements: ["RBKA 3.3.1"]
+  stem: "An aeroplane's take-off weight increases. Its rate of climb and angle of climb will:"
+  options:
+    - "Both increase."
+    - "Both decrease."
+    - "Rate decreases, angle increases."
+    - "Neither changes."
+  answer: 1
+  explanation: "A heavier aeroplane needs more lift (more induced drag), so it has less excess thrust and excess power, and that reduced excess must lift a greater weight. Both rate and angle of climb decrease."
+  references: ["RBKA 3.3"]
+  difficulty: 1
+
+- id: RBKA-A018
+  kind: mcq
+  elements: ["RBKA 3.3.1"]
+  stem: "Compared with climbing at a sea-level aerodrome on a cool day, climbing out of a high-elevation aerodrome on a hot day (high density altitude) gives:"
+  options:
+    - "Higher rate and angle of climb."
+    - "Lower rate and angle of climb."
+    - "Higher rate, lower angle."
+    - "No change, because IAS is the same."
+  answer: 1
+  explanation: "High density altitude means thinner air: a normally aspirated engine produces less power and the propeller less thrust, so excess power and thrust fall. Both rate and angle of climb decrease, even though the aeroplane is flown at the same IAS."
+  references: ["RBKA 3.3"]
+  difficulty: 1
+
+- id: RBKA-A019
+  kind: mcq
+  elements: ["RBKA 3.3.1"]
+  stem: "Climbing in a 30 degree banked turn, compared with a wings-level climb at the same speed and power:"
+  options:
+    - "Rate and angle of climb both decrease."
+    - "Rate and angle of climb both increase."
+    - "Rate is unchanged, angle decreases."
+    - "Rate decreases, angle is unchanged."
+  answer: 0
+  explanation: "In a banked turn part of the lift turns the aeroplane, so the wing must produce more total lift, at a higher angle of attack, with more induced drag. Less excess thrust and power remain, so both rate and angle decrease."
+  references: ["RBKA 3.3"]
+  difficulty: 1
+
+- id: RBKA-A020
+  kind: mcq
+  elements: ["RBKA 3.3.1"]
+  stem: "Shortly after take-off the headwind suddenly decreases (wind shear). The immediate effect on the climb is:"
+  options:
+    - "A momentary increase in IAS and climb performance."
+    - "A momentary loss of IAS and climb performance."
+    - "No effect, because rate of climb is not affected by wind."
+    - "An increase in the angle of climb over the ground."
+  answer: 1
+  explanation: "Inertia keeps the groundspeed for a moment, so losing headwind means losing airspeed. The aeroplane loses performance (and may sink) while it re-accelerates. A steady wind does not change the rate of climb, but a sudden change of wind (shear) does, temporarily."
+  references: ["RBKA 3.3"]
+  difficulty: 2
+
+- id: RBKA-A021
+  kind: numeric
+  elements: ["RBKA 3.3.1"]
+  stem: "An aeroplane climbs at 600 fpm at 75 kt TAS into a 15 kt headwind. What is its climb gradient over the ground, in feet per nautical mile?"
+  answer: 600
+  tolerance: 2
+  unit: "ft/NM"
+  explanation: "Groundspeed = 75 − 15 = 60 kt = 1 NM per minute. Gradient = 600 × 60 ÷ 60 = 600 ft per NM. In still air (GS 75 kt) it would be 480 ft per NM: the headwind steepens the path over the ground but does not change the 600 fpm rate."
+  references: ["RBKA 3.3"]
+  difficulty: 2
+
+- id: RBKA-A022
+  kind: mcq
+  elements: ["RBKA 3.4.1"]
+  stem: "During a descent at constant IAS, the pilot reduces power. The rate of descent, angle of descent and nose attitude will be:"
+  options:
+    - "Increased; steeper; lower"
+    - "Decreased; shallower; higher"
+    - "Increased; steeper; higher"
+    - "Unchanged; unchanged; lower"
+  answer: 0
+  explanation: "Less thrust means the aeroplane must point further downhill to hold the same IAS, so the nose is lowered, the path is steeper and the rate of descent increases. Adding power has the opposite effect: shallower, less rate, nose higher."
+  references: ["RBKA 3.4"]
+  difficulty: 1
+
+- id: RBKA-A023
+  kind: mcq
+  elements: ["RBKA 3.4.1"]
+  stem: "On a glide approach at constant IAS, extending more flap will:"
+  options:
+    - "Flatten the approach path and raise the nose attitude."
+    - "Steepen the approach path, increase the rate of descent and lower the nose attitude."
+    - "Have no effect on the approach path."
+    - "Steepen the path but raise the nose attitude."
+  answer: 1
+  explanation: "Flap adds drag, reducing L/D, so the glide steepens and the rate of descent increases at the same IAS. The extra camber also means less angle of attack is needed, so together with the steeper path the nose attitude is lower, giving a better view of the runway."
+  references: ["RBKA 3.4"]
+  difficulty: 2
+
+- id: RBKA-A024
+  kind: mcq
+  elements: ["RBKA 3.4.2"]
+  stem: "Gliding at the best glide speed into a headwind, compared with still air, the glide distance over the ground and the rate of descent are:"
+  options:
+    - "Distance reduced; rate of descent unchanged."
+    - "Distance increased; rate of descent unchanged."
+    - "Distance unchanged; rate of descent increased."
+    - "Both reduced."
+  answer: 0
+  explanation: "The aeroplane glides through the air mass, so its rate of descent and glide angle through the air are unchanged. The headwind reduces groundspeed, so it covers less ground in the time it takes to descend: the path over the ground is steeper and the distance is reduced. A tailwind increases the distance."
+  references: ["RBKA 3.4"]
+  difficulty: 1
+
+- id: RBKA-A025
+  kind: numeric
+  elements: ["RBKA 3.4.2"]
+  stem: "An aeroplane glides at 60 kt TAS and takes 4 minutes to descend to the ground. With a 15 kt tailwind, how far does it travel over the ground, in nautical miles?"
+  answer: 5
+  tolerance: 0
+  unit: "NM"
+  explanation: "Groundspeed = 60 + 15 = 75 kt = 1.25 NM per minute. In 4 minutes: 4 × 1.25 = 5 NM. In still air it would be 4 NM, and with a 15 kt headwind 3 NM. The time to descend is the same in each case."
+  references: ["RBKA 3.4"]
+  difficulty: 2
+
+- id: RBKA-A026
+  kind: mcq
+  elements: ["RBKA 3.4.3"]
+  stem: "After an engine failure, a pilot raises the nose and glides 10 kt slower than the recommended glide speed to 'stretch' the glide. In still air the result is:"
+  options:
+    - "A longer glide, because the aeroplane is slower."
+    - "A shorter glide, because the lift/drag ratio is reduced by the higher induced drag."
+    - "The same glide distance, because height is unchanged."
+    - "A longer glide, because parasite drag is lower."
+  answer: 1
+  explanation: "Glide distance = height × L/D. The best L/D occurs only at the recommended glide speed. Slower than this, the higher angle of attack produces much more induced drag, L/D falls and the glide steepens, as well as reducing the stall margin. Faster than best glide also shortens the glide, through higher parasite drag."
+  references: ["RBKA 3.4"]
+  difficulty: 2
+
+- id: RBKA-A027
+  kind: numeric
+  elements: ["RBKA 3.4.3"]
+  stem: "An aeroplane has a best lift/drag ratio of 8:1. In still air at best glide speed, how far can it glide from 2400 ft AGL, in feet?"
+  answer: 19200
+  tolerance: 0
+  unit: "ft"
+  explanation: "Glide distance = height × L/D = 2400 × 8 = 19,200 ft, about 3.2 NM. At any other speed the L/D is less than 8, so the distance would be shorter."
+  references: ["RBKA 3.4"]
+  difficulty: 1
+
+- id: RBKA-A028
+  kind: mcq
+  elements: ["RBKA 3.5.1"]
+  stem: "In a level turn to the left, the balance ball is displaced to the left (towards the low wing). The aeroplane is:"
+  options:
+    - "In balance."
+    - "Skidding; reduce left rudder."
+    - "Slipping; apply more left rudder (or reduce bank)."
+    - "Skidding; apply right rudder."
+  answer: 2
+  explanation: "Ball towards the low wing means a slip: too much bank for the rate of yaw. Correct by stepping on the ball, applying left rudder (or reducing bank). A skid would show the ball displaced towards the outside (high wing)."
+  references: ["RBKA 3.5"]
+  difficulty: 2
+
+- id: RBKA-A029
+  kind: mcq
+  elements: ["RBKA 3.5.2"]
+  stem: "Load factor is defined as:"
+  options:
+    - "Weight divided by wing area."
+    - "Lift divided by weight."
+    - "Thrust divided by drag."
+    - "The aeroplane's maximum take-off weight."
+  answer: 1
+  explanation: "Load factor n = lift ÷ weight, expressed in 'g'. It is 1 in level flight and rises in turns and pull-ups. Weight divided by wing area is the wing loading, which in a manoeuvre is effectively multiplied by the load factor."
+  references: ["RBKA 3.5"]
+  difficulty: 1
+
+- id: RBKA-A030
+  kind: mcq
+  elements: ["RBKA 3.5.3"]
+  stem: "As the bank angle in a level turn is increased steadily from 0 to 75 degrees, the stall speed:"
+  options:
+    - "Increases at a steady, constant rate."
+    - "Increases slowly at first, then very rapidly at steep angles of bank."
+    - "Decreases."
+    - "Does not change, because the critical angle of attack is constant."
+  answer: 1
+  explanation: "Stall speed rises with the square root of load factor (1 ÷ cos bank). Up to 30 degrees the increase is about 7 percent, at 45 degrees 19 percent, at 60 degrees 41 percent and at 75 degrees nearly 100 percent: the curve steepens rapidly. The critical angle is constant, but more lift is needed so it is reached at a higher speed."
+  references: ["RBKA 3.5"]
+  difficulty: 2
+
+- id: RBKA-A031
+  kind: mcq
+  elements: ["RBKA 3.5.3"]
+  stem: "A normal category aeroplane has a limit load factor of +3.8 g. If a pilot exceeds this in a steep turn, the most likely result is:"
+  options:
+    - "No effect, because there is a large safety margin."
+    - "Possible permanent deformation of the structure; the aircraft must be inspected before further flight."
+    - "An immediate engine failure."
+    - "A reduction in stall speed."
+  answer: 1
+  explanation: "Beyond the limit load the structure may be permanently deformed (wrinkled skin, popped rivets, bent members); beyond the ultimate load (normally 1.5 × limit) it may fail. An overstress must be reported and inspected. The load factor raises, not lowers, the stall speed."
+  references: ["RBKA 3.5", "POH"]
+  difficulty: 2
+
+- id: RBKA-A032
+  kind: mcq
+  elements: ["RBKA 3.5.4"]
+  stem: "Which is a reason to avoid steep turns on the approach to land?"
+  options:
+    - "The stall speed decreases in the turn."
+    - "The rate of descent increases and the stall speed rises towards the low approach speed, with little height to recover."
+    - "The engine may overheat."
+    - "The aeroplane will climb uncontrollably."
+  answer: 1
+  explanation: "On approach the speed is already low. Bank raises the stall speed towards it and increases the rate of descent, and at low height there is no room to recover from a stall or incipient spin. Over-ruddering to tighten the turn adds a skid, the classic stall-spin set-up."
+  references: ["RBKA 3.5"]
+  difficulty: 1
+
+- id: RBKA-A033
+  kind: mcq
+  elements: ["RBKA 3.5.4"]
+  stem: "Why should steep turns be avoided shortly after take-off?"
+  options:
+    - "Because ATC prohibits all turns below 1000 ft."
+    - "Because the speed is low, bank raises the stall speed and reduces climb performance, and there is little height for recovery or for handling an engine failure."
+    - "Because steep turns increase climb performance too much."
+    - "Because the flaps cannot be retracted in a turn."
+  answer: 1
+  explanation: "After take-off the aeroplane is slow and low. Bank raises the stall speed and reduces the rate and angle of climb, obstacle clearance suffers, and an engine failure or stall leaves no height to recover. Climb performance decreases (not increases) with bank. Turn restrictions in the circuit are a separate rules topic."
+  references: ["RBKA 3.5"]
+  difficulty: 1
+
+- id: RBKA-A034
+  kind: mcq
+  elements: ["RBKA 3.5.5"]
+  stem: "Flying a balanced low-level turn from into wind to downwind in a strong wind, the aeroplane appears (from ground references) to slip and to speed up. The correct response is to:"
+  options:
+    - "Apply rudder to correct the apparent slip."
+    - "Raise the nose to reduce the apparent high speed."
+    - "Ignore the visual illusion and maintain balance and airspeed by reference to the ball and ASI."
+    - "Reduce power to idle."
+  answer: 2
+  explanation: "The turn is balanced relative to the air mass; the apparent slip and speed come from wind drift and the higher groundspeed. Reacting with rudder creates a real skid, and raising the nose or reducing power lowers the real airspeed towards the raised turning stall speed. Fly the instruments: ball centred, correct IAS."
+  references: ["RBKA 3.5"]
+  difficulty: 2
+
+- id: RBKA-A035
+  kind: numeric
+  elements: ["RBKA 3.5.6"]
+  stem: "An aeroplane's level-flight stall speed is 55 kt. What is its stall speed in a level turn at 45 degrees of bank, to the nearest knot?"
+  answer: 65
+  tolerance: 1
+  unit: "kt"
+  explanation: "Load factor at 45 degrees = 1 ÷ cos 45 = 1.414. Stall speed rises with √1.414 = 1.19. 55 × 1.19 = 65.4, so 65 kt. Multiplying by the load factor itself (78 kt) is the common error."
+  references: ["RBKA 3.5"]
+  difficulty: 2
+
+- id: RBKA-A036
+  kind: numeric
+  elements: ["RBKA 3.5.6"]
+  stem: "What is the load factor in a level turn at 60 degrees of bank?"
+  answer: 2
+  tolerance: 0
+  unit: "g"
+  explanation: "Load factor = 1 ÷ cos 60 = 1 ÷ 0.5 = 2 g. The wing must produce twice the aeroplane's weight in lift, and the stall speed rises by √2, about 41 percent."
+  references: ["RBKA 3.5"]
+  difficulty: 1
+
+- id: RBKA-A037
+  kind: mcq
+  elements: ["RBKA 3.7.1"]
+  stem: "A tricycle-gear aeroplane is landed fast in a flat attitude with forward pressure on the control column, and begins to wheelbarrow. The recommended action is to:"
+  options:
+    - "Apply more forward pressure to keep the nosewheel on the ground."
+    - "Close the throttle and ease the control column back to transfer weight to the main wheels, or go around if speed is high or runway remaining is short."
+    - "Brake hard immediately."
+    - "Apply full rudder to keep straight."
+  answer: 1
+  explanation: "Wheelbarrowing means too much weight on the nosewheel while the wing still produces lift, so directional control is poor. Easing back puts the weight onto the main wheels; closing the throttle removes remaining lift and speed. A go-around is the safe option if the speed is high or runway is short. More forward pressure or heavy braking makes it worse."
+  references: ["RBKA 3.7"]
+  difficulty: 2
+
+- id: RBKA-A038
+  kind: mcq
+  elements: ["RBKA 3.7.2"]
+  stem: "When taxiing a high-wing aeroplane in a strong wind from the left rear quarter, the recommended control position is:"
+  options:
+    - "Left aileron up, elevator neutral."
+    - "Left aileron down (control column to the right) and elevator forward."
+    - "Control column fully back and ailerons neutral."
+    - "Left aileron up and elevator fully back."
+  answer: 1
+  explanation: "With a tailwind quadrant wind, 'dive away from the wind': control column forward and away from the wind, which lowers the upwind (left) aileron and keeps the wind from lifting the left wing and tail. A headwind quadrant wind calls for aileron into wind with elevator neutral (tricycle). High-wing aeroplanes are particularly vulnerable because the wind gets under the high, exposed wing."
+  references: ["RBKA 3.7"]
+  difficulty: 3
+
+- id: RBKA-A039
+  kind: mcq
+  elements: ["RBKA 3.7.2"]
+  stem: "During a wing-down crosswind landing, a particular concern in a low-wing aeroplane compared with a high-wing aeroplane is:"
+  options:
+    - "Reduced wing-tip and flap clearance from the ground on the lowered upwind wing."
+    - "The wing being lifted by the wind during taxi."
+    - "The fin being too small to weathercock."
+    - "Ground effect is absent."
+  answer: 0
+  explanation: "The low wing sits close to the ground, so lowering the upwind wing reduces tip and flap clearance and risks a strike. High-wing aeroplanes have more clearance but are more prone to the wind lifting the upwind wing during taxi. Both weathercock, and ground effect is stronger, not absent, for a low wing."
+  references: ["RBKA 3.7"]
+  difficulty: 2
+
+- id: RBKA-A040
+  kind: mcq
+  elements: ["RBKA 3.7.3"]
+  stem: "Which is NOT an advantage of taking off into wind?"
+  options:
+    - "Shorter take-off distance."
+    - "Steeper climb gradient over the ground."
+    - "Lower groundspeed at lift-off."
+    - "Higher rate of climb in feet per minute."
+  answer: 3
+  explanation: "Into wind gives a lower groundspeed at lift-off, a shorter take-off distance and a steeper climb over the ground for better obstacle clearance, plus better directional control. The rate of climb is relative to the air mass and is not changed by a steady wind."
+  references: ["RBKA 3.7"]
+  difficulty: 2
+
+- id: RBKA-A041
+  kind: mcq
+  elements: ["RBKA 3.7.4"]
+  stem: "Compared with a normal approach using full flap, a flapless approach has:"
+  options:
+    - "A lower nose attitude, steeper approach path, lower touchdown speed and shorter landing roll."
+    - "A higher nose attitude, flatter approach path, higher threshold and touchdown speeds and longer landing roll."
+    - "The same attitude and path but a shorter landing roll."
+    - "A higher nose attitude, steeper path and shorter landing roll."
+  answer: 1
+  explanation: "Without flap the wing needs more angle of attack (nose higher), drag is lower so the path is flatter, the stall speed is higher so threshold and touchdown speeds are higher, and the aeroplane floats and rolls further. The first option describes the flap approach."
+  references: ["RBKA 3.7"]
+  difficulty: 1
+
+- id: RBKA-A042
+  kind: mcq
+  elements: ["RBKA 3.7.5"]
+  stem: "On final approach into a strong wind, the headwind decreases rapidly in the last few hundred feet (wind gradient). Without pilot action the aeroplane will:"
+  options:
+    - "Gain airspeed and float, overshooting the aim point."
+    - "Lose airspeed and sink, undershooting the aim point."
+    - "Be unaffected, because it is flying in the air mass."
+    - "Yaw towards the wind."
+  answer: 1
+  explanation: "Inertia holds the groundspeed for a moment, so losing headwind means losing airspeed; the aeroplane sinks and undershoots. That is why extra speed margin and readiness with power are used in strong or gusty winds. An increasing headwind would cause the float and overshoot."
+  references: ["RBKA 3.7", "VFRG wind shear"]
+  difficulty: 2
+
+- id: RBKA-A043
+  kind: mcq
+  elements: ["RBKA 3.7.5"]
+  stem: "Ground effect, within about one wingspan of the surface, causes:"
+  options:
+    - "Increased induced drag, so the aeroplane sinks onto the runway."
+    - "Reduced induced drag and increased lift, so the aeroplane tends to float on landing and may lift off early on take-off."
+    - "Increased parasite drag."
+    - "A higher stall speed and earlier touchdown."
+  answer: 1
+  explanation: "The ground restricts downwash and tip vortices, so induced drag falls and the wing gives more lift at a given angle of attack. A fast aeroplane floats on landing; on take-off it can lift off below normal speed, then lose performance as it climbs out of ground effect. Parasite drag is not reduced."
+  references: ["RBKA 3.7"]
+  difficulty: 1
+
+- id: RBKA-A044
+  kind: mcq
+  elements: ["RBKA 3.8.1"]
+  stem: "A bird strike has dented the leading edge of one wing. The most likely effect on the stall is:"
+  options:
+    - "A lower stall speed on both wings."
+    - "A higher stall speed, with the damaged wing likely to stall first and drop."
+    - "No effect, because the stall depends only on angle of attack."
+    - "The stall warning will activate earlier than normal."
+  answer: 1
+  explanation: "A damaged leading edge makes the airflow separate at a lower angle of attack, so that wing stalls earlier, at a higher speed, giving a wing drop and spin tendency. The stall warning is set for an undamaged wing and may come late or not at all, so it cannot be trusted."
+  references: ["RBKA 3.8"]
+  difficulty: 2
+
+- id: RBKA-A045
+  kind: mcq
+  elements: ["RBKA 3.8.1"]
+  stem: "After structural damage in flight, with height available, what is the recommended way to establish a safe approach speed?"
+  options:
+    - "Use the normal POH approach speed, because the stall speed is unchanged."
+    - "Do a controllability check: in the landing configuration, slow down gradually until control becomes difficult, then fly the approach with a margin above that speed."
+    - "Fly the approach as slowly as possible to minimise the landing roll."
+    - "Extend full flap immediately and then test the stall."
+  answer: 1
+  explanation: "Damage may raise the stall speed and reduce control authority, so the normal speeds may not be safe. A controllability check at a safe height finds the minimum speed at which the aeroplane remains controllable in the intended configuration; the approach is flown with a margin above it, with gentle bank. Slowing to the minimum or deliberately stalling a damaged aircraft is dangerous, and changing configuration (especially flap) may make control worse."
+  references: ["RBKA 3.8"]
+  difficulty: 2
+
+- id: RBKA-A046
+  kind: mcq
+  elements: ["RBKA 3.8.1"]
+  stem: "A bird strike has damaged one flap. Which approach is generally safest?"
+  options:
+    - "Extend full flap as normal to reduce the landing speed."
+    - "Avoid extending the flap, fly a faster flapless approach with gentle turns to a long runway."
+    - "Extend and retract the flap several times to test it."
+    - "Approach at the normal flap speed but with full flap on one side."
+  answer: 1
+  explanation: "A damaged flap may extend asymmetrically and produce a roll the ailerons cannot hold at low speed. Leaving the configuration unchanged and flying a flapless approach at a higher speed, with gentle bank, to a long runway, keeps the aircraft controllable. Cycling the flap invites an asymmetric jam."
+  references: ["RBKA 3.8"]
+  difficulty: 2

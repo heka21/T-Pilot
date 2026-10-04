@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header %}
+{% block title %}Quiz · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header("Practice quiz", "Instant feedback after every question, then a knowledge deficiency report.") }}
+
+{% if error %}<p class="errors mb-6" role="alert">{{ error }}</p>{% endif %}
+
+<form method="post" action="/quiz/start" class="space-y-6">
+  {% if subtopic %}
+    <section class="card space-y-2">
+      <p class="eyebrow">Subtopic</p>
+      <input type="hidden" name="subtopic" value="{{ subtopic.id }}">
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <p class="card-title"><span class="text-fg-muted">{{ subtopic.id }}</span> {{ subtopic.title }}</p>
+        <span class="badge {{ 'ok' if subtopic_count else 'bad' }}">{{ subtopic_count }} question{{ '' if subtopic_count == 1 else 's' }}</span>
+      </div>
+      <p class="text-sm"><a href="/quiz">Choose units instead</a> <span class="text-fg-faint">·</span> <a href="/notes/{{ subtopic.unit_code }}/{{ subtopic.number }}">Read the notes</a></p>
+    </section>
+  {% else %}
+    <div>
+      <p class="mb-3 text-sm text-fg-muted">Tick one or more units, or none for a mix from everything ({{ total_questions }} questions in the bank). Greyed units have no questions yet.</p>
+      <div class="grid gap-4 md:grid-cols-2">
+        {% for exam in exams %}
+          <fieldset class="card">
+            <legend class="sr-only">{{ exam.code }} units</legend>
+            <h2 class="card-title mb-3">{{ exam.code }} <span class="text-sm font-normal text-fg-muted">{{ exam.name }}</span></h2>
+            <div class="flex flex-col gap-2">
+              {% for eu in exam.units %}
+                {% set n = counts.get(eu.unit_code, 0) %}
+                <label class="check{% if not n %} opacity-50 cursor-not-allowed{% endif %}">
+                  <input type="checkbox" name="units" value="{{ eu.unit_code }}" {% if eu.unit_code in selected %}checked{% endif %} {% if not n %}disabled{% endif %}>
+                  <span class="min-w-0 flex-1"><strong>{{ eu.unit_code }}</strong> {{ eu.unit.title }}
+                    <span class="text-xs text-fg-muted">({{ n }} question{{ '' if n == 1 else 's' }})</span></span>
+                </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <fieldset class="field">
+    <legend class="label">Number of questions</legend>
+    <div class="flex flex-wrap gap-2">
+      {% for c in count_choices %}
+        <label class="pill-radio"><input type="radio" name="count" value="{{ c }}" {% if c == count %}checked{% endif %}>{{ c }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <label class="check max-w-xl items-center">
+    <input type="checkbox" class="switch" role="switch" name="weak" value="1" {% if weak %}checked{% endif %}>
+    <span class="min-w-0 flex-1"><span class="font-medium">Focus on my weak areas</span>
+      <span class="block text-xs text-fg-muted">Favours knowledge elements you have got wrong or never tried.</span></span>
+  </label>
+
+  <button type="submit" class="btn-primary btn-lg">Start quiz</button>
+</form>
+{% endblock %}

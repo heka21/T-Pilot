@@ -1,0 +1,39 @@
+# Questions for unit RBKA. See content/README.md for the format.
+- id: RBKA-001
+  kind: mcq
+  elements: ["RBKA 3.6.1"]
+  stem: "During a stall recovery in a light aeroplane, the first action should be to:"
+  options:
+    - "Level the wings with aileron."
+    - "Reduce the angle of attack by easing the control column forward."
+    - "Raise the nose to reduce the rate of descent."
+    - "Apply full opposite rudder."
+  answer: 1
+  explanation: "The stall is caused by exceeding the critical angle of attack, so the first action is always to reduce the angle of attack. Power is applied at the same time or immediately after, and the wings are levelled only once the wing is unstalled. Using aileron while stalled can cause a wing drop and lead to a spin."
+  references: ["RBKA 3.6", "VFRG aerodynamics refresher"]
+  difficulty: 1
+
+- id: RBKA-002
+  kind: numeric
+  elements: ["RBKA 3.6.2"]
+  stem: "An aeroplane has a level-flight stall speed of 48 kt. What is its stall speed, to the nearest knot, in a level turn at 60 degrees of bank?"
+  answer: 68
+  tolerance: 1
+  unit: kt
+  explanation: "Load factor in a level 60 degree turn is 1 / cos 60 = 2. Stall speed increases with the square root of load factor: 48 × √2 = 48 × 1.414 = 67.9, so 68 kt."
+  references: ["RBKA 3.6"]
+  difficulty: 2
+
+- id: RBKA-003
+  kind: mcq
+  elements: ["RBKA 3.6.4"]
+  stem: "While recovering from an unusual attitude you notice the airspeed is high and increasing rapidly, with a steep nose-down attitude and a large angle of bank. The correct recovery is to:"
+  options:
+    - "Apply full opposite rudder and move the control column forward."
+    - "Close the throttle, roll the wings level, then ease out of the dive."
+    - "Apply full power and pull firmly to raise the nose."
+    - "Extend full flap to slow the aircraft."
+  answer: 1
+  explanation: "Rising airspeed shows this is a spiral dive, not a spin. The wing is not stalled. Close the throttle to limit the speed, roll the wings level, then ease out of the dive gently to avoid overstressing the airframe. Pulling before rolling level tightens the spiral."
+  references: ["RBKA 3.6"]
+  difficulty: 2

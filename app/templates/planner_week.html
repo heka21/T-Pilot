@@ -1,0 +1,32 @@
+{# Partial: Mon-Sun week of the active plan. #}
+{% from "_icons.html" import icon %}
+<section id="planner-week" class="mb-8">
+  <div class="mb-3 flex items-center justify-between gap-2">
+    <a href="/planner?week={{ prev_week.isoformat() }}" class="btn-secondary btn-sm" aria-label="Previous week" hx-get="/planner/week?week={{ prev_week.isoformat() }}" hx-target="#planner-week"
+       hx-swap="outerHTML" hx-push-url="/planner?week={{ prev_week.isoformat() }}">{{ icon("arrow-left", "size-4") }}<span class="hidden sm:inline">Previous week</span></a>
+    <h2 class="section-title text-center">Week of {{ week_start.strftime("%-d %B %Y") }}</h2>
+    <a href="/planner?week={{ next_week.isoformat() }}" class="btn-secondary btn-sm" aria-label="Next week" hx-get="/planner/week?week={{ next_week.isoformat() }}" hx-target="#planner-week"
+       hx-swap="outerHTML" hx-push-url="/planner?week={{ next_week.isoformat() }}"><span class="hidden sm:inline">Next week</span>{{ icon("arrow-right", "size-4") }}</a>
+  </div>
+  {% if not (week_start <= today < week_start + (next_week - week_start)) %}
+    <p class="mb-3 text-center text-sm"><a href="/planner" hx-get="/planner/week" hx-target="#planner-week" hx-swap="outerHTML" hx-push-url="/planner">Back to this week</a></p>
+  {% endif %}
+  <div class="week-grid">
+    {% for day in week_days %}
+      <article class="week-day {{ 'today' if day.today }} {{ 'exam-day' if day.exam }}">
+        <h4 class="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wide text-fg-muted">{{ day.date.strftime("%a %-d %b") }}{% if day.today %} <span class="badge badge-brand normal-case tracking-normal">today</span>{% endif %}</h4>
+        {% if day.exam %}
+          <p class="mt-2 text-sm font-semibold text-warn-fg">{{ day.exam }} exam day</p>
+        {% endif %}
+        {% if day["items"] %}
+          <ul class="m-0 mt-1 p-0">
+            {% for item in day["items"] %}{% include "planner_item.html" %}{% endfor %}
+          </ul>
+          <p class="mt-1 text-xs text-fg-muted">{{ day["items"] | sum(attribute="estimated_minutes") | minutes_to_hm }}</p>
+        {% elif not day.exam %}
+          <p class="mt-2 text-xs text-fg-muted">{{ "Rest day" if day.date >= plan.start_date and day.date <= plan.ppla_exam_date else "Outside the plan" }}</p>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+</section>

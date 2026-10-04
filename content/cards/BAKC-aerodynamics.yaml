@@ -1,0 +1,61 @@
+# Flashcards for unit BAKC, aerodynamics subtopics 4.1-4.5. See content/README.md for the format.
+- id: BAKC-AC001
+  elements: ["BAKC 4.1.1"]
+  front: "What is inertia, and why does it matter in wind shear?"
+  back: "Resistance to a change in motion, proportional to mass. In wind shear the aircraft keeps its groundspeed for a moment, so the airspeed changes suddenly (loss of headwind = loss of airspeed)."
+- id: BAKC-AC002
+  elements: ["BAKC 4.1.2"]
+  front: "Define angle of attack and relative airflow."
+  back: "Relative airflow: airflow parallel and opposite to the flight path. Angle of attack: angle between the chord line and the relative airflow (not the pitch attitude)."
+- id: BAKC-AC003
+  elements: ["BAKC 4.1.2"]
+  front: "Centre of pressure versus centre of gravity?"
+  back: "CP: where the total aerodynamic force (lift) acts; moves forward as AoA increases, then rearward at the stall. CG: where total weight acts; depends on loading."
+- id: BAKC-AC004
+  elements: ["BAKC 4.1.2"]
+  front: "Direction of each of the four forces?"
+  back: "Lift: perpendicular to the relative airflow. Drag: parallel to the relative airflow, opposing motion. Weight: vertically down through the CG. Thrust: forward along the thrust line."
+- id: BAKC-AC005
+  elements: ["BAKC 4.1.3"]
+  front: "Chord, span, camber, stall?"
+  back: "Chord: straight line leading to trailing edge. Span: tip to tip. Camber: curvature (chord line to mean camber line). Stall: critical AoA (~15 to 18 degrees) exceeded, airflow separates, lift falls."
+- id: BAKC-AC006
+  elements: ["BAKC 4.2.1"]
+  front: "Effect on lift and drag of doubling airspeed (constant AoA), and of increasing AoA?"
+  back: "Doubling speed: lift and drag × 4 (vary with V²). Increasing AoA: lift and drag both increase up to the critical angle; beyond it lift falls sharply and drag keeps rising."
+- id: BAKC-AC007
+  elements: ["BAKC 4.2.2"]
+  front: "The three kinds of parasite drag, and what causes induced drag?"
+  back: "Parasite: form (shape/wake), skin friction (boundary layer, roughness), interference (junctions). Induced: by-product of lift; tip vortices and downwash tilt lift rearward; greatest at high AoA and low speed."
+- id: BAKC-AC008
+  elements: ["BAKC 4.2.3"]
+  front: "How does total drag vary with airspeed?"
+  back: "U-shaped curve: high at low speed (induced dominates), minimum where induced = parasite (best L/D speed), rising at high speed (parasite rises with V²)."
+- id: BAKC-AC009
+  elements: ["BAKC 4.3.1"]
+  front: "Rate versus angle of climb?"
+  back: "Rate: height per time (fpm), best at Vy, depends on excess power. Angle: height per distance (gradient), best at Vx, depends on excess thrust; used for obstacles. Vx < Vy. Wind changes angle over the ground, not rate."
+- id: BAKC-AC010
+  elements: ["BAKC 4.3.1"]
+  front: "Formula for climb gradient over the ground?"
+  back: "ft per NM = rate of climb (fpm) × 60 ÷ groundspeed (kt). E.g. 600 fpm at 80 kt GS = 450 ft/NM."
+- id: BAKC-AC011
+  elements: ["BAKC 4.4.1", "BAKC 4.4.2"]
+  front: "When are wake vortices strongest, and what is the main hazard?"
+  back: "Heavy, clean, slow (high AoA, flaps up). Main hazard: induced roll that can exceed the following aircraft's roll control, dangerous near the ground."
+- id: BAKC-AC012
+  elements: ["BAKC 4.4.3"]
+  front: "Vortex flow direction and location in cruise?"
+  back: "Outward under the wing, up around the tip, inward over the top (left vortex clockwise seen from behind). Downwash between, upwash outside. They sink behind and below the aircraft, levelling off several hundred feet below its path."
+- id: BAKC-AC013
+  elements: ["BAKC 4.4.3"]
+  front: "Wake avoidance: taking off or landing behind a heavier aircraft?"
+  back: "Vortices exist from its rotation to its touchdown. Taking off after it took off: rotate before its rotation point, climb above its path. Landing after it landed: stay at or above its path, touch down beyond its touchdown point. Allow time. Separation minima: check the current AIP."
+- id: BAKC-AC014
+  elements: ["BAKC 4.4.4"]
+  front: "Effect of wind and turbulence on vortices?"
+  back: "Strong wind and turbulence break them up sooner; calm stable air lets them last longest. They drift with the wind. A light crosswind can hold the upwind vortex over the runway; a light tailwind can move them into the touchdown zone."
+- id: BAKC-AC015
+  elements: ["BAKC 4.5.1"]
+  front: "How does thrust stream hazard (jet blast, prop wash, rotor downwash) vary?"
+  back: "Increases with power (idle < breakaway < take-off) and decreases with distance from the source. Large jets at high power remain hazardous a long way behind; don't taxi or hold directly behind running engines."

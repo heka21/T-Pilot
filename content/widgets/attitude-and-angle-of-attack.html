@@ -1,0 +1,22 @@
+<div class="widget" data-widget="explorer" data-explorer="attitude">
+  <div class="widget-canvas" data-canvas aria-label="3D aeroplane showing pitch attitude, flight path and the resulting angle of attack"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="at-attitude">Pitch attitude (nose against the horizon) <output data-out="attitude">3° nose up</output></label><input id="at-attitude" type="range" min="-10" max="30" step="1" value="3" data-param="attitude"></div>
+    <div class="widget-control"><label for="at-path">Flight path (where the aeroplane is actually going) <output data-out="flightPath">0° level</output></label><input id="at-path" type="range" min="-25" max="15" step="1" value="0" data-param="flightPath"></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Angle of attack = attitude − flight path</dt><dd><span data-out="aoa">3°</span><span class="widget-flag bad" data-flag="stalled" style="display:none">Stalled</span><span class="widget-flag warn" data-flag="near" style="display:none">Near critical</span></dd></div>
+    <div class="widget-readout"><dt>Critical angle</dt><dd>about 16°</dd></div>
+  </dl>
+  <div class="widget-actions">
+    <button type="button" class="btn-secondary" data-action="reset">Reset</button>
+    <button type="button" class="btn-ghost" data-set='{"attitude": 3, "flightPath": 0}'>Cruise</button>
+    <button type="button" class="btn-ghost" data-set='{"attitude": 10, "flightPath": 7}'>Climb</button>
+    <button type="button" class="btn-ghost" data-set='{"attitude": 12, "flightPath": -6}'>Slow, sinking approach</button>
+    <button type="button" class="btn-ghost" data-set='{"attitude": -2, "flightPath": -20}'>Nose below the horizon, yet stalled</button>
+    <span class="text-xs text-fg-faint">Drag the picture to look around.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The wing stalls at an angle of attack, not at an attitude or an airspeed. Angle of attack is the angle between the chord line and the relative airflow, and the relative airflow comes from where the aeroplane is going. A nose-high attitude with a steep sinking flight path, or a pull-up from a dive, can exceed the critical angle with the nose anywhere. Watch the streamers break away when the readout turns red.</p>
+  <details class="widget-try"><summary>Try this: set attitude 12° and flight path −6°. Why is this the classic approach stall?</summary><p>The angle of attack is 12 − (−6) = 18°, past the critical angle, although the attitude looks only slightly nose-high. A slow, sinking approach with the nose held up is exactly this picture.</p></details>
+  <details class="widget-try"><summary>Try this: can the aeroplane be stalled with the nose below the horizon?</summary><p>Yes. Attitude −2° with a flight path of −20° gives an 18° angle of attack. This is what happens when you pull hard out of a steep descent: the flight path lags the attitude.</p></details>
+</div>

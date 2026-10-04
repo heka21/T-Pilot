@@ -1,0 +1,13 @@
+{# Partial: report a problem. Set `flag_kind` and `flag_ref` before including. #}
+{% from "_icons.html" import icon %}
+<form class="flag-form" hx-post="/flags" hx-swap="outerHTML">
+  <input type="hidden" name="kind" value="{{ flag_kind | default('other') }}">
+  <input type="hidden" name="ref" value="{{ flag_ref | default('') }}">
+  <details>
+    <summary>{{ icon("flag", "size-3.5") }} Spotted a problem on this page? Report it</summary>
+    <div class="mt-2 flex max-w-xl gap-2">
+      <input type="text" name="message" placeholder="What's wrong? e.g. the stall speed figure looks off" aria-label="Report a problem" required>
+      <button type="submit" class="btn-secondary shrink-0">Report</button>
+    </div>
+  </details>
+</form>

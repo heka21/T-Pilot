@@ -1,0 +1,129 @@
+# RBKA 3.6 (additional), 4.1 and 4.2.
+- id: RBKA-P001
+  kind: mcq
+  elements: ["RBKA 3.6.1"]
+  stem: "Which sequence best describes the symptoms when approaching a stall in level flight?"
+  options:
+    - "Buffet, then stall warning, then high airspeed."
+    - "Decreasing airspeed, high nose attitude, sloppy controls, stall warning, then buffet and nose or wing drop."
+    - "Increasing airspeed, heavy controls, nose drop."
+    - "Stall warning only, with no change in control feel."
+  answer: 1
+  explanation: "As the angle of attack approaches the critical angle, control effectiveness drops, the stall warning sounds about 5 to 10 kt above the stall, buffet follows as separated airflow strikes the tail, then the nose or a wing drops."
+  references: ["RBKA 3.6"]
+  difficulty: 1
+- id: RBKA-P002
+  kind: mcq
+  elements: ["RBKA 3.6.2"]
+  stem: "Using aileron to raise a dropping wing at the point of stall is dangerous because:"
+  options:
+    - "The ailerons lock at the stall."
+    - "The down-going aileron increases the angle of attack of the dropping wing, stalling it further and inviting a spin."
+    - "It increases the airspeed too quickly."
+    - "It causes the flaps to retract."
+  answer: 1
+  explanation: "Near the critical angle any increase in angle of attack deepens the stall. Use rudder to keep the wings level and recover first, then roll level with aileron."
+  references: ["RBKA 3.6"]
+  difficulty: 2
+- id: RBKA-P003
+  kind: mcq
+  elements: ["RBKA 3.6.3"]
+  stem: "Which factor has NO effect on the indicated airspeed at which an aeroplane stalls in level flight?"
+  options: ["Weight", "Flap setting", "Altitude", "Frost on the wings"]
+  answer: 2
+  explanation: "The wing stalls at the same indicated airspeed regardless of altitude, because the ASI measures the dynamic pressure the wing feels. The true airspeed at the stall is higher at altitude."
+  references: ["RBKA 3.6"]
+  difficulty: 2
+- id: RBKA-P004
+  kind: numeric
+  elements: ["RBKA 3.6.3"]
+  stem: "An aeroplane stalls at 52 kt in level flight at 900 kg. What is its approximate stall speed, to the nearest knot, in level flight at 1,100 kg?"
+  answer: 57
+  tolerance: 1
+  unit: kt
+  explanation: "Stall speed varies with the square root of weight: 52 × √(1,100 ÷ 900) = 52 × √1.222 = 52 × 1.106 = 57.5, so about 57 to 58 kt."
+  references: ["RBKA 3.6"]
+  difficulty: 3
+- id: RBKA-P005
+  kind: mcq
+  elements: ["RBKA 3.6.5"]
+  stem: "A stall during a skidding turn onto final at low speed is dangerous mainly because:"
+  options:
+    - "It happens at a high nose attitude with plenty of warning."
+    - "The nose is near the horizon so the attitude gives little warning, the inner wing stalls first, and the resulting spin begins too low to recover."
+    - "The airspeed indicator over-reads in a skid."
+    - "The flaps retract automatically."
+  answer: 1
+  explanation: "Yaw from the rudder slows the inner wing, which stalls first and drops; with the aeroplane close to the ground there is no height for a spin recovery. Attitude is not a reliable stall cue; airspeed, the warning and buffet are."
+  references: ["RBKA 3.6"]
+  difficulty: 2
+- id: RBKA-P006
+  kind: mcq
+  elements: ["RBKA 3.6.6"]
+  stem: "During a spin the airspeed is:"
+  options: ["High and increasing rapidly", "Low and roughly steady", "At VNE", "Zero"]
+  answer: 1
+  explanation: "Both wings are stalled in a spin, so the airspeed stays low and fairly constant. A rapidly increasing airspeed means a spiral dive, which needs a different recovery."
+  references: ["RBKA 3.6"]
+  difficulty: 1
+- id: RBKA-P007
+  kind: mcq
+  elements: ["RBKA 4.1.1"]
+  stem: "With a light wind, taking off uphill on a sloping strip will:"
+  options:
+    - "Shorten the take-off run."
+    - "Lengthen the take-off run, because part of the thrust is used to climb the slope."
+    - "Have no effect on the take-off run."
+    - "Reduce the landing distance."
+  answer: 1
+  explanation: "Acceleration is slower uphill, so the run is longer and the climb-out starts further along. Uphill helps landing, where the slope aids deceleration."
+  references: ["RBKA 4.1"]
+  difficulty: 1
+- id: RBKA-P008
+  kind: mcq
+  elements: ["RBKA 4.1.1"]
+  stem: "A slushy or waterlogged runway affects performance by:"
+  options:
+    - "Reducing the take-off run because of lower friction."
+    - "Greatly lengthening the take-off run through wheel drag, and greatly lengthening the landing roll through poor braking and possible aquaplaning."
+    - "Only affecting the landing."
+    - "Improving braking on landing."
+  answer: 1
+  explanation: "Slush drags on the wheels during the take-off run and may prevent lift-off speed being reached; on landing it destroys braking and directional control. Most light aeroplane POHs give no figures for slush, which is a sign not to operate from it."
+  references: ["RBKA 4.1"]
+  difficulty: 1
+- id: RBKA-P009
+  kind: mcq
+  elements: ["RBKA 4.1.1"]
+  stem: "Landing on wet grass compared with dry grass, the landing distance will:"
+  options: ["Decrease", "Increase, because braking is less effective", "Stay the same", "Decrease unless flap is used"]
+  answer: 1
+  explanation: "Wet grass gives poor braking friction, so the ground roll is longer. The take-off run on wet grass is also longer because of rolling resistance."
+  references: ["RBKA 4.1"]
+  difficulty: 1
+- id: RBKA-P010
+  kind: mcq
+  elements: ["RBKA 4.2.1"]
+  stem: "VFE is:"
+  options:
+    - "The maximum speed at which the flaps may be operated."
+    - "The maximum speed at which the aeroplane may be flown with the flaps extended, the top of the white arc."
+    - "The stall speed with flaps extended."
+    - "The best rate of climb speed with flap."
+  answer: 1
+  explanation: "VFE is the flap extended limit, marked by the top of the white arc. VFO, where it is lower, is the limit for moving the flap. VSO is the bottom of the white arc."
+  references: ["RBKA 4.2"]
+  difficulty: 1
+- id: RBKA-P011
+  kind: mcq
+  elements: ["RBKA 4.2.1"]
+  stem: "An aeroplane's POH gives VFO 100 kt and VFE 110 kt. On approach at 105 kt you may:"
+  options:
+    - "Select flap now."
+    - "Not select flap until at or below 100 kt, but may fly with flap already extended at this speed."
+    - "Neither select nor fly with flap."
+    - "Select flap and accelerate to 120 kt."
+  answer: 1
+  explanation: "VFO limits the speed for operating the flap; VFE limits the speed for flying with it extended. At 105 kt you are above VFO but below VFE."
+  references: ["RBKA 4.2"]
+  difficulty: 2

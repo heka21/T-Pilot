@@ -1,0 +1,124 @@
+<div class="widget" x-data="{
+  gone: 30, off: 3, togo: 45, side: 'left', hdg: 85,
+  ax: 60, bx: 580, ty: 150,
+  get k() { return Math.min(30, 85 / this.off) },
+  get te() { return this.off * 60 / this.gone },
+  get ca() { return this.off * 60 / this.togo },
+  get total() { return this.te + this.ca },
+  get s() { return this.side === 'left' ? -1 : 1 },
+  get turn() { return this.side === 'left' ? 'right' : 'left' },
+  get fx() { return this.ax + (this.bx - this.ax) * this.gone / (this.gone + this.togo) },
+  get fy() { return this.ty + this.s * this.off * this.k },
+  get halfway() { return this.gone === this.togo },
+  get rough() { return this.te > 20 || this.ca > 20 },
+  f(v) { return String(Math.round(v * 10) / 10) },
+  three(d) { d = ((Math.round(d) % 360) + 360) % 360; return String(d === 0 ? 360 : d).padStart(3, '0') },
+  get newHdg() { return this.hdg - this.s * this.total },
+  get holdHdg() { return this.hdg - this.s * this.te },
+  get a1() { return Math.atan2(this.fy - this.ty, this.fx - this.ax) },
+  get b1() { return Math.atan2(this.fy - this.ty, this.fx - this.bx) },
+  get d2() { return Math.atan2(this.ty - this.fy, this.bx - this.fx) },
+  arc(cx, cy, r, t0, t1, sweep) { return 'M' + (cx + r * Math.cos(t0)).toFixed(1) + ' ' + (cy + r * Math.sin(t0)).toFixed(1) + ' A' + r + ' ' + r + ' 0 0 ' + sweep + ' ' + (cx + r * Math.cos(t1)).toFixed(1) + ' ' + (cy + r * Math.sin(t1)).toFixed(1) },
+  get arcA() { return this.arc(this.ax, this.ty, 100, 0, this.a1, this.s > 0 ? 1 : 0) },
+  get arcB() { return this.arc(this.bx, this.ty, 100, Math.PI, this.b1, this.s < 0 ? 1 : 0) },
+  get arcF() { return this.arc(this.fx, this.fy, 55, this.a1, this.d2, this.s < 0 ? 1 : 0) },
+  get extX() { return this.fx + 90 * Math.cos(this.a1) },
+  get extY() { return this.fy + 90 * Math.sin(this.a1) },
+  get lblY() { return this.ty - this.s * 22 },
+  set(p) { Object.assign(this, p) },
+  reset() { this.gone = 30; this.off = 3; this.togo = 45; this.side = 'left'; this.hdg = 85 }
+}">
+  <svg viewBox="0 0 640 350" role="img" aria-labelledby="ois-title" class="widget-stage">
+    <title id="ois-title">Plan view of a leg from departure A to destination B with a fix off track: the track error angle at A, the closing angle at B and the total correction at the fix</title>
+    <defs>
+      <marker id="ois-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- planned track -->
+    <line x1="60" y1="150" x2="580" y2="150" stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="320" y="24" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">Planned track, A to B (sideways distances exaggerated)</text>
+    <!-- offset dimension -->
+    <line :x1="fx" y1="150" :x2="fx" :y2="fy" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text :x="fx - 8" :y="(150 + fy) / 2 + 4" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="f(off) + ' nm'"></text>
+    <!-- TMG, its extension, and the line to B -->
+    <line :x1="fx" :y1="fy" :x2="extX" :y2="extY" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round"/>
+    <line x1="60" y1="150" :x2="fx" :y2="fy" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#ois-arrow)"/>
+    <line :x1="fx" :y1="fy" x2="580" y2="150" stroke="var(--color-ok)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="8 5"/>
+    <!-- angles -->
+    <path :d="arcA" fill="none" stroke="var(--color-brand)" stroke-width="2"/>
+    <path :d="arcB" fill="none" stroke="var(--color-ok)" stroke-width="2"/>
+    <path :d="arcF" fill="none" stroke="var(--color-warn)" stroke-width="2.5"/>
+    <text x="170" :y="lblY + 4" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand)" class="num" x-text="'TE ' + f(te) + '°'"></text>
+    <text x="470" :y="lblY + 4" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-ok-fg)" class="num" x-text="'CA ' + f(ca) + '°'"></text>
+    <text :x="fx - 24" :y="side === 'left' ? fy - 16 : fy + 26" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-warn-fg)" class="num" x-text="'turn ' + turn + ' ' + f(total) + '°'"></text>
+    <!-- distances along track -->
+    <text :x="(60 + fx) / 2" :y="side === 'left' ? 196 : 112" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="gone + ' nm flown'"></text>
+    <text :x="(fx + 580) / 2" :y="side === 'left' ? 196 : 112" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="togo + ' nm to go'"></text>
+    <!-- end points and the fix -->
+    <circle cx="60" cy="150" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="60" y="176" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)" x-show="side === 'left'">A</text>
+    <text x="60" y="132" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)" x-show="side === 'right'">A</text>
+    <circle cx="580" cy="150" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="580" y="176" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)" x-show="side === 'left'">B</text>
+    <text x="580" y="132" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)" x-show="side === 'right'">B</text>
+    <circle :cx="fx" :cy="fy" r="7" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2"/>
+    <text x="24" y="300" font-size="12" font-weight="600" fill="var(--color-brand)">Blue: track made good (TE at A, distance flown)</text>
+    <text x="24" y="318" font-size="12" font-weight="600" fill="var(--color-ok-fg)">Green: fix to destination (CA at B, distance to go)</text>
+    <text x="24" y="336" font-size="12" font-weight="600" fill="var(--color-warn-fg)">Amber: the turn at the fix is the sum, TE + CA</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ois-gone">Distance gone (flown) <output for="ois-gone" x-text="gone + ' nm'"></output></label>
+      <input id="ois-gone" type="range" min="5" max="120" step="1" x-model.number="gone">
+    </div>
+    <div class="widget-control">
+      <label for="ois-off">Distance off track <output for="ois-off" x-text="f(off) + ' nm ' + side"></output></label>
+      <input id="ois-off" type="range" min="0.5" max="10" step="0.5" x-model.number="off">
+      <div class="widget-presets" role="group" aria-label="Which side of track">
+        <button type="button" :aria-pressed="side === 'left'" @click="side = 'left'">Left of track</button>
+        <button type="button" :aria-pressed="side === 'right'" @click="side = 'right'">Right of track</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <label for="ois-togo">Distance to go <output for="ois-togo" x-text="togo + ' nm'"></output></label>
+      <input id="ois-togo" type="range" min="5" max="150" step="1" x-model.number="togo">
+    </div>
+    <div class="widget-control">
+      <label for="ois-hdg">Heading flown <output for="ois-hdg" x-text="three(hdg) + '° M'"></output></label>
+      <input id="ois-hdg" type="range" min="1" max="360" step="1" x-model.number="hdg">
+    </div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="te > 20 ? 'warn' : ''">
+      <dt>Track error (off × 60 ÷ flown)</dt>
+      <dd><span x-text="f(te) + '° ' + side + ' of track'"></span><span class="widget-flag warn" x-show="te > 20">Rough past 20°</span></dd>
+    </div>
+    <div class="widget-readout" :class="ca > 20 ? 'warn' : ''">
+      <dt>Closing angle (off × 60 ÷ to go)</dt>
+      <dd><span x-text="f(ca) + '°'"></span><span class="widget-flag warn" x-show="ca > 20">Rough past 20°</span></dd>
+    </div>
+    <div class="widget-readout ok">
+      <dt>Total correction to reach B</dt>
+      <dd><span x-text="f(total) + '° ' + turn + ': steer ' + three(newHdg) + '° M'"></span><span class="widget-flag ok" x-show="halfway">Halfway: double the TE</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt>On regaining track, take off the CA</dt>
+      <dd x-text="'hold ' + three(holdHdg) + '° M (also the heading to parallel)'"></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Worked examples from the lesson">
+      <button type="button" @click="set({ gone: 30, off: 3, togo: 45, side: 'left', hdg: 85 })">To destination: 30 / 3 L / 45</button>
+      <button type="button" @click="set({ gone: 30, off: 3, togo: 15, side: 'left', hdg: 85 })">To the town: 30 / 3 L / 15</button>
+      <button type="button" @click="set({ gone: 45, off: 3, togo: 90, side: 'right', hdg: 247 })">Right: 45 / 3 R / 90</button>
+      <button type="button" @click="set({ gone: 37, off: 2, togo: 38, side: 'left' })">Near halfway: 37 / 2 L / 38</button>
+    </div>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> The same offset makes a bigger track error the sooner you find it (you divide by the distance flown) and a bigger closing angle the closer you are to the destination (you divide by the distance to go). Turn by the sum to reach B, then take off only the closing angle once you are back on track.</p>
+  <details class="widget-try"><summary>Try this: 3 nm left after 30 nm, 45 nm to go, heading 085° M. What do you steer?</summary><p>TE = 3 × 60 ÷ 30 = 6°, CA = 3 × 60 ÷ 45 = 4°. Turn right 10° to 095° M; on regaining track take off the 4° and hold 091° M.</p></details>
+  <details class="widget-try"><summary>Try this: same fix, but you want to rejoin at a town 15 nm ahead. What changes?</summary><p>Only the closing angle: 3 × 60 ÷ 15 = 12°. Turn right 6 + 12 = 18° to 103° M; over the town take off 12° and hold 091° M, the same holding heading, because the wind has not changed.</p></details>
+</div>

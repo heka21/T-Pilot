@@ -1,0 +1,167 @@
+# RMTC: RPL meteorology.
+- id: RMTC-001
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Thunderstorms need three ingredients. Which list is correct?"
+  options:
+    - "Moisture, instability and a trigger that lifts the air."
+    - "High pressure, dry air and strong winds."
+    - "An inversion, low humidity and surface cooling."
+    - "Fog, a stable atmosphere and light winds."
+  answer: 0
+  explanation: "Moist unstable air that is lifted by heating, a front, a trough, terrain or convergence will keep rising and build a cumulonimbus. High pressure, inversions and stability suppress storms."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-002
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "The greatest hazards to a light aeroplane near a mature thunderstorm are:"
+  options:
+    - "Mild turbulence and light rain."
+    - "Severe turbulence, hail, lightning, heavy rain reducing visibility, and wind shear from gust fronts and microbursts."
+    - "Carburettor icing only."
+    - "Reduced engine power from the warm air."
+  answer: 1
+  explanation: "A storm cell can break an aeroplane with turbulence and hail, and its outflow produces severe low-level wind shear. Stay well clear, at least 10 nm from a mature cell."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-003
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Radiation fog is most likely in the south-west of Western Australia:"
+  options:
+    - "On windy, overcast winter afternoons."
+    - "On still, clear, humid winter nights and early mornings, clearing as the sun heats the ground."
+    - "During summer afternoon sea breezes."
+    - "Ahead of a cold front in strong winds."
+  answer: 1
+  explanation: "Clear skies let the ground radiate heat away, the air cools to its dew point and, with light winds to mix a shallow layer, fog forms. It burns off by mid-morning."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-004
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Flying VFR under a lowering cloud base towards rising ground, the safest action is to:"
+  options:
+    - "Descend to stay visual and continue."
+    - "Climb into the cloud to clear the terrain."
+    - "Turn back early while there is still room and visibility to do so."
+    - "Slow down and continue at the minimum height."
+  answer: 2
+  explanation: "Being squeezed between cloud and terrain is the classic VFR fatal accident. Turning back while the option is still available is the only safe answer."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-005
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Thermal turbulence at low level inland is usually worst:"
+  options: ["Just after dawn", "In the early to mid afternoon on a hot day over bare ground", "At night", "Over the sea in winter"]
+  answer: 1
+  explanation: "Surface heating drives thermals; they are strongest when the ground is hottest, in the afternoon, and over bare dark ground."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-006
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "In a TAF, the group 'TEMPO 0306/0309 4000 SHRA BKN020' means:"
+  options:
+    - "From 0306 UTC the visibility is permanently 4,000 m."
+    - "Between 0600 and 0900 UTC on the 3rd, temporary periods of less than an hour each with visibility 4,000 m in rain showers and broken cloud at 2,000 ft."
+    - "A 30 percent chance of thunderstorms."
+    - "Showers are expected for exactly three hours."
+  answer: 1
+  explanation: "TEMPO describes temporary fluctuations lasting less than an hour at a time within the stated period. FM is a permanent change, PROB gives a probability, and INTER is for fluctuations under 30 minutes."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-007
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Cloud heights in a Graphical Area Forecast (GAF) are given:"
+  options: ["Above aerodrome level", "Above mean sea level", "Above the highest terrain in the area", "As flight levels only"]
+  answer: 1
+  explanation: "GAF cloud heights are AMSL. TAF and METAR cloud heights are above the aerodrome. Mixing them up is a common error."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-008
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "'CAVOK' in a METAR means:"
+  options:
+    - "No cloud at all and unlimited visibility."
+    - "Visibility 10 km or more, no cloud below 5,000 ft or the highest minimum sector altitude, no cumulonimbus and no significant weather."
+    - "Visibility at least 5 km and no rain."
+    - "Conditions suitable for VFR at any level."
+  answer: 1
+  explanation: "CAVOK has a precise definition; it does not mean cloudless, only no cloud below 5,000 ft (or the MSA) and no CB."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-009
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "The wind in a TAF, METAR and GAF is given in degrees:"
+  options: ["Magnetic", "True", "Grid", "Relative to the runway"]
+  answer: 1
+  explanation: "Forecasts and reports give the wind in degrees true. The tower and ATIS give it in degrees magnetic so it relates to the runway."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-010
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A METAR includes 'BKN008'. For a VFR arrival this indicates:"
+  options:
+    - "Broken cloud at 8,000 ft, no problem."
+    - "Broken cloud at 800 ft above the aerodrome, forming a ceiling well below circuit height; VFR arrival is unlikely to be possible."
+    - "Eight oktas of cloud at 1,000 ft."
+    - "Scattered cloud at 800 ft."
+  answer: 1
+  explanation: "Cloud heights are in hundreds of feet above the aerodrome. BKN (5 to 7 oktas) forms a ceiling, and 800 ft is below the normal 1,000 ft circuit."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-011
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "A dust devil crossing the runway as you line up for take-off indicates:"
+  options:
+    - "A stable atmosphere with no turbulence."
+    - "A strong, narrow thermal with sharp wind changes around it; delay the take-off until it has passed."
+    - "An approaching cold front."
+    - "Sea breeze onset."
+  answer: 1
+  explanation: "A dust devil is a visible thermal. Its updraught and the rotating wind around it can roll a light aeroplane at low level."
+  references: ["RMTC 2.3"]
+  difficulty: 1
+- id: RMTC-012
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Descending through a wind gradient on final into a strong headwind, you should expect:"
+  options:
+    - "The airspeed to increase and the aeroplane to float."
+    - "The headwind to decrease as you descend, so the airspeed decays and the rate of descent increases; add power."
+    - "No change because the aeroplane moves with the air."
+    - "A tailwind at the surface."
+  answer: 1
+  explanation: "Surface friction slows the wind near the ground. Losing headwind component means losing airspeed, the aeroplane sinks, and it will undershoot without power."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-013
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Which observation most strongly suggests mountain wave and rotor turbulence downwind of a ridge?"
+  options: ["Fair-weather cumulus", "Lenticular (lens-shaped) clouds and ragged rotor cloud in a strong wind across the ridge", "Radiation fog in the valley", "A high overcast"]
+  answer: 1
+  explanation: "Lenticular clouds form in the crests of standing waves; rotor clouds mark the violent turbulence beneath. Even without cloud, a strong wind across a ridge produces lee turbulence."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-014
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Flying through a microburst beneath a thunderstorm, an aeroplane typically meets, in order:"
+  options:
+    - "A tailwind, then an updraught, then a headwind."
+    - "A headwind that raises airspeed and lift, then a downdraught, then a tailwind that lowers airspeed and lift, close to the ground."
+    - "Only a steady downdraught."
+    - "Steady lift all the way through."
+  answer: 1
+  explanation: "The outflow spreads from the centre of the downdraught, so the aircraft first flies into increasing headwind, then sinks in the core, then loses airspeed in the tailwind. The sequence is why pilots must not fly through storm outflow near the ground."
+  references: ["RMTC 2.3"]
+  difficulty: 2

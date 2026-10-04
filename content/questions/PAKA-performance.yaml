@@ -1,0 +1,81 @@
+# PAKA 3.1 take-off and landing performance (PPL).
+- id: PAKA-P001
+  kind: mcq
+  elements: ["PAKA 3.1.1"]
+  stem: "Which combination gives the WORST take-off performance?"
+  options:
+    - "Low elevation, cool day, high QNH, headwind, downslope, dry sealed runway."
+    - "High elevation, hot day, low QNH, tailwind, upslope, wet grass."
+    - "Sea level, standard day, no wind."
+    - "High elevation, cool day, headwind."
+  answer: 1
+  explanation: "Every factor in option B increases the take-off distance and reduces the climb: high density height from elevation, heat and low QNH, plus tailwind, upslope and a soft wet surface."
+  references: ["PAKA 3.1"]
+  difficulty: 1
+- id: PAKA-P002
+  kind: mcq
+  elements: ["PAKA 3.1.1"]
+  stem: "A sudden loss of headwind (wind shear) just after lift-off causes:"
+  options:
+    - "An increase in airspeed and climb."
+    - "A loss of airspeed and lift, and a reduced climb or sink, because the aircraft's inertia keeps its groundspeed momentarily constant."
+    - "No effect on performance."
+    - "A higher stall speed."
+  answer: 1
+  explanation: "The airspeed drops by the amount of headwind lost. Close to the ground this can be critical; CASA lists wind shear among the weak areas."
+  references: ["PAKA 3.1", "RMTC 2.3"]
+  difficulty: 2
+- id: PAKA-P003
+  kind: mcq
+  elements: ["PAKA 3.1.2"]
+  stem: "Pressure height equals elevation when:"
+  options: ["The temperature is 15 degrees", "The QNH is 1013 hPa", "The wind is calm", "The aerodrome is at sea level"]
+  answer: 1
+  explanation: "With QNH 1013 the pressure height equals the elevation. Lower QNH raises it, higher QNH lowers it. Density height additionally depends on temperature."
+  references: ["PAKA 3.1", "BAKC 6.2"]
+  difficulty: 1
+- id: PAKA-P004
+  kind: numeric
+  elements: ["PAKA 3.1.2", "PAKA 3.1.3"]
+  stem: "Aerodrome elevation 1,800 ft, QNH 998 hPa, temperature 28 degrees. What is the density height in feet?"
+  answer: 4350
+  tolerance: 80
+  unit: ft
+  explanation: "Pressure height = 1,800 + 15 × 30 = 2,250 ft. ISA at 2,250 ft = 10.5 degrees; deviation 17.5 degrees. Density height = 2,250 + 120 × 17.5 = 4,350 ft (4,290 to 4,350 depending on rounding of the ISA temperature)."
+  references: ["PAKA 3.1", "BAKC 6.2"]
+  difficulty: 3
+- id: PAKA-P005
+  kind: mcq
+  elements: ["PAKA 3.1.3"]
+  stem: "On the ground with no QNH available, you set the altimeter to read the known aerodrome elevation. The subscale then shows:"
+  options: ["The pressure height", "The local QNH", "1013 hPa", "The density height"]
+  answer: 1
+  explanation: "Dial to elevation gives local QNH on the subscale; subscale 1013 gives pressure height on the dial; subscale QNH gives elevation on the dial."
+  references: ["PAKA 3.1"]
+  difficulty: 1
+- id: PAKA-P006
+  kind: mcq
+  elements: ["PAKA 3.1.4"]
+  stem: "The take-off weight you may use is:"
+  options:
+    - "Always the structural MTOW."
+    - "The lowest of the structural MTOW, the climb weight limit, the runway-length-limited weight from the chart, and the weight that keeps the landing within MLW."
+    - "The climb weight limit plus 10 percent."
+    - "Whatever the loading sheet gives."
+  answer: 1
+  explanation: "All the limits apply at once; the most restrictive governs. On a hot day at a high strip the climb weight limit or the runway limit is often below the structural limit."
+  references: ["PAKA 3.1", "POPA 2.4"]
+  difficulty: 2
+- id: PAKA-P007
+  kind: mcq
+  elements: ["PAKA 3.1.5"]
+  stem: "Exceeding the maximum landing weight is most likely to cause:"
+  options:
+    - "Better braking."
+    - "Undercarriage and structural damage on touchdown, and a longer landing roll."
+    - "A lower approach speed."
+    - "No effect if the landing is smooth."
+  answer: 1
+  explanation: "MLW is a structural limit for landing loads. Heavier also means a higher approach speed and longer landing distance."
+  references: ["PAKA 3.1"]
+  difficulty: 1

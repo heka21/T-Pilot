@@ -1,0 +1,354 @@
+# BAKC 5.x and 6.x: charts, documentation, airworthiness, performance, speed limits, weight and balance.
+- id: BAKC-O001
+  kind: mcq
+  elements: ["BAKC 5.1.2"]
+  stem: "Which chart does NOT show controlled airspace?"
+  options: ["Visual Terminal Chart (VTC)", "Visual Navigation Chart (VNC)", "World Aeronautical Chart (WAC)", "En Route Chart Low (ERC-L)"]
+  answer: 2
+  explanation: "The WAC is a topographic navigation chart with no airspace. The VTC, VNC and ERC-L all show controlled airspace boundaries and PRD areas."
+  references: ["BAKC 5.1"]
+  difficulty: 1
+- id: BAKC-O002
+  kind: mcq
+  elements: ["BAKC 5.1.1"]
+  stem: "On a WAC, a dashed line labelled '2°W' is:"
+  options: ["A state border", "An isogonal showing the magnetic variation", "A VFR route", "A controlled airspace boundary"]
+  answer: 1
+  explanation: "Isogonals join points of equal magnetic variation. They are needed to convert true tracks measured on the chart to magnetic headings."
+  references: ["BAKC 5.1"]
+  difficulty: 1
+- id: BAKC-O003
+  kind: mcq
+  elements: ["BAKC 5.1.1"]
+  stem: "The maximum elevation figure printed in a grid square of a VNC represents:"
+  options:
+    - "The height of the highest aerodrome in the square."
+    - "The elevation of the highest terrain or obstacle in that square, rounded up, as a minimum safe reference."
+    - "The lower limit of controlled airspace."
+    - "The average ground elevation."
+  answer: 1
+  explanation: "The figure gives the highest known feature (terrain or obstacle) in the square plus an allowance, so a pilot can choose a safe altitude at a glance."
+  references: ["BAKC 5.1"]
+  difficulty: 2
+- id: BAKC-O004
+  kind: mcq
+  elements: ["BAKC 5.1.2"]
+  stem: "Full details of a restricted area, including its controlling authority and hours of activity, are found in:"
+  options: ["The WAC legend", "ERSA PRD section and AIP ENR 5.1", "The TAF", "The aircraft flight manual"]
+  answer: 1
+  explanation: "The charts show the identifier and limits. ERSA PRD and AIP ENR 5.1 give the description, vertical limits, hours, status and authority."
+  references: ["BAKC 5.1", "BAKC 5.2"]
+  difficulty: 1
+- id: BAKC-O005
+  kind: mcq
+  elements: ["BAKC 5.2.1"]
+  stem: "In the ERSA FAC entry for an aerodrome, runway length and width are given in:"
+  options: ["Feet", "Metres", "Nautical miles", "Yards"]
+  answer: 1
+  explanation: "Runway dimensions in Australia are in metres. Elevations are in feet and distances for navigation are in nautical miles."
+  references: ["BAKC 5.2", "BAKC 2.4"]
+  difficulty: 1
+- id: BAKC-O006
+  kind: mcq
+  elements: ["BAKC 5.2.2"]
+  stem: "A restricted area with conditional status RA3 means:"
+  options:
+    - "A clearance is normally available and you may plan through it."
+    - "A clearance is unlikely at short notice."
+    - "No clearance will be available; plan to avoid it when active."
+    - "The area is a danger area only."
+  answer: 2
+  explanation: "RA1: clearance normally available. RA2: clearance not likely at short notice. RA3: no clearance available. The status is listed in ERSA PRD."
+  references: ["BAKC 5.2"]
+  difficulty: 2
+- id: BAKC-O007
+  kind: mcq
+  elements: ["BAKC 5.2.3"]
+  stem: "ERSA lists a restricted area as active 2300-0700 UTC Monday to Friday. In Western Australian Standard Time it is active:"
+  options: ["2300 to 0700 WST", "0700 to 1500 WST", "1500 to 2300 WST", "0300 to 1100 WST"]
+  answer: 1
+  explanation: "WST is UTC plus 8 hours. 2300 UTC is 0700 WST the next day and 0700 UTC is 1500 WST."
+  references: ["BAKC 5.2", "BAKC 2.3"]
+  difficulty: 2
+- id: BAKC-O008
+  kind: mcq
+  elements: ["BAKC 5.2.3"]
+  stem: "An ERSA entry shows a restricted area's hours as 'NOTAM'. Before flight you should:"
+  options:
+    - "Assume the area is always active."
+    - "Assume the area is never active."
+    - "Check the current NOTAMs, which activate the area, and treat it as inactive if no NOTAM activates it."
+    - "Call the tower at your departure aerodrome."
+  answer: 2
+  explanation: "'NOTAM' means activation is promulgated by NOTAM. A NOTAM check is part of every pre-flight briefing."
+  references: ["BAKC 5.2"]
+  difficulty: 1
+- id: BAKC-O009
+  kind: mcq
+  elements: ["BAKC 6.1.1"]
+  stem: "The document that shows whether an aircraft's maintenance is current and whether any defects are outstanding is the:"
+  options: ["Certificate of airworthiness", "Certificate of registration", "Maintenance release", "Pilot's logbook"]
+  answer: 2
+  explanation: "The maintenance release states the period of validity, maintenance due, daily inspection certifications and defect endorsements. The certificates confirm airworthiness standard and registration but not day-to-day serviceability."
+  references: ["BAKC 6.1"]
+  difficulty: 1
+- id: BAKC-O010
+  kind: mcq
+  elements: ["BAKC 6.1.2"]
+  stem: "A daily inspection on a training aeroplane:"
+  options:
+    - "Must be done before every flight by the pilot in command."
+    - "Must be completed and certified on the maintenance release before the first flight of the day by an authorised person, and is valid for that day."
+    - "Is only required every 100 hours."
+    - "Replaces the need for a pre-flight inspection."
+  answer: 1
+  explanation: "The daily inspection is once per day, to a schedule, certified in Part 1 of the maintenance release by a LAME or an authorised pilot. The pre-flight inspection is separate and done before every flight."
+  references: ["BAKC 6.1"]
+  difficulty: 1
+- id: BAKC-O011
+  kind: mcq
+  elements: ["BAKC 6.1.3"]
+  stem: "After landing you notice the left brake was weak. You should:"
+  options:
+    - "Mention it to the next pilot."
+    - "Record the defect in the maintenance release with the date, aircraft time, description and your signature, and the aircraft must not fly until an engineer clears it or endorses it as a permissible unserviceability."
+    - "Record it only if it happens again."
+    - "Write it in your logbook."
+  answer: 1
+  explanation: "Defects go in Part 2 of the maintenance release. A pilot must not fly with a known uncleared defect."
+  references: ["BAKC 6.1"]
+  difficulty: 1
+- id: BAKC-O012
+  kind: numeric
+  elements: ["BAKC 6.2.3"]
+  stem: "An aerodrome has an elevation of 1,250 ft and the QNH is 1003 hPa. What is the pressure height in feet?"
+  answer: 1550
+  tolerance: 10
+  unit: ft
+  explanation: "Pressure height = elevation + (1013 − QNH) × 30 = 1,250 + 10 × 30 = 1,550 ft. A QNH below 1013 raises the pressure height above the elevation."
+  references: ["BAKC 6.2"]
+  difficulty: 2
+- id: BAKC-O013
+  kind: numeric
+  elements: ["BAKC 6.2.3"]
+  stem: "The pressure height at an aerodrome is 2,000 ft and the temperature is 31 degrees Celsius. What is the density height in feet?"
+  answer: 4400
+  tolerance: 60
+  unit: ft
+  explanation: "ISA temperature at 2,000 ft is 15 − 4 = 11 degrees. The actual temperature is 20 degrees above ISA. Density height = 2,000 + 120 × 20 = 4,400 ft."
+  references: ["BAKC 6.2"]
+  difficulty: 2
+- id: BAKC-O014
+  kind: numeric
+  elements: ["BAKC 6.2.3"]
+  stem: "Aerodrome elevation 400 ft, QNH 1020 hPa, temperature 36 degrees Celsius. What is the density height in feet?"
+  answer: 2770
+  tolerance: 80
+  unit: ft
+  explanation: "Pressure height = 400 + (1013 − 1020) × 30 = 400 − 210 = 190 ft. ISA temperature at 190 ft is about 14.6 degrees; the air is about 21.4 degrees warmer. Density height = 190 + 120 × 21.4 = about 2,760 to 2,770 ft."
+  references: ["BAKC 6.2"]
+  difficulty: 3
+- id: BAKC-O015
+  kind: mcq
+  elements: ["BAKC 6.2.1"]
+  stem: "Density height is best described as:"
+  options:
+    - "The altimeter reading with 1013 set."
+    - "The pressure height corrected for temperature; the height in the standard atmosphere with the same air density as the actual conditions."
+    - "The aerodrome elevation plus 1,000 ft."
+    - "The height at which the altimeter reads zero."
+  answer: 1
+  explanation: "Pressure height is the altimeter reading with 1013 set. Density height adds the temperature correction and is the figure that governs aircraft performance."
+  references: ["BAKC 6.2"]
+  difficulty: 1
+- id: BAKC-O016
+  kind: mcq
+  elements: ["BAKC 6.2.2"]
+  stem: "To read the pressure height of an aerodrome directly from the altimeter you set the subscale to:"
+  options: ["The aerodrome QNH", "1013 hPa", "The area QNH", "Zero"]
+  answer: 1
+  explanation: "With 1013 set the altimeter reads pressure height. With the aerodrome QNH set it reads elevation, and setting the elevation on the dial gives the local QNH on the subscale."
+  references: ["BAKC 6.2"]
+  difficulty: 1
+- id: BAKC-O017
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Compared with a standard day, a hot day with a low QNH at the same aerodrome will:"
+  options:
+    - "Shorten the take-off distance and improve the climb."
+    - "Lengthen the take-off and landing distances and reduce the climb performance."
+    - "Lengthen the take-off distance but improve the climb."
+    - "Have no effect on performance."
+  answer: 1
+  explanation: "Both high temperature and low QNH raise the density height. Lower density means less engine power, less thrust, and a higher TAS needed for the same IAS."
+  references: ["BAKC 6.2"]
+  difficulty: 1
+- id: BAKC-O018
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "An aeroplane is dragged off the ground early with a thin layer of frost on the wings. The likely result is:"
+  options:
+    - "A normal climb."
+    - "It may fly in ground effect but fail to climb out of it, because frost raises the stall speed and reduces lift."
+    - "A faster climb because the wing is heavier."
+    - "No effect unless the frost is more than 10 mm thick."
+  answer: 1
+  explanation: "Even a thin frost roughens the wing surface, reducing maximum lift and raising the stall speed. Ground effect reduces induced drag close to the ground, so an early lift-off can be followed by a settle or a stall."
+  references: ["BAKC 6.2"]
+  difficulty: 2
+- id: BAKC-O019
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "A tailwind component on take-off will:"
+  options:
+    - "Shorten the take-off run."
+    - "Lengthen the take-off run and distance markedly, because the groundspeed at lift-off is higher."
+    - "Have no effect if flap is used."
+    - "Only affect the landing."
+  answer: 1
+  explanation: "The aeroplane must reach its lift-off airspeed. With a tailwind that means a higher groundspeed and a longer run; a tailwind of 10 percent of the lift-off speed adds about 20 percent to the distance."
+  references: ["BAKC 6.2"]
+  difficulty: 1
+- id: BAKC-O020
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "The 'climb weight limit' is:"
+  options:
+    - "The maximum weight fixed by the strength of the airframe."
+    - "The maximum weight at which the aeroplane can achieve the required climb gradient at the density height of the day, which may be lower than the structural MTOW."
+    - "The maximum landing weight."
+    - "The weight at which the climb speed equals the stall speed."
+  answer: 1
+  explanation: "On a hot day at a high aerodrome the performance-limited (WAT) weight can be the binding limit. The permitted take-off weight is the lowest of the structural, climb and runway-length limits."
+  references: ["BAKC 6.2"]
+  difficulty: 2
+- id: BAKC-O021
+  kind: mcq
+  elements: ["BAKC 6.3.1"]
+  stem: "The manoeuvring speed VA:"
+  options:
+    - "Is marked by the red line on the ASI."
+    - "Is the highest speed at which full control deflection will stall the wing before the limit load factor is reached, and it decreases as weight decreases."
+    - "Increases as weight decreases."
+    - "Is the top of the green arc."
+  answer: 1
+  explanation: "Below VA the wing stalls before the structure is overloaded. A lighter aeroplane reaches the limit load at a lower speed, so VA is lower at lower weight. VA is not marked on the ASI."
+  references: ["BAKC 6.3"]
+  difficulty: 2
+- id: BAKC-O022
+  kind: mcq
+  elements: ["BAKC 6.3.1"]
+  stem: "The limit load factor for a normal category aeroplane is:"
+  options: ["+2.0 g and −1.0 g", "+3.8 g and −1.52 g", "+4.4 g and −1.76 g", "+6.0 g and −3.0 g"]
+  answer: 1
+  explanation: "Normal category: +3.8/−1.52. Utility: +4.4/−1.76. Aerobatic: +6.0/−3.0. The design (ultimate) load is 1.5 times the limit load."
+  references: ["BAKC 6.3"]
+  difficulty: 2
+- id: BAKC-O023
+  kind: numeric
+  elements: ["BAKC 6.3.1"]
+  stem: "The limit load factor of an aeroplane is 3.8 g. Using the standard safety factor of 1.5, what is its design (ultimate) load factor, to one decimal place? Enter the answer multiplied by 10 (for example 42 for 4.2)."
+  answer: 57
+  tolerance: 0
+  unit: tenths of g
+  explanation: "3.8 × 1.5 = 5.7 g. Between 3.8 and 5.7 g the structure may deform permanently; beyond 5.7 g it may fail."
+  references: ["BAKC 6.3"]
+  difficulty: 2
+- id: BAKC-O024
+  kind: mcq
+  elements: ["BAKC 6.3.2"]
+  stem: "Which situation is most likely to exceed the aeroplane's structural limits?"
+  options:
+    - "A gentle descent at VNO in smooth air."
+    - "A harsh pull-out from a spiral dive at a speed above VA."
+    - "A level turn at 30 degrees of bank."
+    - "Flying at VA in turbulence."
+  answer: 1
+  explanation: "High speed plus a rapid pull-up means a high load factor at a speed where the wing will not stall first. Rolling level and reducing power before easing out is the correct spiral dive recovery."
+  references: ["BAKC 6.3"]
+  difficulty: 1
+- id: BAKC-O025
+  kind: mcq
+  elements: ["BAKC 6.4.1"]
+  stem: "The centre of gravity of a loaded aircraft is found by:"
+  options:
+    - "Adding all the arms and dividing by the number of items."
+    - "Dividing the total moment by the total weight."
+    - "Multiplying the total weight by the datum distance."
+    - "Subtracting the empty weight arm from the loaded arm."
+  answer: 1
+  explanation: "Each item's moment is weight times arm. Sum the moments, sum the weights, and divide to get the arm at which the total weight acts."
+  references: ["BAKC 6.4"]
+  difficulty: 1
+- id: BAKC-O026
+  kind: mcq
+  elements: ["BAKC 6.4.1"]
+  stem: "Zero fuel weight is:"
+  options:
+    - "The empty weight of the aircraft."
+    - "The weight of the aircraft with everything loaded except usable fuel."
+    - "The maximum take-off weight minus the fuel reserve."
+    - "The weight at which the fuel gauges read zero."
+  answer: 1
+  explanation: "ZFW includes crew, passengers, baggage and unusable fuel but not the usable fuel. The maximum ZFW limits the wing bending load from the fuselage contents."
+  references: ["BAKC 6.4"]
+  difficulty: 1
+- id: BAKC-O027
+  kind: numeric
+  elements: ["BAKC 6.4.2"]
+  stem: "An aeroplane is to carry 140 litres of AVGAS with a specific gravity of 0.72. What is the weight of the fuel in kilograms, to the nearest kilogram?"
+  answer: 101
+  tolerance: 1
+  unit: kg
+  explanation: "Kilograms = litres × SG = 140 × 0.72 = 100.8, so 101 kg. The CASA workbook uses 0.72 for all its loading systems."
+  references: ["BAKC 6.4", "Workbook loading systems"]
+  difficulty: 1
+- id: BAKC-O028
+  kind: numeric
+  elements: ["BAKC 6.4.2", "BAKC 6.4.3"]
+  stem: "Empty weight 700 kg at arm 2,100 mm; pilot and passenger 170 kg at 2,000 mm; baggage 15 kg at 3,400 mm; fuel 90 kg at 2,300 mm. What is the loaded centre of gravity in millimetres aft of the datum, to the nearest millimetre?"
+  answer: 2121
+  tolerance: 2
+  unit: mm
+  explanation: "Moments: 700 × 2,100 = 1,470,000; 170 × 2,000 = 340,000; 15 × 3,400 = 51,000; 90 × 2,300 = 207,000. Total moment 2,068,000 kg mm, total weight 975 kg. CG = 2,068,000 ÷ 975 = 2,121 mm aft of the datum."
+  references: ["BAKC 6.4"]
+  difficulty: 2
+- id: BAKC-O029
+  kind: mcq
+  elements: ["BAKC 6.4.3"]
+  stem: "After loading, the CG is found to be aft of the aft limit while the weight is below MTOW. The correct action is:"
+  options:
+    - "Add fuel to bring the CG forward."
+    - "Move weight forward or remove weight from the rear, then recalculate the CG."
+    - "Fly with a forward trim setting."
+    - "Reduce the take-off weight by leaving out fuel from the front tank."
+  answer: 1
+  explanation: "An aft CG reduces stability and may make stall and spin recovery impossible. Rearrange or remove the rear load and always recompute, because changing the weight changes both the moment and the divisor."
+  references: ["BAKC 6.4"]
+  difficulty: 1
+- id: BAKC-O030
+  kind: mcq
+  elements: ["BAKC 6.4.4"]
+  stem: "Taking off over the maximum take-off weight will most likely cause:"
+  options:
+    - "A shorter take-off run and a higher rate of climb."
+    - "A longer take-off run, a lower rate of climb, a higher stall speed and structural loads beyond those certified."
+    - "No change in performance if the CG is within limits."
+    - "A lower stall speed."
+  answer: 1
+  explanation: "More weight means more lift needed, a higher stall speed and lift-off speed, less excess power for climb, and loads on the airframe and undercarriage the certification did not cover."
+  references: ["BAKC 6.4"]
+  difficulty: 1
+- id: BAKC-O031
+  kind: mcq
+  elements: ["BAKC 6.4.4"]
+  stem: "An aeroplane loaded with its CG forward of the forward limit will tend to:"
+  options:
+    - "Be unstable in pitch with light controls."
+    - "Be nose heavy, stall at a higher speed and may lack enough elevator to flare for landing."
+    - "Stall at a lower speed."
+    - "Have better cruise performance."
+  answer: 1
+  explanation: "A forward CG needs more tail download, which raises the effective weight and the stall speed, and the elevator may run out of authority at low speed in the flare."
+  references: ["BAKC 6.4"]
+  difficulty: 2

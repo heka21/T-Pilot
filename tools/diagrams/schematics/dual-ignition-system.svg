@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" data-prefix="dis">
+<title>Dual ignition: two magnetos, two spark plugs per cylinder</title>
+<desc>Two independent magnetos, each driven by the engine, each feeding one spark plug in every cylinder through its own leads. If one magneto fails the engine keeps running on the other with a small loss of power. The ignition switch grounds (earths) a magneto to stop it; a broken earth lead leaves it live.</desc>
+<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+<!-- engine block with four cylinders -->
+<rect class="sketch" x="250" y="60" width="300" height="200" rx="10" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2" data-fill-style="solid"/>
+<text x="400" y="52" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">engine: four cylinders, two plugs each</text>
+<rect class="sketch" x="270" y="80" width="120" height="70" rx="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+<rect class="sketch" x="410" y="80" width="120" height="70" rx="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+<rect class="sketch" x="270" y="170" width="120" height="70" rx="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+<rect class="sketch" x="410" y="170" width="120" height="70" rx="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+<text x="330" y="100" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">cyl 1</text>
+<text x="470" y="100" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">cyl 2</text>
+<text x="330" y="190" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">cyl 3</text>
+<text x="470" y="190" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">cyl 4</text>
+<!-- spark plugs: left plug fed by the left magneto (brand), right plug by the right magneto (info) -->
+<g stroke-width="1.5">
+  <circle cx="305" cy="128" r="7" fill="var(--color-brand-soft)" stroke="var(--color-brand)"/><circle cx="355" cy="128" r="7" fill="var(--color-info-soft)" stroke="var(--color-info)"/>
+  <circle cx="445" cy="128" r="7" fill="var(--color-brand-soft)" stroke="var(--color-brand)"/><circle cx="495" cy="128" r="7" fill="var(--color-info-soft)" stroke="var(--color-info)"/>
+  <circle cx="305" cy="218" r="7" fill="var(--color-brand-soft)" stroke="var(--color-brand)"/><circle cx="355" cy="218" r="7" fill="var(--color-info-soft)" stroke="var(--color-info)"/>
+  <circle cx="445" cy="218" r="7" fill="var(--color-brand-soft)" stroke="var(--color-brand)"/><circle cx="495" cy="218" r="7" fill="var(--color-info-soft)" stroke="var(--color-info)"/>
+</g>
+<!-- magnetos, engine-driven -->
+<rect class="sketch" x="30" y="90" width="150" height="56" rx="8" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" data-fill-style="solid"/>
+<text x="105" y="113" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)">Left magneto</text>
+<text x="105" y="130" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)">engine-driven, self-powered</text>
+<rect class="sketch" x="30" y="200" width="150" height="56" rx="8" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="2" data-fill-style="solid"/>
+<text x="105" y="223" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)">Right magneto</text>
+<text x="105" y="240" font-size="11" text-anchor="middle" fill="var(--color-info-fg)">engine-driven, self-powered</text>
+<!-- drive from the engine -->
+<line x1="250" y1="160" x2="200" y2="160" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+<line x1="200" y1="118" x2="200" y2="228" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+<line x1="200" y1="118" x2="186" y2="118" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<line x1="200" y1="228" x2="186" y2="228" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<text x="225" y="152" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">drive</text>
+<!-- high-tension leads: left magneto to left plugs -->
+<path d="M180 100 C210 100 230 72 250 72 L300 72 L305 121 M300 72 L440 72 L445 121 M300 72 L300 160 L305 211 M440 72 L440 160 L445 211" fill="none" stroke="var(--color-brand)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- right magneto to right plugs -->
+<path d="M180 246 C210 246 230 250 250 250 L360 250 L355 225 M360 250 L500 250 L495 225 M360 250 L360 162 L355 135 M500 250 L500 162 L495 135" fill="none" stroke="var(--color-info)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- ignition switch earths a magneto to turn it OFF -->
+<rect class="sketch" x="20" y="296" width="290" height="50" rx="8" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+<text x="165" y="315" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Ignition switch: OFF · R · L · BOTH · START</text>
+<text x="165" y="331" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">L earths the right magneto; OFF earths both</text>
+<line x1="90" y1="296" x2="90" y2="256" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+<line x1="50" y1="296" x2="50" y2="146" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+<text x="330" y="292" font-size="12" font-weight="600" fill="var(--color-fg)">Two separate systems: lose one and the</text>
+<text x="330" y="308" font-size="12" font-weight="600" fill="var(--color-fg)">engine runs on the other (small RPM drop)</text>
+<text x="330" y="326" font-size="11" fill="var(--color-warn-fg)">A broken earth lead leaves a magneto live even at OFF:</text>
+<text x="330" y="340" font-size="11" fill="var(--color-warn-fg)">treat every propeller as live</text>
+</svg>

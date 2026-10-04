@@ -1,0 +1,234 @@
+# PAKC 2.1 to 2.3: PPL engines, supercharging and instruments.
+- id: PAKC-E001
+  kind: mcq
+  elements: ["PAKC 2.1.1"]
+  stem: "Full throttle height is:"
+  options:
+    - "The altitude at which the engine stops producing power."
+    - "The altitude at which the throttle is fully open and the engine can just produce the selected cruise power; above it that power cannot be maintained."
+    - "The service ceiling."
+    - "The altitude at which the mixture must be leaned."
+  answer: 1
+  explanation: "As density falls the throttle is opened to hold the chosen power until it reaches the stop. It is specific to a power setting: the full throttle height for 65 percent is higher than for 75 percent."
+  references: ["PAKC 2.1"]
+  difficulty: 1
+- id: PAKC-E002
+  kind: mcq
+  elements: ["PAKC 2.1.2"]
+  stem: "A normally aspirated engine at 8,000 ft on a standard day can produce approximately:"
+  options: ["100 percent of its rated power", "75 percent", "50 percent", "25 percent"]
+  answer: 1
+  explanation: "Power falls about 3 percent per 1,000 ft of density height, leaving roughly 75 percent at 8,000 ft. On a hot day it is less."
+  references: ["PAKC 2.1"]
+  difficulty: 2
+- id: PAKC-E003
+  kind: mcq
+  elements: ["PAKC 2.1.3"]
+  stem: "Compared with a normally aspirated engine, a turbocharged engine:"
+  options:
+    - "Loses power from sea level upwards at the same rate."
+    - "Maintains sea-level power up to its critical altitude, above which power falls."
+    - "Cannot be operated above 5,000 ft."
+    - "Does not need the mixture leaned."
+  answer: 1
+  explanation: "The turbocharger compresses the intake air to keep the manifold pressure at the rated value until the critical altitude, where the wastegate is fully closed."
+  references: ["PAKC 2.1", "PAKC 2.2"]
+  difficulty: 1
+- id: PAKC-E004
+  kind: mcq
+  elements: ["PAKC 2.1.3"]
+  stem: "The engine produces its best power with the mixture:"
+  options: ["As lean as possible", "Slightly richer than the chemically ideal ratio", "At idle cut-off", "Slightly leaner than best economy"]
+  answer: 1
+  explanation: "Best power is slightly rich of the ideal ratio; best economy is slightly lean of it. Too lean raises temperatures and risks detonation; too rich wastes fuel and fouls plugs."
+  references: ["PAKC 2.1"]
+  difficulty: 2
+- id: PAKC-E005
+  kind: mcq
+  elements: ["PAKC 2.2.1"]
+  stem: "The purpose of supercharging is to:"
+  options:
+    - "Cool the engine at high power."
+    - "Compress the intake air so the engine can maintain sea-level power at altitude, or produce more power than a normally aspirated engine."
+    - "Reduce fuel consumption at idle."
+    - "Prevent carburettor ice."
+  answer: 1
+  explanation: "A denser charge means more oxygen per cycle, restoring power lost to altitude or boosting it above the atmospheric value."
+  references: ["PAKC 2.2"]
+  difficulty: 1
+- id: PAKC-E006
+  kind: mcq
+  elements: ["PAKC 2.2.2"]
+  stem: "A turbocharger differs from a mechanical supercharger in that it is driven by:"
+  options: ["Gears from the crankshaft", "A turbine in the exhaust stream", "An electric motor", "The propeller"]
+  answer: 1
+  explanation: "The turbocharger uses exhaust energy, costing no direct engine power but with lag and high temperatures. A mechanical supercharger is gear-driven and absorbs engine power."
+  references: ["PAKC 2.2"]
+  difficulty: 1
+- id: PAKC-E007
+  kind: mcq
+  elements: ["PAKC 2.2.3"]
+  stem: "The device that limits turbocharger boost by diverting exhaust gas around the turbine is the:"
+  options: ["Intercooler", "Wastegate", "Carburettor heat valve", "Alternate air door"]
+  answer: 1
+  explanation: "The wastegate, usually under automatic control, modulates the exhaust flow through the turbine to hold the selected manifold pressure; a pop-off valve backs it up."
+  references: ["PAKC 2.2"]
+  difficulty: 1
+- id: PAKC-E008
+  kind: mcq
+  elements: ["PAKC 2.2.4"]
+  stem: "On take-off the manifold pressure of a turbocharged engine rises above the red line. The pilot should:"
+  options:
+    - "Lean the mixture to reduce the boost."
+    - "Reduce the throttle smoothly to bring the manifold pressure within limits, keep the RPM up and the mixture rich, watch the temperatures, and record the exceedance after landing."
+    - "Close the throttle fully."
+    - "Switch off the alternator."
+  answer: 1
+  explanation: "Overboost risks detonation and over-stress. Reduce throttle, avoid high MP with low RPM, and the engineers need the record because an overboost beyond limits requires inspection."
+  references: ["PAKC 2.2"]
+  difficulty: 2
+- id: PAKC-E009
+  kind: mcq
+  elements: ["PAKC 2.3.1"]
+  stem: "Pressure (position) error in the pitot-static system is:"
+  options:
+    - "The error caused by a blocked pitot tube."
+    - "The difference between the pressure sensed at the static vent and the true ambient pressure, varying with airspeed, flap and attitude, corrected by the POH calibration table."
+    - "The lag of the VSI."
+    - "The error in the altimeter subscale."
+  answer: 1
+  explanation: "Pressure error is why IAS differs from CAS. It is largest at low speed with flap extended."
+  references: ["PAKC 2.3"]
+  difficulty: 2
+- id: PAKC-E010
+  kind: mcq
+  elements: ["PAKC 2.3.2"]
+  stem: "Calibrated airspeed is:"
+  options:
+    - "Indicated airspeed corrected for pressure and instrument error."
+    - "True airspeed corrected for wind."
+    - "Groundspeed."
+    - "The speed shown on the GPS."
+  answer: 0
+  explanation: "IAS corrected for pressure and instrument error gives CAS; CAS corrected for density gives TAS; TAS with wind gives groundspeed."
+  references: ["PAKC 2.3"]
+  difficulty: 1
+- id: PAKC-E011
+  kind: numeric
+  elements: ["PAKC 2.3.2"]
+  stem: "Using the rule of 2 percent per 1,000 ft of density height, what is the approximate true airspeed in knots for a calibrated airspeed of 110 kt at a density height of 7,000 ft?"
+  answer: 125
+  tolerance: 2
+  unit: kt
+  explanation: "TAS ≈ CAS × (1 + 0.02 × 7) = 110 × 1.14 = 125 kt. The navigation computer gives a similar figure."
+  references: ["PAKC 2.3", "PNVC 2.4"]
+  difficulty: 2
+- id: PAKC-E012
+  kind: mcq
+  elements: ["PAKC 2.3.3"]
+  stem: "Immediately after a sharp pull-out from a dive, the pressure instruments:"
+  options:
+    - "Are perfectly accurate."
+    - "May read incorrectly for a few seconds because of manoeuvre-induced pressure disturbances at the static vent."
+    - "Freeze permanently."
+    - "Read true airspeed."
+  answer: 1
+  explanation: "Abrupt attitude changes disturb the static pressure and the lines; wait for the readings to settle before trusting them."
+  references: ["PAKC 2.3"]
+  difficulty: 2
+- id: PAKC-E013
+  kind: mcq
+  elements: ["PAKC 2.3.3"]
+  stem: "The benefit of an instantaneous vertical speed indicator (IVSI) is that it:"
+  options:
+    - "Needs no static source."
+    - "Removes most of the VSI's lag and reverse indication by sensing vertical acceleration."
+    - "Shows true airspeed."
+    - "Is unaffected by a static blockage."
+  answer: 1
+  explanation: "An accelerometer-driven piston gives an immediate indication at the start of a climb or descent. It still needs the static source."
+  references: ["PAKC 2.3"]
+  difficulty: 2
+- id: PAKC-E014
+  kind: mcq
+  elements: ["PAKC 2.3.3"]
+  stem: "Flying from an area of warm air into much colder air with the correct QNH set, the altimeter will:"
+  options:
+    - "Read lower than the true altitude."
+    - "Over-read: the true altitude is lower than indicated because the pressure levels are closer together in cold air."
+    - "Be unaffected by temperature."
+    - "Read the density altitude."
+  answer: 1
+  explanation: "The altimeter is calibrated for ISA. In cold air the aircraft is lower than indicated: 'hot to cold, look out below'. The error is about 4 percent of the height above the station per 10 degrees from ISA."
+  references: ["PAKC 2.3"]
+  difficulty: 3
+- id: PAKC-E015
+  kind: mcq
+  elements: ["PAKC 2.3.4"]
+  stem: "The magnet system of a direct-reading compass is pendulous (hangs below its pivot) in order to:"
+  options:
+    - "Increase its sensitivity."
+    - "Keep the card roughly level and resist the pull of magnetic dip, although this causes turning and acceleration errors."
+    - "Eliminate deviation."
+    - "Reduce the weight of the compass."
+  answer: 1
+  explanation: "Pendulosity counters dip but makes the assembly swing under acceleration, producing the characteristic errors."
+  references: ["PAKC 2.3"]
+  difficulty: 2
+- id: PAKC-E016
+  kind: mcq
+  elements: ["PAKC 2.3.4"]
+  stem: "A bubble in the compass fluid means:"
+  options:
+    - "Nothing; bubbles are normal at altitude."
+    - "The compass is unserviceable: the fluid damps oscillation and friction, and a bubble indicates a leak and lets the card swing and stick."
+    - "The compass needs to be swung."
+    - "The deviation card is out of date."
+  answer: 1
+  explanation: "The liquid must be full and clear. A bubble is a defect to be endorsed on the maintenance release."
+  references: ["PAKC 2.3"]
+  difficulty: 1
+- id: PAKC-E017
+  kind: mcq
+  elements: ["PAKC 2.3.5"]
+  stem: "In the southern hemisphere, when turning through south using the magnetic compass, the pilot should:"
+  options:
+    - "Roll out late, because the compass leads when turning through south."
+    - "Roll out early, because the compass lags when turning through south."
+    - "Ignore the compass; it is accurate in turns."
+    - "Roll out when the compass reads the desired heading."
+  answer: 1
+  explanation: "In the southern hemisphere the magnet assembly's centre of gravity is north of the pivot, so the compass lags through south and leads through north (the aid is ONUS: overshoot north, undershoot south). Through south, roll out before the compass shows the heading; through north, roll out after it. See PAKC 2.3."
+  references: ["PAKC 2.3"]
+  difficulty: 2
+- id: PAKC-E018
+  kind: mcq
+  elements: ["PAKC 2.3.5"]
+  stem: "Accelerating on a westerly heading in the southern hemisphere, the magnetic compass will indicate:"
+  options: ["A turn towards north", "A turn towards south", "No change", "A turn towards west"]
+  answer: 1
+  explanation: "SAND: South on Acceleration, North on Deceleration, for east and west headings in the southern hemisphere. (The northern hemisphere rule is ANDS.)"
+  references: ["PAKC 2.3"]
+  difficulty: 2
+- id: PAKC-E019
+  kind: mcq
+  elements: ["PAKC 2.3.6"]
+  stem: "The compass correction card shows 'For 270 steer 273'. To fly a magnetic heading of 270 you steer a compass heading of:"
+  options: ["267", "270", "273", "276"]
+  answer: 2
+  explanation: "The card gives the compass heading to steer for each magnetic heading, correcting for deviation (here 3 degrees west: 'deviation west, compass best')."
+  references: ["PAKC 2.3"]
+  difficulty: 1
+- id: PAKC-E020
+  kind: mcq
+  elements: ["PAKC 2.3.7"]
+  stem: "During taxi, a serviceable attitude indicator should:"
+  options:
+    - "Show a 10 degree bank in each turn."
+    - "Remain erect and level, tilting no more than about 5 degrees during taxi turns, with suction in the green."
+    - "Topple."
+    - "Show the taxi direction."
+  answer: 1
+  explanation: "Pre-flight checks: AI erect within about 5 minutes and stable in taxi turns; DI set and turning the correct way; turn coordinator showing the turn with the ball outside; ASI zero; altimeter within 100 ft of elevation; compass full, clear and reading correctly."
+  references: ["PAKC 2.3"]
+  difficulty: 2

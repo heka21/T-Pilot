@@ -1,0 +1,53 @@
+{# Partial: one exam question. No feedback is shown during the exam. #}
+{% from "_study_macros.html" import letter, workbook_link, option_card %}
+{% from "_icons.html" import icon %}
+<article id="exam-question" class="card space-y-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <span class="font-semibold">Question {{ position + 1 }} of {{ total }}</span>
+    <button type="button" class="{{ 'btn btn-sm bg-warn-soft text-warn-fg border-transparent' if ans.flagged else 'btn-secondary btn-sm' }}"
+            hx-post="/exam/{{ attempt.id }}/flag/{{ position }}" hx-target="#exam-question" hx-swap="outerHTML"
+            hx-sync="#exam-root:queue all" aria-pressed="{{ 'true' if ans.flagged else 'false' }}">
+      {{ icon("flag", "size-3.5") }} {{ "Flagged for review" if ans.flagged else "Flag for review" }}
+    </button>
+  </div>
+
+  <div>
+    <p class="question-stem">{{ q.stem }}</p>
+    {{ workbook_link(q) }}
+  </div>
+
+  <form id="answer-form" hx-post="/exam/{{ attempt.id }}/answer" hx-trigger="change" hx-swap="none" hx-sync="#exam-root:queue all"
+        onsubmit="return false;">
+    <input type="hidden" name="position" value="{{ position }}">
+    {% if q.kind == "mcq" %}
+      <fieldset class="options">
+        <legend class="sr-only">Choose an answer</legend>
+        {% for o in q.options %}
+          {% set inp %}<input type="radio" name="given" value="{{ loop.index0 }}" {% if ans.given == loop.index0 | string %}checked{% endif %}>{% endset %}
+          {{ option_card(loop.index0, o, "", inp) }}
+        {% endfor %}
+      </fieldset>
+    {% else %}
+      <div class="field">
+        <label class="label" for="given-{{ position }}">Your answer</label>
+        <div class="flex items-center gap-2">
+          <input id="given-{{ position }}" class="w-40" type="number" step="any" inputmode="numeric" name="given" value="{{ ans.given or '' }}">
+          {% if q.unit_label %}<span class="text-sm text-fg-muted">{{ q.unit_label }}</span>{% endif %}
+        </div>
+        <span class="text-xs text-fg-muted">Enter a whole number. Saved when you leave the box.</span>
+      </div>
+    {% endif %}
+  </form>
+  <p id="save-status" class="min-h-4 text-xs text-fg-muted" aria-live="polite">{% if ans.given %}Answer saved.{% endif %}</p>
+
+  <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+    <button type="button" class="btn-secondary" {% if position == 0 %}disabled{% endif %}
+            hx-get="/exam/{{ attempt.id }}/q/{{ position - 1 }}" hx-target="#exam-question" hx-swap="outerHTML" hx-sync="#exam-root:queue all">{{ icon("arrow-left", "size-4") }} Previous</button>
+    {% if position + 1 < total %}
+      <button type="button" class="btn-primary" hx-get="/exam/{{ attempt.id }}/q/{{ position + 1 }}" hx-target="#exam-question" hx-swap="outerHTML" hx-sync="#exam-root:queue all">Next {{ icon("arrow-right", "size-4") }}</button>
+    {% else %}
+      <span class="text-xs text-fg-muted">Last question. Review flagged ones, then submit.</span>
+    {% endif %}
+  </div>
+</article>
+{% if oob %}{% include "exam_nav.html" %}{% endif %}

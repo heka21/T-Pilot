@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header, breadcrumb %}
+{% block title %}{{ page.title }} · {{ app_name }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl">
+{{ breadcrumb([("Reference", "/reference"), (page.title, None)]) }}
+{{ page_header(page.title) }}
+<article class="note-body card p-6 sm:p-10">{{ page.html | safe }}</article>
+<nav aria-label="Other reference pages" class="mt-6">
+  <p class="eyebrow mb-2">Other reference pages</p>
+  <div class="btn-row">
+    {% for p in pages if p.slug != page.slug %}<a href="/reference/{{ p.slug }}" class="btn-secondary btn-sm">{{ p.title }}</a>{% endfor %}
+  </div>
+</nav>
+{% set flag_kind = "other" %}{% set flag_ref = "reference/" ~ page.slug %}
+{% include "_flag_form.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+# Flashcards for unit BAKC, terminology subtopics 2.1-2.5. See content/README.md for the format.
+- id: BAKC-TC001
+  elements: ["BAKC 2.1.1"]
+  front: "Clock code: where are 12, 3, 6 and 9 o'clock, and how many degrees is one 'hour'?"
+  back: "12 = straight ahead along the nose (heading, not track), 3 = right wing, 6 = behind, 9 = left wing. One hour = 30 degrees. Add 'high' or 'low' for traffic above or below."
+- id: BAKC-TC002
+  elements: ["BAKC 2.1.1"]
+  front: "How is a runway's 2-figure designator derived?"
+  back: "Magnetic direction rounded to the nearest 10 degrees, last digit dropped (e.g. 214°M = runway 21). Ends differ by 18. Headings, tracks and winds use 3-figure groups (e.g. 090, 005, 360)."
+- id: BAKC-TC003
+  elements: ["BAKC 2.1.2"]
+  front: "Heading (HDG) versus track?"
+  back: "Heading: the direction the nose (longitudinal axis) points, clockwise from north. Track: the path over the ground. The difference is drift due to wind."
+- id: BAKC-TC004
+  elements: ["BAKC 2.1.3"]
+  front: "True, magnetic, compass: what corrects each to the next, and the memory aid?"
+  back: "True to magnetic: variation (depends on location). Magnetic to compass: deviation (depends on the aircraft and its heading; deviation card). 'East is least, west is best' (subtract east, add west going towards compass)."
+- id: BAKC-TC005
+  elements: ["BAKC 2.2.1", "BAKC 2.2.2"]
+  front: "Units for navigation distance, visibility and speed; what is a knot?"
+  back: "Navigation: nautical miles (1 NM = 1852 m). Visibility: metres/kilometres. Speed: knots. A knot is one nautical mile per hour (× 1.852 for km/h)."
+- id: BAKC-TC006
+  elements: ["BAKC 2.2.3"]
+  front: "What does a wind velocity of 240/18 mean, and which reference is used where?"
+  back: "Wind FROM 240 degrees at 18 kt. Forecasts (TAF, GAF) and METAR/SPECI: degrees true. ATIS and ATC surface winds: degrees magnetic."
+- id: BAKC-TC007
+  elements: ["BAKC 2.2.4"]
+  front: "IAS → CAS → TAS → GS: what correction at each step?"
+  back: "IAS to CAS: instrument and position error. CAS to TAS: density (pressure altitude and temperature; about +2% per 1000 ft). TAS to GS: wind."
+- id: BAKC-TC008
+  elements: ["BAKC 2.3.1"]
+  front: "Write 9:07 pm and 12:15 am as 4-figure groups."
+  back: "2107 and 0015. Add 12 to pm hours from 1 pm; always four figures, no colon."
+- id: BAKC-TC009
+  elements: ["BAKC 2.3.2", "BAKC 2.3.3"]
+  front: "WST and UTC: the conversion rule and the date trap?"
+  back: "WST = UTC + 8, all year (no daylight saving in WA). WST to UTC: subtract 8 (any WST before 0800 is the previous day UTC). UTC to WST: add 8 (any UTC from 1600 is the next day WST)."
+- id: BAKC-TC010
+  elements: ["BAKC 2.3.3"]
+  front: "Convert 2030 UTC on 5 May to WST."
+  back: "2030 + 0800 = 2830 → 0430 WST on 6 May."
+- id: BAKC-TC011
+  elements: ["BAKC 2.4.1"]
+  front: "Height, altitude, elevation?"
+  back: "Height: above a specified datum, usually the ground (AGL). Altitude: aircraft above mean sea level (QNH set). Elevation: a point on or fixed to the ground above MSL. All in feet. Altitude = elevation + height."
+- id: BAKC-TC012
+  elements: ["BAKC 2.4.2"]
+  front: "Australian units for runway dimensions, temperature, pressure, weight, liquid volume, visibility?"
+  back: "Metres; degrees Celsius; hectopascals; kilograms; litres; metres/kilometres."
+- id: BAKC-TC013
+  elements: ["BAKC 2.5.1"]
+  front: "Kinetic and potential energy: formulas and what doubling does."
+  back: "KE = ½mv² (doubling speed gives 4 × KE). PE = mgh (doubling height gives 2 × PE). Both proportional to mass."
+- id: BAKC-TC014
+  elements: ["BAKC 2.5.2"]
+  front: "What is the aircraft energy state?"
+  back: "Its total mechanical energy: kinetic (airspeed) plus potential (height). Throttle adds or removes energy; elevator trades between speed and height; drag always removes energy."
+- id: BAKC-TC015
+  elements: ["BAKC 2.5.3"]
+  front: "Effect on energy of: accelerating level; climbing at constant speed; zoom with power unchanged."
+  back: "Accelerating level: KE up, PE same, total up. Climbing at constant speed: PE up, KE same, total up (engine supplies it). Zoom: KE traded for PE, total roughly constant."

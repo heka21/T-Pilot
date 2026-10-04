@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stack_bar, counts, page_header, breadcrumb %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ unit.code }} · {{ app_name }}{% endblock %}
+{% block content %}
+{{ breadcrumb([("Syllabus", "/syllabus"), (unit.code, None)]) }}
+{{ page_header(unit.code ~ " · " ~ unit.title, "MOS unit " ~ unit.number ~ " · examined in " ~ (exam_codes | join(" and ") or "no exam")) }}
+{% if exam_codes | length > 1 %}
+  <p class="callout callout-brand mb-6">This unit is shared by {{ exam_codes | join(" and ") }}: your status here counts towards both exams.</p>
+{% endif %}
+<div class="card mb-8">
+  <div class="mb-2 flex items-center justify-between gap-3">
+    <span class="eyebrow">Unit progress</span>
+    <span class="text-lg font-bold tabular-nums">{{ unit_progress.percent }}%</span>
+  </div>
+  {{ stack_bar(unit_progress, unit.code) }}
+  <div class="mt-2">{{ counts(unit_progress) }}</div>
+</div>
+
+{% for topic in unit.topics %}
+  <section class="mb-8">
+    <div class="mb-3">
+      <h2 class="section-title">{{ topic.number }}. {{ topic.title }}</h2>
+      {% if topic.note %}<p class="mt-1 text-sm text-fg-muted">{{ topic.note }}</p>{% endif %}
+    </div>
+    <div class="card">
+      <ul class="row-list">
+        {% for sub in topic.subtopics %}
+          <li class="row">
+            <div class="min-w-0 flex-1 basis-60">
+              <a href="{{ subtopic_url(sub) }}" class="text-fg no-underline hover:text-brand"><span class="text-fg-muted">{{ sub.number }}</span> <strong>{{ sub.title }}</strong></a>
+              <div class="mt-0.5 text-xs">
+                {% if sub.note %}<a href="{{ note_url(sub) }}" class="inline-flex items-center gap-1">{{ icon("notes", "size-3.5") }} Read note</a>{% else %}<a href="{{ note_url(sub) }}" class="text-fg-faint no-underline hover:text-fg-muted">No note yet</a>{% endif %}
+              </div>
+            </div>
+            {% with sid = sub.id, status = status_of(sub) %}{% include "_status.html" %}{% endwith %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+{% endfor %}
+{% endblock %}
