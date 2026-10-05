@@ -19,7 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Attempt, CardReview, Exam, PlanItem, Progress, StudyPlan, Subtopic
-from app.services import srs
+from app.services import progress, srs
 
 CARDS_MINUTES = 5
 QUIZ_MINUTES = 10
@@ -281,7 +281,8 @@ def sync_done(session: Session, plan: StudyPlan, today: date | None = None) -> N
         if a.mode == "exam" and a.exam_code:
             exam_days[a.exam_code].add(a.submitted_at.date())
     review_days = {r.last_reviewed.date() for r in session.scalars(select(CardReview)) if r.last_reviewed}
-    due_today = srs.due_count(session, today)["due"] if any(it.kind == "cards" and it.date == today for it in plan.items) else None
+    cards_today = srs.due_count(session, today) if any(it.kind == "cards" and it.date == today for it in plan.items) else None
+    nothing_to_review = cards_today is not None and cards_today["due"] == 0 and cards_today["new"] == 0
     for it in plan.items:
         if it.done_at:
             continue
@@ -291,14 +292,19 @@ def sync_done(session: Session, plan: StudyPlan, today: date | None = None) -> N
             it.done_at = utcnow()
         elif it.kind == "mock_exam" and any(abs((d - it.date).days) <= 1 for d in exam_days.get(it.exam_code, ())):
             it.done_at = utcnow()
-        elif it.kind == "cards" and (it.date in review_days or (it.date == today and due_today == 0 and it.date <= today)):
+        elif it.kind == "cards" and (it.date in review_days or (it.date == today and nothing_to_review)):
             it.done_at = utcnow()
     session.commit()
 
 
 def mark_item(session: Session, item: PlanItem, done: bool = True) -> PlanItem:
+    """Tick or untick an item. Ticking a study item also marks a not-yet-started subtopic as studying."""
     item.done_at = utcnow() if done else None
     session.commit()
+    if done and item.kind == "study" and item.subtopic_id:
+        row = session.get(Progress, item.subtopic_id)
+        if row is None or row.status == "not_started":
+            progress.set_status(session, item.subtopic_id, "studying")
     return item
 
 

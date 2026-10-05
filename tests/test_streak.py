@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta, timezone
 import pytest
 from sqlalchemy import select
 
-from app.models import Progress, Subtopic
+from app.models import PlanItem, Progress, StudyPlan, Subtopic
 from app.services.progress import activity_streak
 from tests._db import fresh_session
 
@@ -56,3 +56,17 @@ def test_streak_kept_until_today_is_over(s) -> None:
 def test_not_started_rows_do_not_count(s) -> None:
     _studied(s, 0, status="not_started")
     assert activity_streak(s, TODAY)["current"] == 0
+
+
+def test_only_ticked_study_items_count(s) -> None:
+    plan = StudyPlan(start_date=TODAY, rpla_exam_date=TODAY + timedelta(days=60), ppla_exam_date=TODAY + timedelta(days=120))
+    s.add(plan)
+    sid = s.scalar(select(Subtopic.id).order_by(Subtopic.position).limit(1))
+    plan.items += [  # cards is auto-ticked when nothing is due, so it must not count on its own
+        PlanItem(date=TODAY - timedelta(days=1), position=0, kind="cards", done_at=_utc_noon(TODAY - timedelta(days=1))),
+        PlanItem(date=TODAY, position=0, kind="cards", done_at=_utc_noon(TODAY)),
+        PlanItem(date=TODAY, position=1, kind="study", subtopic_id=sid, done_at=_utc_noon(TODAY)),
+    ]
+    s.flush()
+    st = activity_streak(s, TODAY)
+    assert st["current"] == 1 and st["today"]

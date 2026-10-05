@@ -99,7 +99,10 @@ def _local_date(ts: datetime) -> date:
 
 
 def activity_streak(session: Session, today: date | None = None) -> dict:
-    """Study streak from every kind of activity: answered questions, card reviews, ticked plan items and status changes.
+    """Study streak from every kind of activity: answered questions, card reviews, ticked study items and status changes.
+
+    Other plan items (cards, quizzes, mocks) are only auto-ticked from activity already counted here, and the cards
+    item can be ticked when nothing is due, so they are left out.
 
     Card reviews only keep their latest timestamp, so a day counts when any card was last reviewed on it; that is
     exact for today and a slight undercount for older days. The streak runs back from today, or from yesterday when
@@ -110,7 +113,7 @@ def activity_streak(session: Session, today: date | None = None) -> dict:
     stamps = [
         select(AttemptAnswer.answered_at).where(AttemptAnswer.answered_at.is_not(None)),
         select(CardReview.last_reviewed).where(CardReview.last_reviewed.is_not(None)),
-        select(PlanItem.done_at).where(PlanItem.done_at.is_not(None)),
+        select(PlanItem.done_at).where(PlanItem.done_at.is_not(None), PlanItem.kind == "study"),
         select(Progress.updated_at).where(Progress.status != "not_started"),
     ]
     days = {_local_date(ts) for q in stamps for ts in session.scalars(q) if ts is not None}

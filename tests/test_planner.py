@@ -67,6 +67,27 @@ def test_sync_and_replan_keeps_past_and_completed():
     assert planner.status(s, new, later)["days_behind"] == 0
 
 
+def test_cards_item_stays_open_while_new_cards_wait():
+    s = fresh_session()
+    plan = make(s)
+    cards = next(it for it in plan.items if it.kind == "cards" and it.date == TODAY)
+    planner.sync_done(s, plan, TODAY)  # no reviews yet, so nothing is due, but new cards are waiting
+    assert cards.done_at is None
+
+
+def test_ticking_a_study_item_marks_it_studying():
+    s = fresh_session()
+    plan = make(s)
+    first, second = [it for it in plan.items if it.kind == "study"][:2]
+    planner.mark_item(s, first)
+    assert s.get(Progress, first.subtopic_id).status == "studying"
+    set_status(s, second.subtopic_id, "confident")
+    planner.mark_item(s, second)
+    assert s.get(Progress, second.subtopic_id).status == "confident"
+    planner.mark_item(s, first, done=False)
+    assert first.done_at is None and s.get(Progress, first.subtopic_id).status == "studying"
+
+
 def test_validation():
     bad = planner.Settings(start_date=TODAY, rpla_exam_date=TODAY, ppla_exam_date=TODAY, study_weekdays=[])
     assert len(bad.validate()) >= 3
