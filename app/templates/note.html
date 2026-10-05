@@ -4,7 +4,7 @@
 {% from "_icons.html" import icon %}
 {% block title %}{{ note.title if note else sub.title }} · {{ app_name }}{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-3xl">
+<div class="mx-auto max-w-4xl">
 {{ breadcrumb([("Lessons", "/lessons"), (sub.unit_code, "/syllabus/unit/" ~ sub.unit_code), (sub.number, subtopic_url(sub))]) }}
 
 {# Lesson header: unit badge, id and reading time above the title; the status control along the bottom. #}

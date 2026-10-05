@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_session
-from app.models import Subtopic, Topic, Unit
+from app.models import STATUSES, ExamUnit, Subtopic, Topic, Unit
 from app.routers.syllabus import _split_id, get_subtopic, neighbours
 from app.templating import templates
 
@@ -33,22 +33,29 @@ def note_url(subtopic: Subtopic | str) -> str:
 
 
 @router.get("/lessons", response_class=HTMLResponse)
-def notes_index(request: Request, session: Session = Depends(get_session)) -> HTMLResponse:
+def notes_index(request: Request, q: str = "", exam: str = "", status: str = "",
+                session: Session = Depends(get_session)) -> HTMLResponse:
+    """All lessons by unit. q/exam/status prefill the filter bar; app.js does the filtering in the page."""
     units = list(session.scalars(
         select(Unit).order_by(Unit.position).options(
             selectinload(Unit.topics).selectinload(Topic.subtopics).selectinload(Subtopic.note),
             selectinload(Unit.topics).selectinload(Topic.subtopics).selectinload(Subtopic.progress),
         )
     ))
+    unit_exams: dict[str, list[str]] = {}
+    for eu in session.scalars(select(ExamUnit).order_by(ExamUnit.exam_code.desc())):  # RPLA before PPLA
+        unit_exams.setdefault(eu.unit_code, []).append(eu.exam_code)
     groups = []
     written = total = 0
     for unit in units:
         subs = [s for t in unit.topics for s in t.subtopics]
         with_note = [s for s in subs if s.note]
-        groups.append({"unit": unit, "notes": with_note, "missing": [s for s in subs if not s.note]})
+        groups.append({"unit": unit, "exams": unit_exams.get(unit.code, []), "notes": with_note, "missing": [s for s in subs if not s.note]})
         written += len(with_note)
         total += len(subs)
-    return templates.TemplateResponse(request, "notes_index.html", {"groups": groups, "written": written, "total": total})
+    filters = {"q": q.strip(), "exam": exam if exam in ("RPLA", "PPLA") else "", "status": status if status in STATUSES else ""}
+    return templates.TemplateResponse(request, "notes_index.html",
+                                      {"groups": groups, "written": written, "total": total, "filters": filters})
 
 
 @router.get("/lessons/{unit}/{number}", response_class=HTMLResponse)

@@ -73,6 +73,15 @@ def test_notes_index(client: TestClient) -> None:
     assert "/lessons/RBKA/3.6" in r.text
 
 
+def test_lessons_filter_bar(client: TestClient) -> None:
+    r = client.get("/lessons?q=stall&exam=RPLA&status=bogus")
+    assert r.status_code == 200
+    assert 'value="stall"' in r.text and 'name="exam" value="RPLA" checked' in r.text
+    assert 'name="status" value="" checked' in r.text  # unknown status falls back to any
+    assert 'data-text="rbka 3.6 rbka3.6 stalling' in r.text
+    assert 'data-unit-link="PHFC" data-exams="RPLA PPLA"' in r.text  # shared unit shows under both exams
+
+
 def test_set_status_roundtrip(client: TestClient) -> None:
     r = client.post("/progress/RBKA%203.6", data={"status": "confident"}, headers={"HX-Request": "true"})
     assert r.status_code == 200

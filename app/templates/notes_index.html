@@ -9,6 +9,13 @@
   {% if status_of(sub) == "confident" %}{% set ns.confident = ns.confident + 1 %}{% else %}{% set ns.left = ns.left + (sub.note.minutes or 0) %}{% endif %}
   {% set ns.minutes = ns.minutes + (sub.note.minutes or 0) %}
 {% endfor %}{% endfor %}
+{# Per-status counts for the filter pills, over every subtopic (with or without a lesson). #}
+{% set counts = {"": total, "not_started": 0, "studying": 0, "confident": 0} %}
+{% for g in groups %}{% for sub in g.notes + g.missing %}{% set _ = counts.update({status_of(sub): counts[status_of(sub)] + 1}) %}{% endfor %}{% endfor %}
+{# Lower-case text the filter matches against: code (spaced and not), lesson and subtopic titles, topic and unit. #}
+{% macro haystack(sub) -%}
+  {{ (sub.id ~ " " ~ sub.unit_code ~ sub.number ~ " " ~ (sub.note.title if sub.note else "") ~ " " ~ sub.title ~ " " ~ sub.topic.title ~ " " ~ sub.unit.title) | lower }}
+{%- endmacro %}
 
 {{ page_header("Lessons", written ~ " of " ~ total ~ " subtopics have a lesson.", "notes") }}
 
@@ -30,21 +37,66 @@
   </div>
 </div>
 
+<div data-lesson-filter data-total="{{ total }}">
+{# Filter bar: stays under the top bar while scrolling. app.js hides cards and units that do not match. #}
+<div class="lesson-filter" role="search" aria-label="Filter lessons">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <label class="topsearch-box h-10 min-w-0 flex-1 basis-64">
+      {{ icon("search", "size-[18px] shrink-0 text-fg-faint") }}
+      <input type="search" name="q" value="{{ filters.q }}" placeholder="Filter by code or title, e.g. BAKC 2.1 or stall"
+             autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Filter lessons" data-filter-q>
+      <button type="button" class="topsearch-clear" data-filter-clear-q aria-label="Clear filter">{{ icon("close", "size-4") }}</button>
+      <kbd class="topsearch-kbd" aria-hidden="true">/</kbd>
+    </label>
+    <div class="filter-scroll">
+      <div class="filter-pills" role="radiogroup" aria-label="Exam">
+        {% for value, label in [("", "All"), ("RPLA", "RPL"), ("PPLA", "PPL")] %}
+          <label class="filter-pill"><input type="radio" name="exam" value="{{ value }}"{% if filters.exam == value %} checked{% endif %}>{{ label }}</label>
+        {% endfor %}
+      </div>
+      <span class="h-5 w-px shrink-0 bg-line" aria-hidden="true"></span>
+      <div class="filter-pills" role="radiogroup" aria-label="Status">
+        {% for value, label in [("", "Any status"), ("not_started", "Not started"), ("studying", "Studying"), ("confident", "Confident")] %}
+          <label class="filter-pill"><input type="radio" name="status" value="{{ value }}"{% if filters.status == value %} checked{% endif %}>{{ label }} <b>{{ counts[value] }}</b></label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <nav class="filter-units" aria-label="Jump to unit">
+    {% for g in groups %}
+      <a href="#unit-{{ g.unit.code | lower }}" class="search-kind shrink-0" data-unit-link="{{ g.unit.code }}" data-exams="{{ g.exams | join(' ') }}"
+         title="{{ g.unit.title }}">{{ g.unit.code }} <b data-unit-count>{{ (g.notes + g.missing) | length }}</b></a>
+    {% endfor %}
+  </nav>
+  <p class="text-xs text-fg-muted" aria-live="polite">
+    <span data-filter-count>{{ total }} subtopics</span>
+    <button type="button" class="ml-2 font-semibold text-brand hover:underline" data-filter-reset hidden>Clear filters</button>
+  </p>
+</div>
+
+<div class="card-sunken mb-10 flex flex-col items-center gap-3 py-10 text-center" data-filter-empty hidden>
+  {{ icon("search", "size-8 text-fg-faint") }}
+  <p class="font-semibold">No lessons match.</p>
+  <p class="text-sm text-fg-muted">Lesson titles and codes only. To search inside lessons, questions and cards, use
+    <a href="/search" data-filter-search-link>search everything</a>.</p>
+</div>
+
 {% for g in groups %}
   {% set ng = g.notes | length %}
-  <section class="rise mb-10" style="--i: {{ [loop.index + 3, 10] | min }}" aria-labelledby="unit-{{ g.unit.code | lower }}">
+  <section class="rise mb-10" style="--i: {{ [loop.index + 3, 10] | min }}" aria-labelledby="unit-{{ g.unit.code | lower }}"
+           data-unit-section="{{ g.unit.code }}" data-exams="{{ g.exams | join(' ') }}">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div class="flex min-w-0 items-center gap-3">
         <span class="grid h-9 min-w-14 shrink-0 place-items-center rounded-xl bg-grad-brand px-2 text-sm font-extrabold tracking-tight text-on-brand shadow-(--shadow-brand)" aria-hidden="true">{{ g.unit.code }}</span>
-        <h2 id="unit-{{ g.unit.code | lower }}" class="section-title min-w-0"><a href="/syllabus/unit/{{ g.unit.code }}" class="text-fg no-underline hover:text-brand"><span class="sr-only">{{ g.unit.code }} </span>{{ g.unit.title }}</a></h2>
+        <h2 id="unit-{{ g.unit.code | lower }}" class="section-title lesson-unit-title min-w-0"><a href="/syllabus/unit/{{ g.unit.code }}" class="text-fg no-underline hover:text-brand"><span class="sr-only">{{ g.unit.code }} </span>{{ g.unit.title }}</a></h2>
       </div>
-      {% if ng %}<span class="badge">{{ ng }} lesson{{ "s" if ng != 1 }}</span>{% endif %}
+      {% if ng %}<span class="badge" data-unit-badge>{{ ng }} lesson{{ "s" if ng != 1 }}</span>{% endif %}
     </div>
     {% if g.notes %}
       <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {% for sub in g.notes %}
           {% set st = status_of(sub) %}
-          <li>
+          <li data-lesson data-status="{{ st }}" data-text="{{ haystack(sub) }}">
             <a href="{{ note_url(sub) }}" class="card-link group relative flex h-full flex-col gap-2.5 overflow-hidden p-4">
               {# A thin strip along the top shows the status at a glance. #}
               <span class="absolute inset-x-0 top-0 h-1 {{ 'bg-ok' if st == 'confident' else ('bg-warn' if st == 'studying' else 'bg-transparent') }}" aria-hidden="true"></span>
@@ -63,11 +115,11 @@
       </ul>
     {% endif %}
     {% if g.missing %}
-      <details class="disclosure {{ 'mt-3' if g.notes }}">
+      <details class="disclosure {{ 'mt-3' if g.notes }}" data-missing>
         <summary><span class="flex items-center gap-2 text-fg-muted">{{ icon("circle", "size-4 text-fg-faint") }} {{ g.missing | length }} subtopic{{ "s" if g.missing | length != 1 }} without a lesson yet</span></summary>
         <ul class="row-list text-sm">
           {% for sub in g.missing %}
-            <li class="row">
+            <li class="row" data-lesson data-status="{{ status_of(sub) }}" data-text="{{ haystack(sub) }}">
               <a href="{{ note_url(sub) }}" class="min-w-0 flex-1 basis-56 text-fg-muted no-underline hover:text-brand">{{ sub.number }} {{ sub.title }}</a>
               {{ badge(status_of(sub)) }}
             </li>
@@ -77,4 +129,5 @@
     {% endif %}
   </section>
 {% endfor %}
+</div>
 {% endblock %}

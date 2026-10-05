@@ -596,7 +596,7 @@
   }
 
   /* Global search: top-bar box, suggestions, results page. */
-  .topbar { @apply sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-line/70 bg-bg/75 px-4 backdrop-blur-xl backdrop-saturate-150 sm:gap-3 sm:px-6 lg:px-10; }
+  .topbar { @apply sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-line/70 bg-bg/75 px-4 backdrop-blur-xl backdrop-saturate-150 sm:gap-3 sm:px-6 lg:px-8; }
   .topsearch { @apply relative min-w-0 flex-1 lg:mx-auto lg:max-w-2xl; }
   .topsearch-box {
     @apply flex h-11 cursor-text items-center gap-2.5 rounded-2xl border border-line bg-surface pl-4 pr-2 text-fg shadow-xs
@@ -650,6 +650,30 @@
   .nav-link:hover svg { @apply -rotate-6 scale-105; }
   .nav-link[aria-current="page"] { @apply bg-brand-soft/60 text-brand-fg; }
   .nav-link[aria-current="page"] svg { @apply bg-grad-brand text-on-brand shadow-(--shadow-brand); }
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-40 flex w-72 flex-col overflow-x-hidden border-r border-line/70 bg-surface transition-[translate,width] duration-200
+           lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:shrink-0 lg:bg-surface/60 lg:backdrop-blur-xl;
+  }
+  .sidebar-head { @apply flex h-16 shrink-0 items-center justify-between gap-3 px-4; }
+  .sidebar-nav { @apply flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-3 pb-4; }
+  .sidebar-eyebrow { @apply whitespace-nowrap px-2 pb-1.5 text-[0.65rem] text-fg-faint; }
+  .sidebar-label, .nav-link span { @apply whitespace-nowrap; }
+  .sidebar-toggle { @apply mx-3 mb-3 hidden cursor-pointer border-t-0 lg:flex; }
+  .sidebar-icon-open { @apply hidden; }
+  /* Collapsed (desktop only): an icon rail. Labels go visually hidden, not display:none, so links keep their names. */
+  @variant lg {
+    html[data-sidebar="collapsed"] {
+      .sidebar { @apply w-[4.5rem]; }
+      .sidebar-head { @apply justify-center px-0; }
+      .sidebar-nav { @apply px-3; }
+      .sidebar-label, .sidebar .nav-link span { @apply sr-only; }
+      .sidebar-eyebrow { @apply mx-2 mb-1.5 mt-3 h-px overflow-hidden bg-line p-0 text-transparent; }
+      .sidebar-nav > .sidebar-eyebrow:first-child { @apply bg-transparent; }
+      .sidebar .nav-link { @apply justify-center px-0; }
+      .sidebar-icon-close { @apply hidden; }
+      .sidebar-icon-open { @apply block; }
+    }
+  }
   .tab-link { @apply flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[0.65rem] font-semibold text-fg-muted no-underline hover:text-fg; }
   .tab-link svg { @apply h-7 w-12 rounded-full px-3.5 py-1 transition-colors duration-200; }
   .tab-link[aria-current="page"] { @apply text-brand-fg; }
@@ -661,6 +685,24 @@
   :root[data-theme="dark"] .theme-icon-dark { @apply block; }
   .pass { @apply font-semibold text-ok; }
   .fail { @apply font-semibold text-bad; }
+
+  /* Lessons filter bar: sticky under the top bar from sm up; pill rows scroll sideways instead of wrapping. */
+  .lesson-filter {
+    @apply mb-8 flex flex-col gap-3 border-b border-line/70 bg-bg/85 py-3 backdrop-blur-xl backdrop-saturate-150
+           -mx-4 px-4 sm:sticky sm:top-16 sm:z-10 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8;
+  }
+  .filter-scroll, .filter-units { @apply -mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 py-0.5 [scrollbar-width:none]; }
+  .filter-scroll::-webkit-scrollbar, .filter-units::-webkit-scrollbar { @apply hidden; }
+  .filter-pills { @apply flex shrink-0 items-center gap-1.5; }
+  .filter-pill {
+    @apply inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-surface px-3 py-1 text-xs font-semibold text-fg-muted
+           transition-[background-color,border-color,color] hover:border-line-strong hover:text-fg has-focus-visible:ring-4 has-focus-visible:ring-brand/20
+           has-checked:border-transparent has-checked:bg-grad-brand has-checked:text-on-brand;
+  }
+  .filter-pill input { @apply sr-only; }
+  .filter-pill b { @apply font-semibold tabular-nums opacity-70; }
+  .filter-units .search-kind.is-empty { @apply opacity-40; }
+  .lesson-unit-title { @apply scroll-mt-20 sm:scroll-mt-60; }
 
   /* Streak: seven day dots, filled for days with study activity. */
   .streak-days { @apply flex items-center gap-1.5; }

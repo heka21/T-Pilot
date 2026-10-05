@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f6fc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#080d1c" media="(prefers-color-scheme: dark)">
-  {# Apply a saved light/dark choice before first paint (app.js owns the toggle). #}
-  <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
+  {# Apply a saved light/dark choice and a collapsed sidebar before first paint (app.js owns both toggles). #}
+  <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    if (localStorage.getItem("sidebar") === "collapsed") document.documentElement.dataset.sidebar = "collapsed"; } catch (e) {}</script>
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ static_url('app.css') }}">
   <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
@@ -23,7 +24,7 @@
 {% set path = request.url.path %}
 {% macro nav_link(href, label, name, cls="nav-link") -%}
   {% set active = (path == "/" if href == "/" else path.startswith(href)) %}
-  <a href="{{ href }}" class="{{ cls }}"{% if active %} aria-current="page"{% endif %}>{{ icon(name) }}<span>{{ label }}</span></a>
+  <a href="{{ href }}" class="{{ cls }}" title="{{ label }}"{% if active %} aria-current="page"{% endif %}>{{ icon(name, "") }}<span>{{ label }}</span></a>
 {%- endmacro %}
 {% macro logo(size="size-9") -%}
   <span class="grid {{ size }} shrink-0 place-items-center rounded-xl bg-grad-brand text-on-brand shadow-(--shadow-brand)">{{ icon("plane", "size-[55%] -rotate-12") }}</span>
@@ -32,34 +33,35 @@
 
   {# ---------------------------------------------------------------- sidebar (desktop) / drawer (mobile) #}
   <div id="drawer-backdrop" class="fixed inset-0 z-30 hidden bg-fg/30 backdrop-blur-sm lg:hidden" data-drawer-close></div>
-  <aside id="sidebar"
-         class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r border-line/70 bg-surface transition-transform duration-200
-                lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:translate-x-0 lg:shrink-0 lg:bg-surface/60 lg:backdrop-blur-xl"
-         aria-label="Main navigation">
-    <div class="flex h-16 items-center justify-between gap-3 px-4">
-      <a href="/" class="group flex items-center gap-2.5 no-underline">
+  <aside id="sidebar" class="sidebar -translate-x-full lg:translate-x-0" aria-label="Main navigation">
+    <div class="sidebar-head">
+      <a href="/" class="group flex min-w-0 items-center gap-2.5 no-underline" title="{{ app_name }}">
         {{ logo() }}
-        <span class="flex flex-col leading-none">
+        <span class="sidebar-label flex flex-col leading-none">
           <span class="text-[0.95rem] font-extrabold tracking-tight text-fg">{{ app_name }}</span>
           <span class="mt-0.5 text-[0.65rem] font-semibold uppercase tracking-wider text-fg-faint">RPL · PPL ground school</span>
         </span>
       </a>
       <button type="button" class="btn-icon -mr-1 size-9 lg:hidden" data-drawer-close aria-label="Close menu">{{ icon("close") }}</button>
     </div>
-    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4">
-      <p class="eyebrow px-2 pb-1.5 pt-3 text-[0.65rem] text-fg-faint">Study</p>
+    <nav class="sidebar-nav">
+      <p class="eyebrow sidebar-eyebrow pt-3">Study</p>
       {{ nav_link("/", "Dashboard", "home") }}
       {{ nav_link("/planner", "Planner", "calendar") }}
       {{ nav_link("/syllabus", "Syllabus", "book") }}
       {{ nav_link("/lessons", "Lessons", "notes") }}
-      <p class="eyebrow px-2 pb-1.5 pt-5 text-[0.65rem] text-fg-faint">Practise</p>
+      <p class="eyebrow sidebar-eyebrow pt-5">Practise</p>
       {{ nav_link("/quiz", "Quiz", "quiz") }}
       {{ nav_link("/exam", "Mock exam", "timer") }}
       {{ nav_link("/cards", "Flashcards", "cards") }}
-      <p class="eyebrow px-2 pb-1.5 pt-5 text-[0.65rem] text-fg-faint">Track</p>
+      <p class="eyebrow sidebar-eyebrow pt-5">Track</p>
       {{ nav_link("/progress", "Progress", "chart") }}
       {{ nav_link("/reference", "Reference", "reference") }}
     </nav>
+    {# Desktop only: shrink to an icon rail and back ("[" does the same); remembered per browser. #}
+    <button type="button" class="nav-link sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="true" title="Collapse sidebar ( [ )">
+      {{ icon("panel-close", "sidebar-icon-close") }}{{ icon("panel-open", "sidebar-icon-open") }}<span>Collapse sidebar</span>
+    </button>
   </aside>
 
   <div class="flex min-w-0 flex-1 flex-col">
@@ -95,7 +97,7 @@
       </button>
     </header>
 
-    <main class="mx-auto w-full max-w-6xl flex-1 px-4 pb-32 pt-6 sm:px-6 lg:px-10 lg:pb-16 lg:pt-8">
+    <main class="mx-auto w-full max-w-screen-2xl flex-1 px-4 pb-32 pt-6 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
       {% block content %}{% endblock %}
     </main>
 

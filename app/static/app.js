@@ -17,11 +17,11 @@
   });
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") setDrawer(false);
-    // "/" jumps to the top-bar search box, unless the user is already typing.
+    // "/" jumps to the page's own filter box if it has one, else the top-bar search box, unless the user is already typing.
     if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
     var t = e.target, tag = t && t.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
-    var box = document.querySelector("[data-global-search]");
+    var box = document.querySelector("[data-filter-q]") || document.querySelector("[data-global-search]");
     if (!box) return;
     box.focus(); box.select(); e.preventDefault();
   });
@@ -81,6 +81,96 @@
     // A slow reply for an older query can land after the box was cleared.
     if (!form.querySelector("[data-global-search]").value.trim()) e.target.innerHTML = "";
     setActive(form, -1); syncExpanded(form);
+  });
+
+  // Lessons page filter: words (all must match a card's code or titles), exam and status, applied in the page.
+  // The URL keeps the filter (replaceState), so Back from a lesson returns to the same list.
+  function filterValues(box) {
+    var exam = box.querySelector("input[name=exam]:checked"), status = box.querySelector("input[name=status]:checked");
+    return { q: box.querySelector("[data-filter-q]").value.trim(), exam: exam ? exam.value : "", status: status ? status.value : "" };
+  }
+  function applyLessonFilter(box) {
+    var f = filterValues(box), words = f.q.toLowerCase().split(/\s+/).filter(Boolean), shown = 0;
+    box.querySelectorAll("[data-unit-section]").forEach(function (sec) {
+      var inExam = !f.exam || sec.dataset.exams.split(" ").indexOf(f.exam) >= 0, n = 0;
+      sec.querySelectorAll("[data-lesson]").forEach(function (li) {
+        var text = li.dataset.text;
+        var ok = inExam && (!f.status || li.dataset.status === f.status) && words.every(function (w) { return text.indexOf(w) >= 0; });
+        li.hidden = !ok;
+        if (ok) n++;
+      });
+      var missing = sec.querySelector("[data-missing]");
+      if (missing) {
+        var m = missing.querySelectorAll("[data-lesson]:not([hidden])").length;
+        missing.hidden = m === 0;
+        if (words.length || f.status) missing.open = m > 0;
+      }
+      sec.hidden = n === 0;
+      var link = box.querySelector('[data-unit-link="' + sec.dataset.unitSection + '"]');
+      if (link) {
+        link.hidden = !inExam;
+        link.classList.toggle("is-empty", n === 0);
+        link.querySelector("[data-unit-count]").textContent = n;
+      }
+      shown += n;
+    });
+    var total = +box.dataset.total, filtered = !!(f.q || f.exam || f.status);
+    box.querySelector("[data-filter-count]").textContent = (filtered ? shown + " of " + total : total) + " lessons";
+    box.querySelector("[data-filter-reset]").hidden = !filtered;
+    box.querySelector("[data-filter-empty]").hidden = shown > 0;
+    box.querySelector("[data-filter-search-link]").href = "/search" + (f.q ? "?q=" + encodeURIComponent(f.q) : "");
+    var url = new URL(location.href);
+    ["q", "exam", "status"].forEach(function (k) { if (f[k]) url.searchParams.set(k, f[k]); else url.searchParams.delete(k); });
+    if (url.href !== location.href) history.replaceState(history.state, "", url);
+  }
+  function setLessonFilter(box, q, exam, status) {
+    box.querySelector("[data-filter-q]").value = q;
+    [["exam", exam], ["status", status]].forEach(function (pair) {
+      var radio = box.querySelector("input[name=" + pair[0] + "][value='" + pair[1] + "']") || box.querySelector("input[name=" + pair[0] + "][value='']");
+      radio.checked = true;
+    });
+    applyLessonFilter(box);
+  }
+  function initLessonFilter(root) {
+    var box = root.querySelector && root.querySelector("[data-lesson-filter]");
+    if (!box) return;
+    var p = new URLSearchParams(location.search);  // an HTMX history restore can bring back stale input values
+    setLessonFilter(box, p.get("q") || "", p.get("exam") || "", p.get("status") || "");
+  }
+  document.addEventListener("input", function (e) {
+    var box = e.target.closest && e.target.closest("[data-lesson-filter]");
+    if (box && e.target.matches("[data-filter-q]")) applyLessonFilter(box);
+  });
+  document.addEventListener("change", function (e) {
+    var box = e.target.closest && e.target.closest("[data-lesson-filter]");
+    if (box && e.target.matches("input[type=radio]")) applyLessonFilter(box);
+  });
+  document.addEventListener("click", function (e) {
+    var box = e.target.closest && e.target.closest("[data-lesson-filter]");
+    if (!box) return;
+    if (e.target.closest("[data-filter-clear-q]")) {
+      var f = filterValues(box);
+      setLessonFilter(box, "", f.exam, f.status);
+      box.querySelector("[data-filter-q]").focus();
+    } else if (e.target.closest("[data-filter-reset]")) {
+      setLessonFilter(box, "", "", "");
+    } else {
+      var link = e.target.closest("[data-unit-link]");
+      if (link && link.classList.contains("is-empty")) e.preventDefault();
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    var input = e.target.closest && e.target.closest("[data-filter-q]");
+    if (!input) return;
+    var box = input.closest("[data-lesson-filter]");
+    if (e.key === "Enter") {
+      // Enter opens the first match, so "bakc 2.1" + Enter goes straight to that lesson.
+      var first = box.querySelector("[data-unit-section]:not([hidden]) [data-lesson]:not([hidden]) a");
+      if (first) first.click();
+      e.preventDefault();
+    } else if (e.key === "Escape") {
+      if (input.value) { var f = filterValues(box); setLessonFilter(box, "", f.exam, f.status); } else input.blur();
+    }
   });
 
   // KaTeX: render $...$ / $$...$$ (emitted by the server as \( \) and \[ \]) inside notes and widgets.
@@ -143,6 +233,35 @@
     document.dispatchEvent(new CustomEvent("casa:themechange", { detail: { theme: next } }));
   });
 
+  // Desktop sidebar: full width or an icon rail. Same storage pattern as the theme: <html data-sidebar>, set before
+  // first paint by base.html. The server always renders the button as expanded, so its labels are synced here.
+  function sidebarCollapsed() { return document.documentElement.dataset.sidebar === "collapsed"; }
+  function syncSidebarToggle() {
+    var collapsed = sidebarCollapsed(), label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+    document.querySelectorAll("[data-sidebar-toggle]").forEach(function (b) {
+      b.setAttribute("aria-expanded", String(!collapsed));
+      b.title = label + " ( [ )";
+      var span = b.querySelector("span"); if (span) span.textContent = label;
+    });
+  }
+  function toggleSidebar() {
+    var collapsed = !sidebarCollapsed();
+    if (collapsed) document.documentElement.dataset.sidebar = "collapsed"; else delete document.documentElement.dataset.sidebar;
+    try { if (collapsed) localStorage.setItem("sidebar", "collapsed"); else localStorage.removeItem("sidebar"); } catch (err) {}
+    syncSidebarToggle();
+    // Charts and 3D views size themselves on window resize; the content width changes without one.
+    setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 220);
+  }
+  document.addEventListener("click", function (e) {
+    if (e.target.closest && e.target.closest("[data-sidebar-toggle]")) toggleSidebar();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "[" || e.ctrlKey || e.metaKey || e.altKey || !window.matchMedia("(min-width: 64rem)").matches) return;
+    var t = e.target, tag = t && t.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+    toggleSidebar(); e.preventDefault();
+  });
+
   // Celebrations: an element with data-celebrate ("big" or "small") throws confetti once when it appears.
   // Skipped under reduced motion. Colours come from the theme tokens.
   function celebrate(origin, big) {
@@ -187,7 +306,7 @@
     });
   }
 
-  function init(root) { renderMaths(root); mountAll(root); celebrateIn(root); applyTheme(currentTheme()); }
+  function init(root) { renderMaths(root); mountAll(root); celebrateIn(root); initLessonFilter(root); applyTheme(currentTheme()); syncSidebarToggle(); }
   document.addEventListener("DOMContentLoaded", function () { init(document); });
   // Deferred scripts (KaTeX) may finish after DOMContentLoaded listeners were queued; run once more on load.
   window.addEventListener("load", function () { init(document); });
