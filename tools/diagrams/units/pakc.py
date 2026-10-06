@@ -326,21 +326,21 @@ def aircraft_antenna_locations() -> Canvas:
                "cat's whisker NAV antenna for the VOR and ILS receivers is on the fin. Short UHF stubs underneath serve the transponder and DME.",
                height=400, prefix="aal")
     c.add(text(20, 28, "Match each antenna to its job on the walk-around", 16, "start", "fg", weight=700))
-    s, X0, Y0 = 4.2, 330, 210
+    s, X0, Y0 = 5, 425, 195
     P = lambda x, y: (X0 + s * x, Y0 + s * y)
     c.add(small_plane(X0, Y0, s))
-    # COM 1 blade on the cabin roof, behind the wing
-    bx, by = P(-18, -17)
+    # COM 1 blade on the top of the fuselage, behind the wing and rear window
+    bx, by = P(-31, -0.3)
     c.add(polygon([(bx - 6, by + 1), (bx + 6, by + 1), (bx - 8, by - 30), (bx - 15, by - 30)], "brand", "brand-soft", MAIN))
-    # COM 2 whip under the rear fuselage
-    wx, wy = P(-20, 6.5)
+    # COM 2 whip under the rear fuselage (belly line)
+    wx, wy = P(-28, 10.3)
     c.add(line(wx, wy, wx - 14, wy + 36, "brand", MAIN))
-    # NAV cat's whisker on top of the fin
-    nx, ny = P(-45, -29)
+    # NAV cat's whisker on top of the fin (y -14.5)
+    nx, ny = P(-69, -14.5)
     c.add(line(nx, ny, nx + 36, ny - 10, "info", MAIN), line(nx, ny, nx + 36, ny + 8, "info", MAIN))
-    # transponder and DME stubs
-    for xx in (14, 20):
-        sx, sy = P(xx, 7.5)
+    # transponder and DME stubs on the belly between the wheels
+    for xx in (1, 7):
+        sx, sy = P(xx, 12.7)
         c.add(line(sx, sy, sx, sy + 14, "warn", MAIN), circle(sx, sy + 16, 2.5, "warn", None))
     # callouts
     c.add(line(bx - 10, by - 32, 420, 70, "fg-muted", THIN))
@@ -352,8 +352,8 @@ def aircraft_antenna_locations() -> Canvas:
     c.add(line(wx - 14, wy + 36, 150, 318, "fg-muted", THIN))
     c.add(text(20, 334, "Second COM antenna", 13, "start", "brand-fg", weight=700))
     c.add(text(20, 351, "one per COM radio", 12.5, "start", "brand-fg"))
-    tx, ty = P(17, 9)
-    c.add(line(tx, ty + 12, 470, 318, "fg-muted", THIN))
+    tx, ty = P(4, 12.7)
+    c.add(line(tx, ty + 20, 470, 318, "fg-muted", THIN))
     c.add(text(620, 334, "Transponder and DME:", 13, "end", "warn-fg", weight=700))
     c.add(text(620, 351, "short UHF stubs underneath", 12.5, "end", "warn-fg"))
     c.add(text(320, 386, "Check each one: cracks, bends, a loose base or a missing whip all cut the range.", 12, "middle", "fg-muted"))
@@ -495,7 +495,7 @@ def radio_propagation_paths() -> Canvas:
     c.add(text(620, 40, "Sky wave (HF): bent back down by the", 12.5, "end", "brand", weight=700))
     c.add(text(620, 57, "ionosphere; hop after hop, thousands of km", 12, "end", "brand"))
     # space wave: to an aircraft in line of sight, and up through the ionosphere
-    c.add(small_plane(70, 226, 0.5))
+    c.add(small_plane(84, 226, 0.6))
     c.add(arrow(top[0] - 6, top[1] - 3, 104, 232, "fg", SECOND))
     c.add(arrow(top[0] - 2, top[1] - 6, 112, 76, "fg", SECOND))
     c.add(text(20, 40, "Space wave (VHF, UHF): straight", 12.5, "start", "fg", weight=700))
@@ -536,7 +536,7 @@ def hf_skip_zone() -> Canvas:
         c.add(rect(x0, G + 8, x1 - x0, 30, SOFT[tone], None))
         c.add(text((x0 + x1) / 2, G + 28, s, 12.5, "middle", FG[tone], weight=700))
     for x, d, s, tone in ((120, "30 km", "hears it", "ok-fg"), (290, "150 km", "silent", "bad-fg"), (520, "1,500 km", "hears it", "ok-fg")):
-        c.add(small_plane(x, 266, 0.45))
+        c.add(small_plane(x + 10.5, 266, 0.5))          # CG 21 units ahead of mid-length
         c.add(num(x - 4, G + 58, d, 12.5, "end", "fg", weight=700))
         c.add(text(x + 4, G + 58, s, 12, "start", tone, weight=600))
     c.add(multiline(20, G + 86, ["Too far for the ground wave, too close for the sky wave.",
@@ -581,7 +581,7 @@ def vhf_line_of_sight_range() -> Canvas:
     pxp, pyp = tx_ + k * dx_, ty_ + k * dy_
     c.add(line(pxp, pyp, tx_, ty_, "brand", SECOND, DASH))
     c.add(circle(tx_, ty_, 3, "brand", None))
-    c.add(small_plane(pxp - 4, pyp - 4, 0.26))
+    c.add(small_plane(pxp - 7, pyp - 3, 0.32))
     c.add(text(ix + iw - 10, iy + 18, "line of sight to", 11.5, "end", "fg-muted"))
     c.add(text(ix + iw - 10, iy + 32, "the radio horizon", 11.5, "end", "fg-muted"))
     c.add(text(ch.right, ch.bottom - 10, "Terrain and low power often make it less.", 11.5, "end", "fg-muted"))

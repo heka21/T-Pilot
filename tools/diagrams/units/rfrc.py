@@ -184,7 +184,7 @@ def rpl_recency_timeline() -> Canvas:
     y = 76
     c.add(window(y, "Carry a passenger?", "at least 3 take-offs and 3 landings, same category of aircraft", "previous 90 days", "90 days ago", "brand"))
     for k, x in enumerate((330, 410, 490)):
-        c.add(group(plane_side(0, 0, 0.34, "brand-fg", -6, "surface", gear=True), transform=f"translate({x} {y + 19})"))
+        c.add(group(plane_side(0, 0, 0.4, "brand-fg", -6, "surface", gear=True), transform=f"translate({x + 8} {y + 17})"))
         c.add(num(x - 26, y + 23, f"{k + 1}", 12, "end", "brand-fg", weight=700))
     c.add(text(28, y + 90, "Not enough? Fly solo circuits first, then take the passenger.", 12, "start", "fg-muted"))
     y = 236
@@ -370,8 +370,8 @@ def right_of_way_rules() -> Canvas:
     # converging
     x, y = 16, 16
     c.add(panel(x, y, "Converging", "the one with the other on its right gives way"))
-    c.add(plane_top(x + 90, y + 160, 0.36, 0, "warn", "warn-soft"))
-    c.add(plane_top(x + 230, y + 92, 0.36, 270, "ok", "ok-soft"))
+    c.add(plane_top(x + 90, y + 152, 0.36, 0, "warn", "warn-soft"))
+    c.add(plane_top(x + 222, y + 92, 0.36, 270, "ok", "ok-soft"))
     c.add(line(x + 90, y + 136, x + 90, y + 104, "fg-faint", THIN, dash=DASH))
     c.add(line(x + 212, y + 92, x + 112, y + 92, "fg-faint", THIN, dash=DASH))
     c.add(path(f"M{x + 98} {y + 136} Q{x + 140} {y + 120} {x + 150} {y + 124}", "warn", None, MAIN, arrow_end=True))
@@ -382,16 +382,16 @@ def right_of_way_rules() -> Canvas:
     # head-on
     x, y = 328, 16
     c.add(panel(x, y, "Head-on", "both alter heading to the right"))
-    c.add(plane_top(x + 60, y + 118, 0.36, 90, "warn", "warn-soft"))
-    c.add(plane_top(x + 236, y + 118, 0.36, 270, "warn", "warn-soft"))
+    c.add(plane_top(x + 68, y + 118, 0.36, 90, "warn", "warn-soft"))
+    c.add(plane_top(x + 228, y + 118, 0.36, 270, "warn", "warn-soft"))
     c.add(path(f"M{x + 84} {y + 124} Q{x + 120} {y + 128} {x + 140} {y + 152}", "warn", None, MAIN, arrow_end=True))
     c.add(path(f"M{x + 212} {y + 112} Q{x + 176} {y + 108} {x + 156} {y + 84}", "warn", None, MAIN, arrow_end=True))
     c.add(text(x + 148, y + 186, "each turns right, away from the other", 12, "middle", "warn-fg", weight=700))
     # overtaking
     x, y = 16, 232
     c.add(panel(x, y, "Overtaking", "the one being overtaken has right of way"))
-    c.add(plane_top(x + 200, y + 100, 0.36, 90, "ok", "ok-soft"))
-    c.add(plane_top(x + 60, y + 100, 0.36, 90, "warn", "warn-soft"))
+    c.add(plane_top(x + 210, y + 100, 0.36, 90, "ok", "ok-soft"))
+    c.add(plane_top(x + 68, y + 100, 0.36, 90, "warn", "warn-soft"))
     c.add(path(f"M{x + 84} {y + 106} Q{x + 120} {y + 150} {x + 220} {y + 150} L{x + 270} {y + 150}", "warn", None, MAIN, arrow_end=True))
     c.add(text(x + 14, y + 178, "overtaker alters right and keeps", 12, "start", "warn-fg", weight=700))
     c.add(text(x + 14, y + 193, "clear until well past", 12, "start", "warn-fg", weight=700))
@@ -403,8 +403,8 @@ def right_of_way_rules() -> Canvas:
     c.add(text(x + 240, y + 198, "runway", 11, "middle", "fg-muted"))
     c.add(line(x + 92, y + 98, x + 198, y + 176, "fg-faint", THIN, dash=DASH))
     c.add(line(x + 168, y + 150, x + 198, y + 176, "fg-faint", THIN, dash=DASH))
-    c.add(plane_side(x + 70, y + 84, 0.34, "warn", pitch=-30, fill="warn-soft"))
-    c.add(plane_side(x + 148, y + 134, 0.34, "ok", pitch=-30, fill="ok-soft"))
+    c.add(plane_side(x + 78, y + 88, 0.34, "warn", pitch=-30, fill="warn-soft"))
+    c.add(plane_side(x + 156, y + 138, 0.34, "ok", pitch=-30, fill="ok-soft"))
     c.add(text(x + 112, y + 74, "higher: gives way", 12, "start", "warn-fg", weight=700))
     c.add(text(x + 14, y + 150, "lower: has", 12, "start", "ok-fg", weight=700))
     c.add(text(x + 14, y + 165, "right of way", 12, "start", "ok-fg", weight=700))
@@ -450,7 +450,7 @@ def minimum_heights() -> Canvas:
     c.add(plane_side(px, py, 0.5, "brand", fill="brand-soft"))
     # 1,000 ft above the top of the obstacle
     top = G - th - 12
-    c.add(line(tx, py + 10, px - 26, py + 10, "brand", THIN, dash=DASH))
+    c.add(line(tx, py + 10, px - 6, py + 10, "brand", THIN, dash=DASH))   # to the main wheels (local y 19.5)
     c.add(darrow(tx, top - 4, tx, py + 12, "brand"))
     c.add(num(tx - 10, (top + py) / 2 + 4, "1,000 ft", 14, "end", "brand", weight=700))
     c.add(text(tx - 10, (top + py) / 2 + 20, "above it", 11, "end", "brand-fg"))
@@ -487,8 +487,8 @@ def takeoff_separation() -> Canvas:
                height=460, prefix="tos")
     G = 292
     c.add(rect(30, G, 580, 12, "fg-muted", None, rx=1))
-    c.add(text(70, G - 26, "you", 11, "middle", "brand-fg", weight=600))
-    c.add(plane_side(70, G - 9, 0.4, "brand", fill="brand-soft"))
+    c.add(text(70, G - 22, "you", 11, "middle", "brand-fg", weight=600))
+    c.add(plane_side(70, G - 7.8, 0.4, "brand", fill="brand-soft"))
     lx = 140
     c.add(line(lx, G - 30, lx, G + 50, "brand", SECOND, dash=DASH))
     c.add(text(lx - 8, G + 30, "your intended", 11, "end", "brand-fg", weight=600))
@@ -497,7 +497,7 @@ def takeoff_separation() -> Canvas:
     c.add(path(f"M{lx + 60} {G} Q{lx + 220} {G - 6} 580 {G - 104}", "fg-faint", None, THIN, dash=DASH))
     c.add(plane_side(330, G - 34, 0.4, "ok", pitch=10, fill="ok-soft"))
     c.add(plane_side(530, G - 86, 0.4, "ok", pitch=14, fill="ok-soft"))
-    c.add(text(330, G - 58, "aircraft ahead, airborne", 11, "middle", "ok-fg", weight=600))
+    c.add(text(330, G - 52, "aircraft ahead, airborne", 11, "middle", "ok-fg", weight=600))
     c.add(line(330, G - 22, 330, G + 66, "ok", THIN, dash=DASH))
     c.add(line(530, G - 74, 530, G + 116, "ok", THIN, dash=DASH))
     c.add(darrow(lx, G + 64, 330, G + 64, "ok"))
@@ -656,7 +656,7 @@ def runway_markings_and_markers() -> Canvas:
     c.add(line(TX - 18, HY + 6, TX + 18, HY + 6, "warn", 2.5, dash="5 3", cap="butt"))
     c.add(line(TX - 18, HY + 14, TX + 18, HY + 14, "warn", 2.5, cap="butt"))
     c.add(line(TX - 18, HY + 20, TX + 18, HY + 20, "warn", 2.5, cap="butt"))
-    c.add(plane_top(TX, HY + 52, 0.3, 0, "fg", "surface"))
+    c.add(plane_top(TX, HY + 46, 0.3, 0, "fg", "surface"))
     # labels for the sealed runway
     c.add(text(X0 + 4, Y0 + RW + 20, "threshold", 12, "start", "fg", weight=600))
     c.add(text(X0 + 4, Y0 + RW + 35, "(piano keys)", 11, "start", "fg-muted"))
@@ -964,7 +964,7 @@ def sartime_timeline() -> Canvas:
         c.add(circle(x, Y, 8 if tone != "fg" else 6, col_, "surface", 2))
         c.add(text(x, Y - 20, title, 14, "middle", FG[tone] if tone != "fg" else "fg", weight=700))
         c.add(multiline(x, Y + 26, lines, 11.5, "middle", FG[tone] if tone != "fg" else "fg-muted", 1.3))
-    c.add(plane_side(272, Y - 50, 0.4, "fg"))
+    c.add(plane_side(283, Y - 50, 0.4, "fg"))
     # margin between planned arrival and SARTIME
     c.add(rect(340, 64, 140, 20, "ok-soft", None, rx=4))
     c.add(text(410, 78, "a sensible margin", 11.5, "middle", "ok-fg", weight=600))

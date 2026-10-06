@@ -93,31 +93,31 @@ def ground_effect() -> Canvas:
         c.add(_panel(x0, 14, 296, 262, "surface-2" if i == 0 else "brand-soft"))
         c.add(text(x0 + 148, 40, head, 16, "middle", "fg" if i == 0 else "brand-fg", weight=700))
         c.add(text(x0 + 148, 58, sub, 12, "middle", "fg-muted"))
-    # left: free air. Vortices roll up at the wing tips, level with the high wing (local y about -20)
+    # left: free air. Vortices roll up at the wing tips, level with the high wing (local y about -7.5)
     lx, ly = 164, 118
     c.add(plane_rear(lx, ly, 1.25, 0, "fg"))
     for sgn in (-1, 1):
-        tip = lx + sgn * 64
-        c.add(group(_vortex(tip + sgn * 6, ly - 20, 24, 22, sgn > 0, "info"), cls="gef-spin"))
-    for dx in (-50, -30, 30, 50):
-        c.add(arrow(lx + dx, ly - 12, lx + dx, ly + 92, "info", MAIN))
+        tip = lx + sgn * 62
+        c.add(group(_vortex(tip + sgn * 6, ly - 9, 24, 22, sgn > 0, "info"), cls="gef-spin"))
+    for dx in (-54, -36, 36, 54):
+        c.add(arrow(lx + dx, ly - 4, lx + dx, ly + 92, "info", MAIN))
     c.add(text(lx, ly + 118, "deep downwash, full tip vortices", 12, "middle", "info", weight=600))
     c.add(text(lx, ly + 136, "→ induced drag", 12, "middle", "info"))
-    # right: near the ground, wheels on the runway (they sit 17 units below the CG)
+    # right: near the ground, wheels on the runway (they sit 13.5 units below the CG)
     rx_, gy = 476, 228
-    ry = gy - 21
+    ry = gy - 17
     c.add(rect(334, gy, 284, 40, "surface", None))
     c.add(line(334, gy, 618, gy, "fg-muted", MAIN))
     c.add(text(476, gy + 26, "runway", 12, "middle", "fg-muted"))
     c.add(plane_rear(rx_, ry, 1.25, 0, "fg"))
     for sgn in (-1, 1):
-        tip = rx_ + sgn * 64
-        c.add(_vortex(tip + sgn * 16, ry - 16, 18, 9, sgn > 0, "info"))
-    for dx in (-50, -30, 30, 50):
-        c.add(arrow(rx_ + dx, ry - 12, rx_ + dx, ry + 10, "info", MAIN))
-    c.add(line(rx_ + 112, ry - 26, rx_ + 112, gy - 2, "fg-muted", THIN))
-    c.add(line(rx_ + 106, ry - 26, rx_ + 118, ry - 26, "fg-muted", THIN))
-    c.add(text(rx_ + 112, ry - 34, "< ½ span", 11, "middle", "fg-muted"))
+        tip = rx_ + sgn * 62
+        c.add(_vortex(tip + sgn * 16, ry - 8, 18, 9, sgn > 0, "info"))
+    for dx in (-54, -36, 36, 54):
+        c.add(arrow(rx_ + dx, ry - 4, rx_ + dx, ry + 12, "info", MAIN))
+    c.add(line(rx_ + 112, ry - 10, rx_ + 112, gy - 2, "fg-muted", THIN))
+    c.add(line(rx_ + 106, ry - 10, rx_ + 118, ry - 10, "fg-muted", THIN))
+    c.add(text(rx_ + 112, ry - 18, "< ½ span", 11, "middle", "fg-muted"))
     c.add(multiline(rx_, 96, ["ground blocks the downwash,", "vortices squashed"], 12, "middle", "brand-fg", weight=600))
     c.add(multiline(rx_, 132, ["→ LESS induced drag,", "a little more lift"], 12, "middle", "brand-fg"))
     # ---- bottom: consequences
@@ -137,7 +137,7 @@ def ground_effect() -> Canvas:
     c.add(circle(296, 467, 3.5, "warn", None))
     c.add(callout(196, 467, 212, 500, "right speed: short float", "ok-fg", 11, anchor="start"))
     c.add(multiline(300, 402, ["10 kt fast:", "floats a long way"], 12, "end", "warn-fg", weight=600))
-    c.add(plane_side(76, 372, 0.32, "fg", pitch=-5))
+    c.add(plane_side(80, 369, 0.32, "fg", pitch=-5))
     # take-off: lift off early, fly in ground effect, sink back
     c.add(line(350, GY - 2, 420, GY - 2, "fg-muted", SECOND, DASH))
     c.add(path(smooth_path([(420, 468), (450, 452), (490, 446), (520, 446), (548, 452), (580, 462), (600, 466)]), "bad", None, MAIN))
@@ -303,7 +303,7 @@ def glide_speed_off_best() -> Canvas:
     c.add(_ground(20, 620, GY, 14))
     c.add(line(X0, TOPY, X0, GY, "fg-muted", THIN, DASH))
     c.add(num(X0 - 6, TOPY + 4, "3,000 ft", 12, "end", "fg-muted"))
-    c.add(plane_side(X0 + 18, TOPY - 4, 0.36, "fg", pitch=-5, gear=True))
+    c.add(plane_side(X0 + 25, TOPY - 2, 0.36, "fg", pitch=-5, gear=True))
     for d, colour, lab in ((4.4, "ok", "9 : 1  →  27,000 ft ≈ 4.4 NM"), (3.5, "bad", "7 : 1  →  21,000 ft ≈ 3.5 NM")):
         xe = X0 + d * sx
         c.add(line(X0, TOPY, xe, GY, colour, MAIN))
@@ -422,17 +422,17 @@ def wheelbarrowing_pivot() -> Canvas:
         GY = 176
         c.add(line(x0 + 14, GY, x0 + 282, GY, "fg-muted", MAIN))
         s = 1.5
-        px = x0 + 140
+        px = x0 + 170
         pitch = 0 if i == 0 else -4
-        # wheels touch at local y 19.5: mains at x -8 (just aft of the CG), nosewheel at x 30
-        py = GY - 19.5 * s if i == 0 else GY - s * (30 * math.sin(math.radians(4)) + 19.5 * math.cos(math.radians(4)))
+        # wheels touch at local y 19.5: mains at x -7.5 (just aft of the CG), nosewheel at x 15
+        py = GY - 19.5 * s if i == 0 else GY - s * (15 * math.sin(math.radians(4)) + 19.5 * math.cos(math.radians(4)))
         c.add(plane_side(px, py, s, "fg", pitch=pitch))
         rad = math.radians(-pitch)
         def loc(lx: float, ly: float) -> tuple[float, float]:
             return px + s * (lx * math.cos(rad) - ly * math.sin(rad)), py + s * (lx * math.sin(rad) + ly * math.cos(rad))
         cgx, cgy = loc(0, -2)
-        mx, my = loc(-8, 19.5)
-        nx, ny = loc(30, 19.5)
+        mx, my = loc(-7.5, 19.5)
+        nx, ny = loc(15, 19.5)
         c.add(circle(cgx, cgy, 6, "surface", "fg", 1.5), path(f"M{fmt(cgx)} {fmt(cgy - 6)} A6 6 0 0 1 {fmt(cgx + 6)} {fmt(cgy)} L{fmt(cgx)} {fmt(cgy)} Z "
                                                                f"M{fmt(cgx)} {fmt(cgy + 6)} A6 6 0 0 1 {fmt(cgx - 6)} {fmt(cgy)} L{fmt(cgx)} {fmt(cgy)} Z",
                                                                None, "fg"))
@@ -448,11 +448,13 @@ def wheelbarrowing_pivot() -> Canvas:
             c.add(text(nx + 8, GY + 34, "nosewheel is", 11, "start", "bad", weight=600))
             c.add(text(nx + 8, GY + 48, "the pivot", 11, "start", "bad", weight=600))
             c.add(arrow(mx, GY + 14, mx, GY + 4, "fg-muted", SECOND))
-            c.add(text(mx + 6, GY + 22, "light", 11, "start", "fg-muted"))
-            c.add(arrow(px - 15, py - 40, px - 15, py - 76, "brand", MAIN))
-            c.add(text(px - 21, py - 62, "wing still lifting", 11, "end", "brand", weight=600))
-            c.add(arrow(px - 72, py + 40, px - 72, py + 14, "fg-muted", SECOND))
-            c.add(multiline(px - 72, py + 56, ["forward stick:", "tail held up"], 11, "middle", "fg-muted"))
+            c.add(text(mx - 6, GY + 22, "light", 11, "end", "fg-muted"))
+            wx, wy = loc(-6, -10)                          # mid-chord on top of the wing
+            c.add(arrow(wx, wy - 2, wx, wy - 38, "brand", MAIN))
+            c.add(text(wx - 6, wy - 24, "wing still lifting", 11, "end", "brand", weight=600))
+            tx, ty = loc(-60, 6)                           # under the tail cone
+            c.add(arrow(tx, GY + 8, tx, ty + 4, "fg-muted", SECOND))
+            c.add(multiline(tx, GY + 24, ["forward stick:", "tail held up"], 11, "middle", "fg-muted"))
         # plan view underneath: aeroplane yawed 14 degrees, pivot marked
         TY = 300
         heading = 76
@@ -460,16 +462,16 @@ def wheelbarrowing_pivot() -> Canvas:
         h = math.radians(heading - 90)
         def plan(lx: float, ly: float) -> tuple[float, float]:
             return px + 0.95 * (lx * math.cos(h) - ly * math.sin(h)), TY + 0.95 * (lx * math.sin(h) + ly * math.cos(h))
-        pv = plan(-8, 0) if i == 0 else plan(30, 0)
+        pv = plan(-7.5, 0) if i == 0 else plan(15, 0)
         cg = plan(0, 0)
         c.add(circle(*pv, 6, "ok" if i == 0 else "bad", "surface", 1.5))
         c.add(circle(*cg, 4, "fg", None))
         c.add(line(x0 + 30, TY, x0 + 266, TY, "fg-faint", THIN, DASH))
         if i == 0:
-            c.add(path(arc_path(pv[0], pv[1], 54, -32, -8), "ok", None, MAIN, arrow_end=True))
+            c.add(path(arc_path(pv[0], pv[1], 44, -34, -8), "ok", None, MAIN, arrow_end=True))
             c.add(multiline(x0 + 148, 372, ["pivot behind the CG: the swing", "straightens itself, like a trolley"], 12, "middle", "ok-fg", weight=600))
         else:
-            c.add(path(arc_path(pv[0], pv[1], 74, 170, 140), "bad", None, MAIN, arrow_end=True))
+            c.add(path(arc_path(pv[0], pv[1], 82, 170, 145), "bad", None, MAIN, arrow_end=True))
             c.add(multiline(x0 + 148, 372, ["pivot ahead of the CG: the swing", "grows into a ground loop"], 12, "middle", "bad", weight=600))
     c.add(rect(16, 414, 608, 46, "brand-soft", None, rx=8))
     c.add(text(28, 433, "Cure: throttle closed, EASE BACK to put the weight on the main wheels, or go around.", 12, "start", "brand-fg",
@@ -602,12 +604,12 @@ def slope_force_on_runway() -> Canvas:
     sc = 1.1
     d = 190
     bx, by = g0[0] + d * ux, g0[1] + d * uy
-    wx = -8 * math.cos(r) + 19.5 * math.sin(r)     # main-wheel contact, local (-8, 19.5), pitched up the slope
-    wy = 8 * math.sin(r) + 19.5 * math.cos(r)
+    wx = -7.5 * math.cos(r) + 19.5 * math.sin(r)   # main-wheel contact, local (-7.5, 19.5), pitched up the slope
+    wy = 7.5 * math.sin(r) + 19.5 * math.cos(r)
     CGx, CGy = bx - wx * sc, by - wy * sc          # main wheel on the slope
     c.add(plane_side(CGx, CGy, sc, "fg", pitch=ang))
-    c.add(arrow(CGx + ux * 70 + nx * 34, CGy + uy * 70 + ny * 34, CGx + ux * 128 + nx * 34, CGy + uy * 128 + ny * 34, "brand", MAIN))
-    c.add(text(CGx + ux * 100 + nx * 50, CGy + uy * 100 + ny * 50, "thrust", 12, "middle", "brand", weight=600))
+    c.add(arrow(CGx + ux * 46 + nx * 30, CGy + uy * 46 + ny * 30, CGx + ux * 104 + nx * 30, CGy + uy * 104 + ny * 30, "brand", MAIN))
+    c.add(text(CGx + ux * 76 + nx * 46, CGy + uy * 76 + ny * 46, "thrust", 12, "middle", "brand", weight=600))
     c.add(arrow(CGx - ux * 50 + nx * 50, CGy - uy * 50 + ny * 50, CGx - ux * 100 + nx * 50, CGy - uy * 100 + ny * 50, "bad", 2.5))
     c.add(multiline(CGx - ux * 104 + nx * 72, CGy - uy * 104 + ny * 72 - 8, ["slope force,", "against thrust"], 12, "middle", "bad", weight=700))
     # the force triangle, drawn in clear sky
@@ -728,7 +730,7 @@ def go_around_flap_retraction() -> Canvas:
     bad = [LOW, (232, 306), (270, 322), (300, 330)]
     c.add(path(smooth_path(bad), "bad", None, MAIN, dash="6 4", arrow_end=True))
     c.add(multiline(306, 306, ["ALL flap up at once: lift lost,", "stall speed jumps, it SINKS"], 12, "start", "bad", weight=700))
-    c.add(plane_side(LOW[0], LOW[1] - 6, 0.36, "fg", pitch=-2))
+    c.add(plane_side(LOW[0] - 18, LOW[1] - 16, 0.4, "fg", pitch=-2))       # on the approach, just short of step 1
     steps = [((205, 287), "1", ["Full power and climb", "attitude, together"], (16, 292, 146), (162, 308)),
              ((300, 262), "2", ["Climbing: first stage", "up (the high-drag one)"], (220, 166, 172), (300, 210)),
              ((470, 170), "3", ["Accelerate; the rest of", "the flap up in stages"], (310, 56, 172), (440, 100))]
@@ -738,7 +740,7 @@ def go_around_flap_retraction() -> Canvas:
         c.add(text(x, y + 4, n, 12, "middle", "ok-fg", weight=700))
         c.add(rect(bx, by, bw, 44, "ok-soft", None, rx=8))
         c.add(multiline(bx + 10, by + 18, lines, 12, "start", "ok-fg"))
-    c.add(plane_side(560, 116, 0.36, "fg", pitch=12))
+    c.add(plane_side(562, 112, 0.4, "fg", pitch=12))
     c.add(rect(400, 236, 220, 60, "warn-soft", None, rx=8))
     c.add(multiline(412, 256, ["Hold the attitude: at full power", "it can run past VFE (or VFO) with", "flap still down."], 12, "start", "warn-fg"))
     c.add(text(20, 420, "POH order and speeds: each stage up only when climbing, safely above its stall speed.", 12, "start",

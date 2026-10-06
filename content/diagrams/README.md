@@ -75,13 +75,17 @@ with `fill-opacity="0.15"` for areas.
 Reuse the shared silhouettes in `tools/diagrams/svg.py` (`plane_side`, `plane_top`, `plane_rear`, `runway`)
 so the same aeroplane and runway appear everywhere. The aeroplane is the **Cessna 152** the student flies: a high
 strut-braced wing on the cabin roof, tricycle gear with the main wheels just behind the CG, a swept fin with a
-dorsal fillet and a low tailplane. All three views put the CG at (x, y), about 100 units long or across at scale 1,
-nose to the right. Side view: spinner at x 55, rudder at x −50, wing on the roof at y −19 to −24 (leading edge
-x 8, trailing edge x −14), belly y 7.5, wheels touch y 19.5 (nose wheel x 30, mains x −8). Plan view: wing x −5 to
-11, tapering beyond |y| 28 to tips at |y| 50, ailerons from |y| 28 to 46. Rear view: wing y −21.5 to −16.5 across
-±50, fin top y −34, wheels touch y 17 (mains at x ±9). So a lift arrow starts at the wing (about 21 units above the
-CG), a chord line runs along y ≈ −21.5, and an aeroplane on the ground sits with its CG 19.5 × scale (side) or
-17 × scale (rear) above the ground line. `airliner_rear` is the twin-jet "heavy" seen from behind (gear up, tips
+dorsal fillet and a low tailplane, drawn to its real proportions (7.3 m long, 10.2 m span, 2.6 m tall): a short blunt
+cowl and a long, nearly level tail cone. All three views put the CG at (x, y), about 100 units long or across at
+scale 1, nose to the right. Side view: spinner tip at x 29.4, rudder at x −71.3, cabin roof at y −6.1 with the wing on
+it up to y −9.9 (leading edge x 7.8, trailing edge x −20), fin top y −14.5, belly y 12.8, prop hub (27, 2.6), wheels
+touch y 19.5 (nose wheel x 15, mains x −7.5). Plan view: spinner x 21.2, rudder x −51.4, wing x −12.7 to 4, the
+leading edge tapering back beyond |y| 24 to tips at |y| 50, ailerons from |y| 25 to 46, tailplane ±16.7 at x −37.6
+to −51.2. Rear view: wing y −9.3 to −5 across ±50, fin top y −13, tailplane ±16.7 at y 1.2 to 3.8, wheels touch
+y 13.5 (mains at x ±11). So a lift arrow starts at the wing (the centre of pressure is about (−2, −8) in the side
+view), a chord line runs along y ≈ −8, the aeroplane reaches about 71 × scale behind its CG but only 29 × scale ahead
+of it, and an aeroplane on the ground sits with its CG 19.5 × scale (side) or 13.5 × scale (rear) above the ground
+line. `airliner_rear` is the twin-jet "heavy" seen from behind (gear up, tips
 at x ±50) for wake-turbulence pictures; a scaled-up Cessna does not read as a heavy. Widgets paste the same
 markup, printed by `python -m tools.diagrams.plane` (see `tools/diagrams/README.md`). The sketch register (Rough.js, built by
 `npm run sketch` from `tools/diagrams/schematics/`) is for concepts and systems; charts and anything with real

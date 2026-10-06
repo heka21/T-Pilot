@@ -9,7 +9,7 @@ Wrap it in your own <g :transform="..."> to move or rotate it with Alpine; keep 
 widget stays in step with the diagrams. Re-run and re-paste when the silhouettes change.
 
     python -m tools.diagrams.plane rear --scale 1.5              # bank-angle.html
-    python -m tools.diagrams.plane side --scale 0.5 --y -7 --color brand
+    python -m tools.diagrams.plane side --scale 0.5 --y -9.5 --color brand
 """
 from __future__ import annotations
 

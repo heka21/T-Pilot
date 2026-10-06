@@ -48,7 +48,7 @@ def takeoff_landing_distances_ala() -> Canvas:
     c.add(line(X(640), y, X(640), y - H50 - 4, "fg-muted", SECOND, dash=DASH))
     c.add(text(X(640) - 6, y - H50 - 26, "50 ft screen", 12, "end", "fg-muted"))
     c.add(text(X(640) - 6, y - H50 - 12, "at TOSS, at least 1.2 × stall", 11, "end", "fg-muted"))
-    c.add(plane_side(X(640) + 22, y - H50 - 6, 0.42, pitch=8))
+    c.add(plane_side(X(640) + 30, y - H50 - 8, 0.42, pitch=8))   # tail over the screen, mains at 50 ft
     c.add(text((X(0) + X(lo)) / 2, y - 20, "ground run", 12, "middle", "brand-fg", weight=600))
     c.add(text((X(lo) + X(640)) / 2 - 10, y - 30, "airborne", 12, "middle", "brand-fg", weight=600))
     c.add(text(X(0), y + 18, "brake release", 11, "start", "fg-faint"))
@@ -68,7 +68,7 @@ def takeoff_landing_distances_ala() -> Canvas:
     c.add(line(X(td), y - 10, X(520), y - 10, "brand", MAIN, dash="2 5"))
     c.add(line(X(0), y, X(0), y - H50 - 4, "fg-muted", SECOND, dash=DASH))
     c.add(text(X(0) + 8, y - H50 - 6, "50 ft at threshold speed", 12, "start", "fg-muted"))
-    c.add(plane_side(X(520) - 20, y - 18, 0.42))
+    c.add(plane_side(X(520) - 12, y - 18, 0.42))   # nose at the stop, wheels on the roll line
     c.add(text(X(520) + 10, y - 16, "stop", 12, "start", "brand-fg", weight=600))
     c.add(rect(X(520), y + 34, 180 * S, 20, "ok-soft", None))
     c.add(num(X(610), y + 48, "180 m spare", 12, "middle", "ok-fg", weight=700))
@@ -129,7 +129,7 @@ def ala_plan_view() -> Canvas:
         xx = rx0 + 6 + i * (rx1 - rx0 - 12) / 5
         for yy in (cy - 16, cy + 16):
             c.add(polygon([(xx - 4, yy + 3), (xx, yy - 5), (xx + 4, yy + 3)], "warn", "fg", 1))
-    c.add(plane_top(196, cy, 0.235, heading=90))
+    c.add(plane_top(200, cy, 0.235, heading=90))
     c.add(text(216, cy + 5, "short, firm grass", 12, "start", "fg", weight=600))
     # width dimension
     wx = 432
@@ -586,7 +586,7 @@ def descent_planning_topd() -> Canvas:
     c.add(ch.curve([(0, 6500), (18.3, 1500)], "brand", 3, smooth=False))
     c.add(ch.point(0, 6500, "brand", label="TOPD", dx=0, dy=-12, anchor="middle"))
     c.add(ch.point(18.3, 1500, "ok", label="join 1,500 ft", dx=0, dy=24, anchor="middle"))
-    c.add(plane_side(ch.px(-3.5), ch.py(6500) - 12, 0.4))
+    c.add(plane_side(ch.px(-3), ch.py(6500) - 10, 0.4))
     X0, X1, Yd = ch.px(0), ch.px(18.3), ch.bottom + 22
     c.add(line(X0, Yd - 5, X0, Yd + 5, "brand", SECOND), line(X1, Yd - 5, X1, Yd + 5, "brand", SECOND), line(X0, Yd, X1, Yd, "brand", SECOND))
     c.add(num((X0 + X1) / 2, Yd + 20, "10/60 × 110 kt = 18.3 nm", 13, "middle", "brand-fg", weight=700))

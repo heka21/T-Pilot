@@ -46,13 +46,15 @@ def forces_in_a_climb() -> Canvas:
     # flight path, horizontal reference and the climb angle at the left
     c.add(line(30, py_at(30), 620, py_at(620), "line-strong", THIN, DASH))
     c.add(text(612, py_at(612) + 22, "flight path", 12, "end", "fg-faint", rotate=-g))
-    hx = 50
+    hx = 34
     c.add(line(hx, py_at(hx), hx + 170, py_at(hx), "fg-faint", THIN, DASH))
     c.add(path(arc_path(hx, py_at(hx), 104, -g, 0), "fg-muted", None, SECOND))
     c.add(text(hx + 116, py_at(hx) - 8, "γ", 15, "start", "fg-muted", weight=700))
     c.add(text(hx, py_at(hx) + 20, "climb angle γ, measured from the horizontal", 12, "start", "fg-muted"))
-    # aeroplane pitched along the path
-    c.add(plane_side(CX, CY, 1.5, pitch=g))
+    # aeroplane pitched along the path; P maps plane-local (x, y) to the page
+    S = 1.5
+    P = lambda lx, ly: (CX + S * (lx * co + ly * s), CY + S * (ly * co - lx * s))
+    c.add(plane_side(CX, CY, S, pitch=g))
     # weight and its components
     c.add(arrow(CX, CY, CX, CY + W, "info", MAIN))
     c.add(text(CX - 10, CY + W - 6, "Weight W", 14, "end", "info", weight=700))
@@ -60,15 +62,14 @@ def forces_in_a_climb() -> Canvas:
     c.add(line(CX, CY, acx, acy, "info", SECOND, DASH, arrow_end=True))
     c.add(line(acx, acy, CX, CY + W, "fg-faint", THIN, DASH))
     c.add(text(acx + 8, acy + 4, "W cos γ", 13, "start", "info", weight=600))
-    # lift perpendicular to the path, equal to W cos g, drawn from the high wing (local y -21.5, straight above the CG)
-    wr = 21.5 * 1.5
-    wx_, wy_ = CX - s * wr, CY - co * wr
+    # lift perpendicular to the path, equal to W cos g, drawn from the CP on the wing (local -2, -8)
+    wx_, wy_ = P(-2, -8)
     lx, ly = wx_ - s * W * co, wy_ - co * W * co
     c.add(arrow(wx_, wy_, lx, ly, "brand", MAIN))
     c.add(text(lx - 10, ly + 8, "Lift = W cos γ", 14, "end", "brand", weight=700))
-    # drag rearward from behind the tail, then W sin g continuing rearward; thrust forward equal to both
+    # drag rearward from behind the tail (local x -71), then W sin g continuing rearward; thrust forward from the prop equal to both
     D = 64
-    sx0, sy0 = CX - 96 * co, CY + 96 * s
+    sx0, sy0 = P(-74, 0)
     ex, ey = sx0 - co * D, sy0 + s * D
     c.add(arrow(sx0, sy0, ex, ey, "fg-muted", MAIN))
     c.add(text((sx0 + ex) / 2 + 10, (sy0 + ey) / 2 - 12, "Drag", 13, "middle", "fg-muted", weight=600))
@@ -76,7 +77,7 @@ def forces_in_a_climb() -> Canvas:
     c.add(arrow(ex, ey, fx, fy, "info", MAIN, dash=DASH))
     c.add(text((ex + fx) / 2 + 6, (ey + fy) / 2 - 12, "W sin γ", 13, "middle", "info", weight=600))
     T = D + W * s
-    tx0, ty0 = CX + 92 * co, CY - 92 * s
+    tx0, ty0 = P(32, 0)
     c.add(arrow(tx0, ty0, tx0 + co * T, ty0 - s * T, "ok", MAIN))
     c.add(text(tx0 + co * T / 2 + 6, ty0 - s * T / 2 + 26, "Thrust", 14, "middle", "ok", weight=700))
     # the two balances
@@ -266,10 +267,10 @@ def four_forces_level_flight() -> Canvas:
                "forward along the thrust line and drag rearward. In steady straight and level flight lift equals weight and thrust equals drag. The centre "
                "of pressure is behind the centre of gravity, so lift and weight make a nose-down couple that a small tailplane force balances.",
                height=400, prefix="ffl")
-    CX, CY = 300, 200
-    c.add(plane_side(CX, CY, 2.4))
+    CX, CY, S = 330, 200, 2.4
+    c.add(plane_side(CX, CY, S))
     L = 130
-    cp, wy = CX - 10, CY - 48          # centre of pressure on the high wing, a little behind the CG (local x 0)
+    cp, wy = CX - 2 * S, CY - 8 * S    # centre of pressure on the wing (local -2, -8), a little behind the CG (local x 0)
     c.add(arrow(cp, wy, cp, wy - L, "brand", MAIN))
     c.add(text(cp + 12, wy - L + 20, "Lift", 15, "start", "brand", weight=700))
     c.add(text(cp + 12, wy - L + 36, "through the CP, at right angles to the airflow", 12, "start", "brand"))
@@ -277,19 +278,20 @@ def four_forces_level_flight() -> Canvas:
     c.add(text(CX - 12, CY + L - 14, "Weight", 15, "end", "info", weight=700))
     c.add(text(CX - 12, CY + L + 2, "through the CG, vertically down", 12, "end", "info"))
     c.add(circle(CX, CY, 5, "surface", "fg", 2))
-    c.add(text(CX - 9, CY + 5, "CG", 12, "end", "fg", weight=700))
+    c.add(text(CX - 9, CY + 17, "CG", 12, "end", "fg", weight=700))
     c.add(circle(cp, wy, 4, "brand", None))
-    # thrust from the propeller forward, drag rearward
-    T = 110
-    c.add(arrow(CX + 138, CY, CX + 138 + T, CY, "fg", MAIN))
-    c.add(text(CX + 138 + T / 2, CY - 12, "Thrust", 15, "middle", "fg", weight=700))
-    c.add(arrow(CX - 150, CY - 4, CX - 150 - T, CY - 4, "fg-muted", MAIN))
-    c.add(text(CX - 150 - T / 2, CY - 16, "Drag", 15, "middle", "fg-muted", weight=700))
-    c.add(text(CX - 150 - T / 2, CY + 16, "parallel to the airflow", 11, "middle", "fg-muted"))
-    # tailplane balancing force
-    tx = CX - 116
-    c.add(arrow(tx, CY + 8, tx, CY + 44, "warn", SECOND))
-    c.add(multiline(tx - 8, CY + 62, ["small tailplane force", "balances the couple"], 11, "middle", "warn-fg"))
+    # thrust from the propeller hub (local 27, 2.6) forward, drag rearward from behind the tail (local x -71)
+    T, ty = 110, CY + 2.6 * S
+    c.add(arrow(CX + 31 * S, ty, CX + 31 * S + T, ty, "fg", MAIN))
+    c.add(text(CX + 31 * S + T / 2, ty - 12, "Thrust", 15, "middle", "fg", weight=700))
+    dx = CX - 75 * S
+    c.add(arrow(dx, ty, dx - T, ty, "fg-muted", MAIN))
+    c.add(text(dx - T / 2, ty - 12, "Drag", 15, "middle", "fg-muted", weight=700))
+    c.add(text(dx - T / 2, ty + 20, "parallel to the airflow", 11, "middle", "fg-muted"))
+    # tailplane balancing force (tailplane local x -52..-71, y 4.4)
+    tx = CX - 61 * S
+    c.add(arrow(tx, CY + 6 * S, tx, CY + 6 * S + 36, "warn", SECOND))
+    c.add(multiline(tx, CY + 6 * S + 54, ["small tailplane force", "balances the couple"], 11, "middle", "warn-fg"))
     c.add(rect(400, 300, 226, 82, "brand-soft", None, rx=8))
     c.add(text(412, 322, "Steady, straight and level", 13, "start", "brand-fg", weight=700))
     c.add(num(412, 344, "Lift   = Weight", 13, "start", "brand-fg", weight=600))
@@ -302,18 +304,18 @@ def four_forces_level_flight() -> Canvas:
 def angle_of_attack_vs_attitude() -> Canvas:
     c = Canvas("Angle of attack is not pitch attitude", "Worked example: nose 10 degrees above the horizon, flight path climbing at 6 degrees, so the relative "
                "airflow comes from 6 degrees above the horizontal ahead and the angle of attack is about 10 minus 6, 4 degrees.", height=360, prefix="aoa")
-    PX, PY = 110, 270
+    PX, PY = 125, 270
     c.add(line(30, PY, 620, PY, "fg-faint", THIN, DASH))
     c.add(text(612, PY - 8, "horizon", 12, "end", "fg-faint"))
 
     def at(deg, r):
         ux, uy = unit(deg)
         return PX + ux * r, PY + uy * r
-    c.add(line(PX, PY, *at(10, 530), "fg-muted", SECOND, DASH))
-    x, y = at(10, 530)
+    c.add(line(PX, PY, *at(10, 508), "fg-muted", SECOND, DASH))
+    x, y = at(10, 508)
     c.add(text(x, y - 10, "longitudinal axis (nose)", 12, "end", "fg-muted"))
-    c.add(line(PX, PY, *at(6, 530), "sky-fg", MAIN))
-    x, y = at(6, 530)
+    c.add(line(PX, PY, *at(6, 508), "sky-fg", MAIN))
+    x, y = at(6, 508)
     c.add(text(x, y + 22, "flight path", 12, "end", "sky-fg", weight=600))
     # relative airflow arrows just below the path, pointing back at the aeroplane
     for r in (380, 480):
@@ -321,14 +323,14 @@ def angle_of_attack_vs_attitude() -> Canvas:
         x1, y1 = at(6, r)
         c.add(arrow(x0, y0 + 20, x1, y1 + 20, "sky-fg", SECOND))
     c.add(text(612, PY + 20, "relative airflow", 12, "end", "sky-fg", weight=600))
-    c.add(plane_side(PX, PY, 1.3, pitch=10))
+    c.add(plane_side(PX, PY, 1.45, pitch=10))
     # the three angles
     c.add(path(arc_path(PX, PY, 200, -10, 0), "fg-muted", None, MAIN))
     c.add(text(PX + 196, PY + 20, "pitch attitude 10°", 13, "middle", "fg-muted", weight=700))
     c.add(text(PX + 196, PY + 36, "horizon to nose", 11, "middle", "fg-muted"))
-    c.add(path(arc_path(PX, PY, 340, -6, 0), "sky-fg", None, MAIN))
-    c.add(text(PX + 340, PY + 20, "flight path 6°", 13, "middle", "sky-fg", weight=700))
-    c.add(text(PX + 340, PY + 36, "horizon to path", 11, "middle", "sky-fg"))
+    c.add(path(arc_path(PX, PY, 322, -6, 0), "sky-fg", None, MAIN))
+    c.add(text(PX + 322, PY + 20, "flight path 6°", 13, "middle", "sky-fg", weight=700))
+    c.add(text(PX + 322, PY + 36, "horizon to path", 11, "middle", "sky-fg"))
     c.add(path(arc_path(PX, PY, 470, -10, -6), "brand", None, 4))
     x, y = at(8, 470)
     c.add(callout(x + 2, y, x - 50, y - 120, ["Angle of attack ≈ 10° − 6° = 4°", "path to nose: well below the stall"], "brand", 13))
@@ -475,7 +477,7 @@ def wake_turbulence_avoidance() -> Canvas:
     R = 330
     c.add(polygon([(R, G1), (610, G1 - 0.32 * (610 - R)), (610, G1 - 0.32 * (610 - R) + 70), (R + 40, G1)], "bad", None, fill_opacity=0.14))
     c.add(line(R, G1, 610, G1 - 0.32 * (610 - R), "fg-muted", MAIN, DASH))
-    c.add(plane_side(560, G1 - 0.32 * 230 + 2, 0.8, "fg-muted", pitch=18))
+    c.add(plane_side(560, G1 - 0.32 * 230, 0.9, "fg-muted", pitch=18))
     c.add(text(610, G1 + 30, "its wake sinks below", 12, "end", "bad", weight=600))
     c.add(text(610, G1 + 45, "and behind its path", 12, "end", "bad"))
     c.add(line(R, G1 - 4, R, G1 + 14, "bad", 3))
@@ -483,7 +485,7 @@ def wake_turbulence_avoidance() -> Canvas:
     c.add(text(R + 6, G1 + 45, "vortices start", 12, "start", "bad"))
     L1 = 220
     c.add(line(L1, G1, 470, G1 - 0.46 * (470 - L1), "brand", 3))
-    c.add(plane_side(440, G1 - 0.46 * 220 + 1, 0.42, "brand", pitch=24))
+    c.add(plane_side(440, G1 - 0.46 * 220, 0.48, "brand", pitch=24))
     c.add(line(L1, G1 - 4, L1, G1 + 14, "ok", 3))
     c.add(text(L1 - 6, G1 + 30, "you lift off", 12, "end", "ok-fg", weight=600))
     c.add(text(L1 - 6, G1 + 45, "before that point", 12, "end", "ok-fg"))
@@ -497,13 +499,13 @@ def wake_turbulence_avoidance() -> Canvas:
     T = 300
     c.add(polygon([(30, G2 - 0.26 * (T - 30)), (T, G2), (30, G2)], "bad", None, fill_opacity=0.14))
     c.add(line(30, G2 - 0.26 * (T - 30), T, G2, "fg-muted", MAIN, DASH))
-    c.add(plane_side(120, G2 - 0.26 * (T - 120) + 1, 0.8, "fg-muted", pitch=-2))
+    c.add(plane_side(120, G2 - 0.26 * (T - 120), 0.9, "fg-muted", pitch=-2))
     c.add(line(T, G2 - 4, T, G2 + 14, "bad", 3))
     c.add(text(T - 6, G2 + 30, "heavy touches down here:", 12, "end", "bad", weight=600))
     c.add(text(T - 6, G2 + 45, "vortices stop", 12, "end", "bad"))
     TD = 410
     c.add(line(30, G2 - 0.24 * (TD - 30), TD, G2, "brand", 3))
-    c.add(plane_side(260, G2 - 0.24 * (TD - 260), 0.42, "brand", pitch=-3))
+    c.add(plane_side(260, G2 - 0.24 * (TD - 260), 0.48, "brand", pitch=-3))
     c.add(line(TD, G2 - 4, TD, G2 + 14, "ok", 3))
     c.add(text(TD + 6, G2 + 30, "you touch down", 12, "start", "ok-fg", weight=600))
     c.add(text(TD + 6, G2 + 45, "beyond that point", 12, "start", "ok-fg"))
@@ -586,11 +588,11 @@ def jet_blast_hazard_zones() -> Canvas:
     c.add(text(60, 40, "hazard falls gradually with distance", 12, "start", "fg-muted"))
     c.add(text(JX + 64, JY + 4, "jet", 12, "start", "fg-muted"))
     # propeller aircraft for comparison
-    PX, PY = 520, 300
-    c.add(path(f"M{PX - 22} {PY - 6} L{PX - 112} {PY - 18} Q{PX - 124} {PY} {PX - 112} {PY + 18} L{PX - 22} {PY + 6} Z", None, "warn", 0, fill_opacity=0.2))
+    PX, PY = 528, 300  # wash starts just behind the tail (local x -51)
+    c.add(path(f"M{PX - 30} {PY - 6} L{PX - 120} {PY - 18} Q{PX - 132} {PY} {PX - 120} {PY + 18} L{PX - 30} {PY + 6} Z", None, "warn", 0, fill_opacity=0.2))
     c.add(plane_top(PX, PY, 0.42, 90))
-    c.add(text(PX - 130, PY - 4, "prop wash: run-up or taxi,", 12, "end", "warn-fg", weight=600))
-    c.add(text(PX - 130, PY + 12, "smaller but real", 12, "end", "warn-fg"))
+    c.add(text(PX - 138, PY - 4, "prop wash: run-up or taxi,", 12, "end", "warn-fg", weight=600))
+    c.add(text(PX - 138, PY + 12, "smaller but real", 12, "end", "warn-fg"))
     c.add(text(20, 356, "Indicative, not to scale: the danger area depends on the aircraft and its power; check the AIP.", 11, "start", "fg-faint"))
     return c
 
@@ -615,11 +617,11 @@ def holding_point_position() -> Canvas:
     c.add(text(JX + 44, JY + 12, "cleared to line up", 12, "start", "fg"))
     c.add(text(JX, JY + 196, "blast", 12, "middle", "bad", weight=700))
     # bad position: directly behind
-    c.add(plane_top(JX, JY + 150, 0.3, 0, "bad"))
+    c.add(plane_top(JX, JY + 145, 0.3, 0, "bad"))  # CG a little ahead of the drawing's middle (nose 21, tail -51)
     c.add(text(JX - 50, JY + 156, "directly behind:", 12, "end", "bad", weight=700))
     c.add(text(JX - 50, JY + 172, "worst place", 12, "end", "bad"))
     # good position: to the side, back, angled
-    c.add(plane_top(470, 280, 0.3, 300, "ok"))
+    c.add(plane_top(466, 278, 0.3, 300, "ok"))
     c.add(text(470, 336, "to the side of its tail, well back,", 12, "middle", "ok-fg", weight=700))
     c.add(text(470, 352, "nose angled towards the blast", 12, "middle", "ok-fg"))
     c.add(text(20, 388, "Next: breakaway thrust as it moves, then take-off power on the runway. Hold the controls firmly.", 12, "start", "fg-muted"))
@@ -1106,14 +1108,15 @@ def cg_position_effects() -> Canvas:
                "enough, higher drag from trim, very stable. Aft of the limit: tail heavy, light and over-sensitive pitch control, reduced longitudinal "
                "stability, lower stall speed but poor stall and spin recovery that may be impossible.", height=340, prefix="cgp")
     for x0, title, cgdx, pitch, colr, lines in (
-            (14, "CG forward of the limit", 26, -5, "warn", ["nose heavy; very stable", "higher stall speed", "more elevator to flare,", "possibly not enough", "higher drag from trim"]),
-            (326, "CG aft of the limit", -26, 5, "bad", ["tail heavy; light, over-", "sensitive pitch control", "reduced stability", "lower stall speed, but stall and", "spin recovery may be impossible"])):
+            (14, "CG forward of the limit", 10, -5, "warn", ["nose heavy; very stable", "higher stall speed", "more elevator to flare,", "possibly not enough", "higher drag from trim"]),
+            (326, "CG aft of the limit", -37, 5, "bad", ["tail heavy; light, over-", "sensitive pitch control", "reduced stability", "lower stall speed, but stall and", "spin recovery may be impossible"])):
         c.add(rect(x0, 16, 300, 310, f"{colr}-soft", None, rx=10))
         c.add(text(x0 + 150, 46, title, 15, "middle", f"{colr}-fg", weight=700))
-        PX, PY = x0 + 150, 140
-        c.add(plane_side(PX, PY, 1.9, pitch=pitch))
-        gx = PX + cgdx * 1.9 * math.cos(math.radians(pitch))
-        gy = PY - cgdx * 1.9 * math.sin(math.radians(pitch))
+        S, pr = 2.1, math.radians(pitch)
+        PX, PY = x0 + 150 + 21 * S, 140  # plane spans local x -71..29, so centre it on the panel
+        c.add(plane_side(PX, PY, S, pitch=pitch))
+        gx = PX + S * (cgdx * math.cos(pr) + 5 * math.sin(pr))  # mid-fuselage, local y 5
+        gy = PY + S * (5 * math.cos(pr) - cgdx * math.sin(pr))
         c.add(circle(gx, gy, 9, "surface", f"{colr}", 2.5))
         c.add(path(f"M{gx} {gy - 9} A9 9 0 0 1 {gx + 9} {gy} L{gx} {gy} Z M{gx} {gy + 9} A9 9 0 0 1 {gx - 9} {gy} L{gx} {gy} Z", None, colr))
         c.add(arrow(gx, gy + 12, gx, gy + 60, "info", MAIN))

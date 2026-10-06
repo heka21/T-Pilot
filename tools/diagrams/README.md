@@ -40,8 +40,8 @@ def forces_in_a_climb() -> Canvas:
 behind the CG, swept fin, low tailplane); `airliner_rear` draws a twin-jet "heavy" from behind for wake turbulence.
 Each takes the CG position, a scale (1 = about 100 units long or across) and colour tokens, and returns one `<g>`.
 The geometry a generator needs to line things up (wing height, wheel contact, tips) is listed under "Recurring
-characters" in `content/diagrams/README.md`. In short: lift arrows start at the wing, about 21.5 × scale above the
-CG; on the ground the CG sits 19.5 × scale (side view) or 17 × scale (rear view) above the ground line.
+characters" in `content/diagrams/README.md`. In short: lift arrows start at the wing, about 8 × scale above the
+CG; on the ground the CG sits 19.5 × scale (side view) or 13.5 × scale (rear view) above the ground line.
 
 Widgets cannot import Python, so they paste the same markup. Print it with:
 
@@ -54,7 +54,7 @@ python -m tools.diagrams.plane side|top|rear|airliner [--scale S] [--x X] [--y Y
 `rear`. Colours are token names (`brand`, `fg-muted`, …). Put the printed `<g>` inside the widget's own Alpine group
 (`<g :transform="...">`) so Alpine moves or rotates it, and leave the pasted markup untouched; note the command in an
 SVG comment beside it (no `--` inside an XML comment, so write the options out in words). Current users:
-`bank-angle.html` (rear, scale 1.5), `altimeter-subscale.html` (side, scale 0.5, y −7, brand) and
+`bank-angle.html` (rear, scale 1.5), `altimeter-subscale.html` (side, scale 0.5, y −9.5, brand) and
 `glide-range-vs-wind.html` (side, scale 1, inside a group that pitches it 6° nose down at half scale). When the
 silhouettes change, re-run the command, re-paste, then `npm run smoke -- content/widgets/<name>.html` and
 `node tools/diagrams/render.mjs <name>`.

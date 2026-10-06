@@ -323,7 +323,7 @@ def wind_shear_inertia() -> Canvas:
     for y, head, hw, ias, color in panels:
         c.add(rect(16, y + 4, 608, 150, "surface-2", None, rx=10))
         c.add(text(32, y + 28, head, 14, "start", "fg", weight=700))
-        c.add(plane_side(x0 + 60, y + 72, 0.9))
+        c.add(plane_side(x0 + 81, y + 76, 1.0))
         # wind
         wx = x0 + 150
         c.add(arrow(wx + hw * k, y + 64, wx, y + 64, "info", MAIN))
@@ -426,7 +426,7 @@ def nocturnal_inversion_low_level_jet() -> Canvas:
     # aeroplane climbing out to the east through the top of the inversion
     pts = [(50, gy - 4), (120, 322), (180, 272), (215, inv), (238, 216)]
     c.add(path(smooth_path(pts), "fg-muted", None, SECOND, dash=DASH))
-    c.add(plane_side(252, 206, 0.7, pitch=26))
+    c.add(plane_side(268, 200, 0.7, pitch=26))      # tail (local x -71) just past the end of the dashed path
     c.add(circle(215, inv, 14, None, "bad", MAIN))
     c.add(text(194, inv - 18, "sudden shear", 12, "end", "bad", weight=700))
     # temperature profile

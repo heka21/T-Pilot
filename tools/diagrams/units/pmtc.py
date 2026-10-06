@@ -639,7 +639,7 @@ def mountain_wave_lenticular_rotor() -> Canvas:
     c.style(css)
     c.add(mk)
     # crossing height, upwind of the crest
-    c.add(plane_side(RX, 58, 0.34))
+    c.add(plane_side(RX + 7, 58, 0.34))
     DX = 108
     c.add(line(DX, 70, DX, G - RH, "brand", SECOND), line(DX - 6, 70, DX + 6, 70, "brand", SECOND), line(DX - 6, G - RH, RX - 6, G - RH, "brand", THIN, DASH))
     c.add(text(RX + 34, 62, "cross 2,000 ft or more above the ridge", 12, "start", "brand", weight=700))

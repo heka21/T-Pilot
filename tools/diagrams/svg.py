@@ -185,64 +185,76 @@ def badge(x: float, y: float, s: str, color: str = "brand", size: float = 12) ->
 
 
 # ---------------------------------------------------------------- recurring characters
-# The aeroplane is a Cessna 152 (the type the student flies): high strut-braced wing, tricycle gear with the
-# mains just aft of the CG, swept fin with a dorsal fillet, low tailplane. All three views share one frame:
-# the CG at the origin, ~100 units long or across at scale 1, nose to the right (side and plan views).
-# Keep the part classes (MAIN strokes on the airframe, SECOND on prop and gear legs) and the signatures:
+# The aeroplane is a Cessna 152 (the type the student flies), drawn to its real proportions (7.3 m long, 10.2 m span,
+# 2.6 m tall): short blunt cowl, cabin glass just above a long, nearly level tail cone, high strut-braced wing on the
+# roof, big swept fin, tricycle gear with the mains just aft of the CG. Thin parts (wing and tailplane seen end on,
+# the fin from behind) are drawn a little thicker than life so their fill shows at small scales. All three views share
+# one frame: the CG at the origin, ~100 units long or across at scale 1, nose to the right (side and plan views).
+# Keep the part classes (MAIN strokes on the airframe, SECOND on prop, struts and gear legs) and the signatures:
 # 87 generators and pakc.small_plane rely on them.
 def plane_side(x: float, y: float, scale: float = 1.0, color: str = "fg", pitch: float = 0, fill: str = "surface", prop: bool = True, gear: bool = True, cls: str | None = None) -> str:
-    """Cessna 152 seen from the left, nose to the right: spinner at x=55, rudder trailing edge at x=-50,
-    wing on the cabin roof at y=-19..-24 (leading edge x=8, trailing edge x=-14), belly at y=7.5, wheels on
-    y=19.5. (x, y) is the centre of gravity; pitch is nose-up degrees (screen rotation is negative)."""
-    tailplane = path("M-36 -0.5 L-54 0.5 L-54 3.5 L-38 4 Z", color, fill, MAIN)
-    body = path("M48 -5 C44 -7 38 -8 30 -9 L16 -9.5 L6 -19 L-14 -19 C-20 -17 -26 -13 -30 -9 L-48 -3 L-49 2 L-40 5 L-14 7 L-10 7.5 L36 7.5 C44 7 48 5 48 4 Z", color, fill, MAIN)
-    fin = path("M-30 -9 C-34 -14 -38 -22 -43 -31 L-49 -31 L-48 -3 Z", color, fill, MAIN)  # base runs along the fuselage top
-    hinge = line(-45.5, -30, -47.3, -5, color, THIN)
-    strut = line(6, 6, 1, -19, color, SECOND)
-    wing = path("M8 -19 C9 -23.5 4 -24 0 -24 L-13 -22.5 L-14 -19 Z", color, fill, MAIN)
-    windscreen = path("M15.5 -10 L6.5 -18.5 L5 -18.5 L5 -10 Z", color, "surface-2", THIN)
-    door_window = path("M3.5 -18 L-4 -18 L-4 -10.5 L3.5 -10.5 Z", color, "surface-2", THIN)
-    rear_window = path("M-5.5 -18 L-12 -17 L-12 -10.5 L-5.5 -10.5 Z", color, "surface-2", THIN)
-    spinner = path("M48 -4 L55 0 L48 4 Z", color, fill, MAIN)
-    parts = [tailplane, body, fin, hinge, strut, wing, windscreen, door_window, rear_window, spinner]
-    if prop:
-        parts.append(line(51, -13, 51, 13, color, SECOND))
+    """Cessna 152 seen from the left, nose to the right: spinner tip at x=29.4, rudder trailing edge at x=-71.3, cabin
+    roof (wing root underside) at y=-6.1 with the wing on it up to y=-9.9 (leading edge x=7.8, trailing edge x=-20), fin
+    top at y=-14.5, belly at y=12.8, wheels on y=19.5 (nose wheel x=15, mains x=-7.5), prop disc x=27 from y=-9.3 to
+    14.5. (x, y) is the centre of gravity; pitch is nose-up degrees (screen rotation is negative)."""
+    body = path("M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 "
+                "L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z", color, fill, MAIN)
+    fin = path("M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z", color, fill, MAIN)
+    hinge = line(-67.4, -13.6, -61.8, 4.8, color, THIN)
+    tailplane = path("M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z", color, fill, MAIN)
+    wing = path("M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z", color, fill, MAIN)
+    windscreen = path("M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z", color, "surface-2", THIN)
+    door_window = path("M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z", color, "surface-2", THIN)
+    side_window = path("M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z", color, "surface-2", THIN)
+    rear_window = path("M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z", color, "surface-2", THIN)
+    strut = line(2.5, 10.4, -0.6, -6.1, color, SECOND)
+    spinner = path("M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z", color, fill, MAIN)
+    parts = []
     if gear:
-        parts += [line(30, 7.5, 30, 13, color, SECOND), circle(30, 16.5, 3, color, None),
-                  line(-2, 7.5, -8, 13, color, SECOND), circle(-8, 16, 3.5, color, None)]
+        parts += [line(13.6, 11.6, 15, 16.9, color, SECOND), circle(15, 17.1, 2.4, color, None),
+                  line(-3.5, 12.5, -7.5, 16, color, SECOND), circle(-7.5, 16.2, 3.3, color, None)]
+    parts += [body, fin, hinge, tailplane, wing, windscreen, door_window, side_window, rear_window, strut, spinner]
+    if prop:
+        parts.append(line(26.9, -9.3, 26.9, 14.5, color, SECOND))
     return group(*parts, transform=f"translate({fmt(x)} {fmt(y)}) rotate({fmt(-pitch)}) scale({fmt(scale)})", cls=cls)
 
 
 def plane_top(x: float, y: float, scale: float = 1.0, heading: float = 90, color: str = "fg", fill: str = "surface", cls: str | None = None) -> str:
-    """Cessna 152 in plan view, 100 units span at scale 1: constant-chord centre section (x -5..11) to |y|=28,
-    tapered rounded tips, the wing drawn over the cabin with the windscreen showing ahead of the leading edge.
+    """Cessna 152 in plan view, 100 units span at scale 1: spinner tip at x=21.2, rudder at x=-51.4; constant-chord
+    centre section (leading edge x=4, trailing edge x=-12.7) to |y|=24, then tapering to rounded tips; windscreen ahead
+    of the wing and the rear window behind it; tailplane ±16.7 between x=-37.6 and -51.2.
     heading in degrees (0 = up the page, 90 = to the right)."""
-    tailplane = path("M-23 -1.5 L-27 -15 L-32 -15 L-32 -2 Z M-23 1.5 L-27 15 L-32 15 L-32 2 Z", color, fill, MAIN)
-    fin = line(-20, 0, -33, 0, color, MAIN)
-    body = path("M40 0 C40 -3 35 -5 29 -5.5 L12 -6 L-10 -5.5 L-30 -2 L-33 -1.2 L-33 1.2 L-30 2 L-10 5.5 L12 6 L29 5.5 C35 5 40 3 40 0 Z", color, fill, MAIN)
-    windscreen = path("M19 -5.4 L11 -6 L11 6 L19 5.4 Z", color, "surface-2", THIN)
-    struts = line(7, -5.5, 5, -28, color, SECOND) + line(7, 5.5, 5, 28, color, SECOND)
-    wing = path("M11 -28 L11 28 L9 46 Q8 50 3 50 L-4 50 Q-6 50 -6 46 L-5 28 L-5 -28 L-6 -46 Q-6 -50 -4 -50 L3 -50 Q8 -50 9 -46 Z", color, fill, MAIN)
-    hinges = line(-2, -46, -2, -28, color, THIN) + line(-2, 28, -2, 46, color, THIN)
-    spinner = path("M40 -2 L44 0 L40 2 Z", color, fill, MAIN)
-    prop = line(42, -12, 42, 12, color, SECOND)
-    return group(tailplane, fin, body, windscreen, struts, wing, hinges, spinner, prop,
+    tailplane = path("M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z", color, fill, MAIN)
+    elevators = line(-46, -2, -46, -16.2, color, THIN) + line(-46, 2, -46, 16.2, color, THIN)
+    body = path("M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 "
+                "C17 3.9 18.8 2.6 18.8 0 Z", color, fill, MAIN)
+    fin = line(-30, 0, -51.4, 0, color, MAIN)
+    windscreen = path("M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z", color, "surface-2", THIN)
+    rear_window = path("M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z", color, "surface-2", THIN)
+    wing = path("M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 "
+                "L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z", color, fill, MAIN)
+    hinges = line(-9.6, -46, -9.6, -25, color, THIN) + line(-9.6, 25, -9.6, 46, color, THIN)
+    spinner = path("M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z", color, fill, MAIN)
+    prop = line(19.3, -8.6, 19.3, 8.6, color, SECOND)
+    return group(tailplane, elevators, body, fin, windscreen, rear_window, wing, hinges, spinner, prop,
                  transform=f"translate({fmt(x)} {fmt(y)}) rotate({fmt(heading - 90)}) scale({fmt(scale)})", cls=cls)
 
 
 def plane_rear(x: float, y: float, scale: float = 1.0, bank: float = 0, color: str = "fg", fill: str = "surface", cls: str | None = None) -> str:
-    """Cessna 152 seen from behind, 100 units span at scale 1: wing across the cabin roof (y=-21.5..-16.5 with a
-    little dihedral), struts to the lower fuselage, wheels on y=17, fin top at y=-34. Positive bank rolls the
-    left wing down (a left turn, as the pilot sees it: left wing on the reader's left)."""
-    wing = path("M-50 -21.5 L0 -20 L50 -21.5 L50 -18 L0 -16.5 L-50 -18 Z", color, fill, MAIN)
-    struts = line(-5, 5, -28, -18, color, SECOND) + line(5, 5, 28, -18, color, SECOND)
-    nose_wheel = circle(0, 14.5, 2.5, color, None)
-    body = rect(-7, -16.5, 14, 24, fill, color, MAIN, rx=4)
-    window = path("M-5 -14 L5 -14 L5 -8 L-5 -8 Z", color, "surface-2", THIN)
-    gear = line(-4, 7, -9, 12, color, SECOND) + line(4, 7, 9, 12, color, SECOND) + circle(-9, 14, 3, color, None) + circle(9, 14, 3, color, None)
-    tailplane = path("M-15 1.5 L15 1.5 L15 4.5 L-15 4.5 Z", color, fill, MAIN)
-    fin = path("M-1.5 -16.5 L-0.5 -34 L2 -34 L2.8 -16.5 Z", color, fill, MAIN)
-    return group(wing, struts, nose_wheel, body, window, gear, tailplane, fin,
+    """Cessna 152 seen from behind, 100 units span at scale 1: wing across the cabin roof (y=-9.3..-5), struts from the
+    lower fuselage to |x|=24, fuselage |x|<=5.2 down to y=8.6, mains at |x|=11 on y=13.5, tailplane ±16.7 at y≈2.5,
+    fin top at y=-13. Positive bank rolls the left wing down (a left turn, as the pilot sees it: left wing on the
+    reader's left)."""
+    nose_wheel = rect(-1.2, 9.4, 2.4, 4.1, color, None, rx=1.2)
+    struts = line(-5, 5.2, -24, -5.4, color, SECOND) + line(5, 5.2, 24, -5.4, color, SECOND)
+    gear = (line(-4.4, 8.2, -10.6, 10.6, color, SECOND) + line(4.4, 8.2, 10.6, 10.6, color, SECOND)
+            + rect(-12.6, 8.3, 3, 5.2, color, None, rx=1.5) + rect(9.6, 8.3, 3, 5.2, color, None, rx=1.5))
+    body = rect(-5.2, -5.2, 10.4, 13.8, fill, color, MAIN, rx=3)
+    window = path("M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z", color, "surface-2", THIN)
+    wing = path("M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z", color, fill, MAIN)
+    tailplane = path("M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z", color, fill, MAIN)
+    fin = path("M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z", color, fill, MAIN)
+    return group(nose_wheel, struts, gear, body, window, wing, tailplane, fin,
                  transform=f"translate({fmt(x)} {fmt(y)}) rotate({fmt(-bank)}) scale({fmt(scale)})", cls=cls)
 
 

@@ -347,7 +347,7 @@ def visual_illusions_panels() -> Canvas:
     c.add(path(f"M{x + 10} {y + 150} Q{x + 50} {y + 136} {x + 80} {y + 140} T{x + 186} {y + 106}", "fg-muted", None, SECOND))
     c.add(line(x + 10, y + 70, x + 186, y + 70, "ok", SECOND, dash=DASH))
     c.add(text(x + 184, y + 64, "true horizon", 11, "end", "ok-fg"))
-    c.add(plane_rear(x + 98, y + 98, 0.7, bank=14, color="bad"))
+    c.add(plane_rear(x + 98, y + 98, 0.9, bank=14, color="bad"))
     c.add(text(x + 150, y + 150, "cloud top", 11, "middle", "fg-muted"))
     c.add(text(x + 12, y + 186, "feels level with the cloud", 12, "start", "fg-muted", weight=600))
     c.add(text(x + 12, y + 204, "→ banked to match it", 13, "start", "bad", weight=700))
@@ -384,9 +384,9 @@ def vestibular_illusions() -> Canvas:
     x, y = box(0, "The leans")
     c.add(text(x + 14, y + 42, "slow roll, then a quick correction", 11, "start", "fg-muted"))
     c.add(line(x + 20, y + 112, x + 278, y + 112, "line-strong", THIN, dash=DASH))
-    c.add(plane_rear(x + 82, y + 104, 0.8, bank=0))
+    c.add(plane_rear(x + 82, y + 104, 1.0, bank=0))
     c.add(text(x + 82, y + 146, "actual", 12, "middle", "fg", weight=600))
-    c.add(plane_rear(x + 216, y + 104, 0.8, bank=-18, color="info"))
+    c.add(plane_rear(x + 216, y + 104, 1.0, bank=-18, color="info"))
     c.add(text(x + 216, y + 146, "felt", 12, "middle", "info-fg", weight=600))
     foot(x, y, "banked the opposite way", "leaning into a bank, a spiral")
 
@@ -395,9 +395,9 @@ def vestibular_illusions() -> Canvas:
     c.add(text(x + 14, y + 42, "dark take-off or go-around", 11, "start", "fg-muted"))
     gx = y + 126
     c.add(line(x + 14, gx, x + 284, gx, "fg-muted", SECOND))
-    c.add(plane_side(x + 82, gx - 20, 0.7, pitch=8))
+    c.add(plane_side(x + 100, gx - 23, 0.85, pitch=8))           # CG 21 units ahead of mid-length
     c.add(text(x + 82, gx + 16, "actual", 12, "middle", "fg", weight=600))
-    c.add(plane_side(x + 220, gx - 34, 0.7, pitch=30, color="info", gear=False))
+    c.add(plane_side(x + 236, gx - 40, 0.85, pitch=30, color="info", gear=False))
     c.add(text(x + 220, gx + 16, "felt", 12, "middle", "info-fg", weight=600))
     c.add(arrow(x + 40, y + 60, x + 110, y + 60, "fg-muted", SECOND))
     c.add(text(x + 118, y + 64, "accelerating", 11, "start", "fg-muted"))
@@ -414,7 +414,7 @@ def vestibular_illusions() -> Canvas:
         r = 52 * (1 - 0.45 * t)
         pts.append((cx + r * math.sin(a), cy + t * 86 + r * 0.28 * math.cos(a)))
     c.add(path(smooth_path(pts), "bad", None, SECOND, arrow_end=True))
-    c.add(plane_rear(x + 220, y + 96, 0.7, bank=0, color="info"))
+    c.add(plane_rear(x + 220, y + 96, 0.9, bank=0, color="info"))
     c.add(text(x + 220, y + 130, "wings feel level", 11, "middle", "info-fg"))
     foot(x, y, "wings level; pulls back", "the pull tightens the spiral")
 
@@ -849,9 +849,9 @@ def survival_priorities() -> Canvas:
     c.add(rect(gx0, 46, 334, 250, "warn-soft", None, rx=12, fill_opacity=0.5))
     c.add(circle(598, 70, 13, "warn", None, fill_opacity=0.8))
     c.add(path(f"M{gx0} {gy} Q{gx0 + 160} {gy - 10} {gx0 + 334} {gy} L{gx0 + 334} 296 L{gx0} 296 Z", None, "surface-2"))
-    c.add(ellipse(426, gy - 4, 44, 5, "fg-faint", None, fill_opacity=0.35))   # the high wing's shade
-    c.add(plane_side(430, gy - 26, 1.1))                                        # wheels on the ground (local y 19.5)
-    c.add(text(420, gy + 26, "shade under the wing", 11, "middle", "fg-muted"))
+    c.add(ellipse(442, gy - 4, 44, 5, "fg-faint", None, fill_opacity=0.35))   # the high wing's shade
+    c.add(plane_side(450, gy - 29.5, 1.25))                                     # wheels (local y 19.5) on the ground at gy - 5
+    c.add(text(440, gy + 26, "shade under the wing", 11, "middle", "fg-muted"))
     c.add(path(f"M{gx0 + 254} {gy - 2} L{gx0 + 274} {gy + 26} L{gx0 + 294} {gy - 2}", "bad", None, 5))
     c.add(text(gx0 + 274, gy + 40, "\"V\" laid out", 11, "middle", "bad"))
     c.add(text(gx0 + 16, 78, "Stay with the aircraft", 16, "start", "brand-fg", weight=700))

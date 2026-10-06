@@ -785,15 +785,15 @@ def tail_download_cg() -> Canvas:
         c.add(panel(12, oy, 616, 190))
         c.add(text(616, oy + 26, "CG forward" if fwd else "CG aft", 16, "end", "fg", weight=700))
         PY = oy + 108
-        c.add(plane_side(200, PY, 2.0, color="fg-faint", gear=False))
-        CL = 205  # centre of lift, about a quarter of the way back from the wing's leading edge (local x 8)
+        c.add(plane_side(210, PY, 2.0, color="fg-faint", gear=False))
+        CL = 212  # centre of lift, about a quarter of the way back from the wing's leading edge (local x 7.8, chord 28)
         CG = CL + (34 if fwd else 10)
-        TAIL = 96
+        TAIL = 87  # mid tailplane (local x -61.5)
         W_ = 36
         td = 20 if fwd else 6
-        # lift = weight + download, from the high wing (local y -21.5)
+        # lift = weight + download, from the high wing (local y -10)
         L = W_ + td
-        WY = PY - 43
+        WY = PY - 20
         c.add(arrow(CL, WY, CL, WY - L, "brand", 2.5))
         c.add(text(CL - 8, WY - L + 10, "lift", 13, "end", "brand", weight=700))
         # weight from CG
@@ -801,8 +801,8 @@ def tail_download_cg() -> Canvas:
         c.add(circle(CG, PY, 6, "surface", "fg", MAIN), line(CG - 6, PY, CG + 6, PY, "fg", THIN), line(CG, PY - 6, CG, PY + 6, "fg", THIN))
         c.add(text(CG + 10, PY + 6 + W_ - 6, "weight", 13, "start", "fg", weight=700))
         # tail download
-        c.add(arrow(TAIL, PY + 2, TAIL, PY + 2 + td * 1.4, "info", 2.5))
-        c.add(text(TAIL - 8, PY + 2 + td * 1.4 + 12, "tail download", 12, "middle", "info", weight=700))
+        c.add(arrow(TAIL, PY + 10, TAIL, PY + 10 + td * 1.4, "info", 2.5))
+        c.add(text(TAIL - 8, PY + 10 + td * 1.4 + 12, "tail download", 12, "middle", "info", weight=700))
         # tail arm
         ya = PY + 54
         c.add(line(TAIL, ya, CG, ya, "info", THIN), line(TAIL, ya - 4, TAIL, ya + 4, "info", THIN), line(CG, ya - 4, CG, ya + 4, "info", THIN))

@@ -174,7 +174,7 @@ def flap_effect_on_lift_curve() -> Canvas:
 # ---------------------------------------------------------------- 3.2 flight controls
 def _ailerons_top(left: str, right: str) -> str:
     """Aileron patches for plane_top local coordinates (heading 90: left wing is up the page, at negative y)."""
-    return rect(-6, -46, 4, 18, left, "fg", 1) + rect(-6, 28, 4, 18, right, "fg", 1)
+    return rect(-12.6, -46, 3, 20, left, "fg", 1) + rect(-12.6, 26, 3, 20, right, "fg", 1)
 
 
 @chart
@@ -187,28 +187,28 @@ def adverse_yaw() -> Canvas:
         X, Y = 196, top + 122
         c.add(rect(12, top + 14, 616, 214, "surface-2" if step == 1 else "ok-soft", None, rx=10, fill_opacity=0.5 if step == 2 else None))
         # intended turn to the right (down the page)
-        c.add(path(f"M{X + 60} {Y} Q{X + 160} {Y} {X + 200} {Y + 40}", "fg-faint", None, THIN, dash=DASH, arrow_end=True))
+        c.add(path(f"M{X + 44} {Y} Q{X + 160} {Y} {X + 200} {Y + 40}", "fg-faint", None, THIN, dash=DASH, arrow_end=True))
         c.add(text(X + 208, Y + 48, "turn wanted", 11, "start", "fg-faint"))
-        rud = "" if step == 1 else path("M-34 0 L-44 6", "brand", None, 3)
+        rud = "" if step == 1 else path("M-46 0 L-55 5", "brand", None, 3)
         c.add(group(plane_top(0, 0, 1, 90, "fg", "surface"), _ailerons_top("brand-soft", "info-soft"), rud,
                     transform=f"translate({X} {Y}) scale(1.5)"))
         c.add(text(X - 14, Y - 84, "left wing rising: aileron DOWN", 11, "middle", "brand", weight=600))
         c.add(text(X - 14, Y + 94, "right wing: aileron UP", 11, "middle", "info", weight=600))
         # drag at the tips: more on the rising wing
-        c.add(arrow(X - 16, Y - 57, X - 86, Y - 57, "bad", MAIN))
-        c.add(text(X - 100, Y - 53, "more drag", 12, "end", "bad", weight=600))
-        c.add(arrow(X - 16, Y + 57, X - 44, Y + 57, "fg-muted", SECOND))
-        c.add(text(X - 50, Y + 61, "less", 11, "end", "fg-muted"))
+        c.add(arrow(X - 20, Y - 57, X - 90, Y - 57, "bad", MAIN))
+        c.add(text(X - 104, Y - 53, "more drag", 12, "end", "bad", weight=600))
+        c.add(arrow(X - 20, Y + 57, X - 48, Y + 57, "fg-muted", SECOND))
+        c.add(text(X - 54, Y + 61, "less", 11, "end", "fg-muted"))
         if step == 1:
-            c.add(path(arc_path(X, Y, 78, -4, -34), "bad", None, MAIN, arrow_end=True))
-            c.add(text(X + 70, Y - 62, "nose yaws LEFT", 13, "start", "bad", weight=700))
+            c.add(path(arc_path(X, Y, 60, -4, -36), "bad", None, MAIN, arrow_end=True))
+            c.add(text(X + 50, Y - 60, "nose yaws LEFT", 13, "start", "bad", weight=700))
             heading = "1 · Aileron alone, rolling right"
             lines = ["The down-going aileron gives the", "rising left wing more lift and more", "induced drag. The drag pulls that", "wing back: the nose swings away", "from the turn. This is adverse yaw."]
             colour = "bad"
         else:
-            c.add(arrow(X - 66, Y + 16, X - 66, Y - 18, "brand", MAIN))
-            c.add(text(X - 74, Y + 30, "rudder force", 11, "end", "brand", weight=600))
-            c.add(path(arc_path(X, Y, 78, 4, 34), "ok", None, MAIN, arrow_end=True))
+            c.add(arrow(X - 86, Y + 16, X - 86, Y - 18, "brand", MAIN))
+            c.add(text(X - 94, Y + 30, "rudder force", 11, "end", "brand", weight=600))
+            c.add(path(arc_path(X, Y, 60, 4, 36), "ok", None, MAIN, arrow_end=True))
             c.add(text(X + 56, Y + 76, "nose follows the turn", 13, "start", "ok-fg", weight=700))
             heading = "2 · Add rudder the same way"
             lines = ["Rudder the same way as the aileron", "pushes the tail left and the nose", "right, cancelling the adverse yaw:", "a coordinated roll, ball centred."]
@@ -323,8 +323,8 @@ def vx_vs_vy() -> Canvas:
             x, y = pt(m, v, roc)
             c.add(circle(x, y, 5, colour, "surface", 1.5))
             c.add(num(x + (-10 if name == "Vx" else 10), y + (-6 if name == "Vx" else 18), f"{m} min", 11, "end" if name == "Vx" else "start", colour))
-        c.add(plane_side(end[0] + 10, end[1] - 4, 0.4, colour, pitch=pitch, gear=False))
-        c.add(text(end[0] + 36, end[1] + 4, name, 14, "start", colour, weight=700))
+        c.add(plane_side(end[0] + 14, end[1] - 6, 0.5, colour, pitch=pitch, gear=False))
+        c.add(text(end[0] + 38, end[1] + 4, name, 14, "start", colour, weight=700))
     c.add(circle(X0, GY, 4, "fg", None))
     c.add(callout(OX + 2, GY - 0.405 * 160 + 3, OX + 60, GY - 26, ["Vy path passes", "too low here"], "bad", 12))
     # labels
@@ -428,7 +428,7 @@ def powered_descent_vs_glide() -> Canvas:
         ex, ey = SX + L * math.cos(r), SY + L * math.sin(r)
         c.add(line(SX, SY, ex, ey, colour, MAIN))
         px, py = SX + f * L * math.cos(r), SY + f * L * math.sin(r)
-        c.add(plane_side(px, py, 0.7, colour, pitch=pitch, gear=False))
+        c.add(plane_side(px, py, 0.85, colour, pitch=pitch, gear=False))
         c.add(text(ex + 10, ey + 4, head, 14, "start", f"{colour}-fg" if colour != "brand" else "brand", weight=700))
         c.add(multiline(ex + 10, ey + 21, lines, 11, "start", "fg-muted"))
     c.add(circle(SX, SY, 4, "fg", None))
@@ -454,7 +454,7 @@ def slip_and_skid_ball() -> Canvas:
         cx = 110 + i * 210
         c.add(rect(cx - 98, 14, 196, 322, "surface-2" if side else "ok-soft", None, rx=10, fill_opacity=None if side else 0.6))
         c.add(text(cx, 42, head, 17, "middle", "bad" if side else "ok-fg", weight=700))
-        c.add(plane_rear(cx, 96, 0.9, 20))
+        c.add(plane_rear(cx, 100, 1.1, 20))
         c.add(text(cx, 140, "left turn, seen from behind", 11, "middle", "fg-faint"))
         # inclinometer: curved tube with two reference wires
         R, TY = 150, 50
@@ -607,7 +607,8 @@ def spin_vs_spiral_dive() -> Canvas:
         c.add(rect(cx - 145, 14, 290, 410, f"{colour}-soft", None, rx=10, fill_opacity=0.45))
         c.add(text(cx, 44, head, 18, "middle", fg, weight=700))
         # picture: steep nose-down aeroplane with rotation
-        c.add(plane_side(cx - 50, 100, 0.55, "fg", pitch=-60 if head == "Spin" else -35, gear=False))
+        p_ = math.radians(60 if head == "Spin" else 35)     # nose-down pitch; centre the fuselage (local x -21) in the arc
+        c.add(plane_side(cx - 50 + 13 * math.cos(p_), 100 + 13 * math.sin(p_), 0.62, "fg", pitch=-math.degrees(p_), gear=False))
         c.add(path(arc_path(cx - 50, 100, 34, 200, 340), colour, None, SECOND, arrow_end=True))
         c.add(_asi(cx + 70, 96, frac, colour if colour == "bad" else "warn", trend))
         c.add(text(cx + 70, 56, "ASI", 11, "middle", "fg-faint"))
@@ -647,7 +648,7 @@ def wing_drop_and_recovery() -> Canvas:
         cx = 165 + i * 310
         c.add(rect(cx - 150, 14, 300, 362, f"{colour}-soft", None, rx=10, fill_opacity=0.45))
         c.add(text(cx, 42, head, 15, "middle", "bad" if not ok else "ok-fg", weight=700))
-        c.add(plane_rear(cx, 104, 1.2, 14))
+        c.add(plane_rear(cx, 106, 1.4, 14))
         c.add(arrow(cx - 136, 200, cx - 96, 200, "sky-fg", SECOND))
         c.add(text(cx - 136, 190, "airflow", 11, "start", "sky-fg"))
         c.add(text(cx - 64, 146, "dropped wing", 11, "middle", "fg-muted"))
@@ -688,7 +689,7 @@ def crosswind_taxi_control_positions() -> Canvas:
     c.add(line(CX, 40, CX, 400, "line-strong", THIN, DASH), line(20, CY, 620, CY, "line-strong", THIN, DASH))
     c.add(text(470, 30, "wind from AHEAD", 13, "middle", "ok-fg", weight=700))
     c.add(text(170, 30, "wind from BEHIND", 13, "middle", "warn-fg", weight=700))
-    c.add(plane_top(CX, CY, 0.9, 90))
+    c.add(plane_top(CX + 8, CY, 0.9, 90))         # wing straddles the divide
     c.add(text(CX + 50, CY + 18, "taxiing →", 11, "start", "fg-faint"))
     quads = [  # (x, y, wind arrow from, to, stick dx, dy, lines)
         (470, 140, (590, 56), (550, 88), -1, 0, ["Wind from ahead-left:", "stick LEFT (into wind),", "elevator neutral"], "ok"),
@@ -715,16 +716,16 @@ def crosswind_takeoff_and_landing() -> Canvas:
     c.add(rect(12, 14, 300, 404, "surface-2", None, rx=10))
     c.add(text(162, 42, "Take-off roll", 16, "middle", "fg", weight=700))
     c.add(text(162, 60, "seen from behind, wind from the left", 11, "middle", "fg-muted"))
-    for y in (110, 140, 170):
+    for y in (120, 145, 170):
         c.add(arrow(26, y, 66, y, "sky-fg", MAIN))
-    c.add(text(26, 98, "wind", 12, "start", "sky-fg", weight=600))
-    c.add(plane_rear(176, 170, 1.7, 0))          # wing across the top at y 134..142, wheels on y 199
+    c.add(text(26, 108, "wind", 12, "start", "sky-fg", weight=600))
+    c.add(plane_rear(176, 176, 1.7, 0))          # wing across the top at y 160..166, wheels on y 199
     c.add(line(80, 199, 280, 199, "fg-muted", SECOND))
-    c.add(arrow(104, 128, 104, 90, "bad", MAIN))
+    c.add(arrow(104, 154, 104, 90, "bad", MAIN))
     c.add(text(110, 84, "wind lifts the upwind wing", 12, "start", "bad", weight=600))
-    c.add(rect(92, 134, 16, 5, "brand", None))
+    c.add(rect(92, 159, 16, 5, "brand", None))
     c.add(text(100, 236, "left aileron UP (stick left)", 12, "start", "brand", weight=600))
-    c.add(line(100, 141, 100, 222, "brand", THIN))
+    c.add(line(100, 166, 100, 222, "brand", THIN))
     c.add(multiline(24, 284, ["Full aileron INTO wind at the start", "(stick towards the wind), less as", "speed builds; rudder keeps you straight", "against weathercocking (nose into wind)."], 12, "start", "fg", leading=1.4))
     c.add(multiline(24, 370, ["This high-wing type: stronger lifting", "tendency, the wing is high and exposed."], 11, "start", "fg-muted", leading=1.4))
     # right panel: approach
@@ -740,7 +741,7 @@ def crosswind_takeoff_and_landing() -> Canvas:
     c.add(text(340, 170, "Crab: nose into wind,", 12, "start", "brand", weight=700))
     c.add(text(340, 232, "track down the centreline;", 12, "start", "fg"))
     c.add(text(340, 248, "rudder straightens it before touchdown", 12, "start", "fg"))
-    c.add(plane_rear(392, 318, 0.9, 12))
+    c.add(plane_rear(388, 318, 1.15, 12))
     c.add(text(392, 356, "upwind (left) wing low", 11, "middle", "fg-muted"))
     c.add(text(462, 300, "Wing-down:", 12, "start", "brand", weight=700))
     c.add(multiline(462, 316, ["upwind wing lowered,", "opposite rudder keeps", "the nose straight"], 12, "start", "fg"))
@@ -931,11 +932,11 @@ def runway_slope_take_off_and_landing() -> Canvas:
         ang = math.degrees(math.atan2(g0[1] - g1[1], g1[0] - g0[0]))
         gy = lambda x: g0[1] - (x - g0[0]) * (g0[1] - g1[1]) / (g1[0] - g0[0])
         if up_takeoff:
-            c.add(plane_side(x0 + 90, gy(x0 + 90) - 12, 0.6, "fg", pitch=ang))
+            c.add(plane_side(x0 + 100, gy(x0 + 100) - 12, 0.6, "fg", pitch=ang))
             c.add(arrow(x0 + 128, 186, x0 + 220, 172, "brand", MAIN))
             c.add(text(x0 + 176, 160, "accelerates slowly", 11, "middle", "brand", weight=600))
         else:
-            c.add(plane_side(x0 + 190, gy(x0 + 190) - 12, 0.6, "fg", pitch=ang))
+            c.add(plane_side(x0 + 202, gy(x0 + 202) - 12, 0.6, "fg", pitch=ang))
             c.add(path(arc_path(x0 + 120, 120, 80, 150, 100), "fg-faint", None, THIN, dash=DASH, arrow_end=True))
             c.add(arrow(x0 + 150, gy(x0 + 150) - 14, x0 + 110, gy(x0 + 110) - 14, "ok", MAIN))
             c.add(text(x0 + 130, gy(x0 + 130) + 24, "slope slows you", 11, "middle", "ok-fg", weight=600))

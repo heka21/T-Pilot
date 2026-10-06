@@ -108,12 +108,12 @@ def overwater_gliding_distance() -> Canvas:
     c.add(line(x2, y15, 620, y15, "ok", 3))
     c.add(circle(x1, y15, 4, "bad", "surface", 1.5))
     c.add(circle(x2, y15, 4, "bad", "surface", 1.5))
-    c.add(plane_side(132, y15 - 10, 0.34, "fg"))
+    c.add(plane_side(140, y15 - 10, 0.34, "fg"))
     c.add(num(20, y15 - 12, "1,500 ft", 13, "start", "fg", weight=700))
     c.add(multiline(MEET, y15 + 22, ["beyond gliding distance of land:", "life jackets for each person,", "within reach of the seated occupant"], 12.5, "middle", "bad-fg", 1.3, weight=700))
     # 6,500 ft track: all green
     c.add(line(20, y65, 620, y65, "ok", 3))
-    c.add(plane_side(132, y65 - 10, 0.34, "fg"))
+    c.add(plane_side(140, y65 - 10, 0.34, "fg"))
     c.add(num(20, y65 - 12, "6,500 ft", 13, "start", "fg", weight=700))
     c.add(text(MEET, y65 - 12, "may stay within gliding distance all the way", 12, "middle", "ok-fg", weight=700))
     c.add(text(20, 30, "The trigger is gliding distance of land, not a fixed distance from the coast", 14, "start", "fg", weight=700))
@@ -190,7 +190,7 @@ def displaced_threshold() -> Canvas:
     c.add(circle(td, GY, 4, "brand", "surface", 1.5))
     c.add(line(20, GY - (X0 - 20) * slope, X0 + 1, GY, "bad", SECOND, dash=DASH))
     c.add(circle(PX, GY - (X0 - PX) * slope, 4, "bad", "surface", 1.5))
-    c.add(plane_side(150, GY - (td - 150) * slope - 12, 0.3, "fg", pitch=-10))
+    c.add(plane_side(150, GY - (td - 150) * slope - 14, 0.3, "fg", pitch=-10))
     c.add(line(280, 356, 310, 356, "brand", MAIN, dash="8 5"))
     c.add(text(320, 360, "approach to the bar clears the poles", 12.5, "start", "brand-fg", weight=700))
     c.add(line(280, 382, 310, 382, "bad", SECOND, dash=DASH))
@@ -456,7 +456,7 @@ def hazard_to_navigation_groups() -> Canvas:
 # ================================================================ 2.8 Security
 def rock_marks(x: float, y: float, s: float, color: str) -> str:
     """Little curved arrows at both wingtips of a plan-view aeroplane heading right: wing rocking."""
-    return (path(f"M{x - 8 * s} {y - 56 * s} q6 -8 12 0", color, None, SECOND) + path(f"M{x - 8 * s} {y + 56 * s} q6 8 12 0", color, None, SECOND))
+    return (path(f"M{x - 7 * s - 6} {y - 56 * s} q6 -8 12 0", color, None, SECOND) + path(f"M{x - 7 * s - 6} {y + 56 * s} q6 8 12 0", color, None, SECOND))
 
 
 @chart
@@ -477,16 +477,16 @@ def interception_signals() -> Canvas:
         c.add(rect(32, y0 + 12, 250, 128, "surface", None, rx=8))
         yc = y0 + 76
         if i == 0:
-            c.add(plane_top(84, yc + 34, 0.4, 90, "fg"))
+            c.add(plane_top(94, yc + 34, 0.4, 90, "fg"))
             c.add(text(64, yc + 38, "you", 11.5, "end", "fg-muted"))
-            c.add(plane_top(170, yc - 8, 0.4, 90, "info", "info-soft"))
-            c.add(rock_marks(170, yc - 8, 0.4, "info"))
+            c.add(plane_top(182, yc - 8, 0.4, 90, "info", "info-soft"))
+            c.add(rock_marks(182, yc - 8, 0.4, "info"))
             c.add(path(f"M196 {yc - 8} Q240 {yc - 8} 262 {yc - 40}", "info", None, SECOND, dash="5 4", arrow_end=True))
             c.add(path(f"M110 {yc + 34} Q200 {yc + 34} 240 {yc}", "brand", None, SECOND, dash="5 4", arrow_end=True))
         elif i == 1:
-            c.add(plane_top(84, yc + 20, 0.4, 90, "fg"))
+            c.add(plane_top(94, yc + 20, 0.4, 90, "fg"))
             c.add(text(64, yc + 24, "you", 11.5, "end", "fg-muted"))
-            c.add(plane_top(150, yc - 16, 0.4, 90, "info", "info-soft"))
+            c.add(plane_top(162, yc - 16, 0.4, 90, "info", "info-soft"))
             c.add(path(f"M172 {yc - 16} Q214 {yc - 18} 214 {yc - 44} Q214 {yc - 58} 196 {yc - 58}", "info", None, MAIN, arrow_end=True))
             c.add(text(222, yc - 30, "climbing", 11.5, "start", "info-fg"))
             c.add(line(110, yc + 20, 270, yc + 20, "brand", SECOND, dash="5 4", arrow_end=True))
@@ -496,7 +496,7 @@ def interception_signals() -> Canvas:
             c.add(line(40, gy, 274, gy, "fg-muted", SECOND))
             c.add(rect(110, gy - 4, 150, 4, "tarmac", None))
             c.add(text(185, gy + 18, "runway", 11.5, "middle", "fg-muted"))
-            c.add(plane_side(170, gy - 40, 0.55, "info", fill="info-soft"))
+            c.add(plane_side(184, gy - 40, 0.55, "info", fill="info-soft"))
             for dy in (-6, 0, 6):
                 c.add(line(205, gy - 38 + dy * 0.3, 232, gy - 38 + dy * 1.6, "warn", SECOND))
             c.add(text(238, gy - 56, "lights", 11.5, "start", "warn-fg"))
@@ -538,14 +538,14 @@ def adiz_entry_tolerance() -> Canvas:
     c.add(multiline(BX - 44, TY - 30, ["planned", "entry point"], 12, "end", "ok-fg", 1.25, weight=700))
     c.add(multiline(BX - 44, TY + 30, ["track", "tolerance"], 11.5, "end", "ok-fg", 1.25))
     # aircraft A: on track
-    c.add(plane_top(200, TY, 0.36, 90, "fg"))
+    c.add(plane_top(204, TY, 0.36, 90, "fg"))
     c.add(text(200, TY + 30, "on track", 11.5, "middle", "fg-muted"))
     # aircraft B: off track
     BY = 238
     c.add(polyline([(30, TY + 8), (100, TY + 10), (220, BY)], "bad", SECOND, dash="5 4"))
     c.add(line(220, BY, 470, BY, "bad", SECOND, dash="5 4", arrow_end=True))
-    c.add(plane_top(300, BY, 0.36, 90, "bad", "bad-soft"))
-    c.add(text(40, BY + 26, "off track round a cloud bank, not reported to ATS", 11.5, "start", "bad-fg", weight=600))
+    c.add(plane_top(304, BY, 0.36, 90, "bad", "bad-soft"))
+    c.add(text(40, BY + 29, "off track round a cloud bank, not reported to ATS", 11.5, "start", "bad-fg", weight=600))
     c.add(text(486, BY + 4, "may be treated", 11.5, "start", "bad-fg", weight=700))
     c.add(text(486, BY + 19, "as unidentified", 11.5, "start", "bad-fg", weight=700))
     # timeline

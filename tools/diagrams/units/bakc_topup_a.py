@@ -322,37 +322,37 @@ def newtons_laws_in_flight() -> Canvas:
     # 1st law: top-left
     c.add(panel(14, 46, 300, 196))
     c.add(text(28, 70, "1  Balanced forces: no change", 14, "start", "fg", weight=700))
-    PX, PY = 164, 150
-    c.add(plane_side(PX, PY, 1.1))
-    c.add(arrow(PX - 2, PY - 24, PX - 2, PY - 66, "fg", MAIN), text(PX + 6, PY - 54, "Lift", 12, "start", "fg", weight=600))    # from the high wing
+    PX, PY = 190, 150
+    c.add(plane_side(PX, PY, 1.3))
+    c.add(arrow(PX - 3, PY - 10, PX - 3, PY - 66, "fg", MAIN), text(PX + 5, PY - 54, "Lift", 12, "start", "fg", weight=600))    # from the CP on the wing (local -2, -8)
     c.add(arrow(PX + 1, PY + 8, PX + 1, PY + 64, "fg", MAIN), text(PX + 9, PY + 58, "Weight", 12, "start", "fg", weight=600))
-    c.add(arrow(PX + 66, PY, PX + 116, PY, "fg", MAIN), text(PX + 92, PY - 10, "Thrust", 12, "middle", "fg", weight=600))
-    c.add(arrow(PX - 70, PY, PX - 120, PY, "fg-muted", MAIN), text(PX - 96, PY - 10, "Drag", 12, "middle", "fg-muted", weight=600))
+    c.add(arrow(PX + 42, PY + 3, PX + 92, PY + 3, "fg", MAIN), text(PX + 67, PY - 7, "Thrust", 12, "middle", "fg", weight=600))    # prop at local x 27
+    c.add(arrow(PX - 103, PY + 3, PX - 150, PY + 3, "fg-muted", MAIN), text(PX - 126, PY - 7, "Drag", 12, "middle", "fg-muted", weight=600))    # tail at local x -71
     c.add(text(28, 232, "No net force: steady speed and height", 12, "start", "brand", weight=700))
     # 2nd law: top-right
     c.add(panel(326, 46, 300, 196))
     c.add(text(340, 70, "2  Net force accelerates a mass", 14, "start", "fg", weight=700))
     GY = 162
     c.add(ground(340, 612, GY + 18))
-    QX = 450
+    QX = 466
     c.add(plane_side(QX, GY + 2, 0.85))
-    c.add(arrow(QX + 52, GY - 2, QX + 122, GY - 2, "info", 3))
-    c.add(num(QX + 87, GY - 16, "thrust 2,500 N", 12, "middle", "info-fg", weight=700))
-    c.add(arrow(QX - 50, GY - 2, QX - 92, GY - 2, "warn", 3))
-    c.add(multiline(QX - 72, GY - 46, ["drag + friction", "1,000 N"], 12, "middle", "warn-fg", weight=700))
+    c.add(arrow(QX + 32, GY - 2, QX + 102, GY - 2, "info", 3))
+    c.add(num(QX + 67, GY - 16, "thrust 2,500 N", 12, "middle", "info-fg", weight=700))
+    c.add(arrow(QX - 66, GY - 2, QX - 108, GY - 2, "warn", 3))
+    c.add(multiline(QX - 88, GY - 46, ["drag + friction", "1,000 N"], 12, "middle", "warn-fg", weight=700))
     c.add(num(340, 204, "net 2,500 − 1,000 = 1,500 N", 12, "start", "fg", weight=600))
     c.add(num(340, 224, "a = F/m = 1,500 / 1,000 = 1.5 m/s²", 13, "start", "brand", weight=700))
     # 3rd law: bottom, two halves
     c.add(panel(14, 254, 612, 200))
     c.add(text(28, 278, "3  Push air one way, the air pushes you the other", 14, "start", "fg", weight=700))
     # propeller
-    RX, RY = 220, 360
+    RX, RY = 244, 360
     c.add(plane_side(RX, RY, 1.1, gear=False))
     for dy in (-14, 0, 14):
-        c.add(arrow(RX - 70, RY + dy, RX - 170, RY + dy * 1.5, "sky-fg", SECOND))
-    c.add(text(RX - 120, RY - 34, "air thrown back", 12, "middle", "sky-fg", weight=600))
-    c.add(arrow(RX + 66, RY - 2, RX + 120, RY - 2, "brand", 3))
-    c.add(multiline(RX + 66, RY - 40, ["air pushes the", "aeroplane forward"], 12, "start", "brand", weight=600))
+        c.add(arrow(RX - 86, RY + dy, RX - 186, RY + dy * 1.5, "sky-fg", SECOND))    # from behind the tail (local x -71)
+    c.add(text(RX - 136, RY - 34, "air thrown back", 12, "middle", "sky-fg", weight=600))
+    c.add(arrow(RX + 40, RY + 3, RX + 94, RY + 3, "brand", 3))
+    c.add(multiline(RX + 40, RY - 40, ["air pushes the", "aeroplane forward"], 12, "start", "brand", weight=600))
     # wing and downwash
     WX, WY = 530, 352
     sec, P = wing_section(WX, WY, 130, 6)
@@ -429,8 +429,8 @@ def relative_airflow_climb_descent() -> Canvas:
         if gamma:
             c.add(line(PX, PY, PX + 300, PY, "fg-faint", THIN, DASH))
             c.add(text(PX + 300, PY + (16 if gamma > 0 else -8), "horizontal", 11, "end", "fg-faint"))
-        c.add(line(PX - ux * 50, PY - uy * 50, PX + ux * 300, PY + uy * 300, "fg-muted", SECOND, DASH))
-        c.add(plane_side(PX, PY, 0.7, pitch=pitch))
+        c.add(line(PX - ux * 66, PY - uy * 66, PX + ux * 300, PY + uy * 300, "fg-muted", SECOND, DASH))    # from just behind the tail (local x -71)
+        c.add(plane_side(PX, PY, 0.85, pitch=pitch))
         lx, ly = PX + ux * 104, PY + uy * 104
         c.add(text(lx, ly + (-8 if gamma == 0 else -16 if gamma > 0 else 20), "flight path", 11, "start", "fg-muted"))
         for off in (-14, 14):
@@ -578,7 +578,7 @@ def climb_gradient_units() -> Canvas:
     c.add(ground(30, 500, Y0 + 2))
     c.add(polygon([(X0, Y0), (X1, Y0), (X1, Y1)], "brand", None, fill_opacity=0.12))
     c.add(line(X0, Y0, X1, Y1, "brand", 3))
-    c.add(plane_side(X0 + (X1 - X0) * 0.55, Y0 + (Y1 - Y0) * 0.55 - 12, 0.6, "brand", pitch=20))
+    c.add(plane_side(X0 + (X1 - X0) * 0.55, Y0 + (Y1 - Y0) * 0.55 - 14.5, 0.7, "brand", pitch=20))    # wheels (local y 19.5) on the path
     c.add(line(X0, Y0 + 22, X1, Y0 + 22, "fg-muted", THIN, arrow_end=True, arrow_start=True))
     c.add(num((X0 + X1) / 2, Y0 + 42, "1 NM ≈ 6,076 ft along the ground", 13, "middle", "fg-muted", weight=600))
     c.add(line(X1 + 18, Y0, X1 + 18, Y1, "fg-muted", THIN, arrow_end=True, arrow_start=True))
@@ -609,7 +609,7 @@ def wake_sink_in_cruise() -> Canvas:
     MID = (TOP + BOT) / 2      # about 500 ft below
     c.add(line(30, TOP, 610, TOP, "fg-muted", SECOND, DASH))
     c.add(text(34, TOP - 8, "its flight path", 12, "start", "fg-muted"))
-    c.add(plane_side(540, TOP, 0.9))
+    c.add(plane_side(560, TOP, 0.9))    # tail (local x -71) clear of the first vortex pair
     c.add(rect(30, MID, 440, BOT - MID, "bad", None, fill_opacity=0.12))
     c.add(line(30, MID, 470, MID, "line-strong", THIN, DASH), line(30, BOT, 470, BOT, "line-strong", THIN, DASH))
     c.add(num(34, MID + 16, "≈ 500 ft below", 12, "start", "fg-muted"))
@@ -620,7 +620,7 @@ def wake_sink_in_cruise() -> Canvas:
         c.add(circle(x - 4, y - 3, 6, "brand-soft", "brand", SECOND), circle(x + 4, y + 3, 6, "brand-soft", "brand", SECOND))
     c.add(callout(392, TOP + 54, 486, TOP + 70, ["vortices sink about", "300 to 500 ft/min"], "brand", 12))
     c.add(text(250, BOT + 22, "the wake levels off here: behind and below is the danger area", 12, "middle", "bad", weight=700))
-    c.add(plane_side(170, TOP - 44, 0.45, "ok"))
+    c.add(plane_side(184, TOP - 44, 0.45, "ok"))
     c.add(text(204, TOP - 50, "you, above its path: clear", 12, "start", "ok-fg", weight=600))
     c.add(rect(14, 290, 612, 76, "surface-2", None, rx=8))
     c.add(text(26, 312, "Crossing traffic at your level or a little above:", 13, "start", "fg", weight=700))
@@ -651,8 +651,8 @@ def rotor_downwash_outflow() -> Canvas:
             c.add(path(smooth_path([(HX + sgn * 52, GY - 46), (x0, y + 4), (x0 + sgn * L, y)]), "brand", None, SECOND if k else MAIN, arrow_end=True))
     c.add(helicopter_side(HX, HY - 30, 1.3))
     c.add(text(194, GY + 24, "air hits the ground and spreads out on every side", 12, "middle", "brand", weight=600))
-    c.add(plane_side(334, GY - 12, 0.4, "fg-muted"))
-    c.add(text(330, GY - 58, "light aeroplane", 11, "middle", "fg-muted"))
+    c.add(plane_side(318, GY - 7.8, 0.4, "fg-muted"))    # wheels (local y 19.5) on the ground
+    c.add(text(318, GY - 58, "light aeroplane", 11, "middle", "fg-muted"))
     # plan view
     c.add(panel(386, 46, 240, 290))
     c.add(text(398, 68, "Plan view", 13, "start", "fg", weight=700))
@@ -696,7 +696,7 @@ def breakaway_thrust_swing() -> Canvas:
     c.add(path(arc_path(JX, JY, 84, 120 - 90, 70 - 90), "fg-muted", None, SECOND, arrow_end=True))
     c.add(multiline(JX + 50, JY + 100, ["turning left", "out of the bay"], 12, "start", "fg-muted", weight=600))
     lx, ly = bxy(*tail, 160, 234)
-    c.add(plane_top(lx, ly, 0.36, 0, "bad", "bad-soft"))
+    c.add(plane_top(lx, ly - 5, 0.36, 0, "bad", "bad-soft"))    # CG ahead of the drawing's middle (nose 21, tail -51)
     c.add(multiline(lx + 26, ly + 4, ["light aeroplane", "now in the blast"], 12, "start", "bad", weight=600))
     c.add(panel(326, 286, 300, 106))
     c.add(text(338, 308, "Breakaway thrust", 13, "start", "fg", weight=700))

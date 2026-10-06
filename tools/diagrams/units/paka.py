@@ -253,7 +253,7 @@ def autopilot_control_loop() -> Canvas:
     c.add(text(535, 286, "drives via a slip clutch", 12, "middle", "warn-fg", weight=600))
     # aeroplane and the loop
     from tools.diagrams.svg import plane_side
-    c.add(plane_side(320, 350, 1.3))
+    c.add(plane_side(347, 348, 1.3))          # fuselage (local x -71..29) centred between the two arrows
     c.add(path("M535 296 C535 340 470 352 400 352", "brand", None, MAIN, arrow_end=True))
     c.add(text(470, 372, "controls move", 12, "start", "brand", weight=600))
     c.add(path("M240 352 C170 352 105 340 105 268", "fg", None, MAIN, arrow_end=True))

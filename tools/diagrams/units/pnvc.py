@@ -356,7 +356,7 @@ def vor_radials_to_from() -> Canvas:
     c.add(text(cx - 16, cy - 16, "VOR", 12, "end", "fg", weight=700))
     # aeroplane on the 090 radial heading 270 (towards the station)
     ax, ay = cx + 108, cy
-    c.add(group(plane_top(0, 0, 0.36, heading=270, color="fg", fill="surface"), transform=f"translate({ax} {ay})"))
+    c.add(group(plane_top(0, 0, 0.36, heading=270, color="fg", fill="surface"), transform=f"translate({ax - 8} {ay})"))   # CG 21 units ahead of mid-length
     c.add(text(ax, ay - 26, "on the 090 radial", 12, "middle", "brand-fg", weight=700))
     c.add(text(ax, ay + 36, "due east of the VOR", 11.5, "middle", "fg-muted"))
     c.add(text(cx + r - 8, cy - r + 30, "TO side for 270", 11.5, "end", "brand-fg", weight=600))

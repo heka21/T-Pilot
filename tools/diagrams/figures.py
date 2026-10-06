@@ -267,7 +267,7 @@ def airspace_cross_section() -> Canvas:
     c.add(text(565, 134, "VFR needs no clearance", 11, "middle", "sky-fg"))
     c.add(num(565, y("8500") - 6, "E LL 8500", 11, "middle", "sky-fg", weight=600))
     # Class G everywhere below the steps (left as the page surface) with a label and an aeroplane
-    c.add(plane_side(470, 250, 0.5))
+    c.add(plane_side(483, 248, 0.6))                # CG 21 units ahead of mid-length: centred over the label
     c.add(text(470, 276, "3,500 ft here: still Class G", 11, "middle", "fg-muted"))
     c.add(text(440, 306, "Class G · non-controlled", 13, "middle", "fg", weight=700))
     c.add(text(440, 322, "no clearance: lookout, radio,", 11, "middle", "fg-muted"))

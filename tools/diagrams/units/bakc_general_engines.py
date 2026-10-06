@@ -194,7 +194,7 @@ def heading_track_drift() -> Canvas:
     ex, ey = X0 + L * math.cos(math.radians(DRIFT)), Y0 + L * math.sin(math.radians(DRIFT))
     c.style(f"""
 .htd-plane{{animation:htd-fly 7s linear infinite}}
-@keyframes htd-fly{{0%{{transform:translate(0px,0px);opacity:0}}6%{{opacity:1}}90%{{opacity:1}}100%{{transform:translate({ex - X0 - 80:.1f}px,{(ex - X0 - 80) * math.tan(math.radians(DRIFT)):.1f}px);opacity:0}}}}
+@keyframes htd-fly{{0%{{transform:translate(0px,0px);opacity:0}}6%{{opacity:1}}90%{{opacity:1}}100%{{transform:translate({ex - X0 - 96:.1f}px,{(ex - X0 - 96) * math.tan(math.radians(DRIFT)):.1f}px);opacity:0}}}}
 """)
     # ground grid hint
     c.add(rect(20, 70, 600, 230, "ok-soft", None, rx=12, fill_opacity=0.5))
@@ -210,7 +210,7 @@ def heading_track_drift() -> Canvas:
     t = math.tan(math.radians(DRIFT))
     for gx in (310, 460):
         c.add(plane_top(gx, Y0 + (gx - X0) * t, 0.55, 90, "fg-muted", "surface", cls=None).replace("<g ", '<g opacity="0.6" ', 1))
-    c.add(group(plane_top(X0 + 40, Y0 + 40 * t, 0.55, 90), cls="htd-plane"))
+    c.add(group(plane_top(X0 + 56, Y0 + 56 * t, 0.55, 90), cls="htd-plane"))    # tail (local x -51) clear of the line ends
     # wind arrows, blowing from the left side of the aeroplane (from the north) towards the south
     for x in (250, 360, 470):
         c.add(arrow(x, 34, x, 76, "sky-fg", MAIN))
@@ -271,7 +271,7 @@ def groundspeed_headwind_tailwind() -> Canvas:
     def bar_row(y: float, title: str, wind: int, colour: str) -> None:
         gs = 105 + wind
         c.add(text(20, y + 6, title, 14, "start", colour, weight=700))
-        c.add(plane_side(X0 - 46, y + 52, 0.45))
+        c.add(plane_side(X0 - 36, y + 52, 0.5))
         # TAS bar
         c.add(rect(X0, y - 10, 105 * K, 22, "info-soft", "info", THIN, rx=4))
         c.add(num(X0 + 10, y + 6, "TAS 105 kt", 12, "start", "info-fg", weight=600))
@@ -317,12 +317,13 @@ def wind_velocity_from() -> Canvas:
     # aircraft cases
     X = 340
     c.add(panel(X, 60, 280, 100))
-    c.add(plane_side(X + 220, 110, 0.6).replace('transform="translate(', 'transform="scale(-1 1) translate(-', 1).replace(f"-{X + 220} ", f"-{X + 220} ", 1))
+    # the plane spans local x -71..29, so put the CG 15 px nose-side of the slot centre X + 220
+    c.add(plane_side(X + 205, 110, 0.7).replace('transform="translate(', 'transform="scale(-1 1) translate(-', 1))
     c.add(text(X + 14, 88, "Flying west (270)", 14, "start", "fg", weight=700))
     c.add(text(X + 14, 108, "15 kt headwind", 13, "start", "bad", weight=700))
     c.add(text(X + 14, 128, "GS = TAS − 15", 12, "start", "fg-muted", cls="num"))
     c.add(panel(X, 180, 280, 100))
-    c.add(plane_side(X + 220, 230, 0.6))
+    c.add(plane_side(X + 235, 230, 0.7))
     c.add(text(X + 14, 208, "Flying east (090)", 14, "start", "fg", weight=700))
     c.add(text(X + 14, 228, "15 kt tailwind", 13, "start", "ok", weight=700))
     c.add(text(X + 14, 248, "GS = TAS + 15", 12, "start", "fg-muted", cls="num"))
@@ -450,8 +451,8 @@ def height_altitude_elevation() -> Canvas:
     c.add(rect(150, y(300) - 4, 120, 6, "fg-muted", None, rx=1))
     c.add(text(210, y(300) + 22, "aerodrome", 12, "middle", "fg-muted", weight=600))
     # aeroplanes at 1300 ft
-    c.add(plane_side(210, y(1300), 0.6))
-    c.add(plane_side(470, y(1300), 0.6, "fg-muted"))
+    c.add(plane_side(208, y(1300), 0.7))
+    c.add(plane_side(468, y(1300), 0.7, "fg-muted"))
     c.add(line(80, y(1300), 600, y(1300), "line-strong", THIN, DASH))
     c.add(text(600, y(1300) + 18, "same altitude", 12, "end", "fg-muted"))
     # dimensions
@@ -550,14 +551,14 @@ def energy_trade_zoom() -> Canvas:
                "becomes potential energy: about 280 ft of height. The energy bars show the total staying the same while the share changes.",
                height=394, prefix="etz")
     p0, p1 = (90, 220), (400, 96)
-    c.add(path(f"M{p0[0] + 34} {p0[1]} C230 220 280 100 {p1[0] - 10} {p1[1]}", "fg-faint", None, SECOND, dash="6 5", arrow_end=True))
-    c.add(plane_side(p0[0], p0[1], 0.6))
-    c.add(plane_side(p1[0] + 40, p1[1], 0.6, pitch=0))
-    c.add(num(p0[0], p0[1] + 34, "100 kt", 14, "middle", "fg", weight=700))
-    c.add(num(p1[0] + 40, p1[1] - 28, "60 kt", 14, "middle", "fg", weight=700))
+    c.add(path(f"M{p0[0] + 26} {p0[1]} C230 220 280 100 {p1[0] - 10} {p1[1]}", "fg-faint", None, SECOND, dash="6 5", arrow_end=True))
+    c.add(plane_side(p0[0], p0[1], 0.7))    # nose at local x 29, tail at -71: labels sit under the middle, 15 px aft of the CG
+    c.add(plane_side(p1[0] + 50, p1[1], 0.7, pitch=0))
+    c.add(num(p0[0] - 15, p0[1] + 34, "100 kt", 14, "middle", "fg", weight=700))
+    c.add(num(p1[0] + 35, p1[1] - 28, "60 kt", 14, "middle", "fg", weight=700))
     # height gained
     c.add(line(p1[0] + 110, p0[1], p1[0] + 110, p1[1], "brand", MAIN, arrow_end=True))
-    c.add(line(p0[0] + 40, p0[1], p1[0] + 118, p0[1], "line-strong", THIN, DASH))
+    c.add(line(p0[0] + 28, p0[1], p1[0] + 118, p0[1], "line-strong", THIN, DASH))
     c.add(multiline(p1[0] + 122, (p0[1] + p1[1]) / 2 - 4, ["≈ 280 ft", "gained"], 15, "start", "brand", weight=700))
     c.add(text(p1[0] + 122, (p0[1] + p1[1]) / 2 + 36, "(ignoring drag)", 11, "start", "fg-muted"))
 
@@ -977,7 +978,7 @@ def gyro_instruments_panel() -> Canvas:
         x, y = bxy(cx, CY, R - 22, b)
         lab = {0: "N", 90: "E", 180: "S", 270: "W"}.get(b, str(b // 10))
         c.add(text(x, y + 4, lab, 11 if b % 90 else 12, "middle", "fg" if b % 90 == 0 else "fg-muted", weight=700 if b % 90 == 0 else None))
-    c.add(plane_top(cx, CY, 0.32, 0, "brand", "brand-soft"))
+    c.add(plane_top(cx, CY - 5, 0.32, 0, "brand", "brand-soft"))    # centre the drawing (nose 21, tail -51) on the card
     c.add(path(f"M{cx - 6} {CY - R - 6} L{cx + 6} {CY - R - 6} L{cx} {CY - R + 4} Z", None, "brand"))
     # turn coordinator
     cx = xs[2]

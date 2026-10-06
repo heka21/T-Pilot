@@ -171,7 +171,7 @@ def nitrogen_bubbles_after_diving() -> Canvas:
             c.add(text(x + PW / 2, sy + 68, "boat ride home, a rest", 11, "middle", "sky-fg"))
         else:
             c.add(rect(x + 8, sy, PW - 16, 74, "sky-soft", None, rx=6))
-            c.add(plane_side(x + 96, sy + 32, 0.9, pitch=6, gear=False))
+            c.add(plane_side(x + 120, sy + 32, 1.1, pitch=6, gear=False))     # CG 21 units ahead of mid-length
             c.add(text(x + PW / 2, sy + 68, "from about 5,000 to 8,000 ft", 11, "middle", "sky-fg"))
         # magnified tissue
         tx, ty, r = x + PW / 2, y + 200, 50
@@ -299,13 +299,13 @@ def somatogravic_resultant_vector() -> Canvas:
     c.add(rect(x0, 40, 294, 140, "surface", "line-strong", SECOND, rx=10))
     c.add(text(x0 + 12, 62, "Actual: accelerating, shallow climb", 13, "start", "fg", weight=700))
     c.add(line(x0 + 12, 158, x0 + 282, 158, "fg-muted", SECOND))
-    c.add(plane_side(x0 + 150, 120, 1.0, pitch=5, gear=False))
+    c.add(plane_side(x0 + 180, 124, 1.15, pitch=5, gear=False))
     c.add(arrow(x0 + 20, 92, x0 + 80, 92, "info", SECOND))
     c.add(text(x0 + 20, 110, "accelerating", 11, "start", "info-fg"))
     c.add(rect(x0, 196, 294, 140, "info-soft", "info", SECOND, rx=10))
     c.add(text(x0 + 12, 218, "Felt, with no horizon: steep nose-up", 13, "start", "info-fg", weight=700))
-    c.add(plane_side(x0 + 150, 280, 1.0, pitch=5 + th, color="info", gear=False))
-    c.add(line(x0 + 80, 280 + 70 * math.tan(math.radians(5)), x0 + 230, 280 - 80 * math.tan(math.radians(5)), "info", THIN, dash=DASH))
+    c.add(plane_side(x0 + 180, 280, 1.15, pitch=5 + th, color="info", gear=False))
+    c.add(line(x0 + 80, 280 + 100 * math.tan(math.radians(5)), x0 + 230, 280 - 50 * math.tan(math.radians(5)), "info", THIN, dash=DASH))
     c.add(text(x0 + 236, 286, "+14°", 13, "start", "info-fg", weight=700, cls="num"))
     c.add(rect(x0, 344, 294, 46, "bad-soft", "bad", SECOND, rx=10))
     c.add(text(x0 + 147, 364, "Pushing forward to \"fix\" it flies into", 13, "middle", "bad-fg", weight=700))
@@ -387,9 +387,10 @@ def constant_bearing_collision() -> Canvas:
 
     c.add(line(*you0, *P, "line-strong", THIN, dash=DASH))
     c.add(line(*oth0, *P, "line-strong", THIN, dash=DASH))
-    for t in range(0, 5):
+    ux, uy = (P[0] - oth0[0]) / math.dist(oth0, P), (P[1] - oth0[1]) / math.dist(oth0, P)
+    for t in range(0, 5):                       # sight lines nose to nose (plan-view spinner 21 units ahead of the CG)
         a, b = pos(you0, t), pos(oth0, t)
-        c.add(line(a[0] + 10, a[1] - 0, b[0], b[1] + 10, "brand", SECOND, dash=None if t == 0 else DASH, opacity=1 - t * 0.12))
+        c.add(line(a[0] + 7, a[1], b[0] + 7 * ux, b[1] + 7 * uy, "brand", SECOND, dash=None if t == 0 else DASH, opacity=1 - t * 0.12))
     for t in range(0, 5):
         a, b = pos(you0, t), pos(oth0, t)
         c.add(plane_top(*a, 0.32, heading=90))
@@ -545,7 +546,7 @@ def hypoxia_stages_by_altitude() -> Canvas:
     c.add(line(x0, Y(5), x1, Y(5), "ok", THIN, dash=DASH))
     c.add(text(x1 - 10, Y(5) + 18, "about 5,000 ft: night vision starts to fade", 12, "end", "ok-fg", weight=600))
     c.add(text(x0 + 14, Y(1.6), "Insidious: each stage creeps in while you feel fine.", 13, "start", "ok-fg", italic=True, weight=600))
-    c.add(plane_side(x1 - 60, Y(1.8), 0.55, pitch=12, color="ok", fill="ok-soft"))
+    c.add(plane_side(x1 - 46, Y(2), 0.65, pitch=12, color="ok", fill="ok-soft"))
     return c
 
 

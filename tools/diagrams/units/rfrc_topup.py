@@ -98,7 +98,7 @@ def refuelling_safety_zone() -> Canvas:
     c.add(rect(ZX0, ZY0, ZX1 - ZX0, ZY1 - ZY0, "warn-soft", "warn", MAIN, rx=18, dash="8 5"))
     c.add(text(ZX0 + 14, ZY1 - 12, "refuelling zone", 12, "start", "warn-fg", weight=700))
     # aeroplane, nose right, engine stopped (prop drawn still)
-    PX, PY, S = 176, 196, 1.7
+    PX, PY, S = 200, 196, 1.7
     c.add(plane_top(PX, PY, S, 90, "fg", "surface"))
     # bowser
     BX, BY = 232, 306
@@ -106,12 +106,12 @@ def refuelling_safety_zone() -> Canvas:
     c.add(rect(BX + 92, BY + 6, 6, 32, "fg-muted", None, rx=2))
     c.add(text(BX + 46, BY + 27, "bowser", 12, "middle", "fg", weight=600))
     # hose up to the filler cap on top of the right wing root (a high wing: refuelled from a step or ladder)
-    FX, FY = PX + 4 * S, PY + 14 * S
+    FX, FY = PX - 4 * S, PY + 14 * S
     c.add(path(f"M{BX} {BY + 16} C{BX - 50} {BY + 14} {FX + 12} {FY + 70} {FX + 2} {FY + 4}", "fg-muted", None, 4))
     c.add(circle(FX, FY, 4, "surface", "fg", SECOND))
     c.add(text(BX - 32, BY + 36, "hose", 11, "end", "fg-muted"))
     # bonding lead (the focal element)
-    TX, TY = PX + 30 * S, PY + 6 * S
+    TX, TY = PX + 14 * S, PY + 3 * S   # on the cowling
     LX0 = BX + 70
     c.add(path(f"M{LX0} {BY} C{LX0} {BY - 50} {TX + 40} {TY + 30} {TX + 2} {TY + 2}", "brand", None, MAIN))
     c.add(circle(TX, TY, 4, "brand", None), circle(LX0, BY, 4, "brand", None))
@@ -129,9 +129,9 @@ def refuelling_safety_zone() -> Canvas:
     c.add(person(86, 196), person(66, 214))
     c.add(arrow(54, 194, 22, 194, "fg-muted", SECOND))
     # number badges in the picture
-    c.add(nbadge(112, 70, "1", "fg"), nbadge(PX + 43 * S + 14, PY - 22, "2", "fg"), nbadge(LX0 - 16, BY - 34, "3", "brand"),
+    c.add(nbadge(112, 70, "1", "fg"), nbadge(PX + 19.3 * S + 22, PY - 22, "2", "fg"), nbadge(LX0 - 16, BY - 34, "3", "brand"),
           nbadge(354, 96, "4", "fg"), nbadge(96, 236, "5", "fg"), nbadge(112, 284, "6", "fg"))
-    c.add(text(PX + 43 * S + 28, PY - 18, "prop still", 11, "start", "fg-muted"))
+    c.add(text(PX + 19.3 * S + 36, PY - 18, "prop still", 11, "start", "fg-muted"))
     # list
     LX = 384
     items = [("1", "No smoking or naked flames", ["no ignition source"], "fg"),
@@ -160,34 +160,34 @@ def preflight_legal_checks() -> Canvas:
                "water and contamination, at the first flight of the day and after refuelling, once the fuel has settled.",
                height=404, prefix="plc")
     c.add(text(320, 28, "Behind the checklist: eight items the law requires", 15, "middle", "fg", weight=700))
-    PX, PY, S = 336, 214, 2.3
+    PX, PY, S = 356, 214, 2.1
     P = lambda u, v: (PX + u * S, PY + v * S)  # noqa: E731
     # frost on the wings and tail (soft hatch area behind the picture)
     c.add(plane_top(PX, PY, S, 90, "fg", "surface"))
     # pitot tube on the left (upper) wing
-    px, py = P(7, -36)
+    px, py = P(1, -36)
     c.add(line(px, py, px + 16, py, "brand", 3))
     # doors (their forward edges show ahead of the high wing's leading edge)
-    for v in (-6, 6):
-        a, b = P(12, v), P(22, v)
+    for v in (-5.2, 5.2):
+        a, b = P(5, v), P(13, v)
         c.add(line(a[0], a[1], b[0], b[1], "brand", 3.5))
     # tank caps on top of each wing, near the root
     for v in (-15, 15):
-        x, y = P(4, v)
+        x, y = P(-4, v)
         c.add(circle(x, y, 4.5, "surface", "brand", MAIN))
     # drains (underside, shown dashed) at each tank and the engine
-    for u, v in ((0, -21), (0, 21), (32, 0)):
+    for u, v in ((-9, -21), (-9, 21), (14, 0)):
         x, y = P(u, v)
         c.add(circle(x, y, 4.5, "ok-soft", "ok", SECOND, dash="2 2"))
     # control surfaces: ailerons and elevator outlined in brand
     for sgn in (-1, 1):
-        a, b = P(-5, sgn * 28), P(-6, sgn * 46)
+        a, b = P(-11, sgn * 27), P(-11, sgn * 46)
         c.add(line(a[0], a[1], b[0], b[1], "brand", 3.5))
-        a, b = P(-32, sgn * 3), P(-32, sgn * 15)
+        a, b = P(-48, sgn * 3), P(-48, sgn * 15.5)
         c.add(line(a[0], a[1], b[0], b[1], "brand", 3.5))
     # badges
-    marks = [("1", P(7, -36), (16, -14)), ("2", P(17, -6), (-8, -24)), ("3", P(4, -15), (-26, -6)), ("4", P(-30, 15), (-12, 14)),
-             ("5", P(-6, 44), (-18, 4)), ("6", P(14, -1), (28, -22)), ("7", P(14, 3), (0, 22)), ("8", P(0, 21), (18, 8))]
+    marks = [("1", P(1, -36), (16, -14)), ("2", P(9, -5.2), (4, -20)), ("3", P(-4, -15), (-26, -6)), ("4", P(-44, 15), (-4, 22)),
+             ("5", P(-11, 44), (-18, 4)), ("6", P(6, -1), (46, -40)), ("7", P(6, 2.5), (6, 22)), ("8", P(-9, 21), (38, 12))]
     for n, (x, y), (dx, dy) in marks:
         c.add(line(x, y, x + dx, y + dy, "fg-muted", THIN))
         c.add(circle(x + dx, y + dy, 10, "brand", "surface", 1.5), num(x + dx, y + dy + 4.5, n, 12, "middle", "surface", weight=700))
@@ -251,7 +251,7 @@ def movement_area_plan() -> Canvas:
         c.add(line(x + TW / 2, RY + 15, x + TW / 2, TY, "warn", 1.5))
     c.add(rect(APX, APY, APW, APH, "tarmac", None, rx=2))
     for x in (278, 320, 362):
-        c.add(plane_top(x, APY + 36, 0.34, 0, "paint", "tarmac"))
+        c.add(plane_top(x, APY + 28, 0.34, 0, "paint", "tarmac"))
     # buildings and road
     c.add(rect(250, 266, 70, 30, "surface-2", "line-strong", SECOND, rx=2), rect(330, 270, 60, 26, "surface-2", "line-strong", SECOND, rx=2))
     c.add(line(16, 304, 624, 304, "line-strong", 6, cap="butt"))
@@ -331,7 +331,7 @@ def taxiway_signs() -> Canvas:
     HY = 150
     for dy, dash in ((0, "5 3"), (6, "5 3"), (14, None), (20, None)):
         c.add(line(TXC - TW / 2, HY + dy, TXC + TW / 2, HY + dy, "warn", 2.5, dash=dash, cap="butt"))
-    c.add(plane_top(TXC, 222, 0.42, 0, "fg", "surface"))
+    c.add(plane_top(TXC, 212, 0.42, 0, "fg", "surface"))
     # signs beside the taxiway (left side, as seen by the pilot)
     c.add(line(TXC - TW / 2 - 6, HY + 10, 96, HY + 10, "fg-muted", THIN))
     c.add(sign(70, HY + 10, 48, 26, "mandatory", "24R", 14))
