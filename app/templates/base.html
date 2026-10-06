@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f6fc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#080d1c" media="(prefers-color-scheme: dark)">
-  {# Apply a saved light/dark choice and a collapsed sidebar before first paint (app.js owns both toggles). #}
+  {# Apply a saved light/dark choice, a collapsed sidebar and the reader's text size before first paint (app.js owns all three). #}
   <script>try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
-    if (localStorage.getItem("sidebar") === "collapsed") document.documentElement.dataset.sidebar = "collapsed"; } catch (e) {}</script>
+    if (localStorage.getItem("sidebar") === "collapsed") document.documentElement.dataset.sidebar = "collapsed";
+    var f = localStorage.getItem("fontsize"); if (["s", "l", "xl", "xxl"].indexOf(f) >= 0) document.documentElement.dataset.fontSize = f; } catch (e) {}</script>
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ static_url('app.css') }}">
   <link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
@@ -17,8 +18,9 @@
   <script defer src="/static/vendor/katex/katex.min.js"></script>
   <script defer src="/static/vendor/katex/auto-render.min.js"></script>
   <script defer src="/static/vendor/alpine.min.js"></script>
-  <script type="importmap">{"imports": {"three": "/static/vendor/three/three.module.js", "three/addons/": "/static/vendor/three/addons/"}}</script>
+  <script type="importmap">{"imports": {"three": "/static/vendor/three/three.module.js", "three/addons/": "/static/vendor/three/addons/", "perfect-freehand": "/static/vendor/perfect-freehand/index.js"}}</script>
   <script type="module" src="{{ static_url('explorers.js') }}"></script>
+  <script type="module" src="{{ static_url('annotations.js') }}"></script>
 </head>
 {% from "_icons.html" import icon %}
 {% set path = request.url.path %}
@@ -50,6 +52,7 @@
       {{ nav_link("/planner", "Planner", "calendar") }}
       {{ nav_link("/syllabus", "Syllabus", "book") }}
       {{ nav_link("/lessons", "Lessons", "notes") }}
+      {{ nav_link("/equations", "Equations", "sigma") }}
       <p class="eyebrow sidebar-eyebrow pt-5">Practise</p>
       {{ nav_link("/quiz", "Quiz", "quiz") }}
       {{ nav_link("/exam", "Mock exam", "timer") }}
@@ -57,6 +60,7 @@
       <p class="eyebrow sidebar-eyebrow pt-5">Track</p>
       {{ nav_link("/progress", "Progress", "chart") }}
       {{ nav_link("/reference", "Reference", "reference") }}
+      {{ nav_link("/my-notes", "My notes", "pen") }}
     </nav>
     {# Desktop only: shrink to an icon rail and back ("[" does the same); remembered per browser. #}
     <button type="button" class="nav-link sidebar-toggle" data-sidebar-toggle aria-controls="sidebar" aria-expanded="true" title="Collapse sidebar ( [ )">
@@ -89,15 +93,17 @@
         {% if on_search and request.query_params.get('kind') %}<input type="hidden" name="kind" value="{{ request.query_params.get('kind') }}">{% endif %}
         {% if not on_search %}<div id="search-suggest" class="suggest-panel" aria-live="polite"></div>{% endif %}
       </form>
+      {% block reading_tools %}{% endblock %}
       <button type="button" class="btn-icon" data-theme-toggle aria-label="Colour theme: follow system" title="Colour theme">
         {{ icon("monitor", "theme-icon theme-icon-system") }}{{ icon("sun", "theme-icon theme-icon-light") }}{{ icon("moon", "theme-icon theme-icon-dark") }}
       </button>
       <button type="button" class="btn-icon lg:hidden" data-drawer-open aria-controls="sidebar" aria-expanded="false" aria-label="Menu">
         {{ icon("menu") }}
       </button>
+      <div class="read-progress" data-read-progress hidden role="progressbar" aria-label="Read" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
     </header>
 
-    <main class="mx-auto w-full max-w-screen-2xl flex-1 px-4 pb-32 pt-6 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
+    <main class="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-32 pt-6 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
       {% block content %}{% endblock %}
     </main>
 

@@ -70,3 +70,15 @@
   <p>{{ text }}{% if href %} <a href="{{ href }}" class="font-semibold">{{ link_text }}</a>{% endif %}</p>
 </div>
 {%- endmacro %}
+
+{# Reader's text size, for pages with a reading column (rendered in base.html's reading_tools block): the read
+   percentage, an "Aa" button and a native popover with five sizes. app.js syncs aria-pressed and stores the choice. #}
+{% macro text_size_control() -%}
+<span class="read-pct" data-read-pct hidden>0%</span>
+<button type="button" class="btn-icon text-size-btn" popovertarget="text-size-menu" aria-label="Text size" title="Text size">{{ icon("text-size") }}</button>
+<div id="text-size-menu" class="text-size-menu" popover role="group" aria-label="Text size">
+  {% for size, label, em in [("s", "Small", "text-[0.75em]"), ("m", "Medium", "text-[0.875em]"), ("l", "Large", "text-[1em]"), ("xl", "Extra large", "text-[1.125em]"), ("xxl", "Largest", "text-[1.3em]")] %}
+  <button type="button" data-font-size="{{ size }}" aria-pressed="{{ 'true' if size == 'm' else 'false' }}" aria-label="{{ size | upper }} ({{ label }})" title="{{ label }}"><span class="{{ em }}" aria-hidden="true">A</span></button>
+  {% endfor %}
+</div>
+{%- endmacro %}

@@ -48,6 +48,15 @@ def test_note_page(client: TestClient) -> None:
     assert "critical angle" in r.text
     assert "<details" in r.text and "3.6.2" in r.text
     assert "In this lesson" in r.text and 'href="#' in r.text
+    # Reading experience: progress target, side panel with tabs, text-size control, pre-paint font size.
+    for marker in ("data-read-target", "data-lesson-panel", 'role="tablist"', 'data-panel-tab="notes"',
+                   'data-panel-tab="sketch"', 'data-font-size="xl"', "data-read-progress"):
+        assert marker in r.text, marker
+    assert 'localStorage.getItem("fontsize")' in r.text
+    # Student annotations: ink/highlight host with its embedded bundle, and the Notes and Sketch panel partials.
+    for marker in ('data-widget="lesson-annotations"', 'data-widget="lesson-notes"', 'data-widget="lesson-sketch"',
+                   "data-annotations", 'class="notes-editor"', "sketch-dialog"):
+        assert marker in r.text, marker
 
 
 def test_missing_note_is_200(client: TestClient) -> None:
@@ -65,6 +74,7 @@ def test_missing_note_is_200(client: TestClient) -> None:
     r = client.get(url)
     assert r.status_code == 200
     assert "not written yet" in r.text.lower()
+    assert "data-lesson-panel" not in r.text
 
 
 def test_notes_index(client: TestClient) -> None:
@@ -113,6 +123,30 @@ def test_reference_pages(client: TestClient) -> None:
         page = client.get(f"/reference/{slug}")
         assert page.status_code == 200, slug
     assert client.get("/reference/does-not-exist").status_code == 404
+
+
+def test_reference_page_has_reading_tools(client: TestClient) -> None:
+    r = client.get(f"/reference/{REFERENCE_SLUGS[0]}")
+    assert r.status_code == 200
+    assert 'data-font-size="xl"' in r.text and "data-read-target" in r.text
+
+
+def test_quiz_page_has_text_size_but_partial_does_not(client: TestClient) -> None:
+    r = client.post("/quiz/start", data={"units": ["RBKA"], "count": "5"}, follow_redirects=False)
+    assert r.status_code == 303
+    page = client.get(r.headers["location"])
+    assert page.status_code == 200
+    assert 'data-font-size="xl"' in page.text
+    partial = client.get(r.headers["location"] + "/q/0", headers={"HX-Request": "true"})
+    assert partial.status_code == 200
+    assert 'id="quiz-question"' in partial.text and "data-font-size=" not in partial.text
+
+
+def test_plain_pages_have_progress_bar_but_no_text_size(client: TestClient) -> None:
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "data-read-progress" in r.text
+    assert "data-font-size=" not in r.text
 
 
 def test_dashboard(client: TestClient) -> None:

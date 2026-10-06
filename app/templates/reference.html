@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% from "_macros.html" import page_header, breadcrumb %}
+{% from "_macros.html" import page_header, breadcrumb, text_size_control %}
 {% from "_icons.html" import icon %}
 {% block title %}{{ page.title }} · {{ app_name }}{% endblock %}
+{% block reading_tools %}{{ text_size_control() }}{% endblock %}
 {% block content %}
 {# Same icon per page as the reference index. #}
 {% set ref_style = {
@@ -11,10 +12,10 @@
   "workbook": ("book", "chip-sky"),
   "sources-and-disclaimer": ("external", "chip-info"),
 } %}
-<div class="mx-auto max-w-4xl">
+<div class="mx-auto max-w-(--measure)">
 {{ breadcrumb([("Reference", "/reference"), (page.title, None)]) }}
 {{ page_header(page.title, "", ref_style.get(page.slug, ("reference",))[0]) }}
-<article class="note-body card rise p-6 sm:p-10">{{ page.html | safe }}</article>
+<article class="note-body card rise p-6 sm:p-10" data-read-target>{{ page.html | safe }}</article>
 <nav aria-label="Other reference pages" class="mt-8">
   <p class="eyebrow mb-3">Other reference pages</p>
   <div class="grid gap-3 sm:grid-cols-2">

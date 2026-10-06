@@ -15,8 +15,13 @@
     if (e.target.closest("[data-drawer-open]")) setDrawer(true);
     else if (e.target.closest("[data-drawer-close]")) setDrawer(false);
   });
+  function drawerOpen() {
+    var backdrop = document.getElementById("drawer-backdrop");
+    return !!backdrop && !backdrop.classList.contains("hidden");
+  }
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") setDrawer(false);
+    // Escape closes the drawer if it is open, else the lesson panel's bottom sheet.
+    if (e.key === "Escape") { if (drawerOpen()) setDrawer(false); else closePanel(); }
     // "/" jumps to the page's own filter box if it has one, else the top-bar search box, unless the user is already typing.
     if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
     var t = e.target, tag = t && t.tagName;
@@ -163,6 +168,7 @@
     var input = e.target.closest && e.target.closest("[data-filter-q]");
     if (!input) return;
     var box = input.closest("[data-lesson-filter]");
+    if (!box) return;   // other pages (the equation sheet) mark their filter box so "/" focuses it, and handle keys themselves
     if (e.key === "Enter") {
       // Enter opens the first match, so "bakc 2.1" + Enter goes straight to that lesson.
       var first = box.querySelector("[data-unit-section]:not([hidden]) [data-lesson]:not([hidden]) a");
@@ -262,6 +268,97 @@
     toggleSidebar(); e.preventDefault();
   });
 
+  // Reader's text size: s, m (default), l, xl, xxl. Same storage pattern as the theme: localStorage "fontsize" and
+  // <html data-font-size> (absent = m), applied before first paint by base.html. CSS scales `content-scaled` regions.
+  var FONT_SIZES = ["s", "m", "l", "xl", "xxl"];
+  function applyFontSize(size) {
+    if (FONT_SIZES.indexOf(size) < 0) size = "m";
+    if (size === "m") delete document.documentElement.dataset.fontSize; else document.documentElement.dataset.fontSize = size;
+    // button[...] because <html data-font-size> matches the bare attribute selector too.
+    document.querySelectorAll("button[data-font-size]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.fontSize === size)); });
+  }
+  function currentFontSize() { return document.documentElement.dataset.fontSize || "m"; }
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest && e.target.closest("button[data-font-size]");
+    if (!btn) return;
+    var size = btn.dataset.fontSize;
+    try { if (size === "m") localStorage.removeItem("fontsize"); else localStorage.setItem("fontsize", size); } catch (err) {}
+    applyFontSize(size);
+    var menu = btn.closest("[popover]");
+    if (menu && menu.hidePopover) { try { menu.hidePopover(); } catch (err) {} }
+    document.dispatchEvent(new CustomEvent("casa:fontsizechange", { detail: { size: size } }));
+    // Charts and 3D views size themselves on window resize; the diagram caps change with the text size.
+    setTimeout(function () { window.dispatchEvent(new Event("resize")); }, 220);
+  });
+
+  // Lesson tools panel (note.html): Contents / Notes / Sketch tabs. On wide screens it docks beside the article
+  // (CSS `docked:` variant); otherwise it is a bottom sheet opened by the floating button, closed by the close
+  // button, the backdrop, Escape or following a section link. The chosen tab is remembered ("panel:tab").
+  var PANEL_TABS = ["contents", "notes", "sketch"];
+  function lessonPanel() { return document.querySelector("[data-lesson-panel]"); }
+  function panelDocked(panel) { return !!panel && getComputedStyle(panel).position === "sticky"; }
+  function setPanelTab(name, focus) {
+    var panel = lessonPanel();
+    if (!panel || PANEL_TABS.indexOf(name) < 0) return;
+    panel.querySelectorAll("[data-panel-tab-btn]").forEach(function (b) {
+      var on = b.dataset.panelTabBtn === name;
+      b.setAttribute("aria-selected", String(on));
+      b.tabIndex = on ? 0 : -1;
+      if (on && focus) b.focus();
+    });
+    panel.querySelectorAll("[data-panel-tab]").forEach(function (p) { p.hidden = p.dataset.panelTab !== name; });
+    try { localStorage.setItem("panel:tab", name); } catch (err) {}
+  }
+  function setPanelOpen(open) {
+    var panel = lessonPanel();
+    if (!panel) return;
+    var wasOpen = panel.classList.contains("is-open");
+    panel.classList.toggle("is-open", open);
+    document.querySelectorAll(".lesson-panel-backdrop").forEach(function (b) { b.classList.toggle("is-open", open); });
+    document.querySelectorAll("[data-panel-open]").forEach(function (b) { b.setAttribute("aria-expanded", String(open)); });
+    if (open && !wasOpen && !panelDocked(panel)) {
+      var tab = panel.querySelector('[data-panel-tab-btn][aria-selected="true"]');
+      if (tab) tab.focus({ preventScroll: true });
+    } else if (!open && wasOpen && panel.contains(document.activeElement)) {
+      var fab = document.querySelector("[data-panel-open]");
+      if (fab) fab.focus({ preventScroll: true });
+    }
+  }
+  function openPanel() { setPanelOpen(true); }
+  function closePanel() { setPanelOpen(false); }
+  function savedPanelTab() {
+    try { var t = localStorage.getItem("panel:tab"); return PANEL_TABS.indexOf(t) >= 0 ? t : "contents"; } catch (err) { return "contents"; }
+  }
+  function syncPanel() {
+    var panel = lessonPanel();
+    if (!panel || panel.dataset.panelSynced) return;   // once per page (a body swap brings a fresh panel)
+    panel.dataset.panelSynced = "1";
+    setPanelTab(savedPanelTab());
+    closePanel();
+  }
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest) return;
+    var t;
+    if ((t = e.target.closest("[data-panel-tab-btn]"))) setPanelTab(t.dataset.panelTabBtn);
+    else if (e.target.closest("[data-panel-open]")) openPanel();
+    else if (e.target.closest("[data-panel-close]")) closePanel();
+    else if ((t = e.target.closest("[data-lesson-panel] [data-toc-link]")) && !panelDocked(lessonPanel())) closePanel();
+  });
+  document.addEventListener("keydown", function (e) {
+    var btn = e.target.closest && e.target.closest("[data-panel-tab-btn]");
+    if (!btn) return;
+    var tabs = Array.prototype.slice.call(btn.closest("[role=tablist]").querySelectorAll("[data-panel-tab-btn]"));
+    var i = tabs.indexOf(btn), next = -1;
+    if (e.key === "ArrowRight") next = (i + 1) % tabs.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + tabs.length) % tabs.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabs.length - 1;
+    if (next < 0) return;
+    setPanelTab(tabs[next].dataset.panelTabBtn, true);
+    e.preventDefault();
+  });
+  window.CasaPanel = { open: openPanel, close: closePanel, setTab: function (name) { setPanelTab(name); } };
+
   // Celebrations: an element with data-celebrate ("big" or "small") throws confetti once when it appears.
   // Skipped under reduced motion. Colours come from the theme tokens.
   function celebrate(origin, big) {
@@ -306,7 +403,138 @@
     });
   }
 
-  function init(root) { renderMaths(root); mountAll(root); celebrateIn(root); initLessonFilter(root); applyTheme(currentTheme()); syncSidebarToggle(); }
+  // Reading progress. The page's [data-read-target] (a lesson or reference article) drives a bar in the top bar
+  // ([data-read-progress], --p = fraction read), percentage readouts ([data-read-pct]) and the current section
+  // (aria-current on [data-toc-link] entries, in every copy of the section list). Progress is saved per path in
+  // localStorage ("read:<path>") so a long lesson can be resumed. Everything is recomputed on scroll, resize and
+  // whenever the article or page changes height (details opening, KaTeX, widgets, text-size changes).
+  var reading = { target: null, observer: null, sections: [], threshold: 0, dirty: true, raf: 0, saveAt: 0, saved: null };
+  function readFraction(rect, viewportHeight, barBottom) {
+    // 0 until the article's top reaches the bottom edge of the top bar; 1 once its bottom is in view.
+    if (rect.height <= 0) return 0;
+    if (rect.bottom <= viewportHeight) return 1;
+    var span = rect.height - (viewportHeight - barBottom);
+    if (span <= 0) return 0;
+    return Math.min(1, Math.max(0, (barBottom - rect.top) / span));
+  }
+  function readingKey() { return "read:" + location.pathname; }
+  function savedReading() {
+    try { var raw = localStorage.getItem(readingKey()); return raw ? JSON.parse(raw) : null; } catch (err) { return null; }
+  }
+  function rebuildSections(target, rect) {
+    var cs = getComputedStyle(document.documentElement), first = target.querySelector("h2[id]");
+    var padding = parseFloat(cs.scrollPaddingTop) || 0, margin = first ? (parseFloat(getComputedStyle(first).scrollMarginTop) || 0) : 0;
+    reading.threshold = padding + margin + 2;   // where a heading lands after a section-list jump
+    reading.sections = Array.prototype.map.call(target.querySelectorAll("h2[id]"), function (h) {
+      return { id: h.id, top: h.getBoundingClientRect().top - rect.top };
+    });
+    reading.dirty = false;
+  }
+  function updateReading() {
+    reading.raf = 0;
+    var target = reading.target;
+    if (!target || !target.isConnected) return;
+    var rect = target.getBoundingClientRect(), vh = window.innerHeight;
+    var bar = document.querySelector(".topbar"), barBottom = bar ? bar.getBoundingClientRect().bottom : 0;
+    var p = readFraction(rect, vh, barBottom), pct = Math.round(p * 100);
+    document.querySelectorAll("[data-read-progress]").forEach(function (el) {
+      el.hidden = false; el.style.setProperty("--p", p.toFixed(4)); el.setAttribute("aria-valuenow", String(pct));
+    });
+    document.querySelectorAll("[data-read-pct]").forEach(function (el) { el.hidden = false; el.textContent = pct + "%"; });
+    if (reading.dirty) rebuildSections(target, rect);
+    var current = null;
+    for (var i = 0; i < reading.sections.length; i++) {
+      if (rect.top + reading.sections[i].top <= reading.threshold) current = reading.sections[i].id; else break;
+    }
+    if (p >= 1 && reading.sections.length) current = reading.sections[reading.sections.length - 1].id;
+    document.querySelectorAll("[data-toc-link]").forEach(function (a) {
+      if (a.dataset.tocLink === current) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
+    });
+    var now = Date.now();
+    if (p > 0 && now - reading.saveAt > 1000) {
+      reading.saveAt = now;
+      try { localStorage.setItem(readingKey(), JSON.stringify({ p: Math.round(p * 1000) / 1000, t: now })); } catch (err) {}
+    }
+    document.dispatchEvent(new CustomEvent("casa:reading", { detail: { fraction: p, section: current } }));
+  }
+  function scheduleReading() { if (!reading.raf && reading.target) reading.raf = requestAnimationFrame(updateReading); }
+  function markReadingDirty() { reading.dirty = true; scheduleReading(); }
+  function initReading() {
+    var target = document.querySelector("[data-read-target]");
+    if (target !== reading.target) {
+      if (reading.observer) { reading.observer.disconnect(); reading.observer = null; }
+      reading.target = target;
+      reading.saveAt = 0;
+      reading.saved = target ? savedReading() : null;
+      if (target && "ResizeObserver" in window) {
+        // The article's own height (details, images, maths, widgets) and the page's (anything above it).
+        reading.observer = new ResizeObserver(markReadingDirty);
+        reading.observer.observe(target);
+        reading.observer.observe(document.body);
+      }
+    }
+    if (!target) {
+      document.querySelectorAll("[data-read-progress], [data-read-pct]").forEach(function (el) { el.hidden = true; });
+      return;
+    }
+    markReadingDirty();
+  }
+  window.addEventListener("scroll", scheduleReading, { passive: true });
+  window.addEventListener("resize", markReadingDirty);
+  document.addEventListener("casa:fontsizechange", markReadingDirty);
+  window.CasaReading = {
+    fraction: readFraction,
+    saved: savedReading,
+    // The saved position when a page is opened fresh (used by the resume pill): null when nothing useful is stored.
+    resumable: function () {
+      var s = reading.saved;
+      if (!s || typeof s.p !== "number" || typeof s.t !== "number") return null;
+      if (s.p < 0.05 || s.p > 0.95 || Date.now() - s.t > 30 * 864e5) return null;
+      return s;
+    },
+    scrollToFraction: function (p) {
+      var target = reading.target;
+      if (!target) return;
+      var rect = target.getBoundingClientRect(), vh = window.innerHeight;
+      var bar = document.querySelector(".topbar"), barBottom = bar ? bar.getBoundingClientRect().bottom : 0;
+      var span = rect.height - (vh - barBottom);
+      var y = window.scrollY + rect.top - barBottom + Math.max(0, span) * Math.min(1, Math.max(0, p));
+      window.scrollTo({ top: y, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    },
+  };
+
+  // Resume pill: a page opened fresh (no #section, at the top) with a saved position part-way through offers to jump
+  // back there. Offered once per article; gone on click, after 10 s, or once the reader scrolls 300 px. Never auto-scrolls.
+  var PLAY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l14 9-14 9z"/></svg>';
+  var resumeOfferedFor = null;
+  function offerResume() {
+    var target = document.querySelector("[data-read-target]");
+    if (!target || target === resumeOfferedFor || !window.CasaReading) return;
+    resumeOfferedFor = target;
+    var saved = window.CasaReading.resumable();
+    if (location.hash || window.scrollY >= 80 || !saved || document.querySelector(".read-resume")) return;
+    var pill = document.createElement("button"), startY = window.scrollY, timer = 0;
+    pill.type = "button";
+    pill.className = "read-resume";
+    pill.innerHTML = PLAY_ICON + "<span>Resume where you left off · " + Math.round(saved.p * 100) + "%</span>";
+    function dismiss() {
+      clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+      pill.remove();
+    }
+    function onScroll() { if (Math.abs(window.scrollY - startY) > 300) dismiss(); }
+    pill.addEventListener("click", function () { dismiss(); window.CasaReading.scrollToFraction(saved.p); });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    timer = setTimeout(dismiss, 10000);
+    document.body.appendChild(pill);
+  }
+
+  function init(root) {
+    renderMaths(root); mountAll(root); celebrateIn(root); initLessonFilter(root); applyTheme(currentTheme()); syncSidebarToggle();
+    applyFontSize(currentFontSize()); syncPanel();
+    initReading();   // last, so maths and widgets have laid out
+    offerResume();
+  }
   document.addEventListener("DOMContentLoaded", function () { init(document); });
   // Deferred scripts (KaTeX) may finish after DOMContentLoaded listeners were queued; run once more on load.
   window.addEventListener("load", function () { init(document); });

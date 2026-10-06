@@ -3,6 +3,7 @@
 @source "../../templates";
 @source "../../routers";
 @plugin "@tailwindcss/typography";
+@import "./equations.css";
 
 /* Theme: follows the system unless <html data-theme="light|dark"> is set (the top-bar toggle, app.js).
    `@variant dark` blocks and `dark:` utilities both honour the toggle. */
@@ -10,6 +11,18 @@
   &:where([data-theme="dark"], [data-theme="dark"] *) { @slot; }
   @media (prefers-color-scheme: dark) {
     &:where(:not([data-theme="light"], [data-theme="light"] *)) { @slot; }
+  }
+}
+
+/* Lesson side panel: `docked:` utilities apply when the content area is wide enough for the article
+   and an 18rem panel side by side: a 90rem viewport with the sidebar open, 80rem with it collapsed
+   (<html data-sidebar="collapsed">). <html data-panel="hidden"> (the panel's pin) keeps it a bottom sheet. */
+@custom-variant docked {
+  @media (min-width: 90rem) {
+    &:where(:root:not([data-panel="hidden"]) *) { @slot; }
+  }
+  @media (min-width: 80rem) {
+    &:where(:root[data-sidebar="collapsed"]:not([data-panel="hidden"]) *) { @slot; }
   }
 }
 
@@ -106,6 +119,17 @@
   --color-hero-2: #6334d8;
   --color-hero-3: #c0399a;
 
+  /* Student ink (Pencil strokes store the token name, never a hex) and highlighter fills. Text stays fg on
+     every highlight fill in both themes. */
+  --color-ink-1: #1d4ed8;
+  --color-ink-2: #dc2626;
+  --color-ink-3: #15803d;
+  --color-ink-4: #111827;
+  --color-hl-yellow: #fde68a;
+  --color-hl-green: #bbf7d0;
+  --color-hl-pink: #fbcfe8;
+  --color-hl-blue: #bfdbfe;
+
   --shadow-card: 0 1px 2px rgb(16 24 64 / 0.04), 0 4px 14px -6px rgb(16 24 64 / 0.10);
   --shadow-lift: 0 2px 4px rgb(16 24 64 / 0.05), 0 14px 32px -10px rgb(16 24 64 / 0.22);
   --shadow-pop: 0 18px 48px -12px rgb(16 24 64 / 0.32);
@@ -177,6 +201,15 @@
       --color-hero-2: #45209e;
       --color-hero-3: #8a2470;
 
+      --color-ink-1: #7fa4ff;
+      --color-ink-2: #ff7b7b;
+      --color-ink-3: #5fd38a;
+      --color-ink-4: #e5e7eb;
+      --color-hl-yellow: #5e4f08;
+      --color-hl-green: #134a2d;
+      --color-hl-pink: #5f1d42;
+      --color-hl-blue: #1e3a6b;
+
       --shadow-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px -8px rgb(0 0 0 / 0.5);
       --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 4px rgb(0 0 0 / 0.4), 0 16px 36px -10px rgb(0 0 0 / 0.7);
       --shadow-pop: 0 20px 50px -12px rgb(0 0 0 / 0.75);
@@ -184,6 +217,14 @@
     }
   }
 
+  /* Reading measure: the lesson/reference/quiz column width at the default text size. It scales with the
+     reader's text size (--content-scale, set per <html data-font-size>) so lines stay ~95 characters. */
+  :root { --reading-measure: 56rem; --content-scale: 1; --measure: calc(var(--reading-measure) * var(--content-scale)); }
+  /* Reader's text size (the top-bar "Aa" menu, app.js; absent = M). Only `content-scaled` regions use it. */
+  html[data-font-size="s"] { --content-scale: 0.9; }
+  html[data-font-size="l"] { --content-scale: 1.125; }
+  html[data-font-size="xl"] { --content-scale: 1.25; }
+  html[data-font-size="xxl"] { --content-scale: 1.4; }
   html { color-scheme: light dark; -webkit-text-size-adjust: 100%; scroll-padding-top: 5rem; }
   html[data-theme="light"] { color-scheme: light; }
   html[data-theme="dark"] { color-scheme: dark; }
@@ -242,6 +283,15 @@
 @utility bg-grad-brand { background-image: var(--grad-brand); }
 @utility bg-grad-hero { background-image: var(--grad-hero); }
 @utility text-grad-brand { @apply bg-clip-text text-transparent; background-image: var(--grad-brand); }
+/* Scales every text-xs…text-xl utility inside (Tailwind emits font-size: var(--text-*)) by the reader's text size.
+   The matching --text-*--line-height ratios are unitless, so they stay as they are. */
+@utility content-scaled {
+  --text-xs: calc(0.75rem * var(--content-scale));
+  --text-sm: calc(0.875rem * var(--content-scale));
+  --text-base: calc(1rem * var(--content-scale));
+  --text-lg: calc(1.125rem * var(--content-scale));
+  --text-xl: calc(1.25rem * var(--content-scale));
+}
 
 /* ------------------------------------------------------------------ components */
 @layer components {
@@ -370,9 +420,9 @@
   .disclosure > :not(summary) { @apply px-4 pb-4; }
 
   /* Quiz and exam answer options */
-  .options { @apply flex flex-col gap-2.5; }
+  .options { @apply content-scaled flex flex-col gap-2.5; }
   .option {
-    @apply flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-line bg-surface px-4 py-3.5 text-[0.95rem] leading-snug
+    @apply flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-line bg-surface px-4 py-3.5 text-[calc(0.95rem*var(--content-scale))] leading-snug
            transition-[transform,background-color,border-color,box-shadow] duration-150 active:scale-[0.99]
            hover:-translate-y-px hover:border-brand/40 hover:shadow-(--shadow-card)
            has-checked:border-brand has-checked:bg-brand-soft/50 has-checked:shadow-(--shadow-card);
@@ -387,9 +437,9 @@
   .option.correct .option-letter { @apply bg-ok text-white dark:text-bg; }
   .option.wrong { @apply animate-shake border-bad bg-bad-soft/70 text-bad-fg hover:translate-y-0 hover:border-bad; }
   .option.wrong .option-letter { @apply bg-bad text-white dark:text-bg; }
-  .question-stem { @apply whitespace-pre-line text-lg font-medium leading-relaxed text-fg sm:text-xl; }
-  .explanation { @apply whitespace-pre-line text-sm leading-relaxed; }
-  .feedback { @apply callout flex animate-rise items-start gap-3 text-[0.95rem]; }
+  .question-stem { @apply content-scaled whitespace-pre-line text-lg font-medium leading-relaxed text-fg sm:text-xl; }
+  .explanation { @apply content-scaled whitespace-pre-line text-sm leading-relaxed; }
+  .feedback { @apply content-scaled callout flex animate-rise items-start gap-3 text-[calc(0.95rem*var(--content-scale))]; }
   .feedback.correct { @apply callout-ok text-ok-fg; }
   .feedback.incorrect { @apply callout-bad text-bad-fg; }
   .score-big { @apply text-6xl font-black tabular-nums tracking-tight text-grad-brand; }
@@ -452,8 +502,9 @@
 
   /* Markdown notes */
   .note-body {
-    @apply prose max-w-none prose-headings:scroll-mt-24 prose-h2:mt-12 prose-h2:text-[1.4rem] prose-h2:font-extrabold prose-h3:text-lg prose-h3:font-bold
-           prose-table:text-sm prose-img:rounded-xl prose-a:font-medium prose-a:decoration-brand/40 prose-a:underline-offset-2;
+    @apply content-scaled prose max-w-none prose-headings:scroll-mt-2 prose-h2:mt-12 prose-h2:text-[1.4em] prose-h2:font-extrabold prose-h3:text-[1.125em] prose-h3:font-bold
+           prose-img:rounded-xl prose-a:font-medium prose-a:decoration-brand/40 prose-a:underline-offset-2;
+    font-size: var(--text-base); /* after prose's 1rem: follows the reader's text size */
     --tw-prose-body: var(--color-fg);
     --tw-prose-headings: var(--color-fg);
     --tw-prose-lead: var(--color-fg-muted);
@@ -519,27 +570,89 @@
   .note-body details.solution > summary { @apply text-info-fg; }
   .note-body details.solution[open] > summary { @apply border-info/25; }
 
-  /* "In this lesson" list above long notes (note.html): numbered tiles that light up on hover. */
-  .lesson-toc ol { @apply m-0 flex list-none flex-col gap-0.5 p-0 text-sm [counter-reset:toc]; }
-  .lesson-toc li { @apply [counter-increment:toc]; }
-  .lesson-toc a { @apply flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-fg no-underline transition-colors hover:bg-brand-soft/60 hover:text-brand-fg; }
-  .lesson-toc a::before { content: counter(toc); @apply grid size-6 shrink-0 place-items-center rounded-md bg-surface-2 text-[0.7rem] font-bold tabular-nums text-fg-muted; }
-  .lesson-toc a:hover::before { @apply bg-grad-brand text-on-brand; }
+  /* "In this lesson" lists (note.html, inline and in the side panel): numbered tiles; the section being read
+     is marked aria-current by app.js's reading tracker. */
+  .toc-list { @apply m-0 flex list-none flex-col gap-0.5 p-0 text-sm [counter-reset:toc]; }
+  .toc-list li { @apply min-w-0 [counter-increment:toc]; }
+  .toc-list a { @apply flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-fg no-underline transition-colors hover:bg-brand-soft/60 hover:text-brand-fg; }
+  .toc-list a::before { content: counter(toc); @apply grid size-6 shrink-0 place-items-center rounded-md bg-surface-2 text-[0.7rem] font-bold tabular-nums text-fg-muted transition-colors; }
+  .toc-list a:hover::before, .toc-list a[aria-current="true"]::before { @apply bg-grad-brand text-on-brand; }
+  .toc-list a[aria-current="true"] { @apply bg-brand-soft/60 font-semibold text-brand-fg; }
+  .lesson-toc-inline .toc-list { @apply sm:grid sm:grid-cols-2 sm:gap-x-3; }
+
+  /* "Formulas in this lesson" (note.html): rows of maths + name linking to the equation sheet. */
+  .lesson-formulas { @apply border-info/25 bg-linear-to-br from-info-soft/30 to-surface; }
+  .formula-list { @apply m-0 flex list-none flex-col gap-1 p-0; }
+  .formula-row { @apply flex items-center gap-3 rounded-xl px-2 py-1.5 text-fg no-underline transition-colors hover:bg-info-soft/50 hover:text-info-fg; }
+  .formula-maths { @apply min-w-0 shrink-0 overflow-x-auto text-[0.95em] sm:min-w-44; }
+  .formula-name { @apply min-w-0 flex-1 text-sm font-medium; }
+
+  /* Lesson page layout: one centred column at the reading measure; when the panel docks (see @custom-variant
+     docked) it becomes article + 18rem panel. */
+  .lesson-layout { @apply mx-auto w-full max-w-(--measure) docked:grid docked:max-w-none docked:grid-cols-[minmax(0,var(--measure))_18rem] docked:items-start docked:justify-center docked:gap-8; }
+  .lesson-main { @apply min-w-0; }
+  /* The panel: a bottom sheet (slides up when .is-open) until it docks as a sticky card beside the article. */
+  .lesson-panel {
+    @apply invisible fixed inset-x-0 bottom-0 z-40 flex max-h-[min(80dvh,36rem)] translate-y-full flex-col rounded-t-3xl border border-line bg-surface shadow-(--shadow-pop)
+           transition-[translate,visibility] duration-200 pb-[env(safe-area-inset-bottom)]
+           docked:visible docked:sticky docked:inset-auto docked:top-20 docked:z-auto docked:max-h-[calc(100dvh-6rem)] docked:translate-y-0 docked:rounded-(--radius-card) docked:pb-0 docked:shadow-(--shadow-card);
+  }
+  .lesson-panel.is-open { @apply visible translate-y-0; }
+  .lesson-panel-head { @apply flex shrink-0 items-center gap-1 border-b border-line px-2 pt-2 pb-0; }
+  .lesson-panel-tab {
+    @apply -mb-px flex cursor-pointer items-center gap-1.5 border-b-2 border-transparent px-3 py-2.5 text-sm font-semibold text-fg-muted transition-colors hover:text-fg;
+  }
+  .lesson-panel-tab > svg { @apply size-4; }
+  .lesson-panel-tab[aria-selected="true"] { @apply border-brand text-brand-fg; }
+  .lesson-panel-close { @apply btn ml-auto size-9 shrink-0 border-transparent bg-transparent p-0 text-fg-muted hover:bg-surface-2 hover:text-fg docked:hidden; }
+  .lesson-panel-body { @apply min-h-0 flex-1 overflow-y-auto overscroll-contain p-3; }
+  .lesson-panel-backdrop { @apply fixed inset-0 z-30 hidden bg-fg/30 backdrop-blur-sm docked:hidden; }
+  .lesson-panel-backdrop.is-open { @apply block; }
+  /* Floating opener for the sheet; sits above the mobile dock, bottom-right on larger screens. */
+  .lesson-panel-fab {
+    @apply btn fixed right-4 z-20 rounded-full border-transparent bg-grad-brand px-4 py-2.5 text-on-brand shadow-(--shadow-pop) hover:text-on-brand hover:brightness-110
+           bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6 lg:right-8 docked:hidden;
+  }
+  .lesson-panel-fab > svg { @apply size-4; }
+
+  /* Reading progress: a 3px gradient bar along the bottom edge of the top bar (scaleX = fraction read),
+     a percentage readout, and a "resume" pill above the dock. */
+  .read-progress { @apply pointer-events-none absolute inset-x-0 -bottom-px h-[3px] overflow-hidden; }
+  .read-progress > i { @apply block h-full w-full origin-left bg-grad-brand transition-transform duration-150 ease-out; transform: scaleX(var(--p, 0)); }
+  .read-pct { @apply hidden shrink-0 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold tabular-nums text-fg-muted sm:inline-flex; }
+  .read-resume {
+    @apply btn fixed left-1/2 z-30 -translate-x-1/2 animate-rise gap-2 rounded-full border-line bg-surface px-4 py-2 text-fg shadow-(--shadow-pop) hover:border-line-strong hover:text-fg
+           bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6;
+  }
+  .read-resume > svg { @apply size-4 text-brand; }
+
+  /* Text-size menu: a native popover under the top-bar "Aa" button (anchored where supported, else top-right),
+     five segmented "A" buttons; the pressed one wears the brand gradient. */
+  .text-size-btn { anchor-name: --text-size; }
+  .text-size-menu { @apply fixed inset-auto top-16 right-4 m-0 rounded-2xl border border-line bg-surface p-1.5 text-fg shadow-(--shadow-pop); }
+  .text-size-menu:popover-open { @apply flex items-end gap-1; }
+  @supports (anchor-name: --a) {
+    .text-size-menu { position-anchor: --text-size; top: calc(anchor(bottom) + 0.5rem); right: anchor(right); }
+  }
+  .text-size-menu button {
+    @apply btn size-10 border-transparent bg-transparent p-0 text-base font-bold leading-none text-fg-muted hover:bg-surface-2 hover:text-fg;
+  }
+  .text-size-menu button[aria-pressed="true"] { @apply bg-grad-brand text-on-brand shadow-(--shadow-brand) hover:bg-grad-brand hover:text-on-brand; }
 
   /* Visuals: inline SVG diagrams and interactive widgets inside notes (app/seed/visuals.py). */
   .visual { @apply my-10 flex w-full flex-col items-center gap-3; }
-  .visual > svg { @apply h-auto w-full max-w-[40rem]; }
+  .visual > svg { @apply h-auto w-full max-w-[calc(40rem*var(--content-scale))]; }
   .visual svg { font-family: inherit; }
   .visual svg text { font-family: inherit; }
   .visual svg .num, .visual svg .mono { @apply font-mono; }
   .visual > figcaption { @apply m-0 max-w-prose text-center text-sm font-medium leading-snug text-fg-muted; }
-  .visual-notice { @apply mt-1 block text-[0.8rem] font-normal text-fg-faint; }
+  .visual-notice { @apply mt-1 block text-[0.8em] font-normal text-fg-faint; }
   .visual-notice::before { content: "What to notice · "; @apply font-semibold text-fg-muted; }
   .visual-missing { @apply rounded-xl border border-dashed border-warn/60 bg-warn-soft/30 px-4 py-6 text-sm text-warn-fg; }
   .visual-missing > p { @apply m-0; }
 
   /* CASA workbook pages: the real exam chart as a paper-white page (white in dark mode too, like the booklet). */
-  .workbook-page { @apply block w-full max-w-[40rem] cursor-zoom-in overflow-hidden rounded-2xl border border-line bg-white shadow-(--shadow-card) transition-shadow hover:shadow-(--shadow-lift); }
+  .workbook-page { @apply block w-full max-w-[calc(40rem*var(--content-scale))] cursor-zoom-in overflow-hidden rounded-2xl border border-line bg-white shadow-(--shadow-card) transition-shadow hover:shadow-(--shadow-lift); }
   .workbook-page img { @apply m-0 block h-auto w-full; }
   .workbook-source { @apply m-0 max-w-prose text-center text-xs text-fg-faint; }
   .workbook-source a { @apply text-fg-muted; }
@@ -553,7 +666,7 @@
   .workbook-figure .workbook-page img { @apply max-h-[70vh] w-auto max-w-full; }
 
   /* Widgets: an Alpine component on a raised card; controls in a sunken tray below the picture. */
-  .widget { @apply w-full max-w-[44rem] rounded-(--radius-card) border border-line bg-surface p-4 shadow-(--shadow-card) sm:p-5; }
+  .widget { @apply w-full max-w-[calc(44rem*var(--content-scale))] rounded-(--radius-card) border border-line bg-surface p-4 shadow-(--shadow-card) sm:p-5; }
   .widget > svg, .widget-stage > svg { @apply h-auto w-full; }
   .widget-stage { @apply relative w-full overflow-hidden rounded-xl; }
   .widget-controls { @apply mt-4 grid gap-x-5 gap-y-3 rounded-xl bg-surface-2/60 p-3 sm:grid-cols-2 sm:p-4; }
@@ -562,14 +675,14 @@
   .widget-control output, .widget-value { @apply font-mono text-sm tabular-nums text-fg-muted; }
   .widget-readouts { @apply mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3; }
   .widget-readout { @apply rounded-xl border border-line bg-surface px-3 py-2; }
-  .widget-readout .widget-label, .widget-readout dt { @apply text-[0.7rem] font-semibold uppercase tracking-wider text-fg-muted; }
+  .widget-readout .widget-label, .widget-readout dt { @apply text-[0.7em] font-semibold uppercase tracking-wider text-fg-muted; }
   .widget-readout .widget-value, .widget-readout dd { @apply m-0 font-mono text-lg font-semibold tabular-nums text-fg transition-colors; }
   .widget-readout.bad { @apply border-bad/60 bg-bad-soft/60; }
   .widget-readout.bad .widget-value, .widget-readout.bad dd { @apply text-bad; }
   .widget-readout.warn { @apply border-warn/60 bg-warn-soft/60; }
   .widget-readout.warn .widget-value, .widget-readout.warn dd { @apply text-warn-fg; }
   .widget-readout.ok .widget-value, .widget-readout.ok dd { @apply text-ok; }
-  .widget-flag { @apply ml-1 inline-block rounded px-1.5 py-px font-sans text-[0.65rem] font-bold uppercase tracking-wide align-middle; }
+  .widget-flag { @apply ml-1 inline-block rounded px-1.5 py-px font-sans text-[0.65em] font-bold uppercase tracking-wide align-middle; }
   .widget-flag.bad { @apply bg-bad text-white dark:text-bg; }
   .widget-flag.warn { @apply bg-warn text-white dark:text-bg; }
   .widget-flag.ok { @apply bg-ok text-white dark:text-bg; }
@@ -626,6 +739,7 @@
   .suggest-icon-question { @apply bg-info-soft text-info-fg; }
   .suggest-icon-card { @apply bg-ok-soft text-ok-fg; }
   .suggest-icon-reference { @apply bg-warn-soft text-warn-fg; }
+  .suggest-icon-mynote { @apply bg-ok-soft text-ok-fg; }
   .suggest-title { @apply block truncate text-sm font-medium leading-snug; }
   .suggest-title mark { @apply rounded-sm bg-transparent px-0 font-semibold text-brand; }
   .suggest-context { @apply block truncate text-xs text-fg-faint; }
@@ -711,6 +825,126 @@
   .streak-day.on > i { @apply border-solid border-transparent bg-accent; }
   .streak-day.today { @apply text-fg; }
   .streak-day.today > i { @apply ring-2 ring-accent/40 ring-offset-2 ring-offset-surface; }
+
+  /* ---------------------------------------------------------------- student annotations (annotations.js)
+     Pencil ink over the lesson: .ink-host wraps the toolbar and the article; annotations.js appends an SVG
+     .ink-layer over it. The layer never takes pointer events, so links, sliders and widgets underneath keep
+     working; drawing is intercepted on the host (capture phase) only when the pen policy says so. */
+  .ink-host { @apply relative; }
+  .ink-host.is-drawing, .ink-host.is-drawing * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
+  .ink-layer { @apply pointer-events-none absolute inset-0 h-full w-full overflow-visible; z-index: 5; }
+  .ink-layer path { pointer-events: none; }
+  .ink-live { opacity: 0.95; }
+  .ink-host[data-ink-tool="erase"] .note-body { cursor: cell; }
+
+  /* Pen toolbar: sticky under the top bar; wraps onto two rows on a phone. */
+  .ink-toolbar { @apply sticky top-[4.25rem] z-10 mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface/90 p-2 shadow-(--shadow-card) backdrop-blur-xl; }
+  .ink-group { @apply inline-flex items-center gap-0.5 rounded-xl bg-surface-2/70 p-0.5; }
+  .ink-tool {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-fg-muted transition-colors
+           hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-fg-muted;
+  }
+  .ink-tool[aria-pressed="true"] { @apply bg-surface text-fg shadow-(--shadow-card); }
+  /* Icon + label buttons keep only the icon on a phone; the label stays readable to screen readers. */
+  .ink-tool:has(> svg) > span:not(.sr-only) { @apply max-sm:sr-only; }
+  .ink-swatch { @apply size-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-transform hover:scale-110; background: var(--ink); background-clip: padding-box; }
+  .ink-swatch[aria-pressed="true"] { @apply border-fg ring-2 ring-surface; }
+  .ink-width { @apply grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg; }
+  .ink-width i { @apply block rounded-full bg-fg; width: calc(var(--w) * 1.6); height: calc(var(--w) * 1.6); }
+  .ink-width[aria-pressed="true"] { @apply bg-surface shadow-(--shadow-card); }
+  .ink-status { @apply ml-auto text-xs whitespace-nowrap text-fg-faint tabular-nums; }
+  .ink-status[data-state="error"] { @apply text-warn-fg; }
+  .ink-status[data-state="saving"] { @apply animate-pulse; }
+
+  /* Highlights: <mark class="hl hl-<colour>" data-hl> around text runs (overrides the browser/typography mark).
+     box-decoration-break keeps the padding and rounding on every line of a wrapped highlight. */
+  mark.hl {
+    @apply cursor-pointer rounded-sm px-0.5 text-inherit transition-[outline-color] duration-300;
+    background-color: var(--color-hl-yellow);
+    -webkit-box-decoration-break: clone; box-decoration-break: clone;
+    outline: 2px solid transparent; outline-offset: 1px;
+  }
+  mark.hl.hl-green { background-color: var(--color-hl-green); }
+  mark.hl.hl-pink { background-color: var(--color-hl-pink); }
+  mark.hl.hl-blue { background-color: var(--color-hl-blue); }
+  /* A highlight with a note (its comment is the title) gets a dotted underline as a hint. */
+  mark.hl[title] { @apply underline decoration-fg-muted decoration-dotted decoration-1 underline-offset-[3px]; }
+  /* Jumped to from the panel list: a brief pulse of the outline. */
+  mark.hl.is-flash { animation: hl-flash 1.5s ease-out; }
+  @keyframes hl-flash { 0%, 40% { outline-color: var(--color-brand); } 100% { outline-color: transparent; } }
+
+  /* Selection bar (choose a colour) and the popover on an existing highlight; positioned by annotations.js. */
+  .hl-bar { @apply absolute z-30 flex animate-rise items-center gap-1 rounded-full border border-line bg-surface p-1 shadow-(--shadow-pop); }
+  .hl-swatch { @apply size-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent ring-1 ring-line-strong ring-inset transition-transform hover:scale-110; }
+  .hl-swatch-yellow { background-color: var(--color-hl-yellow); }
+  .hl-swatch-green { background-color: var(--color-hl-green); }
+  .hl-swatch-pink { background-color: var(--color-hl-pink); }
+  .hl-swatch-blue { background-color: var(--color-hl-blue); }
+  .hl-swatch[aria-pressed="true"] { @apply border-fg; }
+  .hl-bar-note { @apply cursor-pointer rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-fg-muted hover:bg-surface-2 hover:text-fg; }
+  .hl-popover { @apply absolute z-30 w-72 max-w-[calc(100%-1rem)] animate-rise rounded-2xl border border-line bg-surface p-2 shadow-(--shadow-pop); }
+  .hl-popover-row { @apply flex items-center gap-1.5; }
+  .hl-popover-delete { @apply ml-auto cursor-pointer rounded-lg px-2.5 py-1 text-xs font-semibold text-fg-muted hover:bg-bad-soft hover:text-bad-fg; }
+  .hl-popover-close { @apply btn size-8 shrink-0 border-transparent bg-transparent p-0 text-lg leading-none text-fg-muted hover:bg-surface-2 hover:text-fg; }
+  .hl-comment { @apply mt-2 w-full resize-y text-sm; }
+
+  /* Notes tab: typed notes and the highlight list. */
+  .notes-editor { @apply input min-h-36 resize-y font-sans text-sm leading-relaxed; }
+  .notes-saved { @apply text-xs font-normal tracking-normal normal-case text-fg-faint; }
+  .notes-saved[data-state="error"] { @apply text-warn-fg; }
+  .notes-saved[data-state="saving"] { @apply animate-pulse; }
+  .notes-hint { @apply mt-5 flex items-start gap-2 px-1 text-xs leading-relaxed text-fg-faint; }
+  .hl-count:not(:empty) { @apply rounded-full bg-surface-2 px-2 py-px text-[0.7rem] font-semibold tracking-normal tabular-nums text-fg-muted; }
+  .hl-empty { @apply rounded-xl border border-dashed border-line-strong px-3 py-3 text-sm text-fg-muted; }
+  .hl-list { @apply m-0 flex list-none flex-col gap-1.5 p-0; }
+  .hl-item { @apply rounded-xl border border-line bg-surface-2/40 p-2 text-sm; }
+  .hl-item.is-orphaned { @apply border-dashed opacity-70; }
+  .hl-item-quote { @apply flex w-full cursor-pointer items-start gap-2 text-left text-fg hover:text-brand-fg; }
+  .hl-dot { @apply mt-1 size-2.5 shrink-0 rounded-full; }
+  /* The dark-theme fills are deep tints for text contrast; the dots keep the bright light-theme colours. */
+  .hl-dot-yellow { @apply bg-hl-yellow dark:bg-[#facc15]; }
+  .hl-dot-green { @apply bg-hl-green dark:bg-[#4ade80]; }
+  .hl-dot-pink { @apply bg-hl-pink dark:bg-[#f472b6]; }
+  .hl-dot-blue { @apply bg-hl-blue dark:bg-[#60a5fa]; }
+  .hl-item-text { @apply line-clamp-3; }
+  .hl-item-section { @apply mt-1 block text-[0.7rem] font-semibold uppercase tracking-wider text-fg-faint; }
+  .hl-item-orphan { @apply mt-1 block text-xs text-warn-fg; }
+  .hl-item-comment { @apply mt-1 mb-0 whitespace-pre-line text-xs text-fg-muted; }
+  .hl-item-delete { @apply mt-1 cursor-pointer text-xs text-fg-faint hover:text-bad; }
+
+  /* Sketch tab: a preview card that opens a full-screen pad. */
+  .sketch-open { @apply block w-full cursor-pointer rounded-2xl border border-line bg-surface p-2 text-left transition-colors hover:border-line-strong; }
+  .sketch-preview { @apply mx-auto block aspect-[5/7] w-full max-w-64 rounded-xl bg-surface-2/60; }
+  .sketch-preview.is-empty { @apply border-2 border-dashed border-line-strong bg-transparent; }
+  .sketch-open-label { @apply mt-2 flex items-center justify-center gap-1.5 text-sm font-semibold text-brand; }
+  .sketch-pager { @apply mt-2 mb-0 flex items-center justify-between text-xs text-fg-muted tabular-nums; }
+  /* The pad: the whole screen on an iPad (safe-area padded), toolbar on top, then a portrait 1000 x 1400 page
+     as large as fits, centred. .sketch-page is the pointer host, so it must not scroll or zoom. */
+  .sketch-dialog {
+    @apply m-0 h-dvh max-h-none w-dvw max-w-none overflow-hidden overscroll-contain border-0 bg-bg p-0 text-fg;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .sketch-dialog[open] { @apply flex flex-col; }
+  .sketch-dialog::backdrop { @apply bg-fg/40 backdrop-blur-sm; }
+  .sketch-toolbar { @apply flex shrink-0 flex-wrap items-center gap-2 border-b border-line bg-surface/90 p-2 backdrop-blur-xl; }
+  .sketch-page-label { @apply px-1.5 text-xs font-semibold whitespace-nowrap text-fg-muted tabular-nums; }
+  .sketch-status { @apply ml-auto text-xs whitespace-nowrap text-fg-faint tabular-nums; }
+  .sketch-status[data-state="error"] { @apply text-warn-fg; }
+  .sketch-status[data-state="saving"] { @apply animate-pulse; }
+  .sketch-close { @apply btn size-10 shrink-0 border-transparent bg-transparent p-0 text-fg-muted hover:bg-surface-2 hover:text-fg; }
+  .sketch-stage { @apply grid min-h-0 flex-1 place-items-center overflow-hidden p-3 sm:p-4; container-type: size; touch-action: none; }
+  .sketch-page {
+    @apply relative overflow-hidden rounded-2xl border border-line bg-surface shadow-(--shadow-lift);
+    aspect-ratio: 5 / 7;
+    width: min(100%, calc((100dvh - 8rem) * 5 / 7));
+    width: min(100cqw, 100cqh * 5 / 7);
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    /* Faint dot grid: 20 x 28 square cells, so it scales with the page like the strokes do. */
+    background-image: radial-gradient(circle, color-mix(in oklab, var(--color-fg) 16%, transparent) 1.2px, transparent 1.6px);
+    background-size: calc(100% / 20) calc(100% / 28);
+    background-position: center;
+  }
+  .sketch-page > svg { @apply absolute inset-0 block h-full w-full; }
 }
 
 /* Prev/next links at the bottom of lessons and subtopics. */

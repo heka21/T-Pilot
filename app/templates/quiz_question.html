@@ -1,8 +1,10 @@
 {% extends "base.html" if page else "_partial.html" %}
 {% from "_study_macros.html" import letter, correct_answer, workbook_link, details_block, option_card %}
-{% from "_macros.html" import page_header %}
+{% from "_macros.html" import page_header, text_size_control %}
 {% from "_icons.html" import icon %}
 {% block title %}{{ attempt.title or "Quiz" }} · {{ app_name }}{% endblock %}
+{# Full page only: _partial.html has no reading_tools block, so HTMX question swaps leave the top bar alone. #}
+{% block reading_tools %}{{ text_size_control() }}{% endblock %}
 {% block content %}
 {% if page %}
 {% call page_header(attempt.title or "Practice quiz", icon_name="quiz") %}
@@ -10,7 +12,7 @@
 {% endcall %}
 <div id="quiz-area">
 {% endif %}
-<article id="quiz-question" class="card mx-auto max-w-4xl animate-rise space-y-5 p-5 sm:p-7">
+<article id="quiz-question" class="card mx-auto max-w-[60rem] animate-rise space-y-5 p-5 sm:p-7">
   {# Progress header: question count, subtopic and a gradient bar. #}
   <div class="space-y-3">
     <div class="flex items-center justify-between gap-3">

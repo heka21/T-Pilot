@@ -1,10 +1,21 @@
 {% extends "base.html" %}
 {% from "_elements.html" import render_elements %}
-{% from "_macros.html" import prev_next, breadcrumb %}
+{% from "_macros.html" import prev_next, breadcrumb, text_size_control %}
 {% from "_icons.html" import icon %}
 {% block title %}{{ note.title if note else sub.title }} · {{ app_name }}{% endblock %}
+{% block reading_tools %}{{ text_size_control() }}{% endblock %}
+
+{# Section list, rendered inline above the article and again in the side panel. data-toc-link lets app.js mark
+   the section being read (aria-current) in both copies. #}
+{% macro toc_list(toc) -%}
+<ol class="toc-list">{% for h in toc %}<li><a href="#{{ h.id }}" data-toc-link="{{ h.id }}">{{ h.text }}</a></li>{% endfor %}</ol>
+{%- endmacro %}
+
 {% block content %}
-<div class="mx-auto max-w-4xl">
+{# Two regions: the article column (.lesson-main) and the tools panel (.lesson-panel). On wide screens the panel
+   docks beside the article (CSS `docked:` variant); otherwise it is a bottom sheet opened by the floating button. #}
+<div class="lesson-layout">
+<div class="lesson-main">
 {{ breadcrumb([("Lessons", "/lessons"), (sub.unit_code, "/syllabus/unit/" ~ sub.unit_code), (sub.number, subtopic_url(sub))]) }}
 
 {# Lesson header: unit badge, id and reading time above the title; the status control along the bottom. #}
@@ -32,14 +43,59 @@
 </details>
 
 {% if toc %}
-<details class="disclosure lesson-toc rise mb-6 border-brand/20 bg-linear-to-br from-brand-soft/40 to-surface" style="--i: 2" open>
+<details class="disclosure lesson-toc-inline rise mb-6 border-brand/20 bg-linear-to-br from-brand-soft/40 to-surface docked:hidden" style="--i: 2" open>
   <summary><span class="flex min-w-0 items-center gap-2.5"><span class="chip chip-sm chip-grad">{{ icon("compass") }}</span> <span>In this lesson</span> <span class="badge font-normal tabular-nums">{{ toc | length }} sections</span></span></summary>
-  <ol class="sm:grid sm:grid-cols-2 sm:gap-x-3">{% for h in toc %}<li class="min-w-0"><a href="#{{ h.id }}">{{ h.text }}</a></li>{% endfor %}</ol>
+  {{ toc_list(toc) }}
+</details>
+{% endif %}
+
+{% if equations %}
+{# Formulas registered for this lesson in content/equations.yaml; the full sheet is at /equations. #}
+<details class="disclosure lesson-formulas rise mb-6" style="--i: 2" open data-maths>
+  <summary><span class="flex min-w-0 items-center gap-2.5"><span class="chip chip-sm chip-info">{{ icon("sigma") }}</span> <span>Formulas in this lesson</span> <span class="badge font-normal tabular-nums">{{ equations | length }}</span></span></summary>
+  <ul class="formula-list">
+    {% for eq in equations %}
+    <li><a href="/equations#eq-{{ eq.id }}" class="formula-row" title="Open on the equation sheet">
+      <span class="formula-maths">\({{ eq.latex }}\)</span>
+      <span class="formula-name">{{ eq.name }}</span>
+      {{ icon("arrow-right", "size-4 shrink-0 text-fg-faint") }}
+    </a></li>
+    {% endfor %}
+  </ul>
+  <p class="mt-2 px-2 text-xs text-fg-muted"><a href="/equations{% if equations | length == 1 %}#eq-{{ equations[0].id }}{% endif %}">Open the equation sheet</a> for symbols, when to use each formula and rules of thumb.</p>
 </details>
 {% endif %}
 
 {% if note %}
-  <article class="note-body card rise p-6 sm:p-10" style="--i: 3">{{ note.html | safe }}</article>
+  {# Pen, highlighter and typed notes live in annotations.js. The toolbar is server-rendered but hidden until the
+     module mounts; strokes are anchored to the article's top-level blocks, so the layer sits over the whole card. #}
+  <div class="ink-host" data-widget="lesson-annotations" data-sid="{{ sub.id }}">
+    <div class="ink-toolbar" role="toolbar" aria-label="Pen and highlighter" hidden>
+      <div class="ink-group">
+        <button type="button" class="ink-tool" data-ink-tool="pen" aria-pressed="true" title="Pen (Apple Pencil draws, a finger scrolls)">{{ icon("pen", "size-4") }}<span>Pen</span></button>
+        <button type="button" class="ink-tool" data-ink-tool="erase" aria-pressed="false" title="Eraser: touch a stroke to remove it">{{ icon("close", "size-4") }}<span>Erase</span></button>
+      </div>
+      <div class="ink-group" aria-label="Ink colour">
+        {% for c in ["ink-1", "ink-2", "ink-3", "ink-4"] %}<button type="button" class="ink-swatch" style="--ink: var(--color-{{ c }})" data-ink-colour="{{ c }}" aria-pressed="{{ 'true' if loop.first else 'false' }}" aria-label="Colour {{ loop.index }}"></button>{% endfor %}
+      </div>
+      <div class="ink-group" aria-label="Pen width">
+        {% for w, label in [(2, "Fine"), (3, "Medium"), (5, "Thick")] %}<button type="button" class="ink-width" data-ink-width="{{ w }}" aria-pressed="{{ 'true' if w == 3 else 'false' }}" aria-label="{{ label }}"><i style="--w: {{ w }}px"></i></button>{% endfor %}
+      </div>
+      <div class="ink-group">
+        <button type="button" class="ink-tool" data-ink-undo disabled title="Undo (⌘Z)">{{ icon("arrow-left", "size-4") }}<span class="sr-only">Undo</span></button>
+        <button type="button" class="ink-tool" data-ink-redo disabled title="Redo (⇧⌘Z)">{{ icon("arrow-right", "size-4") }}<span class="sr-only">Redo</span></button>
+        <button type="button" class="ink-tool" data-ink-clear disabled title="Remove every stroke on this lesson"><span>Clear</span></button>
+      </div>
+      <div class="ink-group ink-group-modes">
+        <button type="button" class="ink-tool" data-ink-pen-mode aria-pressed="false" title="Let the Pencil tap links and move sliders instead of drawing"><span>Pen selects</span></button>
+        <button type="button" class="ink-tool" data-ink-draw-mode aria-pressed="false" title="Draw with a finger or the mouse too"><span>Finger draws</span></button>
+      </div>
+      <span class="ink-status" aria-live="polite"></span>
+      <span class="ink-orphans text-xs text-warn-fg" hidden></span>
+    </div>
+    <article class="note-body card rise p-6 sm:p-10" style="--i: 3" data-read-target data-lesson-article>{{ note.html | safe }}</article>
+    {% if annotations %}<script type="application/json" data-annotations>{{ annotations | tojson }}</script>{% endif %}
+  </div>
   {% if note.references %}
     <section class="card-sunken mt-6">
       <p class="eyebrow mb-2 flex items-center gap-1.5">{{ icon("reference", "size-3.5") }} References</p>
@@ -84,6 +140,35 @@
 </section>
 
 {{ prev_next(prev, next, note_url) }}
+</div>{# /.lesson-main #}
 
-</div>
+{% if note %}
+{# Tools panel: Contents (section list + how far you have read), Notes (typed notes and highlights) and
+   Sketch (Pencil pad). The two study tabs are filled by the annotation partials when present. #}
+<aside id="lesson-panel" class="lesson-panel" data-lesson-panel aria-label="Lesson tools">
+  <div class="lesson-panel-head" role="tablist" aria-label="Lesson tools">
+    {% for tab, label, name in [("contents", "Contents", "compass"), ("notes", "Notes", "pen"), ("sketch", "Sketch", "sparkle")] %}
+    <button type="button" role="tab" id="lesson-tab-{{ tab }}" class="lesson-panel-tab" data-panel-tab-btn="{{ tab }}"
+            aria-controls="lesson-pane-{{ tab }}" aria-selected="{{ 'true' if loop.first else 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ icon(name) }}<span>{{ label }}</span></button>
+    {% endfor %}
+    <button type="button" class="lesson-panel-close" data-panel-close aria-label="Close panel">{{ icon("close", "size-5") }}</button>
+  </div>
+  <div class="lesson-panel-body">
+    <div id="lesson-pane-contents" role="tabpanel" aria-labelledby="lesson-tab-contents" data-panel-tab="contents">
+      <p class="eyebrow mb-2 flex items-center justify-between gap-3 px-2">In this lesson <span class="font-mono tabular-nums text-fg-faint" data-read-pct hidden>0%</span></p>
+      {% if toc %}{{ toc_list(toc) }}{% else %}<p class="px-2 text-sm text-fg-muted">This lesson has no section headings.</p>{% endif %}
+    </div>
+    <div id="lesson-pane-notes" role="tabpanel" aria-labelledby="lesson-tab-notes" data-panel-tab="notes" hidden>
+      {% include "_panel_notes.html" ignore missing %}
+    </div>
+    <div id="lesson-pane-sketch" role="tabpanel" aria-labelledby="lesson-tab-sketch" data-panel-tab="sketch" hidden>
+      {% include "_panel_sketch.html" ignore missing %}
+    </div>
+  </div>
+</aside>
+<div class="lesson-panel-backdrop" data-panel-close></div>
+<button type="button" class="lesson-panel-fab" data-panel-open aria-controls="lesson-panel" aria-expanded="false">{{ icon("pen") }}<span>Notes</span></button>
+{% endif %}
+
+</div>{# /.lesson-layout #}
 {% endblock %}
