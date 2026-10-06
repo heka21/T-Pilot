@@ -219,7 +219,7 @@
 
   /* Reading measure: the lesson/reference/quiz column width at the default text size. It scales with the
      reader's text size (--content-scale, set per <html data-font-size>) so lines stay ~95 characters. */
-  :root { --reading-measure: 56rem; --content-scale: 1; --measure: calc(var(--reading-measure) * var(--content-scale)); }
+  :root { --reading-measure: 60rem; --content-scale: 1; --measure: calc(var(--reading-measure) * var(--content-scale)); }
   /* Reader's text size (the top-bar "Aa" menu, app.js; absent = M). Only `content-scaled` regions use it. */
   html[data-font-size="s"] { --content-scale: 0.9; }
   html[data-font-size="l"] { --content-scale: 1.125; }
@@ -579,6 +579,10 @@
   .toc-list a:hover::before, .toc-list a[aria-current="true"]::before { @apply bg-grad-brand text-on-brand; }
   .toc-list a[aria-current="true"] { @apply bg-brand-soft/60 font-semibold text-brand-fg; }
   .lesson-toc-inline .toc-list { @apply sm:grid sm:grid-cols-2 sm:gap-x-3; }
+  /* In the side panel the list is a compact column: smaller type and tiles so section titles fit on one line. */
+  .lesson-panel .toc-list { @apply text-[0.8125rem] leading-snug; }
+  .lesson-panel .toc-list a { @apply gap-2 px-1.5 py-1; }
+  .lesson-panel .toc-list a::before { @apply size-5 rounded text-[0.65rem]; }
 
   /* "Formulas in this lesson" (note.html): rows of maths + name linking to the equation sheet. */
   .lesson-formulas { @apply border-info/25 bg-linear-to-br from-info-soft/30 to-surface; }
@@ -589,8 +593,10 @@
 
   /* Lesson page layout: one centred column at the reading measure; when the panel docks (see @custom-variant
      docked) it becomes article + 18rem panel. */
-  .lesson-layout { @apply mx-auto w-full max-w-(--measure) docked:grid docked:max-w-none docked:grid-cols-[minmax(0,var(--measure))_18rem] docked:items-start docked:justify-center docked:gap-8; }
-  .lesson-main { @apply min-w-0; }
+  .lesson-layout { @apply mx-auto w-full max-w-(--measure) docked:grid docked:max-w-none docked:grid-cols-[minmax(0,1fr)_20rem] docked:items-start docked:gap-6; }
+  /* Docked, the article takes whatever width the panel leaves (capped well past the single-column measure
+     so very wide screens do not stretch lines past ~130 characters). */
+  .lesson-main { @apply min-w-0 docked:mx-auto docked:w-full docked:max-w-[calc(var(--measure)*1.3)]; }
   /* The panel: a bottom sheet (slides up when .is-open) until it docks as a sticky card beside the article. */
   .lesson-panel {
     @apply invisible fixed inset-x-0 bottom-0 z-40 flex max-h-[min(80dvh,36rem)] translate-y-full flex-col rounded-t-3xl border border-line bg-surface shadow-(--shadow-pop)
