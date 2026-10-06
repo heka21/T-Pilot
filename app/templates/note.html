@@ -69,7 +69,7 @@
 {% if note %}
   {# Pen, highlighter and typed notes live in annotations.js. The toolbar is server-rendered but hidden until the
      module mounts; strokes are anchored to the article's top-level blocks, so the layer sits over the whole card. #}
-  <div class="ink-host" data-widget="lesson-annotations" data-sid="{{ sub.id }}">
+  <div class="ink-host rise" style="--i: 3" data-widget="lesson-annotations" data-sid="{{ sub.id }}">
     <div class="ink-toolbar" role="toolbar" aria-label="Pen and highlighter" hidden>
       <div class="ink-group">
         <button type="button" class="ink-tool" data-ink-tool="pen" aria-pressed="true" title="Pen (Apple Pencil draws, a finger scrolls)">{{ icon("pen", "size-4") }}<span>Pen</span></button>
@@ -93,7 +93,7 @@
       <span class="ink-status" aria-live="polite"></span>
       <span class="ink-orphans text-xs text-warn-fg" hidden></span>
     </div>
-    <article class="note-body card rise p-6 sm:p-10" style="--i: 3" data-read-target data-lesson-article>{{ note.html | safe }}</article>
+    <article class="note-body p-6 sm:p-10" data-read-target data-lesson-article>{{ note.html | safe }}</article>
     {% if annotations %}<script type="application/json" data-annotations>{{ annotations | tojson }}</script>{% endif %}
   </div>
   {% if note.references %}
