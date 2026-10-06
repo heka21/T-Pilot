@@ -60,9 +60,11 @@ def forces_in_a_climb() -> Canvas:
     c.add(line(CX, CY, acx, acy, "info", SECOND, DASH, arrow_end=True))
     c.add(line(acx, acy, CX, CY + W, "fg-faint", THIN, DASH))
     c.add(text(acx + 8, acy + 4, "W cos γ", 13, "start", "info", weight=600))
-    # lift perpendicular to the path, equal to W cos g
-    lx, ly = CX - s * W * co, CY - co * W * co
-    c.add(arrow(CX, CY, lx, ly, "brand", MAIN))
+    # lift perpendicular to the path, equal to W cos g, drawn from the high wing (local y -21.5, straight above the CG)
+    wr = 21.5 * 1.5
+    wx_, wy_ = CX - s * wr, CY - co * wr
+    lx, ly = wx_ - s * W * co, wy_ - co * W * co
+    c.add(arrow(wx_, wy_, lx, ly, "brand", MAIN))
     c.add(text(lx - 10, ly + 8, "Lift = W cos γ", 14, "end", "brand", weight=700))
     # drag rearward from behind the tail, then W sin g continuing rearward; thrust forward equal to both
     D = 64
@@ -83,8 +85,8 @@ def forces_in_a_climb() -> Canvas:
     c.add(num(412, 340, "Thrust = Drag + W sin γ", 13, "start", "brand-fg", weight=600))
     c.add(num(412, 360, "Lift   = W cos γ  (< W)", 13, "start", "brand-fg", weight=600))
     c.add(text(412, 384, "Excess thrust (T − D) sets the angle", 12, "start", "brand-fg"))
-    c.add(multiline(20, 32, ["Weight still acts straight down, but part of it", "now pulls back along the path like extra drag."], 13, "start", "fg-muted"))
-    c.add(text(20, 404, "Angle exaggerated for clarity.", 11, "start", "fg-faint"))
+    c.add(multiline(20, 356, ["Weight still acts straight down, but part of it", "now pulls back along the path like extra drag."], 13, "start", "fg-muted"))
+    c.add(text(20, 406, "Angle exaggerated for clarity.", 11, "start", "fg-faint"))
     return c
 
 
@@ -267,16 +269,16 @@ def four_forces_level_flight() -> Canvas:
     CX, CY = 300, 200
     c.add(plane_side(CX, CY, 2.4))
     L = 130
-    cp = CX + 18
-    c.add(arrow(cp, CY - 10, cp, CY - 10 - L, "brand", MAIN))
-    c.add(text(cp + 12, CY - L + 2, "Lift", 15, "start", "brand", weight=700))
-    c.add(text(cp + 12, CY - L + 18, "through the CP, at right angles to the airflow", 12, "start", "brand"))
+    cp, wy = CX - 10, CY - 48          # centre of pressure on the high wing, a little behind the CG (local x 0)
+    c.add(arrow(cp, wy, cp, wy - L, "brand", MAIN))
+    c.add(text(cp + 12, wy - L + 20, "Lift", 15, "start", "brand", weight=700))
+    c.add(text(cp + 12, wy - L + 36, "through the CP, at right angles to the airflow", 12, "start", "brand"))
     c.add(arrow(CX, CY, CX, CY + L, "info", MAIN))
     c.add(text(CX - 12, CY + L - 14, "Weight", 15, "end", "info", weight=700))
     c.add(text(CX - 12, CY + L + 2, "through the CG, vertically down", 12, "end", "info"))
     c.add(circle(CX, CY, 5, "surface", "fg", 2))
-    c.add(text(CX - 10, CY + 34, "CG", 12, "end", "fg", weight=700))
-    c.add(circle(cp, CY - 10, 4, "brand", None))
+    c.add(text(CX - 9, CY + 5, "CG", 12, "end", "fg", weight=700))
+    c.add(circle(cp, wy, 4, "brand", None))
     # thrust from the propeller forward, drag rearward
     T = 110
     c.add(arrow(CX + 138, CY, CX + 138 + T, CY, "fg", MAIN))
@@ -292,7 +294,7 @@ def four_forces_level_flight() -> Canvas:
     c.add(text(412, 322, "Steady, straight and level", 13, "start", "brand-fg", weight=700))
     c.add(num(412, 344, "Lift   = Weight", 13, "start", "brand-fg", weight=600))
     c.add(num(412, 364, "Thrust = Drag", 13, "start", "brand-fg", weight=600))
-    c.add(multiline(20, 32, ["CP behind CG: lift and weight form a nose-down", "couple; the tailplane balances it."], 12, "start", "fg-muted"))
+    c.add(multiline(20, 362, ["CP behind CG: lift and weight form a nose-down", "couple; the tailplane balances it."], 12, "start", "fg-muted"))
     return c
 
 

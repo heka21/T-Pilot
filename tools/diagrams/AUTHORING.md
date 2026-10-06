@@ -56,8 +56,11 @@ dark mode, intuitive, and a little bit fun**. Read, in this order, before writin
   `<strong>What to notice.</strong>`, one or two `.widget-try` prompts with the answer worked out.
 - KaTeX: only for real maths (formulas, worked calculations); leave ordinary prose and tables alone. Escape
   backslashes correctly inside Python strings if you generate Markdown.
-- Reuse the shared characters (`plane_side`, `plane_top`, `plane_rear`, `aerofoil`, `runway`) so the same aeroplane
-  appears everywhere. Charts: direct labels on the curves, units in axis titles, highlighted exam values with
+- Reuse the shared characters (`plane_side`, `plane_top`, `plane_rear`, `airliner_rear`, `aerofoil`, `runway`) so the
+  same aeroplane appears everywhere. The aeroplane is a Cessna 152 (high wing on the cabin roof, mains just behind the
+  CG): lift arrows start at the wing (local y ≈ −21.5), wheels touch at local y 19.5 (side) or 17 (rear), and the
+  exact geometry is in `content/diagrams/README.md` → Recurring characters. In a widget, paste the output of
+  `python -m tools.diagrams.plane` instead of drawing an aeroplane by hand. Charts: direct labels on the curves, units in axis titles, highlighted exam values with
   callouts, no legends unless unavoidable.
 - Keep each file under the size limits (40 KB SVG, 80 KB widget). Diagram width is always 640; make it taller if
   needed.

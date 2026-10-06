@@ -450,8 +450,8 @@ def height_altitude_elevation() -> Canvas:
     c.add(rect(150, y(300) - 4, 120, 6, "fg-muted", None, rx=1))
     c.add(text(210, y(300) + 22, "aerodrome", 12, "middle", "fg-muted", weight=600))
     # aeroplanes at 1300 ft
-    c.add(plane_side(210, y(1300) - 4, 0.6))
-    c.add(plane_side(470, y(1300) - 4, 0.6, "fg-muted"))
+    c.add(plane_side(210, y(1300), 0.6))
+    c.add(plane_side(470, y(1300), 0.6, "fg-muted"))
     c.add(line(80, y(1300), 600, y(1300), "line-strong", THIN, DASH))
     c.add(text(600, y(1300) + 18, "same altitude", 12, "end", "fg-muted"))
     # dimensions
@@ -461,9 +461,9 @@ def height_altitude_elevation() -> Canvas:
     c.add(dim_line(500, y(900), y(1300), "bad", ["only 400 ft", "above the ridge"], "right", 12))
     c.add(num(470, y(900) + 22, "ridge 900 ft", 12, "middle", "fg-muted", weight=600))
     # formula
-    c.add(rect(330, 20, 290, 52, "brand-soft", None, rx=8))
-    c.add(text(344, 42, "Altitude = elevation + height", 14, "start", "brand-fg", weight=700))
-    c.add(num(344, 62, "1300 = 300 + 1000", 13, "start", "brand-fg"))
+    c.add(rect(330, 12, 290, 52, "brand-soft", None, rx=8))
+    c.add(text(344, 34, "Altitude = elevation + height", 14, "start", "brand-fg", weight=700))
+    c.add(num(344, 54, "1300 = 300 + 1000", 13, "start", "brand-fg"))
     return c
 
 

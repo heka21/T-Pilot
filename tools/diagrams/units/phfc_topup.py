@@ -412,8 +412,8 @@ def constant_bearing_collision() -> Canvas:
     c.add(text(x0 + 204, 176, "horizon", 11, "end", "fg-muted"))
     for k, sc in enumerate((0.7, 0.45, 0.25)):
         c.add(plane_rear(ox, oy, sc, color="bad", fill="bad-soft" if k == 0 else "surface"))
-    c.add(text(x0 + 16, 190, "same spot,", 11, "start", "bad", weight=600))
-    c.add(text(x0 + 16, 204, "just bigger", 11, "start", "bad", weight=600))
+    c.add(text(x0 + 16, 192, "same spot,", 11, "start", "bad", weight=600))
+    c.add(text(x0 + 16, 205, "just bigger", 11, "start", "bad", weight=600))
     c.add(multiline(x0, 236, ["It stays in the same spot", "and just grows, then", "\"blossoms\" in the last", "few seconds."], 13, "start", "fg", 1.35, weight=600))
     c.add(multiline(x0, 318, ["No movement means your", "peripheral vision ignores it.", "Traffic sliding across the", "screen will pass ahead or behind."], 12, "start", "fg-muted", 1.35))
     return c

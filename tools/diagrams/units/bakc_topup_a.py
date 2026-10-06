@@ -324,8 +324,8 @@ def newtons_laws_in_flight() -> Canvas:
     c.add(text(28, 70, "1  Balanced forces: no change", 14, "start", "fg", weight=700))
     PX, PY = 164, 150
     c.add(plane_side(PX, PY, 1.1))
-    c.add(arrow(PX + 6, PY - 8, PX + 6, PY - 62, "fg", MAIN), text(PX + 14, PY - 50, "Lift", 12, "start", "fg", weight=600))
-    c.add(arrow(PX - 14, PY + 10, PX - 14, PY + 64, "fg", MAIN), text(PX - 6, PY + 58, "Weight", 12, "start", "fg", weight=600))
+    c.add(arrow(PX - 2, PY - 24, PX - 2, PY - 66, "fg", MAIN), text(PX + 6, PY - 54, "Lift", 12, "start", "fg", weight=600))    # from the high wing
+    c.add(arrow(PX + 1, PY + 8, PX + 1, PY + 64, "fg", MAIN), text(PX + 9, PY + 58, "Weight", 12, "start", "fg", weight=600))
     c.add(arrow(PX + 66, PY, PX + 116, PY, "fg", MAIN), text(PX + 92, PY - 10, "Thrust", 12, "middle", "fg", weight=600))
     c.add(arrow(PX - 70, PY, PX - 120, PY, "fg-muted", MAIN), text(PX - 96, PY - 10, "Drag", 12, "middle", "fg-muted", weight=600))
     c.add(text(28, 232, "No net force: steady speed and height", 12, "start", "brand", weight=700))
@@ -492,8 +492,9 @@ def induced_drag_downwash() -> Canvas:
 def parasite_drag_types() -> Canvas:
     c = Canvas("The three parts of parasite drag",
                "Form drag: a flat plate leaves a large low-pressure wake, a streamlined shape a small one. Skin friction drag: the air touching the "
-               "skin is brought to rest and the boundary layer above it is sheared; a rough surface thickens it. Interference drag: where the wing "
-               "meets the fuselage the two flows disturb each other, and a fillet smooths the junction. All three grow with the square of the speed.",
+               "skin is brought to rest and the boundary layer above it is sheared; a rough surface thickens it. Interference drag: front view of a "
+               "high strut-braced wing; where the wing meets the cabin roof and where each strut meets the wing, the flows disturb each other, and "
+               "a fillet smooths the wing root. All three grow with the square of the speed.",
                height=420, prefix="pdt")
     c.add(text(20, 30, "Parasite drag: the cost of pushing the aeroplane through the air", 15, "start", "fg", weight=700))
     W = 196
@@ -539,23 +540,27 @@ def parasite_drag_types() -> Canvas:
     c.add(multiline(x0 + 38, SY - 60, ["boundary", "layer"], 12, "start", "brand", weight=700))
     c.add(text(x0 + W - 18, SY + 50, "air touching the skin is at rest", 11, "end", "fg-muted"))
     c.add(text(x0 + W / 2, 350, "a clean, polished wing is faster", 11, "middle", "fg-muted"))
-    # --- interference: front view of wing-fuselage junction
+    # --- interference: front view of a high strut-braced wing (the Cessna 152 is the textbook case)
     x0 = 14 + 2 * (W + 10)
-    JX, JY = x0 + 98, 190
-    c.add(circle(JX, JY, 34, "surface", "fg", MAIN))
-    c.add(path(f"M{x0 + 8} {JY + 14} L{JX - 30} {JY + 18} L{JX - 30} {JY + 26} L{x0 + 8} {JY + 22} Z", "fg", "surface", MAIN))
-    c.add(path(f"M{x0 + W - 8} {JY + 14} L{JX + 30} {JY + 18} L{JX + 30} {JY + 26} L{x0 + W - 8} {JY + 22} Z", "fg", "surface", MAIN))
-    for sx in (JX - 33, JX + 33):
-        c.add(circle(sx, JY + 20, 13, "bad", None, fill_opacity=0.2))
-        c.add(path(arc_path(sx, JY + 20, 7, 20, 320), "bad", None, THIN))
-    c.add(text(JX, JY - 46, "front view", 11, "middle", "fg-faint"))
-    c.add(text(JX, JY + 56, "flows meet and disturb", 12, "middle", "bad", weight=600))
-    c.add(text(JX, JY + 72, "each other at the junction", 12, "middle", "bad"))
-    FY = 300
-    c.add(circle(JX, FY, 26, "surface", "fg", MAIN))
-    c.add(path(f"M{x0 + 20} {FY + 10} L{JX - 34} {FY + 13} Q{JX - 24} {FY + 13} {JX - 22} {FY + 4} L{JX - 22} {FY + 22} L{x0 + 20} {FY + 17} Z", "fg", "surface", MAIN))
-    c.add(path(f"M{x0 + W - 20} {FY + 10} L{JX + 34} {FY + 13} Q{JX + 24} {FY + 13} {JX + 22} {FY + 4} L{JX + 22} {FY + 22} L{x0 + W - 20} {FY + 17} Z", "fg", "surface", MAIN))
-    c.add(text(JX, FY + 46, "fillets smooth the joint", 11, "middle", "ok-fg", weight=600))
+    JX, JY = x0 + 98, 196
+    c.add(circle(JX, JY, 30, "surface", "fg", MAIN))
+    for sg in (-1, 1):
+        c.add(line(JX + sg * 24, JY + 18, JX + sg * 64, JY - 30, "fg", SECOND))           # strut
+    c.add(rect(x0 + 8, JY - 38, W - 16, 8, "surface", "fg", MAIN, rx=2))                  # wing across the cabin roof
+    for zx, zr in ((JX - 22, 11), (JX + 22, 11), (JX - 62, 10), (JX + 62, 10)):          # root corners, strut-wing junctions
+        c.add(circle(zx, JY - 26, zr, "bad", None, fill_opacity=0.2))
+        c.add(path(arc_path(zx, JY - 26, zr * 0.55, 20, 320), "bad", None, THIN))
+    c.add(text(JX, JY - 52, "front view", 11, "middle", "fg-faint"))
+    c.add(text(JX, JY + 50, "flows meet and disturb", 12, "middle", "bad", weight=600))
+    c.add(text(JX, JY + 66, "each other at every junction", 12, "middle", "bad"))
+    FY = 312
+    c.add(circle(JX, FY, 24, "surface", "fg", MAIN))
+    for sg in (-1, 1):   # fillets fill the corners between the wing's underside and the round cabin
+        curve = f"M{JX + sg * 38} {FY - 24} Q{JX + sg * 24} {FY - 24} {fmt(JX + sg * 22.6)} {FY - 8}"   # ends on the circle
+        c.add(path(f"{curve} A24 24 0 0 {1 if sg < 0 else 0} {JX} {FY - 24} Z", None, "surface"))
+        c.add(path(curve, "fg", None, MAIN))
+    c.add(rect(x0 + 20, FY - 31, W - 40, 7, "surface", "fg", MAIN, rx=2))
+    c.add(text(JX, FY + 42, "fillets smooth the joint", 11, "middle", "ok-fg", weight=600))
     c.add(rect(14, 374, 612, 36, "brand-soft", None, rx=8))
     c.add(text(320, 397, "All three grow with speed squared: twice the speed, four times the parasite drag", 13, "middle", "brand-fg", weight=700))
     return c

@@ -849,8 +849,8 @@ def survival_priorities() -> Canvas:
     c.add(rect(gx0, 46, 334, 250, "warn-soft", None, rx=12, fill_opacity=0.5))
     c.add(circle(598, 70, 13, "warn", None, fill_opacity=0.8))
     c.add(path(f"M{gx0} {gy} Q{gx0 + 160} {gy - 10} {gx0 + 334} {gy} L{gx0 + 334} 296 L{gx0} 296 Z", None, "surface-2"))
-    c.add(plane_side(430, gy - 18, 1.1))
-    c.add(ellipse(420, gy - 4, 52, 6, "fg-faint", None, fill_opacity=0.35))
+    c.add(ellipse(426, gy - 4, 44, 5, "fg-faint", None, fill_opacity=0.35))   # the high wing's shade
+    c.add(plane_side(430, gy - 26, 1.1))                                        # wheels on the ground (local y 19.5)
     c.add(text(420, gy + 26, "shade under the wing", 11, "middle", "fg-muted"))
     c.add(path(f"M{gx0 + 254} {gy - 2} L{gx0 + 274} {gy + 26} L{gx0 + 294} {gy - 2}", "bad", None, 5))
     c.add(text(gx0 + 274, gy + 40, "\"V\" laid out", 11, "middle", "bad"))
@@ -858,8 +858,8 @@ def survival_priorities() -> Canvas:
     c.add(multiline(gx0 + 16, 98, ["easier to see from the air than a person;", "gives shade; the search follows your", "notified route (SARTIME or flight plan)"], 11, "start", "fg"))
     c.add(path(f"M{gx0 + 26} {gy - 4} q-10 -20 4 -36 q14 -16 0 -36", "fg-muted", None, 3, opacity=0.7))
     c.add(path(f"M{gx0 + 18} {gy} l8 -12 l8 12 z", "warn", "warn", THIN))
-    c.add(text(gx0 + 40, gy - 66, "smoke by day,", 11, "start", "fg-muted"))
-    c.add(text(gx0 + 40, gy - 53, "flame by night", 11, "start", "fg-muted"))
+    c.add(text(gx0 + 40, gy - 86, "smoke by day,", 11, "start", "fg-muted"))
+    c.add(text(gx0 + 40, gy - 73, "flame by night", 11, "start", "fg-muted"))
     # signal codes
     y = 320
     c.add(text(16, y, "Ground-to-air signals (see ERSA): make them large and contrasting", 13, "start", "fg", weight=700))

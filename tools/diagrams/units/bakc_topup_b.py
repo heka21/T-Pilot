@@ -511,25 +511,31 @@ def gyro_rigidity_and_precession() -> Canvas:
     c.add(text(ox + 150, 42, "Rigidity in space", 16, "middle", "fg", weight=700))
     CX, CY = ox + 150, 180
     def rear(bank: float, colour: str, fill: str | None, dash: str | None = None) -> str:
-        """Rear view in absolute units: wings, fin and fuselage, rolled by `bank` degrees (left wing down)."""
+        """The Cessna 152 from behind in absolute units, rolled by `bank` degrees (left wing down): high wing across the
+        cabin roof, struts to the lower fuselage, low tailplane, fin, main wheels. The rotor sits in the cabin."""
         def rot(pts):
             a_ = math.radians(-bank)
             return [(CX + x * math.cos(a_) - y * math.sin(a_), CY + x * math.sin(a_) + y * math.cos(a_)) for x, y in pts]
-        wing = rot([(-120, -2), (-20, 6), (-20, 16), (-120, 8)])
-        wing2 = rot([(120, -2), (20, 6), (20, 16), (120, 8)])
-        fin = rot([(-4, -20), (0, -66), (7, -66), (7, -20)])
-        tail = rot([(-40, -14), (40, -14), (40, -6), (-40, -6)])
-        out = "".join(polygon(p_, fill, colour, SECOND) if not dash else path("M" + " L".join(f"{fmt(x)} {fmt(y)}" for x, y in p_) + " Z", colour, None, SECOND, dash=dash)
-                      for p_ in (fin, tail, wing, wing2))
-        if not dash:
-            out += circle(CX, CY, 21, fill, colour, SECOND)
+        def shape(pts, closed: bool = True, width: float = SECOND) -> str:
+            d = "M" + " L".join(f"{fmt(x)} {fmt(y)}" for x, y in rot(pts)) + (" Z" if closed else "")
+            return path(d, colour, None if dash or not closed else fill, width, dash=dash)
+        wing = [(-120, -52), (0, -49), (120, -52), (120, -44), (0, -41), (-120, -44)]
+        struts = [[(-12, 14), (-66, -44)], [(12, 14), (66, -44)]]
+        legs = [[(-9, 16), (-22, 28)], [(9, 16), (22, 28)]]
+        cabin = [(-14, -37), (-10, -41), (10, -41), (14, -37), (14, 14), (10, 18), (-10, 18), (-14, 14)]
+        tail = [(-36, 4), (36, 4), (36, 11), (-36, 11)]
+        fin = [(-3, -41), (-1, -76), (5, -76), (6, -41)]
+        out = shape(wing) + "".join(shape(s_, False) for s_ in struts + legs) + shape(cabin) + shape(tail) + shape(fin)
+        for wx in (-22, 22):
+            (x_, y_), = rot([(wx, 34)])
+            out += circle(x_, y_, 7, None if dash else fill, colour, SECOND, dash=dash)
         return out
     c.add(rear(0, "fg-faint", None, DASH))
     c.add(rear(25, "fg-muted", "surface"))
     c.add(line(CX, CY - 78, CX, CY + 78, "brand", 2.5, dash="6 4"))
     c.add(ellipse(CX, CY, 34, 9, "brand-soft", "brand", MAIN))
     c.add(path(f"M{CX - 30} {CY + 14} Q{CX} {CY + 26} {CX + 30} {CY + 14}", "brand", None, SECOND, arrow_end=True))
-    c.add(text(CX + 8, CY - 84, "spin axis stays put", 12, "start", "brand", weight=700))
+    c.add(text(CX - 8, CY - 84, "spin axis stays put", 12, "end", "brand", weight=700))
     c.add(text(ox + 22, 290, "The aeroplane rolls 25° around the", 12, "start", "fg"))
     c.add(text(ox + 22, 306, "rotor; the rotor does not follow.", 12, "start", "fg"))
     c.add(text(ox + 22, 326, "Used by: attitude indicator, DI", 12, "start", "fg-muted", weight=600))
@@ -778,17 +784,18 @@ def tail_download_cg() -> Canvas:
         fwd = k == 0
         c.add(panel(12, oy, 616, 190))
         c.add(text(616, oy + 26, "CG forward" if fwd else "CG aft", 16, "end", "fg", weight=700))
-        PY = oy + 98
+        PY = oy + 108
         c.add(plane_side(200, PY, 2.0, color="fg-faint", gear=False))
-        CL = 216  # centre of lift, about a quarter of the way back from the wing's leading edge
+        CL = 205  # centre of lift, about a quarter of the way back from the wing's leading edge (local x 8)
         CG = CL + (34 if fwd else 10)
         TAIL = 96
-        W_ = 46
-        td = 26 if fwd else 8
-        # lift = weight + download
+        W_ = 36
+        td = 20 if fwd else 6
+        # lift = weight + download, from the high wing (local y -21.5)
         L = W_ + td
-        c.add(arrow(CL, PY - 4, CL, PY - 4 - L, "brand", 2.5))
-        c.add(text(CL - 8, PY - 4 - L + 10, "lift", 13, "end", "brand", weight=700))
+        WY = PY - 43
+        c.add(arrow(CL, WY, CL, WY - L, "brand", 2.5))
+        c.add(text(CL - 8, WY - L + 10, "lift", 13, "end", "brand", weight=700))
         # weight from CG
         c.add(arrow(CG, PY + 6, CG, PY + 6 + W_, "fg", 2.5))
         c.add(circle(CG, PY, 6, "surface", "fg", MAIN), line(CG - 6, PY, CG + 6, PY, "fg", THIN), line(CG, PY - 6, CG, PY + 6, "fg", THIN))
@@ -797,11 +804,11 @@ def tail_download_cg() -> Canvas:
         c.add(arrow(TAIL, PY + 2, TAIL, PY + 2 + td * 1.4, "info", 2.5))
         c.add(text(TAIL - 8, PY + 2 + td * 1.4 + 12, "tail download", 12, "middle", "info", weight=700))
         # tail arm
-        ya = PY + 66
+        ya = PY + 54
         c.add(line(TAIL, ya, CG, ya, "info", THIN), line(TAIL, ya - 4, TAIL, ya + 4, "info", THIN), line(CG, ya - 4, CG, ya + 4, "info", THIN))
         c.add(text((TAIL + CG) / 2 + 10, ya + 16, "tail arm: " + ("long" if fwd else "shorter"), 11, "middle", "info", weight=600))
-        c.add(text(330, PY - 60, "lift = weight + download", 12, "start", "brand", weight=600))
-        c.add(text(330, PY - 44, "download " + ("large" if fwd else "small"), 12, "start", "info", weight=600))
+        c.add(text(330, oy + 38, "lift = weight + download", 12, "start", "brand", weight=600))
+        c.add(text(330, oy + 54, "download " + ("large" if fwd else "small"), 12, "start", "info", weight=600))
         # verdict
         X = 330
         lines = (["Very stable, heavy in pitch", "Higher stall speed", "More trim drag", "May lack elevator to flare"] if fwd else

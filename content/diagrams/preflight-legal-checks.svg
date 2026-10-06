@@ -4,43 +4,43 @@
 <desc>Plan view of the aeroplane with eight numbered items: 1 locking devices removed (control and gust locks, pitot cover, engine blanks); 2 doors and hatches secured; 3 tank caps fitted and secure; 4 frost, ice and snow removed from wings, tail and control surfaces; 5 flight controls full, free and correct; 6 instruments checked; 7 the empty control seat's harness secured before solo; 8 fuel drained at each drain point for water and contamination, at the first flight of the day and after refuelling, once the fuel has settled.</desc>
 <defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
 <text x="320" y="28" font-size="15" text-anchor="middle" fill="var(--color-fg)" font-weight="700">Behind the checklist: eight items the law requires</text>
-<g transform="translate(336 214) rotate(0) scale(2.3)"><path d="M12 -4 L4 -50 L-6 -50 L-8 -4 Z M12 4 L4 50 L-6 50 L-8 4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-24 -2 L-28 -18 L-34 -18 L-34 -2 Z M-24 2 L-28 18 L-34 18 L-34 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M38 0 C38 -4 32 -5 26 -5 L-24 -3 L-34 -2 L-34 2 L-24 3 L26 5 C32 5 38 4 38 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M38 -2 L43 0 L38 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="41" y1="-10" x2="41" y2="10" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+<g transform="translate(336 214) rotate(0) scale(2.3)"><path d="M-23 -1.5 L-27 -15 L-32 -15 L-32 -2 Z M-23 1.5 L-27 15 L-32 15 L-32 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-20" y1="0" x2="-33" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M40 0 C40 -3 35 -5 29 -5.5 L12 -6 L-10 -5.5 L-30 -2 L-33 -1.2 L-33 1.2 L-30 2 L-10 5.5 L12 6 L29 5.5 C35 5 40 3 40 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 -5.4 L11 -6 L11 6 L19 5.4 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="-5.5" x2="5" y2="-28" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="7" y1="5.5" x2="5" y2="28" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M11 -28 L11 28 L9 46 Q8 50 3 50 L-4 50 Q-6 50 -6 46 L-5 28 L-5 -28 L-6 -46 Q-6 -50 -4 -50 L3 -50 Q8 -50 9 -46 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-2" y1="-46" x2="-2" y2="-28" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-2" y1="28" x2="-2" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M40 -2 L44 0 L40 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="42" y1="-12" x2="42" y2="12" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
 <line x1="352.1" y1="131.2" x2="368.1" y2="131.2" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
-<line x1="359" y1="202.04" x2="391.2" y2="202.04" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
-<line x1="359" y1="225.96" x2="391.2" y2="225.96" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
-<circle cx="333.7" cy="158.8" r="4.5" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
-<circle cx="333.7" cy="269.2" r="4.5" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
-<circle cx="349.8" cy="172.6" r="4.5" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="2 2"/>
-<circle cx="349.8" cy="255.4" r="4.5" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="2 2"/>
+<line x1="363.6" y1="200.2" x2="386.6" y2="200.2" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="363.6" y1="227.8" x2="386.6" y2="227.8" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
+<circle cx="345.2" cy="179.5" r="4.5" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
+<circle cx="345.2" cy="248.5" r="4.5" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
+<circle cx="336" cy="165.7" r="4.5" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="2 2"/>
+<circle cx="336" cy="262.3" r="4.5" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="2 2"/>
 <circle cx="409.6" cy="214" r="4.5" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="2 2"/>
-<line x1="322.2" y1="145" x2="322.2" y2="101.3" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
-<line x1="260.1" y1="204.8" x2="260.1" y2="174.9" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
-<line x1="322.2" y1="283" x2="322.2" y2="326.7" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
-<line x1="260.1" y1="223.2" x2="260.1" y2="253.1" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="324.5" y1="149.6" x2="322.2" y2="108.2" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="262.4" y1="207.1" x2="262.4" y2="179.5" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="324.5" y1="278.4" x2="322.2" y2="319.8" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="262.4" y1="220.9" x2="262.4" y2="248.5" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round"/>
 <line x1="352.1" y1="131.2" x2="368.1" y2="117.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
 <circle cx="368.1" cy="117.2" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
 <text x="368.1" y="121.7" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">1</text>
-<line x1="375.1" y1="202.5" x2="375.1" y2="180.5" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
-<circle cx="375.1" cy="180.5" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
-<text x="375.1" y="185" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">2</text>
-<line x1="333.7" y1="158.8" x2="315.7" y2="150.8" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
-<circle cx="315.7" cy="150.8" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
-<text x="315.7" y="155.3" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">3</text>
-<line x1="267" y1="253.1" x2="255" y2="267.1" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
-<circle cx="255" cy="267.1" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
-<text x="255" y="271.6" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">4</text>
+<line x1="375.1" y1="200.2" x2="367.1" y2="176.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
+<circle cx="367.1" cy="176.2" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
+<text x="367.1" y="180.7" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">2</text>
+<line x1="345.2" y1="179.5" x2="319.2" y2="173.5" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
+<circle cx="319.2" cy="173.5" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
+<text x="319.2" y="178" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">3</text>
+<line x1="267" y1="248.5" x2="255" y2="262.5" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
+<circle cx="255" cy="262.5" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
+<text x="255" y="267" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">4</text>
 <line x1="322.2" y1="315.2" x2="304.2" y2="319.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
 <circle cx="304.2" cy="319.2" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
 <text x="304.2" y="323.7" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">5</text>
-<line x1="395.8" y1="209.4" x2="403.8" y2="179.4" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
-<circle cx="403.8" cy="179.4" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
-<text x="403.8" y="183.9" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">6</text>
-<line x1="372.8" y1="220.9" x2="372.8" y2="240.9" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
-<circle cx="372.8" cy="240.9" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
-<text x="372.8" y="245.4" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">7</text>
-<line x1="349.8" y1="255.4" x2="367.8" y2="263.4" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
-<circle cx="367.8" cy="263.4" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
-<text x="367.8" y="267.9" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">8</text>
+<line x1="368.2" y1="211.7" x2="396.2" y2="189.7" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
+<circle cx="396.2" cy="189.7" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
+<text x="396.2" y="194.2" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">6</text>
+<line x1="368.2" y1="220.9" x2="368.2" y2="242.9" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
+<circle cx="368.2" cy="242.9" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
+<text x="368.2" y="247.4" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">7</text>
+<line x1="336" y1="262.3" x2="354" y2="270.3" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/>
+<circle cx="354" cy="270.3" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
+<text x="354" y="274.8" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">8</text>
 <circle cx="30" cy="66" r="10" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5"/>
 <text x="30" y="70.5" font-size="12" text-anchor="middle" fill="var(--color-surface)" font-weight="700" class="num">1</text>
 <text x="46" y="70" font-size="12.5" fill="var(--color-fg)" font-weight="700">Locks and covers off</text>

@@ -105,11 +105,11 @@ def refuelling_safety_zone() -> Canvas:
     c.add(rect(BX, BY, 92, 44, "surface-2", "fg", MAIN, rx=6))
     c.add(rect(BX + 92, BY + 6, 6, 32, "fg-muted", None, rx=2))
     c.add(text(BX + 46, BY + 27, "bowser", 12, "middle", "fg", weight=600))
-    # hose to the lower wing filler
-    FX, FY = PX - 2, PY + 30 * S
+    # hose up to the filler cap on top of the right wing root (a high wing: refuelled from a step or ladder)
+    FX, FY = PX + 4 * S, PY + 14 * S
+    c.add(path(f"M{BX} {BY + 16} C{BX - 50} {BY + 14} {FX + 12} {FY + 70} {FX + 2} {FY + 4}", "fg-muted", None, 4))
     c.add(circle(FX, FY, 4, "surface", "fg", SECOND))
-    c.add(path(f"M{BX} {BY + 16} C{BX - 40} {BY + 14} {FX + 30} {FY + 40} {FX + 4} {FY + 3}", "fg-muted", None, 4))
-    c.add(text(FX - 8, FY + 50, "hose", 11, "end", "fg-muted"))
+    c.add(text(BX - 32, BY + 36, "hose", 11, "end", "fg-muted"))
     # bonding lead (the focal element)
     TX, TY = PX + 30 * S, PY + 6 * S
     LX0 = BX + 70
@@ -167,27 +167,27 @@ def preflight_legal_checks() -> Canvas:
     # pitot tube on the left (upper) wing
     px, py = P(7, -36)
     c.add(line(px, py, px + 16, py, "brand", 3))
-    # doors
-    for v in (-5.2, 5.2):
-        a, b = P(10, v), P(24, v)
+    # doors (their forward edges show ahead of the high wing's leading edge)
+    for v in (-6, 6):
+        a, b = P(12, v), P(22, v)
         c.add(line(a[0], a[1], b[0], b[1], "brand", 3.5))
-    # tank caps
-    for v in (-24, 24):
-        x, y = P(-1, v)
+    # tank caps on top of each wing, near the root
+    for v in (-15, 15):
+        x, y = P(4, v)
         c.add(circle(x, y, 4.5, "surface", "brand", MAIN))
     # drains (underside, shown dashed) at each tank and the engine
-    for u, v in ((6, -18), (6, 18), (32, 0)):
+    for u, v in ((0, -21), (0, 21), (32, 0)):
         x, y = P(u, v)
         c.add(circle(x, y, 4.5, "ok-soft", "ok", SECOND, dash="2 2"))
     # control surfaces: ailerons and elevator outlined in brand
     for sgn in (-1, 1):
-        a, b = P(-6, sgn * 30), P(-6, sgn * 49)
+        a, b = P(-5, sgn * 28), P(-6, sgn * 46)
         c.add(line(a[0], a[1], b[0], b[1], "brand", 3.5))
-        a, b = P(-33, sgn * 4), P(-33, sgn * 17)
+        a, b = P(-32, sgn * 3), P(-32, sgn * 15)
         c.add(line(a[0], a[1], b[0], b[1], "brand", 3.5))
     # badges
-    marks = [("1", P(7, -36), (16, -14)), ("2", P(17, -5), (0, -22)), ("3", P(-1, -24), (-18, -8)), ("4", P(-30, 17), (-12, 14)),
-             ("5", P(-6, 44), (-18, 4)), ("6", P(26, -2), (8, -30)), ("7", P(16, 3), (0, 20)), ("8", P(6, 18), (18, 8))]
+    marks = [("1", P(7, -36), (16, -14)), ("2", P(17, -6), (-8, -24)), ("3", P(4, -15), (-26, -6)), ("4", P(-30, 15), (-12, 14)),
+             ("5", P(-6, 44), (-18, 4)), ("6", P(14, -1), (28, -22)), ("7", P(14, 3), (0, 22)), ("8", P(0, 21), (18, 8))]
     for n, (x, y), (dx, dy) in marks:
         c.add(line(x, y, x + dx, y + dy, "fg-muted", THIN))
         c.add(circle(x + dx, y + dy, 10, "brand", "surface", 1.5), num(x + dx, y + dy + 4.5, n, 12, "middle", "surface", weight=700))

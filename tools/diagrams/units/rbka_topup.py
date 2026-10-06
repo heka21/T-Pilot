@@ -93,31 +93,31 @@ def ground_effect() -> Canvas:
         c.add(_panel(x0, 14, 296, 262, "surface-2" if i == 0 else "brand-soft"))
         c.add(text(x0 + 148, 40, head, 16, "middle", "fg" if i == 0 else "brand-fg", weight=700))
         c.add(text(x0 + 148, 58, sub, 12, "middle", "fg-muted"))
-    # left: free air
+    # left: free air. Vortices roll up at the wing tips, level with the high wing (local y about -20)
     lx, ly = 164, 118
     c.add(plane_rear(lx, ly, 1.25, 0, "fg"))
     for sgn in (-1, 1):
         tip = lx + sgn * 64
-        c.add(group(_vortex(tip + sgn * 6, ly + 10, 24, 22, sgn > 0, "info"), cls="gef-spin"))
-    for dx in (-36, -12, 12, 36):
-        c.add(arrow(lx + dx, ly + 24, lx + dx, ly + 92, "info", MAIN))
+        c.add(group(_vortex(tip + sgn * 6, ly - 20, 24, 22, sgn > 0, "info"), cls="gef-spin"))
+    for dx in (-50, -30, 30, 50):
+        c.add(arrow(lx + dx, ly - 12, lx + dx, ly + 92, "info", MAIN))
     c.add(text(lx, ly + 118, "deep downwash, full tip vortices", 12, "middle", "info", weight=600))
     c.add(text(lx, ly + 136, "→ induced drag", 12, "middle", "info"))
-    # right: near the ground
+    # right: near the ground, wheels on the runway (they sit 17 units below the CG)
     rx_, gy = 476, 228
-    ry = gy - 42
+    ry = gy - 21
     c.add(rect(334, gy, 284, 40, "surface", None))
     c.add(line(334, gy, 618, gy, "fg-muted", MAIN))
     c.add(text(476, gy + 26, "runway", 12, "middle", "fg-muted"))
     c.add(plane_rear(rx_, ry, 1.25, 0, "fg"))
     for sgn in (-1, 1):
         tip = rx_ + sgn * 64
-        c.add(_vortex(tip + sgn * 10, ry + 12, 18, 9, sgn > 0, "info"))
-    for dx in (-30, 0, 30):
-        c.add(arrow(rx_ + dx, ry + 18, rx_ + dx, ry + 32, "info", MAIN))
-    c.add(line(rx_ + 104, ry + 2, rx_ + 104, gy - 2, "fg-muted", THIN))
-    c.add(line(rx_ + 98, ry + 2, rx_ + 110, ry + 2, "fg-muted", THIN))
-    c.add(text(rx_ + 100, ry - 12, "< ½ span", 11, "end", "fg-muted"))
+        c.add(_vortex(tip + sgn * 16, ry - 16, 18, 9, sgn > 0, "info"))
+    for dx in (-50, -30, 30, 50):
+        c.add(arrow(rx_ + dx, ry - 12, rx_ + dx, ry + 10, "info", MAIN))
+    c.add(line(rx_ + 112, ry - 26, rx_ + 112, gy - 2, "fg-muted", THIN))
+    c.add(line(rx_ + 106, ry - 26, rx_ + 118, ry - 26, "fg-muted", THIN))
+    c.add(text(rx_ + 112, ry - 34, "< ½ span", 11, "middle", "fg-muted"))
     c.add(multiline(rx_, 96, ["ground blocks the downwash,", "vortices squashed"], 12, "middle", "brand-fg", weight=600))
     c.add(multiline(rx_, 132, ["→ LESS induced drag,", "a little more lift"], 12, "middle", "brand-fg"))
     # ---- bottom: consequences
@@ -303,7 +303,7 @@ def glide_speed_off_best() -> Canvas:
     c.add(_ground(20, 620, GY, 14))
     c.add(line(X0, TOPY, X0, GY, "fg-muted", THIN, DASH))
     c.add(num(X0 - 6, TOPY + 4, "3,000 ft", 12, "end", "fg-muted"))
-    c.add(plane_side(X0 + 6, TOPY - 6, 0.36, "fg", pitch=-5, gear=True))
+    c.add(plane_side(X0 + 18, TOPY - 4, 0.36, "fg", pitch=-5, gear=True))
     for d, colour, lab in ((4.4, "ok", "9 : 1  →  27,000 ft ≈ 4.4 NM"), (3.5, "bad", "7 : 1  →  21,000 ft ≈ 3.5 NM")):
         xe = X0 + d * sx
         c.add(line(X0, TOPY, xe, GY, colour, MAIN))
@@ -424,20 +424,20 @@ def wheelbarrowing_pivot() -> Canvas:
         s = 1.5
         px = x0 + 140
         pitch = 0 if i == 0 else -4
-        # wheels at local x 10 (main) and 38 (nose), y 15 / 14 + radius
-        py = GY - 18.5 * s if i == 0 else GY - s * (38 * math.sin(math.radians(4)) + 17 * math.cos(math.radians(4)))
+        # wheels touch at local y 19.5: mains at x -8 (just aft of the CG), nosewheel at x 30
+        py = GY - 19.5 * s if i == 0 else GY - s * (30 * math.sin(math.radians(4)) + 19.5 * math.cos(math.radians(4)))
         c.add(plane_side(px, py, s, "fg", pitch=pitch))
         rad = math.radians(-pitch)
         def loc(lx: float, ly: float) -> tuple[float, float]:
             return px + s * (lx * math.cos(rad) - ly * math.sin(rad)), py + s * (lx * math.sin(rad) + ly * math.cos(rad))
-        cgx, cgy = loc(16, -1)
-        mx, my = loc(10, 18.5)
-        nx, ny = loc(38, 17)
+        cgx, cgy = loc(0, -2)
+        mx, my = loc(-8, 19.5)
+        nx, ny = loc(30, 19.5)
         c.add(circle(cgx, cgy, 6, "surface", "fg", 1.5), path(f"M{fmt(cgx)} {fmt(cgy - 6)} A6 6 0 0 1 {fmt(cgx + 6)} {fmt(cgy)} L{fmt(cgx)} {fmt(cgy)} Z "
                                                                f"M{fmt(cgx)} {fmt(cgy + 6)} A6 6 0 0 1 {fmt(cgx - 6)} {fmt(cgy)} L{fmt(cgx)} {fmt(cgy)} Z",
                                                                None, "fg"))
-        c.add(text(cgx - 4, cgy - 46, "CG", 12, "middle", "fg", weight=700))
-        c.add(line(cgx - 2, cgy - 36, cgx, cgy - 9, "fg-muted", THIN))
+        c.add(text(cgx + 8, cgy - 46, "CG", 12, "middle", "fg", weight=700))
+        c.add(line(cgx + 6, cgy - 36, cgx + 1, cgy - 9, "fg-muted", THIN))
         if i == 0:
             c.add(arrow(mx, GY + 40, mx, GY + 4, "ok", 2.5))
             c.add(text(mx - 8, GY + 34, "main wheels carry", 11, "end", "ok-fg", weight=600))
@@ -449,8 +449,8 @@ def wheelbarrowing_pivot() -> Canvas:
             c.add(text(nx + 8, GY + 48, "the pivot", 11, "start", "bad", weight=600))
             c.add(arrow(mx, GY + 14, mx, GY + 4, "fg-muted", SECOND))
             c.add(text(mx + 6, GY + 22, "light", 11, "start", "fg-muted"))
-            c.add(arrow(px - 20, py - 14, px - 20, py - 64, "brand", MAIN))
-            c.add(text(px - 26, py - 52, "wing still lifting", 11, "end", "brand", weight=600))
+            c.add(arrow(px - 15, py - 40, px - 15, py - 76, "brand", MAIN))
+            c.add(text(px - 21, py - 62, "wing still lifting", 11, "end", "brand", weight=600))
             c.add(arrow(px - 72, py + 40, px - 72, py + 14, "fg-muted", SECOND))
             c.add(multiline(px - 72, py + 56, ["forward stick:", "tail held up"], 11, "middle", "fg-muted"))
         # plan view underneath: aeroplane yawed 14 degrees, pivot marked
@@ -460,13 +460,13 @@ def wheelbarrowing_pivot() -> Canvas:
         h = math.radians(heading - 90)
         def plan(lx: float, ly: float) -> tuple[float, float]:
             return px + 0.95 * (lx * math.cos(h) - ly * math.sin(h)), TY + 0.95 * (lx * math.sin(h) + ly * math.cos(h))
-        pv = plan(-6, 0) if i == 0 else plan(30, 0)
+        pv = plan(-8, 0) if i == 0 else plan(30, 0)
         cg = plan(0, 0)
         c.add(circle(*pv, 6, "ok" if i == 0 else "bad", "surface", 1.5))
         c.add(circle(*cg, 4, "fg", None))
         c.add(line(x0 + 30, TY, x0 + 266, TY, "fg-faint", THIN, DASH))
         if i == 0:
-            c.add(path(arc_path(px - 6, TY, 54, -32, -8), "ok", None, MAIN, arrow_end=True))
+            c.add(path(arc_path(pv[0], pv[1], 54, -32, -8), "ok", None, MAIN, arrow_end=True))
             c.add(multiline(x0 + 148, 372, ["pivot behind the CG: the swing", "straightens itself, like a trolley"], 12, "middle", "ok-fg", weight=600))
         else:
             c.add(path(arc_path(pv[0], pv[1], 74, 170, 140), "bad", None, MAIN, arrow_end=True))
@@ -602,14 +602,14 @@ def slope_force_on_runway() -> Canvas:
     sc = 1.1
     d = 190
     bx, by = g0[0] + d * ux, g0[1] + d * uy
-    wx = 10 * math.cos(r) + 18.5 * math.sin(r)
-    wy = -10 * math.sin(r) + 18.5 * math.cos(r)
+    wx = -8 * math.cos(r) + 19.5 * math.sin(r)     # main-wheel contact, local (-8, 19.5), pitched up the slope
+    wy = 8 * math.sin(r) + 19.5 * math.cos(r)
     CGx, CGy = bx - wx * sc, by - wy * sc          # main wheel on the slope
     c.add(plane_side(CGx, CGy, sc, "fg", pitch=ang))
-    c.add(arrow(CGx + ux * 70 + nx * 34, CGy + uy * 70 + ny * 34, CGx + ux * 140 + nx * 34, CGy + uy * 140 + ny * 34, "brand", MAIN))
-    c.add(text(CGx + ux * 110 + nx * 50, CGy + uy * 110 + ny * 50, "thrust", 12, "middle", "brand", weight=600))
-    c.add(arrow(CGx - ux * 50 + nx * 34, CGy - uy * 50 + ny * 34, CGx - ux * 100 + nx * 34, CGy - uy * 100 + ny * 34, "bad", 2.5))
-    c.add(multiline(CGx - ux * 104 + nx * 56, CGy - uy * 104 + ny * 56 - 8, ["slope force,", "against thrust"], 12, "middle", "bad", weight=700))
+    c.add(arrow(CGx + ux * 70 + nx * 34, CGy + uy * 70 + ny * 34, CGx + ux * 128 + nx * 34, CGy + uy * 128 + ny * 34, "brand", MAIN))
+    c.add(text(CGx + ux * 100 + nx * 50, CGy + uy * 100 + ny * 50, "thrust", 12, "middle", "brand", weight=600))
+    c.add(arrow(CGx - ux * 50 + nx * 50, CGy - uy * 50 + ny * 50, CGx - ux * 100 + nx * 50, CGy - uy * 100 + ny * 50, "bad", 2.5))
+    c.add(multiline(CGx - ux * 104 + nx * 72, CGy - uy * 104 + ny * 72 - 8, ["slope force,", "against thrust"], 12, "middle", "bad", weight=700))
     # the force triangle, drawn in clear sky
     OX, OY, W = 132, 66, 112
     c.add(arrow(OX, OY, OX, OY + W, "fg", 2.5))

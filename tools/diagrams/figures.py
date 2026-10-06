@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 from tools.diagrams.charts import chart
-from tools.diagrams.svg import (DASH, MAIN, SECOND, THIN, Canvas, arc_path, arrow, badge, callout, circle, ellipse, fmt, group, line, multiline, num, path,
+from tools.diagrams.svg import (DASH, MAIN, SECOND, THIN, Canvas, airliner_rear, arc_path, arrow, badge, callout, circle, ellipse, fmt, group, line, multiline, num, path,
                                 plane_rear, plane_side, plane_top, polygon, polyline, rect, runway, smooth_path, text)
 
 
@@ -121,10 +121,10 @@ def four_stroke_cycle() -> Canvas:
 @chart
 def wake_turbulence_vortices() -> Canvas:
     """Animated rear view: counter-rotating wing-tip vortices behind a heavy aeroplane, sinking, rolling a light aircraft."""
-    c = Canvas("Wake turbulence: wing-tip vortices", "Seen from behind, a heavy aeroplane trails two counter-rotating vortices from its wing tips, the left one "
+    c = Canvas("Wake turbulence: wing-tip vortices", "Seen from behind, a heavy twin-jet airliner trails two counter-rotating vortices from its wing tips, the left one "
                "rotating clockwise and the right one anticlockwise, with downwash between them and upwash outside. They sink at about "
                "500 feet per minute and drift with the wind. A light aeroplane entering a vortex is rolled, often faster than its ailerons can counter.",
-               height=420, prefix="wtv")
+               height=460, prefix="wtv")
     c.style("""
 .wtv-cw{animation:wtv-cw 3s linear infinite}
 @keyframes wtv-cw{to{transform:rotate(360deg)}}
@@ -137,39 +137,39 @@ def wake_turbulence_vortices() -> Canvas:
 .wtv-sink{animation:wtv-sink 6s linear infinite}
 @keyframes wtv-sink{0%{transform:translateY(0);opacity:0}15%{opacity:.5}85%{opacity:.5}100%{transform:translateY(90px);opacity:0}}
 """)
-    HX, HY = 320, 150
-    # heavy aeroplane, rear view, wide span (scale 3 of the 100-unit silhouette)
-    c.add(plane_rear(HX, HY, 3.0, 0, "fg", "surface"))
+    HX, HY = 320, 190
+    # heavy aeroplane: a twin-jet airliner from behind, wide span (scale 3 of the 100-unit silhouette, tips at HX ± 150)
+    c.add(airliner_rear(HX, HY, 3.0, "fg", "surface").replace('stroke-width="2"', 'stroke-width="0.9"'))
     c.add(text(HX, 30, "Heavy aeroplane ahead, seen from behind", 14, "middle", "fg", weight=600))
     c.add(text(HX, 48, "strongest wake when heavy, slow and clean (gear and flaps up)", 12, "middle", "fg-muted"))
     # vortex cores at the wing tips
     def vortex(x: float, y: float, cls: str) -> str:
         arcs = "".join(path(arc_path(0, 0, r, a0, a0 + 250), "brand", None, MAIN if r > 20 else SECOND, arrow_end=True) for r, a0 in ((16, 0), (30, 120), (44, 240)))
         return group(group(arcs, cls=cls), transform=f"translate({x} {y})")
-    LX, RX, VY = HX - 150, HX + 150, HY + 8
+    LX, RX, VY = HX - 150, HX + 150, HY - 12   # the tips sit high: the wing has dihedral
     # faint sinking copies suggest the vortices moving down and spreading
     c.add(group(vortex(LX - 14, VY, "wtv-cw"), vortex(RX + 14, VY, "wtv-ccw"), cls="wtv-sink", opacity=0))
     c.add(vortex(LX, VY, "wtv-cw"), vortex(RX, VY, "wtv-ccw"))
     c.add(text(LX, VY + 86, "left vortex: clockwise", 12, "middle", "brand", weight=600))
     c.add(text(RX, VY + 86, "right vortex: anticlockwise", 12, "middle", "brand", weight=600))
     # downwash between the cores, upwash outside
-    for x in (HX - 60, HX, HX + 60):
-        c.add(line(x, VY - 6, x, VY + 66, "sky-fg", SECOND, arrow_end=True, cls="wtv-flow"))
+    for x, top in ((HX - 50, HY + 24), (HX, HY + 36), (HX + 50, HY + 24)):
+        c.add(line(x, top, x, VY + 76, "sky-fg", SECOND, arrow_end=True, cls="wtv-flow"))
     c.add(text(HX, VY + 106, "downwash between the vortices", 12, "middle", "sky-fg"))
     c.add(text(HX, VY + 124, "the pair sinks at a few hundred ft/min and levels off about 500 to 1,000 ft below the flight path", 11, "middle", "fg-muted"))
     for x in (LX - 66, RX + 66):
         c.add(line(x, VY + 66, x, VY - 6, "sky-fg", SECOND, arrow_end=True, cls="wtv-flow"))
     c.add(text(LX - 66, VY - 16, "upwash", 11, "middle", "sky-fg"), text(RX + 66, VY - 16, "upwash", 11, "middle", "sky-fg"))
     # drift with the wind
-    c.add(arrow(22, 300, 92, 300, "fg-muted", SECOND, dash=DASH))
-    c.add(multiline(22, 318, ["vortices drift", "with the wind"], 11, "start", "fg-muted"))
+    c.add(arrow(22, 340, 92, 340, "fg-muted", SECOND, dash=DASH))
+    c.add(multiline(22, 358, ["vortices drift", "with the wind"], 11, "start", "fg-muted"))
     # light aeroplane entering the left vortex, rolled
-    LAX, LAY = LX + 10, 336
+    LAX, LAY = LX + 10, 376
     c.add(group(group(plane_rear(0, 0, 1.1, 0, "bad", "surface"), cls="wtv-roll"), transform=f"translate({LAX} {LAY})"))
     c.add(path(arc_path(LAX, LAY, 72, 200, 160), "bad", None, SECOND, dash=DASH, arrow_end=True))
     c.add(multiline(LAX + 90, LAY - 10, ["Light aeroplane entering the vortex:", "rolled faster than full aileron can hold,", "worst when its heading matches the heavy's"], 12, "start", "bad"))
-    c.add(text(320, 398, "Avoid: stay above and upwind of the heavy aeroplane's flight path;", 11, "middle", "fg-muted"))
-    c.add(text(320, 412, "land beyond its touchdown point, lift off before its rotation point.", 11, "middle", "fg-muted"))
+    c.add(text(320, 438, "Avoid: stay above and upwind of the heavy aeroplane's flight path;", 11, "middle", "fg-muted"))
+    c.add(text(320, 452, "land beyond its touchdown point, lift off before its rotation point.", 11, "middle", "fg-muted"))
     return c
 
 

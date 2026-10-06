@@ -98,8 +98,8 @@ def overwater_gliding_distance() -> Canvas:
     # glide lines from each shore
     c.add(line(CX, SEA, MEET + 40, SEA - 150 - 40 * slope, "fg-muted", SECOND, dash=DASH))
     c.add(line(IX, SEA, MEET - 40, SEA - 150 - 40 * slope, "fg-muted", SECOND, dash=DASH))
-    c.add(text(CX + 30, SEA - 70, "glide to the coast", 11.5, "start", "fg-muted", rotate=-math.degrees(math.atan(slope))))
-    c.add(text(IX - 30, SEA - 70, "glide to the island", 11.5, "end", "fg-muted", rotate=math.degrees(math.atan(slope))))
+    c.add(text(CX + 70, SEA - 92, "glide to the coast", 11.5, "start", "fg-muted", rotate=-math.degrees(math.atan(slope))))
+    c.add(text(IX - 70, SEA - 92, "glide to the island", 11.5, "end", "fg-muted", rotate=math.degrees(math.atan(slope))))
     # 1,500 ft track: green - red - green
     x1 = CX + (SEA - y15) / slope
     x2 = IX - (SEA - y15) / slope
@@ -478,14 +478,14 @@ def interception_signals() -> Canvas:
         yc = y0 + 76
         if i == 0:
             c.add(plane_top(84, yc + 34, 0.4, 90, "fg"))
-            c.add(text(84, yc + 64, "you", 11.5, "middle", "fg-muted"))
+            c.add(text(64, yc + 38, "you", 11.5, "end", "fg-muted"))
             c.add(plane_top(170, yc - 8, 0.4, 90, "info", "info-soft"))
             c.add(rock_marks(170, yc - 8, 0.4, "info"))
             c.add(path(f"M196 {yc - 8} Q240 {yc - 8} 262 {yc - 40}", "info", None, SECOND, dash="5 4", arrow_end=True))
             c.add(path(f"M110 {yc + 34} Q200 {yc + 34} 240 {yc}", "brand", None, SECOND, dash="5 4", arrow_end=True))
         elif i == 1:
             c.add(plane_top(84, yc + 20, 0.4, 90, "fg"))
-            c.add(text(84, yc + 50, "you", 11.5, "middle", "fg-muted"))
+            c.add(text(64, yc + 24, "you", 11.5, "end", "fg-muted"))
             c.add(plane_top(150, yc - 16, 0.4, 90, "info", "info-soft"))
             c.add(path(f"M172 {yc - 16} Q214 {yc - 18} 214 {yc - 44} Q214 {yc - 58} 196 {yc - 58}", "info", None, MAIN, arrow_end=True))
             c.add(text(222, yc - 30, "climbing", 11.5, "start", "info-fg"))

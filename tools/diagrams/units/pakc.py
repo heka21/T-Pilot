@@ -329,30 +329,30 @@ def aircraft_antenna_locations() -> Canvas:
     s, X0, Y0 = 4.2, 330, 210
     P = lambda x, y: (X0 + s * x, Y0 + s * y)
     c.add(small_plane(X0, Y0, s))
-    # COM 1 blade on top
-    bx, by = P(0, -9.6)
+    # COM 1 blade on the cabin roof, behind the wing
+    bx, by = P(-18, -17)
     c.add(polygon([(bx - 6, by + 1), (bx + 6, by + 1), (bx - 8, by - 30), (bx - 15, by - 30)], "brand", "brand-soft", MAIN))
-    # COM 2 whip underneath
-    wx, wy = P(-24, 5.6)
+    # COM 2 whip under the rear fuselage
+    wx, wy = P(-20, 6.5)
     c.add(line(wx, wy, wx - 14, wy + 36, "brand", MAIN))
-    # NAV cat's whisker on the fin
-    nx, ny = P(-40.5, -17)
-    c.add(line(nx, ny, nx + 40, ny - 14, "info", MAIN), line(nx, ny, nx + 40, ny + 6, "info", MAIN))
+    # NAV cat's whisker on top of the fin
+    nx, ny = P(-45, -29)
+    c.add(line(nx, ny, nx + 36, ny - 10, "info", MAIN), line(nx, ny, nx + 36, ny + 8, "info", MAIN))
     # transponder and DME stubs
-    for xx in (24, 31):
-        sx, sy = P(xx, 6.9)
+    for xx in (14, 20):
+        sx, sy = P(xx, 7.5)
         c.add(line(sx, sy, sx, sy + 14, "warn", MAIN), circle(sx, sy + 16, 2.5, "warn", None))
     # callouts
     c.add(line(bx - 10, by - 32, 420, 70, "fg-muted", THIN))
     c.add(text(426, 66, "COM antenna: blade or whip", 13, "start", "brand-fg", weight=700))
     c.add(text(426, 83, "quarter-wave, about 60 cm", 12.5, "start", "brand-fg"))
-    c.add(line(nx + 2, ny - 2, 140, 72, "fg-muted", THIN))
+    c.add(line(nx + 1, ny - 3, 139, 76, "fg-muted", THIN))
     c.add(text(20, 52, "NAV (VOR and ILS): V-shaped", 13, "start", "info-fg", weight=700))
     c.add(text(20, 69, "“cat's whisker” on the fin", 12.5, "start", "info-fg"))
     c.add(line(wx - 14, wy + 36, 150, 318, "fg-muted", THIN))
     c.add(text(20, 334, "Second COM antenna", 13, "start", "brand-fg", weight=700))
     c.add(text(20, 351, "one per COM radio", 12.5, "start", "brand-fg"))
-    tx, ty = P(27.5, 9)
+    tx, ty = P(17, 9)
     c.add(line(tx, ty + 12, 470, 318, "fg-muted", THIN))
     c.add(text(620, 334, "Transponder and DME:", 13, "end", "warn-fg", weight=700))
     c.add(text(620, 351, "short UHF stubs underneath", 12.5, "end", "warn-fg"))

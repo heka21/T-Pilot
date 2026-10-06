@@ -23,8 +23,11 @@ export function themeColours() {
 }
 
 /* ------------------------------------------------------------------ the aeroplane
-   Axes: +X nose, +Y up, +Z right wing. Length ~7.5, span 10. Parts with hinges are Groups whose rotation
-   is set by the explorers (aileronL/R, elevator, rudder: rotation about the hinge; prop: rotation.x). */
+   A Cessna 152: high strut-braced wing on the cabin roof, tricycle gear with the mains just aft of the CG,
+   swept fin with a dorsal fillet, low tailplane. Axes: +X nose, +Y up, +Z right wing. Length ~7.5, span 10.
+   Parts with hinges are Groups whose rotation is set by the explorers (aileronL/R, elevator, rudder: rotation
+   about the hinge; prop: rotation.x). The wing's chord plane is y = WING_Y (used for the chord line). */
+export const WING_Y = 0.75;
 export function makePlane(THREE, c) {
   const body = new THREE.MeshStandardMaterial({ color: c.dark ? c.fgMuted : c.surface, roughness: 0.55, metalness: 0.05 });
   const edge = new THREE.MeshStandardMaterial({ color: c.fg, roughness: 0.6 });
@@ -32,18 +35,6 @@ export function makePlane(THREE, c) {
   const glass = new THREE.MeshStandardMaterial({ color: c.skyFg, roughness: 0.2, transparent: true, opacity: 0.55 });
   const plane = new THREE.Group();
   const parts = { materials: { body, edge, control, glass } };
-
-  // fuselage: lathe profile (radius, station), station measured along +X
-  const profile = [[0.02, 3.3], [0.32, 2.7], [0.55, 1.7], [0.6, 0.6], [0.5, -0.8], [0.32, -2.3], [0.17, -3.7], [0.1, -4.3], [0.0, -4.35]]
-    .map(([r, x]) => new THREE.Vector2(r, x));
-  const fuselage = new THREE.Mesh(new THREE.LatheGeometry(profile, 32), body);
-  fuselage.rotation.z = -Math.PI / 2;      // lathe axis Y -> +X
-  plane.add(fuselage);
-
-  const canopy = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), glass);
-  canopy.scale.set(1.0, 0.5, 0.52);
-  canopy.position.set(0.9, 0.45, 0);
-  plane.add(canopy);
 
   const slab = (w, h, d, mat) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   const planform = (pts, thickness, mat) => {    // pts in (x, z); extruded thickness along y
@@ -53,10 +44,49 @@ export function makePlane(THREE, c) {
     geo.translate(0, thickness / 2, 0);
     return new THREE.Mesh(geo, mat);
   };
+  const profileXY = (pts, thickness, mat) => {   // pts in (x, y), extruded symmetrically along z (fin, fillet)
+    const shape = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
+    geo.translate(0, 0, -thickness / 2);
+    return new THREE.Mesh(geo, mat);
+  };
+  const lathe = (profile) => {                   // profile [[radius, station]], station along +X
+    const m = new THREE.Mesh(new THREE.LatheGeometry(profile.map(([r, x]) => new THREE.Vector2(r, x)), 32), body);
+    m.rotation.z = -Math.PI / 2;                 // lathe axis Y -> +X
+    return m;
+  };
+  const strut = (from, to, radius, mat) => {
+    const a = new THREE.Vector3(...from), b = new THREE.Vector3(...to), d = b.clone().sub(a);
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, d.length(), 8), mat);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize());
+    m.position.copy(a).addScaledVector(d, 0.5);
+    return m;
+  };
 
-  // wing (main part; trailing edge cut back 0.3 for flaps and ailerons)
-  const wing = planform([[0.9, -0.55], [0.6, -5.0], [0.0, -5.0], [-0.3, -0.55], [-0.3, 0.55], [0.0, 5.0], [0.6, 5.0], [0.9, 0.55]], 0.11, body);
-  wing.position.y = -0.3;
+  // nose and cowl: spinner back to the firewall, then the boxy cabin, then the tapering tail cone
+  plane.add(lathe([[0.03, 3.3], [0.35, 2.8], [0.5, 2.0], [0.55, 1.4], [0.52, 1.2]]));
+  const cabin = slab(2.4, 0.95, 1.0, body);      // lower cabin: belly -0.5, cowl-top level 0.45
+  cabin.position.set(0.2, -0.025, 0);
+  plane.add(cabin);
+  const roof = slab(1.8, 0.25, 0.96, body);      // cabin above the window line, under the wing
+  roof.position.set(-0.1, 0.575, 0);
+  plane.add(roof);
+  const windows = slab(1.5, 0.22, 1.02, glass);  // side windows, both sides
+  windows.position.set(0.0, 0.575, 0);
+  plane.add(windows);
+  const windscreen = slab(0.67, 0.05, 0.96, glass);   // raked from the cowl top (1.4, 0.45) to the roof (0.8, 0.7)
+  windscreen.position.set(1.1, 0.575, 0);
+  windscreen.rotation.z = Math.atan2(0.25, -0.6);
+  plane.add(windscreen);
+  const rear = lathe([[0.5, -1.0], [0.42, -1.6], [0.3, -2.4], [0.16, -3.4], [0.1, -3.9], [0, -3.95]]);
+  rear.scale.x = 1.2;                            // a little taller than wide (local x is world y after the rotation)
+  rear.position.y = -0.03;
+  plane.add(rear);
+  plane.add(profileXY([[-1.0, 0.7], [-2.6, 0.3], [-1.0, 0.15]], 0.3, body));   // dorsal fillet / turtle deck
+
+  // high wing on the roof: constant chord inboard, tapered rounded-ish tips; trailing edge cut back for the surfaces
+  const wing = planform([[0.95, -2.8], [0.75, -5.0], [-0.35, -5.0], [-0.55, -2.8], [-0.55, 2.8], [-0.35, 5.0], [0.75, 5.0], [0.95, 2.8]], 0.12, body);
+  wing.position.y = WING_Y;
   plane.add(wing);
   const hinged = (mesh, x, y, z, name) => {
     const g = new THREE.Group();
@@ -67,24 +97,24 @@ export function makePlane(THREE, c) {
     parts[name] = g;
     return g;
   };
-  hinged(slab(0.34, 0.07, 1.75, control), -0.09, -0.3, -4.05, "aileronL");
-  hinged(slab(0.34, 0.07, 1.75, control), -0.09, -0.3, 4.05, "aileronR");
-  hinged(slab(0.34, 0.07, 2.2, body), -0.21, -0.3, -1.75, "flapL");
-  hinged(slab(0.34, 0.07, 2.2, body), -0.21, -0.3, 1.75, "flapR");
+  hinged(slab(0.34, 0.07, 1.75, control), -0.4, WING_Y, -4.0, "aileronL");
+  hinged(slab(0.34, 0.07, 1.75, control), -0.4, WING_Y, 4.0, "aileronR");
+  hinged(slab(0.34, 0.07, 2.2, body), -0.5, WING_Y, -1.7, "flapL");
+  hinged(slab(0.34, 0.07, 2.2, body), -0.5, WING_Y, 1.7, "flapR");
+  // wing struts: lower fuselage to the wing underside at mid span
+  plane.add(strut([0.5, -0.4, -0.5], [0.4, WING_Y - 0.05, -2.9], 0.035, edge));
+  plane.add(strut([0.5, -0.4, 0.5], [0.4, WING_Y - 0.05, 2.9], 0.035, edge));
 
-  // tailplane and elevator
-  const tail = planform([[-3.2, -0.15], [-3.55, -1.9], [-3.85, -1.9], [-3.9, -0.15], [-3.9, 0.15], [-3.85, 1.9], [-3.55, 1.9], [-3.2, 0.15]], 0.08, body);
-  tail.position.y = 0.1;
+  // low tailplane and elevator
+  const tail = planform([[-3.2, -0.15], [-3.55, -1.7], [-3.85, -1.7], [-3.9, -0.15], [-3.9, 0.15], [-3.85, 1.7], [-3.55, 1.7], [-3.2, 0.15]], 0.08, body);
+  tail.position.y = 0.0;
   plane.add(tail);
-  hinged(slab(0.34, 0.06, 3.7, control), -3.88, 0.1, 0, "elevator");
+  hinged(slab(0.34, 0.06, 3.4, control), -3.88, 0.0, 0, "elevator");
 
-  // fin and rudder (shape in the x-y plane)
-  const finShape = new THREE.Shape([[-2.9, 0.15], [-3.6, 1.55], [-3.95, 1.55], [-3.95, 0.15]].map(([x, y]) => new THREE.Vector2(x, y)));
-  const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.08, bevelEnabled: false });
-  finGeo.translate(0, 0, -0.04);
-  plane.add(new THREE.Mesh(finGeo, body));
+  // swept fin with a fillet into the fuselage, and the rudder
+  plane.add(profileXY([[-2.4, 0.15], [-2.95, 0.5], [-3.4, 1.6], [-3.85, 1.6], [-3.9, 0.15]], 0.08, body));
   const rudder = new THREE.Group();
-  rudder.position.set(-3.95, 0.85, 0);
+  rudder.position.set(-3.9, 0.95, 0);
   const rudderMesh = slab(0.34, 1.35, 0.06, control);
   rudderMesh.position.x = -0.16;
   rudder.add(rudderMesh);
@@ -103,17 +133,17 @@ export function makePlane(THREE, c) {
   plane.add(prop);
   parts.prop = prop;
 
-  // undercarriage
+  // tricycle undercarriage: nose leg under the cowl, spring-steel mains splayed from the belly just aft of the CG
   const wheelGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.14, 20);
-  const legGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.6, 8);
-  for (const [x, z] of [[0.3, -1.1], [0.3, 1.1], [2.3, 0]]) {
+  for (const [x, z] of [[-0.4, -1.1], [-0.4, 1.1], [2.3, 0]]) {
     const wheel = new THREE.Mesh(wheelGeo, edge);
     wheel.rotation.x = Math.PI / 2;
     wheel.position.set(x, -1.0, z);
-    const leg = new THREE.Mesh(legGeo, edge);
-    leg.position.set(x, -0.7, z * 0.9);
-    plane.add(wheel, leg);
+    plane.add(wheel);
   }
+  plane.add(strut([2.3, -0.45, 0], [2.3, -1.0, 0], 0.04, edge));
+  plane.add(strut([-0.3, -0.45, -0.35], [-0.4, -0.9, -1.05], 0.04, edge));
+  plane.add(strut([-0.3, -0.45, 0.35], [-0.4, -0.9, 1.05], 0.04, edge));
   parts.group = plane;
   return parts;
 }
@@ -327,12 +357,12 @@ EXPLORERS.attitude = function ({ THREE, OrbitControls }, el) {
   stage.scene.add(pathGroup);
 
   // chord line of the wing (through the aeroplane, body-fixed)
-  const chord = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-5, -0.3, 0), new THREE.Vector3(8, -0.3, 0)]),
+  const chord = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-5, WING_Y, 0), new THREE.Vector3(8, WING_Y, 0)]),
     new THREE.LineDashedMaterial({ color: c.brand, dashSize: 0.4, gapSize: 0.25 }));
   chord.computeLineDistances();
   plane.group.add(chord);
   const chordLabel = makeLabel(THREE, "chord line · attitude", c.brand, 0.8);
-  chordLabel.position.set(8.5, 0.4, 0);
+  chordLabel.position.set(8.5, WING_Y + 0.7, 0);
   plane.group.add(chordLabel);
 
   // streamers over the wing: attached when flying, detached and fluttering when stalled
@@ -388,7 +418,7 @@ EXPLORERS.attitude = function ({ THREE, OrbitControls }, el) {
     for (const s of streamers) {
       const pos = s.geometry.attributes.position;
       const z = s.userData.z;
-      const start = new THREE.Vector3().addScaledVector(fwd, 0.75).addScaledVector(up, -0.12).setZ(z);
+      const start = new THREE.Vector3().addScaledVector(fwd, 0.8).addScaledVector(up, WING_Y + 0.08).setZ(z);
       for (let i = 0; i < 8; i++) {
         const f = i / 7;
         const p = start.clone().addScaledVector(dir, -f * 2.6);
