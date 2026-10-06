@@ -9,8 +9,10 @@ What it does:
 - **Syllabus** browser built from the Part 61 MOS Schedule 3 units (BAKC, RBKA, RFRC, ...), with a
   study status per subtopic (not started / studying / confident).
 - **Lessons** for each subtopic, written in Markdown.
-- **Search** across lessons, syllabus subtopics, MOS knowledge elements, questions, flashcards and
-  reference pages (search box in the sidebar, or press `/`).
+- **Equations**: one printable sheet of every formula the RPL and PPL exams use, grouped by topic, with what each
+  symbol means, when to use it, a rule of thumb and links to the lessons; filter by exam, topic or word.
+- **Search** across lessons, syllabus subtopics, MOS knowledge elements, questions, flashcards,
+  equations and reference pages (search box in the sidebar, or press `/`).
 - **Quiz** practice by unit or subtopic, and timed **mock exams** in the RPLA/PPLA format with a
   knowledge deficiency report at the end.
 - **Flashcards** with spaced repetition.

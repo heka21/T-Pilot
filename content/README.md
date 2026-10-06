@@ -75,6 +75,33 @@ Same file naming and id rule as questions (card ids like `BAKC-EC001`).
   back: "..."
 ```
 
+## Equations: `equations.yaml`
+The equation sheet (`/equations`) and the formula boxes on lessons. One file: a `topics` list (sheet order) and an
+`equations` list. The YAML owns the links to lessons, so lessons carry no markers.
+```
+topics:
+  - {id: aerodynamics, label: Aerodynamics}
+equations:
+  - id: stall-speed-in-turn          # lower-case slug, unique, at most 40 chars; anchor /equations#eq-<id>
+    name: Stall speed in a level turn
+    topic: aerodynamics              # a topic id above
+    latex: 'V_{s,\text{turn}} = V_{s,\text{level}} \sqrt{n}'   # KaTeX, no $ delimiters; single-quote it
+    symbols:                         # sym is KaTeX too; unit optional
+      - {sym: 'V_{s,\text{turn}}', meaning: stall speed in the turn, unit: kt}
+    when: "Markdown, with $...$ inline maths: when the formula is the one to reach for."
+    rule_of_thumb: "30° adds 7%, 45° adds 19%, 60° adds 41%."    # optional
+    exams: [RPLA]                    # RPLA and/or PPLA
+    lessons: ["RBKA 3.5", "RBKA 3.6"]                              # subtopic ids, first = primary lesson
+    tags: [bank, load factor, stall]                               # optional, for the filter and search
+    see_also: [load-factor-bank]                                   # optional, other equation ids
+```
+In double-quoted YAML strings (`when`, `rule_of_thumb`) a backslash is written twice: `"$n = 1/\\cos\\theta$"`.
+Every figure must match the lessons it links to (regulatory figures cite their clause and keep the "verify" flag).
+`exams` must agree with `exams.json`: each claimed exam needs a linked lesson in one of its units, and no linked
+lesson may sit outside the claimed exams. `python -m app.seed.check_content` checks ids, fields, lesson links, exam
+consistency and LaTeX balance; add `--katex` (or run `npm run katex-check`) to render every formula with the
+vendored KaTeX. The table is rebuilt from this file on every start.
+
 ## Reference pages: `reference/*.md`
 Standalone Markdown pages (permitted materials, exam-day checklist, sources). Rendered as-is.
 

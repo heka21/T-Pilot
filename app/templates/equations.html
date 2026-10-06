@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header %}
+{% from "_icons.html" import icon %}
+{% block title %}Equations · {{ app_name }}{% endblock %}
+{% block content %}
+{% set exam_labels = {"RPLA": "RPL", "PPLA": "PPL"} %}
+{% set eq_names = {} %}{% for e in equations %}{% set _ = eq_names.update({e.id: e.name}) %}{% endfor %}
+
+{#- The filter state lives in Alpine; show() reads data-exams/data-topic/data-text on each card. "Print what you see":
+    hidden cards stay hidden on paper, so a filtered sheet prints as an RPL-only or one-topic sheet. -#}
+<div class="equations-sheet" data-maths
+     x-data='{
+       exam: {{ filters.exam | tojson }}, topic: {{ filters.topic | tojson }}, q: {{ filters.q | tojson }},
+       total: {{ equations | length }},
+       show(el) {
+         if (this.exam && !el.dataset.exams.split(" ").includes(this.exam)) return false;
+         if (this.topic && el.dataset.topic !== this.topic) return false;
+         return this.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => el.dataset.text.includes(w));
+       },
+       any(section) { return Array.from(section.querySelectorAll("[data-equation]")).some((el) => this.show(el)); },
+       count() { return Array.from(this.$root.querySelectorAll("[data-equation]")).filter((el) => this.show(el)).length; },
+       get filtered() { return Boolean(this.exam || this.topic || this.q.trim()); },
+       clear() { this.exam = ""; this.topic = ""; this.q = ""; },
+       sync() {
+         const p = new URLSearchParams();
+         if (this.exam) p.set("exam", this.exam);
+         if (this.topic) p.set("topic", this.topic);
+         if (this.q.trim()) p.set("q", this.q.trim());
+         const qs = p.toString();
+         history.replaceState(history.state, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+       }
+     }'
+     x-init="$watch('exam', () => sync()); $watch('topic', () => sync()); $watch('q', () => sync())">
+
+{% call page_header("Equations", "Every formula the RPL and PPL exams use, with what each symbol means and when to reach for it.", "sigma") %}
+  <button type="button" class="btn-secondary btn-sm print:hidden" onclick="window.print()">{{ icon("printer", "size-4") }} Print</button>
+{% endcall %}
+
+{# Filter bar: the lessons page's look (.lesson-filter), but driven by Alpine here, not by app.js's data-lesson-filter. #}
+<div class="lesson-filter print:hidden" role="search" aria-label="Filter equations">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <label class="topsearch-box h-10 min-w-0 flex-1 basis-64">
+      {{ icon("search", "size-[18px] shrink-0 text-fg-faint") }}
+      <input type="search" name="q" value="{{ filters.q }}" placeholder="Filter by name, symbol or lesson, e.g. density or BAKC 6.2"
+             autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Filter equations" x-model="q" data-filter-q
+             @keydown.escape="q ? (q = '') : $el.blur()">
+      <button type="button" class="topsearch-clear" aria-label="Clear filter" @click="q = ''; $el.previousElementSibling.focus()">{{ icon("close", "size-4") }}</button>
+    </label>
+    <div class="filter-scroll">
+      <div class="filter-pills" role="radiogroup" aria-label="Exam">
+        {% for value, label in [("", "All"), ("RPLA", "RPL"), ("PPLA", "PPL")] %}
+          <label class="filter-pill"><input type="radio" name="exam" value="{{ value }}" x-model="exam"{% if filters.exam == value %} checked{% endif %}>{{ label }}</label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="filter-scroll">
+    <div class="filter-pills" role="radiogroup" aria-label="Topic">
+      <label class="filter-pill"><input type="radio" name="topic" value="" x-model="topic"{% if not filters.topic %} checked{% endif %}>All topics</label>
+      {% for t in topics %}
+        <label class="filter-pill"><input type="radio" name="topic" value="{{ t.id }}" x-model="topic"{% if filters.topic == t.id %} checked{% endif %}>{{ t.label }}
+          <b>{{ equations | selectattr("topic", "equalto", t.id) | list | length }}</b></label>
+      {% endfor %}
+    </div>
+  </div>
+  <p class="text-xs text-fg-muted" aria-live="polite">
+    <span x-text="filtered ? count() + ' of ' + total + ' equations' : total + ' equations'">{{ equations | length }} equations</span>
+    <button type="button" class="ml-2 font-semibold text-brand hover:underline" x-show="filtered" @click="clear()"{% if not (filters.exam or filters.topic or filters.q) %} style="display: none"{% endif %}>Clear filters</button>
+  </p>
+</div>
+
+<div class="card-sunken mb-10 flex flex-col items-center gap-3 py-10 text-center print:hidden" x-show="count() === 0" style="display: none">
+  {{ icon("search", "size-8 text-fg-faint") }}
+  <p class="font-semibold">No equations match.</p>
+  <p class="text-sm text-fg-muted">Try fewer words, another topic, or <button type="button" class="font-semibold text-brand hover:underline" @click="clear()">clear the filters</button>.</p>
+</div>
+
+{% for t in topics %}
+  {% set eqs = equations | selectattr("topic", "equalto", t.id) | list %}
+  <section class="equations-topic mb-10" aria-labelledby="topic-{{ t.id }}" x-show="any($el)">
+    <div class="mb-4 flex items-center gap-3">
+      <h2 id="topic-{{ t.id }}" class="section-title scroll-mt-24">{{ t.label }}</h2>
+      <span class="badge tabular-nums print:hidden">{{ eqs | length }}</span>
+    </div>
+    <div class="equations-grid grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+      {% for eq in eqs %}
+        <article id="eq-{{ eq.id }}" class="equation-card card flex scroll-mt-24 flex-col gap-3" data-equation
+                 data-exams="{{ eq.exams | join(' ') }}" data-topic="{{ eq.topic }}" data-text="{{ texts[eq.id] }}" x-show="show($el)">
+          <header class="flex items-start justify-between gap-3">
+            <h3 class="font-semibold leading-snug"><a href="#eq-{{ eq.id }}" class="text-fg no-underline hover:text-brand">{{ eq.name }}</a></h3>
+            <span class="flex shrink-0 gap-1">
+              {% for ex in eq.exams %}<span class="badge {{ 'badge-brand' if ex == 'RPLA' else 'badge-info' }}" title="{{ ex }}">{{ exam_labels.get(ex, ex) }}</span>{% endfor %}
+            </span>
+          </header>
+          <div class="equation-formula overflow-x-auto rounded-xl bg-surface-2/60 px-3 py-1 text-fg">\[{{ eq.latex }}\]</div>
+          {% if eq.symbols %}
+            <dl class="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1 text-sm">
+              {% for s in eq.symbols %}
+                <dt class="text-fg">\({{ s.sym }}\)</dt>
+                <dd class="text-fg-muted">{{ s.meaning }}{% if s.unit %} <span class="whitespace-nowrap text-fg-faint">({{ s.unit }})</span>{% endif %}</dd>
+              {% endfor %}
+            </dl>
+          {% endif %}
+          {% if eq.when_html %}
+            <div class="text-sm">
+              <p class="eyebrow mb-0.5 text-[0.65rem]">When to use it</p>
+              <p class="leading-relaxed text-fg-muted">{{ eq.when_html | safe }}</p>
+            </div>
+          {% endif %}
+          {% if eq.rule_html %}
+            <div class="callout callout-warn">
+              <p class="mb-0.5 flex items-center gap-1.5 text-[0.65rem] font-semibold uppercase tracking-wider text-warn-fg">{{ icon("zap", "size-3.5") }} Rule of thumb</p>
+              <p class="leading-relaxed">{{ eq.rule_html | safe }}</p>
+            </div>
+          {% endif %}
+          {% if eq.lesson_ids or eq.see_also %}
+            <div class="mt-auto flex flex-wrap items-center gap-1.5 pt-1">
+              {% for sid in eq.lesson_ids %}
+                {% set s = subs[sid] %}
+                <a href="{{ note_url(s) }}" class="search-kind" title="{{ s.note.title if s.note else s.title }}">{{ icon("notes", "size-3.5") }} {{ sid }}</a>
+              {% endfor %}
+              {% for other in eq.see_also %}
+                <a href="#eq-{{ other }}" class="search-kind print:hidden" title="See also">{{ icon("arrow-right", "size-3.5") }} {{ eq_names.get(other, other) }}</a>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% endfor %}
+</div>
+{% endblock %}

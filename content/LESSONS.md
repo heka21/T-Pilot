@@ -88,6 +88,10 @@ subtopic (`content/questions/`): the quiz tests what the lesson taught, so they 
 For a second example the reader should try first, state the problem in prose and put the working in
 `??? solution "Show the solution"`.
 
+Formulas are registered in `content/equations.yaml`, not marked in the lesson: when a lesson introduces a formula
+the exam uses, add (or extend) its record there, with this lesson's id in `lessons` and figures that match the
+lesson. Report any formula you added so it can be checked.
+
 ## Self-checks
 
 `??? check "Check yourself: <the question>"` with the answer indented beneath. Three to six per lesson, placed

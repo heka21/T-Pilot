@@ -1,0 +1,1292 @@
+# The equation sheet (/equations) and the "Formulas in this lesson" boxes. See content/README.md, "Equations".
+#
+# Every figure here must match the lessons it links to. `lessons` are subtopic ids (first = the primary lesson);
+# `exams` must agree with content/exams.json: each claimed exam needs a linked lesson in one of its units, and no
+# linked lesson may sit outside the claimed exams. `latex` is KaTeX without $ delimiters; `when` and
+# `rule_of_thumb` are Markdown with $...$ maths. `python -m app.seed.check_content --katex` checks it all.
+
+topics:
+  - {id: aerodynamics, label: Aerodynamics}
+  - {id: performance, label: Performance and limitations}
+  - {id: instruments, label: Instruments}
+  - {id: navigation, label: Navigation}
+  - {id: fuel, label: Fuel}
+  - {id: weight-balance, label: Weight and balance}
+  - {id: meteorology, label: Meteorology}
+  - {id: radio, label: Radio}
+  - {id: human-factors, label: Human factors}
+  - {id: units, label: Units and conversions}
+
+equations:
+  # ---------------------------------------------------------------- aerodynamics
+  - id: dynamic-pressure
+    name: Dynamic pressure
+    topic: aerodynamics
+    latex: 'q = \tfrac{1}{2}\rho V^2'
+    symbols:
+      - {sym: q, meaning: dynamic pressure, unit: Pa}
+      - {sym: '\rho', meaning: air density, unit: kg/m³}
+      - {sym: V, meaning: true airspeed, unit: m/s}
+    when: "Why lift, drag, control forces, structural loads and the ASI reading all change with speed and density: each depends on $q$, the pressure of the air brought to rest against the aeroplane."
+    rule_of_thumb: "Speed is squared: 10% faster and the air pushes about 21% harder; twice as fast, four times as hard. The ASI measures $q$, so the IAS is what the wing feels at any altitude."
+    exams: [RPLA, PPLA]
+    lessons: ["RBKA 4.2", "RBKA 3.2", "BAKC 3.5", "PAKC 2.3", "POPA 2.2"]
+    tags: [ASI, IAS, density, control effectiveness, structural loads]
+    see_also: [lift, drag, tas-from-density]
+
+  - id: lift
+    name: Lift
+    topic: aerodynamics
+    latex: 'L = \tfrac{1}{2}\rho V^2 \, S \, C_L'
+    symbols:
+      - {sym: L, meaning: lift, unit: N}
+      - {sym: '\rho', meaning: air density, unit: kg/m³}
+      - {sym: V, meaning: true airspeed, unit: m/s}
+      - {sym: S, meaning: wing area, unit: m²}
+      - {sym: C_L, meaning: lift coefficient (angle of attack and wing shape)}
+    when: "Any question about what changes lift or the stall speed: weight, speed, density, flap or angle of attack. The exam wants the relationships, not the arithmetic."
+    rule_of_thumb: "Lift goes with $V^2$: double the speed and, at the same angle of attack, the wing makes four times the lift. $\\tfrac{1}{2}\\rho V^2$ is the dynamic pressure the ASI measures."
+    exams: [RPLA]
+    lessons: ["BAKC 4.2", "RBKA 3.1", "RBKA 3.6"]
+    tags: [lift, dynamic pressure, angle of attack, density]
+    see_also: [load-factor-bank, stall-speed-in-turn]
+
+  - id: drag
+    name: Drag
+    topic: aerodynamics
+    latex: 'D = \tfrac{1}{2}\rho V^2 \, S \, C_D'
+    symbols:
+      - {sym: D, meaning: drag, unit: N}
+      - {sym: '\rho', meaning: air density, unit: kg/m³}
+      - {sym: V, meaning: true airspeed, unit: m/s}
+      - {sym: S, meaning: wing area, unit: m²}
+      - {sym: C_D, meaning: drag coefficient (angle of attack and shape)}
+    when: "What changes drag. At a fixed angle of attack drag, like lift, goes with $V^2$; across the speed range parasite drag rises with speed and induced drag falls, giving the U-shaped total-drag curve with its lowest point at the best L/D."
+    rule_of_thumb: "Double the speed at the same angle of attack and drag is four times as great; halve it and it is a quarter."
+    exams: [RPLA]
+    lessons: ["BAKC 4.2", "RBKA 3.1"]
+    tags: [drag, parasite drag, induced drag, drag coefficient]
+    see_also: [lift, glide-angle]
+
+  - id: stall-speed-from-lift
+    name: Stall speed from the lift equation
+    topic: aerodynamics
+    latex: 'V_s = \sqrt{\frac{2W}{\rho\, S\, C_{L\max}}}'
+    symbols:
+      - {sym: V_s, meaning: stall speed (true airspeed), unit: m/s}
+      - {sym: W, meaning: weight (lift needed in level flight), unit: N}
+      - {sym: '\rho', meaning: air density, unit: kg/m³}
+      - {sym: S, meaning: wing area, unit: m²}
+      - {sym: 'C_{L\max}', meaning: 'maximum lift coefficient, at the critical angle of attack'}
+    when: "Increase-or-decrease questions on the stall speed: more weight or load factor raises it, flap (a higher $C_{L\\max}$) lowers it. Density changes the true stall speed but not the indicated one."
+    rule_of_thumb: "Altitude has nil effect on the indicated stall speed: the ASI measures the same dynamic pressure the wing feels."
+    exams: [RPLA]
+    lessons: ["RBKA 3.6"]
+    tags: [stall, CLmax, flap, weight, altitude]
+    see_also: [lift, stall-speed-weight, stall-speed-in-turn]
+
+  - id: stall-speed-weight
+    name: Stall speed and weight
+    topic: aerodynamics
+    latex: 'V_\text{new} = V_\text{old} \sqrt{\frac{W_\text{new}}{W_\text{old}}}'
+    symbols:
+      - {sym: 'V_\text{old}', meaning: stall speed (or best glide speed) at the known weight, unit: kt}
+      - {sym: 'V_\text{new}', meaning: the same speed at the new weight, unit: kt}
+      - {sym: 'W_\text{old}', meaning: weight for the known speed, unit: kg}
+      - {sym: 'W_\text{new}', meaning: actual weight, unit: kg}
+    when: "A stall speed (or best glide speed) is given at one weight and the question asks for it at another, or what an overload does to every published speed."
+    rule_of_thumb: "10% over weight raises the stall speed about 5% ($\\sqrt{1.10} = 1.049$: 48 kt becomes 50.3 kt). At 80% of the weight speeds fall to 0.894 of the figure. The best glide speed moves the same way; the best glide angle does not."
+    exams: [RPLA, PPLA]
+    lessons: ["RBKA 3.6", "RBKA 3.1", "RBKA 3.4", "BAKC 6.4", "POPA 2.2", "PAKA 3.1", "POPC 2.2"]
+    tags: [stall, weight, best glide speed, overweight]
+    see_also: [stall-speed-from-lift, va-at-weight, overweight-effects]
+
+  - id: load-factor-bank
+    name: Load factor in a level turn
+    topic: aerodynamics
+    latex: 'n = \frac{L}{W} = \frac{1}{\cos\theta}'
+    symbols:
+      - {sym: n, meaning: load factor, unit: g}
+      - {sym: L, meaning: lift}
+      - {sym: W, meaning: weight}
+      - {sym: '\theta', meaning: angle of bank, unit: °}
+    when: "A bank angle is given and the question asks for the g, the lift needed, or whether the structural limit is reached in a level turn."
+    rule_of_thumb: "30° gives 1.15 g, 45° gives 1.41 g, 60° gives 2 g; by 75° (3.86 g) a level turn is past the +3.8 g normal-category limit."
+    exams: [RPLA, PPLA]
+    lessons: ["RBKA 3.5", "RBKA 3.6", "BAKC 6.3", "PHFC 2.9"]
+    tags: [bank, g, turn, structural limit]
+    see_also: [stall-speed-in-turn]
+
+  - id: stall-speed-in-turn
+    name: Stall speed in a level turn
+    topic: aerodynamics
+    latex: 'V_{s,\text{turn}} = V_{s,\text{level}} \sqrt{n}'
+    symbols:
+      - {sym: 'V_{s,\text{turn}}', meaning: stall speed in the turn, unit: kt}
+      - {sym: 'V_{s,\text{level}}', meaning: stall speed in level flight, unit: kt}
+      - {sym: n, meaning: load factor, unit: g}
+    when: "Any question that gives a bank angle and asks for the new stall speed; find $n = 1/\\cos\\theta$ first."
+    rule_of_thumb: "30° adds about 7%, 45° adds about 19%, 60° adds about 41%."
+    exams: [RPLA]
+    lessons: ["RBKA 3.5", "RBKA 3.6"]
+    tags: [bank, load factor, stall]
+    see_also: [load-factor-bank, lift]
+
+  - id: wing-loading
+    name: Wing loading
+    topic: aerodynamics
+    latex: '\text{wing loading} = \frac{W}{S} \qquad \text{in a manoeuvre: } \frac{n\,W}{S}'
+    symbols:
+      - {sym: W, meaning: weight, unit: kg}
+      - {sym: S, meaning: wing area, unit: m²}
+      - {sym: n, meaning: load factor, unit: g}
+    when: "Defining wing loading, or what a turn or pull-up does to it: the wing supports $n$ times the weight, so the effective wing loading rises with the load factor, and with it the angle of attack or speed needed."
+    rule_of_thumb: "1,000 kg on a 16 m² wing is 62.5 kg/m² in level flight and the equivalent of 125 kg/m² at 2 g."
+    exams: [RPLA]
+    lessons: ["RBKA 3.5"]
+    tags: [wing loading, load factor, g]
+    see_also: [load-factor-bank]
+
+  - id: glide-angle
+    name: Glide angle and L/D
+    topic: aerodynamics
+    latex: '\tan\gamma = \frac{D}{L}'
+    symbols:
+      - {sym: '\gamma', meaning: glide angle below the horizontal, unit: °}
+      - {sym: D, meaning: drag}
+      - {sym: L, meaning: lift}
+    when: "Why the glide is flattest at the best L/D speed, and why weight does not change the glide angle: it cancels when the forces along and across the path are divided."
+    rule_of_thumb: "An L/D of 9 glides 9 ft forward for every foot lost. Best L/D is at about 4° angle of attack on a basic wing, about 12° below the stall at about 16°."
+    exams: [RPLA]
+    lessons: ["RBKA 3.4", "RBKA 3.1"]
+    tags: [glide, L/D, best glide speed, angle of attack]
+    see_also: [glide-distance, descent-forces, drag]
+
+  - id: glide-distance
+    name: Still-air glide distance
+    topic: aerodynamics
+    latex: '\text{still-air glide distance} = h \times \frac{L}{D}'
+    symbols:
+      - {sym: h, meaning: height above the ground, unit: ft}
+      - {sym: 'L/D', meaning: lift/drag ratio at the speed flown}
+    when: "Engine failure: how far you can glide from a given height. Divide feet by 6,076 for nautical miles. With wind, find the time to the ground (height ÷ rate of descent) and multiply by the groundspeed."
+    rule_of_thumb: "At L/D 9 each 1,000 ft buys 9,000 ft, about 1.5 NM, the figure usually quoted for a C152 (check your POH). 3,000 ft at 9:1 is 4.4 NM; at a wrong speed giving 7:1, only 3.5 NM. Wind slides the reachable circle downwind by wind speed × glide time."
+    exams: [RPLA]
+    lessons: ["RBKA 3.4", "RBKA 3.1"]
+    tags: [glide, engine failure, forced landing, L/D, wind]
+    see_also: [glide-angle, stall-speed-weight]
+
+  - id: descent-forces
+    name: Forces in a powered descent
+    topic: aerodynamics
+    latex: 'W\sin\gamma = D - T'
+    symbols:
+      - {sym: W, meaning: weight}
+      - {sym: '\gamma', meaning: descent angle, unit: °}
+      - {sym: D, meaning: drag}
+      - {sym: T, meaning: thrust}
+    when: "Powered descent questions: more thrust gives a smaller $\\gamma$, a shallower path; with $T = D$ the path is level and with $T > D$ it climbs. With no thrust it is the glide, $W\\sin\\gamma = D$."
+    rule_of_thumb: "Power flattens the path and raises the nose; flap steepens it and lowers the nose. Wind changes the path over the ground, not the rate of descent."
+    exams: [RPLA]
+    lessons: ["RBKA 3.4"]
+    tags: [descent, approach, power, flap]
+    see_also: [glide-angle, climb-forces]
+
+  - id: climb-forces
+    name: Forces in a steady climb
+    topic: aerodynamics
+    latex: 'T = D + W\sin\gamma \quad\Rightarrow\quad \sin\gamma = \frac{T - D}{W}'
+    symbols:
+      - {sym: T, meaning: thrust}
+      - {sym: D, meaning: drag}
+      - {sym: W, meaning: weight}
+      - {sym: '\gamma', meaning: climb angle, unit: °}
+    when: "Angle-of-climb questions: the angle is set by the excess thrust per unit weight, so more weight, more drag (flap, gear) or less thrust (hot and high) all flatten it. The best angle is at $V_X$."
+    rule_of_thumb: "A steady climb is not an acceleration: the forces balance, with thrust exceeding drag by the part of the weight acting back along the path."
+    exams: [RPLA]
+    lessons: ["BAKC 4.3", "RBKA 3.3"]
+    tags: [climb, excess thrust, Vx, climb angle]
+    see_also: [rate-of-climb, climb-gradient]
+
+  - id: rate-of-climb
+    name: Rate of climb and excess power
+    topic: aerodynamics
+    latex: '\text{rate of climb} = V\sin\gamma = \frac{V\,(T - D)}{W}'
+    symbols:
+      - {sym: V, meaning: true airspeed}
+      - {sym: '\gamma', meaning: climb angle, unit: °}
+      - {sym: 'V\,(T - D)', meaning: excess power (power available less power required)}
+      - {sym: W, meaning: weight}
+    when: "Rate-of-climb questions: the rate is the excess power per unit weight, greatest at $V_Y$. Height and heat cut the power available, so the rate falls; a steady wind changes the gradient over the ground, not the rate."
+    rule_of_thumb: "Angle is set by excess thrust, rate by excess power; $V_X$ is always below $V_Y$. The average rate from a climb table is height gained ÷ time: 4,000 ft in 8 min is 500 fpm."
+    exams: [RPLA, PPLA]
+    lessons: ["RBKA 3.3", "BAKC 4.3", "POPA 2.5"]
+    tags: [climb, excess power, Vy, rate of climb]
+    see_also: [climb-forces, climb-gradient, power-loss-density-height]
+
+  - id: rate-of-turn
+    name: Rate of turn
+    topic: aerodynamics
+    latex: '\text{rate of turn}\ (^\circ/\text{s}) \approx \frac{1091 \tan\theta}{V}'
+    symbols:
+      - {sym: '\theta', meaning: angle of bank, unit: °}
+      - {sym: V, meaning: true airspeed, unit: kt}
+    when: "How fast the heading changes at a given bank and speed: more bank or less speed turns faster. The constant is the textbook one; the lesson gives the figures it produces."
+    rule_of_thumb: "At 90 kt and 45° of bank about 12°/s: a full 360° in about 30 seconds. Weight does not appear."
+    exams: [RPLA]
+    lessons: ["RBKA 3.5"]
+    tags: [turn, bank, rate of turn]
+    see_also: [turn-radius, rate-one-turn]
+
+  - id: turn-radius
+    name: Radius of turn
+    topic: aerodynamics
+    latex: 'r\ (\text{ft}) \approx \frac{V^2}{11.26 \tan\theta}'
+    symbols:
+      - {sym: r, meaning: radius of the turn, unit: ft}
+      - {sym: V, meaning: true airspeed, unit: kt}
+      - {sym: '\theta', meaning: angle of bank, unit: °}
+    when: "The size of the turn at a given bank and TAS, for example turning in a valley or onto final. The radius goes with $V^2$: double the speed, four times the radius. Textbook constant; the lesson gives the figures."
+    rule_of_thumb: "At 90 kt: about 380 m (1,250 ft) at 30° of bank, 220 m at 45° and 125 m at 60°. At 120 kt every circle is about 1.78 times as wide."
+    exams: [RPLA]
+    lessons: ["RBKA 3.5"]
+    tags: [turn, bank, radius]
+    see_also: [rate-of-turn]
+
+  - id: rate-one-turn
+    name: Rate one turn and its bank angle
+    topic: aerodynamics
+    latex: '\text{rate one} = 3^\circ/\text{s} \qquad \theta_\text{rate one} \approx \frac{\text{TAS}}{10} + 7'
+    symbols:
+      - {sym: '\theta_\text{rate one}', meaning: bank angle for a rate one turn, unit: °}
+      - {sym: '\text{TAS}', meaning: true airspeed, unit: kt}
+    when: "The turn coordinator's marks show a rate one turn: 3° a second, 180° a minute, a full circle in two minutes. The bank it needs rises with TAS; the $\\text{TAS}/10 + 7$ rule is the textbook estimate (the lessons do not give one)."
+    rule_of_thumb: "At 120 kt the rule gives 19° (exact 18°); at trainer speeds it is a little generous, 16° at 90 kt against an exact 14°. Exactly, $\\tan\\theta = 3V/1091$."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 3.5", "RBKA 3.5", "PAKC 2.3"]
+    tags: [rate one, turn coordinator, bank, instrument flying]
+    see_also: [rate-of-turn]
+
+  - id: propeller-blade-aoa
+    name: Propeller blade angle of attack
+    topic: aerodynamics
+    latex: '\text{blade angle of attack} = \text{blade angle} - \text{helix angle}'
+    symbols:
+      - {sym: '\text{blade angle}', meaning: angle of the blade section to the plane of rotation (fixed on a fixed-pitch propeller), unit: °}
+      - {sym: '\text{helix angle}', meaning: 'angle of the blade path, \tan^{-1}(\text{forward speed} \div \text{rotational speed})', unit: °}
+    when: "Fixed-pitch propeller questions: at the same RPM more forward speed increases the helix angle and lowers the blade angle of attack, so the RPM rises in a dive and falls when the nose is raised."
+    rule_of_thumb: "A blade section moving round at 345 kt with a 21° blade angle: at 80 kt the helix angle is $\\tan^{-1}(80/345) = 13^\\circ$, leaving 8° of attack."
+    exams: [PPLA]
+    lessons: ["PAKA 2.1"]
+    tags: [propeller, helix angle, fixed pitch, RPM]
+
+  # ---------------------------------------------------------------- performance
+  - id: pressure-height
+    name: Pressure height
+    topic: performance
+    latex: '\text{pressure height} = \text{elevation} + (1013 - \text{QNH}) \times 30'
+    symbols:
+      - {sym: '\text{elevation}', meaning: aerodrome elevation, unit: ft}
+      - {sym: '\text{QNH}', meaning: today's QNH, unit: hPa}
+      - {sym: '30', meaning: feet per hectopascal near sea level, unit: ft/hPa}
+    when: "Performance charts and density height start from pressure height. Use it when you are given elevation and QNH; in the aeroplane, set 1013 and read it off the altimeter."
+    rule_of_thumb: "1 hPa is about 30 ft. QNH below 1013 puts the pressure height above the elevation (thin air, worse performance); keep the sign."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.2", "PAKA 3.1", "POPA 2.3"]
+    tags: [QNH, "1013", altimeter, pressure altitude]
+    see_also: [isa-temperature, density-height]
+
+  - id: isa-temperature
+    name: ISA temperature at a height
+    topic: performance
+    latex: 'T_\text{ISA} = 15 - 2 \times \frac{h}{1000}'
+    symbols:
+      - {sym: 'T_\text{ISA}', meaning: ISA temperature, unit: °C}
+      - {sym: h, meaning: pressure height, unit: ft}
+    when: "Finding the ISA deviation (actual minus ISA, keep the sign) for density height, TAS or a performance chart."
+    rule_of_thumb: "15 °C at sea level, falling 2 °C per 1,000 ft (exactly 1.98) to −56.5 °C at the tropopause, 36,090 ft. 3 °C per 1,000 ft is the dry adiabatic rate, not the ISA."
+    exams: [RPLA, PPLA]
+    lessons: ["PMTC 2.1", "BAKC 6.2", "POPA 2.3"]
+    tags: [ISA, lapse rate, ISA deviation]
+    see_also: [density-height, pressure-height]
+
+  - id: density-height
+    name: Density height
+    topic: performance
+    latex: '\text{density height} = \text{pressure height} + 120 \times (T_\text{actual} - T_\text{ISA})'
+    symbols:
+      - {sym: '\text{pressure height}', meaning: height in the ISA with today's pressure, unit: ft}
+      - {sym: 'T_\text{actual}', meaning: outside air temperature, unit: °C}
+      - {sym: 'T_\text{ISA}', meaning: ISA temperature at the pressure height, unit: °C}
+    when: "Hot day, high strip or low QNH: the take-off and climb perform as if at the density height. Work out pressure height and the ISA temperature first."
+    rule_of_thumb: "120 ft for every degree above ISA (subtract below ISA). A 40 °C day on a strip at 1,350 ft pressure height performs like about 4,700 ft."
+    exams: [RPLA, PPLA]
+    lessons: ["POPA 2.3", "BAKC 6.2", "PAKA 3.1"]
+    tags: [density altitude, ISA deviation, take-off performance, hot and high]
+    see_also: [pressure-height, isa-temperature]
+
+  - id: power-loss-density-height
+    name: Engine power and density height
+    topic: performance
+    latex: '\text{full-throttle power} \approx 100\% - 3\% \times \frac{\text{density height (ft)}}{1000}'
+    symbols:
+      - {sym: '\text{density height}', meaning: density height, unit: ft}
+    when: "How much power a normally aspirated engine has left on a hot or high day, and so how much the take-off and especially the climb, which lives on surplus power, will suffer."
+    rule_of_thumb: "Roughly 3% per 1,000 ft of density height: 5,000 ft leaves about 85%, about 4,000 ft about 88%."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.2", "PAKC 2.1", "POPA 2.2", "PAKA 3.1", "POPA 2.5"]
+    tags: [power, density height, normally aspirated, climb performance]
+    see_also: [density-height, rate-of-climb]
+
+  - id: manoeuvring-speed
+    name: Manoeuvring speed
+    topic: performance
+    latex: 'V_A = V_S \sqrt{n_\text{limit}}'
+    symbols:
+      - {sym: V_A, meaning: manoeuvring speed, unit: kt}
+      - {sym: V_S, meaning: 1 g stall speed at the same weight, unit: kt}
+      - {sym: 'n_\text{limit}', meaning: positive limit load factor of the category, unit: g}
+    when: "Finding $V_A$ from the stall speed and the category limit. Below it a full, abrupt control input stalls the wing before the limit load; above it a pull or a sharp gust can overstress the airframe."
+    rule_of_thumb: "Normal category, $\\sqrt{3.8} = 1.95$: $V_A$ is just under twice $V_S$, so 52 kt gives about 101 kt and 55 kt gives 107 kt. Utility is +4.4 g, aerobatic +6 g."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.3", "RBKA 3.8", "POPC 2.2"]
+    tags: [VA, manoeuvring speed, V-n diagram, limit load, turbulence]
+    see_also: [va-at-weight, max-load-factor]
+
+  - id: va-at-weight
+    name: Manoeuvring speed at a lower weight
+    topic: performance
+    latex: 'V_{A,\text{new}} = V_{A,\text{max weight}} \sqrt{\frac{W_\text{actual}}{W_\text{max}}}'
+    symbols:
+      - {sym: 'V_{A,\text{max weight}}', meaning: V_A placarded at maximum weight, unit: kt}
+      - {sym: 'W_\text{actual}', meaning: today's weight, unit: kg}
+      - {sym: 'W_\text{max}', meaning: maximum weight, unit: kg}
+    when: "Flying light (solo, part fuel) and the question asks for $V_A$: it is lower than the placard figure, because the lighter aeroplane stalls at a lower speed and can be pulled to the limit load sooner."
+    rule_of_thumb: "At 80% of maximum weight, $\\sqrt{0.80} = 0.894$: a 100 kt $V_A$ becomes 89 kt. Lighter means a lower $V_A$, the exam's favourite twist."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.3", "RBKA 3.8", "POPC 2.2"]
+    tags: [VA, weight, manoeuvring speed]
+    see_also: [manoeuvring-speed, stall-speed-weight]
+
+  - id: max-load-factor
+    name: Greatest load factor before the stall
+    topic: performance
+    latex: 'n_\text{max} = \left(\frac{V}{V_S}\right)^2'
+    symbols:
+      - {sym: 'n_\text{max}', meaning: greatest load factor the wing can make before it stalls, unit: g}
+      - {sym: V, meaning: indicated airspeed, unit: kt}
+      - {sym: V_S, meaning: 1 g stall speed, unit: kt}
+    when: "Whether a pull at a given speed can overstress the aeroplane, and where $V_A$ comes from: set $n_\\text{max}$ equal to the limit load and solve for the speed."
+    rule_of_thumb: "At the stall speed only 1 g is available; at twice the stall speed, 4 g. That is the curved left edge of the V-n diagram."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.3", "RBKA 3.8", "POPC 2.2"]
+    tags: [V-n diagram, load factor, stall]
+    see_also: [manoeuvring-speed, load-factor-bank]
+
+  - id: climb-gradient
+    name: Climb gradient
+    topic: performance
+    latex: '\text{gradient (ft/NM)} = \frac{\text{rate of climb (fpm)} \times 60}{\text{GS (kt)}} \qquad \text{gradient (\%)} = \frac{\text{rate (fpm)}}{\text{GS (kt)} \times 1.013}'
+    symbols:
+      - {sym: '\text{rate of climb}', meaning: rate from the VSI or POH, unit: ft/min}
+      - {sym: '\text{GS}', meaning: groundspeed in the climb, unit: kt}
+    when: "Will you clear the obstacle? The VSI gives height per minute, the obstacle needs height per nautical mile. A headwind lowers the groundspeed and steepens the gradient; the rate is unchanged."
+    rule_of_thumb: "600 fpm at 80 kt is 450 ft/NM, about 7.4% and a little over 4°. 1% is about 61 ft/NM and 1° about 106 ft/NM (1 NM = 6,076 ft)."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 4.3", "RBKA 3.3", "PNVC 2.4"]
+    tags: [gradient, obstacle clearance, rate of climb, wind]
+    see_also: [rate-of-climb, rate-of-descent]
+
+  - id: rate-of-descent
+    name: Rate of descent for a path
+    topic: performance
+    latex: '\text{ROD (fpm)} = \frac{\text{GS (kt)} \times \text{gradient (ft/NM)}}{60} \qquad 3^\circ\ \text{path: ROD} \approx \text{GS} \times 5'
+    symbols:
+      - {sym: '\text{ROD}', meaning: rate of descent, unit: ft/min}
+      - {sym: '\text{GS}', meaning: groundspeed, unit: kt}
+      - {sym: '\text{gradient}', meaning: path gradient, unit: ft/NM}
+    when: "The rate of descent that holds a path: the climb-gradient sum run backwards. A standard 3° approach is about 300 ft/NM, which gives the GS × 5 rule."
+    rule_of_thumb: "At 100 kt a 3° path needs about 500 fpm; at 80 kt about 400 fpm. A headwind lowers the groundspeed, so the same path needs a lower rate."
+    exams: [PPLA]
+    lessons: ["PNVC 2.4"]
+    tags: [descent, approach, 3 degree, gradient]
+    see_also: [climb-gradient, three-to-one-rule, top-of-climb-descent]
+
+  - id: three-to-one-rule
+    name: 3 to 1 descent rule
+    topic: performance
+    latex: '\text{descent distance (NM)} \approx 3 \times \frac{\text{height to lose (ft)}}{1000}'
+    symbols:
+      - {sym: '\text{height to lose}', meaning: cruise altitude less the joining or circuit altitude, unit: ft}
+    when: "A quick top-of-descent check in the air. Textbook rule (the lessons plan the descent from rate and groundspeed instead): 3 NM for every 1,000 ft is about 330 ft/NM, close to a 3° path."
+    rule_of_thumb: "5,000 ft to lose: start about 15 NM out. A shallower plan, 500 fpm at 110 kt, starts further out, about 18 NM."
+    exams: [PPLA]
+    lessons: ["PNVC 2.4", "POPA 2.5"]
+    tags: [descent, top of descent, TOPD, mental arithmetic]
+    see_also: [top-of-climb-descent, rate-of-descent]
+
+  - id: top-of-climb-descent
+    name: Top of climb and top of descent
+    topic: performance
+    latex: '\text{time} = \frac{\text{height to change}}{\text{rate of climb or descent}} \qquad \text{distance} = \text{GS} \times \frac{\text{time (min)}}{60}'
+    symbols:
+      - {sym: '\text{height to change}', meaning: cruise level less the departure or circuit height, unit: ft}
+      - {sym: '\text{GS}', meaning: groundspeed during the climb or descent, unit: kt}
+    when: "Placing the TOPC and TOPD on the chart and nav log, and the fuel for the climb or descent. Use the climb or descent groundspeed, not the cruise one."
+    rule_of_thumb: "6,500 ft down to 1,500 ft at 500 fpm and 110 kt: 10 min and about 18 NM, so start down 18 NM before the joining point. Plan the descent fuel at cruise flow to be conservative."
+    exams: [PPLA]
+    lessons: ["POPA 2.5", "PNVC 2.4"]
+    tags: [TOPC, TOPD, climb, descent, nav log]
+    see_also: [three-to-one-rule, rate-of-descent, time-speed-distance]
+
+  - id: ground-roll-groundspeed
+    name: Take-off and landing roll and groundspeed
+    topic: performance
+    latex: '\frac{\text{distance}_\text{new}}{\text{distance}_\text{old}} \approx \left(\frac{\text{GS}_\text{new}}{\text{GS}_\text{old}}\right)^2'
+    symbols:
+      - {sym: '\text{GS}', meaning: groundspeed at lift-off or touchdown, unit: kt}
+    when: "How much a headwind saves or a tailwind costs on the roll: the energy to build up or shed goes with the square of the groundspeed at lift-off or touchdown. Use the P-chart for the real figure."
+    rule_of_thumb: "Lift-off at 60 kt: a 10 kt headwind (GS 50 kt) gives $(50/60)^2 = 0.69$, about 30% shorter; a 10 kt tailwind (GS 70 kt) gives 1.36, about 36% longer. 10% faster is 21% more energy."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.2", "RBKA 3.7", "POPA 2.2", "PAKA 3.1"]
+    tags: [take-off, landing, headwind, tailwind, kinetic energy]
+    see_also: [runway-factors, mechanical-energy]
+
+  - id: runway-factors
+    name: Take-off and landing rules of thumb
+    topic: performance
+    latex: 'd = d_\text{chart} \times f_1 \times f_2 \times \cdots'
+    symbols:
+      - {sym: 'd_\text{chart}', meaning: distance from the P-chart for the conditions it covers, unit: m}
+      - {sym: 'f', meaning: 'factor for each extra condition, such as 1.10 for a 2% upslope'}
+    when: "Correcting a take-off or landing distance for a condition the chart does not include. Use the P-chart wherever it has the factor; these are the lessons' rules of thumb for the rest. Each correction multiplies the distance the last one produced."
+    rule_of_thumb: "A tailwind of 10% of the lift-off speed adds about 20% to the take-off distance; a 2% upslope adds about 10%; a wet sealed runway adds 15% or more to the landing. Two 10% penalties make 21%, not 20%."
+    exams: [RPLA, PPLA]
+    lessons: ["RBKA 4.1", "BAKC 6.2", "POPA 2.2", "PAKA 3.1"]
+    tags: [take-off distance, landing distance, slope, wet runway, tailwind, P-chart]
+    see_also: [ground-roll-groundspeed, overweight-effects]
+
+  - id: overweight-effects
+    name: What an overload costs
+    topic: performance
+    latex: 'n_\text{effective} = n_\text{limit} \times \frac{W_\text{max}}{W} \qquad d \propto W^2'
+    symbols:
+      - {sym: 'n_\text{effective}', meaning: load factor at which the structure reaches its design load, unit: g}
+      - {sym: 'n_\text{limit}', meaning: category limit load factor at maximum weight, unit: g}
+      - {sym: W, meaning: actual weight, unit: kg}
+      - {sym: d, meaning: take-off ground roll (rough rule)}
+    when: "What flying over MTOW does: the structure reaches its design load at a lower g, the take-off run grows with roughly the square of the weight, and the stall speed with its square root."
+    rule_of_thumb: "10% over: the g limit falls to $3.8 \\div 1.1 \\approx 3.45$, the runway needed rises about 20% ($1.1^2 = 1.21$), the stall speed about 5%. 8% over: 3.5 g and about 17% longer."
+    exams: [PPLA]
+    lessons: ["POPA 2.2", "PAKA 3.1"]
+    tags: [overweight, MTOW, limit load, take-off distance]
+    see_also: [stall-speed-weight, runway-factors]
+
+  - id: newtons-second-law
+    name: Newton's second law
+    topic: performance
+    latex: 'F = m\,a \quad\Rightarrow\quad a = \frac{F}{m}'
+    symbols:
+      - {sym: F, meaning: net force (thrust less drag and rolling friction), unit: N}
+      - {sym: m, meaning: mass, unit: kg}
+      - {sym: a, meaning: acceleration, unit: m/s²}
+    when: "Acceleration on the take-off roll, or why a heavier aeroplane accelerates more slowly and needs more runway: the same net force pushes more mass."
+    rule_of_thumb: "1,500 N net on 1,000 kg gives 1.5 m/s²; carry 200 kg more and it is 1.25 m/s². In any steady flight, a steady climb included, there is no net force."
+    exams: [RPLA]
+    lessons: ["BAKC 2.5"]
+    tags: [Newton, force, acceleration, mass]
+    see_also: [mechanical-energy]
+
+  - id: mechanical-energy
+    name: Kinetic and potential energy
+    topic: performance
+    latex: 'KE = \tfrac{1}{2} m v^2 \qquad PE = m g h'
+    symbols:
+      - {sym: m, meaning: mass, unit: kg}
+      - {sym: v, meaning: speed, unit: m/s}
+      - {sym: g, meaning: acceleration due to gravity (9.81), unit: m/s²}
+      - {sym: h, meaning: height, unit: m}
+    when: "Energy-state questions: airspeed and height are two stores of energy the pilot trades. Kinetic energy goes with speed squared, potential energy in a straight line with height."
+    rule_of_thumb: "10% fast carries 21% more kinetic energy to get rid of on landing. Speed is stored height: 100 kt is worth about 440 ft ($h = v^2/2g$)."
+    exams: [RPLA]
+    lessons: ["BAKC 2.5", "BAKC 4.1"]
+    tags: [energy, kinetic energy, potential energy, energy state]
+    see_also: [zoom-height, ground-roll-groundspeed]
+
+  - id: zoom-height
+    name: Height gained in a zoom
+    topic: performance
+    latex: 'h = \frac{v_1^2 - v_2^2}{2g}'
+    symbols:
+      - {sym: v_1, meaning: speed at the start of the pull-up, unit: m/s}
+      - {sym: v_2, meaning: speed at the end, unit: m/s}
+      - {sym: g, meaning: acceleration due to gravity (9.81), unit: m/s²}
+      - {sym: h, meaning: height gained, unit: m}
+    when: "How much height a pull-up buys as the speed falls, with the throttle fixed and drag ignored. Convert knots to m/s first (1 kt = 0.514 m/s) and metres to feet at the end (× 3.28)."
+    rule_of_thumb: "100 kt to 60 kt buys about 86 m, 280 ft; 90 kt to 60 kt about 200 ft. Mass cancels, so the answer is the same for any aeroplane; drag makes the real gain a little less."
+    exams: [RPLA]
+    lessons: ["BAKC 2.5", "BAKC 4.1"]
+    tags: [energy, zoom, go-around, stored height]
+    see_also: [mechanical-energy]
+
+  # ---------------------------------------------------------------- instruments
+  - id: altimeter-subscale-error
+    name: Altimeter subscale error
+    topic: instruments
+    latex: '\text{reading error (ft)} \approx (\text{subscale setting} - \text{actual QNH}) \times 30'
+    symbols:
+      - {sym: '\text{subscale setting}', meaning: pressure set in the window, unit: hPa}
+      - {sym: '\text{actual QNH}', meaning: correct local QNH, unit: hPa}
+    when: "The wrong pressure is set on the subscale, or you flew from high to low pressure without resetting: how far, and which way, is the altimeter wrong?"
+    rule_of_thumb: "Set too high, reads too high: 1013 set with a QNH of 1003 over-reads 300 ft, so you are 300 ft lower than it shows. From high to low, look out below."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 3.5", "PAKC 2.3"]
+    tags: [altimeter, QNH, subscale, high to low]
+    see_also: [pressure-height, qfe, pressure-lapse]
+
+  - id: altimeter-temperature-error
+    name: Altimeter temperature error
+    topic: instruments
+    latex: '\text{error} \approx 0.04 \times \frac{\text{ISA deviation}}{10} \times \text{height above the QNH station}'
+    symbols:
+      - {sym: '\text{ISA deviation}', meaning: how far the air is from ISA, unit: °C}
+      - {sym: '\text{height above the QNH station}', meaning: indicated altitude less the station elevation, unit: ft}
+    when: "Terrain clearance on a cold day: with the correct QNH set the altimeter still over-reads in air colder than ISA, by an amount that grows with height."
+    rule_of_thumb: "About 4% of the height above the station per 10 °C off ISA: 4,500 ft on a day 10° colder is about 180 ft lower than indicated. Cold, you are lower; hot to cold, look out below."
+    exams: [PPLA]
+    lessons: ["PAKC 2.3"]
+    tags: [altimeter, temperature error, cold weather, terrain clearance]
+    see_also: [altimeter-subscale-error]
+
+  - id: qfe
+    name: QFE from QNH
+    topic: instruments
+    latex: '\text{QFE} \approx \text{QNH} - \frac{\text{elevation (ft)}}{30}'
+    symbols:
+      - {sym: '\text{QFE}', meaning: pressure at aerodrome level (altimeter reads zero on the aerodrome), unit: hPa}
+      - {sym: '\text{QNH}', meaning: local QNH, unit: hPa}
+      - {sym: '\text{elevation}', meaning: aerodrome elevation, unit: ft}
+    when: "Setting the altimeter to read height above the aerodrome when you know the QNH and the elevation."
+    rule_of_thumb: "Elevation 300 ft, QNH 1015: QFE 1005. Elevation 1,200 ft, QNH 1010: QFE 970. The higher the aerodrome, the further QFE sits below QNH."
+    exams: [PPLA]
+    lessons: ["PMTC 2.2"]
+    tags: [QFE, QNH, altimeter setting]
+    see_also: [pressure-lapse, altimeter-subscale-error]
+
+  - id: tas-rule-of-thumb
+    name: TAS from CAS by rule of thumb
+    topic: instruments
+    latex: '\text{TAS} \approx \text{CAS} \times (1 + 0.02 \times \text{density height in thousands of feet})'
+    symbols:
+      - {sym: '\text{CAS}', meaning: calibrated airspeed (IAS corrected from the POH table), unit: kt}
+      - {sym: '\text{TAS}', meaning: true airspeed, unit: kt}
+    when: "TAS without the computer: about 2% per 1,000 ft of density height (per 1,000 ft of altitude on a standard day). Work out the density height first; in the exam use the method the question names."
+    rule_of_thumb: "CAS 100 kt at about 8,700 ft density height: the rule gives 117 kt; the computer, which works the density exactly, gives about 114 kt. The rule overestimates slightly at height."
+    exams: [RPLA, PPLA]
+    lessons: ["PAKC 2.3", "PNVC 2.4", "BAKC 2.2", "POPA 2.3"]
+    tags: [TAS, CAS, IAS, density height, flight computer]
+    see_also: [tas-from-density, density-height]
+
+  - id: tas-from-density
+    name: TAS from density
+    topic: instruments
+    latex: '\text{TAS} \approx \text{CAS} \sqrt{\frac{\rho_0}{\rho}}'
+    symbols:
+      - {sym: '\rho_0', meaning: ISA sea-level density (1.225), unit: kg/m³}
+      - {sym: '\rho', meaning: density of the air you are flying in, unit: kg/m³}
+    when: "Why TAS exceeds IAS at height: the ASI responds to $\\tfrac{1}{2}\\rho V^2$, so the same reading in thinner air needs a higher true speed. Textbook form, compressibility ignored (fine at light-aeroplane speeds); the lessons use the 2% rule or the flight computer."
+    rule_of_thumb: "At 8,700 ft density height $\\rho/\\rho_0 \\approx 0.77$: CAS 100 kt is about 114 kt TAS, the flight computer's answer."
+    exams: [RPLA, PPLA]
+    lessons: ["PAKC 2.3", "BAKC 2.2"]
+    tags: [TAS, density, ASI, dynamic pressure]
+    see_also: [tas-rule-of-thumb, dynamic-pressure]
+
+  - id: true-magnetic-compass
+    name: True, magnetic and compass
+    topic: instruments
+    latex: '\text{magnetic} = \text{true} - \text{var}_E + \text{var}_W \qquad \text{compass} = \text{magnetic} - \text{dev}_E + \text{dev}_W'
+    symbols:
+      - {sym: '\text{var}', meaning: 'magnetic variation from the isogonal or ERSA, east or west', unit: °}
+      - {sym: '\text{dev}', meaning: 'compass deviation from the deviation card, east or west', unit: °}
+    when: "Turning a true track or heading into magnetic (chart to nav log, forecast wind to runway) and a magnetic heading into the compass heading to steer. Solve wind triangles in true and convert the heading at the end."
+    rule_of_thumb: "Variation west, magnetic best; variation east, magnetic least. Deviation west, compass best; deviation east, compass least. Going back towards true, reverse every sign."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.1", "PAKC 2.3", "PNVC 2.4", "POPC 2.3", "BAKC 3.5"]
+    tags: [variation, deviation, compass, magnetic, "true", deviation card]
+    see_also: [magnetic-bearing]
+
+  # ---------------------------------------------------------------- navigation
+  - id: time-speed-distance
+    name: Time, speed and distance
+    topic: navigation
+    latex: '\text{time (min)} = \frac{\text{distance (NM)} \times 60}{\text{GS (kt)}}'
+    symbols:
+      - {sym: '\text{distance}', meaning: distance to fly, unit: NM}
+      - {sym: '\text{GS}', meaning: groundspeed, unit: kt}
+    when: "Leg times on the navigation log, time to the next fix, or groundspeed from two fixes ($\\text{GS} = \\text{distance} \\div \\text{time} \\times 60$)."
+    rule_of_thumb: "Divide the groundspeed by 60 for NM per minute: 60 kt is 1 NM a minute, 90 kt is 1.5, 120 kt is 2."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.4", "BAKC 2.2", "PNVC 2.5"]
+    tags: [groundspeed, time to go, ETA, nav log]
+    see_also: [endurance, one-in-60-track-error]
+
+  - id: distance-flown
+    name: Distance from speed and time
+    topic: navigation
+    latex: '\text{distance (NM)} = \text{GS (kt)} \times \frac{\text{time (min)}}{60}'
+    symbols:
+      - {sym: '\text{GS}', meaning: groundspeed, unit: kt}
+      - {sym: '\text{time}', meaning: time flown, unit: min}
+    when: "How far you have gone or will go in a given time: a DR position, the ground covered in a climb or glide, or a flight visibility timed with a stopwatch."
+    rule_of_thumb: "At 105 kt, 14 minutes is $14 \\times 1.75 = 24.5$ NM. A feature first recognised 2.5 min before passing it at 105 kt was about 4.4 NM, about 8 km, away."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 2.2", "PNVC 2.5", "PMTC 2.4"]
+    tags: [distance, groundspeed, DR, visibility]
+    see_also: [time-speed-distance, dr-position]
+
+  - id: groundspeed-from-fixes
+    name: Groundspeed and revised ETA from two fixes
+    topic: navigation
+    latex: '\text{GS} = \frac{\text{distance}}{\text{time (min)}} \times 60 \qquad \text{time to go} = \text{distance to go} \times \frac{\text{time taken}}{\text{distance flown}}'
+    symbols:
+      - {sym: '\text{distance}', meaning: distance between the two timed fixes, unit: NM}
+      - {sym: '\text{time taken}', meaning: time between the fixes, unit: min}
+    when: "Revising the ETA after two timed fixes: either find the actual groundspeed and the time to go, or scale the time by proportion. Both give the same answer."
+    rule_of_thumb: "30 NM in 18 min is 100 kt, and the remaining 45 NM then takes 27 min either way. A 'groundspeed' of 1.67 means the × 60 was missed."
+    exams: [PPLA]
+    lessons: ["PNVC 2.5"]
+    tags: [groundspeed, ETA, revision, fix]
+    see_also: [time-speed-distance, distance-flown]
+
+  - id: one-in-60-track-error
+    name: 1 in 60 rule (track error)
+    topic: navigation
+    latex: '\text{track error}\ (^\circ) = \frac{\text{distance off track} \times 60}{\text{distance flown}}'
+    symbols:
+      - {sym: '\text{distance off track}', meaning: how far you are from the planned track, unit: NM}
+      - {sym: '\text{distance flown}', meaning: distance from the last fix, unit: NM}
+    when: "You are off track at a fix and need the heading correction. The closing angle is the same sum with the distance to go; alter heading by track error plus closing angle to reach the destination."
+    rule_of_thumb: "1 NM off track in 60 NM is 1°. Good to a few percent for navigation angles, rough beyond about 20°."
+    exams: [PPLA]
+    lessons: ["PNVC 2.5", "PNVC 2.4"]
+    tags: [track error, closing angle, heading correction, drift]
+    see_also: [time-speed-distance]
+
+  - id: closing-angle
+    name: Closing angle
+    topic: navigation
+    latex: '\text{closing angle}\ (^\circ) = \frac{\text{distance off track} \times 60}{\text{distance to go}}'
+    symbols:
+      - {sym: '\text{distance off track}', meaning: how far you are from the planned track, unit: NM}
+      - {sym: '\text{distance to go}', meaning: distance to the destination or the nominated point, unit: NM}
+    when: "Off track at a fix and you want to reach the destination or a nominated point: the extra angle to converge. Divide by the distance to go, not the distance flown, the most common wrong answer."
+    rule_of_thumb: "At the halfway point the closing angle equals the track error, so the correction is double the track error. Turned round, the same rule gives the sideways error of an angle: 1° at 50 NM is about 0.8 NM."
+    exams: [PPLA]
+    lessons: ["PNVC 2.5", "PNVC 2.7"]
+    tags: [closing angle, 1 in 60, track error]
+    see_also: [one-in-60-track-error, heading-alteration]
+
+  - id: heading-alteration
+    name: Heading alteration to regain track
+    topic: navigation
+    latex: '\text{alteration} = \text{TE} + \text{CA} \qquad \text{once back on track: take off the CA}'
+    symbols:
+      - {sym: '\text{TE}', meaning: track error, unit: °}
+      - {sym: '\text{CA}', meaning: closing angle, unit: °}
+    when: "Choosing the new heading after a fix: the track error alone to parallel the track, track error plus closing angle to regain it at the destination or a nominated point, then take off the closing angle to hold it."
+    rule_of_thumb: "3 NM left of track after 30 NM with 45 NM to go: TE 6°, CA 4°, turn right 10°; on regaining track turn left 4°. Always turn towards the track."
+    exams: [PPLA]
+    lessons: ["PNVC 2.5", "PNVC 2.7"]
+    tags: [heading correction, track error, closing angle, 1 in 60]
+    see_also: [one-in-60-track-error, closing-angle]
+
+  - id: drift
+    name: Drift and maximum drift
+    topic: navigation
+    latex: '\text{max drift}\ (^\circ) = \frac{W \times 60}{\text{TAS}} \qquad \text{drift} \approx \text{max drift} \times \sin\theta = \frac{\text{crosswind} \times 60}{\text{TAS}}'
+    symbols:
+      - {sym: W, meaning: wind speed, unit: kt}
+      - {sym: '\text{TAS}', meaning: true airspeed, unit: kt}
+      - {sym: '\theta', meaning: angle between the wind and the track, unit: °}
+    when: "The heading to steer in your head (1 in 60): the drift is the crosswind component turned into an angle by the TAS. Point the nose into wind by the drift. Run it backwards to estimate the crosswind from an observed drift. Maximum drift (wind at 90°) is the textbook shortcut; the lesson works from the crosswind."
+    rule_of_thumb: "Wind 25 kt at 50° to the track at 110 kt TAS: crosswind 19 kt, drift about 10°; maximum drift would be about 14°. Wind from the left gives right drift and a heading left of track."
+    exams: [PPLA]
+    lessons: ["PNVC 2.4", "PNVC 2.7"]
+    tags: [drift, heading, wind triangle, crosswind, 1 in 60]
+    see_also: [crosswind-component, groundspeed-wind, wind-angle-fractions]
+
+  - id: crosswind-component
+    name: Crosswind component
+    topic: navigation
+    latex: '\text{crosswind} = W \sin\theta'
+    symbols:
+      - {sym: W, meaning: wind speed, unit: kt}
+      - {sym: '\theta', meaning: angle between the wind and the runway (or track), unit: °}
+    when: "Comparing the wind with the POH's maximum demonstrated crosswind, choosing a runway, or finding the drift. Wind and runway must be in the same reference: tower winds and runways are magnetic, forecast winds true."
+    rule_of_thumb: "Runway 24, wind 280/20: angle 40°, crosswind $20 \\times 0.643 = 12.9$ kt. Thirty degrees off the runway already puts half the wind across it."
+    exams: [RPLA, PPLA]
+    lessons: ["RBKA 3.7", "PNVC 2.4", "POPC 2.3"]
+    tags: [crosswind, wind component, runway selection, ERSA]
+    see_also: [headwind-component, wind-angle-fractions, drift]
+
+  - id: headwind-component
+    name: Headwind component
+    topic: navigation
+    latex: '\text{headwind} = W \cos\theta'
+    symbols:
+      - {sym: W, meaning: wind speed, unit: kt}
+      - {sym: '\theta', meaning: angle between the wind and the runway (or track), unit: °}
+    when: "The along-runway part of the wind for the take-off and landing charts, or the along-track part for the groundspeed. Past 90° the cosine is negative: the headwind has become a tailwind."
+    rule_of_thumb: "Runway 24, wind 280/20: $20 \\times \\cos 40^\\circ = 15.3$ kt of headwind. At 60° off the runway, half the wind is still along it."
+    exams: [RPLA, PPLA]
+    lessons: ["RBKA 3.7", "PNVC 2.4", "POPC 2.3", "POPA 2.4"]
+    tags: [headwind, tailwind, wind component, P-chart]
+    see_also: [crosswind-component, groundspeed-wind]
+
+  - id: wind-angle-fractions
+    name: Clock rule for wind components
+    topic: navigation
+    latex: '\sin 15^\circ \approx 0.25 \quad \sin 30^\circ = 0.5 \quad \sin 45^\circ \approx 0.7 \quad \sin 60^\circ \approx 0.9 \quad \sin 90^\circ = 1'
+    symbols:
+      - {sym: '\theta', meaning: 'wind angle, read as minutes on a clock face', unit: °}
+    when: "Crosswind or drift in your head: the fraction of the wind blowing across is the wind angle read as minutes past the hour. The headwind fraction is the same table read from the other end."
+    rule_of_thumb: "15° a quarter, 30° a half, 45° about 0.7, 60° about 0.9, 90° all of it. 50° is about 0.8: 20 kt at 50° is about 16 kt across."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.4", "POPC 2.3", "RBKA 3.7"]
+    tags: [clock rule, crosswind, mental arithmetic, 30 45 60]
+    see_also: [crosswind-component, headwind-component]
+
+  - id: groundspeed-wind
+    name: Groundspeed from TAS and wind
+    topic: navigation
+    latex: '\text{GS} \approx \text{TAS} - W\cos\theta'
+    symbols:
+      - {sym: '\text{TAS}', meaning: true airspeed, unit: kt}
+      - {sym: W, meaning: wind speed, unit: kt}
+      - {sym: '\theta', meaning: angle between the wind and the track (over 90° the term adds), unit: °}
+    when: "Groundspeed for the nav log, or the groundspeeds out and home for an ETP or PNR: the TAS less the headwind component along the track, or plus the tailwind. With a large drift use $\\text{TAS} \\times \\cos(\\text{drift})$ in place of the TAS."
+    rule_of_thumb: "TAS 105 kt: a 20 kt headwind leaves 85 kt, a 20 kt tailwind gives 125 kt. TAS 110 kt with 20 kt on the nose outbound: 90 kt out, 130 kt home."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.4", "BAKC 2.2", "POPC 2.6"]
+    tags: [groundspeed, headwind, tailwind, wind triangle]
+    see_also: [headwind-component, etp, pnr]
+
+  - id: dr-position
+    name: Dead reckoning position
+    topic: navigation
+    latex: '\text{DR position} = \text{last fix} + (\text{GS} \times \text{time since the fix})\ \text{along the TMG}'
+    symbols:
+      - {sym: '\text{GS}', meaning: latest groundspeed, unit: kt}
+      - {sym: '\text{TMG}', meaning: track made good since the fix, unit: °}
+    when: "No fix available (haze, featureless country): plot where you should be from the last fix, using the latest TMG and groundspeed, not the planned ones."
+    rule_of_thumb: "Fix at 1015, TMG 075° M, GS 105 kt: at 1029 you are 24.5 NM along 075° M from the fix (plot it in true)."
+    exams: [PPLA]
+    lessons: ["PNVC 2.5"]
+    tags: [dead reckoning, DR, lost procedure, TMG]
+    see_also: [distance-flown]
+
+  - id: latitude-nautical-mile
+    name: Nautical miles from latitude
+    topic: navigation
+    latex: '1\ \text{minute of latitude} = 1\ \text{NM} \qquad 1^\circ\ \text{of latitude} = 60\ \text{NM}'
+    symbols:
+      - {sym: '\text{NM}', meaning: 'nautical mile (1,852 m)'}
+    when: "Measuring a leg on any chart: lay the dividers on the latitude scale beside a meridian near the track. Never use the longitude scale."
+    rule_of_thumb: "Meridians converge, so a minute of longitude is shorter than a nautical mile everywhere except the equator."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.1", "BAKC 2.2", "PNVC 2.3", "BAKC 5.1"]
+    tags: [latitude, nautical mile, chart, dividers, distance]
+    see_also: [nautical-mile]
+
+  - id: magnetic-bearing
+    name: Magnetic bearing from a relative bearing
+    topic: navigation
+    latex: '\text{MB} = \text{MH} + \text{RB}\ \ (-360\ \text{if over}\ 360) \qquad \text{reciprocal} = \text{MB} \pm 180'
+    symbols:
+      - {sym: '\text{MB}', meaning: magnetic bearing to the station or object, unit: °M}
+      - {sym: '\text{MH}', meaning: magnetic heading, unit: °M}
+      - {sym: '\text{RB}', meaning: 'relative bearing, clockwise from the nose (ADF needle)', unit: °}
+    when: "ADF or a landmark off to the side: turn the angle from the nose into a magnetic bearing you can plot, then take the reciprocal for the position line from the station (QDR) or object."
+    rule_of_thumb: "Heading 120° M, needle on 040: 160° M to the station, on the 340° M line from it. Heading 300°, RB 270: $570 - 360 = 210^\\circ$ M. The clock code is the same idea, 30° per hour."
+    exams: [PPLA]
+    lessons: ["PNVC 2.6", "PNVC 2.1"]
+    tags: [ADF, NDB, relative bearing, QDM, QDR, position line]
+    see_also: [true-magnetic-compass]
+
+  - id: arc-to-time
+    name: Arc to time
+    topic: navigation
+    latex: '15^\circ = 1\ \text{h} \qquad 1^\circ = 4\ \text{min} \qquad 1^\prime = 4\ \text{s}'
+    symbols:
+      - {sym: '^\circ', meaning: degrees of longitude}
+      - {sym: '^\prime', meaning: minutes of arc of longitude}
+    when: "Turning a longitude into time for LMT and UTC, or the gap between your LMT and the zone time: the earth turns 15° of longitude an hour."
+    rule_of_thumb: "Divide the degrees by 15 for hours, multiply the leftover degrees by 4 for minutes and the minutes of arc by 4 for seconds. Perth Airport (115° 58′ E) comes to about 7 h 44 min."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.2", "BAKC 2.3"]
+    tags: [arc to time, longitude, LMT, UTC]
+    see_also: [lmt-utc]
+
+  - id: lmt-utc
+    name: LMT, UTC and local time
+    topic: navigation
+    latex: '\text{UTC} = \text{LMT} - \text{arc to time}\ \ (\text{east longitude}) \qquad \text{local} = \text{UTC} + \text{zone offset}'
+    symbols:
+      - {sym: '\text{LMT}', meaning: local mean time at your meridian (daylight graphs)}
+      - {sym: '\text{UTC}', meaning: Coordinated Universal Time (Z)}
+    when: "Daylight graphs give LMT; forecasts, NOTAMs and flight notifications are in UTC; your watch is in zone time. East of Greenwich, LMT is ahead of UTC."
+    rule_of_thumb: "WST = UTC + 8, the time of the 120° E meridian ($120 \\div 15 = 8$). Perth's LMT runs about 16 minutes behind WST, Kalgoorlie's about 6 minutes ahead."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.2", "BAKC 2.3", "RMTC 2.2"]
+    tags: [UTC, LMT, WST, time zone, daylight]
+    see_also: [arc-to-time]
+
+  # ---------------------------------------------------------------- fuel
+  - id: endurance
+    name: Endurance
+    topic: fuel
+    latex: '\text{endurance (h)} = \frac{\text{fuel available (L)}}{\text{fuel flow (L/h)}}'
+    symbols:
+      - {sym: '\text{fuel available}', meaning: fuel on board less the fixed reserve and any holding or alternate fuel, unit: L}
+      - {sym: '\text{fuel flow}', meaning: cruise fuel flow from the POH, unit: L/h}
+    when: "How long you can fly on the fuel you have, or whether a leg fits inside it. Convert the fixed reserve, a time, to litres at the same fuel flow first."
+    rule_of_thumb: "Set the fixed reserve aside first: 30 minutes for day VFR at 30 L/h is 15 L (verify the current figure in the Part 91 MOS)."
+    exams: [PPLA]
+    lessons: ["PNVC 2.4", "POPA 2.5"]
+    tags: [fuel flow, reserve, fuel planning]
+    see_also: [time-speed-distance]
+
+  - id: trip-fuel
+    name: Fuel for a time
+    topic: fuel
+    latex: '\text{fuel (L)} = \text{time (h)} \times \text{fuel flow (L/h)} = \frac{\text{time (min)} \times \text{fuel flow}}{60}'
+    symbols:
+      - {sym: '\text{time}', meaning: 'flight, holding or diversion time'}
+      - {sym: '\text{fuel flow}', meaning: 'climb, cruise or holding flow from the POH', unit: L/h}
+    when: "The fuel for the legs on the nav log, the holding fuel for a TEMPO or INTER, or the fuel to an alternate: a time multiplied by the right fuel flow."
+    rule_of_thumb: "86.6 min at 34 L/h is 49.1 L; 30 min of holding at 32 L/h is 16 L. Keep one unit and do not round until the end."
+    exams: [PPLA]
+    lessons: ["POPC 2.5", "PFRA 2.4", "POPA 2.5"]
+    tags: [trip fuel, holding fuel, fuel flow, fuel planning]
+    see_also: [minimum-fuel, fixed-reserve]
+
+  - id: fixed-reserve
+    name: Fixed fuel reserve
+    topic: fuel
+    latex: '\text{fixed reserve (L)} = 0.5\ \text{h} \times \text{fuel flow (L/h)}'
+    symbols:
+      - {sym: '0.5\ \text{h}', meaning: '30 minutes, day VFR, piston aeroplane below 5,700 kg'}
+      - {sym: '\text{fuel flow}', meaning: the fuel flow the question or POH specifies, unit: L/h}
+    when: "The fuel you plan to land with and never plan to use: 30 minutes for day VFR in a piston aeroplane (Part 91 MOS table 19.02 item 1; verify against the current MOS). It is a time, so convert it at the fuel flow given."
+    rule_of_thumb: "30 min at 30 L/h is 15 L; at a 27 L/h holding flow, 13.5 L. POPC 2.5 works it at the holding flow, RFRC 2.4 at normal cruise consumption: use the flow the question gives. It is not available for holding or a diversion."
+    exams: [RPLA, PPLA]
+    lessons: ["POPC 2.5", "RFRC 2.4", "PNVC 2.4", "PFRA 2.4"]
+    tags: [fixed reserve, Part 91, MOS, fuel planning, day VFR]
+    see_also: [minimum-fuel, endurance]
+
+  - id: minimum-fuel
+    name: Minimum fuel required
+    topic: fuel
+    latex: '\text{minimum fuel} = \text{taxi} + \text{trip} + \text{holding} + \text{alternate} + \text{fixed reserve}\ (+\ \text{contingency})'
+    symbols:
+      - {sym: '\text{holding}', meaning: '60 min for a TEMPO, 30 min for an INTER, at the holding flow', unit: L}
+      - {sym: '\text{alternate}', meaning: fuel from the destination to the alternate at cruise flow, unit: L}
+    when: "Building the fuel figure for the flight plan in the ledger's order so nothing is counted twice. Holding or alternate fuel is needed when the destination forecast triggers it in the window from 30 minutes before to 60 minutes after the ETA."
+    rule_of_thumb: "The reserve sits on top of the holding and alternate lines, never in place of them. Many pilots add 10% of the trip fuel as contingency. Then compare with the fuel you can carry under MTOW."
+    exams: [PPLA]
+    lessons: ["POPC 2.5", "POPC 2.4", "PFRA 2.4"]
+    tags: [fuel plan, holding, alternate, TEMPO, INTER, contingency]
+    see_also: [trip-fuel, fixed-reserve, fuel-mass]
+
+  - id: fuel-mass
+    name: Fuel volume to mass
+    topic: fuel
+    latex: '\text{kg} = \text{L} \times \text{SG} \qquad \text{L} = \text{kg} \div \text{SG}'
+    symbols:
+      - {sym: '\text{SG}', meaning: 'specific gravity, kilograms per litre (avgas about 0.72)', unit: kg/L}
+    when: "Fuel goes in by the litre but the weight and balance is in kilograms: convert with the specific gravity the question gives."
+    rule_of_thumb: "Avgas about 0.72: 100 L is 72 kg, and 60 kg is about 83 L. The kilograms are always the smaller number. A US gallon of avgas is about 6 lb."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 2.4", "BAKC 6.4", "PNVC 2.4", "POPC 2.1", "POPC 2.5"]
+    tags: [specific gravity, SG, avgas, litres, kilograms]
+    see_also: [us-gallons-litres, weight-ladder]
+
+  - id: etp
+    name: Equi-time point
+    topic: fuel
+    latex: '\text{ETP distance from departure} = \frac{D \times GS_\text{home}}{GS_\text{on} + GS_\text{home}}'
+    symbols:
+      - {sym: D, meaning: total distance of the leg, unit: NM}
+      - {sym: 'GS_\text{on}', meaning: groundspeed continuing to the destination, unit: kt}
+      - {sym: 'GS_\text{home}', meaning: groundspeed turning back to departure, unit: kt}
+    when: "The point from which continuing takes the same time as turning back, for an emergency where time matters (illness, fire, a rough engine). It needs distances and groundspeeds, not fuel."
+    rule_of_thumb: "The groundspeed home goes on top. 180 NM at 110 kt TAS, 20 kt headwind outbound: $180 \\times 130 \\div 220 = 106$ NM. A headwind outbound moves the ETP beyond halfway, into wind. Check: the two times must agree."
+    exams: [PPLA]
+    lessons: ["POPC 2.6"]
+    tags: [ETP, equi-time point, critical point, diversion]
+    see_also: [pnr, groundspeed-wind]
+
+  - id: pnr
+    name: Point of no return
+    topic: fuel
+    latex: '\text{PNR distance} = \frac{E \times GS_\text{out} \times GS_\text{home}}{GS_\text{out} + GS_\text{home}} \qquad t_\text{out} = \frac{E \times GS_\text{home}}{GS_\text{out} + GS_\text{home}}'
+    symbols:
+      - {sym: E, meaning: 'safe endurance: fuel less taxi, fixed reserve and any holding kept for the return, divided by the fuel flow', unit: h}
+      - {sym: 'GS_\text{out}', meaning: groundspeed outbound, unit: kt}
+      - {sym: 'GS_\text{home}', meaning: groundspeed back to departure, unit: kt}
+      - {sym: 't_\text{out}', meaning: time from departure to the PNR, unit: h}
+    when: "The furthest point from which you can still return to departure with the reserve intact, and when you will reach it."
+    rule_of_thumb: "E 2.5 h, 100 kt out, 120 kt home: 136 NM, reached about 82 min after setting course. Check: time out plus time back equals $E$. Swapping the groundspeeds gives the same distance at a different time."
+    exams: [PPLA]
+    lessons: ["POPC 2.6"]
+    tags: [PNR, point of no return, safe endurance, diversion]
+    see_also: [etp, endurance, groundspeed-wind]
+
+  # ---------------------------------------------------------------- weight and balance
+  - id: moment
+    name: Moment and centre of gravity
+    topic: weight-balance
+    latex: '\text{moment} = \text{weight} \times \text{arm} \qquad \text{CG} = \frac{\text{total moment}}{\text{total weight}}'
+    symbols:
+      - {sym: '\text{weight}', meaning: weight of the item, unit: kg}
+      - {sym: '\text{arm}', meaning: 'distance of the item from the datum, aft positive', unit: mm}
+      - {sym: '\text{moment}', meaning: turning effect about the datum, unit: kg mm}
+    when: "Any loading problem: list every item's weight and arm, multiply for the moments, add, then divide the total moment by the total weight for the CG."
+    rule_of_thumb: "Re-calculate after every change: removing a load changes the total weight as well as the moment."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.4", "POPC 2.1"]
+    tags: [CG, centre of gravity, datum, arm, loading]
+
+  - id: index-units
+    name: Index units
+    topic: weight-balance
+    latex: '\text{IU} = \frac{\text{weight (kg)} \times \text{arm (mm)}}{100} \qquad \text{CG (mm)} = \frac{\text{total IU} \times 100}{\text{total weight (kg)}}'
+    symbols:
+      - {sym: '\text{IU}', meaning: 'index unit, a scaled moment (CHARLIE: 1 IU = 100 kg mm)'}
+    when: "Loading system CHARLIE: every moment is divided by 100 to keep the numbers small, and multiplied back at the end for the CG. Other systems scale differently, so read the instructions page first."
+    rule_of_thumb: "70 kg at 3,300 mm is 231,000 kg mm, 2,310 IU. BRAVO divides inch-pound moments by 1,000; ALPHA and ECHO read index units off graphs."
+    exams: [PPLA]
+    lessons: ["POPC 2.1"]
+    tags: [index units, CHARLIE, BRAVO, loading system, CG]
+    see_also: [moment, cg-after-change]
+
+  - id: cg-after-change
+    name: CG after adding or removing a load
+    topic: weight-balance
+    latex: '\text{new CG} = \frac{\text{total moment} \pm w \times \text{arm}}{\text{total weight} \pm w}'
+    symbols:
+      - {sym: w, meaning: 'weight added (+) or removed (−), fuel burned included', unit: kg}
+      - {sym: '\text{arm}', meaning: arm of that load, unit: mm}
+    when: "A load is added, removed or burned off (fuel, a passenger, a bag): change both the moment and the weight, then divide again. Check the CG at take-off and at zero fuel or landing."
+    rule_of_thumb: "Burning fuel from tanks aft of the CG moves the CG forward, and from tanks forward of it moves the CG aft. Removing a bag moves the CG less than you might expect, because the weight falls too."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.4", "POPC 2.1"]
+    tags: [CG, fuel burn, loading, zero fuel]
+    see_also: [moment, cg-shift]
+
+  - id: cg-shift
+    name: CG shift when a load is moved
+    topic: weight-balance
+    latex: '\Delta\text{CG} = \frac{w \times d}{W}'
+    symbols:
+      - {sym: w, meaning: weight of the item moved, unit: kg}
+      - {sym: d, meaning: distance it is moved, unit: mm}
+      - {sym: W, meaning: total weight (unchanged by the move), unit: kg}
+    when: "A load is moved within the aeroplane, so the total weight is unchanged: the CG moves the same way as the load. Textbook shortcut; the lesson gets the same answer by recalculating the moment."
+    rule_of_thumb: "Moving a 20 kg bag 1,500 mm forward in a 1,038 kg aeroplane removes 30,000 kg mm and moves the CG about 29 mm forward."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 6.4", "POPC 2.1"]
+    tags: [CG, moving load, shift]
+    see_also: [cg-after-change, moment]
+
+  - id: floor-loading
+    name: Floor loading
+    topic: weight-balance
+    latex: '\text{floor loading} = \frac{\text{weight (kg)}}{\text{contact area (m}^2)}'
+    symbols:
+      - {sym: '\text{contact area}', meaning: area of the item (or its board) touching the floor, unit: m²}
+    when: "A dense item (battery, toolbox, tinned food) in a baggage compartment: inside the compartment's weight limit but perhaps over the floor's limit in kg/m²."
+    rule_of_thumb: "ECHO's floor limit is 450 kg/m². Stand the item on a board to spread the load, and put the board on the load sheet."
+    exams: [PPLA]
+    lessons: ["POPC 2.1"]
+    tags: [floor loading, baggage, ECHO]
+
+  - id: weight-ladder
+    name: The weight ladder
+    topic: weight-balance
+    latex: '\text{ZFW} = \text{empty} + \text{payload} \qquad \text{TOW} = \text{ZFW} + \text{fuel} \qquad \text{LW} = \text{TOW} - \text{fuel burned}'
+    symbols:
+      - {sym: '\text{ZFW}', meaning: 'zero fuel weight (everything but usable fuel), checked against MZFW', unit: kg}
+      - {sym: '\text{TOW}', meaning: 'take-off weight, checked against MTOW', unit: kg}
+      - {sym: '\text{LW}', meaning: 'landing weight, checked against MLW', unit: kg}
+    when: "Each rung is checked against its own limit. Also the fuel you can carry: $(\\text{MTOW} - \\text{ZFW}) \\div \\text{SG}$ litres. Ramp weight is the take-off weight plus the taxi fuel."
+    rule_of_thumb: "Empty 760 kg plus 245 kg of people and bags is a 1,005 kg ZFW; under a 1,111 kg MTOW that leaves 106 kg, about 147 L of fuel."
+    exams: [RPLA, PPLA]
+    lessons: ["POPC 2.1", "BAKC 6.4", "POPC 2.5"]
+    tags: [ZFW, MTOW, MLW, MZFW, ramp weight, loading]
+    see_also: [fuel-mass, moment]
+
+  # ---------------------------------------------------------------- meteorology
+  - id: cloud-base
+    name: Cumulus cloud base from the dew point spread
+    topic: meteorology
+    latex: '\text{cloud base (ft AGL)} \approx (T - T_d) \times 400'
+    symbols:
+      - {sym: T, meaning: surface temperature, unit: °C}
+      - {sym: T_d, meaning: surface dew point, unit: °C}
+    when: "A METAR or forecast gives the temperature and dew point and the question asks for the base of convective cloud."
+    rule_of_thumb: "The spread closes about 2.5 °C per 1,000 ft (3 °C dry adiabatic minus 0.5 °C for the dew point), so 400 ft per degree: 24/16 gives about 3,200 ft AGL."
+    exams: [RPLA, PPLA]
+    lessons: ["PMTC 2.3", "RMTC 2.1"]
+    tags: [dew point, spread, cumulus, METAR]
+
+  - id: dalr
+    name: Dry adiabatic lapse rate
+    topic: meteorology
+    latex: 'T_\text{parcel} = T_\text{start} - 3 \times \frac{h}{1000}'
+    symbols:
+      - {sym: 'T_\text{start}', meaning: temperature where the parcel starts to rise, unit: °C}
+      - {sym: h, meaning: height the unsaturated parcel is lifted, unit: ft}
+    when: "How an unsaturated parcel cools as it rises (and warms as it sinks): 3 °C per 1,000 ft. Compare it with the environment to judge stability. It is the exam's usual distractor for the ISA lapse rate (2 °C)."
+    rule_of_thumb: "26 °C lifted 2,000 ft is 20 °C; if the environment cools only 2.5 °C per 1,000 ft (21 °C there), the parcel is colder and sinks back: stable for dry air."
+    exams: [PPLA]
+    lessons: ["PMTC 2.2", "PMTC 2.3", "PMTC 2.1"]
+    tags: [DALR, lapse rate, stability, adiabatic]
+    see_also: [salr, isa-temperature, cloud-base]
+
+  - id: salr
+    name: Saturated adiabatic lapse rate
+    topic: meteorology
+    latex: 'T_\text{parcel} \approx T_\text{start} - 1.5 \times \frac{h}{1000}'
+    symbols:
+      - {sym: 'T_\text{start}', meaning: temperature where the saturated parcel starts to rise, unit: °C}
+      - {sym: h, meaning: height the saturated parcel is lifted, unit: ft}
+    when: "A saturated parcel (in cloud) cools more slowly because condensation releases latent heat. An environmental lapse rate between the SALR and the DALR is stable for dry air but unstable once saturated: conditional instability."
+    rule_of_thumb: "About 1.5 °C per 1,000 ft: smaller in warm air, closer to the DALR in very cold air."
+    exams: [PPLA]
+    lessons: ["PMTC 2.2"]
+    tags: [SALR, lapse rate, conditional instability, latent heat]
+    see_also: [dalr]
+
+  - id: pressure-lapse
+    name: Pressure change with height
+    topic: meteorology
+    latex: '1\ \text{hPa} \approx 30\ \text{ft (near sea level)}'
+    symbols:
+      - {sym: '\text{hPa}', meaning: hectopascal (the same as a millibar)}
+    when: "Any conversion between a pressure difference and a height difference near the ground: QNH to pressure height, QFE, or a subscale error."
+    rule_of_thumb: "More exactly about 27 ft per hPa at sea level, growing with height. The total pressure, and the oxygen in each breath, halves by about 18,000 ft."
+    exams: [RPLA, PPLA]
+    lessons: ["PMTC 2.1", "BAKC 3.5"]
+    tags: [pressure, altimeter, QNH, 30 ft per hPa]
+    see_also: [pressure-height, qfe, altimeter-subscale-error]
+
+  - id: surface-wind
+    name: Surface wind from the gradient wind
+    topic: meteorology
+    latex: '\text{surface wind} \approx \text{2,000 ft wind veered } 30^\circ,\ \tfrac{1}{2}\ \text{to}\ \tfrac{2}{3}\ \text{the speed (over land)}'
+    symbols:
+      - {sym: '\text{2,000 ft wind}', meaning: forecast gradient wind above the friction layer, unit: kt}
+    when: "Estimating the wind at a strip from the forecast 2,000 ft wind. In the Southern Hemisphere friction makes the surface wind veered and lighter; climbing out, the wind backs and increases."
+    rule_of_thumb: "Over land about 30° veered at half to two-thirds the speed; over the sea about 10–15° veered at two-thirds to three-quarters. 320/24 over the Wheatbelt gives about 350 at 12–16 kt."
+    exams: [PPLA]
+    lessons: ["PMTC 2.5"]
+    tags: [surface wind, gradient wind, friction, veer, back]
+
+  # ---------------------------------------------------------------- radio
+  - id: vhf-range
+    name: VHF radio range
+    topic: radio
+    latex: '\text{range (NM)} \approx 1.23 \sqrt{h}'
+    symbols:
+      - {sym: h, meaning: height of the aeroplane above the ground station, unit: ft}
+    when: "How far away a VHF station (COM, VOR) can be heard. With both stations raised, add the two: $1.23\\,(\\sqrt{h_1} + \\sqrt{h_2})$."
+    rule_of_thumb: "Line of sight only: at 1,500 ft about 48 NM. Doubling the range needs four times the height."
+    exams: [PPLA]
+    lessons: ["PAKC 3.10"]
+    tags: [VHF, line of sight, radio range, VOR]
+
+  - id: wavelength
+    name: Wavelength and frequency
+    topic: radio
+    latex: '\lambda\ (\text{m}) = \frac{300}{f\ (\text{MHz})}'
+    symbols:
+      - {sym: '\lambda', meaning: wavelength, unit: m}
+      - {sym: f, meaning: frequency, unit: MHz}
+    when: "Wavelength from frequency or the reverse. The 300 is the speed of light, 300,000,000 m/s, with the frequency in MHz."
+    rule_of_thumb: "118 MHz is about 2.54 m, 125 MHz is 2.4 m. Higher frequency, shorter wavelength."
+    exams: [PPLA]
+    lessons: ["PAKC 3.10"]
+    tags: [wavelength, frequency, VHF, radio waves]
+    see_also: [quarter-wave-antenna]
+
+  - id: quarter-wave-antenna
+    name: Quarter-wave antenna
+    topic: radio
+    latex: '\text{antenna length} \approx \frac{\lambda}{4} = \frac{75}{f\ (\text{MHz})}\ \text{m}'
+    symbols:
+      - {sym: '\lambda', meaning: wavelength, unit: m}
+      - {sym: f, meaning: frequency, unit: MHz}
+    when: "Why a VHF COM antenna is short: it is a quarter-wave whip or blade."
+    rule_of_thumb: "At 118 MHz, $2.54 \\div 4 = 0.64$ m; at 125 MHz about 0.6 m."
+    exams: [PPLA]
+    lessons: ["PAKC 3.10"]
+    tags: [antenna, quarter wave, VHF]
+    see_also: [wavelength]
+
+  # ---------------------------------------------------------------- human factors
+  - id: boyles-law
+    name: Boyle's law (trapped gas)
+    topic: human-factors
+    latex: 'P_1 V_1 = P_2 V_2 \quad\Longrightarrow\quad V_2 = V_1 \times \frac{P_1}{P_2}'
+    symbols:
+      - {sym: P_1, meaning: pressure at the start (1013 at sea level), unit: hPa}
+      - {sym: V_1, meaning: gas volume at the start, unit: mL}
+      - {sym: P_2, meaning: pressure at the new level, unit: hPa}
+      - {sym: V_2, meaning: gas volume at the new level, unit: mL}
+    when: "Trapped gas in the gut, teeth, middle ear and sinuses: how much it expands on the climb, or must be re-equalised on the descent."
+    rule_of_thumb: "About ×1.5 at 10,000 ft (700 hPa) and ×2 at 18,000 ft (500 hPa). 150 mL at sea level is about 200 mL at 8,000 ft (753 hPa). Gut and teeth hurt on the climb, ears and sinuses on the descent."
+    exams: [RPLA, PPLA]
+    lessons: ["PHFC 2.4"]
+    tags: [Boyle, trapped gas, ears, sinuses, barotrauma]
+    see_also: [partial-pressure-oxygen]
+
+  - id: partial-pressure-oxygen
+    name: Partial pressure of oxygen
+    topic: human-factors
+    latex: 'P_{O_2} = 0.21 \times P_\text{total}'
+    symbols:
+      - {sym: 'P_{O_2}', meaning: partial pressure of oxygen, unit: hPa}
+      - {sym: 'P_\text{total}', meaning: total air pressure at the height, unit: hPa}
+    when: "Why hypoxia comes with altitude although the air is still 21% oxygen: what drives oxygen into the blood is its partial pressure, which falls with the total pressure."
+    rule_of_thumb: "Sea level about 213 hPa; 10,000 ft about 147 hPa, roughly 70% of sea level; 18,000 ft about 105 hPa, half."
+    exams: [RPLA, PPLA]
+    lessons: ["PHFC 2.11", "PHFC 2.3", "PHFC 2.12", "PMTC 2.1"]
+    tags: [oxygen, partial pressure, hypoxia, altitude]
+    see_also: [boyles-law, pressure-lapse]
+
+  - id: g-blood-column
+    name: g and the blood column
+    topic: human-factors
+    latex: '\Delta p = \rho \, (n\,g) \, h'
+    symbols:
+      - {sym: '\Delta p', meaning: pressure needed to lift blood from heart to head}
+      - {sym: '\rho', meaning: density of blood}
+      - {sym: n, meaning: load factor, unit: g}
+      - {sym: h, meaning: height of the head above the heart (about 30 cm), unit: m}
+    when: "Why positive g starves the brain of blood: the pressure the heart must find to lift blood to the head rises in direct proportion to the load factor."
+    rule_of_thumb: "At 3 g the 30 cm column weighs three times as much. Vision goes first (grey-out, tunnel vision, black-out) before G-LOC; a slow onset gives the reflexes time to respond."
+    exams: [RPLA, PPLA]
+    lessons: ["PHFC 2.9"]
+    tags: [g, G-LOC, grey-out, blood pressure, load factor]
+    see_also: [load-factor-bank]
+
+  # ---------------------------------------------------------------- units
+  - id: knots-kmh
+    name: Knots and kilometres per hour
+    topic: units
+    latex: '\text{km/h} = \text{kt} \times 1.852 \qquad \text{kt} = \text{km/h} \div 1.852'
+    symbols:
+      - {sym: '\text{kt}', meaning: 'knot, one nautical mile per hour'}
+    when: "A speed in km/h to compare with knots. For physics questions, 1 kt = 0.514 m/s."
+    rule_of_thumb: "110 kt is about 204 km/h; 100 km/h is 54 kt. Never 'knots per hour'."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 2.2", "BAKC 2.5", "PNVC 2.4"]
+    tags: [knots, km/h, m/s, speed units]
+    see_also: [nautical-mile]
+
+  - id: nautical-mile
+    name: Nautical miles, kilometres and feet
+    topic: units
+    latex: '1\ \text{NM} = 1852\ \text{m} = 1.852\ \text{km} \approx 6076\ \text{ft} \qquad 1\ \text{km} = 0.54\ \text{NM}'
+    symbols:
+      - {sym: '\text{NM}', meaning: 'nautical mile, one minute of latitude'}
+    when: "Visibility is in metres and kilometres, navigation in nautical miles: convert before comparing a reported visibility with a minimum. Feet per NM for gradients and glide distances."
+    rule_of_thumb: "100 NM is about 185 km. 5,000 m is 2.7 NM, so 4,000 m is below a 5,000 m minimum. 1 statute mile = 0.87 NM."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 2.2", "PNVC 2.1", "PNVC 2.4", "PMTC 2.4"]
+    tags: [nautical mile, kilometres, visibility, statute mile]
+    see_also: [latitude-nautical-mile, knots-kmh, feet-metres]
+
+  - id: feet-metres
+    name: Feet and metres
+    topic: units
+    latex: '\text{m} = \text{ft} \times 0.3048 \qquad \text{ft} = \text{m} \times 3.28'
+    symbols:
+      - {sym: '\text{ft}', meaning: feet (all vertical distances)}
+      - {sym: '\text{m}', meaning: metres (runway lengths and widths)}
+    when: "Runways are in metres, heights in feet: convert a runway length for a chart in feet, or a height given in metres."
+    rule_of_thumb: "1,000 ft is about 305 m (about 300 m); a 1,500 m runway is about 4,920 ft. Converting to the smaller unit gives the bigger number."
+    exams: [RPLA, PPLA]
+    lessons: ["PNVC 2.4", "BAKC 2.4", "PNVC 2.3"]
+    tags: [feet, metres, runway length]
+    see_also: [nautical-mile]
+
+  - id: altitude-elevation-height
+    name: Altitude, elevation and height
+    topic: units
+    latex: '\text{altitude} = \text{elevation} + \text{height}'
+    symbols:
+      - {sym: '\text{altitude}', meaning: aircraft above mean sea level (QNH set), unit: ft AMSL}
+      - {sym: '\text{elevation}', meaning: the ground's own height above mean sea level, unit: ft}
+      - {sym: '\text{height}', meaning: aircraft above the ground or aerodrome, unit: ft AGL}
+    when: "Circuit height at an inland aerodrome, terrain clearance, or a GAF cloud base (above sea level) against a TAF or METAR one (above the aerodrome)."
+    rule_of_thumb: "Circuit at an aerodrome of elevation 650 ft: 1,650 ft on QNH. A 2,500 ft altitude is only 1,300 ft above a 1,200 ft aerodrome."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 2.4", "PMTC 2.2"]
+    tags: [altitude, height, elevation, AMSL, AGL, circuit height]
+    see_also: [pressure-height]
+
+  - id: us-gallons-litres
+    name: US gallons and litres
+    topic: units
+    latex: '\text{L} = \text{US gal} \times 3.785 \qquad \text{kg of avgas} \approx \text{US gal} \times 2.72'
+    symbols:
+      - {sym: '\text{US gal}', meaning: 'US gallon (POH, fuel gauges)', unit: gal}
+    when: "American POHs and gauges in US gallons, the bowser in litres, the load sheet in kilograms."
+    rule_of_thumb: "37 US gal is about 140 L. 48 US gal is 181.7 L, or 130.8 kg at SG 0.72. The imperial gallon (4.546 L) is a fifth larger; do not mix them."
+    exams: [PPLA]
+    lessons: ["PNVC 2.4", "POPC 2.1"]
+    tags: [US gallons, litres, fuel units, avgas]
+    see_also: [fuel-mass, pounds-kilograms]
+
+  - id: pounds-kilograms
+    name: Pounds and kilograms
+    topic: units
+    latex: '\text{kg} = \text{lb} \times 0.4536 \qquad \text{lb} = \text{kg} \times 2.205'
+    symbols:
+      - {sym: '\text{lb}', meaning: pound}
+    when: "American loading systems (BRAVO) in pounds and inches against weights or limits in kilograms."
+    rule_of_thumb: "2,200 lb is about 1,000 kg. A kilogram is heavier, so the weight in pounds is the bigger number."
+    exams: [PPLA]
+    lessons: ["PNVC 2.4", "POPC 2.1"]
+    tags: [pounds, kilograms, BRAVO, weight units]
+    see_also: [us-gallons-litres]
+
+  - id: hpa-inhg
+    name: Hectopascals and inches of mercury
+    topic: units
+    latex: '1\ \text{inHg} \approx 33.86\ \text{hPa} \qquad 1013.25\ \text{hPa} = 29.92\ \text{inHg}'
+    symbols:
+      - {sym: '\text{inHg}', meaning: 'inches of mercury (American altimeters, manifold pressure)'}
+      - {sym: '\text{hPa}', meaning: 'hectopascal, the same as a millibar'}
+    when: "An American altimeter subscale or a manifold pressure gauge in inches of mercury. The 33.86 is the textbook factor; the lessons give only the ISA pair, 1013.25 hPa = 29.92 inHg."
+    rule_of_thumb: "1 inHg is about 34 hPa, so about 1,000 ft near sea level at 30 ft per hPa."
+    exams: [RPLA, PPLA]
+    lessons: ["PMTC 2.1", "BAKC 2.4", "PAKC 2.2"]
+    tags: [inHg, hPa, millibar, pressure units, manifold pressure]
+    see_also: [pressure-lapse]
+
+  - id: temperature-scales
+    name: Celsius, Fahrenheit and kelvin
+    topic: units
+    latex: '{}^\circ\mathrm{F} = 1.8 \times {}^\circ\mathrm{C} + 32 \qquad \mathrm{K} = {}^\circ\mathrm{C} + 273'
+    symbols:
+      - {sym: '{}^\circ\mathrm{C}', meaning: degrees Celsius (Australian reports and the ISA)}
+      - {sym: '\mathrm{K}', meaning: 'kelvin, absolute temperature'}
+    when: "An American POH or gauge in Fahrenheit (textbook conversion; the lessons work only in Celsius), or why a 1 °C change alters air density by about 1/288 at 15 °C."
+    rule_of_thumb: "15 °C is 59 °F and 288 K; 0 °C is 32 °F. A change of 1 °C is a change of 1.8 °F."
+    exams: [RPLA, PPLA]
+    lessons: ["BAKC 2.4", "POPA 2.3"]
+    tags: [Celsius, Fahrenheit, kelvin, temperature units]
+    see_also: [isa-temperature]

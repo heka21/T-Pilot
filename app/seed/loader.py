@@ -9,6 +9,7 @@ Content layout (see content/README.md):
     notes/<UNIT>/<n.n>-<slug>.md   one note per subtopic, YAML frontmatter
     questions/<UNIT>.yaml          list of questions
     cards/<UNIT>.yaml              list of flashcards
+    equations.yaml                 the equation sheet (rebuilt from scratch each time: nothing user-owned refers to it)
 """
 from __future__ import annotations
 
@@ -26,8 +27,9 @@ from sqlalchemy.orm import Session
 
 from app.seed.visuals import VisualsExtension, find_refs
 from app.models import (
-    Card, CardElement, Element, Exam, ExamUnit, Note, Question, QuestionElement, Subtopic, Topic, Unit,
+    Card, CardElement, Element, Equation, EquationLesson, Exam, ExamUnit, Note, Question, QuestionElement, Subtopic, Topic, Unit,
 )
+from app.seed.equations import EQUATIONS_FILE, load_equations
 
 log = logging.getLogger(__name__)
 
@@ -195,6 +197,42 @@ def seed_cards(session: Session, c_dir: Path) -> int:
     return count
 
 
+# ---------------------------------------------------------------- equations
+_OUTER_P_RE = re.compile(r"\A<p>(.*)</p>\Z", re.S)
+
+
+def render_inline_markdown(text: str, content_dir: Path | str | None = None) -> str:
+    """Markdown for one short paragraph, without the wrapping <p> (so it sits inside a card's own element)."""
+    if not text.strip():
+        return ""
+    html_out = render_markdown(text, content_dir).strip()
+    m = _OUTER_P_RE.match(html_out)
+    return m.group(1) if m and "<p>" not in m.group(1) else html_out
+
+
+def seed_equations(session: Session, path: Path) -> int:
+    data = load_equations(path)
+    content_dir = Path(path).parent
+    known = {s.id for s in session.scalars(select(Subtopic))}
+    for row in session.scalars(select(Equation)):
+        session.delete(row)  # cascades to its EquationLesson rows
+    session.flush()
+    for pos, e in enumerate(data["equations"]):
+        session.add(Equation(
+            id=e["id"], name=e["name"], topic=e["topic"], latex=e["latex"], symbols=e["symbols"],
+            when=e["when"], when_html=render_inline_markdown(e["when"], content_dir),
+            rule_of_thumb=e["rule_of_thumb"], rule_html=render_inline_markdown(e["rule_of_thumb"], content_dir),
+            exams=e["exams"], tags=e["tags"], see_also=e["see_also"], position=pos,
+        ))
+        unknown = [x for x in e["lessons"] if x not in known]
+        if unknown:
+            log.warning("equation %s: unknown lessons %s", e["id"], unknown)
+        for lpos, sid in enumerate(dict.fromkeys(x for x in e["lessons"] if x in known)):
+            session.add(EquationLesson(equation_id=e["id"], subtopic_id=sid, position=lpos))
+    session.flush()
+    return len(data["equations"])
+
+
 def seed_all(session: Session, content_dir: Path) -> dict[str, int]:
     content_dir = Path(content_dir)
     summary = {
@@ -203,6 +241,7 @@ def seed_all(session: Session, content_dir: Path) -> dict[str, int]:
         "notes": seed_notes(session, content_dir / "notes"),
         "questions": seed_questions(session, content_dir / "questions"),
         "cards": seed_cards(session, content_dir / "cards"),
+        "equations": seed_equations(session, content_dir / EQUATIONS_FILE),
     }
     session.commit()
     log.info("content seeded: %s", summary)
