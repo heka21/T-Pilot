@@ -1,8 +1,8 @@
 """SQLAlchemy models.
 
-Content tables (Exam, Unit, Topic, Subtopic, Element, Note, Question, Card) are re-seeded from
+Content tables (Exam, Unit, Topic, Subtopic, Element, Note, Question, Card, Equation) are re-seeded from
 content/ on every start using stable string ids, so content edits never touch progress tables
-(Progress, Attempt, AttemptAnswer, CardReview, StudyPlan, PlanItem).
+(Progress, StudentNote, Highlight, InkDocument, Attempt, AttemptAnswer, CardReview, StudyPlan, PlanItem).
 """
 from __future__ import annotations
 
@@ -75,6 +75,7 @@ class Subtopic(Base):
     elements: Mapped[list["Element"]] = relationship(back_populates="subtopic", order_by="Element.position", cascade="all, delete-orphan")
     note: Mapped["Note | None"] = relationship(back_populates="subtopic", uselist=False, cascade="all, delete-orphan")
     progress: Mapped["Progress | None"] = relationship(uselist=False)
+    equations: Mapped[list["Equation"]] = relationship(secondary="equation_lessons", order_by="Equation.position", viewonly=True)
 
 
 class Element(Base):
@@ -146,6 +147,36 @@ class CardElement(Base):
     element_code: Mapped[str] = mapped_column(ForeignKey("elements.code"), primary_key=True)
 
 
+class Equation(Base):
+    """One formula on the equation sheet (content/equations.yaml); rebuilt from scratch on every seed."""
+    __tablename__ = "equations"
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)  # slug, e.g. "stall-speed-in-turn"
+    name: Mapped[str] = mapped_column(String(200))
+    topic: Mapped[str] = mapped_column(String(40))  # a topic id from equations.yaml, e.g. "aerodynamics"
+    latex: Mapped[str] = mapped_column(Text)  # KaTeX source without delimiters
+    symbols: Mapped[list] = mapped_column(JSON, default=list)  # [{sym, meaning, unit}]
+    when: Mapped[str] = mapped_column(Text, default="")
+    when_html: Mapped[str] = mapped_column(Text, default="")
+    rule_of_thumb: Mapped[str] = mapped_column(Text, default="")
+    rule_html: Mapped[str] = mapped_column(Text, default="")
+    exams: Mapped[list] = mapped_column(JSON, default=list)  # ["RPLA", "PPLA"]
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    see_also: Mapped[list] = mapped_column(JSON, default=list)  # equation ids
+    position: Mapped[int] = mapped_column(Integer)  # sheet order
+    lessons: Mapped[list["EquationLesson"]] = relationship(order_by="EquationLesson.position", cascade="all, delete-orphan")
+
+    @property
+    def lesson_ids(self) -> list[str]:
+        return [el.subtopic_id for el in self.lessons]
+
+
+class EquationLesson(Base):
+    __tablename__ = "equation_lessons"
+    equation_id: Mapped[str] = mapped_column(ForeignKey("equations.id"), primary_key=True)
+    subtopic_id: Mapped[str] = mapped_column(ForeignKey("subtopics.id"), primary_key=True)
+    position: Mapped[int] = mapped_column(Integer)  # 0 = the equation's primary lesson
+
+
 # ---------------------------------------------------------------- user state
 STATUSES = ("not_started", "studying", "confident")
 
@@ -154,6 +185,50 @@ class Progress(Base):
     __tablename__ = "progress"
     subtopic_id: Mapped[str] = mapped_column(ForeignKey("subtopics.id"), primary_key=True)
     status: Mapped[str] = mapped_column(String(16), default="not_started")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+# Student annotations on lessons: typed notes, text highlights and Pencil ink (see services.annotations).
+HIGHLIGHT_COLOURS = ("yellow", "green", "pink", "blue")
+INK_KINDS = ("lesson", "sketch")  # lesson: overlay on the lesson text (page 0); sketch: sketch-pad pages
+
+
+class StudentNote(Base):
+    """The student's own typed notes for one lesson (named to stay clear of the content Note)."""
+    __tablename__ = "student_notes"
+    subtopic_id: Mapped[str] = mapped_column(ForeignKey("subtopics.id"), primary_key=True)
+    text: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class Highlight(Base):
+    """A highlighted passage, anchored by its text (W3C TextQuoteSelector) with a position fast path."""
+    __tablename__ = "highlights"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    subtopic_id: Mapped[str] = mapped_column(ForeignKey("subtopics.id"), index=True)
+    colour: Mapped[str] = mapped_column(String(8), default="yellow")  # one of HIGHLIGHT_COLOURS
+    exact: Mapped[str] = mapped_column(Text)
+    prefix: Mapped[str] = mapped_column(String(64), default="")
+    suffix: Mapped[str] = mapped_column(String(64), default="")
+    start: Mapped[int] = mapped_column(Integer)  # character offsets in the lesson's text map
+    end: Mapped[int] = mapped_column(Integer)
+    block_id: Mapped[str | None] = mapped_column(String(80))  # nearest heading/block id, a hint only
+    comment: Mapped[str] = mapped_column(Text, default="")
+    orphaned: Mapped[bool] = mapped_column(Boolean, default=False)  # text no longer found in the lesson
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class InkDocument(Base):
+    """Pencil strokes for one lesson overlay or one sketch-pad page; `rev` increments on every save."""
+    __tablename__ = "ink_documents"
+    __table_args__ = (UniqueConstraint("subtopic_id", "kind", "page"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    subtopic_id: Mapped[str] = mapped_column(ForeignKey("subtopics.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(8))  # one of INK_KINDS
+    page: Mapped[int] = mapped_column(Integer, default=0)
+    strokes: Mapped[list] = mapped_column(JSON, default=list)
+    rev: Mapped[int] = mapped_column(Integer, default=0)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
 

@@ -1,6 +1,6 @@
 {# Top-bar dropdown. Empty output when there is no query, so the panel stays hidden. #}
 {% from "_icons.html" import icon %}
-{% set kind_icons = {"note": "notes", "subtopic": "book", "element": "target", "reference": "reference", "question": "quiz", "card": "cards"} %}
+{% set kind_icons = {"note": "notes", "mynote": "pen", "subtopic": "book", "element": "target", "reference": "reference", "equation": "sigma", "question": "quiz", "card": "cards"} %}
 {% if terms %}
   {% if hits %}
     <ul class="suggest-list" role="listbox" aria-label="Suggestions">

@@ -34,6 +34,16 @@ copy("three/build/three.module.js", "three/three.module.js");
 copy("three/build/three.core.js", "three/three.core.js");
 copy("three/examples/jsm/controls/OrbitControls.js", "three/addons/controls/OrbitControls.js");
 
+// perfect-freehand (MIT): pressure-sensitive stroke outlines for Pencil ink (app/static/annotations.js).
+// A dependency-free ES module, resolved as "perfect-freehand" by the import map in base.html.
+mkdirSync(join(vendor, "perfect-freehand"), { recursive: true });
+// The source map is not shipped, so drop the comment that points at it.
+writeFileSync(
+  join(vendor, "perfect-freehand/index.js"),
+  readFileSync(join(nm, "perfect-freehand/dist/esm/index.mjs"), "utf8").replace(/\n\/\/# sourceMappingURL=.*\s*$/, "\n"),
+);
+copy("perfect-freehand/LICENSE", "perfect-freehand/LICENSE");
+
 // Variable fonts: Latin and Latin Extended subsets of Inter (upright and italic) and JetBrains Mono.
 for (const f of [
   "inter/files/inter-latin-wght-normal.woff2",
@@ -43,7 +53,7 @@ for (const f of [
 ]) copy(`@fontsource-variable/${f}`, join(fonts, f.split("/").pop()));
 
 const versions = Object.fromEntries(
-  ["katex", "alpinejs", "three", "@fontsource-variable/inter", "@fontsource-variable/jetbrains-mono"].map((p) => [
+  ["katex", "alpinejs", "three", "perfect-freehand", "@fontsource-variable/inter", "@fontsource-variable/jetbrains-mono"].map((p) => [
     p, JSON.parse(readFileSync(join(nm, p, "package.json"), "utf8")).version,
   ]),
 );

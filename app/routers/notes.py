@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.db import get_session
 from app.models import STATUSES, ExamUnit, Subtopic, Topic, Unit
 from app.routers.syllabus import _split_id, get_subtopic, neighbours
+from app.services import annotations as annotations_svc
 from app.templating import templates
 
 router = APIRouter(tags=["lessons"])
@@ -63,8 +64,11 @@ def note_page(unit: str, number: str, request: Request, session: Session = Depen
     sub = get_subtopic(session, unit, number)
     prev, nxt = neighbours(session, sub, with_note=True)
     toc = lesson_toc(sub.note.html) if sub.note else []
+    # The student's own notes, highlights and ink ride along as JSON so the page paints with them in place.
+    annotations = annotations_svc.bundle(session, sub.id) if sub.note else None
     return templates.TemplateResponse(request, "note.html", {"sub": sub, "note": sub.note, "prev": prev, "next": nxt,
-                                                             "toc": toc if len(toc) >= TOC_MIN_HEADINGS else []})
+                                                             "toc": toc if len(toc) >= TOC_MIN_HEADINGS else [],
+                                                             "equations": list(sub.equations), "annotations": annotations})
 
 
 @router.get("/notes")

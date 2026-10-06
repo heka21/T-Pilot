@@ -1,0 +1,14 @@
+{# Notes tab of the lesson panel (note.html): the student's typed notes for this lesson and the list of their
+   highlights. annotations.js ("lesson-notes") saves the textarea as you type and fills .hl-list; the textarea is
+   prefilled here so the note shows before the module runs. `annotations` is the bundle (or None). #}
+{% from "_icons.html" import icon %}
+<div class="lesson-notes" data-widget="lesson-notes" data-sid="{{ sub.id }}">
+  <p class="eyebrow mb-2 flex items-center justify-between gap-3 px-1">My notes <span class="notes-saved" data-state="" aria-live="polite"></span></p>
+  <textarea class="notes-editor" placeholder="Type your own notes for this lesson…" aria-label="My notes for this lesson">{{ annotations.note if annotations else "" }}</textarea>
+
+  <p class="eyebrow mt-5 mb-2 flex items-center justify-between gap-3 px-1">Highlights <span class="hl-count"></span></p>
+  <p class="hl-empty">Select text in the lesson to highlight it. Your highlights are listed here.</p>
+  <ul class="hl-list"></ul>
+
+  <p class="notes-hint">{{ icon("pen", "mt-0.5 size-3.5 shrink-0") }}<span>Use the pen toolbar above the lesson to draw on it; the Sketch tab is a blank pad. Everything is listed on <a href="/my-notes">My notes</a>.</span></p>
+</div>

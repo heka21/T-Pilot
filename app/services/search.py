@@ -1,4 +1,4 @@
-"""Global search over the bundled content: notes, subtopics, MOS elements, questions, flashcards, reference.
+"""Global search over the bundled content: notes, subtopics, MOS elements, questions, flashcards, reference, equations.
 
 The content is small (a few thousand items) and only changes on restart, so the index is a plain
 in-memory list built on first use. Matching is case-insensitive substring per query word (so "stall"
@@ -16,17 +16,21 @@ from urllib.parse import quote
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Card, Element, Question, Subtopic
+from app.models import Card, Element, Equation, Question, Subtopic
 
 KINDS = {
     "note": "Lessons",
+    "mynote": "My notes",
     "subtopic": "Syllabus",
     "element": "Knowledge elements",
     "reference": "Reference",
+    "equation": "Equations",
     "question": "Questions",
     "card": "Flashcards",
 }
 KIND_ORDER = list(KINDS)
+# Kinds built per query from the student's own tables (services.annotations), never cached in the content index.
+USER_KINDS = ("mynote",)
 MAX_PER_KIND = 8
 MAX_TOTAL = 60
 SNIPPET_CHARS = 180
@@ -131,6 +135,14 @@ def build_index(session: Session, content_dir: Path | str = "content") -> list[E
         url = f"/cards?subtopic={quote(c.subtopic_id)}" if c.subtopic_id else f"/cards?unit={c.unit_code}"
         entries.append(Entry("card", c.front, c.back, url, context=ctx(c.subtopic_id) or c.unit_code, code=c.id))
 
+    from app.seed.equations import EQUATIONS_FILE, load_equations  # local import, as below
+    topic_labels = {t["id"]: t["label"] for t in load_equations(Path(content_dir) / EQUATIONS_FILE)["topics"]}
+    for eq in session.scalars(select(Equation).order_by(Equation.position).options(selectinload(Equation.lessons))):
+        label = topic_labels.get(eq.topic, eq.topic)
+        body = " ".join([markdown_to_text(eq.when), markdown_to_text(eq.rule_of_thumb),
+                         *(s.get("meaning", "") for s in eq.symbols or []), *eq.tags, label, *eq.lesson_ids])
+        entries.append(Entry("equation", eq.name, body, f"/equations#eq-{eq.id}", context=f"Equations · {label}"))
+
     ref_dir = Path(content_dir) / "reference"
     if ref_dir.is_dir():
         from app.seed.loader import split_frontmatter  # local import: loader imports models too
@@ -221,7 +233,11 @@ def search(session: Session, query: str, content_dir: Path | str = "content", ki
     phrase = " ".join(terms)
     groups: dict[str, list[Hit]] = {k: [] for k in KIND_ORDER}
     if terms:
-        for entry in index(session, content_dir):
+        pool = index(session, content_dir)
+        if kind is None or kind in USER_KINDS:
+            from app.services import annotations  # local import: annotations builds its entries with Entry from here
+            pool = [*pool, *annotations.search_entries(session)]
+        for entry in pool:
             if kind and entry.kind != kind:
                 continue
             s = score(entry, terms, phrase)
@@ -241,13 +257,15 @@ def search(session: Session, query: str, content_dir: Path | str = "content", ki
 SUGGEST_LIMIT = 8
 _CODE_QUERY_RE = re.compile(r"^[a-z]{3,5} \d+(\.\d+)*$")
 # The dropdown is for getting somewhere: lessons first, then the syllabus, single questions and cards last.
-SUGGEST_BONUS = {"note": 4, "subtopic": 2, "reference": 2, "element": 0, "question": -1, "card": -1}
-SUGGEST_PER_KIND = {"note": 3, "subtopic": 2, "reference": 2, "element": 2, "question": 2, "card": 2}
+SUGGEST_BONUS = {"note": 4, "mynote": 3, "subtopic": 2, "reference": 2, "equation": 2, "element": 0, "question": -1, "card": -1}
+SUGGEST_PER_KIND = {"note": 3, "mynote": 2, "subtopic": 2, "reference": 2, "equation": 2, "element": 2, "question": 2, "card": 2}
 KIND_SINGULAR = {
     "note": "Lesson",
+    "mynote": "My notes",
     "subtopic": "Syllabus",
     "element": "Element",
     "reference": "Reference",
+    "equation": "Equation",
     "question": "Question",
     "card": "Flashcard",
 }

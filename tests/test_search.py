@@ -10,7 +10,7 @@ from tests._db import fresh_session
 def test_index_covers_every_kind() -> None:
     session = fresh_session()
     kinds = {e.kind for e in svc.build_index(session, "content")}
-    assert kinds == set(svc.KINDS)
+    assert kinds == set(svc.KINDS) - set(svc.USER_KINDS)  # the student's notes are searched per query, not indexed
 
 
 def test_search_stall_finds_note_and_elements() -> None:

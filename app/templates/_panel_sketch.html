@@ -1,0 +1,48 @@
+{# Sketch tab of the lesson panel (note.html): a preview of the current page of the student's Pencil sketch pad
+   and a full-screen <dialog> to draw in. annotations.js ("lesson-sketch") draws into the SVG inside .sketch-page
+   (a fixed 1000 x 1400 page; .sketch-page is the pointer host) and keeps the preview, pager and status in sync. #}
+{% from "_icons.html" import icon %}
+<div class="lesson-sketch" data-widget="lesson-sketch" data-sid="{{ sub.id }}">
+  <button type="button" class="sketch-open" data-sketch-open>
+    <svg class="sketch-preview is-empty" viewBox="0 0 1000 1400" aria-hidden="true"></svg>
+    <span class="sketch-open-label">{{ icon("pen", "size-4") }} Open the sketch pad</span>
+  </button>
+  <p class="sketch-pager" hidden>
+    <button type="button" class="ink-tool" data-sketch-prev aria-label="Previous page">{{ icon("chevron-right", "size-4 rotate-180") }}</button>
+    <span data-sketch-page-label>Page 1 of 1</span>
+    <button type="button" class="ink-tool" data-sketch-next aria-label="Next page">{{ icon("chevron-right", "size-4") }}</button>
+  </p>
+
+  <dialog class="sketch-dialog" aria-label="Sketch pad">
+    <div class="sketch-toolbar" role="toolbar" aria-label="Sketch pad tools">
+      <div class="ink-group">
+        <button type="button" class="ink-tool" data-sketch-tool="pen" aria-pressed="true" title="Pen">{{ icon("pen", "size-4") }}<span>Pen</span></button>
+        <button type="button" class="ink-tool" data-sketch-tool="erase" aria-pressed="false" title="Eraser: touch a stroke to remove it">{{ icon("close", "size-4") }}<span>Erase</span></button>
+      </div>
+      <div class="ink-group" aria-label="Ink colour">
+        {% for c in ["ink-1", "ink-2", "ink-3", "ink-4"] %}<button type="button" class="ink-swatch" style="--ink: var(--color-{{ c }})" data-sketch-colour="{{ c }}" aria-pressed="{{ 'true' if loop.first else 'false' }}" aria-label="Colour {{ loop.index }}"></button>{% endfor %}
+      </div>
+      <div class="ink-group" aria-label="Pen width">
+        {% for w, label in [(2, "Fine"), (3, "Medium"), (5, "Thick")] %}<button type="button" class="ink-width" data-sketch-width="{{ w }}" aria-pressed="{{ 'true' if w == 3 else 'false' }}" aria-label="{{ label }}"><i style="--w: {{ w }}px"></i></button>{% endfor %}
+      </div>
+      <div class="ink-group">
+        <button type="button" class="ink-tool" data-sketch-undo disabled title="Undo (⌘Z)">{{ icon("arrow-left", "size-4") }}<span class="sr-only">Undo</span></button>
+        <button type="button" class="ink-tool" data-sketch-redo disabled title="Redo (⇧⌘Z)">{{ icon("arrow-right", "size-4") }}<span class="sr-only">Redo</span></button>
+        <button type="button" class="ink-tool" data-sketch-clear disabled title="Clear this page"><span>Clear</span></button>
+      </div>
+      <div class="ink-group">
+        <button type="button" class="ink-tool" data-sketch-finger aria-pressed="false" title="Draw with a finger too (the Pencil and mouse always draw)"><span>Finger draws</span></button>
+      </div>
+      <div class="ink-group">
+        <button type="button" class="ink-tool" data-sketch-prev aria-label="Previous page">{{ icon("chevron-right", "size-4 rotate-180") }}</button>
+        <span class="sketch-page-label" data-sketch-page-label>Page 1 of 1</span>
+        <button type="button" class="ink-tool" data-sketch-next aria-label="Next page">{{ icon("chevron-right", "size-4") }}</button>
+      </div>
+      <span class="sketch-status" aria-live="polite"></span>
+      <button type="button" class="sketch-close" data-sketch-close aria-label="Close the sketch pad">{{ icon("close", "size-5") }}</button>
+    </div>
+    <div class="sketch-stage">
+      <div class="sketch-page"><svg viewBox="0 0 1000 1400"></svg></div>
+    </div>
+  </dialog>
+</div>

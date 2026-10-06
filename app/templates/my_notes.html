@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}My notes · {{ app_name }}{% endblock %}
+{% block content %}
+{% call page_header("My notes", "Your typed notes, highlights and Pencil ink, lesson by lesson.", "pen") %}
+  <a href="/my-notes/export.json" class="btn-ghost btn-sm" download>{{ icon("download", "size-3.5") }} Export JSON</a>
+{% endcall %}
+
+{% if not units %}
+  {{ empty("Nothing here yet. Open a lesson to type notes, highlight a passage or write over it with your Pencil.", "/lessons", "Browse lessons", "pen") }}
+{% else %}
+  <div class="mb-10 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    {% for label, value, name, chip in [
+      ("Lessons", totals.lessons, "notes", "chip-brand"),
+      ("Typed notes", totals.notes, "pen", "chip-accent"),
+      ("Highlights", totals.highlights, "sparkle", "chip-ok"),
+      ("Ink pages", totals.ink_pages, "pen", "chip-brand"),
+    ] %}
+      <div class="stat rise" style="--i: {{ loop.index }}">
+        <div class="mb-1 flex items-center justify-between"><span class="stat-label">{{ label }}</span><span class="chip chip-sm {{ chip }}">{{ icon(name) }}</span></div>
+        <span class="stat-value" data-total="{{ label | lower | replace(' ', '-') }}">{{ value }}</span>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% for g in units %}
+    <section class="rise mb-10" style="--i: {{ [loop.index + 4, 10] | min }}" aria-labelledby="mynotes-{{ g.unit.code | lower }}">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="grid h-9 min-w-14 shrink-0 place-items-center rounded-xl bg-grad-brand px-2 text-sm font-extrabold tracking-tight text-on-brand shadow-(--shadow-brand)" aria-hidden="true">{{ g.unit.code }}</span>
+          <h2 id="mynotes-{{ g.unit.code | lower }}" class="section-title min-w-0"><span class="sr-only">{{ g.unit.code }} </span>{{ g.unit.title }}</h2>
+        </div>
+        <span class="badge">{{ g.lessons | length }} lesson{{ "s" if g.lessons | length != 1 }}</span>
+      </div>
+      <ul class="grid gap-3 md:grid-cols-2">
+        {% for l in g.lessons %}
+          <li class="card flex flex-col gap-2.5 p-4" data-my-note="{{ l.sub.id }}">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="rounded-md bg-surface-2 px-1.5 py-px font-mono text-xs font-semibold text-fg-muted">{{ l.sub.number }}</span>
+              <a href="{{ note_url(l.sub) }}" class="min-w-0 flex-1 font-semibold leading-snug text-fg no-underline hover:text-brand">{{ l.title }}</a>
+            </div>
+            <div class="flex flex-wrap gap-1.5 text-xs">
+              {% if l.note %}<span class="badge badge-brand">{{ icon("pen", "size-3") }} Note</span>{% endif %}
+              {% if l.highlights %}<span class="badge badge-accent tabular-nums">{{ l.highlights }} highlight{{ "s" if l.highlights != 1 }}{% if l.comments %} · {{ l.comments }} comment{{ "s" if l.comments != 1 }}{% endif %}</span>{% endif %}
+              {% if l.lesson_ink %}<span class="badge ok">Ink on lesson</span>{% endif %}
+              {% if l.sketch_pages %}<span class="badge tabular-nums">{{ l.sketch_pages }} sketch page{{ "s" if l.sketch_pages != 1 }}</span>{% endif %}
+            </div>
+            {% if l.excerpt %}<p class="text-sm text-fg-muted">{{ l.excerpt }}</p>{% endif %}
+            {% if l.quotes %}
+              <ul class="flex flex-col gap-1 text-sm">
+                {% for q in l.quotes %}<li><mark class="hl hl-{{ q.colour }}">{{ q.text }}</mark></li>{% endfor %}
+                {% if l.highlights > l.quotes | length %}<li class="text-xs text-fg-faint">and {{ l.highlights - l.quotes | length }} more</li>{% endif %}
+              </ul>
+            {% endif %}
+            <div class="mt-auto flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-fg-muted">
+              <span>{% if l.updated_at %}Updated {{ l.updated_at.strftime("%-d %b %Y") }}{% endif %}</span>
+              <span class="btn-row">
+                <a href="{{ subtopic_url(l.sub) }}" class="text-fg-muted no-underline hover:text-brand">Syllabus</a>
+                <a href="{{ note_url(l.sub) }}#my-notes" class="btn-ghost btn-sm">Open lesson {{ icon("arrow-right", "size-3.5") }}</a>
+              </span>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endfor %}
+{% endif %}
+{% endblock %}

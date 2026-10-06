@@ -1,6 +1,6 @@
 {% from "_icons.html" import icon %}
 {# Same icon per kind as the top-bar suggestions (_search_suggest.html); colours come from .suggest-icon-*. #}
-{% set kind_icons = {"note": "notes", "subtopic": "book", "element": "target", "reference": "reference", "question": "quiz", "card": "cards"} %}
+{% set kind_icons = {"note": "notes", "mynote": "pen", "subtopic": "book", "element": "target", "reference": "reference", "equation": "sigma", "question": "quiz", "card": "cards"} %}
 {% if not terms %}
   <div class="card rise">
     <div class="mb-4 flex items-center gap-3">
@@ -10,11 +10,13 @@
     <ul class="grid gap-2 text-sm text-fg-muted sm:grid-cols-2">
       {% for kind, label, text in [
         ("note", "Lessons", "any word in the lessons"),
+        ("mynote", "My notes", "your own typed notes, highlights and their comments"),
         ("subtopic", "Syllabus", "subtopic ids and titles like <code>RBKA 3.6</code>"),
         ("element", "Knowledge elements", "verbatim MOS text and codes like <code>RBKA 3.6.2</code>"),
         ("question", "Questions", "stems, options and explanations"),
         ("card", "Flashcards", "front and back"),
         ("reference", "Reference", "exam formats, permitted materials, checklists"),
+        ("equation", "Equations", "formulas by name, symbol meaning or lesson, like <code>density height</code>"),
       ] %}
         <li class="flex items-start gap-3 rounded-xl bg-surface-2/50 p-3">
           <span class="suggest-icon suggest-icon-{{ kind }}">{{ icon(kind_icons[kind], "size-4") }}</span>
