@@ -1,0 +1,1258 @@
+# PHFC practice bank (human factors). Ids PHFC-X001 onward. Original wording; facts from content/notes/PHFC.
+
+- id: PHFC-X001
+  kind: mcq
+  elements: ["PHFC 2.1.2"]
+  stem: "You have hay fever the day before a solo navigation exercise from Jandakot. The pharmacist sells you a 'non-drowsy' antihistamine you have never taken and says it is fine for flying. What should you do?"
+  options:
+    - "Take it and fly, since the pharmacist has confirmed it is suitable"
+    - "Take half the normal dose on the morning of the flight to limit side effects"
+    - "Get clearance from a DAME and try the tablet on the ground before flying on it"
+    - "Take it and fly, because medicines sold without a prescription are cleared for pilots"
+  answer: 2
+  explanation: "Any medication, prescription or over-the-counter, needs DAME (or CASA) clearance before you fly on it, and a ground trial first to see how it affects you. A pharmacist's 'that's fine' is not an aviation clearance, and being sold off the shelf says nothing about its effect on a pilot."
+  references: ["PHFC 2.1", "PHFC 2.2"]
+  difficulty: 2
+
+- id: PHFC-X002
+  kind: mcq
+  elements: ["PHFC 2.1.2"]
+  stem: "A pilot has flown for two years on a blood pressure tablet his DAME cleared. His GP now switches him to a different blood pressure medicine. Before his next flight he should:"
+  options:
+    - "Treat it as a new medication: get DAME clearance and trial it on the ground first"
+    - "Fly as normal, because the condition it treats has already been cleared"
+    - "Fly as normal and mention the change at his next medical renewal"
+    - "Fly as normal once the GP confirms the new tablet works the same way"
+  answer: 0
+  explanation: "The clearance he holds is for the old medication. A new medicine needs DAME clearance and a trial on the ground, because the first doses are when unexpected reactions such as drowsiness or dizziness are most likely. The GP knows medicine, but is not giving an aviation clearance."
+  references: ["PHFC 2.1"]
+  difficulty: 2
+
+- id: PHFC-X003
+  kind: mcq
+  elements: ["PHFC 2.1.3"]
+  stem: "A PPL holder spends three days in hospital with a kidney stone. A week later he feels well, and his Class 2 medical has 18 months left to run. Before flying again he should:"
+  options:
+    - "Resume flying, since the certificate remains valid until its expiry date"
+    - "Resume flying and declare the admission at his next medical renewal"
+    - "Resume flying once his GP confirms he is back to normal"
+    - "Report the admission as Part 67 requires and get clearance before flying"
+  answer: 3
+  explanation: "Hospital admissions, illnesses, injuries and new medications must be reported as Part 67 requires, with clearance obtained before resuming flying. A valid certificate only shows that he met the standard on the day of the examination."
+  references: ["PHFC 2.1", "CASR Part 67"]
+  difficulty: 2
+
+- id: PHFC-X004
+  kind: mcq
+  elements: ["PHFC 2.1.3"]
+  stem: "Running the IMSAFE check before a Saturday flight, you find you are a little tired, a little stressed about work and skipped breakfast. No single item seems serious. The correct view is:"
+  options:
+    - "The check is passed, because no single item is bad enough to cancel"
+    - "Minor factors add together, and one honest no is enough to cancel"
+    - "Only the alcohol and medication items can on their own cancel a flight"
+    - "The decision rests with your instructor, who signs you out for the flight"
+  answer: 1
+  explanation: "The health factors rarely arrive alone, and several that are each 'not too bad' can together make you unsafe. The pilot in command makes the fitness decision; one honest no on IMSAFE is enough to cancel or to fix the problem first."
+  references: ["PHFC 2.1"]
+  difficulty: 2
+
+- id: PHFC-X005
+  kind: mcq
+  elements: ["PHFC 2.2.1"]
+  stem: "Why does the validity period of an aviation medical certificate become shorter as the holder gets older?"
+  options:
+    - "Older pilots usually fly fewer hours and so need more frequent checks"
+    - "Eyesight is the only factor that changes with age and it needs regular testing"
+    - "The risk of suddenly incapacitating conditions, above all heart disease, rises with age"
+    - "Hearing loss from years of cockpit noise has to be measured more often"
+  answer: 2
+  explanation: "Medicals exist mainly to screen out conditions that could incapacitate a pilot suddenly, and the risk of those, heart disease above all, rises with each decade. Eyesight and hearing are checked too, but they are not why the validity shortens."
+  references: ["PHFC 2.2", "CASR Part 67"]
+  difficulty: 1
+
+- id: PHFC-X006
+  kind: mcq
+  elements: ["PHFC 2.2.1"]
+  stem: "Which sequence correctly describes obtaining a Class 2 medical certificate?"
+  options:
+    - "Apply through CASA's online medical system, be examined by a DAME, who issues it or refers the case to CASA"
+    - "Be examined by any GP, who forwards the results to CASA, which always decides and issues the certificate"
+    - "Be examined by a DAME found on a club list, who must refer every case to a CASA specialist panel"
+    - "Apply in person at a CASA regional office, where a CASA doctor examines you and issues the certificate"
+  answer: 0
+  explanation: "You apply through CASA's online medical records system, declare your history honestly, and are examined by a DAME (found with the medical examiner search on the CASA website). The DAME issues the certificate or, for anything outside straightforward limits, refers the case to CASA."
+  references: ["PHFC 2.2", "CASR Part 67"]
+  difficulty: 2
+
+- id: PHFC-X007
+  kind: mcq
+  elements: ["PHFC 2.2.4", "PHFC 2.1.1"]
+  stem: "The morning after donating a unit of whole blood, a pilot plans a flight at 9,500 ft. Why is she at greater risk than usual?"
+  options:
+    - "None, provided she has had plenty to drink, because the fluid is replaced at once"
+    - "Less blood volume and fewer red cells raise the risk of fainting and of anaemic hypoxia"
+    - "Her lungs absorb less oxygen until the needle site in her arm has healed"
+    - "The lost plasma thickens her blood, causing stagnant hypoxia under g"
+  answer: 1
+  explanation: "A donation reduces both the blood volume that keeps the brain supplied and the red cells that carry oxygen, a mild anaemic hypoxia that lowers altitude tolerance. Fluid is replaced within a day or so but the red cells take weeks, which is why at least 24 hours on the ground is recommended."
+  references: ["PHFC 2.2", "PHFC 2.1"]
+  difficulty: 2
+
+- id: PHFC-X008
+  kind: mcq
+  elements: ["PHFC 2.2.4"]
+  stem: "Two pilots each give the same 470 mL of whole blood on the same morning. One weighs 55 kg, the other 95 kg. Which statement is correct?"
+  options:
+    - "Both are fit to fly four hours later, once the fluid volume has been restored"
+    - "The heavier pilot needs longer, because a larger body needs more red cells"
+    - "Both must wait exactly 24 hours, as the period does not vary between people"
+    - "The lighter pilot has lost a bigger share of blood and may need longer than 24 hours"
+  answer: 3
+  explanation: "The commonly recommended wait is at least 24 hours, but recovery varies with body size, fitness and hydration: the same 470 mL is a larger share of a small person's blood. Each pilot should ask a DAME about their own case."
+  references: ["PHFC 2.2"]
+  difficulty: 2
+
+- id: PHFC-X009
+  kind: mcq
+  elements: ["PHFC 2.2.2"]
+  stem: "At a wedding near Busselton you have 10 standard drinks, the last at 2330. Allowing for both the 8-hour rule and a liver clearance rate of about one standard drink per hour, the earliest time you could fly is about:"
+  options:
+    - "0730, when the 8 hours from the last drink expire"
+    - "0930, when the liver should have cleared the alcohol"
+    - "0830, allowing one extra hour for absorption"
+    - "0530, since the drinks were spread over the evening"
+  answer: 1
+  explanation: "Ten drinks take about 10 hours to clear, so blood alcohol is near zero at about 0930; the 8-hour rule gives 0730. Take the later of the two: 0930 at the very earliest, and after that much drinking a hangover may last well beyond it."
+  references: ["PHFC 2.2", "CASR 91.520"]
+  difficulty: 3
+
+- id: PHFC-X010
+  kind: mcq
+  elements: ["PHFC 2.2.2"]
+  stem: "After a very heavy night of drinking, how long does the lesson recommend before flying, and why?"
+  options:
+    - "8 hours, because that is the legal bottle-to-throttle minimum"
+    - "Until a breath test reads zero, because that proves fitness"
+    - "24 hours or more, because the hangover outlasts the alcohol"
+    - "12 hours, because the liver doubles its rate after a heavy night"
+  answer: 2
+  explanation: "The more you drink, the higher the peak and the longer both elimination and the hangover last; after heavy drinking allow 24 hours or more. Eight hours is only a legal floor, a zero breath test shows legality not fitness, and the liver's rate is fixed."
+  references: ["PHFC 2.2"]
+  difficulty: 1
+
+- id: PHFC-X011
+  kind: mcq
+  elements: ["PHFC 2.2.2"]
+  stem: "Between legs at Northam on a 39 degree day you have a headache and dark urine. Which drink will rehydrate you best before the next leg?"
+  options:
+    - "A strong coffee, to restore alertness as well as fluid"
+    - "Undiluted cola or cordial, for quick energy and fluid"
+    - "A light beer, which is mostly water and easily absorbed"
+    - "Water, or a diluted electrolyte drink"
+  answer: 3
+  explanation: "Water is absorbed quickly, and diluted electrolyte drinks also replace salts lost in sweat. Caffeine and alcohol make the kidneys pass more water, and very sugary drinks slow stomach emptying and draw water into the gut, so they rehydrate slowly."
+  references: ["PHFC 2.2"]
+  difficulty: 1
+
+- id: PHFC-X012
+  kind: mcq
+  elements: ["PHFC 2.2.2", "PHFC 2.1.1"]
+  stem: "Which is the most reliable early sign of dehydration that a pilot can check for themselves?"
+  options:
+    - "Dark urine"
+    - "Feeling thirsty"
+    - "A rapid breathing rate"
+    - "Tingling around the lips"
+  answer: 0
+  explanation: "Dark urine is the most reliable early sign you can check. Thirst is a late signal: by the time you feel it you are already short of water. Rapid breathing and tingling around the lips point to hyperventilation."
+  references: ["PHFC 2.2", "PHFC 2.1"]
+  difficulty: 1
+
+- id: PHFC-X013
+  kind: mcq
+  elements: ["PHFC 2.2.2"]
+  stem: "Two pilots drink the same number of standard drinks at the same dinner. Which one is likely to reach the higher blood alcohol and take longer to reach zero?"
+  options:
+    - "The larger pilot, because more body mass holds more alcohol"
+    - "The smaller pilot, who has less body water to dilute it"
+    - "The pilot who drank beer, rather than the same drinks as wine"
+    - "The pilot who slept less, because the liver works only in sleep"
+  answer: 1
+  explanation: "A smaller person, or one with more body fat and less body water, reaches a higher concentration from the same drinks and so takes longer to clear it. The type of drink does not matter once measured in standard drinks, and sleep does not change the liver's rate."
+  references: ["PHFC 2.2"]
+  difficulty: 2
+
+- id: PHFC-X014
+  kind: mcq
+  elements: ["PHFC 2.2.3"]
+  stem: "A fellow student smoked cannabis at a party on Saturday night. He says he feels completely normal for his 1000 lesson on Sunday. What is the correct view?"
+  options:
+    - "He can fly, because a single use is not drug abuse unless he is dependent"
+    - "He can fly once 8 hours have passed, the same as for alcohol"
+    - "He should not fly: its effects on judgement and attention last 24 hours or more"
+    - "He can fly dual, because the impairment only matters on solo flights"
+  answer: 2
+  explanation: "Cannabis distorts the perception of time and distance, impairs short-term memory and divided attention, and its effects on complex tasks last 24 hours or more, well after the user feels normal. Drug abuse is a behaviour, independent of addiction or frequency of use."
+  references: ["PHFC 2.2"]
+  difficulty: 2
+
+- id: PHFC-X015
+  kind: mcq
+  elements: ["PHFC 2.2.3"]
+  stem: "A pilot with a blocked nose uses a nasal decongestant before departure. Apart from a fast heart rate and anxiety, what is the particular flight hazard?"
+  options:
+    - "It may wear off in flight, leaving the ears or sinuses blocked on descent"
+    - "It makes trapped gas in the sinuses expand faster during the climb"
+    - "It lowers the blood's oxygen-carrying capacity, as smoking does"
+    - "It causes a permanent loss of high-frequency hearing"
+  answer: 0
+  explanation: "Decongestants can wear off during the flight, and rebound congestion then leaves the ears or sinuses blocked just as you descend, when air has to get back in. That is why a decongestant is not a reason to fly with a cold."
+  references: ["PHFC 2.2", "PHFC 2.5"]
+  difficulty: 2
+
+- id: PHFC-X016
+  kind: mcq
+  elements: ["PHFC 2.2.3"]
+  stem: "Which of these is a non-illicit (legal) psychoactive substance?"
+  options:
+    - "Ecstasy taken at a party"
+    - "Cannabis smoked the night before"
+    - "Heroin bought on the street"
+    - "Codeine in a prescribed painkiller"
+  answer: 3
+  explanation: "A psychoactive substance is anything that changes how the brain works. Non-illicit ones are legal, such as alcohol, caffeine, nicotine, codeine and sedatives; legal does not mean harmless in a cockpit. Ecstasy, cannabis and heroin are illicit."
+  references: ["PHFC 2.2"]
+  difficulty: 1
+
+- id: PHFC-X017
+  kind: mcq
+  elements: ["PHFC 2.3.2"]
+  stem: "A hyperventilating pilot is breathing in more oxygen than normal, yet becomes dizzy and their vision blurs. Why?"
+  options:
+    - "The excess oxygen in the blood is toxic to the brain cells"
+    - "Low carbon dioxide narrows the brain's blood vessels and makes haemoglobin hold its oxygen"
+    - "Fast breathing raises the carbon dioxide level, which acts as a sedative on the brain"
+    - "Rapid airflow dries the lining of the lungs, so less oxygen crosses into the blood"
+  answer: 1
+  explanation: "Over-breathing blows off carbon dioxide. Low CO2 constricts the brain's blood vessels, so less blood reaches it, and makes haemoglobin release less oxygen to the cells, so the brain is short of oxygen despite the extra breathing. The problem is too little CO2, not too much oxygen."
+  references: ["PHFC 2.3"]
+  difficulty: 2
+
+- id: PHFC-X018
+  kind: mcq
+  elements: ["PHFC 2.3.1"]
+  stem: "At 2,500 ft over Serpentine on a hot summer afternoon, with the cabin heat off, a nervous first-time passenger says her fingers and lips are tingling and she feels light-headed. Her hands start to cramp and she is breathing fast. What is the most likely cause and the best action?"
+  options:
+    - "Hypoxia; descend at once and give her oxygen"
+    - "Carbon monoxide; turn the heater off and land"
+    - "Hyperventilation; coach slow breathing and get her talking"
+    - "Hyperventilation; have her take several deep breaths"
+  answer: 2
+  explanation: "Anxiety, fast breathing, tingling around the lips and fingers, and above all muscle spasm in the hands point to hyperventilation; hypoxia is unlikely at 2,500 ft and the heater is off. Slow the breathing to about one breath every 4 to 5 seconds and get her talking; deep breaths blow off more CO2 and make it worse."
+  references: ["PHFC 2.3"]
+  difficulty: 3
+
+- id: PHFC-X019
+  kind: mcq
+  elements: ["PHFC 2.12.1", "PHFC 2.3.1"]
+  stem: "An hour into a cruise at 11,500 ft without oxygen, a pilot feels relaxed and pleased with the flight, has not updated the fuel log for some time, and notices mild tingling in the fingers. She is not anxious. What is the most likely cause and the best action?"
+  options:
+    - "Hypoxia; descend below 10,000 ft without delay"
+    - "Hyperventilation; slow the breathing rate and stay at this level"
+    - "Hyperventilation; breathe into a paper bag until the tingling stops"
+    - "Fatigue; open the fresh-air vents and continue to the destination"
+  answer: 0
+  explanation: "Euphoria, neglected tasks and no anxiety, after a long time above 10,000 ft, point to hypoxia, which feels good while judgement fails. Descend (or use oxygen if carried). A paper bag lowers the oxygen in each breath and must never be used when hypoxia is possible."
+  references: ["PHFC 2.12", "PHFC 2.3"]
+  difficulty: 3
+
+- id: PHFC-X020
+  kind: mcq
+  elements: ["PHFC 2.3.1"]
+  stem: "Why is talking out loud an effective way for a pilot to stop hyperventilating in flight?"
+  options:
+    - "Speaking raises the oxygen content of the blood leaving the lungs"
+    - "Speaking speeds the breathing up enough to clear the excess carbon dioxide"
+    - "Speaking distracts from the tingling, which is harmless and passes by itself"
+    - "Speaking forces slow, controlled breathing out, so carbon dioxide builds back up"
+  answer: 3
+  explanation: "You cannot over-breathe while speaking, because speech forces slow, controlled exhalation; CO2 then recovers and the symptoms fade. The symptoms are not harmless: untreated, hyperventilation can end in unconsciousness."
+  references: ["PHFC 2.3"]
+  difficulty: 2
+
+- id: PHFC-X021
+  kind: mcq
+  elements: ["PHFC 2.4.2"]
+  stem: "You spend three days diving at Rottnest, two scuba dives a day, none needing decompression stops. The last dive ends at 1100 on Friday. Using the commonly taught guideline, when is the earliest you should fly home to Jandakot?"
+  options:
+    - "1100 on Saturday"
+    - "2300 on Friday"
+    - "1300 on Friday, since 1,500 ft is too low for the bends"
+    - "1100 on Sunday"
+  answer: 0
+  explanation: "Multiple dives over several days fall under the longer interval, at least 24 hours, even though no single dive needed decompression stops, so 1100 Saturday. The 12-hour figure is for a single no-decompression dive, and the wait applies however low you plan to fly."
+  references: ["PHFC 2.4"]
+  difficulty: 3
+
+- id: PHFC-X022
+  kind: mcq
+  elements: ["PHFC 2.4.2"]
+  stem: "You snorkel at the Busselton jetty all morning. Your passenger makes one scuba dive with no decompression stops, finishing at 0900. You plan to depart for Jandakot at 1400. Which is correct?"
+  options:
+    - "Neither of you should fly until at least 2100"
+    - "You may both fly, because the dive needed no decompression stops"
+    - "You may fly, but your passenger should not fly until at least 2100"
+    - "Neither of you should fly until 0900 tomorrow"
+  answer: 2
+  explanation: "Snorkelling uses surface air, so no extra nitrogen is dissolved and no wait is needed. Your passenger's single no-decompression dive needs at least 12 hours, to 2100, because the nitrogen loaded at depth can form bubbles as cabin pressure falls."
+  references: ["PHFC 2.4"]
+  difficulty: 3
+
+- id: PHFC-X023
+  kind: mcq
+  elements: ["PHFC 2.4.1"]
+  stem: "Descending into Jandakot with a slight cold, a pilot feels a sudden spinning sensation just as one ear clears and the other stays blocked. This is most likely:"
+  options:
+    - "Decompression sickness affecting the inner ear"
+    - "The leans, after an unnoticed roll"
+    - "Flicker vertigo from the propeller"
+    - "Alternobaric vertigo from unequal middle-ear pressures"
+  answer: 3
+  explanation: "Unequal pressure in the two middle ears can disturb the neighbouring balance organs and produce a sudden sense of spinning, alternobaric vertigo, a disorientation risk without a visual horizon. Decompression sickness follows diving, not a cold."
+  references: ["PHFC 2.4"]
+  difficulty: 2
+
+- id: PHFC-X024
+  kind: mcq
+  elements: ["PHFC 2.5.1"]
+  stem: "Which part of the ear senses linear acceleration and the direction of gravity?"
+  options:
+    - "The semicircular canals"
+    - "The cochlea"
+    - "The otolith organs"
+    - "The eustachian tube"
+  answer: 2
+  explanation: "The otolith organs carry a crystal-weighted jelly layer that gravity or a linear acceleration bends, so they sense 'down' and cannot tell a tilt from an acceleration. The semicircular canals sense angular acceleration, and the cochlea hears."
+  references: ["PHFC 2.5"]
+  difficulty: 1
+
+- id: PHFC-X025
+  kind: mcq
+  elements: ["PHFC 2.5.1", "PHFC 2.5.3"]
+  stem: "Why is noise-induced hearing loss permanent?"
+  options:
+    - "The hair cells in the cochlea that noise kills do not grow back"
+    - "Repeated vibration thickens the eardrum until it cannot move"
+    - "The three bones of the middle ear gradually fuse together"
+    - "The eustachian tube becomes permanently swollen and blocked"
+  answer: 0
+  explanation: "Loud sound damages the delicate hair cells lining the cochlea, and a hair cell that dies is gone for good, taking with it the frequencies it handled. The loss starts at high frequencies, around 4,000 Hz, and is gradual and painless."
+  references: ["PHFC 2.5"]
+  difficulty: 1
+
+- id: PHFC-X026
+  kind: mcq
+  elements: ["PHFC 2.5.1"]
+  stem: "The hammer, anvil and stirrup, which carry the eardrum's vibration on to the cochlea, are found in the:"
+  options:
+    - "Inner ear, a set of fluid-filled passages in the skull"
+    - "Middle ear, an air-filled cavity behind the eardrum"
+    - "Outer ear, along the canal leading to the eardrum"
+    - "Eustachian tube, between the ear and the throat"
+  answer: 1
+  explanation: "The three ossicles cross the air-filled middle ear and concentrate the eardrum's vibration onto the small window of the fluid-filled inner ear. The inner ear holds the cochlea and the balance organs."
+  references: ["PHFC 2.5"]
+  difficulty: 1
+
+- id: PHFC-X027
+  kind: mcq
+  elements: ["PHFC 2.5.2"]
+  stem: "Why should you wake a sleeping passenger before starting the descent?"
+  options:
+    - "A sleeping passenger's ears block on the climb rather than the descent"
+    - "Waking suddenly at low level can trigger hyperventilation"
+    - "Sleep lowers blood pressure, so they may faint as the cabin pressure rises"
+    - "People swallow far less when asleep, so their ears do not equalise"
+  answer: 3
+  explanation: "On descent air must be let back up the eustachian tube, which opens only when you swallow, yawn or move the jaw. A sleeping passenger rarely swallows, so the pressure difference builds and they wake with a painful ear block."
+  references: ["PHFC 2.5", "PHFC 2.4"]
+  difficulty: 1
+
+- id: PHFC-X028
+  kind: mcq
+  elements: ["PHFC 2.5.3"]
+  stem: "Why does steady engine and airflow noise make radio calls hard to understand, even when turning up the volume makes them louder?"
+  options:
+    - "It masks the quiet high-frequency consonants, and more volume amplifies the noise too"
+    - "It overloads the low-frequency vowels, which carry most of the meaning of words"
+    - "It causes the eustachian tube to close, muffling the sound on both sides"
+    - "It speeds up the brain's processing of speech, so short words are skipped"
+  answer: 0
+  explanation: "The consonants that tell words apart are quiet and high-pitched, and cabin noise buries them first, so 'five' and 'nine' blur. Turning the volume up amplifies the noise as well; reducing the noise at the ear with a good headset helps more."
+  references: ["PHFC 2.5"]
+  difficulty: 2
+
+- id: PHFC-X029
+  kind: mcq
+  elements: ["PHFC 2.7.1"]
+  stem: "Reading the fine print on a chart in daylight depends mainly on which receptors, and where are they found?"
+  options:
+    - "Rods, packed into the fovea at the centre of the retina"
+    - "Rods, spread around the edge of the retina"
+    - "Cones, packed into the fovea at the centre of the retina"
+    - "Cones, spread mainly around the edge of the retina"
+  answer: 2
+  explanation: "Cones need plenty of light, see colour and fine detail, and are concentrated in the fovea, where whatever you look straight at lands. Rods work in dim light, detect movement and lie around the periphery; the blind spot has no receptors at all."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X030
+  kind: mcq
+  elements: ["PHFC 2.7.1"]
+  stem: "Which part of the eye does most of the focusing of incoming light?"
+  options:
+    - "The lens"
+    - "The cornea"
+    - "The iris"
+    - "The retina"
+  answer: 1
+  explanation: "The cornea, the clear curved window at the front, does most of the focusing; the lens behind the pupil fine-tunes it by changing shape. The iris sets the pupil size and the retina receives the image."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X031
+  kind: mcq
+  elements: ["PHFC 2.7.2"]
+  stem: "Which practice best preserves dark adaptation for a night flight?"
+  options:
+    - "Avoid bright light for about 30 minutes beforehand and keep cockpit lighting dim"
+    - "Set the cockpit lights to full brightness so the instruments are easy to read"
+    - "Look briefly at the apron floodlights so the eyes grow used to the glare"
+    - "Close both eyes for one minute before take-off to complete the adaptation"
+  answer: 0
+  explanation: "The rods take about 30 minutes to reach full sensitivity, and one glance at a bright light bleaches their pigment again. Keep bright light off them beforehand, keep the cockpit dim, and close one eye if a bright light cannot be avoided."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X032
+  kind: mcq
+  elements: ["PHFC 2.7.2"]
+  stem: "Which of the following degrades night vision even at sea level?"
+  options:
+    - "Breathing supplemental oxygen"
+    - "Wearing the corrective lenses the medical requires"
+    - "A diet rich in vitamin A"
+    - "Carbon monoxide from smoking"
+  answer: 3
+  explanation: "Carbon monoxide from smoking takes up haemoglobin and starves the oxygen-hungry retina before you leave the ground. Vitamin A deficiency, not a diet rich in it, reduces night vision, because the rod pigment is built from it."
+  references: ["PHFC 2.7", "PHFC 2.12"]
+  difficulty: 2
+
+- id: PHFC-X033
+  kind: mcq
+  elements: ["PHFC 2.7.3"]
+  stem: "At night you notice a faint light at your two o'clock that may be traffic. When you look straight at it, it disappears. What is happening, and what should you do?"
+  options:
+    - "Empty-field myopia; focus on the wingtip, then look again"
+    - "Its image falls on the rod-free fovea; look 10 to 15 degrees to one side"
+    - "Autokinesis; stare at it steadily until it settles"
+    - "The cones are still adapting; wait 7 to 10 minutes"
+  answer: 1
+  explanation: "Looking straight at an object puts its image on the fovea, which has no rods and so is blind in the dark. Looking 10 to 15 degrees off-centre puts the image on the rods. Staring is the cause of autokinesis, not its cure."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X034
+  kind: mcq
+  elements: ["PHFC 2.7.3"]
+  stem: "When using off-centre viewing at night, why should you also keep your eyes moving?"
+  options:
+    - "Eye movement makes the cones more sensitive in the dark"
+    - "Moving the eyes stops the pupils from narrowing"
+    - "An image held still on the rods fades within seconds"
+    - "The fovea is blind at night only while the eyes are still"
+  answer: 2
+  explanation: "Even off-centre, an image that stays on the same rods fades within seconds, so keep the eyes moving in small steps. The fovea has no rods, so it is blind at night whether or not the eyes move."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X035
+  kind: mcq
+  elements: ["PHFC 2.7.5"]
+  stem: "Why is it important for a pilot to keep a spectacle prescription up to date, even when vision seems fine?"
+  options:
+    - "Vision changes so slowly that you adapt and do not notice, so traffic is seen later"
+    - "An old prescription doubles the time the eyes take to dark adapt"
+    - "Old lenses cause flicker vertigo when the sun shines through the propeller"
+    - "An old prescription affects only reading, so charts become hard to see"
+  answer: 0
+  explanation: "Vision deteriorates so gradually that you do not notice, and an out-of-date prescription means you see traffic later than you think. If the medical requires correction, keep it current and carry any spare pair it requires."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X036
+  kind: mcq
+  elements: ["PHFC 2.7.5"]
+  stem: "Photochromic sunglasses, which darken in sunlight, are a poor choice for the cockpit because:"
+  options:
+    - "They change the colours of PAPI and navigation lights"
+    - "They black out LCD displays at certain angles"
+    - "They let through too little light for scanning"
+    - "The windscreen blocks the ultraviolet that darkens them"
+  answer: 3
+  explanation: "Photochromic lenses darken in ultraviolet light, which the windscreen blocks, so they stay too light in the cockpit. Blacking out LCD screens and hiding sun glint off other aircraft is the problem with polarised lenses."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X037
+  kind: mcq
+  elements: ["PHFC 2.7.6"]
+  stem: "Where and when do most mid-air collisions occur?"
+  options:
+    - "At night or in cloud, on long cross-country legs"
+    - "In poor visibility, well away from aerodromes"
+    - "In good weather, by day, near aerodromes"
+    - "At high cruising levels inside controlled airspace"
+  answer: 2
+  explanation: "Mid-airs mostly happen in good weather, by day, near aerodromes: in the circuit, on joining and near training areas, where traffic concentrates and pilots are busy with other tasks."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X038
+  kind: mcq
+  elements: ["PHFC 2.7.7"]
+  stem: "Spatial disorientation is best defined as:"
+  options:
+    - "Being uncertain of the aircraft's position on the navigation chart"
+    - "An incorrect perception of attitude, motion or position relative to the earth"
+    - "A loss of consciousness caused by sustained positive g"
+    - "Dizziness caused by alcohol remaining in the inner ear"
+  answer: 1
+  explanation: "Spatial disorientation is a false perception of your attitude, motion or position relative to the earth, such as believing you are level when banked. Being unsure where you are on the chart is being lost, a navigation problem."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X039
+  kind: mcq
+  elements: ["PHFC 2.7.7", "PHFC 2.7.11"]
+  stem: "Why is spatial disorientation so dangerous to a pilot who has it?"
+  options:
+    - "It feels like certainty rather than confusion, so the false sensation is believed"
+    - "It always brings severe nausea, which incapacitates the pilot within seconds"
+    - "It affects the gyroscopic instruments as well as the pilot's senses"
+    - "It happens only to pilots without an instrument rating, who cannot read the instruments"
+  answer: 0
+  explanation: "Disorientation does not feel like confusion; it feels like certainty, so the pilot is tempted to fly by the insistent false sensation. The gyroscopic instruments do not adapt or lag, which is why they must be believed."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X040
+  kind: mcq
+  elements: ["PHFC 2.7.8"]
+  stem: "Of the three systems that maintain equilibrium, which is normally dominant when it has information to work with?"
+  options:
+    - "The semicircular canals of the inner ear"
+    - "The otolith organs of the inner ear"
+    - "The proprioceptive 'seat of the pants' senses"
+    - "The eyes, given a visible horizon"
+  answer: 3
+  explanation: "The eyes are by far the strongest balance input: give them a horizon and you know your attitude at once, and they overrule the inner ear and seat of the pants. Without one, the less reliable senses are all you have."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X041
+  kind: mcq
+  elements: ["PHFC 2.7.8"]
+  stem: "The 'seat of the pants' balance sense refers to:"
+  options:
+    - "The otolith organs responding to gravity"
+    - "The semicircular canals sensing roll and yaw"
+    - "Pressure and stretch receptors in the skin, muscles and joints"
+    - "Peripheral vision of the ground passing below"
+  answer: 2
+  explanation: "The seat of the pants is the proprioceptive system: pressure and stretch receptors in skin, muscles and joints that feel how you are pressed into the seat. The canals and otoliths are the inner ear's vestibular apparatus."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X042
+  kind: mcq
+  elements: ["PHFC 2.7.9"]
+  stem: "In cloud you hold a steady, balanced 30 degree turn for half a minute. What will your inner ear and seat of the pants most likely tell you?"
+  options:
+    - "That the aircraft is flying straight and level"
+    - "That the aircraft is turning in the direction of the bank"
+    - "That the aircraft is turning the opposite way"
+    - "That the aircraft is pitching nose-up"
+  answer: 0
+  explanation: "The canals sense only changes in rotation; in a steady turn the fluid catches up and the sensation dies in about 10 to 20 seconds. In a balanced turn the total force presses you straight into the seat, so the otoliths and seat of the pants also report level."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X043
+  kind: mcq
+  elements: ["PHFC 2.7.9", "PHFC 2.7.10"]
+  stem: "Refolding a chart in cloud, a pilot lets the aircraft roll very gently into a bank and does not feel it. Why did the roll go unnoticed?"
+  options:
+    - "The eyes override the inner ear whenever the instruments are in view"
+    - "The roll was too gentle to bend the cupula enough for the canals to register it"
+    - "The cochlea filters out slow, low-frequency movements of the head"
+    - "The semicircular canals sense only linear acceleration, not rotation"
+  answer: 1
+  explanation: "A rotation that starts very gently bends the canal's cupula too little to register, so a slow roll goes unnoticed. Unperceived pitch, roll and yaw like this are how a spiral dive begins without a horizon."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X044
+  kind: mcq
+  elements: ["PHFC 2.7.10"]
+  stem: "On a dark night over the wheatbelt you stare at a single farmhouse light, and after several seconds it seems to drift about. This is:"
+  options:
+    - "Flicker vertigo"
+    - "Empty-field myopia"
+    - "The somatogravic illusion"
+    - "Autokinesis"
+  answer: 3
+  explanation: "Autokinesis: with nothing else in view, the brain reads the eye's small involuntary movements as movement of the light. Do not fixate; keep the eyes moving and check the light against a fixed reference such as the window frame."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X045
+  kind: mcq
+  elements: ["PHFC 2.7.10"]
+  stem: "Well into a prolonged turn in cloud, a pilot bends down sharply to change fuel tanks and feels a violent tumbling sensation. This is the:"
+  options:
+    - "Leans"
+    - "Graveyard spin"
+    - "Coriolis illusion"
+    - "Somatogravic illusion"
+  answer: 2
+  explanation: "In a prolonged turn the canal in the plane of the turn has adapted; a sharp head movement swings canals into and out of that plane, so fluid starts and stops in several at once. Avoid sudden head movements in turns and in cloud."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X046
+  kind: mcq
+  elements: ["PHFC 2.7.10"]
+  stem: "After a long, steady descending turn in cloud the wings feel level. Seeing the altimeter unwind, the pilot pulls back on the control column without checking the attitude indicator. What happens?"
+  options:
+    - "The aircraft climbs, because back pressure always raises the nose"
+    - "The turn tightens and the descent steepens: a graveyard spiral"
+    - "The aircraft rolls level, because back pressure reduces the bank"
+    - "The aircraft enters a spin in the opposite direction to the turn"
+  answer: 1
+  explanation: "The canals have adapted, so the banked aircraft feels level. With the wings still banked, back pressure tightens the turn: the descent steepens, speed builds and the spiral winds tighter. Roll wings level on the attitude indicator first."
+  references: ["PHFC 2.7"]
+  difficulty: 3
+
+- id: PHFC-X047
+  kind: mcq
+  elements: ["PHFC 2.7.11"]
+  stem: "Under which conditions are balance illusions most likely?"
+  options:
+    - "When outside cues are poor, during accelerations, prolonged turns and head movements"
+    - "In clear daylight with a sharp horizon, during long periods of straight and level flight"
+    - "Only above 10,000 ft, where mild hypoxia starts to affect the inner ear organs"
+    - "Mainly on the ground, while taxiing at speed in a strong and gusty crosswind"
+  answer: 0
+  explanation: "Illusions occur when outside visual cues are poor, absent or misleading (cloud, dark nights, haze, water, sloping cloud) and during accelerations, prolonged turns and head movements, when the inner ear is at its worst."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X048
+  kind: mcq
+  elements: ["PHFC 2.7.11"]
+  stem: "Which combination most increases a pilot's susceptibility to spatial disorientation?"
+  options:
+    - "Grey non-polarised sunglasses and a well-sealed headset"
+    - "A light meal, a cool cabin and a current medical"
+    - "An autopilot engaged and a passenger in the right seat"
+    - "Fatigue, a hangover and no recent instrument practice"
+  answer: 3
+  explanation: "Fatigue, alcohol or a hangover, hypoxia, medication, stress, overload, illness and lack of instrument practice all reduce your ability to keep cross-checking against an insistent false feeling."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X049
+  kind: mcq
+  elements: ["PHFC 2.7.12"]
+  stem: "Flying low over the glassy surface of Lake Lefroy near Kambalda, with no texture visible, a pilot will usually:"
+  options:
+    - "Believe they are higher than they really are"
+    - "Believe they are lower than they really are"
+    - "See the horizon tilted towards the shoreline"
+    - "Feel a nose-up pitch from the somatogravic illusion"
+  answer: 0
+  explanation: "Height is judged from texture and familiar objects. Over water, salt lakes, snow or desert there is none, and you usually believe you are higher than you are, which is how pilots fly into flat surfaces. Use the altimeter and a shoreline or road as reference."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X050
+  kind: mcq
+  elements: ["PHFC 2.7.12"]
+  stem: "Arriving at a country strip whose runway slopes up away from the threshold, a pilot used to flat runways will tend to:"
+  options:
+    - "Feel low and fly a higher than normal approach"
+    - "Feel high and fly a steeper than normal approach"
+    - "Feel high and fly a lower than normal approach"
+    - "Feel low and land well beyond the threshold"
+  answer: 2
+  explanation: "An upsloping runway looks steeper, like a normal runway seen from higher up, so the pilot feels high and corrects by flying too low, risking a landing short. Fly the PAPI or a planned height-distance profile; check slope in ERSA beforehand."
+  references: ["PHFC 2.7"]
+  difficulty: 3
+
+- id: PHFC-X051
+  kind: mcq
+  elements: ["PHFC 2.7.12"]
+  stem: "Heavy rain on the windscreen during an approach tends to make the pilot:"
+  options:
+    - "Feel lower than they are and fly a higher approach"
+    - "Feel higher than they are and fly a lower approach"
+    - "Judge height more accurately because of the added texture"
+    - "See the runway as wider than it is and flare too late"
+  answer: 1
+  explanation: "Rain on the windscreen bends the light and can make you feel higher than you are, so you fly a lower approach. Cross-check the PAPI and the planned heights rather than trusting the picture."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X052
+  kind: mcq
+  elements: ["PHFC 2.7.12"]
+  stem: "Flying VFR above a cloud layer that slopes gently upward to the north, a pilot who is not cross-checking the attitude indicator will tend to:"
+  options:
+    - "Fly towards the cloud because the eyes focus at 1 to 2 m"
+    - "Feel a nose-up pitch caused by the otolith organs"
+    - "Hold an accurate attitude because the eyes overrule false cues"
+    - "Bank or pitch to match the cloud, taking it as the horizon"
+  answer: 3
+  explanation: "The brain accepts the first line that looks like a horizon. A sloping cloud bank or ridge is taken as level, and the pilot banks or pitches to match it. Cross-check the attitude indicator whenever the horizon is uncertain."
+  references: ["PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X053
+  kind: mcq
+  elements: ["PHFC 2.7.12"]
+  stem: "Stopped at the holding point at Jandakot, you glance at the aircraft beside you as it starts to roll forward, and you feel your own aircraft rolling backwards. What should you do?"
+  options:
+    - "Check a fixed reference, such as a runway sign, before acting"
+    - "Apply full brake pressure at once to stop the rearward roll"
+    - "Add power slightly to hold the aircraft in position"
+    - "Close one eye to cancel the illusion of movement"
+  answer: 0
+  explanation: "This is the relative motion illusion: the brain takes movement of a large part of the scene as your own movement. Check against something fixed before you act on the sensation."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X054
+  kind: mcq
+  elements: ["PHFC 2.8.1", "PHFC 2.8.2"]
+  stem: "A passenger in the back seat of a four-seater, with no view of the horizon, starts to feel sick in turbulence over the Darling Range. What sensory conflict is at the root of it?"
+  options:
+    - "The eyes see the bumps outside while the inner ear reports smooth flight"
+    - "The inner ear feels every bump while the eyes see a cabin that looks still"
+    - "Both ears report different motions because the eustachian tubes are blocked"
+    - "The seat of the pants reports a climb while the otoliths report a descent"
+  answer: 1
+  explanation: "Motion sickness is caused by the senses telling the brain different stories about motion, chiefly the eyes against the inner ear. The cabin walls fill the passenger's view and look stationary while the vestibular system feels each bump, the classic conflict."
+  references: ["PHFC 2.8"]
+  difficulty: 2
+
+- id: PHFC-X055
+  kind: mcq
+  elements: ["PHFC 2.8.1"]
+  stem: "Apart from the conflict between the eyes and the inner ear, what else adds to the cause of motion sickness in a passenger or a student watching a demonstration?"
+  options:
+    - "Low blood sugar from flying on an empty stomach"
+    - "Excess carbon dioxide from stale cabin air"
+    - "Motion the brain did not predict, because they are not controlling it"
+    - "Pressure changes in the middle ear during the descent"
+  answer: 2
+  explanation: "The brain predicts the motion it expects. A pilot who starts a turn knows it is coming; a passenger gets it unannounced, so actual motion fails to match expected motion. Hunger is an aggravating factor, not the cause."
+  references: ["PHFC 2.8"]
+  difficulty: 2
+
+- id: PHFC-X056
+  kind: mcq
+  elements: ["PHFC 2.8.2"]
+  stem: "Why does turning round to talk to a back-seat passenger during a turn make queasiness worse?"
+  options:
+    - "Twisting the neck restricts the blood supply to the inner ear"
+    - "It closes the eustachian tube on the side you turn towards"
+    - "Moving the head while the aircraft rotates stimulates several canals at once"
+    - "It increases the g load on the head, pooling blood in the brain"
+  answer: 2
+  explanation: "A head movement during a turn sends confusing signals from several semicircular canals at once, the same mechanism as the Coriolis illusion, adding to the sensory conflict. Keep the head still and move the eyes instead."
+  references: ["PHFC 2.8", "PHFC 2.7"]
+  difficulty: 2
+
+- id: PHFC-X057
+  kind: mcq
+  elements: ["PHFC 2.8.2"]
+  stem: "Which of these lowers a person's threshold for motion sickness, rather than increasing the sensory conflict or the amount of motion?"
+  options:
+    - "Reading a tablet during turbulence"
+    - "Sitting in the back with no view of the horizon"
+    - "Steep turns and repeated changes of attitude"
+    - "A hangover from the night before"
+  answer: 3
+  explanation: "Anxiety, heat, smells, hunger or a heavy meal, alcohol and hangover, fatigue and illness lower the threshold at which the conflict makes you sick. Head-down reading and no horizon increase the conflict; manoeuvres increase the motion."
+  references: ["PHFC 2.8"]
+  difficulty: 3
+
+- id: PHFC-X058
+  kind: mcq
+  elements: ["PHFC 2.8.3"]
+  stem: "A student felt airsick during steep turns on a hot afternoon lesson. Which plan for the next lesson does the lesson recommend?"
+  options:
+    - "Take an anti-motion-sickness tablet an hour before the lesson"
+    - "Skip breakfast so there is less in the stomach"
+    - "Fly a longer manoeuvring session to force faster adaptation"
+    - "An earlier start, a light meal and a shorter manoeuvring session"
+  answer: 3
+  explanation: "Adaptation is built by repeated, gradually increasing exposure: smooth early-morning air, a light meal and shorter manoeuvring at first. Pilots should not take motion sickness tablets without DAME advice, as they cause drowsiness and slowed reactions."
+  references: ["PHFC 2.8"]
+  difficulty: 2
+
+- id: PHFC-X059
+  kind: mcq
+  elements: ["PHFC 2.10.2"]
+  stem: "Climbing out of York you notice a strong smell of AVGAS in the cabin and feel light-headed. Which response is most appropriate?"
+  options:
+    - "Select cabin heat to evaporate the fuel vapour faster"
+    - "Ventilate, minimise electrical switching and land as soon as practicable"
+    - "Switch on each electrical item in turn to find the source"
+    - "Continue, since fuel vapour is harmful only if it can be seen"
+  answer: 1
+  explanation: "Fuel vapour acts like an anaesthetic (headache, dizziness, an intoxicated feeling) and is also a fire risk. Stop the source if you can, ventilate, use oxygen if carried, avoid ignition sources such as electrical switching, and land."
+  references: ["PHFC 2.10"]
+  difficulty: 2
+
+- id: PHFC-X060
+  kind: mcq
+  elements: ["PHFC 2.11.2"]
+  stem: "Oxygen moves from the air in the alveoli into the blood in the lung capillaries by:"
+  options:
+    - "Active pumping by the cells of the alveolar wall"
+    - "Diffusion, from lower to higher oxygen pressure"
+    - "Diffusion, from higher to lower oxygen pressure"
+    - "Being carried across attached to carbon dioxide"
+  answer: 2
+  explanation: "Gas exchange is by diffusion: oxygen moves from the alveoli, where its pressure is higher, into the blood, where it is lower, and carbon dioxide moves the other way. The driving force is a difference in pressure."
+  references: ["PHFC 2.11"]
+  difficulty: 2
+
+- id: PHFC-X061
+  kind: numeric
+  elements: ["PHFC 2.11.3"]
+  stem: "Sea-level air gives an oxygen partial pressure of about 213 hPa. At an altitude where the total pressure is 600 hPa, what percentage of oxygen would the breathed gas need to contain to give the same 213 hPa? (Ignore water vapour; answer to the nearest whole percent.)"
+  answer: 36
+  tolerance: 1
+  unit: "%"
+  explanation: "Partial pressure = oxygen fraction x total pressure, so the fraction needed is 213 / 600 = 0.355, about 36 percent. Check: 0.36 x 600 = 216 hPa, close to 213. Ordinary air at 21 percent would give only 0.21 x 600 = 126 hPa."
+  references: ["PHFC 2.11"]
+  difficulty: 3
+
+- id: PHFC-X062
+  kind: mcq
+  elements: ["PHFC 2.13.1"]
+  stem: "Expecting a landing clearance, a pilot hears 'cleared to land' in a call that actually said 'continue approach'. At which stage of information processing did the error enter?"
+  options:
+    - "Perception, which interprets what is heard against what is expected"
+    - "Sensing, because the ears failed to detect the radio call"
+    - "Long-term memory, which failed to store the clearance"
+    - "Action, because the pilot executed the wrong procedure"
+  answer: 0
+  explanation: "The call was heard, so sensing worked; perception then interpreted it against expectation and filled the gap with what the pilot expected. Reading back clearances and listening for the acknowledgement is the defence."
+  references: ["PHFC 2.13"]
+  difficulty: 2
+
+- id: PHFC-X063
+  kind: mcq
+  elements: ["PHFC 2.13.2"]
+  stem: "In the DECIDE model, what comes after you have carried out the actions you chose?"
+  options:
+    - "Estimate the significance of the problem"
+    - "Identify the actions that will reach a safe outcome"
+    - "Choose a new safe outcome to aim for"
+    - "Evaluate the result, then detect what has changed"
+  answer: 3
+  explanation: "DECIDE is Detect, Estimate, Choose, Identify, Do, Evaluate. Evaluating the result is what makes it a loop: the effect of your action is itself a change to detect."
+  references: ["PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-X064
+  kind: mcq
+  elements: ["PHFC 2.13.2"]
+  stem: "Planning to fly in marginal weather, a pilot thinks 'accidents happen to other people, not to me'. Which hazardous attitude is this, and what is its antidote?"
+  options:
+    - "Macho; 'taking chances is foolish'"
+    - "Invulnerability; 'it could happen to me'"
+    - "Impulsivity; 'not so fast, think first'"
+    - "Resignation; 'I can make a difference'"
+  answer: 1
+  explanation: "Believing accidents happen to others is invulnerability, and the antidote is 'it could happen to me'. Macho is about proving yourself by taking chances; impulsivity is acting without thinking."
+  references: ["PHFC 2.13"]
+  difficulty: 2
+
+- id: PHFC-X065
+  kind: mcq
+  elements: ["PHFC 2.13.2"]
+  stem: "Before departing Jandakot for Busselton you decide: 'if the cloud base at Pinjarra is below 2,000 ft, I turn back'. Why does this improve your decision-making?"
+  options:
+    - "It removes the need to check the weather again before departure"
+    - "It guarantees the flight will be completed on schedule"
+    - "The decision is made calmly in advance, so pressure in flight cannot easily bend it"
+    - "It makes the cloud base at Pinjarra less likely to fall below 2,000 ft"
+  answer: 2
+  explanation: "A decision point set on the ground is made without stress, workload or external pressure. In flight you only compare the conditions with the limit, which is far harder for pride or get-there-itis to bend than a fresh judgement on the spot."
+  references: ["PHFC 2.13"]
+  difficulty: 2
+
+- id: PHFC-X066
+  kind: mcq
+  elements: ["PHFC 2.13.4"]
+  stem: "You have booked a 0530 departure for a trip north to Geraldton after five hours' sleep. Why are you especially vulnerable to fatigue on this flight?"
+  options:
+    - "You will be in the circadian low of about 0200 to 0600 with a sleep deficit"
+    - "Alertness peaks before dawn, so the main risk is over-confidence"
+    - "Five hours of sleep is ample for any flight shorter than three hours"
+    - "Early flights are risky mainly because cold air causes hypoxia"
+  answer: 0
+  explanation: "The body clock puts the low point of alertness at about 0200 to 0600, and an early departure after a short night puts you in that low on a sleep deficit. Fatigue slows reactions, impairs judgement and leads you to accept lower standards."
+  references: ["PHFC 2.13"]
+  difficulty: 2
+
+- id: PHFC-X067
+  kind: mcq
+  elements: ["PHFC 2.13.4"]
+  stem: "Which is a sound strategy for coping with fatigue as a pilot?"
+  options:
+    - "Strong coffee to fly through the circadian low after a short night"
+    - "A long lie-in the night before to cancel out weeks of poor sleep"
+    - "A hard gym session just before the flight to wake yourself up"
+    - "Regular 7 to 9 hours of sleep, without caffeine or alcohol near bedtime"
+  answer: 3
+  explanation: "Sleep management (regular 7 to 9 hours, a dark quiet room, no caffeine or alcohol near bedtime), relaxation, fitness and diet are the coping strategies. One long sleep does not cure chronic fatigue, and exhausting exercise just before flying leaves you tired and dehydrated."
+  references: ["PHFC 2.13", "PHFC 2.1"]
+  difficulty: 1
+
+- id: PHFC-X068
+  kind: mcq
+  elements: ["PHFC 2.13.3"]
+  stem: "A pilot going through a difficult divorce feels calm at the holding point. Why might her flying still suffer?"
+  options:
+    - "Chronic stress causes preoccupation and leaves less attention in reserve"
+    - "Calmness shows arousal is too low, so she will be bored and inattentive"
+    - "Long-term stress raises arousal, which always improves performance"
+    - "Stress from outside flying affects health only, not cockpit performance"
+  answer: 0
+  explanation: "Chronic stress does not switch off when you strap in: it uses part of your limited attention through preoccupation, disturbs sleep and wears down health, so cues are missed when the workload rises. Do not fly when preoccupied."
+  references: ["PHFC 2.13"]
+  difficulty: 2
+
+- id: PHFC-X069
+  kind: mcq
+  elements: ["PHFC 2.15.1"]
+  stem: "Research on normal airline flights, which led to threat and error management, found that the crews who flew safely were the ones who:"
+  options:
+    - "Made no errors on most of their flights"
+    - "Met no threats, thanks to careful planning"
+    - "Caught and managed threats and errors"
+    - "Followed more rules than the other crews"
+  answer: 2
+  explanation: "Threats and errors turned up on almost every flight. Safe crews were not those who made no errors but those who caught and managed them, which is the premise of TEM: expect errors and trap them."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-X070
+  kind: mcq
+  elements: ["PHFC 2.15.1"]
+  stem: "In the TEM model, what does a mismanaged undesired aircraft state lead to?"
+  options:
+    - "An incident or accident"
+    - "A new latent threat"
+    - "A procedural error"
+    - "An anticipated threat"
+  answer: 0
+  explanation: "The three layers are threats, errors and undesired aircraft states. A mismanaged threat or error produces an undesired aircraft state, and a mismanaged undesired aircraft state produces the incident or accident."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-X071
+  kind: mcq
+  elements: ["PHFC 2.15.2"]
+  stem: "Fifteen miles from Wagin, arriving for the first time, you brief yourself aloud on the gusty crosswind, kangaroos near the strip and a go-around decision point at 300 ft. Which step of the single-pilot TEM process is this?"
+  options:
+    - "Recognise"
+    - "Recover"
+    - "Evaluate"
+    - "Anticipate"
+  answer: 3
+  explanation: "Single-pilot TEM is anticipate, recognise, recover. Briefing the threats ahead and your plan for them, out loud, before each phase is anticipation, and it makes the plan easy to recall when the threat arrives."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-X072
+  kind: mcq
+  elements: ["PHFC 2.15.2"]
+  stem: "On final at Wagin you see the airspeed sagging 10 kt below target in the gusts, and you go around as you had briefed. Which steps of single-pilot TEM do these two actions show?"
+  options:
+    - "Anticipate, then recognise"
+    - "Recognise, then recover"
+    - "Anticipate, then recover"
+    - "Recover, then anticipate"
+  answer: 1
+  explanation: "Spotting the low speed by monitoring is recognising; the go-around restores the safety margin, which is recovering. The anticipation was the briefing made before joining."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-X073
+  kind: mcq
+  elements: ["PHFC 2.15.3"]
+  stem: "From the pilot's seat, an ATC clearance that contains a wrong altitude is classed in TEM as:"
+  options:
+    - "A pilot error, because pilots must check every clearance"
+    - "An undesired aircraft state"
+    - "A threat, because it arose outside the pilot's influence"
+    - "A communication error made by the pilot"
+  answer: 2
+  explanation: "A threat is an event or error outside the pilot's influence that adds complexity and must be managed. Other people's errors, such as a wrong clearance or a loose fuel cap left by a refueller, are threats from your seat; your own mistakes are errors."
+  references: ["PHFC 2.15"]
+  difficulty: 3
+
+- id: PHFC-X074
+  kind: mcq
+  elements: ["PHFC 2.15.4"]
+  stem: "The ATIS at Jandakot gives QNH 1018, but you set 1008 by mistake. At the cruise check you spot the error. Using about 30 ft per hPa, what has the error done, and what should you do?"
+  options:
+    - "You have been about 300 ft higher than indicated; reset 1018 and check you have not infringed airspace above"
+    - "You have been about 300 ft lower than indicated; reset 1018 and check your clearance from terrain"
+    - "The error is harmless now that the pre-take-off check is complete; reset 1018 at the next scheduled check"
+    - "Leave 1008 set, because changing the subscale in flight will confuse the altitude you are holding"
+  answer: 0
+  explanation: "A 10 hPa error is about 300 ft. With the subscale set too low the altimeter under-reads, so the aircraft is about 300 ft higher than indicated, a risk to any airspace step above. Reset the correct QNH, confirm your actual level and tell ATC if near controlled airspace: a committed error trapped at the next check."
+  references: ["PHFC 2.15"]
+  difficulty: 3
+
+- id: PHFC-X075
+  kind: mcq
+  elements: ["PHFC 2.15.4"]
+  stem: "A pilot's error escapes the pre-take-off check but is caught and corrected at the cruise check. In TEM terms, this shows:"
+  options:
+    - "That TEM failed, because the first defence missed the error"
+    - "That the error had already become an undesired aircraft state"
+    - "That checklists are of little value in single-pilot flight"
+    - "TEM working as intended, with a later layer trapping the error"
+  answer: 3
+  explanation: "TEM expects some errors to escape the first defence, which is why it has several layers. Recognising the error at the next check and correcting it before it produced an undesired aircraft state is TEM working as designed."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-X076
+  kind: mcq
+  elements: ["PHFC 2.15.5"]
+  stem: "A pilot calls 'fuel on, mixture rich' from the pre-landing checklist while looking at the runway. Why does this fail to trap errors?"
+  options:
+    - "Pre-landing checklists are meant to be read only on the ground"
+    - "An item traps errors only when it is confirmed by looking at or touching the control"
+    - "Reading items aloud overloads short-term memory during the approach"
+    - "Only memory items, not checklist items, are effective once airborne"
+  answer: 1
+  explanation: "Reciting a checklist without looking is not a check. Each item traps errors only when the pilot confirms it by looking at, or touching, the thing it names."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-X077
+  kind: mcq
+  elements: ["PHFC 2.15.5"]
+  stem: "Why does doing the same cockpit flow in the same order on every flight help a pilot notice a missed item?"
+  options:
+    - "It lets the pilot skip the written checklist once the flow is learned"
+    - "It means items can be done in any order provided all are completed"
+    - "A missed item leaves a gap in a familiar pattern, so it stands out"
+    - "It moves the whole procedure into short-term memory for the flight"
+  answer: 2
+  explanation: "Standard actions make the cockpit look the same at the same point every time, so a switch out of place stands out; in a random order nothing looks unusual. In flight, flow then verify with the checklist."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-X078
+  kind: mcq
+  elements: ["PHFC 2.15.6"]
+  stem: "On a hot afternoon at a short country strip with trees at the end, a pilot uses the sea-level take-off distance from memory. The aircraft lifts off late and climbs shallowly towards the trees. How is the aircraft's situation best described?"
+  options:
+    - "An undesired aircraft state, produced by an unmanaged density altitude threat"
+    - "A threat, produced by a handling error during the take-off roll"
+    - "A latent threat that has not yet affected the safety of the flight"
+    - "An error, which becomes a threat once the trees are cleared"
+  answer: 0
+  explanation: "The heat (density altitude) was a threat; not planning for it was mismanagement, and the result, low and slow near obstacles, is an undesired aircraft state, the last layer before an accident."
+  references: ["PHFC 2.15"]
+  difficulty: 3
+
+- id: PHFC-X079
+  kind: mcq
+  elements: ["PHFC 2.15.7"]
+  stem: "Uncertain of your position over the wheatbelt, you have 90 minutes of fuel and two hours of daylight left. What is the best use of your outside resources?"
+  options:
+    - "Wait until fuel nears reserve before calling, to avoid wasting ATC's time"
+    - "Switch the radio off to cut distraction while you study the chart"
+    - "Keep quiet and descend low enough to read the names on wheat bins"
+    - "Call ATC or Flight Information Service early, while fuel and daylight give options"
+  answer: 3
+  explanation: "An early call, while you still have fuel, height and daylight, gives the people helping you options: surveillance can find you and a diversion can be planned. The same call made late leaves very few."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-X080
+  kind: mcq
+  elements: ["PHFC 2.15.7", "PHFC 2.13.1"]
+  stem: "A VFR pilot entering worsening weather delays asking ATC for help because he does not want to sound incompetent on the radio. Which human factor is stopping him from using this resource?"
+  options:
+    - "Boredom and complacency"
+    - "Pride and the fear of looking foolish"
+    - "Lack of currency on the radio"
+    - "High workload causing task shedding"
+  answer: 1
+  explanation: "Reluctance to use outside help is itself a human factor: pride and fear of looking foolish push the decision away from the safe option. ATC and FIS can only help if asked, and early."
+  references: ["PHFC 2.15", "PHFC 2.13"]
+  difficulty: 1
+
+- id: PHFC-X081
+  kind: mcq
+  elements: ["PHFC 2.15.8"]
+  stem: "Climbing out of Rottnest at 300 ft, your door pops open with a bang and a roar of air. What is your first priority?"
+  options:
+    - "Reach across and try to close the door"
+    - "Make a PAN PAN call before anything else"
+    - "Hold the climb attitude and airspeed and keep it balanced"
+    - "Read the POH door procedure straight away"
+  answer: 2
+  explanation: "Aviate, navigate, communicate: fly the aeroplane first. An open door in most light aeroplanes is noisy but not dangerous (check your POH); continue the circuit, make a short call, and deal with the door on the ground."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-X082
+  kind: mcq
+  elements: ["PHFC 2.15.8"]
+  stem: "Why do many accidents begin with a minor fault in a perfectly serviceable aeroplane?"
+  options:
+    - "Attention narrows onto the fault, and the pilot stops flying the aircraft"
+    - "Minor faults usually develop quickly into a complete engine failure"
+    - "Pilots declare emergencies too early and overload air traffic control"
+    - "Checklists for minor faults are too long to complete in flight"
+  answer: 0
+  explanation: "A sudden problem pushes arousal up the right-hand side of the stress curve and narrows attention onto the fault, so attitude, speed and height drift unmonitored. Prioritising, aviate first, keeps the margin needed to deal with everything else."
+  references: ["PHFC 2.15", "PHFC 2.13"]
+  difficulty: 2
+
+- id: PHFC-X083
+  kind: mcq
+  elements: ["PHFC 2.15.9"]
+  stem: "A passenger notices a smell of fuel in the cabin but says nothing because she does not want to be a nuisance. What does this illustrate?"
+  options:
+    - "Passengers are a threat and are best kept out of the flight"
+    - "A fuel smell is a latent threat that only engineers can detect"
+    - "Communication errors are always the pilot's own fault"
+    - "Safety information flows only where people feel able to speak up"
+  answer: 3
+  explanation: "Safety information has to flow, and it flows only between people who trust each other. A passenger made to feel part of the flight in the briefing will speak up; one who feels a nuisance sits in silence."
+  references: ["PHFC 2.15"]
+  difficulty: 2
+
+- id: PHFC-X084
+  kind: mcq
+  elements: ["PHFC 2.15.9"]
+  stem: "You notice a recurring rough running at the run-up in the club aeroplane. Which approach to the maintenance engineer best promotes safe flight?"
+  options:
+    - "Say nothing, since raising small defects strains the relationship"
+    - "Describe it clearly and courteously and insist it is checked"
+    - "Mention it casually and leave it to the next pilot to decide"
+    - "Write it up anonymously so nobody knows who reported it"
+  answer: 1
+  explanation: "Being assertive but courteous with maintenance engineers gets defects fixed properly. Good working relationships let safety information flow; hiding or diluting a report does the opposite."
+  references: ["PHFC 2.15"]
+  difficulty: 1
+
+- id: PHFC-X085
+  kind: mcq
+  elements: ["PHFC 2.1.1"]
+  stem: "Before a lesson, a pilot notices flashing zigzag lines in her vision, the aura that usually comes before one of her migraines. What should she do?"
+  options:
+    - "Fly once a painkiller has taken effect"
+    - "Fly dual, so the instructor can take over"
+    - "Not fly, as the migraine will make safe flight impossible"
+    - "Fly, because an aura affects only peripheral vision"
+  answer: 2
+  explanation: "A migraine aura is typically followed by a severe headache, nausea and sensitivity to light and noise; flying through that is not safe. Do not fly with a migraine, and check any migraine medication with a DAME, since several cause drowsiness."
+  references: ["PHFC 2.1"]
+  difficulty: 1
+
+- id: PHFC-X086
+  kind: mcq
+  elements: ["PHFC 2.1.1"]
+  stem: "A student with a sprained right ankle can walk and drive. What is the key question in deciding whether he is fit to fly?"
+  options:
+    - "Whether he could apply full rudder and maximum braking in an emergency"
+    - "Whether he can walk out to the aircraft and climb in unaided"
+    - "Whether his medical certificate is still within its validity period"
+    - "Whether the ankle is painful while he is sitting at rest"
+  answer: 0
+  explanation: "The test for any injury is whether you can still do everything the aeroplane might demand, including in an emergency: full rudder in a crosswind or hard braking after an engine failure on take-off. Driving needs far less leg force, and strong painkillers add their own impairment."
+  references: ["PHFC 2.1"]
+  difficulty: 1
+
+- id: PHFC-X087
+  kind: mcq
+  elements: ["PHFC 2.1.1"]
+  stem: "Which pairing of a health factor with its effect on a pilot is correct?"
+  options:
+    - "Skipping breakfast: drowsiness, because blood is diverted to digestion"
+    - "Ageing: better close-up focus as the lens of the eye stiffens"
+    - "Smoking: histotoxic hypoxia, as the cells cannot use oxygen"
+    - "Gastroenteritis: sudden disabling cramps and rapid dehydration"
+  answer: 3
+  explanation: "Food poisoning and gastroenteritis can bring cramps, vomiting and diarrhoea with little warning, and dehydrate you quickly. Skipping a meal lowers blood sugar (a heavy meal causes drowsiness), ageing stiffens the lens and loses near focus, and smoking causes anaemic hypoxia through carbon monoxide."
+  references: ["PHFC 2.1"]
+  difficulty: 3
+
+- id: PHFC-X088
+  kind: mcq
+  elements: ["PHFC 2.7.4"]
+  stem: "Flying low along a wheatbelt valley, why are powerlines such a hazard?"
+  options:
+    - "They are marked only on charts of controlled airspace"
+    - "The wires are too thin to see, so they are usually spotted only by their towers"
+    - "Peripheral vision detects them easily, but only when they sway in the wind"
+    - "They show up only at night, when warning lights are switched on"
+  answer: 1
+  explanation: "Only the fovea sees fine detail, and wires are thinner even than a head-on aircraft, so they are usually seen only by their towers. That is why low flying along a valley is so dangerous."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X089
+  kind: mcq
+  elements: ["PHFC 2.7.4"]
+  stem: "Flying west into Jandakot late on a summer afternoon, why is other traffic harder to see?"
+  options:
+    - "Empty-field myopia always occurs when looking towards the sun"
+    - "Strong sunlight switches off the cones, leaving only the rods"
+    - "Glare from the low sun and sea dazzles and cuts contrast"
+    - "The sea reflects polarised light that hides aircraft from the eye"
+  answer: 2
+  explanation: "Glare is light much brighter than its surroundings, such as a low sun and sunlight off the sea, made worse by a dirty or scratched windscreen. It dazzles and cuts contrast, so aircraft and terrain blend into the background."
+  references: ["PHFC 2.7"]
+  difficulty: 1
+
+- id: PHFC-X090
+  kind: mcq
+  elements: ["PHFC 2.7.4"]
+  stem: "Why is colour vision assessed at the aviation medical examination?"
+  options:
+    - "Navigation lights, light signals, PAPIs and chart symbols carry meaning by colour"
+    - "A colour defect makes empty-field myopia more likely in a clear sky"
+    - "Colour vision decides which tint of sunglasses a pilot is allowed to wear"
+    - "Pilots with colour defects are more prone to flicker vertigo"
+  answer: 0
+  explanation: "Aviation uses colour to carry meaning: navigation lights, tower light signals, PAPI and runway lighting, and chart symbols. A colour defect may make a pilot misread any of them, so it is checked at the medical."
+  references: ["PHFC 2.7", "PHFC 2.2"]
+  difficulty: 1
