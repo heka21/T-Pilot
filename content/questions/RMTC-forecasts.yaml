@@ -1,0 +1,942 @@
+# RMTC: RPL meteorology, bank expansion (local weather, forecasts and reports, significance of observations).
+# ---------- RMTC 2.1.1 (a) thunderstorms ----------
+- id: RMTC-F001
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "A February afternoon at Northam: high-based towers to the north-east trail rain shafts that evaporate before reaching the ground. What is the main threat to an aeroplane near the surface?"
+  options:
+    - "Little threat, because rain that does not reach the ground means a weak storm."
+    - "Heavy rain on the runway reducing braking, as the rain will soon reach the ground."
+    - "A strong microburst and gust front, driven by the evaporating rain, with little rain to warn you."
+    - "Freezing fog forming beneath the cloud base as the rain evaporates."
+  answer: 2
+  explanation: "Evaporation chills the falling air, so it is heavier and accelerates downwards: dry inland storms produce some of the strongest microbursts and gust fronts, often carrying dust. The lack of rain at the surface is not a sign of a weak storm; it is the reason the downdraught is so strong."
+  references: ["RMTC 2.1"]
+  difficulty: 3
+- id: RMTC-F002
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Which stage of a thunderstorm cell is the most dangerous, and what marks its beginning?"
+  options:
+    - "The mature stage, which begins when rain and hail start falling to the ground beside the updraught."
+    - "The cumulus stage, which begins when the anvil of ice cloud spreads out at the top."
+    - "The dissipating stage, which begins when the updraughts are at their strongest."
+    - "The cumulus stage, which begins when lightning and heavy rain first reach the surface."
+  answer: 0
+  explanation: "Rain at the surface and lightning mark the mature stage, when the updraught and the rain-cooled downdraught exist side by side. The cumulus stage is all updraught with no rain at the ground, and the anvil belongs to the dissipating stage."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F003
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Summer thunderstorms over the wheatbelt are usually triggered by surface heating. When are they most likely?"
+  options:
+    - "Building before dawn and peaking around sunrise."
+    - "At any hour, since heating has no link to the time of day."
+    - "Building after dark and peaking around midnight."
+    - "Building from about midday and peaking in the late afternoon."
+  answer: 3
+  explanation: "Heating storms follow the sun: they build from about midday, peak in the late afternoon and die away after dark when the heating stops. It is frontal storms, triggered by lifting along a front, that can arrive at any time of day."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F004
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "A vigorous winter cold front with thunderstorms is forecast to cross Perth around dawn. A fellow student says storms are an afternoon problem, so a dawn departure from Jandakot will be fine. What is wrong with that reasoning?"
+  options:
+    - "Nothing; storms need daytime heating, so a dawn front brings only light rain."
+    - "Frontal storms are triggered by lifting along the front, so they can occur at any hour."
+    - "Nothing; storms near Perth occur only in summer, so a winter front cannot produce them."
+    - "Storms at dawn are always weaker than afternoon storms, so they can be flown through."
+  answer: 1
+  explanation: "The trigger decides the timing. A front lifts the air whatever the hour, so a line of frontal storms can pass through Perth at dawn; only heat-triggered storms follow the afternoon pattern."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F005
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Heading east of York, you see a mature thunderstorm about 15 nm north of your track, its anvil spreading south into the clear air over your track ahead. What should you do?"
+  options:
+    - "Continue beneath the anvil, as no rain is falling from it and the cell is over 10 nm away."
+    - "Fly as close to the cell as you need to, provided you stay outside the visible cloud."
+    - "Turn away to stay out from under the anvil as well as 10 nm or more from the cell."
+    - "Climb to pass over the top of the anvil, where the air is smooth and clear."
+  answer: 2
+  explanation: "Hail can fall from the anvil into clear air well outside the visible rain, and the clear air beneath the anvil is where the downdraughts are. Being more than 10 nm from the cell is not enough if your track takes you under its anvil."
+  references: ["RMTC 2.1"]
+  difficulty: 3
+- id: RMTC-F006
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "In which months are heavy, often severe thunderstorms and tropical cyclones most likely in the Kimberley and Pilbara?"
+  options:
+    - "October to April, the wet season."
+    - "May to September, the dry season."
+    - "June to August only, in mid-winter."
+    - "July to October, with the winter fronts."
+  answer: 0
+  explanation: "The north's wet season, October to April, brings heavy afternoon and evening storms, often severe, and tropical cyclones in the same months. May to September is the south-west's fog and front season, not the north's storm season."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F007
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "You are in the circuit at Northam. A storm is about 8 nm away and no rain has reached the aerodrome yet. Which threat could arrive first, with no rain to warn you?"
+  options:
+    - "Heavy rain removing the visibility, since the rain always arrives before the wind."
+    - "Radiation fog forming in the cooled air beneath the cloud."
+    - "Airframe icing in the circuit, below the freezing level."
+    - "The gust front: a sudden wind shift and squall, often with dust."
+  answer: 3
+  explanation: "The cold outflow spreads out ahead of the storm, and its leading edge, the gust front, can reach the aerodrome before the rain, bringing a sudden wind shift, a squall and often a wall of dust. In the circuit that means wind shear on take-off and landing."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+# ---------- RMTC 2.1.1 (b) low cloud ----------
+- id: RMTC-F008
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Behind a winter cold front a moist south-westerly is blowing. On a flight from Jandakot to York, where is low cloud most likely?"
+  options:
+    - "Over the coastal plain near Jandakot, while the hills stay clear."
+    - "On the Darling Scarp and the hills east of it, a few hundred feet above the ridges."
+    - "Over the Avon valley only, because cold air drains into it during the day."
+    - "Nowhere on the route, because the air behind a front is always dry."
+  answer: 1
+  explanation: "The south-westerly is forced up the Scarp; the air expands and cools as it rises and reaches its dew point a few hundred feet above the hills, capping them in orographic cloud while the plain can stay clear. That is exactly where the York track crosses the high ground."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F009
+  kind: numeric
+  elements: ["RMTC 2.1.1"]
+  stem: "A mid-morning observation at Northam gives a temperature of 23 degrees and a dew point of 14 degrees. Using the rule of thumb of 400 ft per degree of dew point spread, at about what height above the ground should the cumulus base be once thermals start?"
+  answer: 3600
+  tolerance: 100
+  unit: ft
+  explanation: "Spread: 23 - 14 = 9 degrees. Rising air loses about 1 degree of spread every 400 ft, so the base is about 9 x 400 = 3,600 ft above the ground. Check: 3,600 / 400 = 9 degrees, the spread. It is an estimate, and only for cumulus formed by air rising from the surface."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F010
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Which temperature and dew point pair, from evening observations, shows air closest to forming cloud or fog?"
+  options:
+    - "Temperature 30, dew point 12"
+    - "Temperature 22, dew point 15"
+    - "Temperature 12, dew point 11"
+    - "Temperature 18, dew point 8"
+  answer: 2
+  explanation: "The dew point spread shows how close the air is to condensing: 12 minus 11 is a spread of only 1 degree, air on the edge of cloud or fog. The other pairs have spreads of 18, 7 and 10 degrees; the highest dew point is not what matters."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F011
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "On a winter day, stratus is lowering ahead of an approaching front. Why would the 400 ft per degree dew point spread rule give an unreliable estimate of its base?"
+  options:
+    - "The rule applies only to cumulus formed by air rising from the surface, not to cloud lowered by a front."
+    - "The rule works only in summer, when the dew point is above 20 degrees."
+    - "The rule gives the base above sea level, while stratus is measured above the aerodrome."
+    - "The rule works only when the dew point spread is more than 15 degrees."
+  answer: 0
+  explanation: "The rule estimates where a surface thermal reaches its dew point, so it suits cumulus. Stratus lowering ahead of a front comes from warm moist air lifted over the colder air, not from surface thermals, so the rule does not apply."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F012
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "After a humid day with a strong sea breeze at Busselton, you plan a dawn departure. Why might there be low stratus over the aerodrome?"
+  options:
+    - "Hot air from the interior was lifted over the coast during the night."
+    - "The ground warmed overnight and lifted the moist air into cloud."
+    - "The sea breeze stopped the thermals, and thermals are what make stratus."
+    - "The sea breeze carried moist ocean air inland, and it cooled further after dark."
+  answer: 3
+  explanation: "The sea breeze brings moist ocean air over the land, where it can cool further in the evening and form low stratus along the coast that spreads inland overnight. The ground cools at night, it does not warm."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F013
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "A cold front is approaching the south-west from the Indian Ocean, and in the morning there is only high cloud. How should the cloud be expected to change through the day, ahead of the front?"
+  options:
+    - "It should rise and clear as the front approaches."
+    - "Its base should lower, from high cloud towards low cloud and rain."
+    - "It should stay as high cloud until the front has passed."
+    - "It should turn to fair-weather cumulus with rising bases."
+  answer: 1
+  explanation: "Ahead of a front warm moist air is lifted over the colder air, and the base lowers through the day from high cloud to low cloud and rain, with a freshening northerly. An afternoon return flight will meet lower cloud than the morning departure."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+# ---------- RMTC 2.1.1 (c) poor visibility ----------
+- id: RMTC-F014
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "The overnight forecast for York is clear skies, high humidity and a south-westerly of 18 kt. How likely is radiation fog by dawn, and why?"
+  options:
+    - "Very likely, because clear skies and high humidity are all that fog needs."
+    - "Very likely, because the strong wind carries moist air into the valley."
+    - "Unlikely, because the wind mixes the air cooled at the ground with warmer air above."
+    - "Unlikely, because high humidity stops the ground from cooling at night."
+  answer: 2
+  explanation: "Radiation fog also needs a light wind, about 2 to 5 kt. A wind much over 10 kt keeps mixing the chilled surface air with warmer air above, so no layer reaches its dew point; at most it gives low stratus. Clear and humid is not enough on its own."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F015
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "On a clear, humid winter night in the Avon valley, which overnight wind gives the best chance of a fog layer a few hundred feet deep by dawn?"
+  options:
+    - "Dead calm"
+    - "About 2 to 5 kt"
+    - "About 12 to 15 kt"
+    - "Over 20 kt"
+  answer: 1
+  explanation: "A light breeze of about 2 to 5 kt stirs the cooled air through a layer a few hundred feet deep. Dead calm gives dew or frost and only a shallow ground fog, and a wind much over 10 kt mixes the chilled air away and stops fog forming."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F016
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "On a still, clear winter dawn the aerodrome at York, in the Avon valley, is in fog, while a hilltop farm strip ten miles away is clear. Why?"
+  options:
+    - "Cold air drains downhill overnight and pools in the low ground, where it reaches its dew point."
+    - "Hilltops are more humid than valleys, so the moisture forms cloud above them instead."
+    - "The sun reaches the valley floor first and evaporates the moisture into fog."
+    - "The wind is always stronger in valleys, which mixes the fog down to the ground."
+  answer: 0
+  explanation: "Chilled air is heavier than warm air, so on sloping ground it drains downhill overnight and collects in the valleys, such as the Avon around Northam and York. A hilltop strip can be clear while the valley aerodrome nearby is fogbound."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F017
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "At first light Northam is in radiation fog and you want to depart on a local flight. What is the usual pattern over the next few hours?"
+  options:
+    - "The fog clears at sunrise, so a departure at first light will be fine."
+    - "The fog lasts all day, because the winter sun cannot heat the ground."
+    - "The fog thickens all morning and clears only after dark."
+    - "It may thicken briefly after sunrise, then clear by mid-morning, often lifting into stratus first."
+  answer: 3
+  explanation: "The coldest time is just after sunrise, so the fog often thickens briefly after first light. Then the sun heats the ground, the droplets evaporate from below, and the fog usually clears by mid-morning, often lifting first into low stratus."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F018
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "The February GAF for the wheatbelt forecasts no cloud. What could still give you poor visibility on a cross-country flight?"
+  options:
+    - "Smoke from bushfires or burn-offs, which can spread over hundreds of kilometres."
+    - "Nothing, because a forecast of no cloud means 10 km visibility or more."
+    - "Drizzle, which falls from clear skies on hot summer afternoons."
+    - "Radiation fog, which forms in the hottest part of a summer afternoon."
+  answer: 0
+  explanation: "A forecast of clear skies is not a forecast of good visibility. Smoke from bushfires and controlled burns in late summer and autumn spreads over hundreds of kilometres and is worst looking into the sun: read the visibility and weather groups, not just the cloud."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F019
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Over the featureless wheatbelt in thick haze, the horizon has disappeared. What is the particular danger?"
+  options:
+    - "The magnetic compass stops working without a visible horizon."
+    - "The engine overheats because the haze is full of dust."
+    - "The inner ear cannot tell a gentle descending turn from level flight, so a spiral can develop."
+    - "The aeroplane climbs on its own because hazy air is less dense."
+  answer: 2
+  explanation: "Without a horizon the pilot loses the visual reference for attitude, and the inner ear cannot distinguish a gentle descending turn from level flight; that is how pilots in haze enter a spiral without knowing it. Poor visibility also hides terrain, obstacles and other aircraft until late."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F020
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "En route to Kalgoorlie in rising dust, you estimate the flight visibility at about 6 km and falling, with the horizon merging into the haze. What is the best decision?"
+  options:
+    - "Continue: 6 km is above the 5,000 m VMC minimum, so the flight is legal and safe."
+    - "Turn back now: 5,000 m is a legal floor, and a falling visibility is the cue to turn."
+    - "Descend lower, because dust is always thinner close to the ground."
+    - "Continue and climb into the haze, where the visibility always improves."
+  answer: 1
+  explanation: "The 5,000 m VMC visibility is a legal floor, not a comfortable working figure. A visibility that is falling as you fly, with the horizon merging into haze, is the sign to turn back while you still can; dust can take the visibility to a few hundred metres in minutes."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+# ---------- RMTC 2.1.1 (d) turbulence and local winds ----------
+- id: RMTC-F021
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "A summer dawn at Serpentine, with a strong easterly blowing off the hills. Where would you expect the roughest air on departure?"
+  options:
+    - "Over the sea west of the coast, where the easterly first meets the water."
+    - "High above the plateau east of the Scarp, above 5,000 ft."
+    - "On the plateau east of the Scarp, upwind of the hills."
+    - "Low down near the foot of the Scarp on the Perth side, below about 2,000 ft."
+  answer: 3
+  explanation: "The easterly pours down the face of the Scarp and rolls into rotor on its lee side, the Perth side where Serpentine and Jandakot lie, with gusts and sudden sink close to the ground. The easterly is often strongest overnight and early in the morning, so a dawn departure towards the hills can be rough below about 2,000 ft."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F022
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "At Jandakot a 20 kt crosswind is blowing across a row of hangars on the upwind side of the runway. Where should you expect mechanical turbulence?"
+  options:
+    - "On the downwind side of the hangars, over the runway where you flare."
+    - "On the upwind side of the hangars, before the wind reaches them."
+    - "Only above 1,000 ft, where the wind is strongest."
+    - "Nowhere near the ground, since the buildings shelter the runway."
+  answer: 0
+  explanation: "Wind blowing over an obstruction tumbles into eddies on its downwind side, rougher the stronger the wind and the bigger the obstacle. A crosswind across hangars sends those eddies over the runway exactly where you flare."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F023
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "What drives the Fremantle Doctor, Perth's afternoon sea breeze?"
+  options:
+    - "The sea heats faster than the land, so air rises over the ocean and the land air flows out to sea."
+    - "The Coriolis effect turns the summer easterly round to the south-west every afternoon."
+    - "The land heats faster than the sea, its surface pressure falls below the sea's, and sea air flows in."
+    - "Cold air drains off the Darling Scarp in the afternoon and is replaced by sea air."
+  answer: 2
+  explanation: "By late morning the coastal plain is several degrees warmer than the ocean, which spreads its heat through a deep mixing layer. The warm column expands, air flows out to sea aloft, the surface pressure over the land falls below that over the sea, and the surface air flows from sea to land."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F024
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "A strong gradient easterly is forecast over Perth for a January day. What does that usually mean for the Fremantle Doctor?"
+  options:
+    - "It arrives early, in mid-morning, and blows harder than usual."
+    - "It is held offshore and arrives late or not at all, so the day is one of the hottest."
+    - "It arrives at the usual time but blows from the north-east."
+    - "It arrives overnight instead, as a cool south-westerly."
+  answer: 1
+  explanation: "A strong gradient easterly holds the sea breeze offshore, so the Doctor arrives late or not at all, and those are Perth's hottest days. Normally it reaches the coast around noon to early afternoon as a cool south-westerly and pushes inland through the afternoon."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+- id: RMTC-F025
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "You are in the circuit at Jandakot around 1230 on a summer day, using runway 06 in an easterly, when the sea breeze front arrives. What should you expect?"
+  options:
+    - "A gradual swing to the north over an hour, with warmer, drier air."
+    - "Smoother air, because the sea breeze always calms the turbulence near the ground."
+    - "The wind dropping to calm for the rest of the afternoon."
+    - "A swing to south-westerly within minutes, turbulence, and a tailwind on 06 until the runway changes."
+  answer: 3
+  explanation: "As the front passes the wind swings from easterly to south-westerly within minutes, the temperature drops and the humidity rises, with shear and turbulence at the boundary. Caught on the old runway you have a tailwind or crosswind until the midday runway change."
+  references: ["RMTC 2.1"]
+  difficulty: 3
+- id: RMTC-F026
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "Flying through moderate thermal turbulence over the wheatbelt, what is the right technique?"
+  options:
+    - "Slow to the manoeuvring or POH turbulence speed and hold the attitude, not the exact height."
+    - "Speed up to cruise power so that the aeroplane punches through the gusts quickly."
+    - "Follow each gust with large control inputs to hold exact height and airspeed."
+    - "Lower full flap to increase lift and steady the aeroplane."
+  answer: 0
+  explanation: "At the manoeuvring or turbulence speed a sharp gust stalls the wing before it can overstress the airframe. Hold the attitude and accept small changes in height and airspeed rather than chasing them; keep the seat belts tight."
+  references: ["RMTC 2.1", "RBKA 3.6"]
+  difficulty: 2
+- id: RMTC-F027
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "In January a high pressure system is centred in the Great Australian Bight. What gradient wind direction would you expect over Perth?"
+  options:
+    - "Westerly, because air flows clockwise around a high in the Southern Hemisphere."
+    - "Northerly, because air flows straight out of a high towards the equator."
+    - "Easterly, because air flows anticlockwise around a high in the Southern Hemisphere."
+    - "Southerly, because air flows directly from the high towards Perth."
+  answer: 2
+  explanation: "In the Southern Hemisphere the Coriolis effect turns moving air to the left, so it circles a high anticlockwise. Perth lies on the high's northern side, where the circulation runs from east to west: the hot, dry summer easterly. Clockwise is the circulation round a low."
+  references: ["RMTC 2.1"]
+  difficulty: 1
+- id: RMTC-F028
+  kind: mcq
+  elements: ["RMTC 2.1.1"]
+  stem: "On a hot afternoon near Cunderdin, flat-based cumulus have formed over the bare paddocks. Up to roughly what level should you expect the thermal turbulence to extend?"
+  options:
+    - "Only the lowest 200 ft above the ground."
+    - "Up to the base of the cumulus."
+    - "Only above the cloud tops."
+    - "Only over the crops and bush, not the paddocks."
+  answer: 1
+  explanation: "When the air is moist enough each thermal is capped by a flat-based cumulus, and the turbulence reaches up to that base. It is worst at low level over bare ground, which heats faster than crops, bush or water."
+  references: ["RMTC 2.1"]
+  difficulty: 2
+# ---------- RMTC 2.2.1 forecasts, reports and broadcasts ----------
+- id: RMTC-F029
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Decode the wind in this report: 'METAR YPKG 120600Z 05015G27KT 9999 SCT045 33/08 Q1009'."
+  options:
+    - "From 050 degrees magnetic at 15 kt, gusting to 27 kt."
+    - "From 050 degrees true at 15 kt, gusting to 27 kt."
+    - "Towards 050 degrees true at 15 kt, gusting to 27 kt."
+    - "From 050 degrees true at 27 kt, with lulls to 15 kt."
+  answer: 1
+  explanation: "The first three digits are the direction the wind blows from, in degrees true because a METAR is a meteorological product, and the next two the mean speed, 15 kt; G27 adds gusts to 27 kt. Only the tower and the ATIS give the wind in degrees magnetic."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F030
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A Perth report reads 'METAR YPPH 210230Z 24018KT 9999 -SHRA BKN025 18/12 Q1018'. What do '-SHRA BKN025' mean?"
+  options:
+    - "Heavy showers of rain, with scattered cloud at 2,500 ft above the aerodrome."
+    - "Light showers of rain, with broken cloud at 25,000 ft above sea level."
+    - "Light showers of rain, with broken cloud (5 to 7 oktas) at 2,500 ft above the aerodrome."
+    - "Showers in the vicinity, with broken cloud (1 to 2 oktas) at 250 ft above the aerodrome."
+  answer: 2
+  explanation: "A minus sign means light, SH showers and RA rain. BKN is broken, 5 to 7 oktas, a ceiling, and the three digits are hundreds of feet above the aerodrome, so 025 is 2,500 ft. Heavy would be '+', and a vicinity report would carry 'VC'."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F031
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A Kalgoorlie TAF has the validity group '1418/1506'. Over what period of Western Australian local time (WST) is it valid?"
+  options:
+    - "1800 WST on the 14th to 0600 WST on the 15th."
+    - "1000 WST on the 14th to 2200 WST on the 14th."
+    - "0200 WST on the 14th to 1400 WST on the 14th."
+    - "0200 WST on the 15th to 1400 WST on the 15th."
+  answer: 3
+  explanation: "1418 is the 14th at 1800 UTC; adding 8 hours gives 2600, which passes midnight: 0200 WST on the 15th. 1506 is the 15th at 0600 UTC, 1400 WST on the 15th. Reading UTC as local, subtracting 8, or forgetting the date change gives the other options."
+  references: ["RMTC 2.2"]
+  difficulty: 3
+- id: RMTC-F032
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Perth TAF: 'TAF YPPH 090400Z 0906/0918 03012KT 9999 FEW040 FM090800 23018KT 9999 BKN018'. Which conditions are forecast for an arrival at 1630 WST on the 9th?"
+  options:
+    - "Wind 230 degrees true at 18 kt, visibility 10 km or more, broken cloud at 1,800 ft."
+    - "Wind 030 degrees true at 12 kt, visibility 10 km or more, few cloud at 4,000 ft."
+    - "Wind 030 degrees true at 12 kt, with broken cloud at 1,800 ft and few at 4,000 ft."
+    - "Either set of conditions, alternating back and forth through the afternoon."
+  answer: 0
+  explanation: "FM090800 is the 9th at 0800 UTC, 1600 WST, and FM is a permanent change: everything after it replaces what came before. At 1630 WST (0830 UTC) the forecast is 230 at 18 kt, 10 km or more and a broken ceiling at 1,800 ft above the aerodrome; the opening conditions no longer apply."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F033
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A TAF contains 'BECMG 1203/1205 25015KT'. By what local time on the 12th should the new wind be established?"
+  options:
+    - "1100 WST"
+    - "1300 WST"
+    - "0500 WST"
+    - "0300 WST"
+  answer: 1
+  explanation: "BECMG is a gradual change over the period given, here 0300 to 0500 UTC on the 12th, which is 1100 to 1300 WST. The change may begin at any time from 1100 WST, and by the end of the period, 1300 WST, the new wind of 250 degrees at 15 kt applies."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F034
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "In an Australian TAF, which change group describes fluctuations to different conditions that each last less than 30 minutes?"
+  options:
+    - "TEMPO"
+    - "BECMG"
+    - "INTER"
+    - "FM"
+  answer: 2
+  explanation: "INTER is for intermittent fluctuations of less than 30 minutes each. TEMPO is for temporary spells of 30 to 60 minutes each, BECMG for a gradual change and FM for a permanent change from a set time."
+  references: ["RMTC 2.2", "AIP GEN 3.5"]
+  difficulty: 1
+- id: RMTC-F035
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "You plan to arrive at Geraldton at 1430 WST on the 4th. The TAF reads 'TAF YPGN 040300Z 0404/0416 20012KT 9999 SCT040 TEMPO 0405/0408 3000 SHRA BKN012'. How should you plan the arrival?"
+  options:
+    - "Plan on the main conditions, since they apply most of the time in the period."
+    - "Ignore the TEMPO group, because it applies only after the main conditions end."
+    - "Plan to arrive at the end of a spell, since each spell lasts only 30 to 60 minutes."
+    - "Plan for spells of 3,000 m in showers and a 1,200 ft ceiling, below VMC, from 1300 to 1600 WST."
+  answer: 3
+  explanation: "TEMPO 0405/0408 is 0500 to 0800 UTC, 1300 to 1600 WST, so a 1430 arrival is inside it. The main conditions apply most of the time, but at any moment the spells of 3,000 m in showers with a broken ceiling at 1,200 ft may be there, and you cannot choose to arrive in a gap, so you must plan for them."
+  references: ["RMTC 2.2", "AIP GEN 3.5"]
+  difficulty: 3
+- id: RMTC-F036
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Decode this TAF group: 'INTER 1506/1509 2000 +SHRA BKN010'."
+  options:
+    - "From 1400 to 1700 WST on the 15th, spells of under 30 minutes each of 2,000 m in heavy showers, ceiling 1,000 ft."
+    - "From 1400 WST on the 15th, a permanent change to 2,000 m in light showers with broken cloud at 10,000 ft."
+    - "From 0600 to 0900 WST on the 15th, spells of 30 to 60 minutes each of 2,000 m in heavy rain, ceiling 1,000 ft."
+    - "From 1400 to 1700 WST on the 15th, a 20 percent chance of 2,000 m in heavy showers, scattered cloud at 1,000 ft."
+  answer: 0
+  explanation: "INTER is intermittent spells of less than 30 minutes each, and 1506/1509 is 0600 to 0900 UTC on the 15th, 1400 to 1700 WST. 2000 is 2,000 m, '+SHRA' heavy showers of rain, and BKN010 broken cloud, a ceiling, at 1,000 ft above the aerodrome."
+  references: ["RMTC 2.2", "AIP GEN 3.5"]
+  difficulty: 2
+- id: RMTC-F037
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A winter Perth TAF includes 'PROB40 1222/1301 0300 FG'. What does it forecast?"
+  options:
+    - "Fog with 3,000 m visibility, certain to occur between 2200 and 0100 WST."
+    - "A 40 minute period of fog with 300 m visibility starting at 2200 UTC."
+    - "A 40 percent probability of fog with 300 m visibility from 0600 to 0900 WST on the 13th."
+    - "A 40 percent probability of mist with 3,000 m visibility from 1400 to 1700 WST on the 12th."
+  answer: 2
+  explanation: "PROB40 gives a 40 percent probability of the condition that follows. 1222/1301 is the 12th at 2200 UTC to the 13th at 0100 UTC; adding 8 hours gives 0600 to 0900 WST on the 13th. 0300 is 300 m and FG is fog (mist would be BR)."
+  references: ["RMTC 2.2"]
+  difficulty: 3
+- id: RMTC-F038
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Jandakot reports 'METAR YPJT 050200Z 09008KT CAVOK 27/09 Q1021'. Assuming all its minimum sector altitudes are below 5,000 ft, which of these could still be present?"
+  options:
+    - "Few cumulonimbus at 6,000 ft."
+    - "Scattered cloud at 7,000 ft."
+    - "Visibility of 8 km in haze."
+    - "Light rain showers over the field."
+  answer: 1
+  explanation: "CAVOK requires visibility 10 km or more, no cloud below 5,000 ft or the highest minimum sector altitude, no cumulonimbus and no significant weather. It does not mean cloudless, so scattered cloud at 7,000 ft fits; any cumulonimbus, a visibility under 10 km or showers would rule CAVOK out."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F039
+  kind: numeric
+  elements: ["RMTC 2.2.1"]
+  stem: "The GAF gives a cloud base of 4,500 ft in the subdivision containing Kalgoorlie, whose aerodrome elevation is about 1,200 ft. At what height would a Kalgoorlie TAF describe the same cloud base?"
+  answer: 3300
+  tolerance: 50
+  unit: ft
+  explanation: "GAF cloud heights are above mean sea level; TAF heights are above the aerodrome. 4,500 - 1,200 = 3,300 ft above the aerodrome. Check: 3,300 + 1,200 = 4,500 ft AMSL."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F040
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "The Kalgoorlie TAF (aerodrome elevation about 1,200 ft) shows 'BKN025', and the GAF for that subdivision gives a broken base at 3,700 ft. What do you conclude?"
+  options:
+    - "They describe the same base: 2,500 ft above the aerodrome is about 3,700 ft AMSL."
+    - "They disagree: the TAF base is 1,200 ft lower than the GAF base."
+    - "They disagree: the GAF is above ground level and the TAF is above sea level."
+    - "They agree only because both use AMSL and the TAF rounds its heights down."
+  answer: 0
+  explanation: "The TAF measures cloud from the aerodrome and the GAF from mean sea level. 2,500 ft plus the 1,200 ft elevation is 3,700 ft AMSL, so the two products describe the same layer on different datums. Mistaking that difference for a disagreement is the classic error."
+  references: ["RMTC 2.2"]
+  difficulty: 3
+- id: RMTC-F041
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A briefing contains 'SPECI YPPH 160715Z 21025G38KT 3000 +TSRA BKN015 16/14 Q1012' in place of the usual METAR. What does the word SPECI tell you?"
+  options:
+    - "It is a special forecast covering the next three hours."
+    - "It is a special observation, issued because conditions changed significantly."
+    - "It is a report from an automatic station with no human observer."
+    - "It is a speculative forecast that carries a probability."
+  answer: 1
+  explanation: "A SPECI is an observation like a METAR, but a special one, issued when conditions change significantly or are below set criteria, so the word itself warns that something has changed: here a heavy thunderstorm with rain, 3,000 m and a ceiling at 1,500 ft. An automatic station is marked AUTO."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F042
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "The latest report for Busselton is marked AUTO and shows no cloud, but the GAF forecasts showers in the area. How should you treat the report?"
+  options:
+    - "As proof that the sky is clear, because automatic sensors scan the whole sky."
+    - "As more reliable than any forecast, because no human error is possible."
+    - "As a forecast, since AUTO reports predict the weather for the next hour."
+    - "With caution, as the sensor sees only cloud directly above it and can miss nearby weather."
+  answer: 3
+  explanation: "AUTO means an automatic station with no observer, so the cloud and weather groups may be incomplete: the sensor sees only cloud directly overhead and can miss a storm two kilometres away. Cross-check the TAF, the GAF and nearby reports."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F043
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "At 0730 UTC you have a Geraldton METAR timed 0700Z and a Geraldton TAF valid until 1200Z. Which tells you what to expect for your arrival at 1700 WST?"
+  options:
+    - "The METAR, because it is an observation and therefore fact."
+    - "Both equally, because a METAR also covers the next two hours."
+    - "The TAF, because only a forecast describes a future time."
+    - "Neither, because 1700 WST is outside both of them."
+  answer: 2
+  explanation: "1700 WST is 0900 UTC, inside the TAF validity. A METAR is fact, but it is already old when you read it and says nothing about the future: use it to check that the forecast is coming true, and the TAF to plan the arrival."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F044
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Before calling for taxi at Jandakot you listen to the ATIS, then tell the tower you have 'information Bravo'. Why?"
+  options:
+    - "So the tower can skip the runway in use, which the ATIS never includes."
+    - "Because Bravo identifies the TAF that applies to your departure."
+    - "Because it confirms that the ATIS wind is given in degrees true."
+    - "So the controller knows you have the current version of the broadcast."
+  answer: 3
+  explanation: "Each ATIS version is identified by a letter and updated when conditions change, so quoting it tells the controller you have the current runway, wind, QNH, cloud, visibility and temperature. The ATIS wind is magnetic, ready to compare with the runway heading."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F045
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "You are about to fly from a farm strip to a non-towered country aerodrome that has an AWIS. What can the AWIS give you before you leave?"
+  options:
+    - "The current wind, QNH, temperature, cloud and visibility there, by radio or phone."
+    - "A forecast of conditions at the aerodrome for the next 12 hours."
+    - "The runway in use as assigned by the tower, with an information letter."
+    - "Warnings of thunderstorms and severe turbulence along your route."
+  answer: 0
+  explanation: "An AWIS is an automatic observation at some non-towered aerodromes, available by radio or telephone, giving the current wind, QNH, temperature, cloud and visibility. It tells you what is happening now, not a forecast; a runway and information letter come from the ATIS at a controlled aerodrome."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F046
+  kind: numeric
+  elements: ["RMTC 2.2.1"]
+  stem: "The GAF for the subdivision east of the Scarp gives a cloud base of 3,000 ft. The highest ground on your track is 1,300 ft AMSL. How much vertical gap is there between that ground and the cloud base?"
+  answer: 1700
+  tolerance: 50
+  unit: ft
+  explanation: "GAF cloud is above mean sea level, so subtract the terrain elevation: 3,000 - 1,300 = 1,700 ft between the ground and the cloud. Check: 1,300 + 1,700 = 3,000 ft. Always compare a GAF base with the height of the ground you will actually fly over."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F047
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Which product do you use to work out heading, groundspeed and TAS for a cruise at 5,000 ft from Jandakot to Kalgoorlie?"
+  options:
+    - "The TAF for Kalgoorlie"
+    - "The latest METAR for Jandakot"
+    - "The GPWT chart"
+    - "The area QNH"
+  answer: 2
+  explanation: "The Grid Point Wind and Temperature chart gives forecast wind and temperature at set heights, such as 2,000, 5,000, 7,000 and 10,000 ft, for planning headings, groundspeeds and TAS. A TAF or METAR gives only the surface wind at one aerodrome."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F048
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "When should you set the forecast area QNH on the altimeter?"
+  options:
+    - "Whenever you are above 5,000 ft, regardless of any local QNH."
+    - "When no local QNH is available from a station within 100 nm."
+    - "Only on the ground before start-up, and never in flight."
+    - "Only when the ATIS at a controlled aerodrome is unserviceable."
+  answer: 1
+  explanation: "The area QNH is a forecast QNH for each area, valid for 3-hour periods and given in the GAF and the NAIPS briefing. You set it when you have no local QNH from a station within 100 nm."
+  references: ["RMTC 2.2", "RFRC 2.3"]
+  difficulty: 2
+- id: RMTC-F049
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Your briefing for a flight to Kalgoorlie includes a SIGMET for severe turbulence across your route. What does it mean for you?"
+  options:
+    - "A warning of significant en route weather; for a light aeroplane it is usually a no-go."
+    - "A routine forecast issued four times a day, to be read with the GAF as normal."
+    - "An observation from a station on the route, which may already be out of date."
+    - "A warning that applies only to aircraft flying above 10,000 ft."
+  answer: 0
+  explanation: "A SIGMET is a warning of significant en route weather such as thunderstorms, severe turbulence or severe icing, issued only when the hazard exists. Its presence on your route is usually a no-go for a light aeroplane, and its absence from a briefing is good news."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F050
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Which list contains only observations, with no forecasts?"
+  options:
+    - "TAF, GAF and GPWT"
+    - "METAR, TAF and AWIS"
+    - "SPECI, area QNH and METAR"
+    - "METAR, SPECI and AWIS"
+  answer: 3
+  explanation: "METAR and SPECI report what was measured, and the AWIS gives the current observed conditions. The TAF, GAF, GPWT and area QNH are all forecasts of what is expected."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F051
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Jandakot TAF: 'TAF YPJT 102300Z 1100/1112 15010KT 9999 SCT030 BECMG 1102/1104 21016KT TEMPO 1103/1106 5000 -SHRA BKN025'. Which statement is correct for a circuit session from 1000 to 1200 WST on the 11th?"
+  options:
+    - "The wind changes suddenly to 210 at 16 kt at 1000 WST, and showers are forecast from 0300 WST."
+    - "The wind stays 150 at 10 kt throughout, because BECMG applies only after the TAF period ends."
+    - "The wind changes gradually to 210 at 16 kt by 1200 WST, and spells of light showers may begin from 1100 WST."
+    - "The wind changes gradually to 210 at 16 kt by 1200 UTC, and a permanent change to showers comes at 1100 WST."
+  answer: 2
+  explanation: "BECMG 1102/1104 is a gradual change between 0200 and 0400 UTC, 1000 to 1200 WST, so 210 at 16 kt is in place by 1200 WST. TEMPO 1103/1106 is 1100 to 1400 WST: spells of 30 to 60 minutes of 5,000 m in light showers under a broken ceiling at 2,500 ft, so the last hour of the session is inside it. TEMPO is not a permanent change."
+  references: ["RMTC 2.2", "AIP GEN 3.5"]
+  difficulty: 3
+- id: RMTC-F052
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A Perth TAF contains the change group 'FM152330'. At what local time does the change take effect?"
+  options:
+    - "2330 WST on the 15th"
+    - "0730 WST on the 16th"
+    - "0730 WST on the 15th"
+    - "1530 WST on the 15th"
+  answer: 1
+  explanation: "FM152330 is the 15th at 2330 UTC. Adding 8 hours gives 3130, which passes midnight: 0730 WST on the 16th. Subtracting 8 instead gives 1530, and forgetting the date change gives the 15th."
+  references: ["RMTC 2.2"]
+  difficulty: 3
+- id: RMTC-F053
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A winter report reads 'METAR YPPH 200000Z VRB02KT 0800 FG OVC002 09/09 Q1026'. What does it describe?"
+  options:
+    - "At 0800 WST, a variable 2 kt wind, 800 m in fog, overcast at 200 ft, and a dew point spread of zero."
+    - "At midnight WST, wind from 020 at 2 kt, 8 km in mist, overcast at 2,000 ft, and a spread of zero."
+    - "At 0800 WST, a variable 2 kt wind, 8,000 m in fog, overcast at 2,000 ft, and a spread of 9 degrees."
+    - "At 1600 WST, a calm wind, 800 m in haze, overcast at 200 ft, and a QNH of 1026 hPa."
+  answer: 0
+  explanation: "0000Z on the 20th is 0800 WST. VRB02KT is a variable wind at 2 kt, 0800 is 800 m, FG fog, OVC002 overcast at 200 ft above the aerodrome, and 09/09 a dew point spread of zero: saturated air. No VFR departure until it clears."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F054
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A summer Kalgoorlie report reads 'METAR YPKG 180730Z 32020G32KT 4000 DU VCSH SCT080 35/04 Q1004'. What do '4000 DU VCSH' report?"
+  options:
+    - "Visibility 4 km in drizzle, with a squall at the aerodrome."
+    - "Visibility 400 m in a dust storm, with heavy showers at the aerodrome."
+    - "Visibility 4,000 ft in smoke, with showers expected later."
+    - "Visibility 4,000 m in dust, with showers in the vicinity of the aerodrome."
+  answer: 3
+  explanation: "Visibility is in metres, so 4000 is 4,000 m. DU is dust (a dust storm is DS, smoke FU, drizzle DZ, squall SQ), and VC means in the vicinity, so VCSH is showers near, not at, the aerodrome. A METAR is an observation and forecasts nothing."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F055
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Which METAR cloud report contains a ceiling, and at what height?"
+  options:
+    - "FEW008 SCT015: a ceiling at 800 ft"
+    - "FEW010 BKN030: a ceiling at 3,000 ft"
+    - "SCT020 SCT040: a ceiling at 2,000 ft"
+    - "FEW005 SCT012: a ceiling at 1,200 ft"
+  answer: 1
+  explanation: "Only BKN (5 to 7 oktas) or OVC (8 oktas) makes a ceiling. In FEW010 BKN030 the few cloud at 1,000 ft is not a ceiling, but the broken layer at 3,000 ft above the aerodrome is. FEW and SCT layers, however low, never form one."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+- id: RMTC-F056
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "A Kalgoorlie TAF with the validity group '0600/0612' ends 'T 24 31 34 32 Q 1013 1012 1009 1008'. What temperature and QNH are forecast for 1400 WST on the 6th?"
+  options:
+    - "24 degrees and 1013 hPa"
+    - "31 degrees and 1012 hPa"
+    - "34 degrees and 1009 hPa"
+    - "32 degrees and 1008 hPa"
+  answer: 2
+  explanation: "The T and Q values are at 3-hourly intervals from the start of the validity. 0600 is the 6th at 0000 UTC, 0800 WST, so the values fall at 0800, 1100, 1400 and 1700 WST; 1400 WST (0600 UTC) is the third pair: 34 degrees and 1009 hPa."
+  references: ["RMTC 2.2"]
+  difficulty: 3
+- id: RMTC-F057
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "In 'METAR YPGN 140200Z 20015KT 9999 SCT025 26/17 Q1014', what do '26/17' and 'Q1014' give?"
+  options:
+    - "Temperature 26 degrees, dew point 17 degrees, QNH 1014 hPa."
+    - "Dew point 26 degrees, temperature 17 degrees, QFE 1014 hPa."
+    - "Wind gusts of 26 kt with lulls of 17 kt, QNH 1014 hPa."
+    - "Temperature 26 degrees, relative humidity 17 percent, QNH 1014 hPa."
+  answer: 0
+  explanation: "A METAR adds the temperature and dew point, written temperature first, here 26 and 17 degrees (a spread of 9), and the QNH, 1014 hPa. Gusts appear in the wind group with a G, as in 20015G25KT."
+  references: ["RMTC 2.2"]
+  difficulty: 1
+- id: RMTC-F058
+  kind: mcq
+  elements: ["RMTC 2.2.1"]
+  stem: "Planning a flight from Jandakot to Northam, how should you read the GAF?"
+  options:
+    - "Read only the subdivision containing Jandakot, since the departure weather governs."
+    - "Read only the subdivision with the worst weather in the WA-S area, whatever your track."
+    - "Skip it and read the TAFs, since the GAF covers only the major aerodromes."
+    - "Read each subdivision your track crosses, for the time you will be in it."
+  answer: 3
+  explanation: "The GAF divides the forecast area into subdivisions, each with its own cloud, visibility, weather, icing and turbulence. Read every subdivision your track crosses for the time you are in it; the TAF covers only the aerodrome and its immediate surroundings."
+  references: ["RMTC 2.2"]
+  difficulty: 2
+# ---------- RMTC 2.3.1 (a) turbulence, thermals, dust devils ----------
+- id: RMTC-F059
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Which TAF surface wind for your destination most strongly signals mechanical turbulence near the ground on arrival?"
+  options:
+    - "18008KT"
+    - "22015G27KT"
+    - "VRB03KT"
+    - "27012KT"
+  answer: 1
+  explanation: "A gust group of 10 kt or more above the mean wind is a turbulence warning: 15 kt gusting 27 kt means the air near the ground is changing speed by 12 kt in seconds as it tumbles over obstacles. The others are light to moderate winds with no gusts."
+  references: ["RMTC 2.3"]
+  difficulty: 1
+- id: RMTC-F060
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Why does a field of fair-weather cumulus over the wheatbelt have flat bases at about the same height?"
+  options:
+    - "The thermals start with similar temperature and moisture, so they reach their dew point at a similar height."
+    - "An inversion at the base level stops each cloud from growing downwards."
+    - "The surface wind blows the bottom of each cloud flat as it drifts."
+    - "The sinking air between the clouds presses their bases into one level."
+  answer: 0
+  explanation: "Each cumulus is the visible top of a thermal, and condensation starts where the rising air reaches its dew point. Because the thermals in an area begin with roughly the same temperature and moisture, they reach it at roughly the same height, so the bases line up."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-F061
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Flying at 2,500 ft beneath a field of cumulus on a summer afternoon, where should you expect sinking air?"
+  options:
+    - "Directly beneath each cloud base."
+    - "Only inside the clouds themselves."
+    - "In the clear blue gaps between the clouds."
+    - "Nowhere below the base, since cumulus mark only rising air."
+  answer: 2
+  explanation: "Each cumulus caps a column of rising air, and the air between the thermals sinks to replace it, so the blue gaps are where the sink is. Flying from cloud to gap you are lifted and then dropped."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-F062
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Smoke from a burn-off near Narrogin rises steadily, then breaks up and spreads out at about 3,000 ft. What does this tell you?"
+  options:
+    - "The air is stable and smooth all the way up to 3,000 ft."
+    - "A cold front has just passed, leaving calm conditions behind it."
+    - "There is wind shear at ground level but none at all aloft."
+    - "The air is unstable, with turbulence at the top of the rising layer near 3,000 ft."
+  answer: 3
+  explanation: "Smoke that rises steadily shows unstable air carrying it upwards, as in a thermal; where it breaks up and spreads is the top of the rising layer, and the break-up marks the turbulence there."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-F063
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Near Cunderdin on a summer afternoon you see eagles circling without flapping, and gliders circling nearby. What does this mark?"
+  options:
+    - "A downdraught beneath a nearby thunderstorm."
+    - "A thermal of rising air, with sinking air around it."
+    - "A sea breeze front bringing cool, smooth air."
+    - "Mountain wave off the Darling Scarp."
+  answer: 1
+  explanation: "Soaring birds and circling gliders are riding a thermal and mark it for you: expect lift where they are circling and sink around it."
+  references: ["RMTC 2.3"]
+  difficulty: 1
+- id: RMTC-F064
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "On which afternoon are dust devils most likely to form over the paddocks around Cunderdin?"
+  options:
+    - "A cool, overcast afternoon with a 20 kt westerly."
+    - "A hot afternoon with a fresh 25 kt easterly."
+    - "A hot, sunny afternoon with little wind."
+    - "A humid afternoon with drizzle and light winds."
+  answer: 2
+  explanation: "Dust devils need a very hot, very unstable layer of air on the ground, which builds up over bare ground on a hot afternoon with light wind. A fresh wind mixes that layer with the cooler air above before it can break away into a spinning column."
+  references: ["RMTC 2.3"]
+  difficulty: 1
+- id: RMTC-F065
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "Returning to Kalgoorlie on a summer afternoon, you see a high-based, dark-based cloud near the aerodrome trailing virga. What does it warn of?"
+  options:
+    - "A cooling downdraught that can reach the ground as a dry microburst and gust front."
+    - "Rain that will improve the visibility by washing the dust out of the air."
+    - "Smooth, stable air beneath the cloud, ideal for the approach."
+    - "Radiation fog forming beneath the cloud within the hour."
+  answer: 0
+  explanation: "Virga is rain evaporating before it reaches the ground; the evaporation cools the air, which sinks, hits the ground and spreads out. Under a high-based inland storm it is the warning of a dry microburst, which is managed only by staying away."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-F066
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "On a hot afternoon at Northam, your final approach passes over a bare paddock and then the runway. What should you be ready for?"
+  options:
+    - "A perfectly steady approach, because thermals form only above 1,000 ft."
+    - "Steady lift all the way down, so you can reduce power early and glide in."
+    - "A loss of engine power caused by the rising warm air."
+    - "Sink or lift in turn, so the aeroplane sinks short or balloons over the threshold."
+  answer: 3
+  explanation: "Thermals give a gain of height over the updraught and a loss in the sinking air around it, so a final over hot ground can be sink followed by lift over the runway, or the reverse. Correct early with power and attitude and be ready to go around."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+# ---------- RMTC 2.3.1 (b) wind gradient and wind shear ----------
+- id: RMTC-F067
+  kind: numeric
+  elements: ["RMTC 2.3.1"]
+  stem: "On final at 65 kt you have a 22 kt headwind at 400 ft, and the surface wind is 8 kt straight down the runway. If inertia held your groundspeed while you descended through the gradient, what would the airspeed be near the ground?"
+  answer: 51
+  tolerance: 1
+  unit: kt
+  explanation: "Groundspeed at 400 ft: 65 - 22 = 43 kt. Held through the descent into an 8 kt headwind, the airspeed becomes 43 + 8 = 51 kt. Check: the headwind falls by 22 - 8 = 14 kt, and 65 - 14 = 51 kt. A loss of headwind is a loss of airspeed, so expect to add power."
+  references: ["RMTC 2.3"]
+  difficulty: 3
+- id: RMTC-F068
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "In which conditions is the wind gradient near the ground steepest?"
+  options:
+    - "A light wind over smooth water."
+    - "A strong wind over rough ground with trees and buildings."
+    - "A light wind over a smooth, bare runway."
+    - "A strong wind over smooth water."
+  answer: 1
+  explanation: "The gradient is caused by friction slowing the air near the surface. It is steeper in strong winds and over rough ground, trees and buildings, and gentler over smooth water."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-F069
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "You take off with a light tailwind that increases with height through the wind gradient. What happens as you climb?"
+  options:
+    - "The airspeed rises and the climb angle steepens."
+    - "Nothing changes, because the aeroplane moves with the air mass."
+    - "The airspeed tends to fall and the climb gradient is reduced."
+    - "The groundspeed falls, so obstacle clearance improves."
+  answer: 2
+  explanation: "An increasing tailwind is performance-decreasing shear: inertia holds the groundspeed for a moment, so the airspeed falls and the climb gradient is reduced, one more reason never to take off downwind towards obstacles. Climbing into a headwind gradient gives the opposite, a brief gain."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-F070
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "At dawn at Jandakot the surface is calm, but the GPWT shows a 25 kt easterly at 2,000 ft. You depart westwards on runway 24. What should you expect as you climb through the top of the inversion?"
+  options:
+    - "A sudden rise in airspeed and a steeper climb, because the wind increases."
+    - "No change, because the wind above an inversion is always light."
+    - "A gradual increase in headwind as the friction layer thins out."
+    - "A sudden loss of airspeed and climb performance as a strong tailwind sets in."
+  answer: 3
+  explanation: "Calm, cold air lies under the inversion with strong wind, sometimes a low-level jet, just above it. Climbing west into an easterly is a sudden gain of tailwind: inertia holds the groundspeed, so the airspeed drops and the climb suffers. Met as a headwind, the same layer would raise the airspeed instead."
+  references: ["RMTC 2.3"]
+  difficulty: 3
+- id: RMTC-F071
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "On approach beneath a thunderstorm, the airspeed suddenly rises and the aeroplane floats above the path. What is the most likely cause, and what follows?"
+  options:
+    - "The microburst's outflow headwind; next come the downdraught and a tailwind that cut airspeed."
+    - "A thermal over the runway; next comes smooth air, so reduce power and land."
+    - "A tailwind gust; next comes a steady headwind that floats you down the runway."
+    - "The wind gradient; next comes a steady rise in airspeed all the way to the ground."
+  answer: 0
+  explanation: "Entering a microburst the aeroplane first meets the outflow as a headwind and floats; in the centre the downdraught pushes it down, and on the far side a tailwind takes away airspeed and lift just as the ground is close. Pulling the power off in the first phase makes the next one worse; the only defence is avoidance."
+  references: ["RMTC 2.3"]
+  difficulty: 3
+- id: RMTC-F072
+  kind: numeric
+  elements: ["RMTC 2.3.1"]
+  stem: "The ATIS gives the wind as 340 degrees at 12 kt gusting 26 kt, close to straight down the runway. Your normal approach speed is 63 kt. Adding half the gust factor, what approach speed should you fly?"
+  answer: 70
+  tolerance: 0
+  unit: kt
+  explanation: "Gust factor: 26 - 12 = 14 kt. Half of it: 14 / 2 = 7 kt. Approach speed: 63 + 7 = 70 kt. A gust 14 kt above the mean is also a warning of mechanical turbulence near the ground; your POH or instructor may limit the margin."
+  references: ["RMTC 2.3"]
+  difficulty: 2
+- id: RMTC-F073
+  kind: mcq
+  elements: ["RMTC 2.3.1"]
+  stem: "A preceding aircraft reports 'wind shear on final, plus or minus 10 kt' at Jandakot. Which set of actions best fits your approach?"
+  options:
+    - "Fly the normal approach speed with full flap, so you are slow over the threshold."
+    - "Fly below the normal approach speed, so that any gust gives you extra lift."
+    - "Continue to land whatever happens, since a go-around in shear is more dangerous."
+    - "Add a speed margin, use less flap if the POH allows, and be ready to go around early."
+  answer: 3
+  explanation: "Shear on final means sudden changes in airspeed. A margin on the approach speed gives speed to lose in a lull, less flap makes the aeroplane less affected by gusts and easier to accelerate, and an early go-around stops the speed or path getting away from you."
+  references: ["RMTC 2.3"]
+  difficulty: 2
