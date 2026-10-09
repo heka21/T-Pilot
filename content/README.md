@@ -73,7 +73,14 @@ Same file naming and id rule as questions (card ids like `BAKC-EC001`).
   elements: ["RBKA 3.6.1"]
   front: "..."
   back: "..."
+  stem: "..."                  # exam-style wording of the front; optional when the front already reads as one
+  options:                     # exactly 4, one correct; shuffled on screen, so no "all of the above"
+    - "..."
+  answer: 1                    # index of the correct option (0-3)
 ```
+Cards are reviewed in exam format: the learner picks an option, then sees the back as the explanation. A wrong pick
+grades the card "again"; a right one asks how sure they were (guessed, knew it, easy). The browse table on /cards
+still shows front and back.
 
 ## Equations: `equations.yaml`
 The equation sheet (`/equations`) and the formula boxes on lessons. One file: a `topics` list (sheet order) and an

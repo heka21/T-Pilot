@@ -254,8 +254,9 @@ def cloud(cx: float, cy: float, w: float, h: float, fill: str = "surface-2", str
 
 @chart
 def vmc_minima_by_airspace() -> Canvas:
-    c = Canvas("VMC minima below 10,000 ft", "Side view in two layers. Above 3,000 ft AMSL or 1,000 ft AGL, whichever is higher, and in Class C, "
-               "D and E: keep 1,500 m horizontally and 1,000 ft vertically from cloud, shown as a dashed keep-out box around the cloud. "
+    c = Canvas("VMC minima below 10,000 ft", "Side view in two layers. Above 3,000 ft AMSL or 1,000 ft AGL, whichever is higher, and in Class C "
+               "and E: keep 1,500 m horizontally and 1,000 ft vertically from cloud, shown as a dashed keep-out box around the cloud. "
+               "Class D is smaller: 600 m horizontally, 1,000 ft above and 500 ft below cloud. "
                "In Class G at or below that height: stay clear of cloud and in sight of the ground or water. Flight visibility is "
                "5,000 m in every case. Above 10,000 ft the visibility requirement increases to 8 km. Not to scale.", height=470, prefix="vmc")
     LINE_Y, GROUND = 262, 392
@@ -263,8 +264,9 @@ def vmc_minima_by_airspace() -> Canvas:
     c.add(text(320, 42, "Above 10,000 ft the flight visibility requirement increases to 8 km", 12, "middle", "fg-muted", weight=600))
     # upper layer
     c.add(rect(20, 60, 600, LINE_Y - 60, "sky-soft", None, fill_opacity=0.5))
-    c.add(text(32, 82, "Class C, D and E", 14, "start", "fg", weight=700))
+    c.add(text(32, 82, "Class C and E", 14, "start", "fg", weight=700))
     c.add(text(32, 99, "and Class G above the line", 12, "start", "fg-muted"))
+    c.add(text(32, 242, "Class D: 600 m horizontally, 1,000 ft above, 500 ft below cloud", 11, "start", "fg-muted", weight=600))
     # cloud with its keep-out box
     cx, cy, cw, ch = 440, 160, 120, 50
     bx0, bx1, by0, by1 = cx - cw / 2 - 90, cx + cw / 2 + 50, cy - ch / 2 - 46, cy + ch / 2 + 46
@@ -424,8 +426,8 @@ def right_of_way_rules() -> Canvas:
 @chart
 def minimum_heights() -> Canvas:
     c = Canvas("Minimum heights", "Side view. Over a populous area or a public gathering, not below 1,000 ft above the highest obstacle "
-               "within a 600 m radius of the aircraft. Anywhere else, not below 500 ft above the ground or water, and not closer than 500 ft "
-               "to any person, vessel, vehicle or structure. Not to scale.", height=440, prefix="mh")
+               "within a 600 m radius of the aircraft. Anywhere else, not below 500 ft above the highest feature or obstacle within a "
+               "300 m radius. Not to scale.", height=440, prefix="mh")
     G = 362
     c.add(line(320, 30, 320, 388, "line-strong", THIN, dash=DASH))
     # ---- left: populous area
@@ -457,19 +459,27 @@ def minimum_heights() -> Canvas:
     # ---- right: elsewhere
     c.add(text(340, 34, "Anywhere else", 15, "start", "fg", weight=700))
     c.add(text(340, 52, "open country or water", 12, "start", "fg-muted"))
-    qx, qy = 420, 180
+    for bx, bw, bh in ((372, 22, 22), (560, 26, 28)):
+        c.add(rect(bx, G - bh, bw, bh, "surface-2", "fg-muted", THIN))
+    ox, oh = 452, 58                                    # highest feature: a tree
+    c.add(line(ox, G - oh + 22, ox, G, "fg", SECOND))
+    c.add(path(f"M{ox - 16} {G - oh + 26} Q{ox} {G - oh - 10} {ox + 16} {G - oh + 26} Z", "fg", "ok-soft", SECOND))
+    c.add(text(ox + 20, G - oh + 10, "highest", 11, "start", "fg-muted"))
+    c.add(text(ox + 20, G - oh + 24, "feature", 11, "start", "fg-muted"))
+    qx, qy = 500, 168
+    ry = qy - 34
+    c.add(arrow(qx, ry, qx - 100, ry, "info", SECOND))
+    c.add(arrow(qx, ry, qx + 100, ry, "info", SECOND))
+    c.add(num(qx - 50, ry - 8, "300 m", 12, "middle", "info", weight=700))
+    c.add(num(qx + 50, ry - 8, "300 m", 12, "middle", "info", weight=700))
+    c.add(line(qx - 100, ry + 6, qx - 100, G, "info", THIN, dash=DASH))
+    c.add(line(qx + 100, ry + 6, qx + 100, G, "info", THIN, dash=DASH))
     c.add(plane_side(qx, qy, 0.5, "brand", fill="brand-soft"))
-    c.add(darrow(qx - 40, qy + 8, qx - 40, G, "brand"))
-    c.add(num(qx - 48, (qy + G) / 2 + 4, "500 ft", 14, "end", "brand", weight=700))
-    c.add(text(qx - 48, (qy + G) / 2 + 20, "above ground", 11, "end", "brand-fg"))
-    c.add(text(qx - 48, (qy + G) / 2 + 34, "or water", 11, "end", "brand-fg"))
-    sx = 540
-    c.add(path(f"M{sx - 76} {G} A76 76 0 0 1 {sx + 76} {G}", "warn", "warn-soft", SECOND, dash="6 4", fill_opacity=0.6))
-    c.add(rect(sx - 12, G - 34, 24, 34, "surface-2", "fg", SECOND))
-    c.add(path(f"M{sx - 12} {G - 34} L{sx} {G - 46} L{sx + 12} {G - 34}", "fg", None, SECOND))
-    c.add(num(sx, G - 92, "500 ft", 13, "middle", "warn", weight=700))
-    c.add(text(sx, G - 108, "no closer than", 11, "middle", "warn-fg"))
-    c.add(text(612, G + 22, "any person, vessel, vehicle or structure", 11, "end", "fg-muted"))
+    otop = G - oh - 4
+    c.add(line(ox, qy + 10, qx - 6, qy + 10, "brand", THIN, dash=DASH))   # to the main wheels
+    c.add(darrow(ox, otop - 4, ox, qy + 12, "brand"))
+    c.add(num(ox - 10, (otop + qy) / 2 + 4, "500 ft", 14, "end", "brand", weight=700))
+    c.add(text(ox - 10, (otop + qy) / 2 + 20, "above it", 11, "end", "brand-fg"))
     # ground
     c.add(rect(16, G, 608, 10, "surface-2", None))
     c.add(line(16, G, 624, G, "fg-muted", SECOND))

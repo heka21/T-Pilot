@@ -216,14 +216,14 @@
 - id: RFRC-019
   kind: mcq
   elements: ["RFRC 2.3.1"]
-  stem: "VMC for an aeroplane in Class C or D airspace below 10,000 ft requires:"
+  stem: "VMC for an aeroplane in Class C airspace below 10,000 ft requires:"
   options:
     - "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
     - "5,000 m visibility, clear of cloud."
     - "8 km visibility, clear of cloud."
     - "3,000 m visibility, 500 ft from cloud."
   answer: 0
-  explanation: "In controlled airspace below 10,000 ft the VMC criteria are 5 km, 1,500 m horizontally and 1,000 ft vertically from cloud. A clearance is also required."
+  explanation: "In Class C (and E) below 10,000 ft the VMC criteria are 5 km, 1,500 m horizontally and 1,000 ft vertically from cloud. A clearance is also required. Class D has smaller cloud distances: 600 m horizontally, 1,000 ft above and 500 ft below."
   references: ["RFRC 2.3"]
   difficulty: 2
 - id: RFRC-020
@@ -294,7 +294,7 @@
     - "1,500 ft above mean sea level."
     - "2,000 ft above the highest building."
   answer: 1
-  explanation: "Populous areas and public gatherings: 1,000 ft above the highest obstacle within 600 m. Elsewhere: 500 ft AGL and 500 ft from any person, vessel, vehicle or structure, with exceptions for take-off, landing and approved operations."
+  explanation: "Populous areas and public gatherings: 1,000 ft above the highest obstacle within 600 m. Elsewhere: 500 ft above the highest feature or obstacle within 300 m, with exceptions for take-off, landing and approved operations."
   references: ["RFRC 2.3", "CASR 91.265-91.267"]
   difficulty: 1
 - id: RFRC-027
@@ -303,7 +303,7 @@
   stem: "Over open farmland away from people and buildings, the minimum height for a VFR flight (other than take-off and landing) is:"
   options: ["200 ft AGL", "500 ft AGL", "1,000 ft AGL", "1,500 ft AGL"]
   answer: 1
-  explanation: "500 ft above ground or water outside populous areas, and not within 500 ft of any person, vessel, vehicle or structure."
+  explanation: "Outside populous areas: 500 ft above the highest feature or obstacle within a 300 m radius, which over open farmland is 500 ft AGL."
   references: ["RFRC 2.3"]
   difficulty: 1
 - id: RFRC-028
@@ -556,7 +556,7 @@
     - "Is not permitted."
     - "May fly in IMC."
   answer: 1
-  explanation: "Class E is controlled for IFR only. VFR flights operate without a clearance but under the controlled airspace VMC minima (5 km, 1,500 m, 1,000 ft) and should carry a transponder."
+  explanation: "Class E is controlled for IFR only. VFR flights operate without a clearance but under the controlled airspace VMC minima (5 km, 1,500 m, 1,000 ft), and must carry a serviceable transponder and radio."
   references: ["RFRC 2.6"]
   difficulty: 2
 - id: RFRC-049
