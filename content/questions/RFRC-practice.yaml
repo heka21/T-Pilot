@@ -1,0 +1,1076 @@
+# RFRC practice bank: scenario and application questions drawn from the RFRC lessons.
+# Regulatory figures are the lessons' figures; check them against the current VFRG / Part 91 MOS.
+- id: RFRC-X001
+  kind: mcq
+  elements: ["RFRC 2.1.1"]
+  stem: "Why does each logbook entry record dual time and solo time separately rather than only a total?"
+  options:
+    - "Because the maintenance release needs the solo hours to calculate the next inspection."
+    - "Because CASA charges a different licence fee for each kind of flying time."
+    - "Because licences, ratings and endorsements set minimums for each kind of experience."
+    - "Because only solo time counts towards the passenger recency requirement."
+  answer: 2
+  explanation: "The logbook is the evidence that you met each minimum, and a total alone would not show how much was flown without an instructor. Aircraft hours belong on the maintenance release, not in your logbook."
+  references: ["RFRC 2.1", "CASR Part 61"]
+  difficulty: 2
+
+- id: RFRC-X002
+  kind: mcq
+  elements: ["RFRC 2.1.2"]
+  stem: "The ERSA entry for a WA country aerodrome shows runway 09/27 as available, but a NOTAM issued yesterday says it is closed for works. What should you do?"
+  options:
+    - "Follow the NOTAM, because it is how temporary changes to ERSA are published."
+    - "Follow ERSA, because it is the permanent and therefore authoritative source."
+    - "Use the runway if it looks serviceable from the air on arrival."
+    - "Follow whichever of the two is shown in the current VFRG."
+  answer: 0
+  explanation: "ERSA is updated on a fixed cycle; NOTAMs carry temporary or urgent changes in between, so the newer NOTAM overrides the printed entry. The VFRG summarises rules and does not list aerodrome status."
+  references: ["RFRC 2.1"]
+  difficulty: 1
+
+- id: RFRC-X003
+  kind: mcq
+  elements: ["RFRC 2.1.2"]
+  stem: "Which statement about the Visual Flight Rules Guide (VFRG) is correct?"
+  options:
+    - "It is the regulation in which the VMC minima are legally set out, so it prevails over the MOS."
+    - "It is CASA's plain-English guidance on the rules, not law itself; the regulation prevails if they differ."
+    - "It is published by Airservices with the AIP, and replaces ERSA for VFR pilots in flight."
+    - "It is a Manual of Standards made under CASR Part 91, and is law in the same way as the MOS."
+  answer: 1
+  explanation: "The VFRG summarises the law for VFR pilots and is permitted in the exam, but the rules themselves are set out in CASR Part 91 and the Part 91 MOS. If a question asks where a rule is set out, look for the regulation or MOS."
+  references: ["RFRC 2.1"]
+  difficulty: 1
+
+- id: RFRC-X004
+  kind: mcq
+  elements: ["RFRC 2.1.3"]
+  stem: "The maintenance release is valid to 2,640.0 hours or 20 November, whichever comes first. Today is 9 October, the hour meter reads 2,638.9 and you are booked for a 1.5 hour flight. May you fly the planned flight?"
+  options:
+    - "Yes, because the release is still current by date."
+    - "Yes, provided you land within half an hour of the hours limit."
+    - "No, because the release has already expired by date."
+    - "No, because only 1.1 hours remain before maintenance falls due."
+  answer: 3
+  explanation: "2,640.0 - 2,638.9 = 1.1 hours, less than the 1.5 hours planned, so maintenance would fall due before the end of the flight. Being current by date does not help when the hours run out first."
+  references: ["RFRC 2.1", "CAR 1988 Part 4A"]
+  difficulty: 2
+
+- id: RFRC-X005
+  kind: mcq
+  elements: ["RFRC 2.1.3"]
+  stem: "A maintenance release valid for 100 hours or 12 months was issued 11 months and 3 weeks ago, and only 40 hours have been flown. Which statement is correct?"
+  options:
+    - "60 hours remain, so no inspection is needed for many weeks."
+    - "The low utilisation automatically extends the release by a month."
+    - "It expires on the date in about a week, whichever limit comes first."
+    - "The pilot may extend it by certifying the daily inspection."
+  answer: 2
+  explanation: "100 hours or 12 months means whichever comes first, so the 12-month date ends this release regardless of the hours left. Only a licensed engineer or approved organisation can issue a new release."
+  references: ["RFRC 2.1", "CAR 1988 Part 4A"]
+  difficulty: 2
+
+- id: RFRC-X006
+  kind: mcq
+  elements: ["RFRC 2.1.3", "RFRC 2.2.4"]
+  stem: "The release is current and today's daily inspection is signed, but Part 2 shows 'elevator trim tab loose' endorsed by the previous pilot, with no engineer's clearance and no permissible unserviceability endorsement. What do you do?"
+  options:
+    - "Fly, since the daily inspection signed today supersedes the earlier defect."
+    - "Leave the aircraft on the ground until an engineer rectifies or endorses the defect."
+    - "Fly with the trim tab taped, and endorse the repair in Part 3 yourself."
+    - "Fly dual only, because an instructor may accept a defect on the day."
+  answer: 1
+  explanation: "An uncleared defect that affects safety makes the aircraft unairworthy until a licensed engineer clears it or endorses it as a permissible unserviceability. No instructor's assurance or pilot certification changes that."
+  references: ["RFRC 2.1", "RFRC 2.2", "CAR 1988 Part 4A"]
+  difficulty: 2
+
+- id: RFRC-X007
+  kind: mcq
+  elements: ["RFRC 2.1.3"]
+  stem: "Which maintenance release finding means the aircraft must NOT fly your one-hour day VFR flight?"
+  options:
+    - "A failed cabin light endorsed as a permissible unserviceability, day VFR only."
+    - "A required inspection shown due at 3,450.0 hours, with the hour meter at 3,451.2."
+    - "Today's daily inspection certified by a pilot trained and authorised by the club."
+    - "6.0 hours remaining before the next 100-hourly inspection."
+  answer: 1
+  explanation: "The inspection due at 3,450.0 hours is already overdue, so the aircraft is not airworthy. A permissible unserviceability whose condition you meet (day VFR) does not stop the flight."
+  references: ["RFRC 2.1", "CAR 1988 Part 4A"]
+  difficulty: 2
+
+- id: RFRC-X008
+  kind: mcq
+  elements: ["RFRC 2.2.1"]
+  stem: "An RPL(A) holder is offered a single-engine aeroplane with a certified MTOW of 1,600 kg. It will be flown with only the pilot and half fuel, weighing about 1,250 kg. May the RPL holder fly it as pilot in command?"
+  options:
+    - "Yes, because the actual take-off weight is below 1,500 kg."
+    - "Yes, if the pilot also holds a Basic Class 2 medical."
+    - "No, because the 1,500 kg limit applies to the certified MTOW."
+    - "No, because an RPL holder may not fly a four-seat aeroplane."
+  answer: 2
+  explanation: "The 1,500 kg RPL limit is the aeroplane's certified maximum take-off weight, not what it weighs today. A Basic Class 2 allows heavier aircraft but the licence limit still binds, because the tighter limit applies."
+  references: ["RFRC 2.2", "CASR 61.425-61.450"]
+  difficulty: 2
+
+- id: RFRC-X009
+  kind: mcq
+  elements: ["RFRC 2.2.1"]
+  stem: "Kim holds an RPL(A) with the recreational navigation and controlled aerodrome endorsements, but not the controlled airspace endorsement. Her direct route from Murrayfield to Northam passes through a Class C step. Which is correct?"
+  options:
+    - "She may fly the route if she plans it to stay entirely outside controlled airspace."
+    - "She may fly the direct route, because the controlled aerodrome endorsement covers the step."
+    - "She may not fly to Northam at all, because it is more than 25 nm away."
+    - "She may enter the step without a clearance, provided she stays below 10,000 ft."
+  answer: 0
+  explanation: "The navigation endorsement lifts the 25 nm limit, but flying in controlled airspace en route needs the controlled airspace endorsement; the controlled aerodrome endorsement does not cover it. She must route below or around the step in Class G."
+  references: ["RFRC 2.2", "RFRC 2.6"]
+  difficulty: 3
+
+- id: RFRC-X010
+  kind: mcq
+  elements: ["RFRC 2.2.1"]
+  stem: "Which RPL limitation can NOT be removed by adding an endorsement to the RPL?"
+  options:
+    - "Flight within 25 nm of the departure aerodrome."
+    - "Flight below 10,000 ft."
+    - "Operations at non-controlled aerodromes only."
+    - "Flight by day under VFR only."
+  answer: 3
+  explanation: "Day VFR belongs to the licence itself, along with single-engine, 1,500 kg MTOW and private operations; only a higher licence and rating lift it. Navigation, above 10,000 ft and controlled aerodrome endorsements lift the other three."
+  references: ["RFRC 2.2"]
+  difficulty: 2
+
+- id: RFRC-X011
+  kind: mcq
+  elements: ["RFRC 2.2.1"]
+  stem: "A Busselton real estate agent offers to pay an RPL(A) holder to fly over local properties so she can photograph them. May the RPL holder accept?"
+  options:
+    - "Yes, if the flight stays within 25 nm of Busselton."
+    - "Yes, if the pilot holds the recreational navigation endorsement."
+    - "No, because the RPL allows only private operations or flight training."
+    - "No, unless the aeroplane has a maximum take-off weight under 1,000 kg."
+  answer: 2
+  explanation: "Being paid to fly a job is aerial work, and the RPL is limited to private operations or flight training whatever endorsements it carries. Distance and aircraft weight do not change that."
+  references: ["RFRC 2.2", "CASR 61.425-61.450"]
+  difficulty: 1
+
+- id: RFRC-X012
+  kind: mcq
+  elements: ["RFRC 2.2.2"]
+  stem: "An RPL holder's last aeroplane flight review was completed on 22 May 2024. Today is 3 June 2026. Which is correct?"
+  options:
+    - "The review is current, because it is valid until 30 June 2026."
+    - "The review expired at the end of May 2026, so the pilot may fly dual but not as pilot in command."
+    - "The review expired on 22 May 2026, but the pilot may still fly solo without passengers."
+    - "The review is current, because flight reviews allow a three-month grace period."
+  answer: 1
+  explanation: "A flight review is valid to the end of the 24th month after it was done, here the end of May 2026. Without a current review the pilot cannot act as pilot in command at all, solo or not, but may fly dual with an instructor to regain it."
+  references: ["RFRC 2.2", "CASR 61.400"]
+  difficulty: 3
+
+- id: RFRC-X013
+  kind: mcq
+  elements: ["RFRC 2.2.2"]
+  stem: "Your flight review was done eight months ago, but your last take-off and landing was four months ago. You want to take your sister to Rottnest this weekend. What must you do first?"
+  options:
+    - "Nothing; a current flight review covers passenger carriage."
+    - "Complete a new flight review before any flight."
+    - "Fly at least 3 take-offs and 3 landings, solo is fine, before carrying her."
+    - "Fly at least one dual circuit with an instructor before carrying her."
+  answer: 2
+  explanation: "Carrying a passenger needs 3 take-offs and 3 landings in the previous 90 days; solo circuits satisfy it. The flight review is a separate 24-month rule and is still current, so you may fly solo now."
+  references: ["RFRC 2.2", "CASR 61.395"]
+  difficulty: 2
+
+- id: RFRC-X014
+  kind: mcq
+  elements: ["RFRC 2.2.2"]
+  stem: "Today is 1 November. A pilot's recent flying: 25 July (2 take-offs, 2 landings), 20 August (2 take-offs, 2 landings), 10 October (1 take-off, 1 landing). Is the pilot current to carry a passenger today?"
+  options:
+    - "Yes: the August and October flights give 3 take-offs and 3 landings within 90 days."
+    - "No: only the October flight is within the previous 90 days."
+    - "Yes: all three flights count, giving 5 take-offs and 5 landings."
+    - "No: the 3 take-offs and landings must be on 3 separate days."
+  answer: 0
+  explanation: "20 August is 73 days before 1 November and 25 July is 99 days before, so the August and October flights count: 2 + 1 = 3 of each. The July flight falls outside the 90-day window."
+  references: ["RFRC 2.2", "CASR 61.395"]
+  difficulty: 3
+
+- id: RFRC-X015
+  kind: mcq
+  elements: ["RFRC 2.2.3"]
+  stem: "Alex holds an RPL(A) with the navigation endorsement and a Basic Class 2 medical, and is current. May Alex fly three friends from Serpentine to Narrogin, by day VFR in Class G, in a 1,150 kg four-seat single?"
+  options:
+    - "No, because an RPL holder may carry only 1 passenger."
+    - "No, because a Basic Class 2 allows only 2 passengers."
+    - "Yes, but only if one of the friends is also a pilot."
+    - "Yes, because a Basic Class 2 allows up to 5 passengers."
+  answer: 3
+  explanation: "The Basic Class 2 allows no more than 5 passengers, and the aircraft, conditions, distance and airspace are all within the licence. The 1-passenger limit belongs to the RAMPC, not the RPL."
+  references: ["RFRC 2.2", "CASR Part 67"]
+  difficulty: 3
+
+- id: RFRC-X016
+  kind: mcq
+  elements: ["RFRC 2.2.3"]
+  stem: "An RPL holder on a Basic Class 2 notes that the medical allows piston aircraft up to 8,618 kg. May they fly a 1,700 kg MTOW single-engine piston aeroplane as pilot in command?"
+  options:
+    - "Yes, because the medical limit of 8,618 kg is the one that applies."
+    - "Yes, but only with no passengers on board."
+    - "No, because the RPL itself limits them to 1,500 kg MTOW."
+    - "No, because a Basic Class 2 limits them to 1,200 kg MTOW."
+  answer: 2
+  explanation: "Licence and medical limits stack, and the tighter one applies: the RPL's 1,500 kg MTOW limit binds even though the Basic Class 2 would allow more."
+  references: ["RFRC 2.2", "CASR Part 67"]
+  difficulty: 2
+
+- id: RFRC-X017
+  kind: mcq
+  elements: ["RFRC 2.2.3"]
+  stem: "A pilot holds an RPL with an aerobatic endorsement and flies on a RAMPC. May they fly aerobatics, solo, in a suitably certified aeroplane?"
+  options:
+    - "No, because the RAMPC does not permit aerobatics."
+    - "Yes, because the aerobatic endorsement lifts the medical limit."
+    - "Yes, as long as no passenger is carried."
+    - "Yes, if the flight is above 3,000 ft over open country."
+  answer: 0
+  explanation: "No aerobatics is one of the RAMPC's own limits, alongside 1 passenger and a single-engine piston aeroplane up to 1,500 kg. An endorsement on the licence does not remove a limit of the medical."
+  references: ["RFRC 2.2", "CASR Part 67"]
+  difficulty: 2
+
+- id: RFRC-X018
+  kind: mcq
+  elements: ["RFRC 2.2.4"]
+  stem: "Who may carry out and certify the daily inspection on the club's private (Class B) aeroplane before the first flight of the day?"
+  options:
+    - "Only a licensed aircraft maintenance engineer."
+    - "A pilot licence holder about to fly it who is trained and authorised to do so."
+    - "Any pilot licence holder, without further training."
+    - "Only a flight instructor employed by the club."
+  answer: 1
+  explanation: "A licence holder may certify the daily inspection on a Class B aircraft they are about to fly if trained and authorised by the operator or school. Training is required because the inspection is only as good as the inspector's knowledge."
+  references: ["RFRC 2.2", "CAR 1988 42ZC"]
+  difficulty: 1
+
+- id: RFRC-X019
+  kind: mcq
+  elements: ["RFRC 2.2.4"]
+  stem: "After a 1.2 hour flight with nothing wrong, what must the pilot write on the maintenance release?"
+  options:
+    - "A new expiry hours figure for the release."
+    - "A certification that the aircraft is airworthy for the next flight."
+    - "Nothing; the flight is recorded only in the pilot's logbook."
+    - "The flight time, which keeps the hours remaining accurate."
+  answer: 3
+  explanation: "The pilot records the flight time on the release (and endorses any defect found). Pilots never issue or extend the release or certify airworthiness; that is an engineer's job."
+  references: ["RFRC 2.2", "RFRC 2.1"]
+  difficulty: 1
+
+- id: RFRC-X020
+  kind: mcq
+  elements: ["RFRC 2.2.4"]
+  stem: "You are authorised to do daily inspections on the club aeroplane. During one you find a cracked exhaust. What must you do?"
+  options:
+    - "Certify the daily, since the crack is outside the cabin, and fly."
+    - "Endorse the defect in Part 2, tell the operator, and leave the aircraft on the ground."
+    - "Mention it to the next pilot and fly only short local flights until it is fixed."
+    - "Record the defect in your own logbook and certify the daily."
+  answer: 1
+  explanation: "A defect goes in Part 2 of the maintenance release, where the engineer and every later pilot will see it, and is reported to the operator. The aircraft stays grounded until an engineer rectifies it or endorses a permissible unserviceability."
+  references: ["RFRC 2.2"]
+  difficulty: 1
+
+- id: RFRC-X021
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "Two aeroplanes are approaching each other head-on at the same level. What does each pilot do?"
+  options:
+    - "Both alter heading to the right."
+    - "Both alter heading to the left."
+    - "The higher aircraft climbs and the lower descends."
+    - "The faster aircraft gives way by turning right."
+  answer: 0
+  explanation: "Head-on, both turn right, so they pass clear. The rule only works because every avoiding turn is to the right."
+  references: ["RFRC 2.3", "CASR Part 91"]
+  difficulty: 1
+
+- id: RFRC-X022
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "Cruising near York, you see an aeroplane at your 10 o'clock at the same level on a converging course. What should you do?"
+  options:
+    - "Give way by turning left to pass in front of it."
+    - "Give way by turning right to pass behind it."
+    - "Hold heading and speed, as it should give way, while watching it closely."
+    - "Climb immediately, as the aircraft on the left always climbs."
+  answer: 2
+  explanation: "You are on its right, so the other aircraft must give way. You maintain heading and speed but keep watching, because the pilot in command is still responsible for avoiding a collision if the other pilot has not seen you."
+  references: ["RFRC 2.3", "CASR Part 91"]
+  difficulty: 2
+
+- id: RFRC-X023
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "Flying a powered aeroplane, you see a glider converging from your left at about your level. Who gives way?"
+  options:
+    - "The glider, because you have it on your left."
+    - "You, because power-driven aircraft give way to gliders."
+    - "Neither; both turn right."
+    - "The glider, because it can trade height for speed."
+  answer: 1
+  explanation: "Power-driven heavier-than-air aircraft give way to gliders, airships, balloons and towing aircraft whichever side they are on, because those can manoeuvre least. The 'on your right' rule applies between aircraft of the same type."
+  references: ["RFRC 2.3", "CASR Part 91"]
+  difficulty: 2
+
+- id: RFRC-X024
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "In the Jandakot Class D zone, with a tower clearance, you are flying 400 ft below a cloud base in 6 km visibility. Are you in VMC?"
+  options:
+    - "Yes, because Class D needs only clear of cloud."
+    - "Yes, because the visibility exceeds 5,000 m."
+    - "No, because Class D requires 1,000 ft below cloud."
+    - "No, because Class D requires 500 ft below cloud."
+  answer: 3
+  explanation: "Class D VMC is 5,000 m visibility, 600 m horizontally, 1,000 ft above and 500 ft below cloud. At 400 ft below the base you are too close, even though the visibility is fine."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 3
+
+- id: RFRC-X025
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "You are cruising at 4,500 ft AMSL in Class G over farmland near Pinjarra (elevation about 100 ft), in 8 km visibility, passing 1,000 m horizontally from a cumulus. Are you in VMC?"
+  options:
+    - "No, because above 3,000 ft AMSL you need 1,500 m horizontally from cloud."
+    - "Yes, because in Class G you only need to stay clear of cloud."
+    - "Yes, because 1,000 m from cloud is enough below 5,000 ft."
+    - "No, because the visibility must be at least 10 km."
+  answer: 0
+  explanation: "At 4,500 ft you are above 3,000 ft AMSL and above 1,000 ft AGL, so the Class G minima are 5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud. Clear of cloud is enough only at or below the higher of 3,000 ft AMSL and 1,000 ft AGL."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 2
+
+- id: RFRC-X026
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "In Class G you are at 3,300 ft AMSL over ground at 2,600 ft elevation, in 6 km visibility. Which cloud requirement applies?"
+  options:
+    - "1,500 m horizontally and 1,000 ft vertically, because you are above 3,000 ft AMSL."
+    - "600 m horizontally, 1,000 ft above and 500 ft below cloud."
+    - "Clear of cloud and in sight of ground or water, because you are below 1,000 ft AGL."
+    - "1,500 m horizontally and 500 ft vertically from cloud."
+  answer: 2
+  explanation: "The boundary is the higher of 3,000 ft AMSL and 1,000 ft AGL; here 1,000 ft AGL is 3,600 ft AMSL. At 3,300 ft you are below it (700 ft AGL), so clear of cloud and in sight of ground or water applies."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 3
+
+- id: RFRC-X027
+  kind: mcq
+  elements: ["RFRC 2.3.1"]
+  stem: "At a non-controlled aerodrome with a 1,200 m runway, you are lined up in a 1,100 kg aeroplane behind a 2,500 kg twin that is airborne and 700 m ahead of your lift-off point. May you start your take-off roll?"
+  options:
+    - "Yes, because it is airborne and more than 600 m ahead of your lift-off point."
+    - "Yes, because the 600 m rule depends only on your own aeroplane being under 2,000 kg."
+    - "No; 600 m needs both under 2,000 kg, so wait until it crosses the upwind end or turns."
+    - "No; you must wait until the twin has left the circuit area and made its departure call."
+  answer: 2
+  explanation: "The 600 m option applies only when both aircraft are under 2,000 kg, and the twin is not. On a runway this length, wait until it has crossed the upwind end or commenced a turn."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 3
+
+- id: RFRC-X028
+  kind: mcq
+  elements: ["RFRC 2.3.2"]
+  stem: "A pilot finishes their last drink at 2330. What is the earliest time they may depart as pilot in command, and on what condition?"
+  options:
+    - "0330, if they feel sober."
+    - "0530, provided the blood alcohol is under 0.05."
+    - "0730, provided they are below 0.02 and not under the influence."
+    - "1130, because a 12-hour gap is required."
+  answer: 2
+  explanation: "8 hours from the last drink is 0730, but the 8 hours is a minimum: the pilot must also be below 0.02 g per 100 mL and not under the influence. After a heavy night they may still be over at 0730."
+  references: ["RFRC 2.3", "CASR 91.520", "CASR Part 99"]
+  difficulty: 2
+
+- id: RFRC-X029
+  kind: mcq
+  elements: ["RFRC 2.3.2"]
+  stem: "A pilot with a current medical certificate had minor day surgery yesterday and still feels groggy. Which is correct?"
+  options:
+    - "They may fly, because the medical certificate is current."
+    - "They may fly solo, but not carry passengers."
+    - "They may fly if they take a stimulant to stay alert."
+    - "They must not fly while unfit, and must tell a DAME or CASA if it is significant or lasts."
+  answer: 3
+  explanation: "A medical certificate says you were fit when examined, not today. A temporarily unfit pilot must not fly, and a lasting or medically significant condition must be reported to a DAME or CASA, who decide when flying may resume."
+  references: ["RFRC 2.3", "CASR 67.265"]
+  difficulty: 1
+
+- id: RFRC-X030
+  kind: mcq
+  elements: ["RFRC 2.3.3"]
+  stem: "Holding at the threshold of a towered aerodrome with a radio failure, you receive a steady green light. It means:"
+  options:
+    - "Cleared for take-off."
+    - "Cleared to taxi."
+    - "Return to your starting point."
+    - "Taxi clear of the landing area."
+  answer: 0
+  explanation: "On the ground a steady green is a clearance for take-off; green flashes clear you to taxi. White flashes send you back to the starting point, and red flashes tell you to taxi clear of the landing area."
+  references: ["RFRC 2.3", "ERSA EMERG"]
+  difficulty: 1
+
+- id: RFRC-X031
+  kind: mcq
+  elements: ["RFRC 2.3.3"]
+  stem: "Approaching a towered aerodrome without a radio, you receive green flashes from the tower. What do they mean?"
+  options:
+    - "Cleared to land now."
+    - "Aerodrome unsafe, do not land."
+    - "Return for landing; a clearance to land will follow."
+    - "Give way to other aircraft and continue circling."
+  answer: 2
+  explanation: "In flight, green flashes mean return for landing, and a steady green will follow as the landing clearance. A flash is the weaker version of the steady light. Steady red means give way and keep circling."
+  references: ["RFRC 2.3", "ERSA EMERG"]
+  difficulty: 2
+
+- id: RFRC-X032
+  kind: mcq
+  elements: ["RFRC 2.3.4"]
+  stem: "Over Northam, where the ground is about 500 ft AMSL, the highest obstacle within 600 m of your aircraft is a silo 150 ft tall. What is your minimum altitude?"
+  options:
+    - "1,000 ft AMSL"
+    - "1,150 ft AMSL"
+    - "1,500 ft AMSL"
+    - "1,650 ft AMSL"
+  answer: 3
+  explanation: "Over a populous area the minimum is 1,000 ft above the highest obstacle within 600 m: the silo top is 500 + 150 = 650 ft AMSL, so 650 + 1,000 = 1,650 ft AMSL. 1,500 ft AMSL would be only 1,000 ft above the ground."
+  references: ["RFRC 2.3", "CASR 91.265-91.267"]
+  difficulty: 3
+
+- id: RFRC-X033
+  kind: mcq
+  elements: ["RFRC 2.3.4"]
+  stem: "Over flat farmland away from any town, a 250 ft communications mast stands 200 m to one side of your track. What is your minimum height above the surrounding ground as you pass?"
+  options:
+    - "500 ft"
+    - "750 ft"
+    - "1,000 ft"
+    - "1,250 ft"
+  answer: 1
+  explanation: "Away from populous areas the minimum is 500 ft above the highest feature or obstacle within 300 m of the point below the aircraft. The mast is within 300 m, so 250 + 500 = 750 ft above the ground. 1,250 ft would apply the populous-area 1,000 ft rule."
+  references: ["RFRC 2.3", "CASR 91.265-91.267"]
+  difficulty: 3
+
+- id: RFRC-X034
+  kind: mcq
+  elements: ["RFRC 2.3.4"]
+  stem: "In which situation is flight below the normal minimum heights permitted?"
+  options:
+    - "Circling a friend's farmhouse at 300 ft to wave."
+    - "Taking off and landing."
+    - "Photographing a property for a private album."
+    - "Following a river at low level for sightseeing."
+  answer: 1
+  explanation: "The exceptions are take-off and landing, CASA-approved operations, a forced landing, and flight needed to avoid weather or terrain. Sightseeing, waving and private photography are not exceptions."
+  references: ["RFRC 2.3", "CASR 91.265-91.267"]
+  difficulty: 1
+
+- id: RFRC-X035
+  kind: mcq
+  elements: ["RFRC 2.3.5"]
+  stem: "You fly past a football final at a Kalgoorlie oval packed with spectators. What is the minimum height over the crowd?"
+  options:
+    - "500 ft above the highest obstacle within 300 m."
+    - "1,000 ft above the ground directly below."
+    - "1,000 ft above the highest obstacle within 600 m."
+    - "3,000 ft above the ground, as for aerobatics."
+  answer: 2
+  explanation: "Flight over a public gathering comes under the populous-area rule: 1,000 ft above the highest obstacle within a 600 m radius, which is more than 1,000 ft above the ground wherever there are tall obstacles such as light towers. 3,000 ft is the aerobatics figure."
+  references: ["RFRC 2.3", "CASR 91.265-91.267"]
+  difficulty: 2
+
+- id: RFRC-X036
+  kind: mcq
+  elements: ["RFRC 2.3.5"]
+  stem: "A pilot with the aerobatic endorsement, in an aeroplane certified for aerobatics, wants to loop at 4,000 ft AGL over Geraldton on a clear day. Is it permitted?"
+  options:
+    - "No, because aerobatics are never permitted over a populous area."
+    - "Yes, because the flight is above 3,000 ft AGL."
+    - "Yes, because the pilot and aircraft both meet the aerobatic requirements."
+    - "No, because aerobatics must be flown above 5,000 ft AGL over towns."
+  answer: 0
+  explanation: "Aerobatics need a certified aircraft, an endorsed pilot, day VMC and at least 3,000 ft AGL, and are never permitted over a populous area or public gathering. Meeting the height rule does not lift the populous-area ban."
+  references: ["RFRC 2.3"]
+  difficulty: 2
+
+- id: RFRC-X037
+  kind: mcq
+  elements: ["RFRC 2.3.6"]
+  stem: "Last light at York is 1806 WST. Your flight from Jandakot to York takes 40 minutes, with no holding expected. What is the latest time you may depart?"
+  options:
+    - "1706"
+    - "1716"
+    - "1726"
+    - "1756"
+  answer: 1
+  explanation: "You must be on the ground at least 10 minutes before last light: 1806 - 10 = 1756 landing, then 1756 - 40 = 1716 departure. 1726 forgets the 10 minutes; 1756 is the landing deadline, not the departure."
+  references: ["RFRC 2.3", "Part 91 MOS"]
+  difficulty: 3
+
+- id: RFRC-X038
+  kind: mcq
+  elements: ["RFRC 2.3.6"]
+  stem: "Planning an afternoon flight from Perth to Kalgoorlie, which last light time must you plan your arrival around?"
+  options:
+    - "Perth's, because that is where the flight departs."
+    - "Whichever of the two is later."
+    - "Sunset at Perth plus 10 minutes."
+    - "Kalgoorlie's (or the alternate's), which is earlier than Perth's."
+  answer: 3
+  explanation: "You must be on the ground 10 minutes before last light at the destination or alternate. Kalgoorlie is well east of Perth, so its last light is earlier; a plan built on Perth's figure arrives in the dark."
+  references: ["RFRC 2.3"]
+  difficulty: 2
+
+- id: RFRC-X039
+  kind: mcq
+  elements: ["RFRC 2.4.1"]
+  stem: "The club aeroplane has just had its engine replaced and the engineer asks you to fly the check flight. Your partner would like to come. Which is correct?"
+  options:
+    - "Your partner may come if you hold 3 take-offs and landings in 90 days."
+    - "Your partner may come if the flight stays within 25 nm."
+    - "Your partner may not come, because no passengers may be carried on a test flight after maintenance."
+    - "Your partner may come if the engineer signs the maintenance release first."
+  answer: 2
+  explanation: "A test flight after maintenance exists because nobody yet knows the aircraft is right, so Part 91 bars passengers. Your own recency is irrelevant to this restriction, which is about the flight."
+  references: ["RFRC 2.4", "CASR Part 91"]
+  difficulty: 1
+
+- id: RFRC-X040
+  kind: mcq
+  elements: ["RFRC 2.4.1"]
+  stem: "An aeroplane is being ferried to Kalgoorlie for repairs under a special flight permit. The owner's son wants a lift. Which is correct?"
+  options:
+    - "He may come only if the special flight permit allows passengers."
+    - "He may come, because a ferry flight is a private flight."
+    - "He may never be carried on any ferry flight."
+    - "He may come if the pilot holds a Class 2 medical."
+  answer: 0
+  explanation: "A special flight permit exists because the aircraft does not fully meet its normal standard, so passengers may be carried only if the permit itself allows it. Read the permit's conditions."
+  references: ["RFRC 2.4", "CASR Part 91"]
+  difficulty: 2
+
+- id: RFRC-X041
+  kind: mcq
+  elements: ["RFRC 2.4.1"]
+  stem: "You have not flown for four months and your flight review falls due. Can you fly the flight review with an instructor in the right seat?"
+  options:
+    - "No; you need 3 solo take-offs and landings first, as the instructor is a passenger."
+    - "No; you need a new medical before the review."
+    - "Yes, but only if the instructor flies the take-off and landing."
+    - "Yes; the instructor is doing a job, not travelling as a passenger."
+  answer: 3
+  explanation: "A flight review or flight test is not a passenger flight: the instructor or examiner is a crew member doing a job, so the passenger recency rule does not apply to their presence."
+  references: ["RFRC 2.4", "CASR 61.395"]
+  difficulty: 2
+
+- id: RFRC-X042
+  kind: numeric
+  elements: ["RFRC 2.4.2"]
+  stem: "A day VFR flight in a piston aeroplane is planned for 1 hour 20 minutes at a fuel flow of 30 L/h. Ignoring taxi fuel and any other allowances, how much fuel is needed for the flight time plus the fixed reserve?"
+  answer: 55
+  tolerance: 0
+  unit: L
+  explanation: "The fixed reserve for day VFR in a piston aeroplane is 30 minutes. Total time 80 + 30 = 110 minutes at 0.5 L/min = 55 L. Check: flight 1.333 h x 30 = 40 L, reserve 0.5 h x 30 = 15 L, 40 + 15 = 55 L."
+  references: ["RFRC 2.4", "Part 91 MOS chapter 19"]
+  difficulty: 2
+
+- id: RFRC-X043
+  kind: mcq
+  elements: ["RFRC 2.4.2"]
+  stem: "At Busselton your passenger asks to stay in the cabin with the engine running and the air vents open while the aeroplane is refuelled from the bowser. What do the refuelling rules require?"
+  options:
+    - "Refuelling may go ahead if the passenger keeps the doors shut."
+    - "The engine must be stopped, and the passenger off the aircraft or supervised as the rules allow."
+    - "Refuelling may go ahead with the engine at idle if a fire extinguisher is at hand."
+    - "The engine may run if the aircraft and bowser are bonded together."
+  answer: 1
+  explanation: "Each refuelling rule removes an ignition source: engines stopped, no smoking or flames, bonding against static, an extinguisher ready, and passengers off or supervised. Bonding or an extinguisher does not make a running engine acceptable."
+  references: ["RFRC 2.4", "CASR Part 91"]
+  difficulty: 2
+
+- id: RFRC-X044
+  kind: mcq
+  elements: ["RFRC 2.4.2"]
+  stem: "The battery is flat and you plan to start the engine by hand-swinging the propeller. What must be true before the engine is started?"
+  options:
+    - "The brakes are set or chocks in, and a pilot is at the controls."
+    - "The throttle is fully open so the engine catches quickly."
+    - "The aircraft is inside the hangar, out of the wind."
+    - "A passenger holds the tail while you swing the propeller."
+  answer: 0
+  explanation: "Brakes or chocks keep the aeroplane still when the engine fires, and a pilot must be at the controls whenever the engine is running. Do not run the engine inside a hangar, and keep people clear of the propeller and slipstream."
+  references: ["RFRC 2.4"]
+  difficulty: 2
+
+- id: RFRC-X045
+  kind: mcq
+  elements: ["RFRC 2.4.2"]
+  stem: "At 800 ft over a town the engine runs rough, and to reach the only suitable field you must descend below the populous-area minimum height. Which is correct?"
+  options:
+    - "You must climb back to the minimum height before choosing a field."
+    - "You may descend only if ATC gives you a clearance first."
+    - "You may deviate from the rule to the extent needed for safety, and must report it."
+    - "You may deviate, and no report is needed if nobody on the ground complains."
+  answer: 2
+  explanation: "In an emergency the pilot in command may deviate from a rule to the extent necessary for safety, and must report the deviation afterwards. The pilot's authority matches their responsibility for the flight."
+  references: ["RFRC 2.4", "CASR Part 91 Subpart 91.D"]
+  difficulty: 2
+
+- id: RFRC-X046
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "Why must the fuel tank caps be checked fitted and secure after refuelling?"
+  options:
+    - "An unsecured cap lets water from the fuel drains back into the tank."
+    - "An unsecured cap causes the fuel gauge to over-read."
+    - "An unsecured cap breaks the bonding between the aircraft and the bowser."
+    - "An unsecured cap lets low pressure over the wing siphon fuel out in flight."
+  answer: 3
+  explanation: "Air flowing over the wing lowers the pressure above an open filler and can draw fuel out in flight, leading to fuel exhaustion. Securing the caps is one of the legally required pre-flight items."
+  references: ["RFRC 2.4"]
+  difficulty: 1
+
+- id: RFRC-X047
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "After maintenance on the ailerons, why does the control check require full, free and correct movement rather than just full and free movement?"
+  options:
+    - "Because a control can be rigged to move fully and freely in the wrong direction."
+    - "Because 'correct' confirms the trim is set for take-off."
+    - "Because the engineer's certification already covers full and free movement."
+    - "Because 'correct' means the controls feel the same as last flight."
+  answer: 0
+  explanation: "A misrigged control can move through its full range without binding yet deflect the wrong way for each input. Checking the direction of each surface catches that before take-off."
+  references: ["RFRC 2.4"]
+  difficulty: 2
+
+- id: RFRC-X048
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "A family friend, not a pilot, will sit in the right seat of your dual-control trainer to 'just watch'. What must happen before start-up?"
+  options:
+    - "You permit it and brief them to keep hands and feet clear of the controls."
+    - "Nothing; a person in a control seat may handle the controls in cruise."
+    - "The friend must hold a student pilot licence to sit there."
+    - "You disconnect the right-seat rudder pedals."
+  answer: 0
+  explanation: "A control seat may be occupied by a pilot or a person the pilot in command permits, who must not interfere with the controls and must be briefed to keep clear of them. Letting a non-pilot handle the controls is not permitted."
+  references: ["RFRC 2.4", "CASR Part 91"]
+  difficulty: 1
+
+- id: RFRC-X049
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "A colleague and her six-year-old son fly with you in a four-seat aeroplane. Where should the boy sit?"
+  options:
+    - "On his mother's lap in the front, sharing her belt."
+    - "In the front right seat, so you can keep an eye on him."
+    - "In his own seat with his own belt, where he cannot reach the controls."
+    - "Anywhere, as long as an adult holds his hand for take-off."
+  answer: 2
+  explanation: "Every occupant needs a seat and belt; only an infant under the prescribed age may be carried on an adult's lap with an infant belt attached to the adult's belt. Children must be restrained and seated where they cannot reach the controls."
+  references: ["RFRC 2.4", "CASR Part 91"]
+  difficulty: 1
+
+- id: RFRC-X050
+  kind: mcq
+  elements: ["RFRC 2.4.3"]
+  stem: "Why must seats be adjusted and locked before take-off?"
+  options:
+    - "So the passenger cannot reach the pilot's controls."
+    - "So the seat belt geometry meets the certification standard."
+    - "So the aircraft's centre of gravity stays within limits."
+    - "So the seat cannot slide back on the take-off roll and pull the column back."
+  answer: 3
+  explanation: "A seat sliding back under acceleration takes the pilot's hands with it, raising the nose at low speed and risking a stall just after lift-off. Try to move the seat after adjusting it to confirm the lock is engaged."
+  references: ["RFRC 2.4"]
+  difficulty: 1
+
+- id: RFRC-X051
+  kind: mcq
+  elements: ["RFRC 2.5.1"]
+  stem: "Taxiing at an aerodrome, you see a large white letter H inside a circle painted on a paved area. What does it mark?"
+  options:
+    - "A helipad, where helicopters may arrive vertically, so keep aeroplanes clear."
+    - "A holding point where aeroplanes wait before entering the runway."
+    - "A hard-surface area, meaning sealed surfaces only are in use."
+    - "A hangar apron reserved for aircraft under maintenance."
+  answer: 0
+  explanation: "An H in a circle or square marks a helipad, the helicopter touchdown area. Holding positions are yellow lines across a taxiway, and a white dumb-bell means sealed surfaces only."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+
+- id: RFRC-X052
+  kind: mcq
+  elements: ["RFRC 2.5.4", "RFRC 2.5.1"]
+  stem: "What do the '24' and the 'R' painted on runway 24R at Jandakot tell you?"
+  options:
+    - "Runway direction about 240 degrees true, with right-hand circuits."
+    - "Runway direction about 240 degrees magnetic, with right-hand circuits."
+    - "Runway direction about 240 degrees magnetic; the right one of the parallels as seen on approach."
+    - "Runway direction about 024 degrees magnetic; the right one of the parallels as seen on approach."
+  answer: 2
+  explanation: "The designator is the magnetic direction to the nearest 10 degrees with the last zero dropped, and L, C or R identifies a parallel runway as seen by the approaching pilot. The letter says nothing about circuit direction."
+  references: ["RFRC 2.5"]
+  difficulty: 2
+
+- id: RFRC-X053
+  kind: mcq
+  elements: ["RFRC 2.5.2"]
+  stem: "Runway 06 is in use with standard left-hand circuits. Roughly what heading do you fly on the crosswind leg?"
+  options:
+    - "060"
+    - "150"
+    - "240"
+    - "330"
+  answer: 3
+  explanation: "Crosswind is the first 90 degree left turn after the upwind leg: 060 - 90 = 330. Downwind would be 240, and base 150."
+  references: ["RFRC 2.5"]
+  difficulty: 2
+
+- id: RFRC-X054
+  kind: mcq
+  elements: ["RFRC 2.5.2"]
+  stem: "On the downwind leg, when is the turn onto base leg normally made?"
+  options:
+    - "When the touchdown point is directly abeam the wingtip."
+    - "When the touchdown point is about 45 degrees behind the wing."
+    - "As soon as the pre-landing checks are complete."
+    - "When the aircraft has descended to 500 ft above the aerodrome."
+  answer: 1
+  explanation: "The turn onto base is made with the touchdown point about 45 degrees behind the wing, which gives a base leg of sensible length. Abeam the threshold is too early, and the descent begins on base, not before it."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+
+- id: RFRC-X055
+  kind: mcq
+  elements: ["RFRC 2.5.2"]
+  stem: "You have just lifted off and are climbing straight ahead on runway heading, passing 400 ft above the aerodrome. Which leg of the circuit are you on?"
+  options:
+    - "Crosswind leg"
+    - "Final"
+    - "Base leg"
+    - "Upwind leg"
+  answer: 3
+  explanation: "The upwind (departure) leg is straight ahead after take-off on runway heading, with no turn below 500 ft. The turn onto crosswind comes at or above 500 ft."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+
+- id: RFRC-X056
+  kind: mcq
+  elements: ["RFRC 2.5.2"]
+  stem: "Runway 24 at a country aerodrome has published right-hand circuits. Looking along the landing direction of 240, where is the dead side?"
+  options:
+    - "On the right of the runway, to the north-west."
+    - "On the left of the runway, to the south-east."
+    - "Beyond the upwind end of the runway."
+    - "On the right, because the dead side is always on the right."
+  answer: 1
+  explanation: "The dead side is opposite the circuit. With right-hand circuits the pattern is on the right (north-west) of a pilot facing 240, so the dead side is on the left, to the south-east. Work it out from the pattern, never from 'always the right side'."
+  references: ["RFRC 2.5"]
+  difficulty: 3
+
+- id: RFRC-X057
+  kind: mcq
+  elements: ["RFRC 2.5.3"]
+  stem: "A large white cross is painted at the entrance to one of the taxiways leading to the runway, but there is no cross on the runway. Which is correct?"
+  options:
+    - "That taxiway is unserviceable; use another, and the runway may still be used."
+    - "The whole aerodrome is closed."
+    - "That taxiway may be used with caution in daylight."
+    - "Gliding is in progress, so expect winch cables on that taxiway."
+  answer: 0
+  explanation: "A white cross on any part of the movement area marks that part unserviceable, with no 'use with caution' version. Gliding is shown by two white crosses beside the windsock, not by a cross on a taxiway."
+  references: ["RFRC 2.5"]
+  difficulty: 2
+
+- id: RFRC-X058
+  kind: mcq
+  elements: ["RFRC 2.5.3"]
+  stem: "Overflying a gravel strip near Merredin, you see a large white cross at each end of the runway. What should you do?"
+  options:
+    - "Land, keeping well clear of the crosses at each end."
+    - "Land after making a CTAF call, as the crosses mean gliding."
+    - "Not land, because the runway is unserviceable."
+    - "Land only on the sealed surfaces, as the crosses mean soft ground."
+  answer: 2
+  explanation: "White crosses on a runway close it: it must not be used. Two crosses beside the windsock would mean gliding, and a white dumb-bell would mean sealed surfaces only."
+  references: ["RFRC 2.5"]
+  difficulty: 1
+
+- id: RFRC-X059
+  kind: mcq
+  elements: ["RFRC 2.5.4"]
+  stem: "On a sealed runway, the white stripes running along the runway at its start (the 'piano keys') mark:"
+  options:
+    - "The runway end, beyond which there is no usable surface."
+    - "The threshold, where the landing area begins."
+    - "The aiming point for touchdown."
+    - "The runway holding position."
+  answer: 1
+  explanation: "Piano keys mark the threshold. The aiming point is two broad bars further along, and holding positions are yellow taxiway markings."
+  references: ["RFRC 2.5", "AIP AD 1.1"]
+  difficulty: 1
+
+- id: RFRC-X060
+  kind: mcq
+  elements: ["RFRC 2.5.4"]
+  stem: "Taxiing out for departure, you reach two solid yellow lines followed by two dashed yellow lines across the taxiway, beside a red sign. What do you do?"
+  options:
+    - "Cross them; the dashed lines show the runway is clear."
+    - "Stop on the far side of the dashed lines, at the runway edge."
+    - "Slow down and cross after checking the windsock."
+    - "Stop before the solid lines; it is a runway holding position."
+  answer: 3
+  explanation: "This is a runway holding position: hold on the solid side, which faces you as you approach the runway. The dashed side faces the runway so vacating aircraft can cross freely."
+  references: ["RFRC 2.5", "AIP AD 1.1"]
+  difficulty: 2
+
+- id: RFRC-X061
+  kind: mcq
+  elements: ["RFRC 2.5.4"]
+  stem: "On a sealed runway, how is the end of the usable runway normally shown?"
+  options:
+    - "By arrows pointing to a white line across the runway."
+    - "By a transverse stripe or the end of the side stripes."
+    - "By a single dashed yellow line across the runway."
+    - "By a row of white gable markers across the pavement."
+  answer: 1
+  explanation: "A transverse stripe or the end of the side stripes marks the runway end on a sealed runway; on an unsealed strip, gables or cones at the ends do it. Arrows to a line mark a displaced threshold."
+  references: ["RFRC 2.5", "AIP AD 1.1"]
+  difficulty: 2
+
+- id: RFRC-X062
+  kind: mcq
+  elements: ["RFRC 2.6.1"]
+  stem: "In Class D, the tower clears you to land behind a Piper on final. Who is responsible for keeping you apart from the Piper?"
+  options:
+    - "You, using the traffic information and what you can see."
+    - "The tower, because Class D is controlled airspace."
+    - "The Piper's pilot, because it is ahead of you."
+    - "The approach controller, because you are both on final."
+  answer: 0
+  explanation: "In Class D, ATC separates IFR from IFR and gives VFR traffic information; it sequences you but does not separate VFR from VFR. Keeping your spacing behind the Piper is your job by sight."
+  references: ["RFRC 2.6", "AIP ENR 1.4"]
+  difficulty: 3
+
+- id: RFRC-X063
+  kind: mcq
+  elements: ["RFRC 2.6.1"]
+  stem: "An RPL holder without the controlled airspace endorsement is at 1,500 ft in Class G south of Perth, under a Class C step with a lower limit of 2,500 ft, and climbs to 3,000 ft to avoid turbulence. What has happened?"
+  options:
+    - "Nothing wrong, because the step boundary is horizontal, not vertical."
+    - "Nothing wrong, as long as the pilot broadcasts on the area frequency."
+    - "The pilot has entered Class C without a clearance: an airspace infringement."
+    - "The pilot has entered Class E, where no clearance is needed."
+  answer: 2
+  explanation: "Below the step's lower limit you are in Class G; climbing through 2,500 ft takes you into Class C, which needs a clearance and, for an RPL holder, the endorsement. The boundary you must watch is often vertical."
+  references: ["RFRC 2.6"]
+  difficulty: 2
+
+- id: RFRC-X064
+  kind: mcq
+  elements: ["RFRC 2.6.1"]
+  stem: "Your planned track crosses a danger area marked for parachuting. Which is correct?"
+  options:
+    - "You may never enter a danger area."
+    - "You may enter only with the controlling authority's clearance when it is active."
+    - "You may enter only if you hold the controlled airspace endorsement."
+    - "You may enter, but it is your responsibility to know and manage the risk."
+  answer: 3
+  explanation: "A danger area warns of a hazardous activity; entry is allowed but the risk is yours to know. Prohibited means never, and restricted means only with a clearance when active."
+  references: ["RFRC 2.6", "AIP ENR 5.1"]
+  difficulty: 1
+
+- id: RFRC-X065
+  kind: mcq
+  elements: ["RFRC 2.6.2"]
+  stem: "On a VNC you see a Class C step labelled 'C LL 4500'. You are cruising beneath it at 3,500 ft with no other airspace shown. Which is correct?"
+  options:
+    - "You are in Class G and need no clearance while you stay below 4,500 ft."
+    - "You are in Class C and need a clearance now."
+    - "The step ends at 4,500 ft and you are inside it."
+    - "You are in Class E and must hold a transponder code."
+  answer: 0
+  explanation: "'C LL 4500' means Class C with a lower limit of 4,500 ft. Below it, with nothing else shown, you are in Class G and need no clearance, but you must not climb into the step without one."
+  references: ["RFRC 2.6"]
+  difficulty: 1
+
+- id: RFRC-X066
+  kind: mcq
+  elements: ["RFRC 2.6.2"]
+  stem: "A restricted area across your track is listed in the ERSA PRD section as active 'by NOTAM'. You check the NOTAMs and find none for it today. Is it active?"
+  options:
+    - "No; 'by NOTAM' means it is active only when a NOTAM says so."
+    - "Yes; 'by NOTAM' means it is active unless a NOTAM cancels it."
+    - "Yes, during daylight hours, because restricted areas default to HJ."
+    - "It cannot be known without calling the controlling authority first."
+  answer: 0
+  explanation: "An area active 'by NOTAM' is inactive unless a NOTAM activates it. If still in doubt you can call the controlling authority, but the ERSA entry plus the NOTAM check answers the question."
+  references: ["RFRC 2.6", "AIP ENR 5.1"]
+  difficulty: 2
+
+- id: RFRC-X067
+  kind: mcq
+  elements: ["RFRC 2.6.2"]
+  stem: "A NOTAM activates a restricted area near your route from 0100 to 0800 UTC on Saturday. You plan to pass it at 1530 WST (UTC + 8). Without a clearance, may you route through it?"
+  options:
+    - "Yes, because 1530 WST is after 0800."
+    - "No, because 1530 WST is 0730 UTC, inside the active period."
+    - "Yes, because NOTAM times are in local time."
+    - "No, because restricted areas are active H24 at weekends."
+  answer: 1
+  explanation: "1530 WST - 8 hours = 0730 UTC, which is within 0100 to 0800 UTC (0900 to 1600 WST). The area is active, so without a clearance you must stay out or change the plan."
+  references: ["RFRC 2.6", "BAKC 2.3"]
+  difficulty: 3
+
+- id: RFRC-X068
+  kind: mcq
+  elements: ["RFRC 2.7.1"]
+  stem: "You are holding short at a country aerodrome when an aeroplane on a wide final, making no radio calls, starts switching its landing lights on and off repeatedly. What should you do?"
+  options:
+    - "Line up quickly and depart before it arrives."
+    - "Stay clear of the runway and expect it to land."
+    - "Flash your own lights to acknowledge, then line up."
+    - "Call it on the CTAF and wait for a reply before deciding."
+  answer: 1
+  explanation: "Repeated switching of landing or navigation lights signals an aircraft in difficulty and compelled to land, often with a radio failure. Give way: stay off the runway, or extend or leave the pattern if airborne."
+  references: ["RFRC 2.7", "ERSA EMERG"]
+  difficulty: 1
+
+- id: RFRC-X069
+  kind: mcq
+  elements: ["RFRC 2.7.1"]
+  stem: "At night, a radio-failed aircraft on final receives a steady green from the tower and flashes its landing light once in reply. What is that single flash?"
+  options:
+    - "A signal that it is compelled to land and needs the runway."
+    - "A request for the tower to switch on the runway lights."
+    - "A signal of unlawful interference on board."
+    - "An acknowledgement of the tower's light signal."
+  answer: 3
+  explanation: "Flashing the landing lights is the night acknowledgement of a light signal. Repeated, irregular switching on approach is the different signal meaning 'in difficulty and compelled to land'."
+  references: ["RFRC 2.7", "RFRC 2.3"]
+  difficulty: 2
+
+- id: RFRC-X070
+  kind: mcq
+  elements: ["RFRC 2.7.2"]
+  stem: "On landing, the nosewheel drops into a soft patch and the propeller tips strike the ground. Nothing else is damaged and nobody is hurt. How is this classified?"
+  options:
+    - "An incident, because damage limited to the propeller does not by itself make it an accident."
+    - "An accident, because the aircraft was damaged."
+    - "A serious incident, because the propeller must be replaced."
+    - "Neither, because the aircraft was on the ground."
+  answer: 0
+  explanation: "Damage limited to the engine, propeller, wheels, tyres, brakes or fairings does not by itself meet the accident definition. It affected safety, so it is a reportable incident."
+  references: ["RFRC 2.7", "Transport Safety Investigation Regulations"]
+  difficulty: 2
+
+- id: RFRC-X071
+  kind: mcq
+  elements: ["RFRC 2.7.2"]
+  stem: "Two aeroplanes pass within metres of each other in the Northam circuit. Neither is damaged and nobody is hurt. How is the occurrence classified?"
+  options:
+    - "An accident, because of the severity of the risk."
+    - "Not reportable, because nothing happened."
+    - "A serious incident, because an accident nearly occurred."
+    - "A routine incident, because there was no damage."
+  answer: 2
+  explanation: "A serious incident is one in which an accident nearly occurred, such as a near collision. An accident needs an actual outcome: death or serious injury, serious damage, or a missing aircraft."
+  references: ["RFRC 2.7", "Transport Safety Investigation Regulations"]
+  difficulty: 2
+
+- id: RFRC-X072
+  kind: mcq
+  elements: ["RFRC 2.7.3"]
+  stem: "On short final at a country strip a ute drives across the runway and you go around with metres to spare. Nobody is hurt. What reporting is required?"
+  options:
+    - "A written report to CASA within 7 days."
+    - "Phone the ATSB as soon as practicable, then a written report within 72 hours."
+    - "A written report to the ATSB within 72 hours only."
+    - "An entry in Part 2 of the maintenance release only."
+  answer: 1
+  explanation: "A runway incursion where an accident nearly occurred is a serious incident, which is immediately reportable: phone the ATSB (1800 011 034) by the quickest means, then write within 72 hours. Reports go to the ATSB, not CASA."
+  references: ["RFRC 2.7", "Transport Safety Investigation Regulations"]
+  difficulty: 2
+
+- id: RFRC-X073
+  kind: mcq
+  elements: ["RFRC 2.7.3"]
+  stem: "After a forced landing accident in a paddock, nobody is trapped but fuel is leaking near the hot engine. When may the wreckage be moved?"
+  options:
+    - "At any time once everyone is out, so the farmer can use the paddock."
+    - "Only after the written report to the ATSB has been submitted."
+    - "Only to rescue people or prevent further damage, unless the ATSB or police agree."
+    - "Only once a CASA inspector has examined the aircraft on site."
+  answer: 2
+  explanation: "Wreckage is not disturbed except to rescue people or prevent further damage, unless the ATSB or police agree, because switch and control positions are evidence. Acting to stop a fire is allowed."
+  references: ["RFRC 2.7"]
+  difficulty: 2
+
+- id: RFRC-X074
+  kind: mcq
+  elements: ["RFRC 2.7.4"]
+  stem: "You plan to land at Hyden at 1415 WST and choose a 30-minute margin. What SARTIME do you lodge?"
+  options:
+    - "0615 UTC"
+    - "0645 UTC"
+    - "1445 UTC"
+    - "2245 UTC"
+  answer: 1
+  explanation: "1415 + 30 minutes = 1445 WST; WST is UTC + 8, so 1445 - 8 hours = 0645 UTC. 0615 UTC drops the margin, and 2245 UTC adds the 8 hours instead of subtracting."
+  references: ["RFRC 2.7", "AIP ENR 1.10", "BAKC 2.3"]
+  difficulty: 3
+
+- id: RFRC-X075
+  kind: mcq
+  elements: ["RFRC 2.7.4"]
+  stem: "En route to a remote strip, a headwind means you will arrive only five minutes before your SARTIME. What should you do?"
+  options:
+    - "Nothing; a SARTIME is a planning figure only."
+    - "Cancel it now, since you are clearly not in difficulty."
+    - "Wait until after landing and then explain the delay."
+    - "Extend it by radio or phone before it expires."
+  answer: 3
+  explanation: "Extend the SARTIME before it expires. If it passes uncancelled, the alerting phases begin and search resources are committed; cancelling it early leaves you with no SAR cover for the rest of the flight."
+  references: ["RFRC 2.7", "AIP ENR 1.10"]
+  difficulty: 2
+
+- id: RFRC-X076
+  kind: mcq
+  elements: ["RFRC 2.7.5"]
+  stem: "A passenger becomes unwell and you want priority to land, but the aircraft itself is in no danger. Which call, set out in ERSA EMERG, fits?"
+  options:
+    - "MAYDAY"
+    - "PAN PAN"
+    - "SECURITE"
+    - "No call; just join the circuit"
+  answer: 1
+  explanation: "PAN PAN is the urgency call, for a problem without immediate danger. MAYDAY is for grave and imminent danger needing immediate assistance. Both are in ERSA EMERG, the in-flight emergency reference."
+  references: ["RFRC 2.7", "ERSA EMERG"]
+  difficulty: 2
+
+- id: RFRC-X077
+  kind: mcq
+  elements: ["RFRC 2.7.5"]
+  stem: "Your radio fails on the way into a towered aerodrome. Which transponder code, listed in ERSA EMERG, tells ATC of the radio failure?"
+  options:
+    - "7500"
+    - "7700"
+    - "7600"
+    - "2000"
+  answer: 2
+  explanation: "ERSA EMERG lists 7600 for radio failure, 7700 for emergency and 7500 for unlawful interference, along with the radio failure procedures to follow."
+  references: ["RFRC 2.7", "ERSA EMERG"]
+  difficulty: 1
