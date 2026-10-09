@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import page_header, empty %}
 {% from "_icons.html" import icon %}
+{% from "_readiness.html" import mock_trend %}
 {% block title %}Mock exam · {{ app_name }}{% endblock %}
 {% block content %}
 {{ page_header("Mock exam", "A timed exam in the RPLA or PPLA format. No feedback until you submit, then a Knowledge Deficiency Report.", "timer") }}
@@ -72,6 +73,13 @@
         </details>
       {% endif %}
       {% if exam.fuel_policy %}<p class="flex items-start gap-2 text-xs text-fg-muted">{{ icon("zap", "mt-px size-3.5 shrink-0 text-accent") }}<span><strong class="text-fg">Fuel policy:</strong> {{ exam.fuel_policy }}</span></p>{% endif %}
+      {% set trend = trends.get(exam.code) if trends else none %}
+      {% if trend %}
+        <div class="border-t border-line pt-4">
+          <p class="mb-3 flex items-center gap-2 text-sm font-bold">{{ icon("chart", "size-4 text-brand") }} Your {{ exam.code }} mock scores</p>
+          {{ mock_trend(trend, exam.pass_mark_percent, "trend-" ~ exam.code | lower) }}
+        </div>
+      {% endif %}
       <form method="post" action="/exam/start" class="mt-auto">
         <input type="hidden" name="exam_code" value="{{ exam.code }}">
         <button type="submit" class="btn-primary btn-lg w-full">{{ icon("timer", "size-5") }} Start {{ exam.code }} mock exam</button>

@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import Attempt, AttemptAnswer, Question, QuestionElement, Subtopic
+from app.services import mistakes
 from app.services.progress import element_accuracy
 
 
@@ -84,6 +85,8 @@ def record_answer(session: Session, attempt: Attempt, position: int, given: str 
     ans.answered_at = utcnow()
     if grade_now:
         ans.correct = mark(ans.question, given)
+        if ans.correct is not None:
+            mistakes.record(session, ans.question_id, ans.correct)
     session.commit()
     return ans
 
@@ -93,8 +96,11 @@ def finish_attempt(session: Session, attempt: Attempt) -> Attempt:
     if attempt.exam_code:
         from app.models import Exam
         pass_mark = session.get(Exam, attempt.exam_code).pass_mark_percent
+    graded_live = attempt.mode == "quiz"  # quiz answers were recorded as mistakes when marked
     for a in attempt.answers:
         a.correct = mark(a.question, a.given)
+        if a.correct is not None and not graded_live:
+            mistakes.record(session, a.question_id, a.correct)
         if a.correct is None:
             a.correct = False  # unanswered counts as wrong once submitted
     attempt.correct_count = sum(1 for a in attempt.answers if a.correct)

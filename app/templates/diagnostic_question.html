@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_study_macros.html" import workbook_link, option_card %}
+{% from "_macros.html" import text_size_control %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ attempt.title or "Diagnostic" }} · {{ app_name }}{% endblock %}
+{% block reading_tools %}{{ text_size_control() }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-[60rem]">
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <p class="flex min-w-0 items-center gap-2.5 font-semibold"><span class="chip chip-sm chip-grad">{{ icon("compass") }}</span>{{ attempt.title or "Diagnostic" }}</p>
+    <a href="/diagnostic" class="btn-ghost btn-sm">{{ icon("clock", "size-3.5") }} Stop for now</a>
+  </div>
+
+  {% if new_round %}
+    <div class="callout callout-brand rise mb-5 flex items-start gap-3" role="status">
+      <span class="chip chip-sm chip-brand">{{ icon("sparkle") }}</span>
+      <p class="min-w-0 pt-1"><strong class="text-fg">Round 2: a second question on the {{ total }} subtopic{{ "s" if total != 1 }} you got right.</strong>
+        Same rules: no feedback until the end.</p>
+    </div>
+  {% endif %}
+
+  <article class="card animate-rise space-y-5 p-5 sm:p-7">
+    <div class="space-y-3">
+      <div class="flex items-center justify-between gap-3">
+        <span class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+          <span class="badge badge-brand">Round {{ round }}</span>
+          <span class="font-semibold">Question {{ index }} of {{ total }}</span>
+        </span>
+        <span class="badge shrink-0">{{ q.subtopic_id or q.unit_code }}</span>
+      </div>
+      <progress class="h-2.5" value="{{ index - 1 }}" max="{{ total }}" aria-label="Round {{ round }} progress: {{ index - 1 }} of {{ total }} answered"></progress>
+    </div>
+
+    <div>
+      <p class="question-stem">{{ q.stem }}</p>
+      {{ workbook_link(q) }}
+    </div>
+
+    <form method="post" action="/diagnostic/{{ attempt.id }}/answer" class="space-y-5">
+      <input type="hidden" name="position" value="{{ position }}">
+      {% if q.kind == "mcq" %}
+        <fieldset class="options">
+          <legend class="sr-only">Choose an answer</legend>
+          {% for o in q.options %}
+            {% set inp %}<input type="radio" name="given" value="{{ loop.index0 }}" required>{% endset %}
+            {{ option_card(loop.index0, o, "", inp) }}
+          {% endfor %}
+        </fieldset>
+      {% else %}
+        <div class="field card-sunken">
+          <label class="label" for="given-{{ position }}">Your answer</label>
+          <div class="flex items-center gap-2">
+            <input id="given-{{ position }}" class="w-40 text-lg font-semibold tabular-nums" type="number" step="any" inputmode="numeric" name="given" required>
+            {% if q.unit_label %}<span class="text-sm font-semibold text-fg-muted">{{ q.unit_label }}</span>{% endif %}
+          </div>
+          <span class="text-xs text-fg-muted">Enter a whole number, like the real exam.</span>
+        </div>
+      {% endif %}
+      <div class="flex flex-col-reverse gap-3 border-t border-line pt-4 sm:flex-row sm:items-center sm:justify-between">
+        {# Submits the small form below: an empty answer, recorded as "I don't know". #}
+        <button type="submit" form="idk-{{ position }}" class="btn-secondary btn-lg w-full sm:w-auto" formnovalidate>{{ icon("quiz", "size-4") }} I don't know</button>
+        <button type="submit" class="btn-primary btn-lg w-full sm:w-auto">Next {{ icon("arrow-right", "size-4") }}</button>
+      </div>
+    </form>
+    <form id="idk-{{ position }}" method="post" action="/diagnostic/{{ attempt.id }}/answer" class="hidden">
+      <input type="hidden" name="position" value="{{ position }}">
+      <input type="hidden" name="given" value="">
+    </form>
+  </article>
+
+  <p class="mt-4 flex items-start gap-2 text-xs text-fg-muted">{{ icon("flag", "mt-px size-3.5 shrink-0 text-warn") }}
+    <span>Not sure? Tap <strong class="text-fg">I don't know</strong> rather than guess: a lucky guess can skip a lesson you need. Your answers are saved as you go.</span></p>
+</div>
+{% endblock %}

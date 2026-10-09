@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Mistakes · {{ app_name }}{% endblock %}
+{% block content %}
+{% set today = now().date() %}
+{% call page_header("Mistakes", "Every question you answer wrong comes back until you get it right on " ~ clear_after ~ " separate days.", "target") %}
+  {% if counts.open %}
+    <form method="post" action="/quiz/start" class="m-0">
+      <input type="hidden" name="mistakes" value="1">
+      <input type="hidden" name="count" value="10">
+      <button type="submit" class="btn-primary">{{ icon("play", "size-4") }} Retry {{ [10, counts.open] | min }} now</button>
+    </form>
+  {% endif %}
+{% endcall %}
+
+<div class="mb-8 grid grid-cols-3 gap-3">
+  {% for label, value, name, chip, note in [
+      ("Due today", counts.due, "clock", "chip-warn", "ready to retry"),
+      ("Open", counts.open, "target", "chip-brand", "still to clear"),
+      ("Cleared", counts.cleared, "check", "chip-ok", "right on " ~ clear_after ~ " days")] %}
+    <div class="stat rise" style="--i: {{ loop.index }}">
+      <div class="mb-1 flex items-center justify-between gap-2"><span class="stat-label">{{ label }}</span><span class="chip chip-sm {{ chip }} hidden sm:grid">{{ icon(name) }}</span></div>
+      <span class="stat-value">{{ value }}</span>
+      <span class="hidden text-xs text-fg-muted sm:block">{{ note }}</span>
+    </div>
+  {% endfor %}
+</div>
+
+{% if groups %}
+  <div class="grid gap-4 lg:grid-cols-2">
+    {% for g in groups %}
+      {% set sub = g.subtopic %}
+      {% set n_due = g.mistakes | selectattr("due", "le", today) | list | length %}
+      <section class="card rise flex min-w-0 flex-col gap-3 p-4 sm:p-5" style="--i: {{ [loop.index + 3, 10] | min }}">
+        <div class="flex items-start justify-between gap-3">
+          {% if sub %}
+            <a href="{{ note_url(sub) }}" class="flex min-w-0 items-start gap-2 font-semibold text-fg no-underline hover:text-brand hover:underline">
+              {{ icon("book", "mt-0.5 size-4 shrink-0 text-brand") }}<span class="min-w-0"><span class="text-fg-muted">{{ sub.id }}</span> {{ sub.title }}</span></a>
+          {% else %}
+            <p class="flex min-w-0 items-start gap-2 font-semibold text-fg">{{ icon("quiz", "mt-0.5 size-4 shrink-0 text-fg-muted") }}Other questions</p>
+          {% endif %}
+          <span class="flex shrink-0 flex-wrap justify-end gap-1">
+            {% if n_due %}<span class="badge warn">{{ n_due }} due</span>{% endif %}
+            <span class="badge">{{ g.mistakes | length }} open</span>
+          </span>
+        </div>
+        <ul class="row-list border-t border-line pt-3">
+          {% for m in g.mistakes %}
+            <li class="flex flex-col gap-1.5 py-2.5 first:pt-0 last:pb-0">
+              <p class="text-sm text-fg">{{ m.question.stem | truncate(140) }}</p>
+              <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
+                <span>missed {{ m.miss_count }}×</span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="inline-flex gap-1" aria-hidden="true">
+                    {% for i in range(clear_after) %}<i class="size-2 rounded-full {{ 'bg-brand' if i < m.streak else 'border border-line-strong' }}"></i>{% endfor %}
+                  </span>
+                  <span>{{ m.streak }}/{{ clear_after }} right<span class="sr-only"> on separate days</span></span>
+                </span>
+                {% if m.due <= today %}
+                  <span class="badge warn">{{ icon("clock", "size-3") }}due today</span>
+                {% else %}
+                  <span>next {{ m.due.strftime("%a %-d %b") }}</span>
+                {% endif %}
+                <span class="text-fg-faint">{{ m.question.id }}</span>
+              </p>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  {% if counts.cleared %}
+    {{ empty("No open mistakes: all " ~ counts.cleared ~ " you have missed are cleared. Nice work!", "/quiz", "Take a quiz", "sparkle") }}
+  {% else %}
+    {{ empty("No mistakes yet. Questions you answer wrong in quizzes, mocks and the diagnostic will collect here.", "/quiz", "Take a quiz", "sparkle") }}
+  {% endif %}
+{% endif %}
+{% endblock %}

@@ -7,6 +7,36 @@
 
 {% if error %}<p class="errors rise mb-6 flex items-start gap-2" role="alert">{{ icon("alert", "mt-0.5 size-4 shrink-0") }}<span>{{ error }}</span></p>{% endif %}
 
+{# My mistakes: its own small form (outside the main one, as forms cannot nest). #}
+{% set mc = mistake_counts %}
+{% if not subtopic and (mc.open or mistakes) %}
+  <section class="card rise mb-6 flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5 {{ 'border-2 border-brand bg-brand-soft/30' if mistakes }}" aria-labelledby="my-mistakes">
+    <div class="flex min-w-0 flex-1 items-start gap-3">
+      <span class="chip {{ 'chip-grad' if mistakes else 'chip-brand' }}">{{ icon("target") }}</span>
+      <div class="min-w-0">
+        <h2 id="my-mistakes" class="card-title">My mistakes</h2>
+        {% if mc.open %}
+          <p class="text-sm text-fg-muted"><strong class="text-fg tabular-nums">{{ mc.due }}</strong> due today · <strong class="text-fg tabular-nums">{{ mc.open }}</strong> open
+            · <a href="/mistakes" class="font-semibold">See all</a></p>
+        {% else %}
+          <p class="flex items-center gap-1.5 text-sm text-ok-fg">{{ icon("check", "size-4 shrink-0") }}All clear: no open mistakes.
+            <a href="/mistakes" class="font-semibold">See all</a></p>
+        {% endif %}
+      </div>
+    </div>
+    {% if mc.open %}
+      <form method="post" action="/quiz/start" class="m-0 flex flex-wrap items-center gap-2">
+        <input type="hidden" name="mistakes" value="1">
+        <label class="sr-only" for="mistake-count">Number of questions</label>
+        <select id="mistake-count" name="count" class="w-auto">
+          {% for c in count_choices %}<option value="{{ c }}" {% if c == 10 %}selected{% endif %}>{{ c }} questions</option>{% endfor %}
+        </select>
+        <button type="submit" class="{{ 'btn-primary' if mistakes else 'btn-secondary' }}">{{ icon("play", "size-4") }} Retry mistakes</button>
+      </form>
+    {% endif %}
+  </section>
+{% endif %}
+
 <form method="post" action="/quiz/start" class="space-y-6">
   {% if subtopic %}
     {# One subtopic, chosen from a lesson or the syllabus. #}

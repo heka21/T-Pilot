@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.db import get_session
 from app.models import STATUSES, Subtopic, Unit
 from app.routers.syllabus import exams_with_units, subtopic_url
-from app.services import progress
+from app.services import progress, readiness
 from app.templating import templates
 
 router = APIRouter(tags=["progress"])
@@ -39,5 +39,6 @@ def progress_page(request: Request, session: Session = Depends(get_session)) -> 
         "units": [(u, progress.unit_progress(session, u.code)) for u in units],
         "weak": progress.weak_subtopics(session),
         "attempts": progress.recent_attempts(session, 10),
+        "readiness": readiness.report(session, "RPLA"),
     }
     return templates.TemplateResponse(request, "progress.html", ctx)

@@ -1,0 +1,193 @@
+{# Exam readiness: the predicted-score card (dashboard compact, /progress full) and the mock-score trend chart.
+   `r` is services.readiness.report(); `mocks` is services.readiness.mock_history(). #}
+{% from "_icons.html" import icon %}
+
+{% macro readiness_card(r, compact=False) -%}
+{% set met = r.checks | selectattr("ok") | list | length %}
+{% set n_checks = r.checks | length %}
+{% set code = r.exam.code %}
+<section id="readiness" class="card rise scroll-mt-24" style="--i: 2" aria-labelledby="readiness-title">
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <h2 id="readiness-title" class="flex items-center gap-2.5 text-lg font-bold">{{ icon("target", "size-5 text-brand") }} {{ code }} readiness</h2>
+    {% if compact %}<a href="/progress#readiness" class="btn-ghost btn-sm">Details {{ icon("arrow-right", "size-3.5") }}</a>{% endif %}
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-8">
+    {# ---------------------------------------------------------------- headline, meter, verdict, checklist #}
+    <div class="flex min-w-0 flex-col gap-5">
+      <div>
+        <p class="eyebrow">Predicted {{ code }} score</p>
+        {% if r.predicted is not none %}
+          <p class="mt-1 flex flex-wrap items-baseline gap-x-2">
+            <span class="text-5xl font-black tabular-nums tracking-tight text-fg">{{ r.predicted }}%</span>
+            {% if r.low_confidence %}<span class="text-sm font-semibold text-fg-muted">(early estimate)</span>{% endif %}
+          </p>
+        {% else %}
+          <p class="mt-1 text-5xl font-black tracking-tight text-fg-faint" aria-label="No prediction yet">—</p>
+          <p class="mt-1 text-sm text-fg-muted">Answer a few questions in every unit to get a prediction.</p>
+        {% endif %}
+      </div>
+
+      {# 0-100 meter with the pass mark. #}
+      <div role="img" aria-label="{% if r.predicted is not none %}Predicted score {{ r.predicted }}%{% else %}No prediction yet{% endif %}, pass mark {{ r.pass_mark }}%">
+        <div class="relative h-3 rounded-full bg-surface-2">
+          {% if r.predicted is not none %}<i class="block h-full rounded-full bg-brand transition-[width] duration-700" style="width: {{ [r.predicted, 100] | min }}%"></i>{% endif %}
+          <span class="absolute -inset-y-1 w-0.5 -translate-x-1/2 rounded-full bg-fg" style="left: {{ r.pass_mark }}%"></span>
+        </div>
+        <div class="relative mt-1.5 h-4 text-xs font-semibold text-fg-muted" aria-hidden="true">
+          <span class="absolute left-0">0</span>
+          <span class="absolute -translate-x-1/2 whitespace-nowrap text-fg" style="left: {{ r.pass_mark }}%">Pass {{ r.pass_mark }}%</span>
+          <span class="absolute right-0">100</span>
+        </div>
+      </div>
+
+      {% if r.ready %}
+        <div class="callout callout-ok flex flex-wrap items-center gap-3" data-celebrate="small" role="status">
+          <span class="chip chip-sm chip-ok">{{ icon("trophy") }}</span>
+          <p class="min-w-0 flex-1 font-semibold text-ok-fg">Ready to book your {{ code }}</p>
+          <a href="/reference/exam-formats" class="btn-secondary btn-sm">Booking and exam format {{ icon("arrow-right", "size-3.5") }}</a>
+        </div>
+      {% endif %}
+
+      {% macro check_list() %}
+        <ul class="flex flex-col gap-3">
+          {% for c in r.checks %}
+            <li class="flex items-start gap-3 text-sm">
+              <span class="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full {{ 'bg-ok-soft text-ok-fg' if c.ok else 'bg-surface-2 text-fg-muted' }}">{{ icon("check" if c.ok else "close", "size-3.5") }}</span>
+              <span class="min-w-0 flex-1">
+                <span class="sr-only">{{ "Met:" if c.ok else "Not met yet:" }}</span>
+                <span class="block font-medium text-fg">{{ c.label }}</span>
+                <span class="block text-xs text-fg-muted">{{ c.value }}</span>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endmacro %}
+
+      {% if compact %}
+        <details class="disclosure">
+          <summary><span class="flex items-center gap-2">{{ icon("check" if r.ready else "flag", "size-4 shrink-0 " ~ ("text-ok" if r.ready else "text-fg-muted")) }}
+            {% if r.ready %}All {{ n_checks }} booking checks met{% else %}Keep going: {{ met }} of {{ n_checks }} booking checks met{% endif %}</span></summary>
+          {{ check_list() }}
+        </details>
+      {% else %}
+        <div>
+          <h3 class="mb-3 text-sm font-bold">Ready to book?</h3>
+          {{ check_list() }}
+          {% if not r.ready %}<p class="mt-4 text-sm font-semibold text-fg-muted">Keep going: {{ met }} of {{ n_checks }} met.</p>{% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    {# ---------------------------------------------------------------- per unit #}
+    <div class="min-w-0">
+      <p class="eyebrow mb-3">By unit</p>
+      <ul class="flex flex-col gap-3.5">
+        {% for u in r.units %}
+          <li>
+            <div class="flex items-baseline justify-between gap-3 text-sm">
+              <p class="min-w-0 truncate" title="{{ u.unit_code }} {{ u.unit.title }}"><strong class="text-fg">{{ u.unit_code }}</strong> <span class="text-fg-muted">{{ u.unit.title }}</span></p>
+              <span class="shrink-0 font-bold tabular-nums {{ 'text-fg' if u.readiness is not none else 'text-fg-faint' }}">{{ u.readiness ~ "%" if u.readiness is not none else "–" }}</span>
+            </div>
+            <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2" role="img"
+                 aria-label="{{ u.unit_code }}: {{ ('readiness ' ~ u.readiness ~ '%') if u.readiness is not none else 'no answers yet' }}">
+              {% if u.readiness is not none %}<i class="block h-full rounded-full bg-brand" style="width: {{ u.readiness }}%"></i>{% endif %}
+            </div>
+            <p class="mt-1 text-xs text-fg-muted">
+              {% if u.answered %}{{ u.answered }} answer{{ "s" if u.answered != 1 }}{% if not u.confident %} (early){% endif %}{% else %}No answers yet{% endif %}
+              · coverage {{ u.coverage }}%</p>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="mt-4 text-xs text-fg-faint">Recent answers count most; a repeat of a question you have seen counts half. Syllabus coverage overall: {{ r.coverage }}%.</p>
+    </div>
+  </div>
+
+  {% if not compact and r.mocks %}
+    <div class="mt-6 border-t border-line pt-5">
+      <h3 class="mb-3 text-sm font-bold">{{ code }} mock scores</h3>
+      {{ mock_trend(r.mocks, r.pass_mark, "trend-progress-" ~ code | lower) }}
+    </div>
+  {% endif %}
+</section>
+{%- endmacro %}
+
+
+{# Mock-score trend: one brand-coloured line, y 0-100%, reference lines at the pass mark and the 80% target.
+   A dot is filled when at least 70% of that mock's questions were new to you, hollow otherwise (or unknown).
+   Each dot is focusable with a tooltip (the <title> for hover, a drawn tip for hover and focus). #}
+{% macro mock_trend(mocks, pass_mark=70, uid="trend") -%}
+{% set W, H = 360, 184 %}
+{% set L, R, T, B = 42, 74, 20, 26 %}
+{% set pw, ph = W - L - R, H - T - B %}
+{% set x0, x1 = L + 12, L + pw - 16 %}
+{% set n = mocks | length %}
+{% set step = ((n + 7) // 8) if n > 8 else 1 %}
+{% macro ypos(v) %}{{ (T + ph * (1 - ([[v, 0] | max, 100] | min) / 100)) | round(1) }}{% endmacro %}
+{% macro xpos(i) %}{{ ((x0 + (x1 - x0) * i / (n - 1)) if n > 1 else (L + pw / 2)) | round(1) }}{% endmacro %}
+<figure class="trend m-0" id="{{ uid }}">
+  <style>{% for m in mocks %}#{{ uid }}:has(.d{{ loop.index }}:is(:hover, :focus-visible)) .t{{ loop.index }}{% if not loop.last %},{% endif %}{% endfor %} { opacity: 1; }</style>
+  <svg viewBox="0 0 {{ W }} {{ H }}" class="block h-auto w-full max-w-[34rem] overflow-visible text-[11px]" role="group"
+       aria-label="Mock exam scores, oldest to newest: {% for m in mocks %}{{ m.score | round | int }}%{{ ', ' if not loop.last }}{% endfor %}">
+    {# Gridlines: 0, 50, 100 recessive; pass mark dashed, target dotted. #}
+    {% for v in [0, 50, 100] %}
+      <line x1="{{ L }}" x2="{{ L + pw }}" y1="{{ ypos(v) }}" y2="{{ ypos(v) }}" class="stroke-line" stroke-width="1"/>
+      <text x="{{ L - 6 }}" y="{{ ypos(v) | float + 3.5 }}" text-anchor="end" class="fill-fg-muted tabular-nums">{{ v }}%</text>
+    {% endfor %}
+    <line x1="{{ L }}" x2="{{ L + pw }}" y1="{{ ypos(80) }}" y2="{{ ypos(80) }}" class="stroke-fg-faint" stroke-width="1" stroke-dasharray="1 3" stroke-linecap="round"/>
+    <text x="{{ L + pw + 6 }}" y="{{ ypos(80) | float + 3.5 }}" class="fill-fg-muted">Target 80%</text>
+    <line x1="{{ L }}" x2="{{ L + pw }}" y1="{{ ypos(pass_mark) }}" y2="{{ ypos(pass_mark) }}" class="stroke-fg-muted" stroke-width="1.25" stroke-dasharray="5 4"/>
+    <text x="{{ L + pw + 6 }}" y="{{ ypos(pass_mark) | float + 3.5 }}" class="fill-fg font-semibold">Pass {{ pass_mark }}%</text>
+
+    {# x axis: mock number #}
+    <text x="{{ L - 6 }}" y="{{ H - 6 }}" text-anchor="end" class="fill-fg-faint">Mock</text>
+    {% for m in mocks %}
+      {% if (loop.index0 % step == 0) or loop.last %}
+        <text x="{{ xpos(loop.index0) }}" y="{{ H - 6 }}" text-anchor="middle" class="fill-fg-muted tabular-nums">{{ loop.index }}</text>
+      {% endif %}
+    {% endfor %}
+
+    {% if n > 1 %}
+      <polyline points="{% for m in mocks %}{{ xpos(loop.index0) }},{{ ypos(m.score) }} {% endfor %}" fill="none" class="stroke-brand" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    {% endif %}
+
+    {# Dots, each with a big invisible hit circle. #}
+    {% for m in mocks %}
+      {% set fresh = m.fresh_share is not none and m.fresh_share >= 0.7 %}
+      {% set label = "Mock " ~ loop.index ~ " · " ~ m.date.strftime("%-d %b %Y") ~ " · " ~ (m.score | round | int) ~ "% · " ~ (((m.fresh_share * 100) | round | int ~ "% new questions") if m.fresh_share is not none else "share of new questions not recorded") %}
+      <g class="trend-dot d{{ loop.index }}" tabindex="0" role="img" aria-label="{{ label }}">
+        <title>{{ label }}</title>
+        <circle cx="{{ xpos(loop.index0) }}" cy="{{ ypos(m.score) }}" r="12" fill="transparent"/>
+        <circle cx="{{ xpos(loop.index0) }}" cy="{{ ypos(m.score) }}" r="7" class="trend-ring fill-surface"/>
+        {% if fresh %}
+          <circle cx="{{ xpos(loop.index0) }}" cy="{{ ypos(m.score) }}" r="5" class="fill-brand"/>
+        {% else %}
+          <circle cx="{{ xpos(loop.index0) }}" cy="{{ ypos(m.score) }}" r="4" class="fill-surface stroke-brand" stroke-width="2"/>
+        {% endif %}
+      </g>
+    {% endfor %}
+
+    {# Direct label: the latest score only. #}
+    {% set last = mocks | last %}
+    <text x="{{ xpos(n - 1) }}" y="{{ ypos(last.score) | float - 11 }}" text-anchor="middle" class="fill-fg text-[12px] font-bold tabular-nums">{{ last.score | round | int }}%</text>
+
+    {# Tooltips, drawn last so they sit on top; shown by the <style> above. #}
+    {% set tw, th = 164, 36 %}
+    {% for m in mocks %}
+      {% set cx = xpos(loop.index0) | float %}
+      {% set cy = ypos(m.score) | float %}
+      {% set tx = [[cx - tw / 2, 2] | max, W - tw - 2] | min %}
+      {% set ty = (cy - 14 - th) if (cy - 14 - th) >= 0 else (cy + 14) %}
+      <g class="trend-tip t{{ loop.index }}" aria-hidden="true">
+        <rect x="{{ tx | round(1) }}" y="{{ ty | round(1) }}" width="{{ tw }}" height="{{ th }}" rx="7" class="fill-surface stroke-line-strong" stroke-width="1"/>
+        <text x="{{ (tx + 9) | round(1) }}" y="{{ (ty + 15) | round(1) }}" class="fill-fg font-semibold">Mock {{ loop.index }} · {{ m.date.strftime("%-d %b %Y") }}</text>
+        <text x="{{ (tx + 9) | round(1) }}" y="{{ (ty + 29) | round(1) }}" class="fill-fg-muted"><tspan class="fill-fg font-semibold">{{ m.score | round | int }}%</tspan> · {% if m.fresh_share is not none %}{{ (m.fresh_share * 100) | round | int }}% new questions{% else %}new share unknown{% endif %}</text>
+      </g>
+    {% endfor %}
+  </svg>
+  <figcaption class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-muted">
+    <span class="inline-flex items-center gap-1.5"><svg class="size-3" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" class="fill-brand"/></svg>mostly new questions</span>
+    <span class="inline-flex items-center gap-1.5"><svg class="size-3" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4" class="fill-surface stroke-brand" stroke-width="2"/></svg>mostly seen before</span>
+  </figcaption>
+</figure>
+{%- endmacro %}

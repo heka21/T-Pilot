@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_session
 from app.models import Exam, ExamUnit, Progress, Subtopic
-from app.services import planner, progress, srs
+from app.services import diagnostic, mistakes, planner, progress, readiness, srs
 from app.templating import templates
 
 router = APIRouter()
@@ -52,13 +52,20 @@ def build_dashboard(session: Session) -> dict[str, Any]:
     last = progress.recent_attempts(session, 1)
     plan = planner.active_plan(session)
     plan_status = planner.status(session, plan) if plan else None
+    mistake_counts = mistakes.counts(session)
+    links = PLAN_ITEM_LINKS | ({"quiz": "/quiz?mistakes=1"} if mistake_counts["due"] else {})
     return {
         "exams": exams,
         "exam_progress": {e.code: progress.exam_progress(session, e.code) for e in exams},
         "plan": plan,
         "plan_status": plan_status,
         "today_items": plan_status["today_items"] if plan_status else [],
-        "item_links": PLAN_ITEM_LINKS,
+        "item_links": links,
+        "mistakes": mistake_counts,
+        "readiness": readiness.report(session, "RPLA"),
+        # Offer the placement test until one is taken, while little has been studied yet.
+        "offer_diagnostic": diagnostic.latest(session) is None and len(planner.completed_subtopics(session)) < 5,
+        "open_diagnostic": diagnostic.open_diagnostic(session),
         "due_cards": srs.due_count(session),
         "last_attempt": last[0] if last else None,
         "weak": progress.weak_subtopics(session, 5),

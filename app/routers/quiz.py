@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_session
 from app.models import Attempt, Exam, ExamUnit, Question, Subtopic, Unit
+from app.services import mistakes as mistakes_svc
 from app.services import quiz as quiz_svc
 from app.templating import templates
 
@@ -24,7 +25,7 @@ def get_attempt(session: Session, attempt_id: int, mode: str = "quiz") -> Attemp
 
 
 def setup_context(session: Session, subtopic_id: str | None, weak: bool, count: int = 10,
-                  selected: list[str] | None = None, error: str | None = None) -> dict:
+                  selected: list[str] | None = None, error: str | None = None, mistakes: bool = False) -> dict:
     exams = session.scalars(select(Exam).options(selectinload(Exam.units).selectinload(ExamUnit.unit))
                             .order_by(Exam.duration_minutes, Exam.code)).all()
     counts = dict(session.execute(select(Question.unit_code, func.count()).group_by(Question.unit_code)).all())
@@ -32,7 +33,8 @@ def setup_context(session: Session, subtopic_id: str | None, weak: bool, count: 
     sub_count = session.scalar(select(func.count()).select_from(Question).where(Question.subtopic_id == subtopic.id)) if subtopic else 0
     return {"exams": exams, "counts": counts, "subtopic": subtopic, "subtopic_count": sub_count, "weak": weak,
             "count": count, "count_choices": COUNTS, "selected": selected or [], "error": error,
-            "total_questions": sum(counts.values())}
+            "total_questions": sum(counts.values()), "mistakes": mistakes,
+            "mistake_counts": mistakes_svc.counts(session)}
 
 
 def question_context(attempt: Attempt, position: int) -> dict:
@@ -48,18 +50,28 @@ def next_unanswered(attempt: Attempt) -> int | None:
 
 
 @router.get("", response_class=HTMLResponse)
-def quiz_setup(request: Request, subtopic: str | None = None, weak: int = 0, unit: list[str] | None = None,
-               session: Session = Depends(get_session)) -> HTMLResponse:
-    ctx = setup_context(session, subtopic, bool(weak), selected=unit or [])
+def quiz_setup(request: Request, subtopic: str | None = None, weak: int = 0, mistakes: int = 0,
+               unit: list[str] | None = None, session: Session = Depends(get_session)) -> HTMLResponse:
+    ctx = setup_context(session, subtopic, bool(weak), selected=unit or [], mistakes=bool(mistakes))
     return templates.TemplateResponse(request, "quiz_setup.html", ctx)
 
 
 @router.post("/start")
 def quiz_start(request: Request, units: list[str] = Form(default=[]), subtopic: str = Form(""),
-               count: int = Form(10), weak: str = Form(""), session: Session = Depends(get_session)) -> Response:
+               count: int = Form(10), weak: str = Form(""), mistakes: str = Form(""),
+               session: Session = Depends(get_session)) -> Response:
     count = count if count in COUNTS else 10
     weak_on = bool(weak)
     sub = session.get(Subtopic, subtopic) if subtopic else None
+    if mistakes:
+        questions = mistakes_svc.quiz_questions(session, count)
+        title = "Quiz: my mistakes"
+        if not questions:
+            ctx = setup_context(session, None, False, count, error="No open mistakes: nothing to retry.", mistakes=True)
+            return templates.TemplateResponse(request, "quiz_setup.html", ctx, status_code=422)
+        attempt = quiz_svc.start_attempt(session, questions, mode="quiz", title=title,
+                                         config={"mistakes": True, "count": count})
+        return RedirectResponse(f"/quiz/{attempt.id}", status_code=303)
     if sub:
         questions = quiz_svc.pick_questions(session, count, subtopic_ids=[sub.id], weak=weak_on)
         title = f"Quiz: {sub.id} {sub.title}"
@@ -72,6 +84,20 @@ def quiz_start(request: Request, units: list[str] = Form(default=[]), subtopic: 
         return templates.TemplateResponse(request, "quiz_setup.html", ctx, status_code=422)
     attempt = quiz_svc.start_attempt(session, questions, mode="quiz", title=title,
                                      config={"units": units, "subtopic": sub.id if sub else None, "weak": weak_on, "count": count})
+    return RedirectResponse(f"/quiz/{attempt.id}", status_code=303)
+
+
+@router.post("/retry/{attempt_id}")
+def quiz_retry(attempt_id: int, session: Session = Depends(get_session)) -> Response:
+    """A quiz of the questions a submitted quiz, mock or diagnostic got wrong, in their original order."""
+    source = session.get(Attempt, attempt_id)
+    if source is None or source.submitted_at is None:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+    questions = [a.question for a in source.answers if not a.correct]
+    if not questions:
+        return RedirectResponse("/quiz", status_code=303)
+    attempt = quiz_svc.start_attempt(session, questions, mode="quiz", title="Retry: " + (source.title or "missed questions").removeprefix("Quiz: "),
+                                     config={"retry_of": source.id, "count": len(questions)})
     return RedirectResponse(f"/quiz/{attempt.id}", status_code=303)
 
 

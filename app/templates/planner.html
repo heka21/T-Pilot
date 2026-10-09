@@ -50,6 +50,13 @@
 {% block content %}
 {{ page_header("Study planner", today.strftime("%A %-d %B %Y"), "calendar") }}
 
+<a href="/diagnostic" class="callout callout-brand rise mb-6 flex items-center gap-3 text-fg no-underline transition-colors hover:border-brand/50 hover:text-fg">
+  <span class="chip chip-sm chip-brand">{{ icon("compass") }}</span>
+  <span class="min-w-0 flex-1"><strong>Skip what you already know: take the diagnostic.</strong>
+    <span class="block text-xs text-fg-muted sm:inline">One question per RPLA subtopic; the ones you know are left out of the plan.</span></span>
+  {{ icon("arrow-right", "size-4 shrink-0 text-brand") }}
+</a>
+
 {% if not plan %}
   <section class="card rise mb-6 border-brand/30 bg-brand-soft/30">
     <h2 class="card-title mb-4 flex items-center gap-2.5">{{ icon("compass", "size-5 text-brand") }} How the plan is built</h2>

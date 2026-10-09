@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import stack_bar, counts, ring, empty %}
 {% from "_icons.html" import icon %}
+{% from "_readiness.html" import readiness_card %}
 {% block title %}Dashboard · {{ app_name }}{% endblock %}
 {% block content %}
 {% set hour = now().hour %}
@@ -61,6 +62,27 @@
   </div>
 </section>
 
+{% if open_diagnostic %}
+  {% set od_done = open_diagnostic.answers | selectattr("answered_at") | list | length %}
+  <div class="callout callout-brand rise mb-6 flex flex-wrap items-center justify-between gap-3">
+    <span class="flex min-w-0 flex-1 items-center gap-3"><span class="chip chip-sm chip-brand">{{ icon("compass") }}</span>
+      <span class="min-w-0"><strong class="text-fg">Resume your diagnostic.</strong> {{ od_done }} of {{ open_diagnostic.question_count }} questions answered so far.</span></span>
+    <a href="/diagnostic/{{ open_diagnostic.id }}" class="btn-primary btn-sm">{{ icon("play", "size-3.5") }} Resume</a>
+  </div>
+{% elif offer_diagnostic %}
+  <section class="card rise mb-6 flex flex-col gap-4 border-brand/30 bg-brand-soft/30 sm:flex-row sm:items-center" style="--i: 1">
+    <div class="flex min-w-0 flex-1 items-start gap-4">
+      <span class="chip chip-lg chip-grad hidden sm:grid">{{ icon("compass") }}</span>
+      <div class="min-w-0">
+        <p class="eyebrow text-brand-fg">Placement test</p>
+        <h2 class="card-title mt-1">Already know some of this from flying lessons?</h2>
+        <p class="mt-1 text-sm text-fg-muted">Take the RPLA diagnostic and skip what you know: one question per subtopic, untimed, and your plan leaves out the ones you get right.</p>
+      </div>
+    </div>
+    <a href="/diagnostic" class="btn-primary shrink-0">{{ icon("compass", "size-4") }} Take the diagnostic</a>
+  </section>
+{% endif %}
+
 {% if ps %}
   {% if ps.behind %}
     <div class="callout callout-bad rise mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -103,7 +125,7 @@
 {% endif %}
 
 {# ------------------------------------------------------------------ stat tiles #}
-<div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+<div class="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-5">
   <div class="stat rise" style="--i: 1">
     <div class="mb-1 flex items-center justify-between"><span class="stat-label">Next exam</span><span class="chip chip-sm chip-warn">{{ icon("timer") }}</span></div>
     {% if ps and ps.next_exam %}
@@ -119,7 +141,12 @@
     <span class="stat-value">{{ due_cards.due }}</span>
     <span class="text-xs text-fg-muted">+ {{ due_cards.new }} new · {{ due_cards.seen }}/{{ due_cards.total }} seen</span>
   </a>
-  <div class="stat rise" style="--i: 3">
+  <a href="{{ '/quiz?mistakes=1' if mistakes.due else '/mistakes' }}" class="stat rise" style="--i: 3">
+    <div class="mb-1 flex items-center justify-between"><span class="stat-label">Mistakes to fix</span><span class="chip chip-sm chip-accent">{{ icon("target") }}</span></div>
+    <span class="stat-value">{{ mistakes.due }}</span>
+    <span class="text-xs text-fg-muted">due today · {{ mistakes.open }} open</span>
+  </a>
+  <div class="stat rise" style="--i: 4">
     <div class="mb-1 flex items-center justify-between"><span class="stat-label">Plan progress</span><span class="chip chip-sm chip-brand">{{ icon("calendar") }}</span></div>
     {% if ps %}
       <span class="stat-value">{{ ps.percent }}%</span>
@@ -130,7 +157,7 @@
       <a href="/planner" class="text-xs font-semibold">Create a plan</a>
     {% endif %}
   </div>
-  <div class="stat rise" style="--i: 4">
+  <div class="stat rise col-span-2 xl:col-span-1" style="--i: 5">
     <div class="mb-1 flex items-center justify-between"><span class="stat-label">Last attempt</span><span class="chip chip-sm chip-info">{{ icon("trophy") }}</span></div>
     {% if last_attempt %}
       <span class="stat-value">{% if last_attempt.score_percent is not none %}{{ last_attempt.score_percent | round | int }}%{% else %}–{% endif %}</span>
@@ -142,6 +169,9 @@
     {% endif %}
   </div>
 </div>
+
+{# ------------------------------------------------------------------ RPLA readiness #}
+<div class="mb-6">{{ readiness_card(readiness, compact=True) }}</div>
 
 {# ------------------------------------------------------------------ today + weak areas #}
 <div class="mb-10 grid gap-4 lg:grid-cols-5">

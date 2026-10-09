@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ exam_code }} diagnostic · {{ app_name }}{% endblock %}
+{% block content %}
+{{ page_header(exam_code ~ " diagnostic", "A placement test: find the subtopics you already know so your study plan can skip them.", "compass") }}
+
+<div class="mx-auto grid max-w-[60rem] gap-4">
+  <section class="card rise p-5 sm:p-7">
+    <h2 class="card-title mb-4 text-lg">How it works</h2>
+    <ul class="flex flex-col gap-4 text-sm">
+      <li class="flex items-start gap-3"><span class="chip chip-sm chip-brand">{{ icon("quiz") }}</span>
+        <span class="min-w-0 pt-1 leading-relaxed"><strong class="text-fg">About {{ subtopic_count }} questions</strong>, one per {{ exam_code }} subtopic,
+          then a short second round on the ones you got right. Two out of two means a subtopic looks known. Allow 45 to 60 minutes.</span></li>
+      <li class="flex items-start gap-3"><span class="chip chip-sm chip-sky">{{ icon("clock") }}</span>
+        <span class="min-w-0 pt-1 leading-relaxed"><strong class="text-fg">Untimed, and you can stop and resume any time.</strong>
+          There is no feedback until the end; then you see how you did in each subtopic and choose which to mark as known.</span></li>
+      <li class="flex items-start gap-3"><span class="chip chip-sm chip-warn">{{ icon("flag") }}</span>
+        <span class="min-w-0 pt-1 leading-relaxed"><strong class="text-fg">Tap “I don't know” rather than guess.</strong>
+          A lucky guess can mark a subtopic as known and skip a lesson you need. Not knowing is the useful answer here.</span></li>
+    </ul>
+
+    <div class="mt-6 flex flex-col items-stretch gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+      {% if open %}
+        {% set done = open.answers | selectattr("answered_at") | list | length %}
+        <p class="text-sm text-fg-muted">In progress: <strong class="text-fg tabular-nums">{{ done }}</strong> of {{ open.question_count }} answered.</p>
+      {% else %}
+        <p class="text-sm text-fg-muted">Nothing you answer here changes your study status until you choose to.</p>
+      {% endif %}
+      <form method="post" action="/diagnostic/start" class="m-0">
+        <button type="submit" class="btn-primary btn-lg w-full px-8 sm:w-auto">{{ icon("play", "size-5") }} {{ "Resume the diagnostic" if open else "Start the diagnostic" }}</button>
+      </form>
+    </div>
+  </section>
+
+  {% if latest %}
+    <a href="/diagnostic/{{ latest.id }}/result" class="card-link rise flex items-center gap-3 p-4" style="--i: 1">
+      <span class="chip chip-sm chip-ok">{{ icon("trophy") }}</span>
+      <span class="min-w-0 flex-1 text-sm"><span class="block font-semibold">Your last diagnostic</span>
+        <span class="block text-xs text-fg-muted">{{ latest.submitted_at.strftime("%-d %B %Y") }}{% if latest.correct_count is not none %} · {{ latest.correct_count }} of {{ latest.question_count }} right{% endif %}</span></span>
+      <span class="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-brand">See the result {{ icon("arrow-right", "size-3.5") }}</span>
+    </a>
+  {% endif %}
+</div>
+{% endblock %}

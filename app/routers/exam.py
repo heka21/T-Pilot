@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.db import get_session
 from app.models import Attempt, Exam, ExamUnit, Unit
 from app.services import exam as exam_svc
+from app.services import readiness
 from app.services.quiz import kdr_report, record_answer
 from app.templating import templates
 
@@ -58,7 +59,9 @@ def exam_setup(request: Request, session: Session = Depends(get_session)) -> HTM
         current = None
     recent = session.scalars(select(Attempt).where(Attempt.mode == "exam", Attempt.submitted_at.is_not(None))
                              .order_by(Attempt.submitted_at.desc()).limit(10)).all()
-    return templates.TemplateResponse(request, "exam_setup.html", {"exams": exams, "open_attempt": current, "recent": recent})
+    trends = {e.code: readiness.mock_history(session, e.code) for e in exams}
+    return templates.TemplateResponse(request, "exam_setup.html", {"exams": exams, "open_attempt": current, "recent": recent,
+                                                                   "trends": trends})
 
 
 @router.post("/start")

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header, badge, empty %}
+{% from "_icons.html" import icon %}
+{% block title %}Diagnostic results · {{ app_name }}{% endblock %}
+
+{# One subtopic row: a checkbox (or a "confident" badge when it already is), the subtopic, its score and a lesson link. #}
+{% macro sub_row(row, checked=False, selectable=True) -%}
+{% set s = row.subtopic %}
+<li class="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+  {% if selectable and row.status != "confident" %}
+    <label class="flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-sm">
+      <input type="checkbox" name="subtopics" value="{{ s.id }}" class="mt-0.5 size-5" {% if checked %}checked{% endif %}>
+      <span class="min-w-0"><span class="font-semibold text-fg-muted">{{ s.id }}</span> <span class="font-medium text-fg">{{ s.title }}</span></span>
+    </label>
+  {% else %}
+    <p class="flex min-w-0 flex-1 items-start gap-3 text-sm">
+      {% if selectable %}<span class="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-ok-soft text-ok-fg">{{ icon("check", "size-3.5") }}</span>{% endif %}
+      <span class="min-w-0"><span class="font-semibold text-fg-muted">{{ s.id }}</span> <span class="font-medium text-fg">{{ s.title }}</span></span>
+    </p>
+  {% endif %}
+  <span class="flex shrink-0 items-center gap-2">
+    {% if row.status == "confident" %}{{ badge("confident") }}{% endif %}
+    <span class="w-8 text-right text-xs font-semibold tabular-nums text-fg-muted" title="{{ row.right }} right of {{ row.asked }} asked">{{ row.right }}/{{ row.asked }}</span>
+    <a href="{{ note_url(s) }}" class="btn-ghost btn-sm px-2" aria-label="Lesson {{ s.id }}" title="Read the lesson">{{ icon("notes", "size-4") }}</a>
+  </span>
+</li>
+{%- endmacro %}
+
+{% block content %}
+{% set known = groups.known %}
+{% set partly = groups.partly %}
+{% set start = groups.start %}
+{% set selectable = (known + partly) | rejectattr("status", "equalto", "confident") | list %}
+{{ page_header("Diagnostic results", (attempt.title or "Diagnostic") ~ " · " ~ attempt.submitted_at.strftime("%-d %B %Y"), "compass") }}
+
+{% if applied is not none %}
+  <div class="callout callout-ok rise mb-6 flex items-start gap-3" role="status">
+    <span class="chip chip-sm chip-ok">{{ icon("check") }}</span>
+    <p class="min-w-0 pt-1 text-ok-fg">
+      {% if applied == "0" %}No subtopics changed.
+      {% else %}<strong>{{ applied }} subtopic{{ "" if applied == "1" else "s" }} marked confident</strong>{% if has_plan %}, and your plan has been updated to skip {{ "it" if applied == "1" else "them" }}{% endif %}.{% endif %}
+      {% if has_plan %}<a href="/planner" class="font-semibold">See the plan</a>{% endif %}
+    </p>
+  </div>
+{% endif %}
+
+<div class="mb-8 grid grid-cols-3 gap-3">
+  {% for label, rows, name, chip, note in [
+      ("Looks known", known, "check", "chip-ok", "right twice"),
+      ("Partly known", partly, "book", "chip-warn", "right once"),
+      ("Start here", start, "compass", "chip-brand", "not yet")] %}
+    <div class="stat rise" style="--i: {{ loop.index }}">
+      <div class="mb-1 flex items-center justify-between gap-2"><span class="stat-label">{{ label }}</span><span class="chip chip-sm {{ chip }} hidden sm:grid">{{ icon(name) }}</span></div>
+      <span class="stat-value">{{ rows | length }}</span>
+      <span class="hidden text-xs text-fg-muted sm:block">subtopics · {{ note }}</span>
+    </div>
+  {% endfor %}
+</div>
+<p class="mb-8 text-sm text-fg-muted">{{ attempt.correct_count }} of {{ attempt.question_count }} questions right ({{ (attempt.score_percent or 0) | round | int }}%). “I don't know” counts as not yet known.</p>
+
+<form method="post" action="/diagnostic/{{ attempt.id }}/apply" class="grid gap-4 lg:grid-cols-2">
+  <section class="card rise flex min-w-0 flex-col gap-3" style="--i: 4" aria-labelledby="known-title">
+    <div>
+      <h2 id="known-title" class="flex items-center gap-2.5 text-lg font-bold">{{ icon("check", "size-5 text-ok") }} Looks known (2/2)</h2>
+      <p class="mt-1 text-sm text-fg-muted">Right in both rounds. Ticked to mark as known; untick any you would rather study.</p>
+    </div>
+    {% if known %}
+      <ul class="row-list border-t border-line pt-3">{% for row in known %}{{ sub_row(row, checked=True) }}{% endfor %}</ul>
+    {% else %}
+      {{ empty("None this time. That's fine: the plan covers everything.", icon_name="book") }}
+    {% endif %}
+  </section>
+
+  <section class="card rise flex min-w-0 flex-col gap-3" style="--i: 5" aria-labelledby="partly-title">
+    <div>
+      <h2 id="partly-title" class="flex items-center gap-2.5 text-lg font-bold">{{ icon("book", "size-5 text-warn") }} Partly known</h2>
+      <p class="mt-1 text-sm text-fg-muted">Right once. Worth a read; tick one only if you are sure of it.</p>
+    </div>
+    {% if partly %}
+      <ul class="row-list border-t border-line pt-3">{% for row in partly %}{{ sub_row(row) }}{% endfor %}</ul>
+    {% else %}
+      {{ empty("None.", icon_name="book") }}
+    {% endif %}
+  </section>
+
+  <div class="rise flex flex-col gap-3 lg:col-span-2 sm:flex-row sm:items-center sm:justify-between" style="--i: 6">
+    <p class="flex items-start gap-2 text-sm text-fg-muted">{{ icon("sparkle", "mt-0.5 size-4 shrink-0 text-brand") }}
+      <span>You can change any status later from the <a href="/syllabus">syllabus</a>.</span></p>
+    {% if selectable %}
+      <button type="submit" class="btn-primary btn-lg w-full sm:w-auto">{{ icon("check", "size-5") }} Mark ticked subtopics as known</button>
+    {% endif %}
+  </div>
+</form>
+
+<section class="card rise mt-8" style="--i: 7" aria-labelledby="start-title">
+  <div class="mb-3">
+    <h2 id="start-title" class="flex items-center gap-2.5 text-lg font-bold">{{ icon("compass", "size-5 text-brand") }} Start here</h2>
+    <p class="mt-1 text-sm text-fg-muted">Wrong or “I don't know” in round 1. Start with these lessons.</p>
+  </div>
+  {% if start %}
+    <ul class="row-list border-t border-line pt-3">{% for row in start %}{{ sub_row(row, selectable=False) }}{% endfor %}</ul>
+  {% else %}
+    {{ empty("Nothing: you got at least one right in every subtopic.", icon_name="sparkle") }}
+  {% endif %}
+</section>
+
+<div class="btn-row mt-8">
+  {% if attempt.correct_count < attempt.question_count %}
+    <form method="post" action="/quiz/retry/{{ attempt.id }}" class="m-0 w-full sm:w-auto">
+      <button type="submit" class="btn-secondary w-full sm:w-auto">{{ icon("play", "size-4") }} Retry the ones I missed</button>
+    </form>
+  {% endif %}
+  <a href="/planner" class="btn-ghost">{{ icon("calendar", "size-4") }} Planner</a>
+  <a href="/syllabus" class="btn-ghost">{{ icon("book", "size-4") }} Syllabus</a>
+</div>
+{% endblock %}

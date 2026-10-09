@@ -444,6 +444,12 @@
   .feedback.incorrect { @apply callout-bad text-bad-fg; }
   .score-big { @apply text-6xl font-black tabular-nums tracking-tight text-grad-brand; }
 
+  /* Mock-score trend (_readiness.html mock_trend): tips are hidden until their dot is hovered or focused
+     (the chart's own <style> pairs .dN with .tN). */
+  .trend-dot { @apply cursor-pointer outline-none; }
+  .trend-dot:focus-visible .trend-ring { @apply stroke-brand; stroke-width: 2; }
+  .trend-tip { @apply pointer-events-none opacity-0 transition-opacity duration-150; }
+
   /* Exam navigator */
   .exam-nav { @apply grid grid-cols-[repeat(auto-fill,minmax(2.5rem,1fr))] gap-1.5; }
   .exam-nav button { @apply relative rounded-lg border border-line bg-surface py-1.5 text-xs font-semibold tabular-nums text-fg transition-colors hover:border-line-strong hover:bg-surface-2 cursor-pointer; }

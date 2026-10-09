@@ -2,7 +2,7 @@
 
 Content tables (Exam, Unit, Topic, Subtopic, Element, Note, Question, Card, Equation) are re-seeded from
 content/ on every start using stable string ids, so content edits never touch progress tables
-(Progress, StudentNote, Highlight, InkDocument, Attempt, AttemptAnswer, CardReview, StudyPlan, PlanItem).
+(Progress, StudentNote, Highlight, InkDocument, Attempt, AttemptAnswer, Mistake, CardReview, StudyPlan, PlanItem).
 """
 from __future__ import annotations
 
@@ -265,6 +265,20 @@ class AttemptAnswer(Base):
     flagged: Mapped[bool] = mapped_column(Boolean, default=False)
     answered_at: Mapped[datetime | None] = mapped_column(DateTime)
     attempt: Mapped["Attempt"] = relationship(back_populates="answers")
+    question: Mapped["Question"] = relationship()
+
+
+class Mistake(Base):
+    """A question answered wrong, asked again on a schedule until it is right on two separate days (services.mistakes)."""
+    __tablename__ = "mistakes"
+    question_id: Mapped[str] = mapped_column(ForeignKey("questions.id"), primary_key=True)
+    first_missed_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    last_missed_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    miss_count: Mapped[int] = mapped_column(Integer, default=0)
+    streak: Mapped[int] = mapped_column(Integer, default=0)  # right answers on separate days since the last miss
+    last_correct_on: Mapped[date | None] = mapped_column(Date)
+    due: Mapped[date] = mapped_column(Date, default=date.today)
+    cleared_at: Mapped[datetime | None] = mapped_column(DateTime)  # None while the mistake is open
     question: Mapped["Question"] = relationship()
 
 

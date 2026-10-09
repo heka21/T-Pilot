@@ -6,6 +6,7 @@
 {% block content %}
 {{ page_header(attempt.title ~ ": results", "Submitted " ~ attempt.submitted_at.strftime("%-d %B %Y %H:%M") ~ " UTC", "trophy") }}
 {% set pct = (attempt.score_percent or 0) | round | int %}
+{% set missed = attempt.answers | rejectattr("correct") | list | length %}
 
 {# The score moment: big number, a meter with the pass mark, confetti on a pass. #}
 <section class="card rise relative mb-8 overflow-hidden p-6 sm:p-8"{% if attempt.passed %} data-celebrate="big"{% endif %}>
@@ -34,9 +35,15 @@
       <p class="flex flex-wrap items-center gap-1.5 text-sm text-fg-muted"><span class="chip chip-sm chip-warn mr-1">{{ icon("clock") }}</span> Time used: <strong class="text-fg">{{ "under 1 min" if minutes_used < 1 else minutes_used | minutes_to_hm }}</strong>{% if exam %} of {{ exam.duration_minutes | minutes_to_hm }}{% endif %}</p>
     {% endif %}
     <div class="btn-row">
-      <a href="/quiz?weak=1" class="btn-primary btn-lg w-full sm:w-auto">{{ icon("target", "size-4") }} Quiz the weak areas</a>
+      {% if missed %}
+        <form method="post" action="/quiz/retry/{{ attempt.id }}" class="m-0 w-full sm:w-auto">
+          <button type="submit" class="btn-primary btn-lg w-full sm:w-auto">{{ icon("play", "size-4") }} Retry the {{ missed }} you missed</button>
+        </form>
+      {% endif %}
+      <a href="/quiz?weak=1" class="{{ 'btn-secondary' if missed else 'btn-primary' }} btn-lg w-full sm:w-auto">{{ icon("target", "size-4") }} Quiz the weak areas</a>
       <a href="/exam" class="btn-secondary btn-lg w-full sm:w-auto">Back to mock exams</a>
     </div>
+    {% if missed %}<p class="text-xs text-fg-muted">The questions you missed also go on <a href="/mistakes" class="font-semibold">your mistakes list</a> until you get each one right on two separate days.</p>{% endif %}
   </div>
 </section>
 

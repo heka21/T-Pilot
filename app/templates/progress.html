@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "_macros.html" import stack_bar, ring, counts, page_header, empty %}
 {% from "_icons.html" import icon %}
+{% from "_readiness.html" import readiness_card %}
 {% block title %}Progress · {{ app_name }}{% endblock %}
 {% block content %}
 {{ page_header("Progress", "Your theory logbook: syllabus coverage, weak spots and every attempt.", "chart") }}
@@ -42,6 +43,9 @@
     {% endif %}
   </div>
 </div>
+
+{# ------------------------------------------------------------------ RPLA readiness #}
+<div class="mb-10">{{ readiness_card(readiness) }}</div>
 
 {# ------------------------------------------------------------------ exams #}
 <div class="mb-10 grid gap-4 md:grid-cols-2">
