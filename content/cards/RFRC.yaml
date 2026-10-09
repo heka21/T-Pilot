@@ -3,143 +3,395 @@
   elements: ["RFRC 2.1.1"]
   front: "Why keep a logbook, and what goes in each entry?"
   back: "Legal evidence of experience and recency. Date, aircraft type and registration, PIC and your role, route, flight time by day/night and dual/solo/command, instrument time, signatures for tests and reviews."
+  stem: "The main purpose of a pilot's personal logbook is to:"
+  options:
+    - "Record the aircraft's time in service for the maintenance release."
+    - "Record defects found during the daily inspection of the aircraft."
+    - "Provide legal evidence of the pilot's flying experience and recency."
+    - "Provide the aircraft's legal record of airworthiness and servicing."
+  answer: 2
 - id: RFRC-C002
   elements: ["RFRC 2.1.2"]
   front: "Where are the VFR operating rules, aerodrome data and licence privileges found?"
   back: "Rules: CASR Part 91 and its MOS (VFRG summary). Aerodrome data and PRD: ERSA. Licences: CASR Part 61."
+  stem: "Aerodrome data and details of prohibited, restricted and danger areas are found in:"
+  options:
+    - "CASR Part 61 and its Manual of Standards."
+    - "The aircraft's flight manual (POH)."
+    - "The Bureau of Meteorology's GAF notes."
+    - "ERSA (En Route Supplement Australia)."
+  answer: 3
 - id: RFRC-C003
   elements: ["RFRC 2.1.3"]
   front: "What is the maintenance release?"
   back: "The document certifying the aircraft is airworthy for a stated period (typically 100 hours or 12 months), with maintenance due, daily inspection certifications and defect endorsements."
+  stem: "The maintenance release is the document that:"
+  options:
+    - "Records the pilot's flight time, recent experience and flight reviews."
+    - "Certifies the aircraft airworthy for a stated period and records defects."
+    - "Registers the aircraft with CASA and shows its owner and operator."
+    - "Authorises the pilot in command to carry out any maintenance needed."
+  answer: 1
 - id: RFRC-C004
   elements: ["RFRC 2.2.1"]
   front: "RPL(A) basic limits?"
   back: "Single-engine aeroplane up to 1,500 kg MTOW, day VFR, private or training, within 25 nm (unless navigation endorsement), no controlled airspace or controlled aerodromes without the endorsements."
+  stem: "Without any endorsements, an RPL(A) holder may fly:"
+  options:
+    - "A single-engine aeroplane up to 1,500 kg MTOW, by day VFR, within 25 nm."
+    - "A single-engine aeroplane up to 1,500 kg MTOW, by day or night VFR, within 25 nm."
+    - "A single-engine aeroplane up to 5,700 kg MTOW, by day VFR, within 50 nm."
+    - "A single-engine aeroplane up to 1,500 kg MTOW, by day VFR, into Class D within 25 nm."
+  answer: 0
 - id: RFRC-C005
   elements: ["RFRC 2.2.2"]
   front: "Recency to carry passengers? Flight review interval?"
   back: "3 take-offs and 3 landings in the previous 90 days. Flight review every 24 months."
+  stem: "The recent experience needed to carry passengers, and the flight review interval, are:"
+  options:
+    - "3 take-offs and landings in 90 days; flight review every 12 months."
+    - "3 take-offs and landings in 90 days; flight review every 24 months."
+    - "3 take-offs and landings in 30 days; flight review every 24 months."
+    - "1 take-off and landing in 90 days; flight review every 24 months."
+  answer: 1
 - id: RFRC-C006
   elements: ["RFRC 2.2.3"]
   front: "RAMPC limits?"
   back: "Single-engine piston up to 1,500 kg, day VFR, below 10,000 ft, private, no aerobatics, no more than 1 passenger."
+  stem: "A pilot flying on a RAMPC medical certificate may:"
+  options:
+    - "Carry up to 5 passengers, by day VFR below 10,000 ft."
+    - "Carry no more than 1 passenger, by day or night VFR below 10,000 ft."
+    - "Carry no more than 1 passenger, and fly aerobatics above 3,000 ft AGL."
+    - "Carry no more than 1 passenger, by day VFR below 10,000 ft."
+  answer: 3
 - id: RFRC-C007
   elements: ["RFRC 2.2.4"]
   front: "What may a pilot sign on the maintenance release?"
   back: "The daily inspection (if authorised), flight time, and defect endorsements. A pilot cannot issue a maintenance release or clear a defect."
+  stem: "On the maintenance release, a pilot may:"
+  options:
+    - "Endorse defects, record flight time and certify the daily inspection if authorised."
+    - "Clear an endorsed defect once satisfied that the aircraft is again serviceable."
+    - "Issue a new maintenance release after completing a satisfactory daily inspection."
+    - "Extend the release by up to 10 hours to reach a maintenance base for servicing."
+  answer: 0
 - id: RFRC-C008
   elements: ["RFRC 2.3.1"]
   front: "Rules of the air: converging, head-on, overtaking, landing?"
   back: "Converging: give way to the aircraft on your right. Head-on: both turn right. Overtaking: overtaken has right of way, overtaker turns right. Landing: lower aircraft has right of way but must not cut in."
+  stem: "Two aeroplanes are converging at about the same level. Which must give way?"
+  options:
+    - "The aeroplane that has the other on its left."
+    - "The faster aeroplane, whichever side the other is on."
+    - "The aeroplane that has the other on its right."
+    - "The higher aeroplane, whichever side the other is on."
+  answer: 2
 - id: RFRC-C009
   elements: ["RFRC 2.3.1"]
   front: "Turn after take-off not below? Circuit height?"
   back: "500 ft above aerodrome level. Standard circuit height 1,000 ft above aerodrome level for light aeroplanes."
+  stem: "After take-off, an aeroplane must not turn until it is at least:"
+  options:
+    - "500 ft above mean sea level."
+    - "300 ft above aerodrome level."
+    - "500 ft above aerodrome level."
+    - "1,000 ft above aerodrome level."
+  answer: 2
 - id: RFRC-C010
   elements: ["RFRC 2.3.1"]
   front: "Take-off separation at a non-controlled aerodrome?"
   back: "Preceding aircraft has landed and vacated, or crossed the upwind end, or commenced a turn, or is airborne 1,800 m ahead (600 m if both aircraft are under 2,000 kg)."
+  stem: "At a non-controlled aerodrome, your aeroplane and the one departing ahead are both under 2,000 kg MTOW. You may start your take-off once the preceding aircraft is airborne and at least:"
+  options:
+    - "1,800 m ahead."
+    - "600 m ahead."
+    - "1,000 m ahead."
+    - "300 m ahead."
+  answer: 1
 - id: RFRC-C011
   elements: ["RFRC 2.3.1"]
-  front: "VMC below 10,000 ft: Class C/D/E and Class G above 3,000 ft AMSL or 1,000 ft AGL?"
-  back: "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+  front: "VMC below 10,000 ft: Class C/E and Class G above 3,000 ft AMSL or 1,000 ft AGL?"
+  back: "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud. (Class D is smaller: 5,000 m, 600 m horizontally, 1,000 ft above and 500 ft below cloud.)"
+  stem: "In Class G airspace below 10,000 ft, above 3,000 ft AMSL and more than 1,000 ft above the ground, the VFR minima are:"
+  options:
+    - "5,000 m visibility, clear of cloud and in sight of the ground or water."
+    - "8 km visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+    - "5,000 m visibility, 600 m horizontally and 500 ft vertically from cloud."
+    - "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+  answer: 3
 - id: RFRC-C012
   elements: ["RFRC 2.3.1"]
   front: "VMC in Class G at or below 3,000 ft AMSL / 1,000 ft AGL?"
   back: "5,000 m visibility, clear of cloud, in sight of ground or water."
+  stem: "You are flying VFR at 2,000 ft AMSL in Class G airspace over a coastal plain near sea level. The VMC minima are:"
+  options:
+    - "5,000 m visibility, clear of cloud and in sight of ground or water."
+    - "5,000 m visibility, 1,500 m horizontally and 1,000 ft vertically from cloud."
+    - "1,500 m visibility, clear of cloud and in sight of ground or water."
+    - "8 km visibility, clear of cloud and in sight of ground or water."
+  answer: 0
 - id: RFRC-C013
   elements: ["RFRC 2.3.1"]
   front: "Altimeter setting below 10,000 ft and the VFR cruising levels?"
   back: "QNH (local within 100 nm or area QNH). Above 5,000 ft: tracks 000-179 odd thousands + 500; 180-359 even thousands + 500."
+  stem: "A VFR flight cruising above 5,000 ft on a magnetic track of 095 degrees could correctly fly at:"
+  options:
+    - "8,500 ft, an even thousand plus 500."
+    - "7,000 ft, an odd thousand."
+    - "6,500 ft, an even thousand plus 500."
+    - "7,500 ft, an odd thousand plus 500."
+  answer: 3
 - id: RFRC-C014
   elements: ["RFRC 2.3.2"]
   front: "Alcohol rule?"
   back: "No flying within 8 hours of drinking, never under the influence, blood alcohol limit 0.02 g/100 mL."
+  stem: "The alcohol rules for a pilot are:"
+  options:
+    - "No flying within 12 hours of drinking; blood alcohol limit 0.05 g/100 mL."
+    - "No flying within 8 hours of drinking; blood alcohol limit 0.02 g/100 mL."
+    - "No flying within 8 hours of drinking; blood alcohol limit 0.05 g/100 mL."
+    - "No flying within 12 hours of drinking; blood alcohol limit 0.02 g/100 mL."
+  answer: 1
 - id: RFRC-C015
   elements: ["RFRC 2.3.3"]
   front: "Light signals to an aircraft in flight?"
   back: "Steady green: cleared to land. Steady red: give way, keep circling. Green flashes: return for landing. Red flashes: aerodrome unsafe, do not land. White flashes: land here and go to the apron."
+  stem: "An aircraft in flight receives a steady red light from the tower. This means:"
+  options:
+    - "Give way to other aircraft and continue circling."
+    - "Aerodrome unsafe, do not land."
+    - "Return to this aerodrome for landing."
+    - "Land at this aerodrome and proceed to the apron."
+  answer: 0
 - id: RFRC-C016
   elements: ["RFRC 2.3.3"]
   front: "Light signals to an aircraft on the ground?"
   back: "Steady green: cleared for take-off. Steady red: stop. Green flashes: cleared to taxi. Red flashes: taxi clear of the landing area. White flashes: return to starting point."
+  stem: "An aircraft on the ground receives flashing green light signals from the tower. This means:"
+  options:
+    - "Cleared for take-off."
+    - "Taxi clear of the landing area in use."
+    - "Cleared to taxi."
+    - "Return to the starting point on the aerodrome."
+  answer: 2
 - id: RFRC-C017
   elements: ["RFRC 2.3.4"]
   front: "Minimum heights?"
-  back: "Populous area or public gathering: 1,000 ft above the highest obstacle within 600 m. Elsewhere: 500 ft AGL and 500 ft from any person, vessel, vehicle or structure."
+  back: "Populous area or public gathering: 1,000 ft above the highest obstacle within 600 m. Elsewhere: 500 ft above the highest feature or obstacle within 300 m."
+  stem: "Over a populous area, an aeroplane must not fly lower than:"
+  options:
+    - "1,000 ft above the ground directly below the aircraft."
+    - "1,000 ft above the highest obstacle within 600 m of the aircraft."
+    - "500 ft above the highest obstacle within 600 m of the aircraft."
+    - "1,500 ft above the highest obstacle within 300 m of the aircraft."
+  answer: 1
 - id: RFRC-C018
   elements: ["RFRC 2.3.5"]
   front: "Aerobatics minimum height and restrictions?"
   back: "Not below 3,000 ft AGL unless approved; certified aircraft, day VMC, endorsement held; never over populous areas or public gatherings."
+  stem: "Unless CASA has approved a lower height, aerobatic flight must not be conducted below:"
+  options:
+    - "1,500 ft AGL."
+    - "3,000 ft AMSL."
+    - "5,000 ft AGL."
+    - "3,000 ft AGL."
+  answer: 3
 - id: RFRC-C019
   elements: ["RFRC 2.3.6"]
   front: "Daylight planning rule for VFR?"
   back: "Plan to land at least 10 minutes before last light, allowing for holding."
+  stem: "The VFR daylight planning rule requires you to plan to land:"
+  options:
+    - "At least 10 minutes before sunset, allowing for any holding."
+    - "Before last light, adding 10 minutes only if holding is expected."
+    - "At least 10 minutes before last light, allowing for any holding."
+    - "At least 10 minutes before last light, or by last light if the runway is lit."
+  answer: 2
 - id: RFRC-C020
   elements: ["RFRC 2.4.1"]
   front: "Who may not carry passengers?"
   back: "Student pilots solo; pilots without 3 take-offs and landings in 90 days; test and some ferry flights; RAMPC holders beyond 1 passenger."
+  stem: "Which pilot is NOT permitted to carry a passenger?"
+  options:
+    - "A student pilot flying solo."
+    - "An RPL holder who did 3 take-offs and 3 landings last month."
+    - "An RPL holder with current recency and a flight review 20 months ago."
+    - "A RAMPC holder carrying a single passenger on a private day VFR flight."
+  answer: 0
 - id: RFRC-C021
   elements: ["RFRC 2.4.2"]
   front: "Passenger briefing items?"
   back: "Seat belts and when to wear them, exits, smoking, emergency equipment, brace position, follow the pilot's instructions."
+  stem: "A passenger briefing must cover:"
+  options:
+    - "Seat belts, exits, smoking, fuel endurance, the brace position and obeying the pilot."
+    - "Seat belts, exits, smoking, emergency equipment, the brace position and the planned route."
+    - "Seat belts, exits, navigation lights, emergency equipment, the brace position and obeying the pilot."
+    - "Seat belts, exits, smoking, emergency equipment, the brace position and obeying the pilot."
+  answer: 3
 - id: RFRC-C022
   elements: ["RFRC 2.4.2"]
   front: "Refuelling precautions?"
   back: "No smoking or naked flames, engines off, aircraft bonded to the bowser, fire extinguisher at hand, passengers off or supervised, no HF or radar transmissions, caps secure and drain check afterwards."
+  stem: "During refuelling, the aircraft should be:"
+  options:
+    - "Bonded to the bowser, with engines off and a fire extinguisher at hand."
+    - "Bonded to the bowser, with the engine idling and a fire extinguisher at hand."
+    - "Bonded only after refuelling, with engines off and a fire extinguisher at hand."
+    - "Bonded to the bowser, with engines off and HF radio used to monitor ATC."
+  answer: 0
 - id: RFRC-C023
   elements: ["RFRC 2.4.3"]
   front: "When must seat belts be worn?"
   back: "Take-off, landing, below 1,000 ft AGL, in turbulence, and when the PIC directs. PIC harness fastened at all times."
+  stem: "Seat belts must be worn by all occupants during:"
+  options:
+    - "Take-off, landing, flight below 500 ft above ground level, turbulence, and when the PIC directs."
+    - "Take-off, landing, flight below 1,000 ft AGL, turbulence, and when the PIC directs."
+    - "Take-off and landing only, unless the pilot in command directs otherwise."
+    - "Take-off, landing, flight below 3,000 ft above ground level, and when the PIC directs."
+  answer: 1
 - id: RFRC-C024
   elements: ["RFRC 2.4.3"]
   front: "When is a fuel drain check required?"
   back: "Before the first flight of the day and after each refuelling, after letting the fuel settle."
+  stem: "A fuel drain check is required:"
+  options:
+    - "Before the first flight of the day only, unless water is suspected."
+    - "After each refuelling only, before the fuel has had time to settle."
+    - "Before the first flight of the day and after each refuelling."
+    - "Only when the aircraft has been parked outside overnight in rain."
+  answer: 2
 - id: RFRC-C025
   elements: ["RFRC 2.5.1"]
   front: "Colour of runway markings? Taxiway markings?"
   back: "Runway: white. Taxiway: yellow. Mandatory signs red with white letters; information signs yellow with black letters."
+  stem: "At an aerodrome, taxiway markings are coloured:"
+  options:
+    - "White, while runway markings are yellow."
+    - "Yellow, and runway markings are also yellow."
+    - "White, and runway markings are also white."
+    - "Yellow, while runway markings are white."
+  answer: 3
 - id: RFRC-C026
   elements: ["RFRC 2.5.2"]
   front: "Circuit legs in order from take-off?"
   back: "Upwind, crosswind, downwind, base, final. Dead side is the side opposite the circuit."
+  stem: "The circuit legs, in order from take-off, are:"
+  options:
+    - "Upwind, base, downwind, crosswind, final."
+    - "Upwind, crosswind, downwind, base, final."
+    - "Crosswind, upwind, downwind, base, final."
+    - "Upwind, downwind, crosswind, base, final."
+  answer: 1
 - id: RFRC-C027
   elements: ["RFRC 2.5.3"]
   front: "White cross on the movement area?"
   back: "Unserviceable: do not use that runway, taxiway or area."
+  stem: "A white cross on a runway or taxiway means that area:"
+  options:
+    - "Is in use for gliding operations."
+    - "May be used for take-off only, not for landing."
+    - "Is unserviceable and must not be used."
+    - "May be used with caution by light aircraft only."
+  answer: 2
 - id: RFRC-C028
   elements: ["RFRC 2.5.4"]
   front: "Cone markers versus gable markers?"
   back: "Cones: runway (landing area) edges. Gables: runway strip boundary."
+  stem: "On an unsealed runway, cone markers show the:"
+  options:
+    - "Edges of the runway, the landing area itself."
+    - "Boundary of the runway strip around the runway."
+    - "Limit of the clearway beyond the runway end."
+    - "Position of the runway holding point on the taxiway."
+  answer: 0
 - id: RFRC-C029
   elements: ["RFRC 2.5.4"]
   front: "Double white cross beside the windsock?"
   back: "Gliding operations in progress."
+  stem: "A double white cross displayed beside the wind indicator means:"
+  options:
+    - "The aerodrome is unserviceable and must not be used."
+    - "Right-hand circuits are in force on all runways."
+    - "Parachuting operations are in progress overhead."
+    - "Gliding operations are in progress."
+  answer: 3
 - id: RFRC-C030
   elements: ["RFRC 2.6.1"]
   front: "Which airspace classes are controlled, and where does VFR need a clearance?"
   back: "A, C, D, E are controlled; G is not. VFR needs a clearance in C and D (A is IFR only); not in E, but E has controlled-airspace VMC minima."
+  stem: "In which airspace classes does a VFR flight need a clearance to enter?"
+  options:
+    - "C, D and E, as all three are controlled airspace."
+    - "C and D; E is controlled but needs none for VFR."
+    - "C and D, and G wherever ATC provides a service."
+    - "A, C and D; VFR may enter Class A with a clearance."
+  answer: 1
 - id: RFRC-C031
   elements: ["RFRC 2.6.2"]
   front: "How do you know if a control zone or restricted area is active?"
   back: "ERSA hours (aerodrome entry or PRD section), charts for the boundaries, NOTAMs for changes, and call the controlling authority if in doubt."
+  stem: "The normal hours of activity of a restricted area are found in:"
+  options:
+    - "ERSA, with any changes published by NOTAM."
+    - "The GAF, with any changes broadcast on the ATIS."
+    - "The aerodrome ATIS, updated hourly by the tower."
+    - "AIP GEN 3.6, with changes broadcast on area frequency."
+  answer: 0
 - id: RFRC-C032
   elements: ["RFRC 2.7.1"]
   front: "Aircraft flashing its landing or navigation lights repeatedly?"
   back: "It is in difficulty and compelled to land. Give way."
+  stem: "An aircraft is seen repeatedly switching its landing or navigation lights on and off. This indicates that it:"
+  options:
+    - "Is warning other traffic that it is about to take off."
+    - "Is asking the aircraft ahead to give way while it overtakes."
+    - "Is in difficulty and compelled to land, so give way to it."
+    - "Is practising a forced landing and needs the circuit kept clear."
+  answer: 2
 - id: RFRC-C033
   elements: ["RFRC 2.7.2"]
   front: "Accident versus incident?"
   back: "Accident: death or serious injury, serious structural damage, or missing aircraft. Incident: any other occurrence affecting safety; serious incident is a near-accident."
+  stem: "Which occurrence is classed as an accident rather than an incident?"
+  options:
+    - "An aeroplane lands with less than its fixed fuel reserve remaining."
+    - "A near collision with another aircraft in the circuit."
+    - "A runway incursion that forces another aircraft to go around."
+    - "A passenger is seriously injured during a heavy landing."
+  answer: 3
 - id: RFRC-C034
   elements: ["RFRC 2.7.3"]
   front: "Reporting an accident or serious incident?"
   back: "To the ATSB immediately by phone (1800 011 034), then a written report within 72 hours. Routine reportable matters: written within 72 hours."
+  stem: "After an accident, the pilot must notify the ATSB:"
+  options:
+    - "Within 72 hours by phone, then in writing within 30 days."
+    - "Immediately by phone; no written report is needed if CASA is told."
+    - "Immediately by phone, then in writing within 72 hours."
+    - "In writing within 24 hours, with no phone notification required."
+  answer: 2
 - id: RFRC-C035
   elements: ["RFRC 2.7.4"]
   front: "SARTIME?"
   back: "A nominated UTC time by which you report arrival; extend before it expires, cancel on landing, or SAR action begins."
+  stem: "A SARTIME is:"
+  options:
+    - "A nominated UTC time by which you report arrival, or search action begins."
+    - "A nominated local time by which you report arrival, or search action begins."
+    - "The time 30 minutes after your ETA, set automatically by ATS for every flight."
+    - "The latest UTC time to depart, after which your flight notification is cancelled."
+  answer: 0
 - id: RFRC-C036
   elements: ["RFRC 2.7.5"]
   front: "Document containing emergency procedures?"
   back: "ERSA EMERG section (pink pages); fuller text in AIP GEN 3.6 and ENR 1.14."
+  stem: "Emergency procedures are summarised for the pilot in:"
+  options:
+    - "The ERSA FAC section, with fuller text in AIP AD 2 for each aerodrome."
+    - "The ERSA EMERG section, with fuller text in AIP GEN 3.6 and ENR 1.14."
+    - "The Designated Airspace Handbook, with fuller text in the Part 61 MOS."
+    - "The GAF notes, with fuller text in the Bureau of Meteorology's aviation manual."
+  answer: 1

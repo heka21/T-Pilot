@@ -184,8 +184,12 @@ def seed_cards(session: Session, c_dir: Path) -> int:
             missing = set(c.get("elements", [])) - set(codes)
             if missing:
                 log.warning("card %s: unknown elements %s", c.get("id"), sorted(missing))
+            options, answer = c.get("options") or [], c.get("answer")
+            if options and (len(options) != 4 or answer not in range(4)):
+                log.warning("card %s: needs 4 options and an answer 0-3, reviewed self-graded", c.get("id"))
+                options, answer = [], None
             row = Card(id=c["id"], unit_code=unit_code, subtopic_id=el2st.get(codes[0]) if codes else None,
-                       front=c["front"], back=c["back"])
+                       front=c["front"], back=c["back"], stem=c.get("stem"), options=options, answer=answer)
             session.merge(row)
             for ce in session.scalars(select(CardElement).where(CardElement.card_id == row.id)):
                 session.delete(ce)

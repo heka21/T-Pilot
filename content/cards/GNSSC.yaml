@@ -3,27 +3,76 @@
   elements: ["GNSSC 2.1.1"]
   front: "How many satellites for a 3D fix, RAIM fault detection, and fault exclusion?"
   back: "4 for a 3D fix (lat, long, altitude and receiver clock), 5 for RAIM fault detection, 6 for fault detection and exclusion."
+  stem: "The minimum numbers of satellites for a 3D fix, for RAIM fault detection, and for fault detection and exclusion are:"
+  options:
+    - "4 for a 3D fix, 5 for fault detection, 6 for fault exclusion."
+    - "3 for a 3D fix, 5 for fault detection, 6 for fault exclusion."
+    - "4 for a 3D fix, 4 for fault detection, 6 for fault exclusion."
+    - "4 for a 3D fix, 5 for fault detection, 7 for fault exclusion."
+  answer: 0
 - id: GNSSC-C002
   elements: ["GNSSC 2.1.1"]
   front: "Main GNSS error sources?"
   back: "Ionospheric (largest) and tropospheric delay, satellite clock and ephemeris errors, multipath, receiver noise, magnified by poor geometry (high DOP); also masking and interference/jamming."
+  stem: "The largest single source of GNSS position error is usually:"
+  options:
+    - "Tropospheric delay of the satellite signal."
+    - "Ionospheric delay of the satellite signal."
+    - "Multipath reflections from the airframe and terrain."
+    - "Satellite clock and ephemeris errors."
+  answer: 1
 - id: GNSSC-C003
   elements: ["GNSSC 2.1.1"]
   front: "SBAS in Australia?"
   back: "SBAS (like WAAS) broadcasts corrections and integrity from geostationary satellites. Australia/NZ are rolling out SouthPAN; check its current status for aviation use. Otherwise receivers rely on RAIM."
+  stem: "A satellite-based augmentation system (SBAS) such as WAAS or SouthPAN:"
+  options:
+    - "Broadcasts corrections on VHF from ground stations at each aerodrome."
+    - "Checks integrity inside the receiver using spare satellites, without outside data."
+    - "Adds a second constellation of navigation satellites in medium Earth orbit."
+    - "Broadcasts corrections and integrity data from geostationary satellites."
+  answer: 3
 - id: GNSSC-C004
   elements: ["GNSSC 2.1.1"]
   front: "GNSS pre-flight serviceability checks?"
   back: "Self-test passed, database current, 3D fix on the satellite page, position matches known location, settings (units, datum WGS-84, CDI scale) correct, NOTAMs for GNSS outages."
+  stem: "Before relying on a GNSS receiver in flight, the pre-flight checks should confirm:"
+  options:
+    - "Self-test passed, database current, a 2D fix, and the datum set to WGS-84."
+    - "Self-test passed, database current, a 3D fix, and the datum set to AGD-66."
+    - "Self-test passed, database current, a 3D fix, and the datum set to WGS-84."
+    - "Self-test passed, database expired less than a year ago, a 3D fix, and WGS-84 set."
+  answer: 2
 - id: GNSSC-C005
   elements: ["GNSSC 2.1.1"]
   front: "Indications of waypoint passage?"
   back: "Waypoint alert message, TO/FROM changes to FROM, distance counts down to zero then up, automatic sequencing to the next leg (unless OBS/hold mode)."
+  stem: "Which indication shows that you have passed a GNSS waypoint?"
+  options:
+    - "The TO/FROM indication changes to TO and the distance starts to decrease."
+    - "The TO/FROM indication changes to FROM and the distance starts to increase."
+    - "The CDI deflects fully to one side and a RAIM alert message appears."
+    - "The receiver switches itself to OBS mode and stops sequencing legs."
+  answer: 1
 - id: GNSSC-C006
   elements: ["GNSSC 2.1.1"]
   front: "GNSS human factors traps?"
   back: "Automation complacency, head-down programming, data entry errors (similar waypoint names), mode confusion (OBS, Direct-To), loss of situational awareness on failure, skill fade."
+  stem: "Which of the following is a GNSS human factors trap rather than a technical error source?"
+  options:
+    - "Multipath, as signals reflect off the airframe before reaching the antenna."
+    - "Ionospheric delay, as signals slow down passing through the upper atmosphere."
+    - "Poor satellite geometry, giving a high dilution of precision (DOP)."
+    - "Mode confusion, such as being in OBS mode when sequencing was expected."
+  answer: 3
 - id: GNSSC-C007
   elements: ["GNSSC 2.1.1"]
   front: "GNSS status for a private VFR pilot with a handheld?"
   back: "An aid, not a sole means: keep navigating visually and cross-checking with the chart; visual navigation expected at or below 2,000 ft AGL. Primary-means use needs approved equipment and training; check VFRG and AIP ENR 1.1."
+  stem: "For a private VFR pilot, a handheld GNSS receiver is:"
+  options:
+    - "An aid to visual navigation, cross-checked against the chart."
+    - "An approved sole means of navigation once its database is current."
+    - "A primary means of navigation above 2,000 ft AGL in Class G airspace."
+    - "Permitted only when a VOR or NDB cross-check is also available."
+  answer: 0

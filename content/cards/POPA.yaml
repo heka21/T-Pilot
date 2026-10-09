@@ -3,99 +3,274 @@
   elements: ["POPA 2.1.1"]
   front: "What is take-off safety speed (TOSS)?"
   back: "The speed to be reached by 50 ft after take-off, giving a safe margin above the stall (at least 1.2 x stall speed in take-off configuration for light aeroplanes). Performance charts assume reaching it at the screen height."
+  stem: "Take-off safety speed (TOSS) is the speed that must be reached:"
+  options:
+    - "By 50 ft, at least 1.2 times the stall speed in the take-off configuration."
+    - "At lift-off, at least 1.2 times the stall speed in the take-off configuration."
+    - "By 50 ft, at least 1.1 times the stall speed in the landing configuration."
+    - "By 1,000 ft, at least 1.3 times the stall speed in the clean configuration."
+  answer: 0
 - id: POPA-C002
   elements: ["POPA 2.1.1"]
   front: "Define TODA and TODR."
   back: "TODA: take-off run available plus any clearway, within which the aeroplane must reach 50 ft. TODR: distance from start of the take-off run to 50 ft at TOSS, from the chart for the day's conditions, factored. TODR must not exceed TODA."
+  stem: "Take-off distance available (TODA) is:"
+  options:
+    - "The take-off run available plus any stopway; the aeroplane must lift off within it."
+    - "The take-off run available plus any clearway; the aeroplane must reach 50 ft within it."
+    - "The take-off run available only; the aeroplane must reach 50 ft within it."
+    - "The runway length plus the cleared runway strip; the aeroplane must reach 50 ft within it."
+  answer: 1
 - id: POPA-C003
   elements: ["POPA 2.1.1"]
   front: "Define LDA and LDR."
   back: "LDA: runway length from the threshold available for the landing roll. LDR: distance from 50 ft over the threshold at threshold speed to a full stop, factored. LDR must not exceed LDA (a displaced threshold reduces LDA)."
+  stem: "A runway has a displaced threshold. Compared with the full runway length, the landing distance available is:"
+  options:
+    - "Unchanged, because the landing roll may use the whole runway."
+    - "Increased, because the displaced section counts as a stopway."
+    - "Reduced, because LDA is measured from the threshold."
+    - "Unchanged, because LDA is measured from the start of the runway."
+  answer: 2
 - id: POPA-C004
   elements: ["POPA 2.1.2"]
   front: "AC 91-02 (formerly CAAP 92-1) ALA dimension and approach guidelines?"
   back: "Length at least TODR and LDR, width about 15 m for light singles, a cleared runway strip beyond edges and ends, obstacle-free approach and take-off slopes of about 5 percent (1 in 20) for day, longitudinal slope not more than about 2 percent."
+  stem: "Under the AC 91-02 guidelines, an ALA used by day should have obstacle-free approach and take-off slopes of about:"
+  options:
+    - "2 percent (1 in 50)."
+    - "10 percent (1 in 10)."
+    - "2.5 percent (1 in 40)."
+    - "5 percent (1 in 20)."
+  answer: 3
 - id: POPA-C005
   elements: ["POPA 2.1.2"]
   front: "Other ALA suitability checks?"
   back: "Firm even surface, short grass, drainage; windsock; boundary markings; no stock or wildlife; no power lines on approach; owner's permission; minimum height rules; plan for communications and SAR. Say no if any one fails."
+  stem: "While inspecting a proposed ALA, which single finding means the strip should not be used?"
+  options:
+    - "Power lines across the approach path."
+    - "Short, dry grass on a firm, even surface."
+    - "Boundary markers at each corner of the strip."
+    - "Written permission from the landowner."
+  answer: 0
 - id: POPA-C006
   elements: ["POPA 2.2.1"]
   front: "Quick revision: factors that lengthen take-off distance?"
   back: "Tailwind, heat, low QNH, high elevation (all via density height), upslope, wet grass, slush, frost, higher weight. Headwind and downslope shorten it. Upslope shortens landing; downslope lengthens it."
+  stem: "In which list does every factor increase the take-off distance?"
+  options:
+    - "Headwind, high temperature and upslope."
+    - "Tailwind, high temperature and upslope."
+    - "Tailwind, low temperature and downslope."
+    - "Headwind, high QNH and downslope."
+  answer: 1
 - id: POPA-C007
   elements: ["POPA 2.2.1"]
   front: "Ground effect, wind shear and frost effects on performance?"
   back: "Ground effect can let the aeroplane lift off before it can climb. Wind shear removing headwind costs airspeed and climb. Frost reduces lift and raises stall speed; it must be removed."
+  stem: "Frost on the wings before take-off:"
+  options:
+    - "Has little effect if it is thin and smooth, so it may be left on."
+    - "Raises the stall speed only at high weights, so a light aeroplane may depart."
+    - "Reduces lift and raises the stall speed, so it must be removed."
+    - "Reduces drag but raises the stall speed, so the take-off speed is increased."
+  answer: 2
 - id: POPA-C008
   elements: ["POPA 2.2.2", "POPA 2.2.3"]
   front: "Pressure height vs density height, and finding them with the altimeter?"
   back: "Pressure height: altimeter reading with 1013 set. Density height: pressure height corrected 120 ft per degree from ISA. Dial set to elevation gives QNH on the subscale; subscale QNH gives elevation (within 100 ft)."
+  stem: "On the ground, with QNH 1020 hPa, the pilot sets 1013 on the altimeter subscale. The altimeter now reads:"
+  options:
+    - "Density height."
+    - "Aerodrome elevation."
+    - "Height above the aerodrome."
+    - "Pressure height."
+  answer: 3
 - id: POPA-C009
   elements: ["POPA 2.2.4", "POPA 2.2.5"]
   front: "Structural weights, climb weight limit, and results of exceeding limits?"
   back: "MTOW and MLW are airframe limits; climb weight limit is the performance (WAT) limit from the take-off chart; take-off weight is the lowest limit. Overweight: longer distances, poorer climb, higher stall and approach speeds, structural overload."
+  stem: "Which weight limit is a performance (WAT) limit rather than an airframe limit?"
+  options:
+    - "The climb weight limit from the take-off chart."
+    - "The maximum take-off weight listed in POH section 2."
+    - "The maximum landing weight in POH section 2."
+    - "The maximum zero fuel weight in POH section 2."
+  answer: 0
 - id: POPA-C010
   elements: ["POPA 2.3.1"]
   front: "Pressure height formula from elevation and QNH?"
   back: "Pressure height = elevation + (1013 - QNH) x 30 ft. Kalgoorlie 1,200 ft, QNH 1008: 1,200 + 150 = 1,350 ft. A negative pressure height (high QNH, low aerodrome) is normal; keep the sign."
+  stem: "An aerodrome elevation is 1,200 ft and QNH is 1008 hPa. The pressure height is:"
+  options:
+    - "1,050 ft: elevation minus 150 ft."
+    - "1,350 ft: elevation plus 150 ft."
+    - "1,200 ft: the same as the aerodrome elevation."
+    - "1,500 ft: elevation plus 300 ft."
+  answer: 1
 - id: POPA-C011
   elements: ["POPA 2.3.1"]
   front: "Density height inputs on the ground?"
   back: "Pressure height (altimeter with 1013.2 set, or from elevation and QNH) and OAT read from the gauge once settled in the shade, not the sun-heated cabin."
+  stem: "To find density height before take-off, the outside air temperature should be read:"
+  options:
+    - "From the OAT gauge straight after parking in the sun, before it has settled."
+    - "From the cabin thermometer, since it shows the air entering the cabin."
+    - "From the OAT gauge once it has settled, with the aeroplane in the shade."
+    - "From the dew point on the ATIS, as air density depends on moisture."
+  answer: 2
 - id: POPA-C012
   elements: ["POPA 2.3.2"]
   front: "Density height formula? Example: pressure height 2,500 ft, OAT 30."
   back: "ISA temp = 15 - 2 x (PH / 1,000). DH = PH + 120 x (OAT - ISA). ISA at 2,500 is 10, deviation 20: DH = 2,500 + 2,400 = 4,900 ft."
+  stem: "Pressure height is 2,500 ft and OAT is +30°C. Using 120 ft per degree, the density height is about:"
+  options:
+    - "4,300 ft (ISA +15)."
+    - "6,100 ft (ISA +30)."
+    - "2,500 ft (the same as the pressure height)."
+    - "4,900 ft (ISA +20)."
+  answer: 3
 - id: POPA-C013
   elements: ["POPA 2.3.2"]
   front: "Density height by navigation computer, density altitude chart and flight manual chart?"
   back: "Computer: set pressure height against OAT in the airspeed window, read density altitude. Chart: enter temperature, up to the pressure altitude line, read across. POH charts usually take pressure altitude and temperature separately and apply density internally."
+  stem: "On a navigation computer, density altitude is found by setting:"
+  options:
+    - "Pressure height against OAT in the airspeed window, then reading density altitude."
+    - "QNH against OAT in the airspeed window, then reading density altitude."
+    - "Pressure height against TAS in the airspeed window, then reading density altitude."
+    - "Aerodrome elevation against OAT in the altitude window, then reading pressure height."
+  answer: 0
 - id: POPA-C014
   elements: ["POPA 2.4.1"]
   front: "Where are structural MTOW and MLW found, and the workbook values?"
   back: "POH section 2 (limitations), or the loading system envelope in the workbook: ALPHA 1,633 kg, BRAVO 1,000 kg normal, CHARLIE 1,115 kg normal, ECHO 2,950 kg with MLW 2,725 kg. The structural limit caps whatever the chart allows."
+  stem: "In the CASA workbook, loading system ECHO has a structural MTOW and MLW of:"
+  options:
+    - "2,725 kg and 2,950 kg."
+    - "2,950 kg and 2,725 kg."
+    - "2,950 kg and 2,630 kg."
+    - "3,175 kg and 2,950 kg."
+  answer: 1
 - id: POPA-C015
   elements: ["POPA 2.4.2"]
   front: "Chart A versus chart B in the CASA workbook?"
   back: "Chart A: weight chart, maximum take-off or landing weight the runway allows. Chart B: distance chart, TODR or LDR for a given weight. Compare TODR with TODA and LDR with LDA."
+  stem: "In the CASA workbook, chart A gives:"
+  options:
+    - "The TODR or LDR for a given aeroplane weight."
+    - "The climb gradient available for a given weight and density height."
+    - "The maximum take-off or landing weight the runway allows."
+    - "The CG limits for a given take-off or landing weight."
+  answer: 2
 - id: POPA-C016
   elements: ["POPA 2.4.2"]
   front: "Entry order for a take-off weight chart?"
   back: "Pressure height and temperature, then TODA (or weight), then wind component, then runway slope, then surface, to the weight scale. Permitted take-off weight is the lowest of runway-limited weight, climb weight limit and structural MTOW."
+  stem: "When entering a take-off weight chart, the usual order is:"
+  options:
+    - "TODA, wind component, slope, surface, then pressure height and temperature."
+    - "Pressure height and temperature, slope, surface, TODA, then wind component."
+    - "Wind component, pressure height and temperature, TODA, surface, then runway slope."
+    - "Pressure height and temperature, TODA, wind component, slope, then surface."
+  answer: 3
 - id: POPA-C017
   elements: ["POPA 2.4.2"]
   front: "Conditions on which the CASA take-off chart is based?"
   back: "Full throttle, the stated flap setting, take-off safety speed by 50 ft (stated IAS or varying with weight), surface type, factored distance (1.15 on take-off), still air, level runway and sealed surface before corrections."
+  stem: "The CASA take-off chart assumes, before corrections:"
+  options:
+    - "Full throttle, TOSS by 50 ft, still air, a level sealed runway and a 1.15 factor."
+    - "Full throttle, TOSS at lift-off, still air, a level grass runway and a 1.15 factor."
+    - "Climb power, TOSS by 50 ft, a 10 kt headwind, a level sealed runway and no factor."
+    - "Full throttle, TOSS by 50 ft, still air, a level sealed runway and no factor."
+  answer: 0
 - id: POPA-C018
   elements: ["POPA 2.4.2"]
   front: "Conditions on which the CASA landing chart is based?"
   back: "Usually full flap, stated threshold speed at 50 ft (varying with weight), power off from the threshold, maximum braking, dry sealed level surface and still air before corrections, factored distance (larger factor than take-off)."
+  stem: "The CASA landing chart assumes, before corrections:"
+  options:
+    - "Threshold speed at the flare, power on, maximum braking, dry level sealed surface, still air."
+    - "Threshold speed at 50 ft, power off, maximum braking, dry level sealed surface, still air."
+    - "Threshold speed at 50 ft, power off, light braking, wet level grass surface, still air."
+    - "Threshold speed at 50 ft, power off, maximum braking, dry level sealed surface, 10 kt headwind."
+  answer: 1
 - id: POPA-C019
   elements: ["POPA 2.4.2"]
   front: "Chart reading tips?"
   back: "Use a ruler, follow guide lines parallel, use the wind component (not full wind) and check head or tail, upslope penalises take-off but helps landing, do not round intermediates, and compare the answer with the structural limit."
+  stem: "When reading a take-off performance chart, the wind used should be:"
+  options:
+    - "The full reported wind speed, treated as a headwind."
+    - "The crosswind component, as it limits the take-off."
+    - "The headwind or tailwind component along the runway."
+    - "The reported wind speed, with the gust added for safety."
+  answer: 2
 - id: POPA-C020
   elements: ["POPA 2.5.1"]
   front: "How is a climb table used between two altitudes? Example: 2,000 ft is 3 min, 2 L, 4 nm; 6,000 ft is 11 min, 6 L, 15 nm."
   back: "Subtract the lower altitude's figures from the higher: 8 min, 4 L, 11 nm still air. Then correct for temperature (often 10 percent per 10 degrees above ISA) and wind for ground distance."
+  stem: "A climb table gives 2,000 ft: 3 min, 2 L, 4 nm and 6,000 ft: 11 min, 6 L, 15 nm. In still air, a climb from 2,000 ft to 6,000 ft needs:"
+  options:
+    - "11 min, 6 L and 15 nm."
+    - "14 min, 8 L and 19 nm."
+    - "8 min, 4 L and 15 nm."
+    - "8 min, 4 L and 11 nm."
+  answer: 3
 - id: POPA-C021
   elements: ["POPA 2.5.1"]
   front: "How is a cruise performance table used?"
   back: "Enter with pressure altitude and RPM (or MP and RPM), read percent power, TAS and fuel flow for the temperature column. Lean as the table assumes or fuel flow will exceed the plan. At fixed RPM percent power falls with altitude; TAS for a given power rises."
+  stem: "When using a cruise performance table at a fixed RPM, as pressure altitude increases:"
+  options:
+    - "Percent power falls, while TAS for a given power rises."
+    - "Percent power rises, while TAS for a given power falls."
+    - "Percent power falls, and TAS for a given power also falls."
+    - "Percent power and TAS for a given power both stay the same."
+  answer: 0
 - id: POPA-C022
   elements: ["POPA 2.5.1"]
   front: "How is the descent planned when the POH gives little data?"
   back: "Time = height to lose / rate of descent; distance = time x GS. Use cruise fuel flow for the descent as a conservative plan, keeping some power on to avoid shock cooling."
+  stem: "With little descent data in the POH, descent time and distance are planned as:"
+  options:
+    - "Time = height to lose ÷ GS; distance = time × rate of descent."
+    - "Time = height to lose ÷ rate of descent; distance = time × GS."
+    - "Time = height to lose ÷ rate of descent; distance = time × TAS."
+    - "Time = rate of descent ÷ height to lose; distance = time × GS."
+  answer: 1
 - id: POPA-C023
   elements: ["POPA 2.5.1"]
   front: "Conditions for maximum endurance and maximum range?"
   back: "Endurance: minimum power speed (minimum fuel flow), slow, leaned. Range: minimum drag (best L/D) speed in still air, leaned, improved by higher altitude and lower weight. Headwind: fly faster for range; tailwind: fly slower."
+  stem: "For maximum range in still air, the aeroplane should be flown:"
+  options:
+    - "At minimum power speed, leaned."
+    - "At minimum drag speed, with a full rich mixture."
+    - "At minimum drag (best L/D) speed, leaned."
+    - "At maximum cruise power, leaned."
+  answer: 2
 - id: POPA-C024
   elements: ["POPA 2.4.2"]
   front: "Workbook chart conditions at a glance: Figs 3, 4, 5, 6, 12, 13?"
   back: "Fig 3 take-off: 10 degrees flap, 60 KIAS, MTOW 1,090 kg. Fig 4 landing: 40 degrees, 65 KIAS, distance independent of weight. Fig 5 take-off: zero flap, 64 KIAS, 2,350 RPM minimum. Fig 6 landing: 30 degrees, 58 KIAS. All 15 kt crosswind, factor 1.15. ECHO Fig 12: zero flap, 3,200 RPM, 37.4 in Hg, factor 1.22; Fig 13: 45 degrees, factor 1.26; both 20 kt crosswind, speeds from the chart scale."
+  stem: "In the CASA workbook, the Fig 4 landing chart:"
+  options:
+    - "Uses 40 degrees flap, and the landing distance is independent of the wind component."
+    - "Uses zero flap, and the landing distance is independent of weight."
+    - "Uses 30 degrees flap, and the landing distance is independent of weight."
+    - "Uses 40 degrees flap, and the landing distance is independent of weight."
+  answer: 3
 - id: POPA-C025
   elements: ["POPA 2.4.2"]
   front: "Fig 3 gives weights (A) and (B). Which take-off weight applies?"
   back: "The lesser of (A) and (B) (note 1), and never above the 1,090 kg MTOW (note 2). (A) is the runway-limited weight from TODA, wind, slope and surface. On Fig 6 the landing weight must not exceed the climb weight limit (A)."
+  stem: "On Fig 3, weight (A) is 1,120 kg and weight (B) is 1,100 kg. The maximum permitted take-off weight is:"
+  options:
+    - "1,090 kg, the structural MTOW."
+    - "1,100 kg, the lesser of (A) and (B)."
+    - "1,120 kg, the greater of (A) and (B)."
+    - "1,110 kg, the mean of (A) and (B)."
+  answer: 0

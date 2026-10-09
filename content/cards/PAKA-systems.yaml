@@ -3,27 +3,76 @@
   elements: ["PAKA 2.1.1"]
   front: "Why does a fixed-pitch propeller overspeed in a dive?"
   back: "Higher airspeed reduces the blade angle of attack, so the propeller absorbs less torque and the engine speeds up past the red line."
+  stem: "In a dive, a fixed-pitch propeller tends to overspeed because:"
+  options:
+    - "Higher airspeed increases the blade angle of attack, so the propeller absorbs more torque."
+    - "The propeller governor moves the blades to fine pitch as the airspeed increases."
+    - "Higher airspeed reduces the blade angle of attack, so the propeller absorbs less torque."
+    - "The denser air at lower altitude richens the mixture and increases engine power."
+  answer: 2
 - id: PAKA-SC002
   elements: ["PAKA 2.1.1"]
   front: "Causes of fixed-pitch propeller overspeed?"
   back: "Diving or descending with high power, high power at high airspeed, recovering from a spiral dive or unusual attitude with power on, a fine-pitch (climb) propeller, propeller damage."
+  stem: "Which of the following is a likely cause of a fixed-pitch propeller overspeed?"
+  options:
+    - "Climbing at Vy with full power and a coarse-pitch propeller."
+    - "Cruising at low power with carburettor heat applied."
+    - "Holding the brakes at full power during the engine run-up."
+    - "Recovering from a spiral dive with the power still on."
+  answer: 3
 - id: PAKA-SC003
   elements: ["PAKA 2.1.1"]
   front: "Remedial action for a fixed-pitch overspeed?"
   back: "Reduce power (throttle back) and raise the nose to reduce airspeed; reduce power before descending in future; record any red-line exceedance on the maintenance release."
+  stem: "A fixed-pitch propeller overspeeds in a descent. The correct immediate action is to:"
+  options:
+    - "Increase power and raise the nose to reduce airspeed."
+    - "Reduce power and raise the nose to reduce airspeed."
+    - "Reduce power and lower the nose to maintain the airspeed."
+    - "Enrich the mixture and apply full carburettor heat."
+  answer: 1
 - id: PAKA-SC004
   elements: ["PAKA 2.2.1"]
   front: "Reed versus vane stall warning?"
   back: "Reed: leading-edge opening, suction at high AoA sounds a reed horn, no electrical power needed. Vane: tab lifted by airflow as the stagnation point moves aft, closes a microswitch, needs electrical power."
+  stem: "A reed-type stall warning differs from a vane-type in that it:"
+  options:
+    - "Sounds a horn by suction through a leading-edge opening and needs no electrical power."
+    - "Uses a vane lifted by the airflow to close a microswitch and needs electrical power."
+    - "Sounds a horn by suction through a leading-edge opening but needs electrical power."
+    - "Uses a vane lifted by the airflow to close a microswitch, with no electrical power needed."
+  answer: 0
 - id: PAKA-SC005
   elements: ["PAKA 2.2.1"]
   front: "Why not overpower an engaged autopilot?"
   back: "Servos slip, but auto-trim trims against your force, building a large out-of-trim load released as a pitch upset at disconnect. Disconnect first, then fly by hand."
+  stem: "A pilot should not overpower an engaged autopilot by force because:"
+  options:
+    - "The servos lock solid, and forcing them can jam or damage the primary flight controls."
+    - "The autopilot disconnects at once, leaving the aircraft out of trim in roll."
+    - "Auto-trim trims against the force, so a large pitch upset follows disconnect."
+    - "The autopilot then holds the new attitude, but in the wrong lateral mode."
+  answer: 2
 - id: PAKA-SC006
   elements: ["PAKA 2.2.1"]
   front: "Autopilot cut-out (disconnect) means?"
   back: "Control wheel A/P disconnect button, AP button on the mode controller, autopilot circuit breaker, avionics master, trim interrupt/CWS, plus automatic disconnects for failures or limits."
+  stem: "If the control wheel disconnect button fails to disengage the autopilot, another means is to:"
+  options:
+    - "Overpower the controls firmly until the servos disengage themselves."
+    - "Retrim fully nose-down to unload the pitch servo and release it."
+    - "Select altitude hold, which overrides and cancels all of the other active modes."
+    - "Pull the autopilot circuit breaker or switch off the avionics master."
+  answer: 3
 - id: PAKA-SC007
   elements: ["PAKA 2.2.1"]
   front: "What does an autopilot trim annunciator warn of?"
   back: "The servo is holding a control force because the aircraft is out of trim. Disconnecting now causes a sudden pitch change: retrim and hold the controls firmly at disconnect."
+  stem: "An autopilot trim annunciator illuminates. This warns that:"
+  options:
+    - "The autopilot has failed completely, and the aircraft is already out of control in pitch."
+    - "The servo is holding a force, so disconnecting will cause a sudden pitch change."
+    - "The aircraft is in trim, and the autopilot can now be disconnected safely."
+    - "The pitch servo has stopped working, so the autopilot holds roll only."
+  answer: 1

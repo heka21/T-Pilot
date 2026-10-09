@@ -3,11 +3,32 @@
   elements: ["RBKA 3.6.1"]
   front: "What causes a wing to stall?"
   back: "Exceeding the critical angle of attack (about 15 to 18 degrees). It can happen at any airspeed and any attitude."
+  stem: "A wing stalls when:"
+  options:
+    - "The airspeed falls below the bottom of the white arc, whatever the angle of attack."
+    - "The nose attitude rises more than about 15 to 18 degrees above the horizon."
+    - "The angle of attack exceeds about 4 degrees, the angle for the best lift/drag ratio."
+    - "The critical angle of attack, about 15 to 18 degrees, is exceeded."
+  answer: 3
 - id: RBKA-C002
   elements: ["RBKA 3.6.2"]
   front: "Stall speed in a level 60 degree banked turn compared with level flight?"
   back: "About 41 percent higher. Load factor is 2, and stall speed rises with the square root of load factor (√2 = 1.41)."
+  stem: "An aeroplane stalls at 50 kt in straight and level flight. In a level, balanced 60 degree banked turn at the same weight, it stalls at about:"
+  options:
+    - "100 kt, because the load factor is 2 and stall speed doubles with it."
+    - "50 kt, because the stall depends on angle of attack, not on bank angle."
+    - "71 kt, because the load factor is 2 and stall speed rises by √2."
+    - "60 kt, because the load factor is 1.41 and stall speed rises by 19 percent."
+  answer: 2
 - id: RBKA-C003
   elements: ["RBKA 3.6.4"]
   front: "Quickest way to tell a spin from a spiral dive?"
   back: "Airspeed. Spin: low and steady (wings stalled). Spiral dive: high and increasing (not stalled). Spiral recovery is roll level first, then ease out."
+  stem: "The quickest way to tell a spin from a spiral dive is the:"
+  options:
+    - "Altimeter: height is lost rapidly in a spiral dive but only slowly in a spin."
+    - "Airspeed: low and steady in a spin, high and increasing in a spiral dive."
+    - "Rate of turn: high in a spin, low and steady in a spiral dive, whatever the airspeed."
+    - "Attitude: nose steady in a spin, nose oscillating up and down in a spiral dive."
+  answer: 1

@@ -3,63 +3,175 @@
   elements: ["PAKC 2.1.1"]
   front: "What is full throttle height?"
   back: "The altitude at which the throttle is fully open and the engine is only just making a chosen power setting. Above it power can only fall. It is specific to the power setting: higher for 65 percent than for 75 percent."
+  stem: "Full throttle height for a normally aspirated engine is the altitude at which:"
+  options:
+    - "The throttle is fully open and the engine only just makes a chosen power setting."
+    - "The engine produces its maximum rated power, with the throttle and propeller fully forward."
+    - "The rate of climb at full throttle has fallen to 100 ft per minute."
+    - "A supercharger can no longer maintain rated manifold pressure at full throttle."
+  answer: 0
 - id: PAKC-EC002
   elements: ["PAKC 2.1.1", "PAKC 2.1.3"]
   front: "What is the critical altitude of a supercharged or turbocharged engine?"
   back: "The highest altitude at which the supercharger can maintain rated manifold pressure with the throttle fully open, typically 12,000 to 20,000 ft for a light aeroplane turbocharger. Above it power falls as in a normally aspirated engine."
+  stem: "Above its critical altitude, a turbocharged engine:"
+  options:
+    - "Continues to maintain rated manifold pressure with the throttle fully open."
+    - "Loses power with height, as a normally aspirated engine does."
+    - "Gains power with height, because the colder air is denser."
+    - "Must be throttled back to avoid overboosting the turbocharger."
+  answer: 1
 - id: PAKC-EC003
   elements: ["PAKC 2.1.2"]
   front: "Effect of altitude and temperature on normally aspirated engine power? Rule of thumb?"
   back: "Power depends on air density, which falls with height and with temperature. About 3 percent of sea-level power is lost per 1,000 ft of density height: roughly 75 percent available at 8,000 ft and 55 percent at 15,000 ft. Hot days also worsen cooling."
+  stem: "By the rule of thumb, a normally aspirated engine at a density height of 8,000 ft can produce about:"
+  options:
+    - "92 percent of its sea-level power."
+    - "55 percent of its sea-level power."
+    - "75 percent of its sea-level power."
+    - "100 percent of its sea-level power, if correctly leaned."
+  answer: 2
 - id: PAKC-EC004
   elements: ["PAKC 2.1.3"]
   front: "Mixture strength for best power, best economy, and the effects of too rich or too lean?"
   back: "Best power slightly richer than the chemically ideal ratio; best economy slightly leaner. Too rich wastes fuel, fouls plugs and reduces power; too lean raises temperatures, loses power and risks detonation. Lean with altitude to restore the ratio."
+  stem: "Compared with the chemically correct fuel/air ratio, the best power and best economy mixtures are:"
+  options:
+    - "Best power slightly leaner, and best economy slightly richer."
+    - "Both slightly richer, with best economy the richer of the two."
+    - "Both exactly at the chemically correct ratio."
+    - "Best power slightly richer, and best economy slightly leaner."
+  answer: 3
 - id: PAKC-EC005
   elements: ["PAKC 2.1.3"]
   front: "Service ceiling versus absolute ceiling?"
   back: "Service ceiling: rate of climb has fallen to 100 ft per minute. Absolute ceiling: rate of climb is zero."
+  stem: "The service ceiling of an aeroplane is the altitude at which:"
+  options:
+    - "The rate of climb has fallen to 100 ft per minute."
+    - "The rate of climb has fallen to zero."
+    - "The rate of climb has fallen to 500 ft per minute."
+    - "The engine reaches full throttle height at climb power."
+  answer: 0
 - id: PAKC-EC006
   elements: ["PAKC 2.2.1"]
   front: "Purpose of supercharging?"
   back: "To compress intake air so the cylinders get a denser charge: maintain sea-level power at altitude and, in some engines, boost power above the normally aspirated value (ground boosting). Manifold pressure can then exceed ambient, typically 35 to 40 inHg or more."
+  stem: "The purpose of supercharging an engine is to:"
+  options:
+    - "Cool the intake air so that the engine runs at lower cylinder head temperatures."
+    - "Compress the intake air so the cylinders receive a denser charge at altitude."
+    - "Raise the engine's RPM limit so it produces more power in the climb."
+    - "Recover exhaust heat to warm the induction air and prevent carburettor icing."
+  answer: 1
 - id: PAKC-EC007
   elements: ["PAKC 2.2.2"]
   front: "Mechanical supercharger versus turbocharger?"
   back: "Supercharger: gear-driven from the crankshaft, instant response, but absorbs engine power and output is tied to RPM. Turbocharger: driven by an exhaust turbine, uses wasted energy, but has turbo lag and runs very hot. An intercooler cools the compressed air, raising density and reducing detonation risk."
+  stem: "Compared with a gear-driven supercharger, a turbocharger:"
+  options:
+    - "Responds instantly, but absorbs engine power through its crankshaft drive."
+    - "Is driven from the crankshaft, so its output is tied to engine RPM."
+    - "Uses exhaust energy, but suffers turbo lag and runs very hot."
+    - "Uses exhaust energy, so it needs no wastegate or boost control."
+  answer: 2
 - id: PAKC-EC008
   elements: ["PAKC 2.2.3"]
   front: "How is turbocharger boost limited?"
   back: "Wastegate: an exhaust valve that diverts gas around the turbine, often modulated by an automatic wastegate (density) controller. Also a manifold pressure relief (pop-off) valve, overboost warning and red line, and absolute or sloped pressure controllers."
+  stem: "In a turbocharged engine, boost is mainly limited by:"
+  options:
+    - "An intercooler that cools the compressed air before it enters the cylinders."
+    - "The mixture control, leaned to reduce the exhaust gas flow."
+    - "A carburettor heat valve that bypasses the compressor."
+    - "A wastegate that diverts exhaust gas around the turbine."
+  answer: 3
 - id: PAKC-EC009
   elements: ["PAKC 2.2.4"]
   front: "Pilot actions after an overboost?"
   back: "Reduce throttle smoothly into limits; check mixture rich at high power and keep RPM up; monitor CHT, EGT and TIT and reduce power if high; note the exceedance and duration and record it in the maintenance release for engineering inspection."
+  stem: "After an inadvertent overboost, the pilot should:"
+  options:
+    - "Reduce throttle smoothly into limits and record the exceedance in the maintenance release."
+    - "Close the throttle rapidly to idle and continue; no record is needed if it lasted under a minute."
+    - "Lean the mixture to reduce power, and report it only if the engine then runs rough."
+    - "Reduce RPM to absorb the excess boost, then record it in the pilot's logbook."
+  answer: 0
 - id: PAKC-EC010
   elements: ["PAKC 2.2.4"]
   front: "Why idle a turbocharged engine before shutdown?"
   back: "To let the hot turbocharger cool for a few minutes (time in the POH) so the bearings are not starved of oil. Also avoid rapid throttle movements."
+  stem: "A turbocharged engine is idled for a few minutes before shutdown in order to:"
+  options:
+    - "Allow the cylinder heads to warm evenly after the descent."
+    - "Let the turbocharger cool so its bearings are not starved of oil."
+    - "Purge fuel vapour from the induction system before the next start."
+    - "Let the wastegate close fully so boost is available for the next start."
+  answer: 1
 - id: PAKC-EC011
   elements: ["PAKC 2.3.1", "PAKC 2.3.2"]
   front: "Pitot and static pressure, pressure error, alternate static source; IAS, CAS and TAS?"
   back: "Pitot pressure is static plus dynamic pressure; static is ambient pressure from an undisturbed vent. Pressure error (largest at low speed with flap) is removed by the POH table, turning IAS into CAS; the cabin alternate static source makes instruments read slightly high. TAS is CAS corrected for density, about 2 percent more per 1,000 ft of density height."
+  stem: "When the cabin alternate static source is selected in an unpressurised aeroplane, the altimeter and ASI usually:"
+  options:
+    - "Read slightly low."
+    - "Freeze at their last readings."
+    - "Read slightly high."
+    - "Are unaffected, as cabin and outside pressure are equal."
+  answer: 2
 - id: PAKC-EC012
   elements: ["PAKC 2.3.3"]
   front: "ASI and VSI errors: blockages, manoeuvres, lag and the IVSI?"
   back: "ASI with pitot and drain blocked over-reads in a climb (acts as an altimeter); static blocked over-reads in a descent and under-reads in a climb. VSI with static blocked reads zero and lags 6 to 9 seconds, possibly showing the reverse trend; an IVSI's accelerometer piston removes most lag. Abrupt manoeuvres upset all pressure instruments for a few seconds."
+  stem: "The static source becomes blocked during a descent. The ASI will:"
+  options:
+    - "Under-read."
+    - "Read zero."
+    - "Read correctly."
+    - "Over-read."
+  answer: 3
 - id: PAKC-EC013
   elements: ["PAKC 2.3.3"]
   front: "Altimeter: static blockage, subscale error and temperature error?"
   back: "Static blockage freezes the reading. About 30 ft per hPa: set 1023 with QNH 1013 and you are 300 ft lower than indicated. High to low or hot to cold, look out below: in air colder than ISA true altitude is lower than indicated, about 4 percent per 10 degrees."
+  stem: "Flying with 1023 hPa set on the subscale when the QNH is 1013 hPa, the aeroplane is:"
+  options:
+    - "About 300 ft lower than indicated."
+    - "About 300 ft higher than indicated."
+    - "About 30 ft lower than indicated."
+    - "About 100 ft higher than indicated."
+  answer: 0
 - id: PAKC-EC014
   elements: ["PAKC 2.3.4", "PAKC 2.3.6"]
   front: "Direct-reading compass construction, and the compass correction card?"
   back: "Needles align with magnetic north; fluid damps oscillation and friction; a bubble makes it unserviceable; the pendulous magnet system resists dip but causes turning and acceleration errors. The deviation card from a compass swing gives the compass heading to steer for each magnetic heading (e.g. for 090 steer 092): deviation east, compass least."
+  stem: "During the pre-flight check, a bubble is seen in the fluid of the direct-reading compass. The compass:"
+  options:
+    - "Is serviceable, as the fluid only damps oscillation."
+    - "Is unserviceable and must not be relied on."
+    - "Is serviceable, provided the deviation card is current."
+    - "Is serviceable by day, but not for night flight."
+  answer: 1
 - id: PAKC-EC015
   elements: ["PAKC 2.3.5"]
   front: "Southern hemisphere compass turning and acceleration errors?"
   back: "Turning error is largest through north and south: through south the compass lags, so roll out early; through north it leads, so roll out late (ONUS: overshoot north, undershoot south; about 30 degrees at rate one). Acceleration error is largest on east and west: SAND, South on Acceleration, North on Deceleration."
+  stem: "In the southern hemisphere, when accelerating on an easterly heading, the direct-reading compass will initially indicate a turn towards:"
+  options:
+    - "The north."
+    - "Neither direction, as acceleration error is zero on east and west headings."
+    - "The south."
+    - "The north while accelerating, and the south while decelerating."
+  answer: 2
 - id: PAKC-EC016
   elements: ["PAKC 2.3.7"]
   front: "Pre-flight serviceability checks of the primary flight instruments?"
   back: "Altimeter with QNH set reads elevation within 100 ft (VFR, AIP ENR 1.7); ASI and VSI read zero at rest. AI erect within about 5 minutes, suction green, no flags; DI set to compass and steady; turn coordinator correct in taxi turns. Compass full, no bubbles, reads runway heading, deviation card present."
+  stem: "During the pre-flight check with QNH set, the altimeter should read the aerodrome elevation within:"
+  options:
+    - "60 ft for VFR flight."
+    - "30 ft for VFR flight."
+    - "200 ft for VFR flight."
+    - "100 ft for VFR flight."
+  answer: 3

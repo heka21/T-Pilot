@@ -2,23 +2,65 @@
   elements: ["RBKA 3.6.3"]
   front: "Effect on stall IAS of: power, flap, weight, manoeuvres, ice, altitude?"
   back: "Power: decreases. Flap: decreases. Weight: increases. Manoeuvres (load factor): increases. Frost/ice: increases. Altitude: nil."
+  stem: "Which of the following increases the indicated stall speed?"
+  options:
+    - "A higher pressure altitude at the same weight."
+    - "Frost on the wing upper surface."
+    - "An increase in the engine power setting."
+    - "Lowering the flaps to the landing setting."
+  answer: 1
 - id: RBKA-PC002
   elements: ["RBKA 3.6.5"]
   front: "Where can an aeroplane stall at an unexpected attitude?"
   back: "Steep turns and pull-ups, harsh dive recoveries, the skidding turn onto final, wind shear on approach. Attitude is not a stall cue."
+  stem: "An aeroplane can stall at a normal or nose-low attitude, for example:"
+  options:
+    - "In a gentle climbing turn flown at the best rate of climb speed."
+    - "In a steady wings-level glide at best glide speed with flap up."
+    - "In a skidding turn onto final, or a harsh pull-out from a dive."
+    - "In straight and level cruise at the aeroplane's maximum weight."
+  answer: 2
 - id: RBKA-PC003
   elements: ["RBKA 3.6.6"]
   front: "Spin recovery sequence?"
   back: "Throttle closed, ailerons neutral, full opposite rudder, stick centrally forward until rotation stops, centralise rudder, ease out of the dive. Follow the POH."
+  stem: "After closing the throttle and centralising the ailerons, the standard spin recovery continues with:"
+  options:
+    - "Full rudder in the direction of the spin, then stick centrally forward until it stops."
+    - "Stick fully back, then full opposite rudder until the rotation stops."
+    - "Full aileron against the rotation, then stick centrally forward until it stops."
+    - "Full opposite rudder, then stick centrally forward until the rotation stops."
+  answer: 3
 - id: RBKA-PC004
   elements: ["RBKA 4.1.1"]
   front: "Runway slope effects?"
   back: "Uphill: longer take-off, shorter landing. Downhill: shorter take-off, longer landing (and floating)."
+  stem: "Compared with a level runway, taking off uphill and landing uphill give:"
+  options:
+    - "A longer take-off distance and a shorter landing distance."
+    - "A shorter take-off distance and a longer landing distance."
+    - "A longer take-off distance and a longer landing distance."
+    - "A shorter take-off distance and a shorter landing distance."
+  answer: 0
 - id: RBKA-PC005
   elements: ["RBKA 4.1.1"]
   front: "Wet and slushy runway effects?"
   back: "Wet: longer landing (poor braking), longer take-off on grass. Slush: greatly longer take-off (wheel drag) and landing (aquaplaning, no braking)."
+  stem: "Compared with a dry runway, a slush-covered runway will:"
+  options:
+    - "Shorten the landing, because the slush drag slows the wheels, but lengthen take-off."
+    - "Greatly lengthen both take-off (wheel drag) and landing (aquaplaning)."
+    - "Lengthen the landing only, with little effect on the take-off distance."
+    - "Lengthen the take-off only, because braking action is unaffected by slush."
+  answer: 1
 - id: RBKA-PC006
   elements: ["RBKA 4.2.1"]
   front: "VFO versus VFE?"
   back: "VFO: maximum speed to move (operate) the flaps. VFE: maximum speed with flaps extended, top of the white arc."
+  stem: "VFE is the:"
+  options:
+    - "Maximum speed with the flaps extended, the top of the white arc."
+    - "Stalling speed with full flap, at the bottom of the white arc."
+    - "Maximum speed with the flaps extended, the top of the green arc."
+    - "Maximum speed in rough air with flaps extended, the top of the yellow arc."
+  answer: 0

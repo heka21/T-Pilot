@@ -3,59 +3,164 @@
   elements: ["BAKC 4.1.1"]
   front: "What is inertia, and why does it matter in wind shear?"
   back: "Resistance to a change in motion, proportional to mass. In wind shear the aircraft keeps its groundspeed for a moment, so the airspeed changes suddenly (loss of headwind = loss of airspeed)."
+  stem: "On approach, an aircraft flies into a sudden loss of headwind. Because of inertia, the immediate effect is:"
+  options:
+    - "Airspeed falls, because the aircraft briefly keeps its groundspeed."
+    - "Airspeed rises, because the aircraft briefly keeps its groundspeed."
+    - "Groundspeed falls, because the aircraft briefly keeps its airspeed."
+    - "No change in airspeed, because the aircraft moves with the air mass at once."
+  answer: 0
 - id: BAKC-AC002
   elements: ["BAKC 4.1.2"]
   front: "Define angle of attack and relative airflow."
   back: "Relative airflow: airflow parallel and opposite to the flight path. Angle of attack: angle between the chord line and the relative airflow (not the pitch attitude)."
+  stem: "The angle of attack is the angle between:"
+  options:
+    - "The longitudinal axis and the horizon."
+    - "The chord line and the longitudinal axis."
+    - "The flight path and the horizon."
+    - "The chord line and the relative airflow."
+  answer: 3
 - id: BAKC-AC003
   elements: ["BAKC 4.1.2"]
   front: "Centre of pressure versus centre of gravity?"
   back: "CP: where the total aerodynamic force (lift) acts; moves forward as AoA increases, then rearward at the stall. CG: where total weight acts; depends on loading."
+  stem: "As the angle of attack increases through the normal flight range, the centre of pressure:"
+  options:
+    - "Moves rearward, until it moves forward at the stall."
+    - "Moves forward, until it moves rearward at the stall."
+    - "Stays fixed, because lift always acts through the CG."
+    - "Moves forward, and keeps moving forward through the stall."
+  answer: 1
 - id: BAKC-AC004
   elements: ["BAKC 4.1.2"]
   front: "Direction of each of the four forces?"
   back: "Lift: perpendicular to the relative airflow. Drag: parallel to the relative airflow, opposing motion. Weight: vertically down through the CG. Thrust: forward along the thrust line."
+  stem: "Which statement about the direction of the forces in flight is correct?"
+  options:
+    - "Lift acts perpendicular to the chord line, and weight acts vertically down through the centre of pressure."
+    - "Lift acts vertically upward, and drag acts parallel to the longitudinal axis."
+    - "Lift acts perpendicular to the relative airflow, and weight acts vertically down through the CG."
+    - "Lift acts perpendicular to the horizon, and thrust acts parallel to the relative airflow."
+  answer: 2
 - id: BAKC-AC005
   elements: ["BAKC 4.1.3"]
   front: "Chord, span, camber, stall?"
   back: "Chord: straight line leading to trailing edge. Span: tip to tip. Camber: curvature (chord line to mean camber line). Stall: critical AoA (~15 to 18 degrees) exceeded, airflow separates, lift falls."
+  stem: "A wing stalls when:"
+  options:
+    - "The airspeed falls below the published stall speed, whatever the angle of attack."
+    - "The critical angle of attack is exceeded, so the airflow separates and lift falls."
+    - "The pitch attitude exceeds about 15 to 18 degrees nose-up, so the airflow separates."
+    - "The flaps are retracted at low speed, so the camber falls and the airflow separates."
+  answer: 1
 - id: BAKC-AC006
   elements: ["BAKC 4.2.1"]
   front: "Effect on lift and drag of doubling airspeed (constant AoA), and of increasing AoA?"
   back: "Doubling speed: lift and drag × 4 (vary with V²). Increasing AoA: lift and drag both increase up to the critical angle; beyond it lift falls sharply and drag keeps rising."
+  stem: "At a constant angle of attack, doubling the airspeed multiplies the lift and the drag by:"
+  options:
+    - "2, because both vary directly with airspeed."
+    - "8, because both vary with the cube of airspeed."
+    - "4 for the lift, while the drag halves as induced drag falls."
+    - "4, because both vary with the square of airspeed."
+  answer: 3
 - id: BAKC-AC007
   elements: ["BAKC 4.2.2"]
   front: "The three kinds of parasite drag, and what causes induced drag?"
   back: "Parasite: form (shape/wake), skin friction (boundary layer, roughness), interference (junctions). Induced: by-product of lift; tip vortices and downwash tilt lift rearward; greatest at high AoA and low speed."
+  stem: "Induced drag is:"
+  options:
+    - "A by-product of lift from tip vortices and downwash, greatest at high angle of attack and low speed."
+    - "A by-product of lift from tip vortices and downwash, greatest at low angle of attack and high speed."
+    - "Caused by friction in the boundary layer and surface roughness, and increases with the square of airspeed."
+    - "Caused by mixing airflows at the wing and fuselage junction, and is greatest at high speed."
+  answer: 0
 - id: BAKC-AC008
   elements: ["BAKC 4.2.3"]
   front: "How does total drag vary with airspeed?"
   back: "U-shaped curve: high at low speed (induced dominates), minimum where induced = parasite (best L/D speed), rising at high speed (parasite rises with V²)."
+  stem: "As airspeed increases from just above the stall to VNE, total drag:"
+  options:
+    - "Rises steadily, because parasite drag increases with the square of airspeed."
+    - "Falls steadily, because induced drag decreases as airspeed increases."
+    - "Falls to a minimum where induced and parasite drag are equal, then rises."
+    - "Rises to a maximum where induced and parasite drag are equal, then falls."
+  answer: 2
 - id: BAKC-AC009
   elements: ["BAKC 4.3.1"]
   front: "Rate versus angle of climb?"
   back: "Rate: height per time (fpm), best at Vy, depends on excess power. Angle: height per distance (gradient), best at Vx, depends on excess thrust; used for obstacles. Vx < Vy. Wind changes angle over the ground, not rate."
+  stem: "To clear an obstacle after take-off, the pilot should climb at:"
+  options:
+    - "Vy, which gives the most height per minute and depends on the excess power."
+    - "Vx, which gives the most height per distance and depends on excess thrust."
+    - "Vy, which gives the most height per distance and depends on excess thrust."
+    - "Vx, which gives the most height per minute and depends on excess power."
+  answer: 1
 - id: BAKC-AC010
   elements: ["BAKC 4.3.1"]
   front: "Formula for climb gradient over the ground?"
   back: "ft per NM = rate of climb (fpm) × 60 ÷ groundspeed (kt). E.g. 600 fpm at 80 kt GS = 450 ft/NM."
+  stem: "An aeroplane climbs at 600 fpm with a groundspeed of 80 kt. Its climb gradient over the ground is about:"
+  options:
+    - "800 ft per NM."
+    - "600 ft per NM."
+    - "4,500 ft per NM."
+    - "450 ft per NM."
+  answer: 3
 - id: BAKC-AC011
   elements: ["BAKC 4.4.1", "BAKC 4.4.2"]
   front: "When are wake vortices strongest, and what is the main hazard?"
   back: "Heavy, clean, slow (high AoA, flaps up). Main hazard: induced roll that can exceed the following aircraft's roll control, dangerous near the ground."
+  stem: "Wake vortices are strongest behind an aircraft that is:"
+  options:
+    - "Heavy, clean and fast, at a low angle of attack."
+    - "Light, with flaps extended, flying slowly on approach."
+    - "Heavy, clean and slow, at a high angle of attack."
+    - "Light, clean and fast, at a low angle of attack."
+  answer: 2
 - id: BAKC-AC012
   elements: ["BAKC 4.4.3"]
   front: "Vortex flow direction and location in cruise?"
   back: "Outward under the wing, up around the tip, inward over the top (left vortex clockwise seen from behind). Downwash between, upwash outside. They sink behind and below the aircraft, levelling off several hundred feet below its path."
+  stem: "In cruise, the airflow around a wingtip vortex and the vortex's movement behind the aircraft are:"
+  options:
+    - "Inward under the wing, up around the tip and outward over the top; the vortices sink behind the aircraft."
+    - "Outward under the wing, up around the tip and inward over the top; the vortices rise above the flight path."
+    - "Outward over the top, down around the tip and inward under the wing; the vortices sink behind the aircraft."
+    - "Outward under the wing, up around the tip and inward over the top; the vortices sink behind the aircraft."
+  answer: 3
 - id: BAKC-AC013
   elements: ["BAKC 4.4.3"]
   front: "Wake avoidance: taking off or landing behind a heavier aircraft?"
   back: "Vortices exist from its rotation to its touchdown. Taking off after it took off: rotate before its rotation point, climb above its path. Landing after it landed: stay at or above its path, touch down beyond its touchdown point. Allow time. Separation minima: check the current AIP."
+  stem: "You are taking off after a heavier aircraft has just departed from the same runway. To avoid its wake you should:"
+  options:
+    - "Rotate after its rotation point and stay below its flight path."
+    - "Rotate before its rotation point and climb above its flight path."
+    - "Rotate before its rotation point and stay below its flight path."
+    - "Rotate at its rotation point and turn downwind of its flight path."
+  answer: 1
 - id: BAKC-AC014
   elements: ["BAKC 4.4.4"]
   front: "Effect of wind and turbulence on vortices?"
   back: "Strong wind and turbulence break them up sooner; calm stable air lets them last longest. They drift with the wind. A light crosswind can hold the upwind vortex over the runway; a light tailwind can move them into the touchdown zone."
+  stem: "Wake vortices are likely to persist longest near the runway in:"
+  options:
+    - "A strong, gusty wind, which spreads the vortices along the whole runway."
+    - "Unstable, turbulent air, which stops the vortices from breaking up and sinking to the ground."
+    - "Calm, stable air, or a light crosswind that holds the upwind vortex over the runway."
+    - "A strong crosswind, which holds the downwind vortex over the runway."
+  answer: 2
 - id: BAKC-AC015
   elements: ["BAKC 4.5.1"]
   front: "How does thrust stream hazard (jet blast, prop wash, rotor downwash) vary?"
   back: "Increases with power (idle < breakaway < take-off) and decreases with distance from the source. Large jets at high power remain hazardous a long way behind; don't taxi or hold directly behind running engines."
+  stem: "The hazard from jet blast or propeller wash behind an aircraft:"
+  options:
+    - "Increases with power setting and decreases with distance from the source."
+    - "Is greatest behind an aircraft taxiing steadily, less behind one about to move off."
+    - "Is greatest at idle power and decreases once breakaway thrust is applied."
+    - "Is constant for a given power setting, whatever the distance from the source."
+  answer: 0

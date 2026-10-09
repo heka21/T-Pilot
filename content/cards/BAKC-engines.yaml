@@ -3,119 +3,329 @@
   elements: ["BAKC 3.1.1"]
   front: "Four strokes of a piston engine cycle, in order?"
   back: "Induction, compression, power, exhaust. Only the power stroke does work. Two crankshaft turns per cycle; the camshaft turns at half crankshaft speed."
+  stem: "The four strokes of a piston engine cycle, in order, are:"
+  options:
+    - "Induction, power, compression, exhaust."
+    - "Compression, induction, power, exhaust."
+    - "Induction, compression, power, exhaust."
+    - "Induction, ignition, compression, exhaust."
+  answer: 2
 - id: BAKC-EC002
   elements: ["BAKC 3.1.2"]
   front: "Why does engine power fall with altitude and temperature?"
   back: "Lower air density means less oxygen per induction stroke. Roughly 3 percent of power is lost per 1,000 ft; a hot day costs power the same way."
+  stem: "Engine power falls as altitude and air temperature increase because:"
+  options:
+    - "Lower air density means less oxygen in each induction stroke."
+    - "Lower air density makes the mixture leaner, so less fuel burns each stroke."
+    - "The magnetos produce a weaker spark in the lower air pressure."
+    - "Warmer, thinner air lets the fuel boil before it reaches the cylinders."
+  answer: 0
 - id: BAKC-EC003
   elements: ["BAKC 3.1.3"]
   front: "What does the impulse coupling do?"
   back: "Retards and intensifies the magneto spark at cranking speed for easy starting and prevents kick-back."
+  stem: "The purpose of the impulse coupling on a magneto is to:"
+  options:
+    - "Advance the spark at cranking speed, giving a quicker, hotter start in cold weather."
+    - "Retard and intensify the spark at cranking speed, for easy starts without kick-back."
+    - "Earth the magneto at shutdown, so a hand-turned propeller cannot start the engine."
+    - "Switch the ignition to the other magneto automatically if one magneto fails."
+  answer: 1
 - id: BAKC-EC004
   elements: ["BAKC 3.1.3"]
   front: "Why two magnetos and two plugs per cylinder?"
   back: "Better combustion (two flame fronts) and redundancy: the engine keeps running on one magneto if the other fails."
+  stem: "Aircraft piston engines have two magnetos and two spark plugs per cylinder to:"
+  options:
+    - "Double the take-off power, then allow one magneto to be switched off in cruise."
+    - "Give a hotter spark for starting, and let the battery power one set of plugs in flight."
+    - "Reduce fuel burn by firing alternate plugs each stroke, so each plug lasts longer."
+    - "Give better combustion with two flame fronts, and keep running if one magneto fails."
+  answer: 3
 - id: BAKC-EC005
   elements: ["BAKC 3.1.4"]
   front: "Oil temperature rising slowly, oil pressure falling slowly: meaning?"
   back: "Oil loss or oil system failure; engine failure is likely. Reduce power and land as soon as possible."
+  stem: "In cruise, oil temperature is rising slowly while oil pressure is falling slowly. This most likely means:"
+  options:
+    - "Oil loss or oil system failure; reduce power and land as soon as possible."
+    - "A faulty oil temperature gauge; continue and have it checked after landing."
+    - "Normal thinning of the oil in a warm engine; enrich the mixture and continue."
+    - "Carburettor ice forming; apply full carburettor heat and leave it on."
+  answer: 0
 - id: BAKC-EC006
   elements: ["BAKC 3.1.5"]
   front: "Two jobs of engine oil?"
   back: "Lubricate (reduce friction and wear, seal rings) and cool the internal parts the airflow cannot reach, shedding the heat in the oil cooler."
+  stem: "Besides lubricating the engine, engine oil also:"
+  options:
+    - "Cleans the fuel before it reaches the carburettor, trapping water in the oil filter."
+    - "Heats the induction air in cold weather, preventing carburettor ice at low power."
+    - "Cools internal parts the airflow cannot reach, shedding the heat in the oil cooler."
+    - "Raises the effective octane by coating the cylinder walls, preventing detonation."
+  answer: 2
 - id: BAKC-EC007
   elements: ["BAKC 3.1.6"]
   front: "Symptoms of too rich versus too lean a mixture?"
   back: "Rich: rough, power loss, high fuel burn, cool running, plug fouling, black smoke. Lean: power loss, high CHT and EGT, detonation risk."
+  stem: "Which symptoms indicate a mixture that is too lean?"
+  options:
+    - "Rough running, black exhaust smoke, cool running and plug fouling."
+    - "Power loss, low CHT and EGT, and high fuel consumption."
+    - "Rough running, low CHT, and plug fouling from lead deposits."
+    - "Power loss, high CHT and EGT, and a risk of detonation."
+  answer: 3
 - id: BAKC-EC008
   elements: ["BAKC 3.1.7"]
   front: "Main advantage and main disadvantage of fuel injection over a carburettor?"
   back: "Advantage: no carburettor ice and an even mixture to each cylinder. Disadvantage: complexity, cost, hot-start vapour lock and dependence on a fuel pump."
+  stem: "Compared with a carburettor, the main advantage of fuel injection is:"
+  options:
+    - "Simpler maintenance, and easier starting when the engine is hot."
+    - "No carburettor ice, and an even mixture to each cylinder."
+    - "No dependence on a fuel pump, and a lower purchase cost."
+    - "Immunity to all induction icing, including impact ice on the air filter."
+  answer: 1
 - id: BAKC-EC009
   elements: ["BAKC 3.1.8"]
   front: "Which instruments run on vacuum, electricity and pressure in a typical trainer?"
   back: "Vacuum: attitude indicator and directional indicator. Electric: turn coordinator. Pressure (no power): ASI, altimeter, VSI."
+  stem: "In a typical training aircraft, the attitude indicator and directional indicator are driven by:"
+  options:
+    - "The electrical system, while the turn coordinator is vacuum driven."
+    - "Pitot and static pressure, while the turn coordinator is electric."
+    - "The vacuum system, while the turn coordinator is electric."
+    - "The vacuum system, which also drives the turn coordinator and ASI."
+  answer: 2
 - id: BAKC-EC010
   elements: ["BAKC 3.2.1"]
   front: "AVGAS 100LL colour? Jet A-1 appearance?"
   back: "100LL is blue (100/130 is green). Jet A-1 is clear to straw coloured and smells of kerosene. A clear sample from an AVGAS aeroplane means water or jet fuel."
+  stem: "A fuel drain sample from an AVGAS aeroplane is clear and colourless. This indicates:"
+  options:
+    - "Good 100LL, which is normally clear when fresh."
+    - "Water or jet fuel, since 100LL is dyed blue."
+    - "AVGAS 100/130, which is the undyed grade."
+    - "Older 100LL whose dye has faded, safe to use."
+  answer: 1
 - id: BAKC-EC011
   elements: ["BAKC 3.2.1"]
   front: "Main source of water in fuel tanks and the defence against it?"
   back: "Condensation in partly filled tanks overnight. Fill the tanks before overnight parking and drain-check before flight and after refuelling."
+  stem: "The main source of water in aircraft fuel tanks, and the defence against it, are:"
+  options:
+    - "Condensation in part-full tanks overnight; fill tanks before overnight parking, and drain-check."
+    - "Rain entering through the fuel vents; park with the tanks part-full so water can be drained easily."
+    - "Contaminated bowser fuel; refuel only from sealed drums and drain-check once a week."
+    - "Condensation in full tanks during the day; leave the tanks part-full overnight and drain-check."
+  answer: 0
 - id: BAKC-EC012
   elements: ["BAKC 3.3.1"]
   front: "Three causes of detonation named in the syllabus?"
   back: "Lean mixture at high power, high manifold pressure with low RPM, and fuel of too low an octane. High CHT makes all of them worse."
+  stem: "The three causes of detonation named in the syllabus are:"
+  options:
+    - "Lean mixture at high power, low manifold pressure with high RPM, and low-octane fuel."
+    - "Rich mixture at high power, high manifold pressure with low RPM, and low-octane fuel."
+    - "Lean mixture at high power, high manifold pressure with low RPM, and high-octane fuel."
+    - "Lean mixture at high power, high manifold pressure with low RPM, and low-octane fuel."
+  answer: 3
 - id: BAKC-EC013
   elements: ["BAKC 3.3.2"]
   front: "Effect of prolonged idling?"
   back: "Spark plug fouling (lead and carbon) from a cool, rich-running engine, giving rough running and a poor magneto check."
+  stem: "Prolonged idling on the ground is likely to cause:"
+  options:
+    - "Detonation from a hot, lean-running engine, giving high CHT and rough running."
+    - "Shock cooling of the cylinders, giving cracked heads and a rough magneto check."
+    - "Spark plug fouling from a cool, rich-running engine, giving a poor magneto check."
+    - "Oil thinning from a hot, fast-running engine, giving low oil pressure on take-off."
+  answer: 2
 - id: BAKC-EC014
   elements: ["BAKC 3.3.3"]
   front: "Why warm the engine before high power, and why avoid a long idle descent?"
   back: "Cold oil is thick and does not flow (pressure may read high). A long idle descent shock-cools the cylinders and invites carburettor ice: keep some power on and use carburettor heat."
+  stem: "A long descent at idle power should be avoided because it:"
+  options:
+    - "Overheats the cylinders and invites detonation; enrich the mixture and open the cowl flaps fully."
+    - "Shock-cools the cylinders and invites carburettor ice; keep some power and use carburettor heat."
+    - "Thickens the oil and raises oil pressure; lean the mixture and keep the RPM low."
+    - "Fouls the magnetos and invites vapour lock; switch on the booster pump and lean the mixture."
+  answer: 1
 - id: BAKC-EC015
   elements: ["BAKC 3.3.3"]
   front: "Purpose of the dead-cut check at shutdown?"
   back: "Confirms the ignition switch earths both magnetos, so a live magneto cannot fire the engine if the propeller is moved by hand."
+  stem: "The purpose of the dead-cut check at shutdown is to confirm that:"
+  options:
+    - "Both magnetos produce a spark, so the engine will keep running on either one in flight."
+    - "The mixture control cuts the fuel, so no fuel is left in the cylinders."
+    - "The impulse coupling disengages, so the engine will not kick back on the next start."
+    - "The ignition switch earths both magnetos, so a moved propeller cannot fire the engine."
+  answer: 3
 - id: BAKC-EC016
   elements: ["BAKC 3.3.4"]
   front: "Blue exhaust smoke versus black exhaust smoke?"
   back: "Blue: burning oil (worn rings or valve guides). Black: over-rich mixture."
+  stem: "Blue exhaust smoke from a piston engine indicates:"
+  options:
+    - "An over-rich mixture from incorrect leaning."
+    - "Water in the fuel from condensation in the tanks."
+    - "Burning oil from worn rings or valve guides."
+    - "A lean mixture with detonation in the cylinders."
+  answer: 2
 - id: BAKC-EC017
   elements: ["BAKC 3.4.1"]
   front: "Alternator fails in flight: what do you lose and what do you keep?"
-  back: "Battery runs down in roughly 30 to 60 minutes, then radios, transponder, electric flaps, lights and fuel pump are lost. The engine (magnetos) and vacuum gyros keep working."
+  back: "Battery runs down in roughly 30 to 60 minutes, then radios, transponder, electric flaps, lights and any electric fuel pump are lost. The engine (magnetos) and vacuum gyros keep working."
+  stem: "The alternator fails in flight. Once the battery is flat:"
+  options:
+    - "Radios, transponder and electric flaps fail; the engine and vacuum gyros keep working."
+    - "The engine stops soon after, because the magnetos are powered by the battery and alternator."
+    - "Radios and transponder fail, and so do the vacuum-driven attitude and heading indicators."
+    - "Electric flaps and lights fail, but the radios keep working from the magneto supply."
+  answer: 0
 - id: BAKC-EC018
   elements: ["BAKC 3.4.2"]
   front: "Unexplained slow loss of RPM in cruise, humid air: cause and action?"
   back: "Carburettor ice. Apply full carburettor heat and leave it on; expect rougher running briefly as the ice melts. Do not chase the RPM with throttle."
+  stem: "In cruise in humid air, the RPM falls slowly for no obvious reason. The likely cause and action are:"
+  options:
+    - "Carburettor ice; open the throttle a little at a time to hold the cruise RPM."
+    - "A failing magneto; select the good magneto and land as soon as possible."
+    - "Carburettor ice; apply heat briefly, then return to cold as soon as the engine runs rough."
+    - "Carburettor ice; apply full carburettor heat and leave it on, despite brief rough running."
+  answer: 3
 - id: BAKC-EC019
   elements: ["BAKC 3.4.3"]
   front: "What do you look for during the carburettor heat check at run-up?"
   back: "An RPM drop with heat on (system works). A rise while still on means ice was present. RPM returns to normal when cold is reselected."
+  stem: "During the run-up, the RPM drops when carburettor heat is selected, then rises while heat is still on. This shows that:"
+  options:
+    - "The carburettor heat system has failed."
+    - "The mixture is too lean for take-off."
+    - "Ice was present and is being melted."
+    - "A magneto is breaking down under load."
+  answer: 2
 - id: BAKC-EC020
   elements: ["BAKC 3.4.4"]
   front: "Conditions for serious carburettor (throttle) ice?"
   back: "High humidity, temperatures roughly minus 5 to plus 20 degrees (possible up to 30), and low power with the throttle butterfly nearly closed: descents, approaches, taxi."
+  stem: "Serious carburettor (throttle) ice is most likely with:"
+  options:
+    - "Low humidity, temperatures below about minus 10 degrees, and high power at take-off."
+    - "High humidity, about minus 5 to plus 20 degrees, and low power on descent or approach."
+    - "High humidity, temperatures below about minus 10 degrees, and high power in the climb."
+    - "Low humidity, temperatures of roughly plus 25 to plus 35 degrees, and cruise power."
+  answer: 1
 - id: BAKC-EC021
   elements: ["BAKC 3.4.5"]
   front: "Why not just open the throttle when RPM drops from undiagnosed ice?"
   back: "Each increment hides the symptom while ice keeps building, until full throttle gives nothing and the engine stops."
+  stem: "RPM is falling from undiagnosed carburettor ice. Why should the pilot not just keep opening the throttle?"
+  options:
+    - "Each increase hides the symptom while ice keeps building, until full throttle gives nothing."
+    - "Opening the throttle leans the mixture, which risks detonation and overheating at high power."
+    - "Opening the throttle over-speeds the propeller, which risks serious engine damage."
+    - "Each increase draws in more unfiltered air, which adds dust and grit to the ice."
+  answer: 0
 - id: BAKC-EC022
   elements: ["BAKC 3.4.6", "BAKC 3.4.8"]
   front: "Effect of carburettor heat on the engine, and why avoid it on the ground?"
   back: "Hot air is less dense: power drops, mixture richens. The hot air is unfiltered, so on the ground it draws in dust; use it only for the check and select cold for take-off."
+  stem: "Selecting carburettor heat causes:"
+  options:
+    - "A power loss and a leaner mixture, because the hot air is less dense."
+    - "A power gain and a richer mixture, because the hot air vaporises the fuel."
+    - "A power loss and a leaner mixture, because the hot air is filtered."
+    - "A power loss and a richer mixture, because the hot air is less dense."
+  answer: 3
 - id: BAKC-EC023
   elements: ["BAKC 3.4.7"]
   front: "Alternate air versus carburettor heat?"
   back: "Carburettor heat: hot air into a carburettor to prevent or melt ice. Alternate air: on fuel-injected engines, an unfiltered bypass for a blocked intake filter (impact ice, dust)."
+  stem: "On a fuel-injected engine, the alternate air source is used to:"
+  options:
+    - "Supply hot air to the carburettor to prevent or melt throttle ice."
+    - "Supply alternate static pressure to the instruments if the static vent becomes blocked."
+    - "Supply unfiltered bypass air if the intake filter is blocked by impact ice or dust."
+    - "Supply extra filtered air to the engine when operating in dusty or sandy conditions."
+  answer: 2
 - id: BAKC-EC024
   elements: ["BAKC 3.4.9"]
   front: "Symptoms and fix for fuel vaporisation (vapour lock)?"
   back: "Fluctuating fuel pressure and flow, surging, rough running, hard hot start. Booster pump on, enrich, follow the POH hot-start procedure."
+  stem: "Fluctuating fuel pressure and flow, surging and a hard hot start suggest:"
+  options:
+    - "Carburettor ice; apply full carburettor heat and lean the mixture."
+    - "Vapour lock; booster pump on, enrich and follow the POH hot-start procedure."
+    - "Water in the fuel; change tanks and lean the mixture for smoother running."
+    - "Plug fouling; lean the mixture and run the engine at high RPM to burn the deposits off."
+  answer: 1
 - id: BAKC-EC025
   elements: ["BAKC 3.5.1"]
   front: "ASI colour arcs and the speeds at their ends?"
   back: "White: VSO to VFE. Green: VS1 to VNO. Yellow: VNO to VNE (smooth air only). Red line: VNE. VA is not marked."
+  stem: "On the ASI, the green arc runs from:"
+  options:
+    - "VS1 to VNO."
+    - "VSO to VFE."
+    - "VS1 to VA (the manoeuvring speed)."
+    - "VNO to VNE."
+  answer: 0
 - id: BAKC-EC026
   elements: ["BAKC 3.5.2"]
   front: "What pressure does each pressure instrument use?"
   back: "ASI: pitot minus static. Altimeter: static. VSI: rate of change of static via a calibrated leak (it lags)."
+  stem: "Which pressures do the pressure instruments use?"
+  options:
+    - "Altimeter static; VSI rate of change of pitot; ASI pitot minus static."
+    - "Altimeter pitot; VSI rate of change of static; ASI pitot minus static."
+    - "Altimeter static; VSI rate of change of static; ASI total pitot pressure only."
+    - "Altimeter static; VSI rate of change of static; ASI pitot minus static."
+  answer: 3
 - id: BAKC-EC027
   elements: ["BAKC 3.5.3"]
   front: "Static vent blocked: effect on altimeter, VSI and ASI?"
   back: "Altimeter freezes, VSI reads zero, ASI under-reads in a climb and over-reads in a descent."
+  stem: "The static vent becomes blocked in the cruise and the aircraft then descends. The instruments show:"
+  options:
+    - "Altimeter frozen, VSI zero, ASI under-reading."
+    - "Altimeter correct, VSI zero, ASI falling towards zero."
+    - "Altimeter frozen, VSI zero, ASI over-reading."
+    - "Altimeter frozen, VSI showing a descent, ASI over-reading."
+  answer: 2
 - id: BAKC-EC028
   elements: ["BAKC 3.5.3"]
   front: "Pitot tube and drain both blocked: ASI behaviour?"
   back: "Acts like an altimeter: over-reads in a climb, under-reads in a descent. Drain clear and tube blocked: reads towards zero."
+  stem: "The pitot tube and its drain hole are both blocked. As the aircraft climbs, the ASI:"
+  options:
+    - "Under-reads, acting like an altimeter."
+    - "Over-reads, acting like an altimeter."
+    - "Falls steadily towards zero."
+    - "Stays fixed at the speed when blocked."
+  answer: 1
 - id: BAKC-EC029
   elements: ["BAKC 3.5.3"]
   front: "When and why do you reset the directional indicator to the compass?"
   back: "About every 10 to 15 minutes and before turns, in straight, level, unaccelerated flight, because the gyro drifts and the compass is only accurate when not turning or accelerating."
+  stem: "The directional indicator should be reset to the magnetic compass:"
+  options:
+    - "About every 10 to 15 minutes, in straight, level, unaccelerated flight."
+    - "About every 10 to 15 minutes, during a rate-one turn so the compass settles."
+    - "Only before take-off, because the gyro does not drift once in flight."
+    - "About once an hour, while climbing or accelerating so the compass is level."
+  answer: 0
 - id: BAKC-EC030
   elements: ["BAKC 3.5.4"]
   front: "Turn coordinator check during taxi turns?"
   back: "Aircraft symbol banks into the turn, ball moves to the outside. DI heading should change the correct way; compass swings freely."
+  stem: "During a taxi turn to the right, a serviceable turn coordinator shows:"
+  options:
+    - "The aircraft symbol banked right, with the ball moving to the right."
+    - "The aircraft symbol banked left, with the ball moving to the left."
+    - "The aircraft symbol level, with the ball moving to the left."
+    - "The aircraft symbol banked right, with the ball moving to the left."
+  answer: 3

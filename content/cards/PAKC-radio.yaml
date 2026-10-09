@@ -3,127 +3,351 @@
   elements: ["PAKC 3.1.1"]
   front: "How are 3, 5, 9 and whole thousands spoken on the radio?"
   back: "TREE, FIFE, NIN-er; thousands and hundreds as TOU-SAND and HUN-dred (\"tree thousand fife hundred\" for 3,500 ft). Headings, frequencies and codes digit by digit."
+  stem: "How should a pilot transmit a cruising altitude of 9,500 ft?"
+  options:
+    - "\"Niner fife zero zero\""
+    - "\"Ninety-five hundred\""
+    - "\"Niner thousand fife hundred\""
+    - "\"Niner fife hundred\""
+  answer: 2
 - id: PAKC-RC002
   elements: ["PAKC 3.1.1"]
   front: "When may you abbreviate your call-sign (e.g. VH-ABC to 'Bravo Charlie' or 'ABC')?"
   back: "Only after the ground station has abbreviated it first. Use the full call-sign on first contact, prefixed by aircraft type, and whenever a similar call-sign is on frequency."
+  stem: "When may the pilot of VH-ABC first abbreviate the call-sign to \"ABC\"?"
+  options:
+    - "After the ground station has used the abbreviated call-sign first."
+    - "After the initial call, provided no similar call-sign is on frequency."
+    - "Whenever the frequency is busy, to keep transmissions short."
+    - "After the pilot has stated the aircraft type on first contact."
+  answer: 0
 - id: PAKC-RC003
   elements: ["PAKC 3.1.1"]
   front: "Readability scale 1 to 5?"
   back: "1 unreadable, 2 readable now and then, 3 readable but with difficulty, 4 readable, 5 perfectly readable."
+  stem: "In reply to a radio check, \"readability four\" means the transmission is:"
+  options:
+    - "Perfectly readable."
+    - "Readable."
+    - "Readable but with difficulty."
+    - "Readable now and then."
+  answer: 1
 - id: PAKC-RC004
   elements: ["PAKC 3.1.1"]
   front: "How is time given on the radio, and what is Perth time in UTC?"
   back: "UTC, 24-hour clock, normally minutes only ('estimate at tree fife') and the hour added if confusion is possible. Perth (WST) = UTC + 8, no daylight saving."
+  stem: "A pilot in Perth estimates arriving at 1435 local time (WST). The estimate in UTC is:"
+  options:
+    - "2235 UTC, normally spoken as minutes only: \"tree fife\"."
+    - "0735 UTC, normally spoken as minutes only: \"tree fife\"."
+    - "0635 UTC, always spoken in full as \"zero six tree fife\" to avoid confusion."
+    - "0635 UTC, normally spoken as minutes only: \"tree fife\"."
+  answer: 3
 - id: PAKC-RC005
   elements: ["PAKC 3.1.1"]
   front: "What is a clipped transmission and how do you prevent it?"
   back: "The first or last words lost by speaking before the PTT is fully pressed or releasing early. Press, pause, speak, finish, release. A lost call-sign or 'not' can cause the wrong action."
+  stem: "A clipped transmission is caused by:"
+  options:
+    - "Speaking before the PTT is fully pressed, or releasing it before finishing."
+    - "Holding the PTT down after finishing, leaving a stuck microphone on frequency."
+    - "Two stations transmitting at once, so each carrier blocks the other."
+    - "Transmitting on the standby frequency instead of the active frequency."
+  answer: 0
 - id: PAKC-RC006
   elements: ["PAKC 3.2.1"]
   front: "How do you set the squelch?"
   back: "Open it until hiss is heard, set the volume against the hiss, then close the squelch until the hiss just disappears."
+  stem: "The correct way to set the squelch on a VHF radio is to:"
+  options:
+    - "Close it fully, set the volume on the ATIS, then open it until the hiss can just be heard."
+    - "Open it fully and leave it open, so that weak stations are not missed."
+    - "Open it until hiss is heard, set the volume, then close it until the hiss just disappears."
+    - "Set the volume with the squelch closed, then open the squelch halfway."
+  answer: 2
 - id: PAKC-RC007
   elements: ["PAKC 3.2.1"]
   front: "Main items of the pre-flight radio test?"
   back: "Avionics master on after start; radio on; correct frequencies (active vs standby); MIC and receive selections on the audio panel; volume and squelch; navaids tuned and identified; headset and mic plugs; intercom/VOX threshold; radio check."
+  stem: "Which of these is part of the routine pre-flight radio test?"
+  options:
+    - "Switching the avionics master on before engine start to check the radios."
+    - "Pressing IDENT on the transponder to confirm it is transmitting."
+    - "Making a test transmission on 121.5 MHz to confirm the transmitter works."
+    - "Checking the MIC and receive selections on the audio panel."
+  answer: 3
 - id: PAKC-RC008
   elements: ["PAKC 3.2.1"]
   front: "What does VOX control, and does it key the transmitter?"
   back: "VOX opens the intercom when speech exceeds a set threshold. It does not key the VHF transmitter; that still needs the PTT."
+  stem: "In an aeroplane with a VOX intercom, the pilot speaks without pressing the PTT. The speech is:"
+  options:
+    - "Transmitted on the selected COM, as VOX keys the transmitter above the threshold."
+    - "Heard on the intercom only, as VOX does not key the VHF transmitter."
+    - "Heard on the intercom, and transmitted only if the cabin speaker is selected."
+    - "Heard on neither, as the VOX circuit only opens while the PTT is pressed."
+  answer: 1
 - id: PAKC-RC009
   elements: ["PAKC 3.3.1"]
   front: "Radio fault-finding sequence?"
   back: "Power and avionics master, circuit breakers (reset once), frequency in the active window, volume and squelch, audio panel MIC/receive selection, plugs and headset (try another/hand mic/speaker), stuck mic (TX light), other COM, range. If unresolved: 7600 and ERSA EMERG procedure."
+  stem: "A pilot has worked through the radio fault-finding sequence and the radio still does not work. The pilot should:"
+  options:
+    - "Squawk 7600 and follow the ERSA EMERG radio failure procedure."
+    - "Squawk 7700 and follow the ERSA EMERG radio failure procedure."
+    - "Reset each tripped circuit breaker again until the radio returns."
+    - "Squawk 7500 and transmit blind on 121.5 MHz."
+  answer: 0
 - id: PAKC-RC010
   elements: ["PAKC 3.3.1"]
   front: "TX light stays on and you hear nothing. Cause and action?"
   back: "Stuck microphone/PTT: you are blocking the frequency. Unplug the PTT or headset, or change to the other COM."
+  stem: "In flight the TX light stays on and no other stations are heard. The most likely cause and action are:"
+  options:
+    - "A failed receiver; squawk 7600 and transmit blind on the active COM frequency."
+    - "Squelch set too high; open the squelch until the hiss is heard."
+    - "A stuck PTT blocking the frequency; unplug the PTT or headset, or change COM."
+    - "Out of VHF range; climb and call a nearer station on its frequency."
+  answer: 2
 - id: PAKC-RC011
   elements: ["PAKC 3.3.1"]
   front: "Hiss with the squelch open, but no stations heard?"
   back: "The receiver and audio work. Suspect wrong frequency (check active window and digits) or being out of VHF range (climb, try a nearer station)."
+  stem: "With the squelch opened, hiss is heard but no stations. This indicates:"
+  options:
+    - "The receiver has failed; squawk 7600 and follow the ERSA EMERG radio failure procedure."
+    - "A stuck microphone is blocking the frequency; unplug the PTT or headset."
+    - "The audio panel has failed; select the cabin speaker instead of headsets."
+    - "The receiver and audio work; suspect a wrong frequency or being out of range."
+  answer: 3
 - id: PAKC-RC012
   elements: ["PAKC 3.4.1"]
   front: "Recommended CTAF broadcasts?"
   back: "Taxiing; entering the runway; inbound by 10 nm; joining the circuit; straight-in approach if used; base/final when needed for separation; clear of the runway (optional). Format: location traffic, type, call-sign, position, level, intentions, location."
+  stem: "An aircraft is inbound to a non-towered aerodrome. The recommended inbound CTAF broadcast is made:"
+  options:
+    - "By 10 nm from the aerodrome."
+    - "By 5 nm from the aerodrome."
+    - "By 15 nm from the aerodrome."
+    - "By 3 nm, when joining the circuit."
+  answer: 0
 - id: PAKC-RC013
   elements: ["PAKC 3.4.1"]
   front: "The five circuit legs?"
   back: "Upwind, crosswind, downwind, base, final. Joining calls: joining crosswind, joining downwind, straight-in approach; distances in nm ('3 miles final')."
+  stem: "The circuit legs, in order after take-off, are:"
+  options:
+    - "Upwind, downwind, crosswind, base, final."
+    - "Upwind, crosswind, downwind, base, final."
+    - "Crosswind, upwind, downwind, base, final."
+    - "Upwind, crosswind, base, downwind, final."
+  answer: 1
 - id: PAKC-RC014
   elements: ["PAKC 3.4.1"]
   front: "Downwind call at a Class D aerodrome?"
   back: "\"(Call-sign), downwind, touch and go\" (or full stop). The tower gives your sequence; land only after \"cleared to land\" (or touch and go)."
+  stem: "At a Class D aerodrome a pilot calls \"Alpha Bravo Charlie, downwind, touch and go\". The pilot may then land:"
+  options:
+    - "Once the tower has acknowledged the downwind call and given a sequence."
+    - "Once number one in the sequence, provided the runway is seen to be clear."
+    - "Only after the tower says \"cleared to land\" or \"cleared touch and go\"."
+    - "After broadcasting \"final\", provided the tower does not object."
+  answer: 2
 - id: PAKC-RC015
   elements: ["PAKC 3.5.1"]
   front: "Secrecy of communications means?"
   back: "Do not divulge or use the content of messages not intended for you. Safety traffic addressed to all stations and distress messages may (and should) be acted on or relayed."
+  stem: "Under the secrecy of communications rules, a pilot who overhears a message intended for another station:"
+  options:
+    - "Must not divulge or use it, unless it is distress traffic or safety traffic for all stations."
+    - "May pass it on to others, provided it has no commercial value."
+    - "May use it for their own planning, but must not repeat it on the radio."
+    - "Must not act on it or relay it, even if it is a distress message from another aircraft."
+  answer: 0
 - id: PAKC-RC016
   elements: ["PAKC 3.5.1"]
   front: "Examples of unauthorised transmissions?"
   back: "Unnecessary or personal chat, profane or obscene language, false or misleading messages (especially false distress), transmissions without a call-sign, using the wrong frequency (e.g. chat on 121.5), unapproved equipment."
+  stem: "Which of these is an unauthorised transmission?"
+  options:
+    - "A MAYDAY RELAY of another aircraft's unacknowledged distress call."
+    - "A radio check with the tower before taxi."
+    - "A CTAF broadcast made when inbound by 10 nm."
+    - "A pilot chatting to a friend on 121.5 MHz."
+  answer: 3
 - id: PAKC-RC017
   elements: ["PAKC 3.6.1"]
   front: "Functions of transmitter, receiver and antenna?"
   back: "Transmitter: generates the RF carrier and modulates it (AM) with speech. Receiver: selects, amplifies and demodulates. Antenna: radiates the RF energy and collects incoming signals."
+  stem: "In a VHF communication system, the receiver:"
+  options:
+    - "Generates the RF carrier and modulates it with speech."
+    - "Selects, amplifies and demodulates the incoming signal."
+    - "Radiates RF energy and collects incoming signals."
+    - "Selects, amplifies and modulates the incoming signal with speech."
+  answer: 1
 - id: PAKC-RC018
   elements: ["PAKC 3.6.1"]
   front: "Why an avionics (radio) master?"
   back: "Switches all avionics together; off for engine start and shutdown to protect them from voltage spikes, and allows avionics to be shed at once in an electrical emergency."
+  stem: "The avionics master is switched off for engine start and shutdown to:"
+  options:
+    - "Stop the radios transmitting while the propeller is turning."
+    - "Prevent starter vibration from activating the ELT."
+    - "Protect the avionics from voltage spikes."
+    - "Stop the transponder replying while on the ground."
+  answer: 2
 - id: PAKC-RC019
   elements: ["PAKC 3.6.1"]
   front: "Fuse versus circuit breaker?"
   back: "Both open a circuit on overload. A fuse melts and must be replaced with one of the same rating; a circuit breaker pops and can be reset (once only in flight)."
+  stem: "In flight, a circuit breaker pops. Compared with a blown fuse:"
+  options:
+    - "The breaker may be reset as often as needed; the fuse must be replaced with a higher rating."
+    - "The breaker must not be reset in flight; the fuse must be replaced with one of the same rating."
+    - "The breaker may be reset once; the fuse may be replaced with one of any available rating."
+    - "The breaker may be reset once; the fuse must be replaced with one of the same rating."
+  answer: 3
 - id: PAKC-RC020
   elements: ["PAKC 3.7.1"]
   front: "MAYDAY versus PAN PAN?"
   back: "MAYDAY (distress): grave and imminent danger requiring immediate assistance. PAN PAN (urgency): concerns safety of the aircraft or a person but immediate assistance not required. Each said three times."
+  stem: "An aeroplane has a rough-running engine but is holding height and the pilot does not need immediate assistance. The appropriate call begins:"
+  options:
+    - "PAN PAN, said three times."
+    - "MAYDAY, said three times."
+    - "PAN PAN, said once."
+    - "MAYDAY, said once."
+  answer: 0
 - id: PAKC-RC021
   elements: ["PAKC 3.7.1"]
   front: "Content of a distress message, in order?"
   back: "MAYDAY x3; station addressed; call-sign (and type); nature of emergency; intentions; position, level and heading; other info (POB, endurance). First on the frequency in use, then 121.5. Squawk 7700."
+  stem: "In a distress message, what comes immediately after the aircraft's call-sign?"
+  options:
+    - "The aircraft's position, level and heading."
+    - "The nature of the emergency."
+    - "The pilot's intentions."
+    - "The persons on board and the endurance."
+  answer: 1
 - id: PAKC-RC022
   elements: ["PAKC 3.7.1"]
   front: "MAYDAY RELAY and 'STOP TRANSMITTING MAYDAY'?"
   back: "MAYDAY RELAY: passing on another aircraft's distress message that has not been acknowledged. STOP TRANSMITTING MAYDAY: silence imposed on other stations during distress traffic."
+  stem: "A pilot hears a distress call from another aircraft that has not been acknowledged. The pilot should transmit:"
+  options:
+    - "STOP TRANSMITTING MAYDAY, to clear the frequency."
+    - "PAN PAN, passing on the distress message."
+    - "MAYDAY RELAY, passing on the distress message."
+    - "SECURITE, passing on the distress message."
+  answer: 2
 - id: PAKC-RC023
   elements: ["PAKC 3.8.1"]
   front: "VFR radio failure procedure (outline; check ERSA EMERG)?"
   back: "Squawk 7600; listen out (ATIS, tower, area); transmit blind; remain in VMC; follow ERSA for your airspace; land at the most suitable aerodrome; report arrival to ATS (cancel SARTIME)."
+  stem: "A VFR aircraft suffers a radio failure. Which action is part of the procedure?"
+  options:
+    - "Squawk 7500, listen out and transmit blind, remaining in VMC."
+    - "Squawk 7600 and stop transmitting until the fault is found, remaining in VMC."
+    - "Squawk 7700, listen out and transmit blind only on 121.5 MHz."
+    - "Squawk 7600, listen out and transmit blind, remaining in VMC."
+  answer: 3
 - id: PAKC-RC024
   elements: ["PAKC 3.8.1"]
   front: "Light signals to an aircraft in flight?"
   back: "Steady green: cleared to land. Green flashes: return for landing. Steady red: give way, continue circling. Red flashes: aerodrome unsafe, do not land. White flashes: land here after steady green, then after green flashes proceed to apron."
+  stem: "An aircraft in flight receives a steady red light from the tower. This means:"
+  options:
+    - "Give way to other aircraft and continue circling."
+    - "The aerodrome is unsafe; do not land."
+    - "Return to the aerodrome for landing."
+    - "Land at this aerodrome, then proceed to the apron."
+  answer: 0
 - id: PAKC-RC025
   elements: ["PAKC 3.8.1"]
   front: "Light signals to an aircraft on the ground?"
   back: "Steady green: cleared for take-off. Green flashes: cleared to taxi. Steady red: stop. Red flashes: taxi clear of the landing area. White flashes: return to starting point."
+  stem: "An aircraft on the ground receives a series of green flashes from the tower. This means:"
+  options:
+    - "Cleared for take-off."
+    - "Cleared to taxi."
+    - "Taxi clear of the landing area in use."
+    - "Return to the starting point on the aerodrome."
+  answer: 1
 - id: PAKC-RC026
   elements: ["PAKC 3.9.1"]
   front: "Which COM do you transmit on?"
   back: "The one chosen by the audio panel MIC (transmit) selector, on its active frequency, regardless of which receivers are selected for listening."
+  stem: "The audio panel MIC selector is on COM 1, and both COM 1 and COM 2 receivers are selected. Pressing the PTT transmits on:"
+  options:
+    - "COM 1, on its standby frequency."
+    - "COM 1 and COM 2, on their active frequencies."
+    - "COM 1, on its active frequency."
+    - "Whichever COM was tuned last, on its active frequency."
+  answer: 2
 - id: PAKC-RC027
   elements: ["PAKC 3.9.1"]
   front: "Main audio panel controls?"
   back: "MIC selector (COM 1/2), receiver buttons (COM, NAV, ADF, DME, marker), speaker/phone, intercom volume and squelch (VOX), isolation modes (pilot isolate, crew, all), marker lights. Fail-safe usually links COM 1 to the pilot headset."
+  stem: "If an audio panel fails, its fail-safe mode usually connects:"
+  options:
+    - "COM 2 to the cabin speaker."
+    - "All receivers to all headsets."
+    - "COM 1 to the cabin speaker only."
+    - "COM 1 to the pilot's headset."
+  answer: 3
 - id: PAKC-RC028
   elements: ["PAKC 3.9.1"]
   front: "Transponder controls and VFR Class G code?"
   back: "Four-digit code (0-7), mode OFF/STBY/ON/ALT, IDENT only when ATC asks. VFR in Class G squawks 1200 with ALT selected unless assigned a code."
+  stem: "A VFR aircraft in Class G airspace has not been assigned a transponder code. The pilot should select:"
+  options:
+    - "Code 1200 with ALT selected."
+    - "Code 2000 with ALT selected."
+    - "Code 1200 with ON selected."
+    - "Code 7000 with ALT selected."
+  answer: 0
 - id: PAKC-RC029
   elements: ["PAKC 3.10.1"]
   front: "VHF line-of-sight range rule of thumb?"
   back: "Range (nm) ≈ 1.23 × √(height in ft). E.g. 2,500 ft: 1.23 × 50 ≈ 62 nm. Two elevated stations: add the two ranges."
+  stem: "Using the rule of thumb, the approximate VHF range between a ground station and an aircraft at 2,500 ft is:"
+  options:
+    - "About 50 nm."
+    - "About 62 nm."
+    - "About 31 nm."
+    - "About 100 nm."
+  answer: 1
 - id: PAKC-RC030
   elements: ["PAKC 3.10.1"]
   front: "Bands: MF, HF, VHF, UHF frequencies and uses?"
   back: "MF 300 kHz-3 MHz (NDB, ground wave). HF 3-30 MHz (long-range voice, sky wave). VHF 30-300 MHz (COM 118-137, VOR/ILS 108-118, line of sight). UHF 300 MHz-3 GHz (DME, transponder, GNSS)."
+  stem: "The VHF COM band and its propagation are:"
+  options:
+    - "108 to 118 MHz, line of sight."
+    - "3 to 30 MHz, sky wave."
+    - "118 to 137 MHz, line of sight."
+    - "118 to 137 MHz, ground wave following the earth's curvature."
+  answer: 2
 - id: PAKC-RC031
   elements: ["PAKC 3.10.1"]
   front: "Factors affecting radio propagation?"
   back: "Terrain (shadowing, absorption), ionosphere (day/night changes, night effect), sunspots (HF disturbance), electrical interference, thunderstorms (static, ADF errors), power attenuation with distance."
+  stem: "Which effect on radio propagation is correctly matched to its cause?"
+  options:
+    - "Sunspots: reduced VHF line-of-sight range."
+    - "Terrain: the HF sky-wave skip zone."
+    - "Ionosphere: shadowing behind hills."
+    - "Thunderstorms: static and ADF errors."
+  answer: 3
 - id: PAKC-RC032
   elements: ["PAKC 3.10.2"]
   front: "Key limitations of VHF and HF?"
   back: "VHF: line of sight, limited by height and terrain, but clear. HF: long range by sky wave, but noisy, fading, skip zone, and frequency must suit time of day (higher by day, lower at night)."
+  stem: "Compared with VHF, HF radio:"
+  options:
+    - "Is limited to line of sight, but is clearer and free of fading."
+    - "Has long range by sky wave, but is noisy, fades and has a skip zone."
+    - "Has long range by ground wave, and is clear but suffers terrain shadowing."
+    - "Has long range by sky wave, and uses higher frequencies at night than by day."
+  answer: 1

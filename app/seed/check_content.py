@@ -294,6 +294,11 @@ def main(argv: list[str]) -> int:
     for path in sorted((CONTENT / "cards").glob("*.yaml")):
         for c in yaml.safe_load(path.read_text(encoding="utf-8")) or []:
             c_ids[c.get("id")] += 1
+            opts = c.get("options") or []
+            if len(opts) != 4 or len(set(opts)) != 4:
+                problems.append(f"{path}: card {c.get('id')} needs 4 distinct options (cards are reviewed in exam format)")
+            if not (isinstance(c.get("answer"), int) and 0 <= c["answer"] <= 3):
+                problems.append(f"{path}: card {c.get('id')} answer must be an option index 0-3")
             for code in c.get("elements", []):
                 if code not in el2st:
                     problems.append(f"{path}: card {c.get('id')} tags unknown element {code}")

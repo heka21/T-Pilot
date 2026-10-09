@@ -3,19 +3,54 @@
   elements: ["PFRA 2.8.1"]
   front: "What is an ADIZ and where are its rules?"
   back: "Air Defence Identification Zone: airspace in which aircraft must be identified, located and controlled for national security. Requirements (flight notification, radio, position reports within tolerances, transponder) in AIP ENR 2.2."
+  stem: "An Air Defence Identification Zone (ADIZ) is airspace in which:"
+  options:
+    - "Military flying takes place and civil aircraft are prohibited at all times."
+    - "Aircraft must be identified, located and controlled for national security."
+    - "Live firing may occur, and civil aircraft must avoid it when it is active."
+    - "International arrivals are identified by customs before they may land."
+  answer: 1
 - id: PFRA-XC002
   elements: ["PFRA 2.8.1"]
   front: "Actions when intercepted?"
   back: "Follow the interceptor's instructions and signals; notify ATS if possible; call on 121.5 MHz; squawk 7700 unless ATS instructs otherwise; if ATS and interceptor conflict, follow the interceptor. AIP ENR 1.12."
+  stem: "If your aircraft is intercepted, you should:"
+  options:
+    - "Follow the interceptor's signals, call on 121.5 MHz and squawk 7700 unless ATS instructs otherwise."
+    - "Follow the interceptor's signals, call on 123.45 MHz and squawk 7600 unless ATS instructs otherwise."
+    - "Follow the interceptor's signals, call on 121.5 MHz and squawk 7500 unless ATS instructs otherwise."
+    - "Follow ATS rather than the interceptor if they conflict, call on 121.5 MHz and squawk 7700."
+  answer: 0
 - id: PFRA-XC003
   elements: ["PFRA 2.8.1"]
   front: "Interceptor rocks wings then slow level turn; abrupt climbing breakaway; gear down over runway?"
   back: "'Follow me' (rock wings and follow); 'you may proceed'; 'land at this aerodrome'."
+  stem: "An intercepting aircraft lowers its landing gear and overflies the runway. This signal means:"
+  options:
+    - "You may proceed."
+    - "Follow me."
+    - "Land at this aerodrome."
+    - "Do not land at this aerodrome."
+  answer: 2
 - id: PFRA-XC004
   elements: ["PFRA 2.8.2"]
   front: "Powers of the pilot in command?"
   back: "Final authority over the aircraft and responsibility for safety of all on board: safety directions passengers must obey, refuse carriage or disembark persons, reasonable restraint of a person endangering the flight, refuse unsafe cargo/dangerous goods, deviate from rules in an emergency."
+  stem: "Which is a power of the pilot in command?"
+  options:
+    - "Giving safety directions passengers must obey, and refusing to carry a person."
+    - "Arresting a passenger who disobeys a safety direction and charging them with an offence."
+    - "Carrying undeclared dangerous goods if the pilot accepts the risk."
+    - "Deviating from the flight rules whenever an ATC delay costs time."
+  answer: 0
 - id: PFRA-XC005
   elements: ["PFRA 2.8.2"]
   front: "Transponder codes 7500, 7600, 7700?"
   back: "7500 unlawful interference (hijack), 7600 radio failure, 7700 emergency."
+  stem: "A pilot subject to unlawful interference (hijack) should select transponder code:"
+  options:
+    - "7600."
+    - "7700."
+    - "1200."
+    - "7500."
+  answer: 3

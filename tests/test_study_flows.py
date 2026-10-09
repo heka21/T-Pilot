@@ -4,6 +4,9 @@ from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
 
+from app.db import SessionLocal
+from app.models import Card
+
 
 def test_quiz_flow(client: TestClient) -> None:
     assert client.get("/quiz").status_code == 200
@@ -54,15 +57,32 @@ def test_exam_flow(client: TestClient) -> None:
 
 
 def test_cards_flow(client: TestClient) -> None:
+    """Exam format: four shuffled options, check, explanation, then a grade that depends on the pick."""
     assert client.get("/cards").status_code == 200
-    r = client.get("/cards/review")
+    r = client.get("/cards/review?unit=RMTC")
+    assert r.status_code == 200 and "Check answer" in r.text
+    card_id = re.search(r"/cards/([^/\"?]+)/answer", r.text).group(1)
+    order = re.search(r'name="order" value="([0-9,]+)"', r.text).group(1)
+    assert sorted(order.split(",")) == ["0", "1", "2", "3"]
+    shown = [int(v) for v in re.findall(r'name="given" value="(\d)"', r.text)]
+    assert shown == [int(x) for x in order.split(",")]
+
+    with SessionLocal() as s:
+        answer = s.get(Card, card_id).answer
+    wrong = (answer + 1) % 4
+    r = client.post(f"/cards/{card_id}/answer", data={"given": wrong, "order": order, "unit": "RMTC"})
+    assert r.status_code == 200 and "Incorrect." in r.text and "Explanation" in r.text
+    assert 'hx-vals=\'{"grade": 0}\'' in r.text and "Knew it" not in r.text
+    # the correct option's letter follows the display order
+    assert f"Correct answer: <strong>{'ABCD'[order.split(',').index(str(answer))]}." in r.text
+
+    r = client.post(f"/cards/{card_id}/answer", data={"given": answer, "order": order, "unit": "RMTC"})
+    assert r.status_code == 200 and "Correct." in r.text and "Knew it" in r.text
+    assert client.post(f"/cards/{card_id}/answer", data={"given": 7, "order": order}).status_code == 422
+
+    r = client.post(f"/cards/{card_id}/grade", data={"grade": "2", "unit": "RMTC"})
     assert r.status_code == 200
-    card_id = re.search(r"/cards/([^/\"?]+)/back", r.text).group(1)
-    r = client.get(f"/cards/{card_id}/back")
-    assert r.status_code == 200 and "Again" in r.text
-    r = client.post(f"/cards/{card_id}/grade", data={"grade": "2"})
-    assert r.status_code == 200
-    assert "Show answer" in r.text or "Done for today" in r.text
+    assert "Check answer" in r.text or "Done for today" in r.text
 
 
 def test_planner_flow(client: TestClient) -> None:

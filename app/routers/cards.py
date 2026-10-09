@@ -1,6 +1,12 @@
-"""Flashcards with SM-2 spaced repetition: overview, browse and review."""
+"""Flashcards with SM-2 spaced repetition: overview, browse and review.
+
+Review is in exam format: four options in a fresh random order each time (so the position is never the cue), the
+card's back as the explanation, and the SM-2 grade from the answer: a wrong pick is "again", a right one asks how
+sure the learner was. Cards without options fall back to show-the-back and self-grade.
+"""
 from __future__ import annotations
 
+import random
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
@@ -33,8 +39,22 @@ def card_context(session: Session, units: list[str], subtopic: Subtopic | None, 
     queue = review_queue(session, units, subtopic)
     if skip and len(queue) > 1 and queue[0].id == skip:
         queue = queue[1:] + queue[:1]  # don't show the card just failed straight back
-    return filters(units, subtopic) | {"card": queue[0] if queue else None, "remaining": len(queue),
-                                       "counts": srs.due_count(session), "show_back": False}
+    card = queue[0] if queue else None
+    return filters(units, subtopic) | {"card": card, "remaining": len(queue), "counts": srs.due_count(session),
+                                       "show_back": False, "order": shuffled_order(card)}
+
+
+def shuffled_order(card: Card | None) -> list[int]:
+    """Display order of the card's options, as original option indexes."""
+    return random.sample(range(len(card.options)), len(card.options)) if card and card.options else []
+
+
+def parse_order(raw: str, n: int) -> list[int]:
+    try:
+        order = [int(x) for x in raw.split(",")]
+    except ValueError:
+        order = []
+    return order if sorted(order) == list(range(n)) else list(range(n))
 
 
 @router.get("", response_class=HTMLResponse)
@@ -69,6 +89,23 @@ def card_back(request: Request, card_id: str, unit: list[str] = Query(default=[]
         raise HTTPException(status_code=404, detail="Card not found")
     sub = session.get(Subtopic, subtopic) if subtopic else None
     ctx = card_context(session, unit, sub) | {"card": card, "show_back": True}
+    return templates.TemplateResponse(request, "card.html", ctx)
+
+
+@router.post("/{card_id}/answer", response_class=HTMLResponse)
+def card_answer(request: Request, card_id: str, given: int = Form(...), order: str = Form(""),
+                unit: list[str] = Form(default=[]), subtopic: str = Form(""),
+                session: Session = Depends(get_session)) -> HTMLResponse:
+    """Mark the pick and show the explanation. Nothing is stored until the grade is posted."""
+    card = session.get(Card, card_id)
+    if card is None:
+        raise HTTPException(status_code=404, detail="Card not found")
+    if not card.options or given not in range(len(card.options)):
+        raise HTTPException(status_code=422, detail="Not an option of this card")
+    sub = session.get(Subtopic, subtopic) if subtopic else None
+    ctx = card_context(session, unit, sub) | {"card": card, "show_back": True, "given": given,
+                                              "correct": given == card.answer,
+                                              "order": parse_order(order, len(card.options))}
     return templates.TemplateResponse(request, "card.html", ctx)
 
 

@@ -1,5 +1,8 @@
-{# Partial: one flashcard in review (front, or back with grade buttons), or the "done" message. #}
+{# Partial: one flashcard in review, or the "done" message. A card with options is an exam-format question (pick, check,
+   then the back as the explanation and a grade); a card without them is show-the-back and self-grade. `order` holds
+   the original option indexes in display order, so letters follow the screen and the posted value is the real index. #}
 {% from "_icons.html" import icon %}
+{% from "_study_macros.html" import letter, option_card %}
 <article id="card-box" class="flashcard mx-auto max-w-2xl">
   {% if card %}
     <div class="flex flex-col gap-5">
@@ -10,16 +13,73 @@
         </span>
         <span class="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold tabular-nums text-fg-muted">{{ icon("cards", "size-3.5") }}{{ remaining }} in this session</span>
       </div>
-      <p class="front">{{ card.front }}</p>
-      {% if show_back %}
-        <div class="back">{{ card.back }}</div>
+      {% if card.options %}
+        <p class="question-stem">{{ card.stem or card.front }}</p>
+        {% if show_back %}
+          <div class="options">
+            {% for i in order %}
+              {{ option_card(loop.index0, card.options[i], 'correct' if i == card.answer else ('wrong' if i == given else '')) }}
+            {% endfor %}
+          </div>
+          <div class="feedback {{ 'correct' if correct else 'incorrect' }} items-center" role="status"{% if correct %} data-celebrate="small"{% endif %}>
+            <span class="grid size-9 shrink-0 place-items-center rounded-full {{ 'bg-ok animate-pop' if correct else 'bg-bad' }} text-white dark:text-bg">{{ icon("check" if correct else "alert", "size-5") }}</span>
+            <div class="min-w-0">
+              <strong>{{ "Correct." if correct else "Incorrect." }}</strong>
+              Correct answer: <strong>{{ letter(order.index(card.answer)) }}. {{ card.options[card.answer] }}</strong>
+            </div>
+          </div>
+          <div class="card-sunken space-y-2 border-brand/15">
+            <p class="eyebrow flex items-center gap-1.5 text-brand-fg">{{ icon("sparkle", "size-3.5") }}Explanation</p>
+            <p class="explanation">{{ card.back }}</p>
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="front">{{ card.front }}</p>
+        {% if show_back %}
+          <div class="back">{{ card.back }}</div>
+        {% endif %}
       {% endif %}
     </div>
     <div id="card-filters">
       {% for u in units %}<input type="hidden" name="unit" value="{{ u }}">{% endfor %}
       {% if subtopic %}<input type="hidden" name="subtopic" value="{{ subtopic.id }}">{% endif %}
     </div>
-    {% if show_back %}
+    {% if card.options and show_back %}
+      {# A wrong pick is always "again"; a right one asks how sure you were, since a guess is not knowing it. #}
+      {% if correct %}
+        <div>
+          <p class="mb-2.5 text-center text-xs font-semibold text-fg-muted">How sure were you?</p>
+          <div class="grade-buttons sm:grid-cols-3" role="group" aria-label="How sure were you?">
+            {% for g, label, hint, ico, cls in [
+                (1, "Guessed", "unsure", "alert", "border-warn/30 bg-warn-soft text-warn-fg hover:border-transparent hover:bg-warn hover:text-white dark:hover:text-bg"),
+                (2, "Knew it", "sure", "check", "btn-primary"),
+                (3, "Easy", "instant", "zap", "border-ok/30 bg-ok-soft text-ok-fg hover:border-transparent hover:bg-ok hover:text-white dark:hover:text-bg")] %}
+              <button type="button" class="{{ cls }} transition-[transform,background-color,color,border-color] hover:-translate-y-0.5 active:scale-95" hx-post="/cards/{{ card.id }}/grade" hx-vals='{"grade": {{ g }}}'
+                      hx-include="#card-filters" hx-target="#card-box" hx-swap="outerHTML"{% if g == 2 %} autofocus{% endif %}>{{ icon(ico, "mb-1 size-5") }}{{ label }}<small>{{ hint }}</small></button>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="flex justify-end border-t border-line pt-4">
+          <button type="button" class="btn-primary btn-lg w-full sm:w-auto" hx-post="/cards/{{ card.id }}/grade" hx-vals='{"grade": 0}'
+                  hx-include="#card-filters" hx-target="#card-box" hx-swap="outerHTML" autofocus>Next card {{ icon("arrow-right", "size-4") }}</button>
+        </div>
+      {% endif %}
+    {% elif card.options %}
+      <form class="space-y-5" hx-post="/cards/{{ card.id }}/answer" hx-include="#card-filters" hx-target="#card-box" hx-swap="outerHTML">
+        <input type="hidden" name="order" value="{{ order | join(',') }}">
+        <fieldset class="options">
+          <legend class="sr-only">Choose an answer</legend>
+          {% for i in order %}
+            {% set inp %}<input type="radio" name="given" value="{{ i }}" required>{% endset %}
+            {{ option_card(loop.index0, card.options[i], "", inp) }}
+          {% endfor %}
+        </fieldset>
+        <div class="flex justify-end border-t border-line pt-4">
+          <button type="submit" class="btn-primary btn-lg w-full sm:w-auto">{{ icon("check", "size-4") }} Check answer</button>
+        </div>
+      </form>
+    {% elif show_back %}
       <div>
         <p class="mb-2.5 text-center text-xs font-semibold text-fg-muted">How well did you remember it?</p>
         {# Each grade has its own colour: soft at rest, solid on hover, a little squash on press. Good is the default. #}

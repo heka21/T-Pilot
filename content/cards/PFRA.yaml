@@ -3,171 +3,472 @@
   elements: ["PFRA 2.1.1"]
   front: "Where are publications obtained, and why keep them amended?"
   back: "Legislation (CAR, CASR, MOS, CAOs): Federal Register of Legislation and CASA. AIP, ERSA, charts, SUPs, AICs: Airservices (subscription or free online), amended on the 28-day AIRAC cycle; NOTAMs from NAIPS. Out-of-date documents mean wrong frequencies, airspace and procedures."
+  stem: "Where does a pilot obtain the AIP, ERSA and current aeronautical charts?"
+  options:
+    - "From CASA, together with the CASR and the Part 91 MOS."
+    - "From the Bureau of Meteorology, through its aviation briefing service."
+    - "From Airservices Australia, by subscription or free online."
+    - "From the Federal Register of Legislation, as amended legislation."
+  answer: 2
 - id: PFRA-C002
   elements: ["PFRA 2.1.2"]
   front: "Which reference for: licence privileges; rules of the air and fuel; maintenance release; aerodrome data and PRD?"
   back: "Licences: CASR Part 61 and its MOS. Rules of the air, VMC, fuel: CASR Part 91 and its MOS. Maintenance release and pilot maintenance: CAR 1988 Part 4A and Schedule 8. Aerodrome data, PRD, emergency procedures: ERSA."
+  stem: "Where would a pilot find the rules of the air, VMC criteria and fuel requirements for a private flight?"
+  options:
+    - "CASR Part 61 and its Manual of Standards."
+    - "CAR 1988 Part 4A and Schedule 8."
+    - "The ERSA entry for the departure aerodrome."
+    - "CASR Part 91 and its Manual of Standards."
+  answer: 3
 - id: PFRA-C003
   elements: ["PFRA 2.1.2", "PFRA 2.1.4"]
   front: "What are the three parts of the AIP Book?"
   back: "GEN (general: units, abbreviations, services), ENR (en route: rules, airspace, navigation, charts, SAR) and AD (aerodromes). Abbreviations are in GEN 2.2, units in GEN 2.1."
+  stem: "The three parts of the AIP Book are:"
+  options:
+    - "GEN, ENR and AD."
+    - "GEN, ENR and EMERG."
+    - "GEN, FAC and AD."
+    - "ENR, AD and SUP."
+  answer: 0
 - id: PFRA-C004
   elements: ["PFRA 2.1.3"]
   front: "How is a NOTAM structured and what time zone are its validity times?"
   back: "Identifier and series, location (ICAO code), validity period in UTC (B from, C to, PERM or EST), subject and text. Head office NOTAMs cover whole FIRs."
+  stem: "The validity times in items B and C of an Australian NOTAM are given in:"
+  options:
+    - "Local standard time at the NOTAM location."
+    - "UTC, with item C showing PERM or EST where applicable."
+    - "Local time, adjusted for summer time where it is observed."
+    - "UTC, with item B showing PERM or EST where applicable."
+  answer: 1
 - id: PFRA-C005
   elements: ["PFRA 2.1.3"]
   front: "What is an AIP Supplement (SUP)?"
   back: "A temporary or advance change to the AIP too long for a NOTAM, such as air show airspace or long-term works. Numbered by year (e.g. H23/26), and permitted in the exam as part of the AIP."
+  stem: "An AIP Supplement (SUP) is used to publish:"
+  options:
+    - "An urgent, short-notice change distributed through NAIPS, such as a failed light."
+    - "A permanent change to the AIP, made on the next AIRAC date."
+    - "A temporary or advance change too long for a NOTAM, such as air show airspace."
+    - "Explanatory or administrative information that does not change the AIP."
+  answer: 2
 - id: PFRA-C006
   elements: ["PFRA 2.1.4"]
   front: "Decode HJ, HN, H24, HO, PPR, PAL, LL, UL."
   back: "HJ sunrise to sunset; HN night; H24 continuous; HO hours of operation; PPR prior permission required; PAL pilot-activated lighting; LL and UL lower and upper limit of airspace."
+  stem: "In ERSA, the abbreviation HN means:"
+  options:
+    - "Sunrise to sunset."
+    - "Hours of operation."
+    - "Continuous, day and night."
+    - "Night hours."
+  answer: 3
 - id: PFRA-C007
   elements: ["PFRA 2.2.1"]
   front: "Main PPL(A) privileges compared with the RPL?"
   back: "PIC or co-pilot in private operations without RPL weight, distance or airspace limits: passengers anywhere, all airspace, controlled aerodromes, above 10,000 ft (oxygen rules). Night needs a night VFR rating, IMC an instrument rating; no hire or reward beyond permitted cost sharing."
+  stem: "Compared with the RPL, a PPL(A) holder without further ratings may:"
+  options:
+    - "Carry passengers anywhere and use controlled airspace and controlled aerodromes."
+    - "Fly at night under the VFR, as night flying privileges are included in the licence."
+    - "Fly in IMC by day, provided the flight remains in Class G airspace throughout."
+    - "Fly for hire or reward, provided the passengers are friends, family or club members."
+  answer: 0
 - id: PFRA-C008
   elements: ["PFRA 2.2.1"]
   front: "PPL recent experience requirements?"
   back: "Day passengers: 3 take-offs and 3 landings in previous 90 days in the category. Night passengers: 3 night take-offs and landings in 90 days plus night VFR rating. Flight review within 24 months; Class 2 (or Basic Class 2) medical."
+  stem: "To carry passengers by day, a PPL(A) holder must have completed:"
+  options:
+    - "1 take-off and 1 landing in the same category within the previous 90 days."
+    - "3 take-offs and 3 landings in the same category within the previous 90 days."
+    - "3 take-offs and 3 landings in the same category within the previous 12 months."
+    - "A flight review in the same category within the previous 90 days."
+  answer: 1
 - id: PFRA-C009
   elements: ["PFRA 2.2.1"]
   front: "Classification of operations: what can a PPL holder fly as PIC?"
   back: "Private operations (Part 91), including equal cost sharing with no profit. Aerial work and air transport for hire or reward need a CPL or ATPL. Test: is anyone paying beyond equal cost sharing?"
+  stem: "A PPL holder flies three friends to Rottnest and they split the aircraft hire cost equally with the pilot. This flight is:"
+  options:
+    - "An air transport operation, which needs a CPL because the passengers contribute."
+    - "Aerial work, which needs a CPL because money changes hands."
+    - "A private operation only if the passengers pay nothing towards the costs."
+    - "A private operation, because equal cost sharing with no profit is permitted."
+  answer: 3
 - id: PFRA-C010
   elements: ["PFRA 2.2.2"]
   front: "Flight and duty time limits for a PPL in private operations?"
   back: "CAO 48.1 imposes no limits on private operations, but the pilot must not fly fatigued and must comply with any operator or training organisation limits; private hours count toward those cumulative limits."
+  stem: "For a PPL holder flying private operations, the CAO 48.1 flight and duty time limits:"
+  options:
+    - "Limit flight time to 8 hours in any 24-hour period."
+    - "Apply in full, as they do to commercial pilots."
+    - "Do not apply, but the pilot must not fly while fatigued."
+    - "Do not apply, and private hours never count toward operator limits."
+  answer: 2
 - id: PFRA-C011
   elements: ["PFRA 2.3.1"]
   front: "Documents to carry on a private VFR flight?"
   back: "Flight manual (POH) with loading data, current maintenance release, current charts, ERSA and AIP information, licence, medical and photo ID, and any approvals relied on. Check CASR 91.105 for whether CofR and CofA must be carried."
+  stem: "Documents to be carried on a private VFR flight include:"
+  options:
+    - "The flight manual with loading data, the current maintenance release and current charts."
+    - "The flight manual, the engine and airframe logbooks, and current charts."
+    - "The maintenance release, the pilot's personal logbook and the insurance certificate."
+    - "Current charts, the aircraft's last annual inspection report and the pilot's personal logbook."
+  answer: 0
 - id: PFRA-C012
   elements: ["PFRA 2.3.2"]
   front: "Rules on carrying and discharging firearms?"
   back: "Carry only as permitted: with PIC knowledge and consent, unloaded, not accessible in flight, complying with security and state firearms laws. Discharge from an aircraft is prohibited except under a specific CASA approval."
+  stem: "A firearm may be carried in a private aircraft when:"
+  options:
+    - "It is loaded but locked in the baggage compartment, with the PIC's consent."
+    - "The PIC knows and consents, and it is unloaded and inaccessible in flight."
+    - "It is unloaded and within reach of its owner, who holds a firearms licence."
+    - "It is declared on the flight notification and kept unloaded in the cabin."
+  answer: 1
 - id: PFRA-C013
   elements: ["PFRA 2.3.2"]
   front: "Aerodromes where operations are not restricted to runways?"
   back: "Published in ERSA; the whole marked landing area may be used, choosing a path into wind. Otherwise operations are confined to runways and landing on grass between them is an offence."
+  stem: "At an aerodrome that ERSA does not list as having operations unrestricted to runways, landing on the grass between the runways is:"
+  options:
+    - "Permitted, provided the pilot chooses a path into wind."
+    - "Permitted only for aircraft below 2,000 kg MTOW."
+    - "Permitted, provided the grass area is bounded by gable markers."
+    - "An offence, as operations are confined to the runways."
+  answer: 3
 - id: PFRA-C014
   elements: ["PFRA 2.3.2"]
   front: "Prohibited, restricted and danger areas: may you enter?"
   back: "Prohibited: never. Restricted: not when active without clearance from the controlling authority (RA1/2/3 shows likelihood); inactive treated as surrounding airspace. Danger: no clearance needed, but avoid or use caution."
+  stem: "Restricted area R155, rated RA2, is active on your planned track. You may enter it:"
+  options:
+    - "Only with a clearance from the controlling authority."
+    - "Without a clearance, provided you keep a good lookout."
+    - "At no time, whether or not it is active."
+    - "Without a clearance, if you broadcast on the area frequency."
+  answer: 0
 - id: PFRA-C015
   elements: ["PFRA 2.3.3"]
   front: "When is the SECURITY prefix used? Give examples."
   back: "SECURITY three times for safety of navigation or important weather warnings, not emergencies. E.g. unlit crane, birds or animals on the runway, drone, parachute drop, microburst or severe wind shear on approach, dust storm."
+  stem: "A pilot sees an unlit crane close to the approach path. The message to ATS should begin with:"
+  options:
+    - "MAYDAY, spoken three times."
+    - "PAN PAN, spoken three times."
+    - "SECURITY, spoken three times."
+    - "SECURITY, spoken once before the message."
+  answer: 2
 - id: PFRA-C016
   elements: ["PFRA 2.4.1"]
   front: "PPL-level planning responsibilities before flight (beyond the RPL checks)?"
   back: "Get weather and operational briefing (forecasts, NOTAMs), plan route and cruising levels for VFR and airspace, calculate fuel including holding and alternate, check weight and balance, submit flight notification or SARTIME, confirm aerodromes are suitable."
+  stem: "Before a private cross-country flight, the PIC is responsible for:"
+  options:
+    - "Fuel and weight and balance; ATS checks the NOTAMs once a flight notification is lodged."
+    - "Forecasts and NOTAMs, fuel, weight and balance, and a flight notification or SARTIME."
+    - "Fuel and weight and balance; the aerodrome operator confirms the aerodrome is suitable."
+    - "Route and fuel; NOTAMs need only be checked when using controlled aerodromes."
+  answer: 1
 - id: PFRA-C017
   elements: ["PFRA 2.4.1"]
   front: "VFR alternate minima, and holding fuel for TEMPO and INTER?"
   back: "When, from 30 min before to 60 min after ETA, the destination forecast has more than SCT cloud below 1,500 ft, visibility under 8 km, a probability of fog, mist, dust or thunderstorms, or crosswind beyond limits. Holding fuel instead: 60 min for TEMPO, 30 min for INTER. Verify against the current Part 91 MOS."
+  stem: "The destination TAF includes an INTER period of reduced visibility at your ETA. Instead of nominating an alternate, you may carry holding fuel of:"
+  options:
+    - "60 minutes."
+    - "15 minutes."
+    - "45 minutes."
+    - "30 minutes."
+  answer: 3
 - id: PFRA-C018
   elements: ["PFRA 2.4.1"]
   front: "Rules for carrying cargo and animals?"
   back: "Cargo: secured, not blocking exits or controls, within floor loading limits and included in weight and balance. Animals: only with PIC consent, restrained in a container or harness, weight included."
+  stem: "A passenger wants to bring their dog on a private flight. The dog may be carried:"
+  options:
+    - "Loose on a passenger's lap, provided the PIC consents and the flight is short."
+    - "In a container without PIC consent, provided it weighs under 10 kg."
+    - "With PIC consent, restrained in a container or harness, its weight included."
+    - "With PIC consent, in a container, its weight ignored if it is under 10 kg."
+  answer: 2
 - id: PFRA-C019
   elements: ["PFRA 2.4.1"]
   front: "Rules on sick or handicapped persons and parachutists?"
   back: "Sick or handicapped: only if the PIC is satisfied they can be carried safely, not seated where they could obstruct an exit or controls, briefed and assisted. Parachutists: CASR Part 105, approved organisation and drop zone, coordinated with ATS."
+  stem: "A passenger with limited mobility may be carried when:"
+  options:
+    - "The PIC is satisfied it is safe and their seat does not obstruct an exit."
+    - "They are seated beside an exit so they can be helped out quickly in an emergency."
+    - "They hold a medical certificate from a doctor stating that they are fit to fly."
+    - "A CASA approval for the flight has been obtained before departure."
+  answer: 0
 - id: PFRA-C020
   elements: ["PFRA 2.4.1"]
   front: "Flotation, survival equipment and dangerous goods requirements?"
   back: "Life jackets for each occupant when a single-engine aeroplane is over water beyond gliding distance of land. Designated remote areas: water, ELT, signalling equipment, first aid kit. Dangerous goods: CASR Part 92 prohibits them except as permitted; PIC refuses anything not allowed."
+  stem: "A single-engine aeroplane must carry a life jacket for each occupant when flying:"
+  options:
+    - "Over any water, whatever the distance from land."
+    - "Over water beyond gliding distance of land."
+    - "Over water only when out of radio range of ATS."
+    - "Over water only when no ELT is fitted to the aeroplane."
+  answer: 1
 - id: PFRA-C021
   elements: ["PFRA 2.4.2"]
   front: "Radio test before taxi and listening watch requirements?"
   back: "Before taxi check frequency, squelch and volume and make a radio check (readability 1 to 5). In flight keep a continuous watch on the CTAF within 10 nm of a non-controlled aerodrome, ATC near controlled airspace, otherwise area frequency; monitor 121.5 where able."
+  stem: "Flying VFR within 10 nm of a non-controlled aerodrome, you must keep a continuous listening watch on:"
+  options:
+    - "121.5 MHz only, as monitoring the CTAF is optional."
+    - "The area frequency, monitoring the CTAF only when joining."
+    - "The ATIS frequency of the nearest controlled aerodrome."
+    - "The CTAF for that aerodrome."
+  answer: 3
 - id: PFRA-C022
   elements: ["PFRA 2.5.1"]
   front: "Displaced threshold marking and use?"
   back: "Arrows along the centreline pointing to a transverse bar. Land beyond it; the surface before it may be used for the take-off run and for roll-out landing in the other direction."
+  stem: "A runway threshold is displaced, marked by arrows along the centreline leading to a transverse bar. The surface before the bar:"
+  options:
+    - "May be used for the take-off run, and for roll-out when landing the other way."
+    - "Is closed to all aircraft movements, including taxiing, backtracking and take-off."
+    - "May be used for touchdown, but not for the take-off run in either direction."
+    - "May be used for touchdown by aircraft under 5,700 kg, but not for take-off."
+  answer: 0
 - id: PFRA-C023
   elements: ["PFRA 2.5.1"]
   front: "Cone markers versus gable markers?"
   back: "Cones mark the edges of the runway or landing area on unsealed strips; usable surface lies between them. Gables mark the boundary of the runway strip (graded clear area), not the runway edge."
+  stem: "On an unsealed country aerodrome, cone markers and gable markers indicate:"
+  options:
+    - "Cones the runway strip boundary, and gables the runway edges."
+    - "Cones the runway edges, and gables the runway strip boundary."
+    - "Cones the runway edges, and gables the runway threshold."
+    - "Cones the edges of the taxiways, and gables the runway edges."
+  answer: 1
 - id: PFRA-C024
   elements: ["PFRA 2.5.1"]
   front: "Meaning of a horizontal white dumbbell and a double white cross in the signal area?"
   back: "Dumbbell: use only sealed (hard) runways and taxiways; no landing on grass. Double white cross by the primary wind indicator: gliding operations in progress."
+  stem: "A horizontal white dumbbell displayed in the signal area means:"
+  options:
+    - "Gliding operations are in progress."
+    - "The aerodrome is closed to all aircraft movements."
+    - "Use only hard-surfaced runways and taxiways."
+    - "Right-hand circuits are in force."
+  answer: 2
 - id: PFRA-C025
   elements: ["PFRA 2.5.1"]
   front: "Runway holding position marking and HLS marking?"
   back: "Holding position: two solid and two dashed yellow lines; hold on the solid side (taxiway side). Intermediate holding position: single dashed line. HLS: letter H inside a circle, square or triangle; aeroplanes keep clear."
+  stem: "At a runway holding position marked by two solid and two dashed yellow lines, a taxiing aircraft holds:"
+  options:
+    - "On the dashed side, which faces the taxiway."
+    - "Straddling the lines, with the nosewheel on the dashed lines."
+    - "On the solid side, which faces the runway."
+    - "On the solid side, which faces the taxiway."
+  answer: 3
 - id: PFRA-C026
   elements: ["PFRA 2.5.2", "PFRA 2.5.3"]
   front: "Circuit legs, dead side, and a white cross on the movement area?"
   back: "Upwind, crosswind, downwind (parallel and opposite to landing direction), base, final. Dead side is opposite the circuit side, where overflying aircraft descend before joining crosswind. A white cross marks an unserviceable area; crosses at runway ends close the runway."
+  stem: "When overflying a non-controlled aerodrome to join the circuit, the descent to circuit height is made:"
+  options:
+    - "On the dead side, opposite the circuit side, before joining crosswind."
+    - "On the live side, before joining the circuit at the start of the downwind leg."
+    - "On the dead side, before joining the circuit on a long final."
+    - "Overhead the runway, before turning directly onto the base leg."
+  answer: 0
 - id: PFRA-C027
   elements: ["PFRA 2.6.1"]
   front: "Class C, D, E and G for VFR, and airspace speed limits?"
   back: "C and D: clearance required (C separates VFR from IFR; D gives traffic information). E: no clearance for VFR, no separation, transponder required. G: no clearance, flight information on request; Class A is closed to VFR. 250 kt IAS below 10,000 ft, 200 kt in Class D."
+  stem: "A VFR aeroplane is about to enter Class E airspace. It requires:"
+  options:
+    - "A clearance, and it will be separated from IFR traffic."
+    - "No clearance, but a serviceable transponder."
+    - "A clearance, but no transponder."
+    - "No clearance and no transponder, as in Class G."
+  answer: 1
 - id: PFRA-C028
   elements: ["PFRA 2.6.2"]
   front: "Define FIR, FIA, OCTA, CTA, CTR, report and broadcast."
   back: "FIR: flight information region (WA is in the Melbourne FIR); FIA: subdivision with its own area frequency; OCTA: Class G. CTA: controlled airspace above a lower limit (C LL 4500); CTR: from the surface around a controlled aerodrome. A report goes to ATS and is answered; a broadcast goes to all stations with no reply."
+  stem: "A broadcast differs from a report in that a broadcast:"
+  options:
+    - "Is addressed to ATS and must be acknowledged."
+    - "Is made only in controlled airspace, to the controlling unit."
+    - "Is addressed to all stations, and no reply is expected."
+    - "Is addressed to all stations, and each must acknowledge it."
+  answer: 2
 - id: PFRA-C029
   elements: ["PFRA 2.6.3"]
   front: "How should VFR tracking tolerances be applied near controlled airspace?"
   back: "Navigate to remain clear without a clearance: keep a buffer of a mile or two laterally and fly about 500 ft below a CTA step, or get a clearance first. Check current AIP ENR 1.1 for the figures."
+  stem: "Without a clearance, a VFR pilot navigating beneath a CTA step should plan to:"
+  options:
+    - "Fly just below the step's lower limit, using the full tracking tolerance."
+    - "Fly at the step's lower limit, as the lower limit itself is Class G."
+    - "Fly about 100 ft below the step, matching the altimeter tolerance."
+    - "Fly about 500 ft below the step and keep a lateral buffer."
+  answer: 3
 - id: PFRA-C030
   elements: ["PFRA 2.6.4", "PFRA 2.6.2"]
   front: "CTAF procedures, and entering Class C or D?"
   back: "CTAF area: within 10 nm of a non-controlled aerodrome, ERSA frequency or 126.7; broadcast taxiing, entering runway, inbound at 10 nm, joining, clear; join overhead at 1,500 ft AAL; radio mandatory at certified and registered aerodromes. Class C/D: get the ATIS, obtain a clearance before entry, read back and comply."
+  stem: "Before entering Class D airspace, a VFR pilot must:"
+  options:
+    - "Obtain a clearance, read it back and comply with it."
+    - "Broadcast intentions on the CTAF and listen for traffic."
+    - "Make an inbound call; a clearance is needed only in Class C."
+    - "Obtain the ATIS; no clearance is needed by day."
+  answer: 0
 - id: PFRA-C031
   elements: ["PFRA 2.6.5"]
   front: "Altimeter datums, height/altitude/flight level, and the transition altitude and level?"
   back: "QNH gives altitude (AMSL), QFE height above the aerodrome, 1013.2 a flight level (pressure altitude in hundreds of feet). Transition altitude 10,000 ft, transition level FL110: set 1013 climbing through 10,000 ft, QNH descending through FL110; no cruising in the layer. Area QNH below 1013 raises the lowest usable level to FL115 or FL120 (AIP ENR 1.7)."
+  stem: "On a climb to cruise at FL125, the pilot changes the altimeter subscale to:"
+  options:
+    - "1013.2 hPa when passing FL110, the transition level."
+    - "1013.2 hPa when passing 10,000 ft, the transition altitude."
+    - "Area QNH, which is kept for the whole flight."
+    - "Aerodrome QFE when passing 10,000 ft, the transition altitude."
+  answer: 1
 - id: PFRA-C032
   elements: ["PFRA 2.6.5"]
   front: "ISA values, and the error from a wrong subscale setting?"
   back: "ISA: MSL 15 degrees C and 1013.25 hPa, lapse about 2 degrees per 1,000 ft, pressure about 1 hPa per 30 ft. So 1 hPa of subscale error is 30 ft: 1020 set with QNH 1008 over-reads 360 ft (6,500 indicated is about 6,140 ft). High to low, look out below."
+  stem: "The altimeter subscale is set to 1020 hPa but the QNH is 1008 hPa. The altimeter indicates 6,500 ft. The true altitude is about:"
+  options:
+    - "6,860 ft, because the altimeter under-reads by 360 ft."
+    - "6,380 ft, because the altimeter over-reads by 120 ft."
+    - "6,140 ft, because the altimeter over-reads by 360 ft."
+    - "6,260 ft, because the altimeter over-reads by 240 ft."
+  answer: 2
 - id: PFRA-C033
   elements: ["PFRA 2.7.1"]
   front: "Transponder emergency codes and VFR radio failure in Class G (ERSA EMERG)?"
   back: "7700 emergency, 7600 radio failure, 7500 unlawful interference. Radio failure in Class G: continue, remain VMC, land at the nearest suitable aerodrome, broadcast blind, squawk 7600."
+  stem: "A VFR aeroplane in Class G airspace suffers a radio failure. The pilot should:"
+  options:
+    - "Squawk 7700, remain in VMC and continue to the planned destination."
+    - "Squawk 7500, remain in VMC and land at the nearest suitable aerodrome."
+    - "Squawk 7600, climb to the planned level and continue in any conditions."
+    - "Squawk 7600, remain in VMC and land at the nearest suitable aerodrome."
+  answer: 3
 - id: PFRA-C034
   elements: ["PFRA 2.7.1"]
   front: "What does the ERSA EMERG section contain?"
   back: "MAYDAY and PAN PAN formats and frequencies (current, then 121.5), transponder codes, radio failure procedures, interception signals, ditching and forced landing, SAR and ground-to-air signals, tower light signals, and emergency contacts."
+  stem: "Which of the following would a pilot find in the ERSA EMERG section?"
+  options:
+    - "Interception signals, radio failure procedures and tower light signals."
+    - "Runway lengths, pavement strengths and lighting details for each aerodrome."
+    - "Prohibited, restricted and danger area limits and hours of activity."
+    - "Navaid frequencies, Morse identifiers and rated coverage."
+  answer: 0
 - id: PFRA-C035
   elements: ["PFRA 2.7.2"]
   front: "When may a mercy flight be declared?"
   back: "By the PIC or operator when the flight is necessary to relieve suffering or save life, no other transport is available in time, the PIC judges the risk acceptable, and ATS or CASA is notified of the declaration and the rule departures, before flight where possible."
+  stem: "A mercy flight may be declared by the PIC when:"
+  options:
+    - "A passenger must reach a medical appointment and the weather is below VFR minima."
+    - "It is needed to save a life or relieve suffering, with no other transport in time."
+    - "Road transport is available in time, but the flight would be quicker."
+    - "The operator approves it, even if the PIC judges the risk unacceptable."
+  answer: 1
 - id: PFRA-C036
   elements: ["PFRA 2.7.2"]
   front: "When must a mercy flight not be undertaken?"
   back: "When the risk outweighs the benefit, other transport or waiting would meet the need, the pilot is not competent for the conditions, or the person is not in grave danger. It changes the legal position only, not the weather."
+  stem: "A mercy flight must not be undertaken when:"
+  options:
+    - "The patient is in grave danger and no road ambulance can arrive in time."
+    - "The flight would have to depart from normal rules, such as flying at night."
+    - "The risk of the flight outweighs the benefit to the patient."
+    - "ATS has been notified of the declaration before departure."
+  answer: 2
 - id: PFRA-C037
   elements: ["PFRA 2.7.3", "PFRA 2.9.3"]
   front: "ATSB reporting times for accidents and incidents?"
   back: "Immediately reportable matters (accidents, serious incidents): phone ATSB as soon as practicable (1800 011 034), then written report within 72 hours. Routine reportable matters: written report within 72 hours. Preserve the site until released."
+  stem: "After an immediately reportable matter, the PIC must phone the ATSB as soon as practicable and then submit a written report within:"
+  options:
+    - "24 hours."
+    - "48 hours."
+    - "7 days."
+    - "72 hours."
+  answer: 3
 - id: PFRA-C038
   elements: ["PFRA 2.7.5"]
   front: "Examples of hazards to navigation a pilot must report?"
   back: "Unlit or uncharted obstacles or failed obstacle lights, bird concentrations, animals, vehicles or people on a runway, unserviceable navaids or lighting, unforecast hazardous weather, drones, kites or balloons, laser illumination, bushfire smoke, unpromulgated military, parachuting or gliding."
+  stem: "Which of the following is a hazard to navigation that a pilot should report to ATS?"
+  options:
+    - "A failed obstacle light on a tall mast."
+    - "A scheduled airliner on its published arrival route."
+    - "A wet runway after rain, with no standing water."
+    - "A NOTAMed parachute drop at the advertised time."
+  answer: 0
 - id: PFRA-C039
   elements: ["PFRA 2.9.1"]
   front: "Meaning of intermittent (flashing) landing or navigation lights from an aircraft?"
   back: "The aircraft is in difficulty and compelled to land; give way. Also used to acknowledge tower light signals at night and during interception."
+  stem: "At night you see an aircraft repeatedly switching its landing lights on and off. This signals that it:"
+  options:
+    - "Is requesting a clearance to enter the circuit."
+    - "Is in difficulty and compelled to land."
+    - "Is about to begin a go-around."
+    - "Is warning others of its wake turbulence."
+  answer: 1
 - id: PFRA-C040
   elements: ["PFRA 2.9.2"]
   front: "Accident versus incident?"
   back: "Accident: death or serious injury, serious structural damage, or aircraft missing. Incident: any other occurrence that affects or could affect safety; a serious incident is a near-accident."
+  stem: "Which of these occurrences is classed as an accident rather than an incident?"
+  options:
+    - "A runway incursion in which the two aircraft stop 50 m apart."
+    - "An engine failure followed by a safe forced landing with no damage."
+    - "An aircraft that goes missing on a cross-country flight."
+    - "A near collision in the circuit in which no one is injured."
+  answer: 2
 - id: PFRA-C041
   elements: ["PFRA 2.9.3"]
   front: "Besides the ATSB, where else is a defect reported?"
   back: "In the maintenance release and, where airworthiness is affected, to CASA through the defect reporting system."
+  stem: "Besides any report to the ATSB, a defect found in an aircraft must be:"
+  options:
+    - "Reported to the aircraft owner, who decides whether CASA needs to know."
+    - "Recorded in the pilot's logbook and reported to the flying school only."
+    - "Reported to Airservices through NAIPS, so that a NOTAM can be issued to warn other pilots."
+    - "Entered in the maintenance release, and reported to CASA if airworthiness is affected."
+  answer: 3
 - id: PFRA-C042
   elements: ["PFRA 2.9.4"]
   front: "What is a SARTIME and how is it used?"
   back: "A UTC time nominated by the pilot by which arrival will be reported, lodged with Airservices. Extend before expiry if delayed, cancel on arrival; if it expires, the uncertainty, alert and distress phases begin with JRCC coordinating."
+  stem: "A SARTIME is:"
+  options:
+    - "A UTC time by which the pilot will report arrival, after which search action begins."
+    - "The estimated time of arrival at the destination, given to ATS in local standard time."
+    - "A UTC time at which ATS will call the pilot to check on the flight's progress."
+    - "The latest time a pilot may depart and still arrive before last light."
+  answer: 0
 - id: PFRA-C043
   elements: ["PFRA 2.9.5"]
   front: "Which document contains emergency procedures?"
   back: "ERSA EMERG section, with full text in AIP GEN 3.6 and ENR 1.14."
+  stem: "The emergency procedures a VFR pilot is expected to use in flight are found in:"
+  options:
+    - "The AIP SUP section, with the full text in the CASR and the Part 91 MOS."
+    - "The ERSA EMERG section, with the full text in AIP GEN 3.6 and ENR 1.14."
+    - "The ERSA FAC section, with the full text in AIP AD 2."
+    - "AIP GEN 2.2, with the full text in the Part 91 MOS."
+  answer: 1

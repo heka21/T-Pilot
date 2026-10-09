@@ -39,6 +39,11 @@ def init_db() -> None:
     Base.metadata.create_all(engine)
     with engine.begin() as conn:
         conn.exec_driver_sql("DROP TABLE IF EXISTS flags")  # the issue-report feature was removed
+        # create_all does not add columns to existing tables; the seed fills these on every start.
+        have = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(cards)")}
+        for name, ddl in (("stem", "TEXT"), ("options", "JSON"), ("answer", "INTEGER")):
+            if name not in have:
+                conn.exec_driver_sql(f"ALTER TABLE cards ADD COLUMN {name} {ddl}")
 
 
 def get_session() -> Iterator[Session]:

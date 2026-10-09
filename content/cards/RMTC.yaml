@@ -2,51 +2,142 @@
   elements: ["RMTC 2.1.1"]
   front: "Three ingredients of a thunderstorm?"
   back: "Moisture, instability, and a trigger that lifts the air (heating, front, trough, terrain, convergence)."
+  stem: "Which three conditions are needed for a thunderstorm to form?"
+  options:
+    - "Moisture, a stable lapse rate and a lifting trigger."
+    - "Moisture, instability and a lifting trigger."
+    - "Instability, a low-level temperature inversion and strong surface wind."
+    - "Moisture, instability and a slow-moving high-pressure system."
+  answer: 1
 - id: RMTC-C002
   elements: ["RMTC 2.1.1"]
   front: "When does radiation fog form?"
   back: "Clear, calm, humid nights: the ground radiates heat, air cools to its dew point. Common in south-west WA winter mornings; clears mid-morning."
+  stem: "Radiation fog is most likely to form:"
+  options:
+    - "On a clear, calm night with moist air, as the ground cools the air to its dew point."
+    - "When warm moist air moves over a colder sea surface, in any wind strength."
+    - "On an overcast night with a strong gradient wind mixing the lower layers."
+    - "When moist air is forced up a slope and cools adiabatically to its dew point."
+  answer: 0
 - id: RMTC-C003
   elements: ["RMTC 2.1.1"]
   front: "When is thermal turbulence worst?"
   back: "Hot afternoons over bare, dark ground, inland in summer."
+  stem: "Low-level thermal turbulence is likely to be worst:"
+  options:
+    - "On a summer morning just after sunrise, over coastal water."
+    - "On a clear winter night, over flat grassland well inland."
+    - "On a hot summer afternoon, over bare, dark ground inland."
+    - "On a hot summer afternoon, over a large inland lake."
+  answer: 2
 - id: RMTC-C004
   elements: ["RMTC 2.1.1"]
   front: "Correct response to a lowering cloud base over rising terrain?"
   back: "Turn back early while there is room. Never get squeezed between cloud and terrain."
+  stem: "On a VFR flight the cloud base is lowering ahead over rising terrain. The correct response is to:"
+  options:
+    - "Descend to stay clear of the cloud and keep following the valley upward."
+    - "Climb into the cloud and continue on instruments until clear of the high ground."
+    - "Hold the same altitude and reassess once the terrain gets closer."
+    - "Turn back early, while there is still room between the cloud and the terrain."
+  answer: 3
 - id: RMTC-C005
   elements: ["RMTC 2.2.1"]
   front: "TAF change groups FM, BECMG, TEMPO, INTER, PROB?"
   back: "FM: permanent change from a time. BECMG: gradual change over a period. TEMPO: fluctuations under 1 hour each. INTER: fluctuations under 30 min. PROB30/40: probability."
+  stem: "In an Australian TAF, the difference between TEMPO and INTER is that:"
+  options:
+    - "TEMPO fluctuations each last under 1 hour; INTER fluctuations each last under 30 minutes."
+    - "TEMPO fluctuations each last under 30 minutes; INTER fluctuations each last under 1 hour."
+    - "TEMPO is a permanent change from a stated time; INTER is a gradual change over a stated period."
+    - "TEMPO is a gradual change over a period; INTER is a 30 or 40 percent probability."
+  answer: 0
 - id: RMTC-C006
   elements: ["RMTC 2.2.1"]
   front: "Cloud height reference in a GAF versus a TAF/METAR?"
   back: "GAF: above mean sea level. TAF and METAR: above aerodrome level."
+  stem: "Cloud base heights are given above:"
+  options:
+    - "Aerodrome level in a GAF, and mean sea level in a TAF and METAR."
+    - "Mean sea level in a GAF, a TAF and a METAR."
+    - "Aerodrome level in a GAF, a TAF and a METAR."
+    - "Mean sea level in a GAF, and aerodrome level in a TAF and METAR."
+  answer: 3
 - id: RMTC-C007
   elements: ["RMTC 2.2.1"]
   front: "Cloud amounts FEW, SCT, BKN, OVC?"
   back: "FEW 1-2 oktas, SCT 3-4, BKN 5-7, OVC 8. BKN and OVC form a ceiling."
+  stem: "A METAR reports BKN020. The cloud cover at 2,000 ft is:"
+  options:
+    - "3 to 4 oktas, which does not form a ceiling."
+    - "5 to 7 oktas, which forms a ceiling."
+    - "1 to 2 oktas, which does not form a ceiling."
+    - "8 oktas, which forms a ceiling."
+  answer: 1
 - id: RMTC-C008
   elements: ["RMTC 2.2.1"]
   front: "CAVOK definition?"
   back: "Visibility 10 km or more, no cloud below 5,000 ft or the highest MSA, no CB, no significant weather."
+  stem: "CAVOK means visibility 10 km or more, no CB, no significant weather and:"
+  options:
+    - "No cloud below 3,000 ft or the highest minimum sector altitude."
+    - "No cloud below 10,000 ft or the lowest safe altitude for the route."
+    - "No cloud below 5,000 ft or the highest minimum sector altitude."
+    - "No BKN or OVC cloud below 5,000 ft, although FEW and SCT may be present."
+  answer: 2
 - id: RMTC-C009
   elements: ["RMTC 2.2.1"]
   front: "Forecast wind direction: true or magnetic?"
   back: "True in TAF, METAR and GAF. Magnetic from the tower and ATIS."
+  stem: "Wind directions in a TAF and in an ATIS broadcast are given in:"
+  options:
+    - "Degrees magnetic in the TAF, and degrees true in the ATIS broadcast."
+    - "Degrees true in the TAF, and degrees magnetic in the ATIS."
+    - "Degrees true in both the TAF and the ATIS."
+    - "Degrees magnetic in both the TAF and the ATIS."
+  answer: 1
 - id: RMTC-C010
   elements: ["RMTC 2.3.1"]
   front: "What does a dust devil tell you?"
   back: "A strong narrow thermal with sharp wind changes around it: avoid it on take-off and landing."
+  stem: "A dust devil is seen near the runway on a hot afternoon. It indicates:"
+  options:
+    - "The gust front of a distant thunderstorm, which will reach the aerodrome within minutes."
+    - "A sinking column of cool air, giving smooth conditions once it has passed."
+    - "A strong, narrow thermal with sharp wind changes; avoid it on take-off and landing."
+    - "Wake turbulence from a departing aircraft lifting dust from the runway edge."
+  answer: 2
 - id: RMTC-C011
   elements: ["RMTC 2.3.1"]
   front: "Descending through a wind gradient into a strong headwind: effect?"
   back: "Headwind decreases, airspeed decays, sink rate increases: add power or the aeroplane undershoots."
+  stem: "On approach into a strong headwind, the aircraft descends through a wind gradient near the ground. The likely effect is:"
+  options:
+    - "The headwind increases, airspeed rises and the aircraft floats; reduce power to avoid overshooting."
+    - "The headwind decreases, airspeed rises and the sink rate reduces; reduce power to avoid overshooting."
+    - "Airspeed is unaffected because the aircraft moves with the air mass; hold the normal power setting."
+    - "The headwind decreases, airspeed decays and sink rate increases; add power to avoid undershooting."
+  answer: 3
 - id: RMTC-C012
   elements: ["RMTC 2.3.1"]
   front: "Sequence through a microburst?"
   back: "Headwind (airspeed up), downdraught, then tailwind (airspeed and lift down) close to the ground."
+  stem: "An aircraft on approach flies through a microburst. The sequence of effects is:"
+  options:
+    - "Headwind with airspeed rising, then a downdraught, then a tailwind with airspeed and lift falling."
+    - "Tailwind with airspeed falling, then a downdraught, then a headwind with airspeed and lift rising."
+    - "A downdraught first, then a headwind with airspeed rising, then a strong updraught near the ground."
+    - "Headwind with airspeed rising, then an updraught, then a tailwind with airspeed and lift rising."
+  answer: 0
 - id: RMTC-C013
   elements: ["RMTC 2.3.1"]
   front: "Visible signs of mountain wave and rotor?"
   back: "Lenticular clouds in the wave crests and ragged rotor cloud downwind of the ridge in a strong wind across it."
+  stem: "With a strong wind blowing across a ridge, which visible signs indicate mountain wave and rotor?"
+  options:
+    - "Lenticular cloud upwind of the ridge, and fog filling the valleys downwind of it."
+    - "Lenticular cloud in the wave crests, and ragged rotor cloud downwind of the ridge."
+    - "Towering cumulus over the ridge, and smooth layered stratus in the lee of the ridge."
+    - "Ragged rotor cloud upwind of the ridge, and lenticular cloud below the ridge crest."
+  answer: 1

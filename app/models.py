@@ -137,6 +137,10 @@ class Card(Base):
     subtopic_id: Mapped[str | None] = mapped_column(ForeignKey("subtopics.id"))
     front: Mapped[str] = mapped_column(Text)
     back: Mapped[str] = mapped_column(Text)
+    # Exam format: the card is reviewed as a four-option question; `back` is the explanation shown after answering.
+    stem: Mapped[str | None] = mapped_column(Text)  # exam-style wording; falls back to `front`
+    options: Mapped[list] = mapped_column(JSON, default=list)  # 4 strings, or [] for a self-graded card
+    answer: Mapped[int | None] = mapped_column(Integer)  # option index 0..3
     elements: Mapped[list["CardElement"]] = relationship(cascade="all, delete-orphan")
     review: Mapped["CardReview | None"] = relationship(uselist=False)
 
