@@ -1,6 +1,6 @@
 """Content completeness check. Exit code 1 when something is missing.
 
-    python -m app.seed.check_content [--strict] [--katex]
+    python -m app.seed.check_content [--strict] [--katex] [--coverage]
 
 Reports: subtopics without a note, notes without a "## What the exam expects" section or whose list misses an
 element number, elements with no question, elements with no card, questions/cards tagged with unknown element codes,
@@ -12,12 +12,13 @@ on PATH).
 """
 from __future__ import annotations
 
+import difflib
 import json
 import re
 import shutil
 import subprocess
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import yaml
@@ -222,6 +223,23 @@ def check_katex(data: dict, problems: list[str]) -> bool:
     return True
 
 
+DUPLICATE_RATIO = 0.85
+MIN_QUESTIONS_PER_ELEMENT = 3
+
+
+def near_duplicates(stems: dict[str, list[tuple[str, str]]]) -> list[str]:
+    """Pairs of question stems within a unit that read almost the same (a reworded copy pads the bank)."""
+    out = []
+    for unit, items in stems.items():
+        lowered = [(qid, stem.lower()) for qid, stem in items]
+        for i, (a_id, a) in enumerate(lowered):
+            for b_id, b in lowered[i + 1:]:
+                m = difflib.SequenceMatcher(None, a, b)
+                if m.real_quick_ratio() > DUPLICATE_RATIO and m.quick_ratio() > DUPLICATE_RATIO and m.ratio() > DUPLICATE_RATIO:
+                    out.append(f"questions {a_id} and {b_id} have near-identical stems ({m.ratio():.2f})")
+    return out
+
+
 def load_syllabus() -> tuple[dict[str, dict], dict[str, str]]:
     data = json.loads((CONTENT / "syllabus" / "schedule3.json").read_text(encoding="utf-8"))
     subtopics: dict[str, dict] = {}
@@ -264,9 +282,11 @@ def main(argv: list[str]) -> int:
 
     q_ids: Counter = Counter()
     q_elements: Counter = Counter()
+    q_stems: dict[str, list[tuple[str, str]]] = defaultdict(list)
     for path in sorted((CONTENT / "questions").glob("*.yaml")):
         for q in yaml.safe_load(path.read_text(encoding="utf-8")) or []:
             q_ids[q.get("id")] += 1
+            q_stems[path.stem.split("-")[0]].append((str(q.get("id")), str(q.get("stem", ""))))
             if not str(q.get("id", "")).startswith(path.stem.split("-")[0] + "-"):
                 problems.append(f"{path}: question id {q.get('id')} does not start with unit {path.stem.split('-')[0]}")
             for c in q.get("elements", []):
@@ -328,6 +348,7 @@ def main(argv: list[str]) -> int:
     warnings: list[str] = []
     equations = check_equations(subtopics, problems, warnings)
     katex_ran = check_katex(equations, problems) if "--katex" in argv else None
+    warnings += near_duplicates(q_stems)
     print(f"{'unit':6} {'notes':>9} {'elems w/ Q':>11} {'elems w/ C':>11} {'questions':>9} {'cards':>6} {'visuals':>8}")
     for code, u in by_unit.items():
         print(f"{code:6} {u.get('notes',0):>4}/{u.get('subtopics',0):<4} {u.get('el_with_q',0):>5}/{u.get('elements',0):<5} {u.get('el_with_c',0):>5}/{u.get('elements',0):<5} {u.get('questions',0):>9} {u.get('cards',0):>6} {visuals.get(code, 0):>8}")
@@ -344,6 +365,9 @@ def main(argv: list[str]) -> int:
     if "--list" in argv:
         print("missing notes:", *missing_notes, sep="\n  ")
         print("elements without questions:", *no_q, sep="\n  ")
+    if "--coverage" in argv:
+        thin = [f"{c} ({q_elements[c]})" for c in el2st if q_elements[c] < MIN_QUESTIONS_PER_ELEMENT]
+        print(f"elements with fewer than {MIN_QUESTIONS_PER_ELEMENT} questions: {len(thin)}", *thin, sep="\n  ")
     strict = "--strict" in argv
     return 1 if problems or (strict and (missing_notes or no_q or no_c)) else 0
 
