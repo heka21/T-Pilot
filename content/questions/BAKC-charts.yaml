@@ -1,0 +1,183 @@
+# Using the workbook take-off and landing charts (Figs 3 to 6), one of CASA's named RPLA weak areas.
+# Answers checked against the workbook page images (app/static/workbook/p05-p08). Readings off the curves use
+# generous tolerances; most questions test the method, the printed chart data and the weight-limit logic.
+- id: BAKC-C001
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "Working through Fig 3 you find (A) is 1,000 kg and (B) is 1,040 kg. What is the most you may take off at?"
+  options: ["1,040 kg", "1,000 kg", "1,090 kg", "1,020 kg, the average of (A) and (B)"]
+  answer: 1
+  explanation: "Note (1) on Fig 3 says the gross weight at take-off must not exceed the lesser of (A) and (B), and note (2) caps it at the 1,090 kg maximum take-off weight. The lowest of 1,000, 1,040 and 1,090 kg is 1,000 kg. Averaging is never allowed: the lowest limit always governs."
+  workbook_page: 5
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 2
+- id: BAKC-C002
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "On Fig 3, what does the chart use as its starting point on the lower left panel?"
+  options: ["Density height", "Airfield elevation from ERSA", "Take-off distance available", "Airfield pressure height"]
+  answer: 3
+  explanation: "The dashed example starts at START HERE on the airfield pressure height scale, then crosses to the shade temperature lines. The chart applies the temperature correction itself, so you never enter it with density height."
+  workbook_page: 5
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 1
+- id: BAKC-C003
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Fig 3 has three surface lines in its middle panel: reference short dry grass, long dry or short wet grass, and long wet grass. Compared with the reference line, a long wet grass strip:"
+  options: ["Gives a lower allowable take-off weight for the same runway length", "Gives a higher allowable take-off weight because wet grass is slippery", "Makes no difference because the chart is for grass anyway", "Only matters if there is a tailwind"]
+  answer: 0
+  explanation: "Long and wet grass both add rolling resistance, so the aeroplane needs more distance for a given weight. For a fixed runway length the chart gives a lower weight. The reference line is short dry grass."
+  workbook_page: 5
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 2
+- id: BAKC-C004
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Fig 3 shows the weight lines in the lower right panel rising from TAIL to HEAD wind. With everything else unchanged, changing from a 5 kt tailwind to a 10 kt headwind will:"
+  options: ["Lower the allowable take-off weight", "Leave it unchanged, because wind only affects the landing", "Raise the allowable take-off weight", "Raise it only if the runway is sealed"]
+  answer: 2
+  explanation: "A headwind reduces the groundspeed needed at lift-off, so the same runway supports a heavier aeroplane. A tailwind does the opposite and costs more than the same headwind saves, which is why the chart steepens on the tail side."
+  workbook_page: 5
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 1
+- id: BAKC-C005
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Using Fig 3 at a fixed pressure height and runway, the shade temperature rises from 10 to 30 degrees. The allowable take-off weight will:"
+  options: ["Increase", "Decrease", "Stay the same, because the chart is entered with pressure height", "Increase only if QNH is above 1013 hPa"]
+  answer: 1
+  explanation: "Higher temperature means lower air density (higher density height): less engine power, less propeller thrust and a higher true airspeed for lift-off. The chart is entered with pressure height and then corrected for temperature, and hotter always means less weight for the same runway."
+  workbook_page: 5
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 1
+- id: BAKC-C006
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "The box on Fig 3 lists the conditions the chart assumes. Which set matches it?"
+  options: ["Full throttle, flap up, 64 KIAS safety speed, factor 1.15, 15 kt crosswind limit", "2,350 RPM, 20 degrees flap, 58 KIAS, factor 1.25, 12 kt crosswind limit", "Full throttle, 30 degrees flap, 65 KIAS, factor 1.0, 20 kt crosswind limit", "Full throttle, 10 degrees flap, 60 KIAS take-off safety speed, factor 1.15, 15 kt crosswind limit"]
+  answer: 3
+  explanation: "Fig 3 assumes full throttle, 10 degrees of flap, a 60 KIAS take-off safety speed, a 1.15 take-off distance factor and a 15 kt maximum crosswind. The second option describes Fig 5 (zero flap, 64 KIAS). Always read the box: the chart is only valid for its stated conditions."
+  workbook_page: 5
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 2
+- id: BAKC-C007
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "On a cool day at a sea-level strip, Fig 3 gives (A) 1,100 kg and (B) 1,095 kg. What may you take off at?"
+  options: ["1,090 kg", "1,095 kg", "1,100 kg", "1,097 kg"]
+  answer: 0
+  explanation: "Both chart figures are above the 1,090 kg maximum take-off weight in note (2), so the structural limit governs. The take-off weight is always the lowest of (A), (B) and the MTOW."
+  workbook_page: 5
+  references: ["BAKC 6.2", "Workbook p5"]
+  difficulty: 2
+- id: BAKC-C008
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Fig 4, the landing distance chart, carries the note 'landing distance required is independent of landing weight'. Which inputs do you enter it with?"
+  options: ["Landing weight, pressure height and wind only", "Density height and runway surface only", "Pressure height, temperature, slope and wind component", "Landing weight, temperature and the crosswind component"]
+  answer: 2
+  explanation: "Fig 4 starts with shade temperature and airfield pressure height at the bottom, then corrects for slope and the ambient wind component to give landing distance required. Weight is not an input, as the note says, but the separate climb limit weight scale still caps how heavy you may land."
+  workbook_page: 6
+  references: ["BAKC 6.2", "Workbook p6"]
+  difficulty: 2
+- id: BAKC-C009
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Fig 4 shows the slope panel with DOWN below the reference line and UP above it. For landing, a downhill slope will:"
+  options: ["Decrease the landing distance required", "Increase the landing distance required", "Not affect it, since landing distance is independent of weight", "Only affect the take-off, not the landing"]
+  answer: 1
+  explanation: "Landing downhill, the slope component of weight pushes you along the runway and resists braking, so the landing distance increases. The opposite of take-off, where uphill is the penalty."
+  workbook_page: 6
+  references: ["BAKC 6.2", "Workbook p6"]
+  difficulty: 2
+- id: BAKC-C010
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "The box on Fig 4 gives the landing conditions. What are the flap setting and approach speed?"
+  options: ["30 degrees and 58 KIAS", "10 degrees and 60 KIAS", "40 degrees and 58 KIAS", "40 degrees and 65 KIAS"]
+  answer: 3
+  explanation: "Fig 4 assumes 40 degrees of flap and a 65 kt approach speed, with a 1.15 landing distance factor and a 15 kt crosswind limit. Fig 6 is the other landing chart: 30 degrees of flap and 58 KIAS."
+  workbook_page: 6
+  references: ["BAKC 6.2", "Workbook p6"]
+  difficulty: 1
+- id: BAKC-C011
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "Fig 5 lists 'max permitted cross wind 15 kts'. The runway is 06 and the wind is 150/18. What should you conclude?"
+  options: ["The crosswind is about 18 kt, above the chart's 15 kt limit, so this runway can't be used under the chart", "The crosswind is about 9 kt, within the limit", "Crosswind doesn't matter because the chart corrects for the ambient wind component", "The crosswind is zero because the wind is behind you"]
+  answer: 0
+  explanation: "Runway 06 points 060 degrees; a wind from 150 is 90 degrees off, so the whole 18 kt is crosswind. That exceeds the 15 kt limit printed on the chart. The chart's ambient wind scale only handles the head or tail component, not the crosswind."
+  workbook_page: 7
+  references: ["BAKC 6.2", "Workbook p7"]
+  difficulty: 2
+- id: BAKC-C012
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "Fig 5's climb limit weight panel is entered with pressure height and temperature. On a hot day at a high aerodrome it gives 990 kg, while the runway allows 1,030 kg. What is happening?"
+  options: ["The runway governs, so you may use 1,030 kg", "The two figures are averaged to 1,010 kg", "At 1,030 kg it couldn't climb at the required gradient: 990 kg is the limit", "The climb limit applies only when carrying passengers"]
+  answer: 2
+  explanation: "The climb weight limit is the heaviest weight that still achieves the required climb gradient after take-off in the day's pressure height and temperature. Being able to lift off is not enough. The take-off weight must not exceed the lower figure."
+  workbook_page: 7
+  references: ["BAKC 6.2", "Workbook p7"]
+  difficulty: 2
+- id: BAKC-C013
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Fig 5 includes a surface panel with a reference line for a hard sealed surface. Moving from a sealed runway to short wet or long dry grass:"
+  options: ["Decreases the take-off distance required", "Increases the take-off distance required", "Has no effect because Fig 5 is a weight chart", "Only matters above 30 degrees"]
+  answer: 1
+  explanation: "Grass, and especially wet or long grass, adds rolling resistance, so the ground roll and the take-off distance required increase. On Fig 5 the surface lines slope toward a longer distance from the sealed reference line."
+  workbook_page: 7
+  references: ["BAKC 6.2", "Workbook p7"]
+  difficulty: 1
+- id: BAKC-C014
+  kind: mcq
+  elements: ["BAKC 6.2.5"]
+  stem: "Using Fig 6, the airfield pressure height is 3,000 ft. What is the landing climb weight limit (A)?"
+  options: ["About 950 kg", "About 1,020 kg", "There is no limit below 4,000 ft", "1,080 kg, the maximum on the panel"]
+  answer: 3
+  explanation: "On Fig 6's climb weight limit panel the sloping line meets the vertical 1,080 kg line at about 4,400 ft. At any lower pressure height the vertical line governs, so (A) is 1,080 kg. Note (1) says the landing weight must not exceed (A)."
+  workbook_page: 8
+  references: ["BAKC 6.2", "Workbook p8"]
+  difficulty: 3
+- id: BAKC-C015
+  kind: numeric
+  elements: ["BAKC 6.2.5"]
+  stem: "Using Fig 6's climb weight limit panel, the airfield pressure height is 6,000 ft. To the nearest 10 kg, what is the maximum landing weight (A)?"
+  answer: 985
+  tolerance: 20
+  unit: kg
+  explanation: "Enter the climb weight limit panel at 6,000 ft, go right to the sloping line and drop to the weight scale: about 985 kg. The worked example on the chart, at about 5,400 ft, gives about 1,020 kg; the limit falls as the pressure height rises."
+  workbook_page: 8
+  references: ["BAKC 6.2", "Workbook p8"]
+  difficulty: 3
+- id: BAKC-C016
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "Fig 6's landing chart notes that landing distance required does not vary significantly with weight. Which change WILL increase the landing distance it gives?"
+  options: ["A higher pressure height", "A stronger headwind", "A 2 percent upslope", "A lower shade temperature"]
+  answer: 0
+  explanation: "Higher pressure height means thinner air and a higher true airspeed for the same approach IAS, so a longer landing. A headwind, an upslope and colder air all shorten it."
+  workbook_page: 8
+  references: ["BAKC 6.2", "Workbook p8"]
+  difficulty: 2
+- id: BAKC-C017
+  kind: mcq
+  elements: ["BAKC 6.2.3"]
+  stem: "Before using any of the workbook take-off charts, the aerodrome elevation is 1,000 ft and the QNH is 1003 hPa. What pressure height do you enter the chart with?"
+  options: ["About 700 ft", "1,000 ft", "About 1,300 ft", "About 1,030 ft"]
+  answer: 2
+  explanation: "QNH is 10 hPa below 1013, and each hPa is about 30 ft, so add 300 ft: pressure height about 1,300 ft. Low QNH raises the pressure height; a common trap is to subtract instead of add."
+  references: ["BAKC 6.2"]
+  difficulty: 2
+- id: BAKC-C018
+  kind: mcq
+  elements: ["BAKC 6.2.4"]
+  stem: "On Fig 4, why do the wind lines on the TAIL side of the reference line slope more steeply than those on the HEAD side?"
+  options: ["The chart is drawn for a headwind only", "A tailwind costs more distance than an equal headwind saves", "Tailwinds are limited to 15 kt", "Headwinds increase the landing distance"]
+  answer: 1
+  explanation: "Each knot of tailwind adds more to the landing distance than a knot of headwind takes off, so the chart punishes tailwinds steeply. The same is true on the take-off charts."
+  workbook_page: 6
+  references: ["BAKC 6.2", "Workbook p6"]
+  difficulty: 3

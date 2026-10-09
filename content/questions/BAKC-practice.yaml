@@ -1,0 +1,1158 @@
+# BAKC practice bank: coverage and the heavily examined areas (calculations, engines, instruments, wake, speed limits).
+# Written to the BAKC lessons; no workbook charts or loading systems.
+- id: BAKC-X001
+  kind: mcq
+  elements: ["BAKC 2.1.2"]
+  stem: "Flying from Jandakot towards York in a crosswind, the nose of your aeroplane points 085°M while its path over the ground is 080°M. What is your heading?"
+  options:
+    - "085°M, because heading is where the nose points"
+    - "080°M, because heading is the path over the ground"
+    - "005°, the angle between the nose and the path"
+    - "082°M, the average of the two directions"
+  answer: 0
+  explanation: "Heading is the direction of the aeroplane's longitudinal axis, where the nose points: 085°M. The direction over the ground, 080°M, is the track, and the 5 degree difference between them is the drift caused by the wind."
+  references: ["BAKC 2.1"]
+  difficulty: 1
+
+- id: BAKC-X002
+  kind: mcq
+  elements: ["BAKC 2.1.2"]
+  stem: "You want to make good a track of 090°M with the wind blowing from the north, on the left of your track. Compared with the track, the heading you must fly is:"
+  options:
+    - "The same as the track, because wind does not affect heading"
+    - "A few degrees right of the track, away from the wind"
+    - "A few degrees left of the track, into the wind"
+    - "The reciprocal of the wind direction"
+  answer: 2
+  explanation: "A wind from the left drifts the aeroplane to the right, so you point the nose a little left of the track, into wind, to compensate. Heading and track are the same only in still air or with the wind straight on the nose or tail."
+  references: ["BAKC 2.1"]
+  difficulty: 2
+
+- id: BAKC-X003
+  kind: numeric
+  elements: ["BAKC 2.1.1"]
+  stem: "You are heading 320°M near Serpentine when ATC reports traffic at four o'clock. What is the magnetic bearing of the traffic from you, in degrees?"
+  answer: 80
+  tolerance: 0
+  unit: "degrees"
+  explanation: "Each clock hour is 30 degrees, so four o'clock is 4 × 30 = 120 degrees right of the nose. 320 + 120 = 440, which passes 360, so subtract a full circle: 440 − 360 = 080°M. The clock is fixed to the nose, so it is added to the heading, not the track."
+  references: ["BAKC 2.1"]
+  difficulty: 2
+
+- id: BAKC-X004
+  kind: numeric
+  elements: ["BAKC 2.1.3"]
+  stem: "Your compass reads 247°C. The deviation card shows 2°E for that heading and the local variation is 3°W. What is the true heading, in degrees?"
+  answer: 246
+  tolerance: 0
+  unit: "degrees"
+  explanation: "Going from compass back to true, reverse 'east is least, west is best'. Compass to magnetic: add the easterly deviation, 247 + 2 = 249°M. Magnetic to true: subtract the westerly variation, 249 − 3 = 246°T. Check forwards: 246 + 3 (west is best) = 249°M, then 249 − 2 (east is least) = 247°C."
+  references: ["BAKC 2.1"]
+  difficulty: 3
+
+- id: BAKC-X005
+  kind: mcq
+  elements: ["BAKC 2.2.1"]
+  stem: "The forecast visibility near Northam is 6 km. A silo you want to identify is 4 NM ahead on your track. Using 1 km = 0.54 NM, which is correct?"
+  options:
+    - "It is within the visibility now, because 6 km is about 11 NM"
+    - "It is beyond the visibility; you will see it from about 3 NM"
+    - "It is within the visibility now, because a kilometre and a nautical mile are about equal"
+    - "It is beyond the visibility; you will see it from about 1 NM"
+  answer: 1
+  explanation: "6 × 0.54 = 3.2 NM, so the silo, 4 NM away, is beyond the visibility and comes into view at about 3 NM. Multiplying by 1.852 (giving 11) converts the wrong way: a kilometre is a little over half a nautical mile."
+  references: ["BAKC 2.2"]
+  difficulty: 2
+
+- id: BAKC-X006
+  kind: mcq
+  elements: ["BAKC 2.2.1"]
+  stem: "Why is the nautical mile a convenient unit for measuring distance on an aeronautical chart?"
+  options:
+    - "It is one minute of longitude, so the longitude scale is a distance scale"
+    - "It is exactly one kilometre at the scale of every chart"
+    - "It is the unit used for visibility, so the two compare directly"
+    - "It is one minute of latitude, so the latitude scale is a distance scale"
+  answer: 3
+  explanation: "One nautical mile (1,852 m) is one minute of latitude, so dividers set against the latitude scale beside the route measure distance on any chart, and one degree of latitude is 60 NM. It is not a kilometre (1 NM = 1.852 km), and visibility is reported in metres and kilometres, not nautical miles."
+  references: ["BAKC 2.2"]
+  difficulty: 2
+
+- id: BAKC-X007
+  kind: mcq
+  elements: ["BAKC 2.2.2"]
+  stem: "A passenger asks what '110 knots' means. Which is the correct definition of a knot?"
+  options:
+    - "One statute mile per hour"
+    - "One nautical mile per minute"
+    - "One kilometre per hour"
+    - "One nautical mile per hour"
+  answer: 3
+  explanation: "A knot is a speed of one nautical mile (1,852 m) per hour, so 110 kt is 110 NM in an hour, about 204 km/h. The 'per hour' is built into the word, which is why 'knots per hour' is wrong."
+  references: ["BAKC 2.2"]
+  difficulty: 1
+
+- id: BAKC-X008
+  kind: numeric
+  elements: ["BAKC 2.2.2"]
+  stem: "At a groundspeed of 90 kt, how many minutes will it take to reach a town 27 NM ahead?"
+  answer: 18
+  tolerance: 0
+  unit: "min"
+  explanation: "90 kt is 90 ÷ 60 = 1.5 NM per minute, so 27 ÷ 1.5 = 18 minutes. Check with the formula: time = 27 ÷ 90 × 60 = 0.3 × 60 = 18 min."
+  references: ["BAKC 2.2"]
+  difficulty: 2
+
+- id: BAKC-X009
+  kind: mcq
+  elements: ["BAKC 2.2.3"]
+  stem: "The Geraldton METAR gives the wind as 180/12. Which statement is correct?"
+  options:
+    - "It blows towards the south at 12 kt, direction in degrees true"
+    - "It blows from the south at 12 kt, direction in degrees true"
+    - "It blows from the south at 12 kt, direction in degrees magnetic"
+    - "It blows towards the south at 12 kt, direction in degrees magnetic"
+  answer: 1
+  explanation: "Wind velocity is written direction/speed, with the direction the wind blows from, so 180/12 is a 12 kt southerly. METAR, SPECI and forecast winds are in degrees true; only winds passed by ATC or on an ATIS are magnetic."
+  references: ["BAKC 2.2"]
+  difficulty: 2
+
+- id: BAKC-X010
+  kind: mcq
+  elements: ["BAKC 2.2.3", "BAKC 2.1.3"]
+  stem: "Which of these gives the wind direction in degrees magnetic, so that it can be compared directly with the runway number?"
+  options:
+    - "The ATIS for the aerodrome"
+    - "The TAF for the aerodrome"
+    - "The METAR for the aerodrome"
+    - "The graphical area forecast (GAF)"
+  answer: 0
+  explanation: "Surface winds passed by ATC or on an ATIS are magnetic, to match the magnetic runway designators. TAF, GAF and METAR winds are meteorological products and are given in degrees true."
+  references: ["BAKC 2.2", "BAKC 2.1"]
+  difficulty: 1
+
+- id: BAKC-X011
+  kind: numeric
+  elements: ["BAKC 2.2.4"]
+  stem: "Cruising at 5,000 ft with an indicated airspeed of 90 kt (take CAS as equal to IAS), you track directly into a 25 kt headwind. Using the rule of thumb that TAS exceeds IAS by about 2 percent per 1,000 ft, how many minutes will a 37 NM leg take?"
+  answer: 30
+  tolerance: 1
+  unit: "min"
+  explanation: "TAS: 5,000 ft is 5 × 2 = 10 percent, so 90 × 1.10 = 99 kt. GS = 99 − 25 = 74 kt. Time = 37 ÷ 74 × 60 = 0.5 × 60 = 30 minutes. Skipping the TAS step (90 − 25 = 65 kt) gives about 34 minutes: the order is always IAS, CAS, TAS, then GS."
+  references: ["BAKC 2.2"]
+  difficulty: 3
+
+- id: BAKC-X012
+  kind: mcq
+  elements: ["BAKC 2.3.1"]
+  stem: "A fuel truck is booked for 12:40 am. How is that written as a 4-figure group?"
+  options:
+    - "1240"
+    - "2440"
+    - "0040"
+    - "2340"
+  answer: 2
+  explanation: "The hour after midnight is hour zero, so 12:40 am is 0040. 1240 is 12:40 pm, just after noon; 2440 does not exist, because the day ends at 2359; 2340 is 11:40 pm."
+  references: ["BAKC 2.3", "AIP GEN 2.1"]
+  difficulty: 1
+
+- id: BAKC-X013
+  kind: numeric
+  elements: ["BAKC 2.3.1"]
+  stem: "You depart Busselton at 1350 and the flight time is 1 hour 25 minutes. What is the landing time as a 4-figure group (enter digits only, e.g. 0845 as 845)?"
+  answer: 1515
+  tolerance: 0
+  unit: "time"
+  explanation: "Add minutes to minutes: 50 + 25 = 75 minutes, which is 1 hour 15 minutes, so write 15 and carry 1 hour. Hours: 13 + 1 + 1 = 15. Landing 1515. Adding the groups as ordinary numbers (1350 + 125 = 1475) gives an impossible time, because the minutes run only to 59."
+  references: ["BAKC 2.3"]
+  difficulty: 2
+
+- id: BAKC-X014
+  kind: mcq
+  elements: ["BAKC 2.3.2"]
+  stem: "You set a SARTIME of 0745 WST on Sunday for a flight from Jandakot to Rottnest and back. What is the SARTIME in UTC?"
+  options:
+    - "2345 UTC Saturday"
+    - "2345 UTC Sunday"
+    - "1545 UTC Sunday"
+    - "1545 UTC Saturday"
+  answer: 0
+  explanation: "WST to UTC: subtract 8 hours. 0745 − 0800 is negative, so add 24 hours first: 3145 − 0800 = 2345, and the date moves back a day to Saturday. Any WST time before 0800 is the previous day in UTC; the 1545 options added 8 hours instead of subtracting."
+  references: ["BAKC 2.3", "AIP GEN 2.1"]
+  difficulty: 2
+
+- id: BAKC-X015
+  kind: mcq
+  elements: ["BAKC 2.3.3"]
+  stem: "A NOTAM closes the runway at Busselton from 1630 UTC to 2000 UTC on Monday 6 October. When is it closed in Western Standard Time?"
+  options:
+    - "0830 to 1200 WST on Monday 6 October"
+    - "0030 to 0400 WST on Monday 6 October"
+    - "0030 to 0400 WST on Tuesday 7 October"
+    - "0830 to 1200 WST on Sunday 5 October"
+  answer: 2
+  explanation: "UTC to WST: add 8 hours. 1630 + 0800 = 2430 and 2000 + 0800 = 2800; both pass 2400, so subtract 24 and move the date forward: 0030 to 0400 WST on Tuesday 7 October. Any UTC time from 1600 onward is the next WST date. The 0830 options subtracted 8 hours instead of adding."
+  references: ["BAKC 2.3", "AIP GEN 2.1"]
+  difficulty: 2
+
+- id: BAKC-X016
+  kind: mcq
+  elements: ["BAKC 5.2.3", "BAKC 2.3.3"]
+  stem: "ERSA lists a restricted area near your route as active 0100-0500 UTC, Monday to Friday. You will pass it at 1230 WST on a Saturday. On the ERSA listing alone, is it active then?"
+  options:
+    - "Yes, because 1230 WST falls inside the area's 0900 to 1300 WST window"
+    - "No, because 1230 WST Saturday is 0430 UTC Saturday, not a listed day"
+    - "Yes, because 1230 WST Saturday is 0430 UTC Friday, a listed day"
+    - "No, because converted to WST the area is active 1700 to 2100 only"
+  answer: 1
+  explanation: "Add 8 hours: the area is active 0900 to 1300 WST, and because 0100 UTC is 0900 WST on the same date, the days line up, Monday to Friday. 1230 WST Saturday is 0430 UTC Saturday, so the area is not active by the listing: the time is inside the window but the day is not. 1700 to 2100 comes from subtracting 8. Always check the NOTAMs too, which can activate an area."
+  references: ["BAKC 5.2", "BAKC 2.3"]
+  difficulty: 3
+
+- id: BAKC-X017
+  kind: numeric
+  elements: ["BAKC 2.4.1"]
+  stem: "The TAF for an aerodrome of elevation 1,100 ft forecasts broken cloud at 2,500 ft. What is the forecast cloud base above mean sea level, in feet?"
+  answer: 3600
+  tolerance: 0
+  unit: "ft"
+  explanation: "Cloud heights in a TAF or METAR are heights above the aerodrome. Altitude = elevation + height = 1,100 + 2,500 = 3,600 ft AMSL. The GAF gives cloud as altitudes, so there the same base would be printed as 3,600."
+  references: ["BAKC 2.4"]
+  difficulty: 3
+
+- id: BAKC-X018
+  kind: mcq
+  elements: ["BAKC 2.4.2"]
+  stem: "In Australian aviation, which units are used for outside air temperature and for aircraft weight?"
+  options:
+    - "Degrees Fahrenheit and pounds"
+    - "Degrees Celsius and pounds"
+    - "Degrees Fahrenheit and kilograms"
+    - "Degrees Celsius and kilograms"
+  answer: 3
+  explanation: "Air temperature and dew point in Australian reports are in degrees Celsius, and aircraft weights, from MTOW to the weight and balance, are in kilograms. Some imported aircraft have Fahrenheit engine gauges, but the weather is always Celsius."
+  references: ["BAKC 2.4"]
+  difficulty: 1
+
+- id: BAKC-X019
+  kind: numeric
+  elements: ["BAKC 2.4.2", "BAKC 6.4.2"]
+  stem: "Your weight and balance shows you can carry at most 80 kg of AVGAS (SG 0.72) with your passengers on board. How many litres do you ask the refueller for? Round down to a whole litre."
+  answer: 111
+  tolerance: 0
+  unit: "L"
+  explanation: "Kilograms to litres: divide by the SG. 80 ÷ 0.72 = 111.1, so 111 L (round down, because rounding up would exceed the weight available). Check: for avgas the litres must be the bigger number; multiplying (80 × 0.72 = 58) goes the wrong way."
+  references: ["BAKC 2.4", "BAKC 6.4"]
+  difficulty: 2
+
+- id: BAKC-X020
+  kind: mcq
+  elements: ["BAKC 2.5.1"]
+  stem: "You touch down at Murrayfield 10 percent faster than the POH approach speed. Roughly how much more kinetic energy must the brakes, tyres and drag absorb?"
+  options:
+    - "About 10 percent more"
+    - "About 5 percent more"
+    - "About 100 percent more"
+    - "About 21 percent more"
+  answer: 3
+  explanation: "Kinetic energy is ½mv², so it goes with the square of the speed: 1.1² = 1.21, about 21 percent more. Energy never rises in simple proportion to speed; doubling the speed would give four times the energy."
+  references: ["BAKC 2.5"]
+  difficulty: 2
+
+- id: BAKC-X021
+  kind: mcq
+  elements: ["BAKC 2.5.2"]
+  stem: "Two identical aeroplanes are at 1,000 ft above the same field, one at 60 kt and one at 100 kt. Which statement about their energy states is correct?"
+  options:
+    - "They are the same, because the energy state depends only on height"
+    - "The 100 kt aeroplane's is higher, because its extra speed is stored height"
+    - "The 60 kt aeroplane's is higher, because it is nearer the stall"
+    - "They cannot be compared, because the energy state depends only on engine power"
+  answer: 1
+  explanation: "The energy state is the total of kinetic energy (speed) and potential energy (height). At the same height the faster aeroplane has more kinetic energy, the equivalent of roughly 280 ft more height it could gain by trading speed. Power changes the energy state over time but is not part of it."
+  references: ["BAKC 2.5"]
+  difficulty: 2
+
+- id: BAKC-X022
+  kind: mcq
+  elements: ["BAKC 2.5.2", "BAKC 2.5.3"]
+  stem: "On final at Jandakot you are on the correct approach path but 10 kt fast. Which action removes the excess energy, rather than only moving it from speed into height?"
+  options:
+    - "Extending more flap, within its limiting speed, or reducing power"
+    - "Raising the nose with the elevator while holding the power constant"
+    - "Lowering the nose slightly and holding the same power setting"
+    - "Trimming nose-up and leaving the power set"
+  answer: 0
+  explanation: "Drag, increased by flap, removes energy, and reducing power stops adding it. The elevator cannot create or remove energy: raising the nose or trimming nose-up only trades the excess speed for height and puts you above the path, and lowering the nose adds speed."
+  references: ["BAKC 2.5"]
+  difficulty: 2
+
+- id: BAKC-X023
+  kind: mcq
+  elements: ["BAKC 3.1.2"]
+  stem: "Roughly what percentage of its sea-level power can a normally aspirated engine produce at full throttle at a density height of 6,000 ft?"
+  options:
+    - "About 100 percent, because full throttle makes up for altitude"
+    - "About 94 percent"
+    - "About 82 percent"
+    - "About 64 percent"
+  answer: 2
+  explanation: "A normally aspirated engine loses roughly 3 percent of its sea-level power per 1,000 ft of density height: 6 × 3 = 18 percent, leaving about 82 percent. Full throttle cannot make up for it, because power is limited by the mass of air each cylinder draws in, and that falls with density."
+  references: ["BAKC 3.1"]
+  difficulty: 2
+
+- id: BAKC-X024
+  kind: mcq
+  elements: ["BAKC 3.1.4", "BAKC 3.1.6"]
+  stem: "In cruise, the main use of the exhaust gas temperature (EGT) gauge is to:"
+  options:
+    - "Lean the mixture accurately"
+    - "Check each magneto in turn"
+    - "Confirm the oil is warm enough"
+    - "Detect carburettor ice early"
+  answer: 0
+  explanation: "The EGT responds quickly to mixture, rising as you lean towards the chemically correct ratio, so it is the gauge for setting the mixture in cruise. Magneto checks use the tachometer, oil temperature has its own gauge, and carburettor ice shows as a loss of RPM or manifold pressure."
+  references: ["BAKC 3.1"]
+  difficulty: 1
+
+- id: BAKC-X025
+  kind: mcq
+  elements: ["BAKC 3.1.5"]
+  stem: "Why does an engine that is low on oil tend to run hot?"
+  options:
+    - "The oil pump speeds up to compensate and makes friction heat"
+    - "A low oil quantity leans the mixture and raises the temperature"
+    - "Less oil carries away the heat from parts the air cannot cool"
+    - "The oil cooler bypass valve closes when the quantity is low"
+  answer: 2
+  explanation: "Besides lubricating, oil carries heat from the pistons, the underside of the cylinder heads and the bearings, which the air over the fins cannot reach, to the sump and the oil cooler. Less oil carries the same heat, so the temperature rises. The oil quantity has no effect on the mixture."
+  references: ["BAKC 3.1"]
+  difficulty: 2
+
+- id: BAKC-X026
+  kind: mcq
+  elements: ["BAKC 3.1.5", "BAKC 3.1.3"]
+  stem: "The oil cooler on many engines has a thermostatic valve that bypasses the cooler while the oil is cold. What is the oil cooler itself for?"
+  options:
+    - "To warm the oil before start so it reaches the bearings"
+    - "To shed heat carried out by the oil, keeping it within limits"
+    - "To filter metal particles and carbon out of the oil"
+    - "To raise the oil pressure whenever the engine is running at high RPM"
+  answer: 1
+  explanation: "The oil cooler is a small radiator in the cooling airflow that sheds the heat the oil has carried away from the engine's internal parts. The bypass lets cold oil skip it so the oil warms up sooner; the cooler does not heat the oil, and filtering is the job of the oil filter."
+  references: ["BAKC 3.1"]
+  difficulty: 2
+
+- id: BAKC-X027
+  kind: mcq
+  elements: ["BAKC 3.3.2", "BAKC 3.1.6"]
+  stem: "On a cross-country to Kalgoorlie at 7,500 ft you forget to lean the mixture. What is the most likely consequence?"
+  options:
+    - "The CHT rises sharply and the engine begins to detonate"
+    - "The engine runs leaner as the air thins, so it uses less fuel"
+    - "Nothing, because the carburettor corrects the mixture automatically for height"
+    - "Fuel consumption rises above the planned figure, and the plugs may foul"
+  answer: 3
+  explanation: "The carburettor meters fuel by the volume of air, so the mixture becomes progressively richer as you climb. Left rich in cruise, the engine burns more fuel than planned (eating into the reserve), may lose a little power and run rough, and fouls its plugs. High CHT and detonation come from a mixture that is too lean."
+  references: ["BAKC 3.3", "BAKC 3.1"]
+  difficulty: 2
+
+- id: BAKC-X028
+  kind: mcq
+  elements: ["BAKC 3.1.7"]
+  stem: "Which is a disadvantage of a fuel injection system compared with a simple carburettor?"
+  options:
+    - "It is more prone to ice forming in the venturi"
+    - "It gives an uneven mixture strength between the cylinders"
+    - "It needs carburettor heat before every descent"
+    - "It is hard to start when hot, because of vapour lock"
+  answer: 3
+  explanation: "Fuel injection is more complex and costly, needs a fuel pump running at all times, and is hard to start when hot because fuel in the hot lines vaporises (vapour lock). It has no venturi, so no carburettor ice and no carburettor heat; uneven distribution is the carburettor's weakness."
+  references: ["BAKC 3.1"]
+  difficulty: 1
+
+- id: BAKC-X029
+  kind: mcq
+  elements: ["BAKC 3.1.7"]
+  stem: "Which is an advantage of a simple carburettor over a fuel injection system?"
+  options:
+    - "It cannot form ice in the induction system"
+    - "It is simple, cheap and easy to maintain"
+    - "It delivers a more even mixture to each cylinder"
+    - "It gives better fuel economy in the cruise"
+  answer: 1
+  explanation: "The simple carburettor's advantages are simplicity, low cost, easy maintenance and few parts to fail. It is the injection system that is free of carburettor ice and gives a precise, even mixture with better economy."
+  references: ["BAKC 3.1"]
+  difficulty: 1
+
+- id: BAKC-X030
+  kind: mcq
+  elements: ["BAKC 3.1.8", "BAKC 3.4.1"]
+  stem: "In a typical trainer, the alternator fails over the wheatbelt and some time later the battery is exhausted. Which is correct?"
+  options:
+    - "The engine runs on and the vacuum attitude and heading indicators still work"
+    - "The engine stops, because the magnetos have lost their power supply"
+    - "The attitude and heading indicators fail, because they run on electricity"
+    - "The airspeed indicator and altimeter stop, because they need electric power"
+  answer: 0
+  explanation: "The magnetos are self-contained, so the engine keeps running, and in most trainers the attitude and directional indicators are driven by an engine vacuum pump. You lose the electrical services: radios, transponder, lights, electric flaps and fuel pump, and the turn coordinator. The ASI, altimeter and VSI need no power at all."
+  references: ["BAKC 3.1", "BAKC 3.4"]
+  difficulty: 3
+
+- id: BAKC-X031
+  kind: mcq
+  elements: ["BAKC 3.3.1"]
+  stem: "During a long climb out of Northam on a 38 degree day, the CHT rises sharply and the engine begins to run rough. You suspect detonation. Which actions are correct?"
+  options:
+    - "Lean the mixture, raise the nose to slow down and keep climb power"
+    - "Apply full carburettor heat and continue the climb at the same speed"
+    - "Enrich the mixture, reduce power and lower the nose"
+    - "Close the cowl flaps to warm the engine evenly and increase power"
+  answer: 2
+  explanation: "Detonation is driven by hot, high-pressure end gas, so the remedy reverses the causes: enrich (the extra fuel cools), reduce power (lower cylinder pressure), lower the nose for airspeed and cooling, and open cowl flaps if fitted. Leaning makes it worse, and carburettor heat feeds the engine hotter air."
+  references: ["BAKC 3.3"]
+  difficulty: 2
+
+- id: BAKC-X032
+  kind: mcq
+  elements: ["BAKC 3.3.1"]
+  stem: "In an aeroplane with a constant-speed propeller, which power-change sequence reduces the risk of detonation?"
+  options:
+    - "When adding power, increase RPM before manifold pressure"
+    - "When adding power, increase manifold pressure before RPM"
+    - "When reducing power, reduce RPM before manifold pressure"
+    - "For cruise, set the highest manifold pressure with the lowest RPM"
+  answer: 0
+  explanation: "High manifold pressure with low RPM holds a dense, high-pressure charge in the cylinder for longer, a recipe for detonation. So add power by increasing RPM first and then manifold pressure, and reduce it by taking off manifold pressure first and then RPM, so the engine is never over-boosted."
+  references: ["BAKC 3.3"]
+  difficulty: 2
+
+- id: BAKC-X033
+  kind: mcq
+  elements: ["BAKC 3.3.1"]
+  stem: "Which statement correctly distinguishes detonation from pre-ignition?"
+  options:
+    - "Detonation is lighting before the spark by a hot spot; pre-ignition is end gas exploding after the spark"
+    - "Detonation happens only at idle power; pre-ignition happens only at full power"
+    - "Detonation is end gas exploding after the spark; pre-ignition is lighting before the spark by a hot spot"
+    - "They are two names for the same event in the cylinder"
+  answer: 2
+  explanation: "In detonation the spark has fired normally, but the unburnt end gas ahead of the flame front reaches its self-ignition temperature and explodes. Pre-ignition is the mixture being lit before the spark, by a glowing carbon deposit or overheated plug. Both cause rough running and high temperatures, and the syllabus causes (lean mixture, high MP with low RPM, low octane) are those of detonation."
+  references: ["BAKC 3.3"]
+  difficulty: 3
+
+- id: BAKC-X034
+  kind: mcq
+  elements: ["BAKC 3.3.2"]
+  stem: "Why does prolonged idling on the ground tend to foul the spark plugs?"
+  options:
+    - "At idle the engine runs hot and lean, which burns away the plug electrodes"
+    - "At idle the engine runs cool and rich, leaving carbon and lead deposits"
+    - "At idle the oil pressure is high enough to force oil onto the plugs"
+    - "At idle the carburettor heat is on, drawing dust onto the plugs"
+  answer: 1
+  explanation: "The idle system deliberately supplies extra fuel and the cylinders are too cool to burn it all, so unburnt fuel leaves carbon and the lead in AVGAS leaves deposits on the plugs. A fouled plug typically shows up as an excessive drop on the next magneto check."
+  references: ["BAKC 3.3"]
+  difficulty: 1
+
+- id: BAKC-X035
+  kind: mcq
+  elements: ["BAKC 3.3.3", "BAKC 3.4.2"]
+  stem: "In a fixed-pitch trainer you let the nose drop in a descent with cruise power set, and the tachometer passes the red line. Why does this matter, and what do you do?"
+  options:
+    - "The mixture becomes too lean and will detonate; enrich and continue the descent"
+    - "The magnetos lose their timing above the red line; select one magneto and continue"
+    - "The oil temperature falls too quickly; add more power to keep the engine warm"
+    - "Inertia loads rise with RPM squared; close the throttle and raise the nose"
+  answer: 3
+  explanation: "The red line is maximum RPM. Inertial loads on the moving parts rise with the square of RPM, the valves can float and the propeller tips approach the speed of sound. With a fixed-pitch propeller a dive with power on is the usual cause, so close the throttle and raise the nose."
+  references: ["BAKC 3.3", "BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X036
+  kind: mcq
+  elements: ["BAKC 3.3.4"]
+  stem: "On the climb out of York the exhaust trails continuous blue smoke. What does the blue colour indicate?"
+  options:
+    - "Unburnt fuel from a mixture that is far too rich"
+    - "Water in the fuel turning to steam in the cylinders"
+    - "Carburettor heat left on throughout the climb at full power"
+    - "Oil burning in the cylinders, past worn rings or guides"
+  answer: 3
+  explanation: "Blue smoke is oil being burnt: it is reaching the combustion chambers past worn piston rings or valve guides, or from an over-filled sump. Expect high oil consumption and oil-fouled plugs. Black smoke, not blue, is unburnt fuel from a rich mixture."
+  references: ["BAKC 3.3"]
+  difficulty: 1
+
+- id: BAKC-X037
+  kind: mcq
+  elements: ["BAKC 3.3.4"]
+  stem: "After start the engine runs rough and the exhaust shows black smoke. Which of these is a likely cause to check?"
+  options:
+    - "Worn piston rings letting oil into the cylinders"
+    - "An unlocked primer feeding raw fuel into the cylinders"
+    - "An over-filled sump throwing oil onto the cylinder walls"
+    - "Worn valve guides letting oil down the valve stems"
+  answer: 1
+  explanation: "Black smoke is unburnt fuel: the mixture is too rich. Check the mixture control, the primer (if it is not locked it can keep feeding raw fuel) and the carburettor heat. Worn rings, worn guides and an over-filled sump all put oil into the cylinders, which gives blue smoke."
+  references: ["BAKC 3.3"]
+  difficulty: 2
+
+- id: BAKC-X038
+  kind: mcq
+  elements: ["BAKC 3.4.2", "BAKC 3.4.1"]
+  stem: "In cruise the fuel pressure gauge shows a falling pressure and the engine begins to falter. Which response is correct?"
+  options:
+    - "Booster pump on, change tanks and set the mixture rich"
+    - "Lean the mixture and reduce power to save fuel"
+    - "Apply carburettor heat only, as low fuel pressure means ice"
+    - "Select each magneto in turn to find the faulty one"
+  answer: 0
+  explanation: "Low fuel pressure means fuel is not reaching the engine: a failed engine pump, a blocked vent, an empty tank or vapour in the lines. The booster pump takes over from a failed engine pump, changing tanks gets round a blocked vent or empty tank, and a rich mixture helps keep it running. Unresolved, the engine stops."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X039
+  kind: mcq
+  elements: ["BAKC 3.4.3", "BAKC 3.4.8"]
+  stem: "During the run-up at 1,800 RPM on a humid morning you apply full carburettor heat. The RPM falls to 1,690, then rises to 1,740 with the heat still on. Back on cold it settles at 1,840. What does this show?"
+  options:
+    - "The heat is not working, because the RPM did not stay down"
+    - "The heat works, and there was no ice in the carburettor"
+    - "The heat works, and ice in the carburettor has melted"
+    - "A magneto is faulty, because the RPM moved with the heat on"
+  answer: 2
+  explanation: "The 110 RPM drop when the heat goes on proves hot, less dense air is reaching the carburettor. A rise with the heat still on means ice was present and has melted, and the RPM on cold ending above the starting figure shows the starting figure had been reduced by ice. With no ice, the RPM drops, stays down, then returns to its original value."
+  references: ["BAKC 3.4"]
+  difficulty: 3
+
+- id: BAKC-X040
+  kind: mcq
+  elements: ["BAKC 3.4.3"]
+  stem: "During the pre-take-off check you select full carburettor heat and the RPM does not change at all. What does this indicate?"
+  options:
+    - "The carburettor heat system is not working"
+    - "There is no ice and the system is working normally"
+    - "Ice was present and has just melted"
+    - "The mixture is too lean for the check to show anything"
+  answer: 0
+  explanation: "Hot air is less dense, so a working system always shows an RPM drop, typically about 100 to 150 RPM in a trainer. No drop means a disconnected control or a damaged duct or flap: do not fly into conditions where carburettor ice is likely. 'No ice' shows as a drop that stays steady, not as no drop."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X041
+  kind: mcq
+  elements: ["BAKC 3.4.4"]
+  stem: "You are cruising at normal cruise power on a humid day with an outside air temperature of 25 degrees. Which type of engine ice is still a risk?"
+  options:
+    - "None, because carburettor ice needs a temperature below freezing"
+    - "Impact ice, because the humidity is high"
+    - "Fuel evaporation ice, which can form at any power setting"
+    - "Throttle ice, because cruise power is a low power setting"
+  answer: 2
+  explanation: "Fuel evaporation (refrigeration) ice forms in the venturi and induction passage wherever fuel evaporates, so it can form at any power, in high humidity, at outside temperatures roughly from minus 10 to plus 30 degrees. Throttle ice favours low power with the butterfly nearly closed, at roughly minus 5 to plus 20, and impact ice needs visible moisture at or below freezing."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X042
+  kind: mcq
+  elements: ["BAKC 3.4.5"]
+  stem: "In cruise, the RPM of your fixed-pitch trainer has crept down twice and each time you opened the throttle to restore it. It has now crept down again. What is the correct action?"
+  options:
+    - "Open the throttle further, because the engine needs more power"
+    - "Apply full carburettor heat and leave it on"
+    - "Lean the mixture until the RPM peaks again"
+    - "Apply partial carburettor heat to limit the loss of power"
+  answer: 1
+  explanation: "An unexplained, recurring loss of RPM is carburettor ice until proven otherwise. Each throttle increment buys the RPM back while the ice keeps growing, hiding the symptom. Apply full heat and keep it on; partial heat can make icing worse, and more throttle only delays the stop."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X043
+  kind: mcq
+  elements: ["BAKC 3.4.5"]
+  stem: "A pilot unknowingly compensates for carburettor ice by opening the throttle bit by bit until it is fully open. Why is this point especially dangerous?"
+  options:
+    - "The mixture becomes too lean at full throttle and detonates"
+    - "Full throttle melts the ice suddenly and floods the engine"
+    - "The engine overspeeds past the red line once the throttle is fully open"
+    - "Nothing is left to compensate as the ice grows, so the engine stops"
+  answer: 3
+  explanation: "Opening the throttle lets more mixture past the growing ice, which hides the symptom. Once the throttle is fully open there is nothing left to give, the ice keeps building and the engine stops, by which time it has little heat left to melt so much ice. Any unexplained RPM loss calls for full carburettor heat first."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X044
+  kind: mcq
+  elements: ["BAKC 3.4.6"]
+  stem: "Without a carburettor air temperature gauge, why should carburettor heat be used fully on or fully off rather than partly on?"
+  options:
+    - "Partial heat wears the control cable and hot air flap unevenly"
+    - "Partial heat leans the mixture more than full heat does"
+    - "Partial heat is unfiltered, while full heat is filtered"
+    - "Partial heat can warm sub-freezing air into the icing range"
+  answer: 3
+  explanation: "Partial heat can warm air that was well below freezing up into the icing range, so ice becomes more likely, not less. With no gauge to show the carburettor air temperature, use full heat or none. All carburettor heat air is unfiltered, and heat richens rather than leans the mixture."
+  references: ["BAKC 3.4"]
+  difficulty: 3
+
+- id: BAKC-X045
+  kind: mcq
+  elements: ["BAKC 3.4.7", "BAKC 3.4.4"]
+  stem: "Flying a fuel-injected aeroplane through sleet at minus 2 degrees, you notice the manifold pressure falling. What is the likely cause and remedy?"
+  options:
+    - "Carburettor throttle ice; apply carburettor heat"
+    - "Impact ice blocking the air intake; select alternate air"
+    - "Vapour lock in the fuel lines; switch on the booster pump"
+    - "Fuel evaporation ice; lean the mixture to warm it"
+  answer: 1
+  explanation: "A fuel-injected engine has no venturi, so it cannot form carburettor ice, but visible moisture at or below freezing builds impact ice on the intake and filter. Alternate air opens an unfiltered air source inside the cowling that bypasses the blocked intake; on many engines it opens automatically."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X046
+  kind: mcq
+  elements: ["BAKC 3.4.7"]
+  stem: "Which statement correctly compares carburettor heat and alternate air?"
+  options:
+    - "Carburettor heat prevents or melts carburettor ice; alternate air bypasses a blocked intake"
+    - "Carburettor heat bypasses a blocked filter on an injected engine; alternate air melts ice in a carburettor"
+    - "Both bring filtered hot air to the engine and both are fitted to every piston engine"
+    - "Alternate air is fitted to carburettor engines as a back-up in case carburettor heat fails"
+  answer: 0
+  explanation: "Carburettor heat brings hot air from around the exhaust into a carburettor to prevent or melt ice inside it. Alternate air, fitted to fuel-injected engines, opens a second, unfiltered air source that bypasses an intake blocked by impact ice, dust or a collapsed filter."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X047
+  kind: mcq
+  elements: ["BAKC 3.4.8"]
+  stem: "Why is carburettor heat normally selected to cold for take-off?"
+  options:
+    - "Carburettor ice cannot form at all with the throttle fully open"
+    - "Hot air leans the mixture so far that the engine may stop"
+    - "It costs take-off power and raises the detonation risk at full power"
+    - "The hot air flap is designed to close itself automatically at high RPM"
+  answer: 2
+  explanation: "Hot air is less dense, so the engine makes less power (RPM or manifold pressure drops), and hot intake air on an engine working hard at full power raises the risk of detonation. Carburettor heat richens rather than leans the mixture, and fuel evaporation ice can form at any power. Select cold before take-off and before a go-around unless the POH says otherwise."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X048
+  kind: mcq
+  elements: ["BAKC 3.4.9"]
+  stem: "Why does switching on the electric booster pump help to cure vapour lock?"
+  options:
+    - "It raises the pressure in the lines, clearing the vapour"
+    - "It cools the fuel lines by circulating fuel back to the tank"
+    - "It richens the mixture so that the engine runs cooler"
+    - "It draws fuel from the other tank, which is cooler"
+  answer: 0
+  explanation: "Vapour lock is fuel boiling in hot lines and pumps, and a pump built to move liquid cannot move bubbles, so the supply becomes intermittent. The booster pump raises the pressure in the lines, which pushes the vapour through or collapses it back into liquid and restores the flow. Follow the POH hot-start procedure as well."
+  references: ["BAKC 3.4"]
+  difficulty: 2
+
+- id: BAKC-X049
+  kind: mcq
+  elements: ["BAKC 3.4.9"]
+  stem: "When is fuel vaporisation (vapour lock) most likely?"
+  options:
+    - "The first start on a cold winter morning after a frosty night"
+    - "A long descent at idle power through cool, humid coastal air"
+    - "Restarting a hot engine on a hot day after a short shutdown"
+    - "The run-up after a long taxi on a cold day"
+  answer: 2
+  explanation: "Fuel boils when it is heated or its pressure is lowered. After a hot engine is shut down there is no cooling airflow, so heat soaks into the fuel lines and pump and the fuel boils. Symptoms on the restart are fluctuating fuel pressure and flow, rough running, surging and hard starting."
+  references: ["BAKC 3.4"]
+  difficulty: 1
+
+- id: BAKC-X050
+  kind: mcq
+  elements: ["BAKC 3.5.1"]
+  stem: "Which speed is marked by the lower end of the green arc on an airspeed indicator?"
+  options:
+    - "VSO, the stall speed in the landing configuration"
+    - "VS1, the stall speed with flaps up"
+    - "VFE, the maximum flap extended speed"
+    - "VNO, the maximum structural cruising speed"
+  answer: 1
+  explanation: "The green arc, the normal operating range, runs from VS1 (stall speed clean, flaps up) to VNO. VSO is the bottom of the white arc, VFE the top of the white arc, and VNO the top of the green."
+  references: ["BAKC 3.5"]
+  difficulty: 1
+
+- id: BAKC-X051
+  kind: numeric
+  elements: ["BAKC 3.5.2"]
+  stem: "You depart Jandakot with QNH 1018 set and fly towards a trough where the QNH is 1006, without resetting the subscale. The altimeter reads 3,000 ft. Using 30 ft per hectopascal, what is your actual altitude, in feet?"
+  answer: 2640
+  tolerance: 10
+  unit: "ft"
+  explanation: "The subscale is 1018 − 1006 = 12 hPa too high, so the altimeter over-reads by 12 × 30 = 360 ft. Actual altitude = 3,000 − 360 = 2,640 ft. From high to low, look out below: you are lower than the altimeter shows."
+  references: ["BAKC 3.5"]
+  difficulty: 3
+
+- id: BAKC-X052
+  kind: mcq
+  elements: ["BAKC 3.5.3"]
+  stem: "Ice blocks the front of the pitot tube, but the pitot drain hole stays clear. What do the pressure instruments show?"
+  options:
+    - "The ASI over-reads in a climb; the altimeter and VSI read normally"
+    - "The altimeter freezes and the VSI reads zero; the ASI reads normally"
+    - "All three pressure instruments freeze at their present readings"
+    - "The ASI falls to zero; the altimeter and VSI read normally"
+  answer: 3
+  explanation: "With the drain open, the trapped pitot pressure leaks away until it equals static pressure, so the dynamic pressure, and the ASI, fall to zero. The altimeter and VSI use only static pressure and are unaffected. An ASI that over-reads in a climb is the case where the pitot and its drain are both blocked."
+  references: ["BAKC 3.5"]
+  difficulty: 2
+
+- id: BAKC-X053
+  kind: mcq
+  elements: ["BAKC 3.5.4"]
+  stem: "On the pre-flight check of the magnetic compass, what are you looking for?"
+  options:
+    - "It reads 360 whichever way the aeroplane is parked"
+    - "It agrees with the attitude indicator after start"
+    - "Its card spins freely and never settles on a heading"
+    - "Full of fluid, no bubbles, deviation card present"
+  answer: 3
+  explanation: "Before start the compass should be full of fluid with no bubbles, have its deviation card, and show a sensible heading for the way you are parked. In the taxi it should swing freely and turn the correct way, then read the runway direction when you line up. The attitude indicator shows attitude, not heading."
+  references: ["BAKC 3.5"]
+  difficulty: 1
+
+- id: BAKC-X054
+  kind: mcq
+  elements: ["BAKC 4.1.1"]
+  stem: "Climbing out from Jandakot, the headwind suddenly increases by 10 kt. What does the airspeed do at first, and why?"
+  options:
+    - "It falls by about 10 kt, because inertia holds the groundspeed for a moment"
+    - "It rises by about 10 kt, because inertia holds the groundspeed for a moment"
+    - "It falls by about 10 kt, because the aircraft holds its airspeed and loses groundspeed"
+    - "It does not change, because the aircraft moves with the air mass"
+  answer: 1
+  explanation: "Inertia holds the aeroplane's speed over the ground for a moment. With 10 kt more headwind at the same groundspeed, 10 kt more air flows past the wing, so the IAS rises and the aeroplane balloons until it settles back at its trimmed speed. A decreasing headwind does the opposite and is the more dangerous case."
+  references: ["BAKC 4.1"]
+  difficulty: 2
+
+- id: BAKC-X055
+  kind: mcq
+  elements: ["BAKC 4.1.3"]
+  stem: "The span of a wing divided by its average chord is its:"
+  options:
+    - "Aspect ratio"
+    - "Camber"
+    - "Angle of incidence"
+    - "Wing loading"
+  answer: 0
+  explanation: "Span (tip to tip) divided by the mean chord is the aspect ratio. A long, slender, high aspect ratio wing makes less induced drag for the same lift, which is why gliders have them. Camber is the curvature of the aerofoil section."
+  references: ["BAKC 4.1"]
+  difficulty: 1
+
+- id: BAKC-X056
+  kind: numeric
+  elements: ["BAKC 4.2.1"]
+  stem: "At a constant angle of attack and air density, an aeroplane slows from 100 kt to 70 kt. Its lift becomes what percentage of the original lift?"
+  answer: 49
+  tolerance: 1
+  unit: "percent"
+  explanation: "At a constant angle of attack lift goes with V²: (70 ÷ 100)² = 0.7² = 0.49, so 49 percent. To stay level the pilot must raise the angle of attack until the lift coefficient has roughly doubled (1 ÷ 0.49 = 2.04)."
+  references: ["BAKC 4.2"]
+  difficulty: 2
+
+- id: BAKC-X057
+  kind: mcq
+  elements: ["BAKC 4.2.2"]
+  stem: "Squashed insects, rough paint and frost on the wing increase mainly which type of drag?"
+  options:
+    - "Induced drag"
+    - "Interference drag"
+    - "Skin friction drag"
+    - "Form drag"
+  answer: 2
+  explanation: "Skin friction drag comes from the air's viscosity in the boundary layer; a rough surface makes the boundary layer thicker and more turbulent, raising it. It is part of parasite drag. Induced drag comes from making lift, interference drag from junctions, and form drag from the shape and its wake."
+  references: ["BAKC 4.2"]
+  difficulty: 1
+
+- id: BAKC-X058
+  kind: mcq
+  elements: ["BAKC 4.2.3"]
+  stem: "An aeroplane in level flight is slower than its minimum-drag speed. To fly slower still and stay level, the pilot needs:"
+  options:
+    - "More thrust, because total drag rises as speed falls here"
+    - "Less thrust, because total drag always falls as speed falls"
+    - "The same thrust, because total drag does not depend on speed"
+    - "Less thrust, because induced drag falls as speed falls"
+  answer: 0
+  explanation: "Below the minimum-drag speed induced drag dominates, and it grows as the speed falls and the angle of attack rises, so total drag increases. Flying slower there needs more thrust: this is the back of the drag curve. Induced drag rises, not falls, as the speed decreases."
+  references: ["BAKC 4.2"]
+  difficulty: 2
+
+- id: BAKC-X059
+  kind: mcq
+  elements: ["BAKC 4.2.3"]
+  stem: "On the total drag curve, the speed for minimum total drag is where:"
+  options:
+    - "Parasite drag has fallen to its minimum value"
+    - "Induced drag has risen to its maximum value"
+    - "Parasite drag and induced drag are equal"
+    - "Induced drag has fallen to zero"
+  answer: 2
+  explanation: "Parasite drag rises with V² and induced drag falls with speed, so their sum is U-shaped and lowest where the two are equal. That speed gives the best lift/drag ratio and is close to the best glide speed of a light piston aeroplane. Parasite drag is least at the lowest speeds, and induced drag never reaches zero while the wing makes lift."
+  references: ["BAKC 4.2"]
+  difficulty: 2
+
+- id: BAKC-X060
+  kind: mcq
+  elements: ["BAKC 4.4.1"]
+  stem: "At Kalgoorlie, which of these is likely to leave the strongest wake vortices?"
+  options:
+    - "The same twin landing at its maximum landing weight with full flap"
+    - "The twin at maximum weight just after take-off, flaps coming up"
+    - "The same twin cruising fast and light at the end of a long flight"
+    - "The same twin taxiing to the runway at maximum weight"
+  answer: 1
+  explanation: "Vortices are strongest behind an aircraft that is heavy, clean and slow. Just after take-off at maximum weight with the flaps coming up, the wing carries its greatest load at low speed in a clean configuration. Landing weight is lower and full flap breaks up the vortex, a fast light aircraft needs little angle of attack, and an aircraft on the ground makes no significant wake."
+  references: ["BAKC 4.4"]
+  difficulty: 3
+
+- id: BAKC-X061
+  kind: mcq
+  elements: ["BAKC 4.4.1"]
+  stem: "For the same weight and configuration, why does a slower aircraft generate stronger wing-tip vortices?"
+  options:
+    - "Its engines must produce more thrust at the lower speed to stay airborne"
+    - "Its wing makes less lift, so air spills round the tips more easily"
+    - "Its propellers or jets add their own swirl to the tip vortices"
+    - "Its wing must fly at a higher angle of attack to make the same lift"
+  answer: 3
+  explanation: "At lower speed the wing must use a higher angle of attack to make lift equal to the weight, so the pressure difference is concentrated into a slower flow and the air left behind is turned more violently. That is why the wake is strongest just after lift-off and on final approach, not in a fast cruise."
+  references: ["BAKC 4.4"]
+  difficulty: 2
+
+- id: BAKC-X062
+  kind: mcq
+  elements: ["BAKC 4.4.2"]
+  stem: "Why is a wake vortex encounter on short final or just after take-off particularly dangerous for a light aeroplane?"
+  options:
+    - "The vortex can stop the engine by starving its intake of air"
+    - "The vortex blocks the pitot tube, so the airspeed indicator reads zero"
+    - "The vortex lifts it up into the heavier aircraft's flight path ahead"
+    - "Induced roll may exceed its roll control, with no height to recover"
+  answer: 3
+  explanation: "The primary hazard is induced roll: a vortex can roll a following light aeroplane faster than full opposite aileron can counter. At height that is a recoverable upset; near the ground, on final or just after take-off, there is no height to recover in."
+  references: ["BAKC 4.4"]
+  difficulty: 2
+
+- id: BAKC-X063
+  kind: mcq
+  elements: ["BAKC 4.4.2", "BAKC 4.4.3"]
+  stem: "A light aeroplane flies directly behind a heavy aircraft, between its two wing-tip vortices. What is it most likely to experience?"
+  options:
+    - "Rising air that pushes it up above the heavy's flight path"
+    - "Sinking air that may make it lose height or be unable to climb"
+    - "A strong tailwind blowing along the heavy's flight path"
+    - "Smooth air, because the vortices exist only out at the wing tips"
+  answer: 1
+  explanation: "Each vortex flows outward under the wing, up round the tip and inward over the top, so between the two vortices both push the air down. An aeroplane flying along the wake between them is in downwash and may lose height or be unable to climb; just outside the vortices the air moves up."
+  references: ["BAKC 4.4"]
+  difficulty: 3
+
+- id: BAKC-X064
+  kind: mcq
+  elements: ["BAKC 4.4.4"]
+  stem: "You are landing on runway 03 at a regional aerodrome behind a heavier twin that has just landed. The wind is 060/04, a light crosswind from the right. Which of the twin's vortices is most likely to remain over the runway?"
+  options:
+    - "The right (upwind) vortex, because the crosswind cancels its outward drift"
+    - "The left vortex, because the crosswind carries it back over the runway"
+    - "Neither, because any crosswind blows both vortices off the runway"
+    - "Both equally, because vortices near the ground do not move with the wind"
+  answer: 0
+  explanation: "Near the ground each vortex spreads outward from the centreline at a few knots. A light crosswind from the right blows the right (upwind) vortex back against its outward drift, so it can sit almost stationary over the runway, while the left (downwind) vortex is carried away faster. Vortices drift with the air mass."
+  references: ["BAKC 4.4"]
+  difficulty: 3
+
+- id: BAKC-X065
+  kind: mcq
+  elements: ["BAKC 5.1.1", "BAKC 2.4.1"]
+  stem: "A mast on a ridge is marked on the chart with a height of 150 ft above ground and an elevation of 1,380 ft. With QNH set, which figure do you compare with your altimeter reading?"
+  options:
+    - "150 ft, the height above ground"
+    - "1,530 ft, the sum of the two figures"
+    - "1,380 ft, the elevation above mean sea level"
+    - "1,230 ft, the difference between the two figures"
+  answer: 2
+  explanation: "With QNH set the altimeter reads altitude above mean sea level, so you compare it with the obstacle's elevation, 1,380 ft. The 150 ft height above ground tells you how far the mast stands out from the ridge; the elevation already includes the ground beneath it, so adding the two double-counts."
+  references: ["BAKC 5.1", "BAKC 2.4"]
+  difficulty: 2
+
+- id: BAKC-X066
+  kind: mcq
+  elements: ["BAKC 5.1.2"]
+  stem: "Which chart shows controlled airspace and PRD areas but no topography?"
+  options:
+    - "En Route Chart Low (ERC-L)"
+    - "World Aeronautical Chart (WAC)"
+    - "Visual Navigation Chart (VNC)"
+    - "Visual Terminal Chart (VTC)"
+  answer: 0
+  explanation: "The ERC-L is drawn for IFR: air routes, navaids, airspace and PRD areas, with no topography. The VNC and VTC show both topography and airspace, and the WAC shows topography but no airspace."
+  references: ["BAKC 5.1"]
+  difficulty: 1
+
+- id: BAKC-X067
+  kind: mcq
+  elements: ["BAKC 5.2.1"]
+  stem: "An ERSA runway line reads '09/27 1050 x 18 GRAVEL 0.8% up W'. Taking off on runway 27, you will be rolling:"
+  options:
+    - "Downhill, because runway 27 points west, away from the high end"
+    - "Uphill, because runway 27 points east, towards the high end"
+    - "Uphill, because runway 27 points west, towards the high end"
+    - "On level ground, because slopes under 1 percent are ignored"
+  answer: 2
+  explanation: "'0.8% up W' means the runway rises towards the west. Runway 27 points roughly 270 degrees magnetic, west, so a take-off on 27 runs uphill and one on 09 runs downhill. The length and width, 1,050 m by 18 m, are in metres."
+  references: ["BAKC 5.2"]
+  difficulty: 2
+
+- id: BAKC-X068
+  kind: mcq
+  elements: ["BAKC 5.2.1"]
+  stem: "The remarks in an ERSA aerodrome entry include 'PPR'. What must you do?"
+  options:
+    - "Fly right-hand circuits on every runway at that aerodrome"
+    - "Phone the operator for permission before you arrive"
+    - "Carry a portable radio to make calls on the CTAF"
+    - "Arrive and depart in daylight only"
+  answer: 1
+  explanation: "PPR means prior permission required: you must contact the operator, whose details are in the entry, before you arrive. Circuit direction, frequencies and lighting are listed separately in the entry."
+  references: ["BAKC 5.2"]
+  difficulty: 1
+
+- id: BAKC-X069
+  kind: mcq
+  elements: ["BAKC 5.2.2"]
+  stem: "A restricted area along your planned route to Geraldton is listed in ERSA with conditional status RA2. How should you plan?"
+  options:
+    - "Plan through it, expecting a clearance to be normally available"
+    - "Plan through it without a clearance, as RA2 areas are advisory"
+    - "Plan to avoid it, because no clearance will ever be available for it"
+    - "Plan to avoid it; a clearance on the day is possible but not assured"
+  answer: 3
+  explanation: "RA1 means a clearance is normally available and you may plan through; RA2 means do not flight plan through, although ATC may give a tactical clearance on the day; RA3 means no clearance will be available. Every active restricted area needs a clearance to enter."
+  references: ["BAKC 5.2", "AIP ENR 5.1"]
+  difficulty: 2
+
+- id: BAKC-X070
+  kind: mcq
+  elements: ["BAKC 5.2.2"]
+  stem: "On the chart and in ERSA, an area identifier begins with the letter D. What does that mean?"
+  options:
+    - "Flight is never permitted in the area"
+    - "Flight is permitted only with a clearance from the controlling authority"
+    - "The area is controlled airspace around a towered aerodrome"
+    - "Flight is permitted, but a hazard such as gunnery or parachuting exists"
+  answer: 3
+  explanation: "D is a danger area: flight is permitted, but a hazard exists, and you are expected to know what it is and avoid the area if practicable. P (prohibited) means never, and R (restricted) needs a clearance from the controlling authority."
+  references: ["BAKC 5.2", "AIP ENR 5.1"]
+  difficulty: 1
+
+- id: BAKC-X071
+  kind: mcq
+  elements: ["BAKC 6.1.1"]
+  stem: "The maintenance release was issued at 2,745.0 hours time in service, valid for 100 hours or 12 months, and the date is well inside its limit. The aircraft now shows 2,840.1 hours and today's daily inspection is certified. You plan Jandakot to Kalgoorlie and back today, 5.2 hours of flying. Is the aircraft serviceable for this flight?"
+  options:
+    - "Yes, because the release is current at the moment you depart"
+    - "No: it expires at 2,845.0 hours and you would land at 2,845.3"
+    - "Yes, because the 12-month date limit has not yet been reached"
+    - "No, because the release expired at 2,840.0 hours, before today"
+  answer: 1
+  explanation: "Expiry by hours is 2,745.0 + 100 = 2,845.0. You would land at 2,840.1 + 5.2 = 2,845.3, after the release lapses. Maintenance that falls due before the end of the flight makes the aircraft unserviceable for that flight, even though it is current now; whichever limit, hours or date, comes first ends the release."
+  references: ["BAKC 6.1"]
+  difficulty: 3
+
+- id: BAKC-X072
+  kind: mcq
+  elements: ["BAKC 6.1.1"]
+  stem: "The certificate of airworthiness for the club's aeroplane has no expiry date. Which statement is correct?"
+  options:
+    - "It stays in force only while the aircraft is maintained as required"
+    - "It proves the aircraft is airworthy for every flight it makes"
+    - "It removes the need to check the maintenance release before flight"
+    - "It must be renewed by the pilot in command every 12 months"
+  answer: 0
+  explanation: "The certificate of airworthiness confirms the type meets an approved design and this aircraft conforms to it, and it remains in force only while the aircraft is maintained as required. If the maintenance release has lapsed or maintenance is overdue, the aircraft is not airworthy whatever the certificate says."
+  references: ["BAKC 6.1"]
+  difficulty: 2
+
+- id: BAKC-X073
+  kind: mcq
+  elements: ["BAKC 6.1.2"]
+  stem: "Which statement about the pilot's pre-flight inspection is correct?"
+  options:
+    - "It is done once a day and certified on the maintenance release"
+    - "It is needed only if no daily inspection has been certified today"
+    - "It is done before every flight by the pilot and is not certified"
+    - "It may be carried out only by a licensed engineer"
+  answer: 2
+  explanation: "The pre-flight inspection, the POH walk-around, is required before every flight and is the pilot in command's responsibility, but nothing is written on the maintenance release. The daily inspection is the one done once a day, to a schedule, and certified; doing one never replaces the other."
+  references: ["BAKC 6.1"]
+  difficulty: 1
+
+- id: BAKC-X074
+  kind: mcq
+  elements: ["BAKC 6.1.2"]
+  stem: "Who may carry out and certify the daily inspection on a training aeroplane?"
+  options:
+    - "A licensed engineer, or an operator-authorised pilot"
+    - "Only a licensed engineer, never a pilot of any kind"
+    - "Any licensed pilot who has read the POH for the type"
+    - "Only the chief flying instructor of the flying school"
+  answer: 0
+  explanation: "The daily inspection is done to the manufacturer's or operator's daily inspection schedule and certified on the maintenance release by an authorised person: a licensed engineer, or a pilot who holds a pilot licence and is authorised by the operator to carry out daily inspections on that type. Once certified it is valid for the rest of the day."
+  references: ["BAKC 6.1"]
+  difficulty: 2
+
+- id: BAKC-X075
+  kind: mcq
+  elements: ["BAKC 6.1.3"]
+  stem: "During a solo flight the alternator warning light flickers on and off for twenty minutes. How should this defect be recorded?"
+  options:
+    - "Tell the instructor on duty, who will pass it on to the next pilot"
+    - "Write it in your personal logbook with the flight details"
+    - "After landing, endorse it in Part 2 of the maintenance release"
+    - "Record it only if the light stays on for the whole flight"
+  answer: 2
+  explanation: "A defect that appears in flight is endorsed after landing in the defect section, Part 2, of the maintenance release, with a clear description, the date, the time in service and your signature and licence number. Telling someone is not recording it: only the endorsement reaches every future pilot through the document they must check."
+  references: ["BAKC 6.1"]
+  difficulty: 2
+
+- id: BAKC-X076
+  kind: mcq
+  elements: ["BAKC 6.1.3"]
+  stem: "You have endorsed a cracked exhaust pipe in Part 2 of the maintenance release. What must happen before the aircraft flies again?"
+  options:
+    - "The next pilot inspects it on the pre-flight and decides if it is safe"
+    - "An engineer fixes it, or accepts it as a permissible unserviceability"
+    - "You clear it yourself once you are satisfied it will not get worse"
+    - "The chief flying instructor countersigns your entry and releases it"
+  answer: 1
+  explanation: "The endorsement grounds the aircraft. Only a licensed engineer can release it, by rectifying the defect and signing it off, or by determining it is a permissible unserviceability that does not affect safety and endorsing it as such, with any conditions. Neither the pilot who found it nor the next pilot can decide alone that it is probably fine."
+  references: ["BAKC 6.1"]
+  difficulty: 2
+
+- id: BAKC-X077
+  kind: mcq
+  elements: ["BAKC 6.2.1"]
+  stem: "At a coastal aerodrome the QNH is 1013 hPa on two days, one at 15 degrees and one at 35 degrees. How do the aerodrome's pressure height and density height on the hot day compare with the cool day?"
+  options:
+    - "Both are higher on the hot day"
+    - "Pressure height is higher on the hot day; density height is the same"
+    - "Both are the same, because the QNH has not changed"
+    - "Pressure height is the same; density height is higher on the hot day"
+  answer: 3
+  explanation: "Pressure height depends only on pressure, so with the same QNH it is the same on both days. Density height is pressure height corrected for temperature, about 120 ft for every degree above ISA, so the hot day's density height is much higher, and that is what the aeroplane feels."
+  references: ["BAKC 6.2"]
+  difficulty: 2
+
+- id: BAKC-X078
+  kind: mcq
+  elements: ["BAKC 6.2.1"]
+  stem: "The engine, propeller and wing respond to the density of the air. Which height describes that density?"
+  options:
+    - "Aerodrome elevation"
+    - "Pressure height"
+    - "Height above the aerodrome"
+    - "Density height"
+  answer: 3
+  explanation: "Density height is the height in the standard atmosphere with the same air density as today, which is what the engine, propeller and wing feel. Elevation is fixed by survey, and pressure height corrects only for pressure, not for temperature."
+  references: ["BAKC 6.2"]
+  difficulty: 1
+
+- id: BAKC-X079
+  kind: mcq
+  elements: ["BAKC 6.2.2"]
+  stem: "You are parked at a strip with no ATIS, AWIS or tower and want the local QNH. How do you get it from the altimeter?"
+  options:
+    - "Set 1013 hPa on the subscale and read the altimeter"
+    - "Set it to read the strip's elevation and read the subscale"
+    - "Set the altimeter to read zero, then read the subscale"
+    - "Use whatever setting the previous pilot left on the subscale"
+  answer: 1
+  explanation: "QNH is the setting that makes the altimeter read the aerodrome's elevation above mean sea level, so turn the subscale until it reads the ERSA elevation and read the QNH in the window. Setting 1013 gives the pressure height, and setting the altimeter to zero puts its datum at the strip, not at sea level."
+  references: ["BAKC 6.2"]
+  difficulty: 1
+
+- id: BAKC-X080
+  kind: numeric
+  elements: ["BAKC 6.2.2", "BAKC 6.2.3"]
+  stem: "At a strip of elevation 650 ft you set the subscale so that the altimeter reads 650 ft, and the subscale shows 1008 hPa. If you now set 1013 hPa, what will the altimeter read, in feet?"
+  answer: 800
+  tolerance: 10
+  unit: "ft"
+  explanation: "The QNH is 1008. Setting 1013 makes the altimeter read the pressure height: 650 + (1013 − 1008) × 30 = 650 + 150 = 800 ft. Put another way, turning the subscale up by 5 hPa moves the reading up by about 5 × 30 = 150 ft."
+  references: ["BAKC 6.2"]
+  difficulty: 2
+
+- id: BAKC-X081
+  kind: numeric
+  elements: ["BAKC 6.3.1"]
+  stem: "The POH gives VA as 104 kt at the maximum weight of 1,100 kg. Today you are flying solo at 880 kg. What is VA at this weight, to the nearest knot?"
+  answer: 93
+  tolerance: 1
+  unit: "kt"
+  explanation: "VA varies with the square root of weight: 104 × √(880 ÷ 1,100) = 104 × √0.80 = 104 × 0.894 = 93 kt. VA is lower at lower weight, because a lighter aeroplane can be pulled to the limit load factor at a lower speed before the wing stalls."
+  references: ["BAKC 6.3"]
+  difficulty: 3
+
+- id: BAKC-X082
+  kind: mcq
+  elements: ["BAKC 6.3.1", "BAKC 6.3.2"]
+  stem: "Descending towards Jandakot over the Darling Scarp, you are in the yellow arc when the air becomes rough. What should you do?"
+  options:
+    - "Reduce power and slow to the turbulence penetration speed"
+    - "Hold the speed, because the yellow arc is approved in any air below VNE"
+    - "Increase speed to get through the rough air more quickly"
+    - "Extend full flap at once to slow down as fast as possible"
+  answer: 0
+  explanation: "The yellow arc, from VNO to VNE, is for smooth air only. The load a gust puts on the structure grows with airspeed, so slow to VB or the POH turbulence penetration speed near VA. Extending flap at yellow-arc speeds would exceed VFE."
+  references: ["BAKC 6.3"]
+  difficulty: 2
+
+- id: BAKC-X083
+  kind: mcq
+  elements: ["BAKC 6.3.2"]
+  stem: "You recognise a spiral dive: nose low, bank steepening and airspeed rising quickly. What is the correct recovery sequence?"
+  options:
+    - "Pull back firmly to raise the nose first, then roll the wings level"
+    - "Apply full opposite rudder, then pull back hard"
+    - "Close the throttle, roll wings level, then ease out"
+    - "Add full power and pull back to climb away"
+  answer: 2
+  explanation: "In a spiral the wing is not stalled and the speed is high. Pulling while banked tightens the turn and adds load factor on top of the excess speed. Close the throttle to stop the speed building, roll level so the lift points up, then ease out with the least load factor."
+  references: ["BAKC 6.3"]
+  difficulty: 2
+
+- id: BAKC-X084
+  kind: mcq
+  elements: ["BAKC 6.4.1"]
+  stem: "A 60 kg passenger sits in a rear seat at an arm of 2,900 mm aft of the datum. What is the moment of that load?"
+  options:
+    - "174,000 kg mm"
+    - "48 kg mm"
+    - "2,960 kg mm"
+    - "2,840 kg mm"
+  answer: 0
+  explanation: "Moment is weight multiplied by arm: 60 × 2,900 = 174,000 kg mm, the load's turning effect about the datum. Dividing the arm by the weight (48), or adding or subtracting the two, does not give a moment."
+  references: ["BAKC 6.4"]
+  difficulty: 1
+
+- id: BAKC-X085
+  kind: mcq
+  elements: ["BAKC 6.4.4"]
+  stem: "An aeroplane is loaded with its CG aft of the aft limit. Which is the most serious likely result?"
+  options:
+    - "A higher stall speed and heavy elevator forces in pitch"
+    - "Too little elevator to flare, so it lands nosewheel first"
+    - "Poor stability, and stall or spin recovery may be impossible"
+    - "No significant effect, provided the total weight is below MTOW"
+  answer: 2
+  explanation: "With the CG aft the tail's leverage is short: longitudinal stability is reduced, pitch control is light and over-sensitive, and the elevator may not be able to unstall the wing, so stall and spin recovery may be impossible. A higher stall speed, heavy controls and too little elevator to flare are forward-CG problems, and a weight check never replaces the CG check."
+  references: ["BAKC 6.4"]
+  difficulty: 2
