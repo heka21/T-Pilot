@@ -202,7 +202,7 @@
   answer: 60
   tolerance: 0
   unit: min
-  explanation: "TEMPO (fluctuations lasting under an hour) requires 60 minutes of holding fuel; INTER (under 30 minutes) requires 30 minutes. Alternatively, plan an alternate."
+  explanation: "TEMPO (fluctuations of 30 to 60 minutes each) requires 60 minutes of holding fuel; INTER (under 30 minutes) requires 30 minutes. Alternatively, plan an alternate."
   references: ["PFRA 2.4"]
   difficulty: 1
 - id: PFRA-L018

@@ -684,7 +684,7 @@
     - "The dust storm will start at 0800 and conditions improve permanently from 1200"
     - "There is a 20 percent chance of dust"
   answer: 1
-  explanation: "TEMPO is temporary fluctuations lasting less than an hour at a time within the period given. 2000 DS is 2,000 m in dust storm, below the 5,000 m VMC minimum. The 0930 ETA is inside the TEMPO period, so plan to arrive outside it, delay, or carry the holding fuel and alternate the rules require."
+  explanation: "TEMPO is temporary fluctuations lasting 30 to 60 minutes at a time within the period given. 2000 DS is 2,000 m in dust storm, below the 5,000 m VMC minimum. The 0930 ETA is inside the TEMPO period, so plan to arrive outside it, delay, or carry the holding fuel and alternate the rules require."
   references: ["PMTC 2.7", "RMTC 2.2"]
   difficulty: 2
 - id: PMTC-055
