@@ -366,7 +366,8 @@
   // takes arrow keys. The spot is kept as fractions of the free space ("<name>:pos") so it survives rotation and
   // resizes; until moved a floater sits where CSS parks it (the lesson bar beside the docked panel). Each is
   // kept below the top bar (and the lesson bar above the mini player when that is low
-  // on the screen); data-side / data-vside say which way its flyouts should open, towards the middle.
+  // on the screen); data-side / data-vside say which way its flyouts should open, towards the middle, and --room
+  // how wide they can be.
   var FLOAT_GAP = 8, FLOAT_STEP = 16;
   function savedFloatPos(el) {
     try { var p = JSON.parse(localStorage.getItem(el.dataset.floater + ":pos") || "null"); return p && isFinite(p.x) && isFinite(p.y) ? p : null; } catch (err) { return null; }
@@ -377,7 +378,7 @@
     x = Math.max(FLOAT_GAP, Math.min(vw - w - FLOAT_GAP, x));
     var bottom = vh - FLOAT_GAP;
     document.querySelectorAll("[data-miniplayer]").forEach(function (o) {
-      if (o === el) return;
+      if (o === el || el.contains(o)) return;   // the player as the lesson bar's flyout
       var r = o.getBoundingClientRect();
       if (r.height && r.top > vh / 2 && r.left < x + w && r.right > x) bottom = Math.min(bottom, r.top - FLOAT_GAP);
     });
@@ -385,6 +386,7 @@
     el.style.left = x + "px"; el.style.top = y + "px"; el.style.right = "auto"; el.style.bottom = "auto";
     el.dataset.side = x + w / 2 > vw / 2 ? "left" : "right";
     el.dataset.vside = y + h / 2 > vh / 2 ? "up" : "down";
+    el.style.setProperty("--room", (x + w / 2 > vw / 2 ? x : vw - x - w) + "px");   // width free on the flyout side
   }
   function placeFloater(el) {
     if (!el.getClientRects().length) return;   // hidden (the player with nothing loaded)

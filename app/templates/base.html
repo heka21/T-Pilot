@@ -113,7 +113,9 @@
     </main>
 
     {# -------------------------------------------------------------- narration mini player (player.js fills and shows it)
-       Dragged by its grip or title (app.js floaters, "player:pos"); the X stops playback and closes it. #}
+       Dragged by its grip or title (app.js floaters, "player:pos"); the X stops playback and closes it. On a lesson's
+       page player.js moves it into the lesson bar as a flyout from the Listen button; the fold button (shown only
+       there) closes it back into that button. #}
     <div class="miniplayer" data-miniplayer data-floater="player" hidden role="region" aria-label="Lesson audio">
       <input type="range" class="mp-scrub" min="0" max="1000" value="0" step="1" data-mp-scrub data-mp-bar aria-label="Position in the lesson">
       <div class="flex items-center gap-1 p-2 pl-1">
@@ -139,6 +141,7 @@
             <ol class="mp-chapters" data-mp-chapters></ol>
           </div>
         </details>
+        <button type="button" class="btn-icon size-9" data-player="collapse" hidden aria-label="Hide the player in the Listen button" title="Hide (the headphones bring it back)">{{ icon("chevron-down", "size-[18px]") }}</button>
         <button type="button" class="btn-icon size-9" data-player="stop" aria-label="Stop and close the player" title="Stop and close">{{ icon("close", "size-[18px]") }}</button>
       </div>
     </div>

@@ -8,7 +8,12 @@
    sentence with no clear match stays on the block before it). A visual cue pulls the sentences after it onto
    that figure. Inside the block, the closest sentence is marked too where the CSS Custom Highlight API exists.
 
-   window.CasaFollow = {enabled(), set(on), align(timeline, article), sentence(block, text) -> Range} */
+   The same match lets Listen start where the reader is: spot(sid, t) gives the time of the first sentence on the
+   block at the top of the screen (player.js asks for it on Listen and on play), so the timeline is fetched as soon
+   as a narrated lesson's page opens rather than when its audio first plays.
+
+   window.CasaFollow = {enabled(), set(on), align(timeline, article), sentence(block, text) -> Range,
+                        spot(sid, t) -> seconds or null} */
 (function () {
   "use strict";
 
@@ -196,13 +201,19 @@
     return d ? (d.querySelector("summary") || d) : el;
   }
 
-  function keepInView(el, smooth) {
-    if (Date.now() < handsOffUntil) return;
-    var r = el.getBoundingClientRect(), vh = window.innerHeight;
+  // The part of the window the reader sees text in: below the top bar and above the mini player.
+  function viewport() {
+    var vh = window.innerHeight;
     var bar = document.querySelector(".topbar"), top = bar ? bar.getBoundingClientRect().bottom : 0;
     var player = document.querySelector("[data-miniplayer]:not([hidden])");
     var bottom = player ? Math.min(vh, player.getBoundingClientRect().top) : vh;
     if (player && player.getBoundingClientRect().top < vh / 2) bottom = vh;     // dragged to the top: it is not in the way
+    return { top: top, bottom: bottom };
+  }
+
+  function keepInView(el, smooth) {
+    if (Date.now() < handsOffUntil) return;
+    var r = el.getBoundingClientRect(), v = viewport(), top = v.top, bottom = v.bottom;
     if (r.top >= top + 16 && r.bottom <= bottom - 16) return;
     var y = window.scrollY + r.top - top - Math.max(24, (bottom - top) * 0.2);
     window.scrollTo({ top: Math.max(0, y), behavior: smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto" });
@@ -234,24 +245,60 @@
     if (page) clear();
     page = { sid: host.getAttribute("data-sid"), article: article, map: null, timeline: null, current: null, cap: -1 };
     var mine = page, last = null;
+    function fetchFor(lesson) {
+      if (mine.loading) return;
+      mine.loading = true;
+      timelineFor(lesson).then(function (tl) {
+        if (!tl || page !== mine || mine.timeline) return;      // no timeline: leave this page alone
+        mine.loading = false;
+        mine.timeline = tl; mine.map = align(tl, article);
+        if (last) update(last);
+      });
+    }
+    // Ready before the first tap on Listen, which has to start the sound synchronously (iOS).
+    var desc = lessonOnPage(mine.sid);
+    if (desc) fetchFor(desc);
     window.CasaPlayer.subscribe(article, function (s) {
       last = s;
       if (page !== mine) return;
       if (!s.lesson || s.lesson.sid !== mine.sid) { clear(); return; }
-      if (!mine.timeline && !mine.loading) {
-        mine.loading = true;
-        timelineFor(s.lesson).then(function (tl) {
-          if (!tl || page !== mine) return;      // no timeline: leave this page alone
-          mine.loading = false;
-          mine.timeline = tl; mine.map = align(tl, article);
-          if (last) update(last);
-        });
-        return;
-      }
+      if (!mine.timeline) { fetchFor(s.lesson); return; }
       if (s.type === "play") handsOffUntil = 0;
       update(s);
       if (s.type === "play" && on && mine.current) keepInView(mine.current, true);
     });
+  }
+
+  // The lesson descriptor on a Listen button of this page (note.html), if the lesson is narrated.
+  function lessonOnPage(sid) {
+    var b = document.querySelector("[data-listen]"), d;
+    try { d = b && JSON.parse(b.getAttribute("data-listen")); } catch (e) { return null; }
+    return d && d.sid === sid && d.src ? d : null;
+  }
+
+  // Where to start the narration of `sid` for a reader looking at its page: the first sentence on the block at the
+  // top of the screen. null (keep the place `t` it would resume from) off that page, before the timeline is in,
+  // while the reader is still at the start, or when the block being read at `t` is on screen.
+  function spot(sid, t) {
+    if (!page || page.sid !== sid || !page.map || !page.article.isConnected) return null;
+    var caps = page.timeline.captions || [], map = page.map, v = viewport();
+    var line = v.top + Math.min(80, (v.bottom - v.top) * 0.15);
+    function onScreen(el) {
+      var r = el.getBoundingClientRect();
+      return (r.width || r.height) && r.bottom > v.top && r.top < v.bottom;
+    }
+    var k = capIndex(caps, t || 0), now = k >= 0 && map.at[k] != null ? visible(map.blocks[map.at[k]]) : null;
+    if (now && onScreen(now)) return null;
+    // The first block not yet scrolled past the reading line (one in a closed box counts as its summary).
+    var at = -1;
+    for (var i = 0; i < map.blocks.length; i++) {
+      var r = visible(map.blocks[i]).getBoundingClientRect();
+      if ((r.width || r.height) && r.bottom > line) { at = i; break; }
+    }
+    if (at <= 0) return null;
+    // Its first sentence, or the next one narrated after it.
+    for (var c = 0; c < caps.length; c++) if (map.at[c] != null && map.at[c] >= at) return Math.max(0, caps[c].t - 0.2);
+    return null;
   }
 
   // A reader scrolling the page themselves pauses the scrolling (not the highlight) for a while; pressing play, or
@@ -291,5 +338,5 @@
   if (window.htmx) htmx.onLoad(function (el) { init(el.nodeType === 1 ? el : document); });
   else document.addEventListener("DOMContentLoaded", function () { init(document); });
 
-  window.CasaFollow = { enabled: function () { return on; }, set: set, align: align, sentence: sentenceRange };
+  window.CasaFollow = { enabled: function () { return on; }, set: set, align: align, sentence: sentenceRange, spot: spot };
 })();

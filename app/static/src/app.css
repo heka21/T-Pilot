@@ -646,6 +646,42 @@
   .lesson-bar[data-collapsed] > .lesson-bar-collapse { @apply size-11 bg-grad-brand text-white hover:text-white; }
   .lesson-bar[data-collapsed] .lesson-bar-fold,
   .lesson-bar:not([data-collapsed]) .lesson-bar-unfold { display: none; }
+  /* On a lesson's page the mini player is the bar's flyout (player.js moves it in): a card beside the strip, centred
+     on the Listen button (--dock-y), opening towards the middle like the pen toolbar and as wide as the room there
+     allows (--room, app.js). Its own grip goes (the bar's grip moves both); the fold chevron points back at the bar. */
+  .lesson-bar > .miniplayer {
+    @apply absolute right-full bottom-auto left-auto mr-2 cursor-auto touch-auto select-auto;
+    top: var(--dock-y, 50%);
+    translate: 0 -50%;
+    width: min(30rem, calc(var(--room, 100vw) - 1rem));
+  }
+  .lesson-bar[data-side="right"] > .miniplayer { @apply right-auto left-full mr-0 ml-2; }
+  .lesson-bar > .miniplayer .mp-grip { display: none; }
+  .lesson-bar > .miniplayer > div { @apply pl-2; }
+  .lesson-bar > .miniplayer [data-player="collapse"] svg { rotate: -90deg; }
+  .lesson-bar[data-side="right"] > .miniplayer [data-player="collapse"] svg { rotate: 90deg; }
+  .lesson-bar[data-vside="down"] .mp-panel { @apply top-12 bottom-auto; }
+  /* The Listen button the player flies out of: filled while the flyout is open; once a lesson is loaded a ring round
+     it fills with the progress (--p on the bar, player.js), and it breathes while playing with the flyout closed.
+     With the bar folded, its fold button wears the ring instead. */
+  .lesson-bar-listen[aria-expanded="true"] { @apply bg-accent text-white hover:text-white; }
+  html[data-player-docked] .lesson-bar:not([data-collapsed]) > .lesson-bar-listen,
+  html[data-player-docked] .lesson-bar[data-collapsed] > .lesson-bar-collapse { @apply relative overflow-visible; }
+  html[data-player-docked] .lesson-bar:not([data-collapsed]) > .lesson-bar-listen::after,
+  html[data-player-docked] .lesson-bar[data-collapsed] > .lesson-bar-collapse::after {
+    @apply pointer-events-none absolute -inset-[3px] rounded-full content-[''];
+    background: conic-gradient(var(--color-accent) var(--p, 0%), color-mix(in oklab, var(--color-accent) 22%, transparent) 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+  }
+  html[data-player-docked][data-player-playing] .lesson-bar:has(> .miniplayer[hidden]):not([data-collapsed]) > .lesson-bar-listen,
+  html[data-player-docked][data-player-playing] .lesson-bar[data-collapsed] > .lesson-bar-collapse { animation: dock-breathe 2.4s ease-in-out infinite; }
+  @keyframes dock-breathe {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-accent) 0%, transparent); }
+    50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-accent) 22%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html[data-player-docked][data-player-playing] .lesson-bar > .lesson-bar-btn { animation: none; }
+  }
 
   /* Reading progress: a 3px gradient bar along the bottom edge of the top bar (scaleX = fraction read),
      a percentage readout, and a "resume" pill near the bottom. */

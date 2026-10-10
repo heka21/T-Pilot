@@ -128,7 +128,8 @@
 
 {% if note %}
 {# Lesson bar: a vertical strip of round buttons floating over the page: Listen and Watch (when the lesson is
-   narrated; neither starts playing: Listen loads the mini player paused, Watch opens on its start screen), a pen
+   narrated; neither starts playing: Listen loads the mini player paused, Watch opens on its start screen; once a
+   lesson is loaded the mini player is Listen's flyout, which the button opens and closes, player.js), a pen
    toggle and Notes. Drag it anywhere by the grip or the bar itself (app.js floaters; the spot is kept as
    "lessonbar:pos"). The pen toggle opens the pen toolbar as a flyout beside it, on whichever side faces the
    middle of the screen. The toolbar is server-rendered but hidden (and the toggle with it) until annotations.js
@@ -138,7 +139,7 @@
 <div class="lesson-bar" data-lesson-bar data-floater="lessonbar" data-drag-handle>
   <button type="button" class="lesson-bar-grip" data-floater-grip title="Drag to move (or focus and use the arrow keys)">{{ icon("grip", "size-4") }}<span class="sr-only">Move the lesson bar</span></button>
   {% if listen %}
-  <button type="button" class="lesson-bar-btn lesson-bar-listen" data-listen="{{ listen | tojson | forceescape }}" data-listen-paused title="{{ 'Listen again' if listen.completed else ('Resume listening' if listen.position else 'Listen') }} · {{ (listen.duration / 60) | minutes_to_hm }}">{{ icon("headphones", "size-4") }}<span class="sr-only">Listen</span></button>
+  <button type="button" class="lesson-bar-btn lesson-bar-listen" data-listen="{{ listen | tojson | forceescape }}" data-listen-paused data-player-dock title="{{ 'Listen again' if listen.completed else ('Resume listening' if listen.position else 'Listen') }} · {{ (listen.duration / 60) | minutes_to_hm }}">{{ icon("headphones", "size-4") }}<span class="sr-only">Listen</span></button>
   <a class="lesson-bar-btn lesson-bar-watch" draggable="false" href="{{ listen.watch_url }}" title="Watch">{{ icon("tv", "size-4") }}<span class="sr-only">Watch</span></a>
   {% endif %}
   <button type="button" class="lesson-bar-btn lesson-bar-toggle" data-lesson-bar-toggle aria-controls="ink-toolbar" aria-expanded="false" title="Show the pen tools">{{ icon("pen", "size-4") }}<span class="sr-only">Pen tools</span></button>

@@ -38,8 +38,10 @@ const TIMELINE = {
   ],
 };
 
-function setup({ follow = null, sid = "PAKA 2.1", highlights = false } = {}) {
-  const body = `<div data-sid="${sid}"><article data-lesson-article>${ARTICLE}</article></div>
+function setup({ follow = null, sid = "PAKA 2.1", highlights = false, listen = false } = {}) {
+  const desc = { sid: "PAKA 2.1", src: "/media/audio/PAKA/2.1.mp3?v=abcaf_heart" };
+  const body = `${listen ? `<button data-listen='${JSON.stringify(desc)}'></button>` : ""}
+    <div data-sid="${sid}"><article data-lesson-article>${ARTICLE}</article></div>
     <button data-player="follow" aria-pressed="false"></button>`;
   const dom = new JSDOM(`<!doctype html><html><body>${body}</body></html>`, { url: "http://localhost/", runScripts: "outside-only" });
   const w = dom.window;
@@ -131,4 +133,32 @@ test("the sentence in the block closest to the caption is highlighted where the 
   assert.equal(hl.range.toString(), "The angle between the chord line and the plane of rotation is the blade angle.");
   emit(31);
   assert.equal(w.CSS.highlights.get("casa-reading").range.toString(), "Cut a blade across and you see an aerofoil section with a chord line.");
+});
+
+// Lays the article's blocks out 100 px apart, `scroll` px up the window (jsdom has no layout); anything else,
+// like a paragraph in a closed box, has no box.
+function layout(w, scroll) {
+  const blocks = ["Most training", "Nothing has", "Cut a blade", "FIGURE", "Reduce power", "Check yourself"];
+  w.Element.prototype.getBoundingClientRect = function () {
+    const i = blocks.findIndex((b) => (b === "FIGURE" ? this.tagName === "FIGURE" : this.matches("p, summary") && this.textContent.trim().startsWith(b)));
+    if (i < 0) return { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 };
+    const top = 200 + 100 * i - scroll;
+    return { top, bottom: top + 100, left: 0, right: 600, width: 600, height: 100 };
+  };
+}
+
+test("spot(): where Listen starts for a reader scrolled into the lesson", async () => {
+  const { w, F, fetches } = setup({ listen: true });
+  assert.equal(F.spot("PAKA 2.1", 0), null, "nothing before the timeline is in");
+  await tick();
+  assert.deepEqual(fetches, ["/media/audio/PAKA/2.1.json?v=abcaf_heart"], "fetched when the page opens, before any playing");
+  layout(w, 0);
+  assert.equal(F.spot("PAKA 2.1", 0), null, "still at the start: resume as before");
+  layout(w, 350);    // "Cut a blade across" is at the top of the window
+  assert.equal(F.spot("PAKA 2.1", 0), 29.8, "its first sentence, a moment early");
+  assert.equal(F.spot("RFRC 2.3", 0), null, "only for this page's lesson");
+  layout(w, 250);    // "Nothing has broken" is still showing at the top
+  assert.equal(F.spot("PAKA 2.1", 21), null, "the passage it would resume on is on screen: resume there");
+  layout(w, 650);    // past "Reduce power": the closed check box is next, read from its question
+  assert.equal(F.spot("PAKA 2.1", 21), 69.8);
 });

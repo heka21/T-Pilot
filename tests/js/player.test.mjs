@@ -245,3 +245,99 @@ test("clicking a [data-listen] button loads and plays that lesson with its queue
   toggle.click();
   assert.equal(audio.paused, false);
 });
+
+test("on a lesson's page, Listen and play start from the passage the reader is on (follow.js's spot)", () => {
+  const { w, P, audio } = setup({ body: '<button type="button" id="listen"></button><button type="button" id="toggle" data-player="toggle"></button>' });
+  const asked = [];
+  let spot = 120;
+  w.CasaFollow = { spot: (sid, t) => { asked.push([sid, t]); return spot; } };
+  const listen = w.document.getElementById("listen");
+  listen.setAttribute("data-listen", JSON.stringify(lesson("RFRC 2.3", { position: 300 })));
+  listen.setAttribute("data-listen-paused", "");
+  listen.click();
+  assert.deepEqual(asked[0], ["RFRC 2.3", 300], "asked against the place it would resume from");
+  assert.equal(audio.src, "/media/audio/RFRC/2.3.mp3?v=abc#t=120.0", "starts at the spot, not 3 s before it");
+  assert.equal(audio.plays, 0);
+
+  // Paused and loaded: play jumps to where the reader has scrolled to, then plays.
+  audio.duration = 600; audio.currentTime = 130;
+  spot = 400;
+  w.document.getElementById("toggle").click();
+  assert.equal(audio.currentTime, 400);
+  assert.equal(audio.paused, false);
+  // Playing: the toggle only pauses.
+  w.document.getElementById("toggle").click();
+  assert.equal(audio.currentTime, 400);
+  assert.equal(audio.paused, true);
+  // No spot (the passage being read is on screen, or another page): resume where it was.
+  spot = null;
+  w.document.getElementById("toggle").click();
+  assert.equal(audio.currentTime, 400);
+
+  P.stop();
+  P.load(lesson("RFRC 2.3", { position: 300 }), { at: 0 });
+  assert.equal(audio.src, "/media/audio/RFRC/2.3.mp3?v=abc", "a spot at the very start needs no fragment");
+});
+
+test("on a lesson's page the player is the lesson bar's flyout, opened and closed by its Listen button", () => {
+  const desc = JSON.stringify(lesson("RFRC 2.3")).replace(/"/g, "&quot;");
+  const { w, P, audio } = setup({ body: `<div data-miniplayer data-floater="player" hidden><button data-player="collapse" hidden>fold</button></div>
+    <div data-lesson-bar><button type="button" id="dock" data-listen="${desc}" data-listen-paused data-player-dock title="Listen"></button></div>` });
+  w.document.dispatchEvent(new w.Event("DOMContentLoaded"));
+  const html = w.document.documentElement, mini = w.document.querySelector("[data-miniplayer]"),
+        fold = w.document.querySelector("[data-player='collapse']"), dock = w.document.getElementById("dock"),
+        bar = w.document.querySelector("[data-lesson-bar]");
+  assert.equal(mini.parentElement, bar, "the player moves into the lesson bar");
+  assert.ok(!mini.hasAttribute("data-floater") && mini.hasAttribute("data-no-drag"), "it no longer drags on its own");
+  assert.equal(fold.hidden, false);
+
+  dock.click();
+  assert.equal(mini.hidden, false, "Listen loads the lesson and opens the flyout");
+  assert.equal(audio.plays, 0);
+  assert.ok(!html.hasAttribute("data-player-open"), "no room kept at the bottom for a flyout");
+  assert.ok(html.hasAttribute("data-player-docked"));
+  assert.equal(dock.getAttribute("aria-expanded"), "true");
+  assert.equal(dock.title, "Hide the player");
+
+  dock.click();
+  assert.equal(mini.hidden, true, "a second tap closes it");
+  assert.equal(w.localStorage.getItem("player:collapsed"), "1");
+  assert.equal(dock.getAttribute("aria-expanded"), "false");
+  assert.equal(dock.title, "Show the player");
+
+  audio.duration = 600; audio.currentTime = 150;
+  P.toggle();
+  audio.fire("timeupdate");
+  assert.equal(bar.style.getPropertyValue("--p"), "25.00%", "the bar carries the progress for the ring");
+  assert.ok(html.hasAttribute("data-player-playing"));
+
+  dock.click();
+  assert.equal(mini.hidden, false, "and a tap opens it again");
+  assert.equal(audio.paused, false, "without touching playback");
+  assert.equal(audio.currentTime, 150);
+  assert.equal(w.localStorage.getItem("player:collapsed"), null);
+
+  fold.click();
+  assert.equal(mini.hidden, true, "the fold button closes it too");
+
+  P.stop();
+  assert.ok(!dock.hasAttribute("aria-expanded"));
+  assert.equal(dock.title, "Listen");
+  assert.ok(!html.hasAttribute("data-player-docked"));
+});
+
+test("a closed player stays a bar where there is no lesson bar, and starting a lesson opens it", () => {
+  const { w, P } = setup({ storage: { "player:collapsed": "1" },
+                           body: '<div data-miniplayer hidden><button data-player="collapse">fold</button></div><button type="button" id="play"></button>' });
+  w.document.dispatchEvent(new w.Event("DOMContentLoaded"));
+  P.load(lesson("RFRC 2.3"), { queue: [] });
+  const mini = w.document.querySelector("[data-miniplayer]");
+  assert.equal(mini.hidden, false);
+  assert.ok(w.document.documentElement.hasAttribute("data-player-open"));
+  assert.equal(w.document.querySelector("[data-player='collapse']").hidden, true);
+
+  const play = w.document.getElementById("play");
+  play.setAttribute("data-listen", JSON.stringify(lesson("RFRC 2.4")));
+  play.click();
+  assert.equal(w.localStorage.getItem("player:collapsed"), null, "starting a lesson opens the player");
+});

@@ -5,8 +5,15 @@
    that re-bind after each swap. A full page load stops playback, but the place is saved on the server every few
    seconds and the player comes back paused where it was.
 
-   window.CasaPlayer = {load(lesson, {autoplay, queue}), toggle(), seek(t), skip(dt), chapter(+1|-1), stop(),
+   window.CasaPlayer = {load(lesson, {autoplay, queue, at}), toggle(), seek(t), skip(dt), chapter(+1|-1), stop(),
                         current(), subscribe(el, fn)}
+
+   On a lesson's page the mini player is not a separate bar: it moves into the lesson bar as a flyout beside the
+   Listen button (data-player-dock), which opens and closes it and wears a ring for the progress; closed is kept
+   as "player:collapsed".
+
+   On a lesson's own page, Listen and play start from the passage on screen when the reader has scrolled away from
+   where the narration would resume (follow.js works out the spot).
 
    lesson: the descriptor from services.audio.descriptor (sid, title, unit, src, duration, chapters, position, ...).
    The lock screen, CarPlay and headphone buttons work through the Media Session API. */
@@ -29,6 +36,7 @@
   function stored(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 
   var speed = parseFloat(stored("listen:speed")) || 1;
+  var collapsed = stored("player:collapsed") === "1";
 
   function fmt(t) {
     t = Math.max(0, Math.floor(t || 0));
@@ -85,6 +93,7 @@
     opts = opts || {};
     if (!next || !next.src) return;
     if (lesson && lesson.sid === next.sid) {        // already loaded: just play, with the new queue if one came
+      if (opts.at != null) seek(opts.at);
       if (opts.queue) {
         queue = opts.queue.filter(function (d) { return d.sid !== next.sid; });
         store(STORE, JSON.stringify({ lesson: lesson, queue: queue }));
@@ -94,7 +103,7 @@
     }
     if (lesson) save();
     lesson = next;
-    var start = next.position > 5 ? next.position - 3 : 0;
+    var start = opts.at != null ? opts.at : next.position > 5 ? next.position - 3 : 0;
     // A media fragment sets the start before metadata loads (setting currentTime that early is ignored on iOS).
     audio.src = next.src + (start ? "#t=" + start.toFixed(1) : "");
     audio.defaultPlaybackRate = speed;
@@ -126,6 +135,11 @@
   }
 
   function toggle() { if (!lesson) return; if (audio.paused) audio.play().catch(function () {}); else audio.pause(); }
+
+  // Where a reader on the lesson's page wants it to start instead of time t (follow.js), or null.
+  function readingSpot(sid, t) {
+    try { return window.CasaFollow && window.CasaFollow.spot ? window.CasaFollow.spot(sid, t) : null; } catch (e) { return null; }
+  }
   function seek(t) {
     if (!lesson) return;
     var d = audio.duration || lesson.duration || 0;
@@ -151,6 +165,32 @@
     emit("speed");
   }
   function cycleSpeed() { setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length] || 1); }
+
+  // Close the player flyout into the lesson bar's Listen button, or open it from there: it shrinks into (or grows
+  // out of) the button so it is clear where it lives.
+  function dockTarget() {
+    var dock = document.querySelector("[data-player-dock]");
+    if (dock && !dock.getClientRects().length) dock = dock.closest("[data-lesson-bar]");   // the bar is folded too
+    return dock && dock.getClientRects().length ? dock : null;
+  }
+  function flyMini(toDock, done) {
+    var mini = document.querySelector("[data-miniplayer]"), dock = dockTarget();
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!mini || mini.hidden || !dock || !mini.animate || still) { if (done) done(); return; }
+    var a = mini.getBoundingClientRect(), b = dock.getBoundingClientRect();
+    var far = "translate(" + (b.left + b.width / 2 - a.left - a.width / 2) + "px," + (b.top + b.height / 2 - a.top - a.height / 2) +
+              "px) scale(" + Math.max(0.05, b.width / a.width) + ")";
+    var frames = [{ transform: "none", opacity: 1 }, { transform: far, opacity: 0 }];
+    var anim = mini.animate(toDock ? frames : frames.reverse(), { duration: 240, easing: "cubic-bezier(0.4, 0, 0.2, 1)" });
+    if (done) anim.onfinish = anim.oncancel = done;
+  }
+  function setCollapsed(on) {
+    if (on === collapsed) return;
+    store("player:collapsed", on ? "1" : undefined);
+    if (on) flyMini(true, function () { collapsed = true; emit("dock"); });
+    else { collapsed = false; emit("dock"); flyMini(false); }
+  }
+  function miniShown() { var mini = document.querySelector("[data-miniplayer]"); return !!mini && !mini.hidden; }
 
   // ------------------------------------------------------------ lock screen, CarPlay, headphones
   function setMetadata() {
@@ -220,18 +260,32 @@
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-listen], [data-player]");
     if (!b) return;
+    if (b.hasAttribute("data-player-dock") && lesson) {   // the Listen button the player flies out of
+      setCollapsed(!collapsed);
+      e.preventDefault();
+      return;
+    }
     if (b.hasAttribute("data-listen")) {
+      // Starting a lesson shows the player (out of the Listen button on a lesson's page).
+      var wasShown = miniShown();
+      if (collapsed) { collapsed = false; store("player:collapsed"); }
       // A lesson's Listen or Watch button: start it now, inside the tap (iOS), then let a Watch link navigate.
       // data-listen-paused (the lesson bar's Listen) only loads it into the mini player, paused.
       var desc;
       try { desc = JSON.parse(b.getAttribute("data-listen")); } catch (err) { return; }
       var q = b.getAttribute("data-listen-queue");
-      load(desc, { autoplay: !b.hasAttribute("data-listen-paused"), queue: q ? JSON.parse(q) : undefined });
+      var at = readingSpot(desc.sid, lesson && lesson.sid === desc.sid ? audio.currentTime : desc.position);
+      load(desc, { autoplay: !b.hasAttribute("data-listen-paused"), queue: q ? JSON.parse(q) : undefined, at: at });
+      emit("dock");
+      if (!wasShown) flyMini(false);
       if (b.tagName !== "A") e.preventDefault();
       return;
     }
     var act = b.getAttribute("data-player");
-    if (act === "toggle") toggle();
+    if (act === "toggle") {
+      if (lesson && audio.paused) { var spot = readingSpot(lesson.sid, audio.currentTime); if (spot != null) seek(spot); }
+      toggle();
+    }
     else if (act === "back") skip(-BACK);
     else if (act === "forward") skip(FORWARD);
     else if (act === "prev") chapter(-1);
@@ -243,6 +297,7 @@
       if (menu) menu.open = false;
     }
     else if (act === "stop") stop();
+    else if (act === "collapse") setCollapsed(true);
     else if (act === "chapter") seek(parseFloat(b.getAttribute("data-t")) || 0);
     else return;
     e.preventDefault();
@@ -273,15 +328,28 @@
         bar = mini.querySelector("[data-mp-bar]"), time = mini.querySelector("[data-mp-time]"),
         chList = mini.querySelector("[data-mp-chapters]"),
         lessonLink = mini.querySelector("[data-mp-lesson]"), watchLink = mini.querySelector("[data-mp-watch]"),
-        scrub = mini.querySelector("[data-mp-scrub]");
+        scrub = mini.querySelector("[data-mp-scrub]"), fold = mini.querySelector("[data-player='collapse']");
+    // On a lesson's page the player becomes the lesson bar's flyout, lined up with the Listen button (--dock-y), and
+    // moves with the bar; nothing inside it drags.
+    var dock = document.querySelector("[data-player-dock]"), bar = dock && dock.closest("[data-lesson-bar]");
+    if (bar) {
+      bar.appendChild(mini);
+      mini.removeAttribute("data-floater");
+      mini.setAttribute("data-no-drag", "");
+      mini.style.left = mini.style.top = mini.style.right = mini.style.bottom = "";
+    }
+    if (fold) fold.hidden = !bar;
     var shownSid = null, lastCh = -1, lastSpeed = null;
     if (scrub) {
       scrub.addEventListener("input", function () { var d = audio.duration || (lesson && lesson.duration) || 0; seek(d * scrub.value / 1000); });
     }
     subscribe(mini, function (s) {
-      var onWatch = !!document.querySelector("[data-watch-page]");
-      mini.hidden = !s.lesson || onWatch;
-      document.documentElement.toggleAttribute("data-player-open", !mini.hidden);
+      var onWatch = !!document.querySelector("[data-watch-page]"), html = document.documentElement;
+      mini.hidden = !s.lesson || onWatch || (!!bar && collapsed);
+      if (bar && !mini.hidden) mini.style.setProperty("--dock-y", dock.offsetTop + dock.offsetHeight / 2 + "px");
+      html.toggleAttribute("data-player-open", !mini.hidden && !bar);   // a bar along the bottom that needs room
+      html.toggleAttribute("data-player-docked", !!s.lesson && !!bar);
+      html.toggleAttribute("data-player-playing", !!s.lesson && !s.paused);
       if (!s.lesson) return;
       mini.toggleAttribute("data-playing", !s.paused);
       if (shownSid !== s.lesson.sid) {
@@ -386,7 +454,23 @@
     });
   }
 
-  function init(root) { bindMini(root); bindWatch(root); }
+  // The lesson bar's Listen button once something is loaded: the bar carries the progress (--p) for the ring on the
+  // button (or on the bar's own fold button when the bar is folded), and the button says whether the flyout is open.
+  function bindDock(root) {
+    var dock = root.querySelector ? root.querySelector("[data-player-dock]") : null;
+    if (!dock) return;
+    var bar = dock.closest("[data-lesson-bar]") || dock, label = dock.title, was = null;
+    subscribe(dock, function (s) {
+      if (s.lesson) bar.style.setProperty("--p", s.duration ? (100 * s.time / s.duration).toFixed(2) + "%" : "0%");
+      var state = !s.lesson ? "none" : collapsed ? "closed" : "open";
+      if (state === was) return;
+      was = state;
+      dock.title = state === "none" ? label : state === "open" ? "Hide the player" : "Show the player";
+      if (state === "none") dock.removeAttribute("aria-expanded"); else dock.setAttribute("aria-expanded", String(state === "open"));
+    });
+  }
+
+  function init(root) { bindMini(root); bindWatch(root); bindDock(root); }
   if (window.htmx) htmx.onLoad(function (el) { init(el.nodeType === 1 ? el : document); });
   else document.addEventListener("DOMContentLoaded", function () { init(document); });
 
