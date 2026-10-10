@@ -2,7 +2,8 @@
 
 Content tables (Exam, Unit, Topic, Subtopic, Element, Note, Question, Card, Equation) are re-seeded from
 content/ on every start using stable string ids, so content edits never touch progress tables
-(Progress, StudentNote, Highlight, InkDocument, Attempt, AttemptAnswer, Mistake, CardReview, StudyPlan, PlanItem).
+(Progress, ListenProgress, StudentNote, Highlight, InkDocument, Attempt, AttemptAnswer, Mistake, CardReview, StudyPlan,
+PlanItem).
 """
 from __future__ import annotations
 
@@ -189,6 +190,17 @@ class Progress(Base):
     __tablename__ = "progress"
     subtopic_id: Mapped[str] = mapped_column(ForeignKey("subtopics.id"), primary_key=True)
     status: Mapped[str] = mapped_column(String(16), default="not_started")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class ListenProgress(Base):
+    """Where the student is in a lesson's narration (see services.audio). Kept on the server so a lesson started in
+    the car resumes on the iPad. Separate from Progress: listening is not the same as studying."""
+    __tablename__ = "listen_progress"
+    subtopic_id: Mapped[str] = mapped_column(ForeignKey("subtopics.id"), primary_key=True)
+    position: Mapped[float] = mapped_column(Float, default=0.0)  # seconds
+    duration: Mapped[float] = mapped_column(Float, default=0.0)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)  # first time it was heard to the end
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
 

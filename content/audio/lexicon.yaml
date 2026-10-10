@@ -1,0 +1,383 @@
+# How the narrator says abbreviations. Used by app/seed/narration.py (normalise) for every listening script.
+#
+# words: a capitalised token and how to say it. Matching is exact and case-sensitive, a trailing "s" is a plural
+#        (NOTAMs -> "no-tams"). null means spell it letter by letter (Q N H), which is also what happens to any
+#        all-capitals token not listed here; check_content lists those so they can be added deliberately.
+#        Respell rather than explain: the voice reads "mee-tar" as METAR is said on the radio.
+# units: abbreviations said in full when they follow a number (1,500 ft -> 1,500 feet).
+#
+# Check a pronunciation with: .venv/bin/python -m tools.audio.build --say "the METAR and the TAF"
+
+words:
+  # said as words
+  AIRAC: air-rack
+  AIREP: air-rep
+  AIRMET: air-met
+  ARFOR: are-for
+  AVGAS: av-gas
+  MOGAS: mo-gas
+  ATIS: eigh-tiss
+  AWIS: eigh-wiss
+  CASA: car-sa
+  CAVOK: cav-okay
+  CTAF: see-taff
+  DAME: dame
+  DECIDE: decide
+  EMERG: emergency
+  ERSA: er-sa
+  GEN: gen
+  IMSAFE: I'm safe
+  PAVE: pave
+  INTER: inter
+  LSALT: el-salt
+  MAYDAY: mayday
+  METAR: mee-tar
+  SPECI: spee-see
+  NAIPS: nayps
+  NAV: nav
+  COM: com
+  COMM: comm
+  MIC: mike
+  NOTAM: no-tam
+  PAN: pan
+  PAPI: pappy
+  PROB: prob
+  BECMG: becoming
+  RADAR: radar
+  RAIM: raim
+  SAR: sar
+  SARTIME: sar-time
+  SECURITE: say-cure-ee-tay
+  SIGMET: sig-met
+  TAF: taff
+  TEMPO: tempo
+  TOSS: toss
+  VOX: vox
+  WAT: watt
+  ICAO: eye-kay-oh
+  LORAN: loran
+  GLONASS: glo-nass
+  DAP: dap
+  RAAF: raff
+  TORA: tor-ah
+  TODA: toe-dah
+  ASDA: az-dah
+  FEW: few
+  HASELL: hassle
+  G-LOC: gee-lock
+  TOPC: top of climb
+  TOPD: top of descent
+  WAAS: wahss
+  EGNOS: egg-noss
+  GBAS: gee-bas
+  OCTA: ock-ta
+  ADIZ: eigh-diz
+  ASIC: eigh-sick
+  VIC: vick
+  ALT: alt
+  GND: ground
+  FLIGHTWATCH: flight-watch
+  AVTUR: av-tur
+  PAL: pal
+  PERM: perm
+  SUP: sup
+  ROL: roll
+  DN: down
+  ERC-L: E R C low
+  # capitals used as ordinary words in checklists and quotations
+  "NO": "no"
+  "ON": "on"
+  "OFF": "off"
+  "TO": "to"
+  STOP: stop
+  BOTH: both
+  HERE: here
+  START: start
+  TRIM: trim
+  SAND: sand
+  BLIND: blind
+  AUTO: auto
+  RELAY: relay
+  IDENT: ident
+  DISC: disc
+  FROM: from
+  STBY: standby
+  ALPHA: alpha
+  BRAVO: bravo
+  CHARLIE: charlie
+  ECHO: echo
+  # spelled letter by letter (listed so check_content knows they were chosen, not missed)
+  ADF: ~
+  AGL: ~
+  AIC: ~
+  AIP: ~
+  ALA: ~
+  AMSL: ~
+  ASI: ~
+  ATC: ~
+  ATS: ~
+  ATSB: ~
+  CAO: ~
+  CAAP: ~
+  CAS: ~
+  CASR: ~
+  CDI: ~
+  CG: ~
+  CHT: ~
+  CPL: ~
+  CTA: ~
+  CTR: ~
+  DME: ~
+  DR: ~
+  EGT: ~
+  ELT: ~
+  ENR: ~
+  ERC: ~
+  ETA: ~
+  ETD: ~
+  ETI: ~
+  ETP: ~
+  FIA: ~
+  FIR: ~
+  FIS: ~
+  GAF: ~
+  GNSS: ~
+  GPS: ~
+  GPWT: ~
+  HF: ~
+  IAS: ~
+  IFR: ~
+  ILS: ~
+  IMC: ~
+  ISA: ~
+  KIAS: ~
+  LAME: ~
+  MOS: ~
+  MTOW: ~
+  MZFW: ~
+  MLW: ~
+  NDB: ~
+  OAT: ~
+  PLB: ~
+  PNR: ~
+  POB: ~
+  POH: ~
+  PPL: ~
+  PPR: ~
+  PRD: ~
+  PTT: ~
+  QFE: ~
+  QNE: ~
+  QNH: ~
+  RNAV: ~
+  RPL: ~
+  RPM: ~
+  SBAS: ~
+  TAS: ~
+  TEM: ~
+  UHF: ~
+  UTC: ~
+  VFR: ~
+  VFRG: ~
+  VHF: ~
+  VMC: ~
+  VNC: ~
+  VOR: ~
+  VSI: ~
+  IVSI: ~
+  VTC: ~
+  WAC: ~
+  WST: ~
+  ZFW: ~
+  WA: ~
+  ADS-B: A D S B
+  CO2: C O 2
+  CO: C O
+  AD: ~
+  CAR: ~
+  PCA: ~
+  GP: ~
+  RAMPC: ~
+  HJ: ~
+  HN: ~
+  HO: ~
+  VIP: ~
+  JRCC: ~
+  FOD: ~
+  TAC: ~
+  FAC: ~
+  LDA: ~
+  VH: ~
+  SG: ~
+  ECG: ~
+  TUC: ~
+  CPR: ~
+  AED: ~
+  SOP: ~
+  DI: ~
+  CP: ~
+  PC: ~
+  CST: ~
+  EST: ~
+  GS: ~
+  LL: ~
+  ACT: ~
+  RFDS: ~
+  DRSABCD: ~
+  BUMFH: ~
+  YPJT: ~
+  ANR: ~
+  LCD: ~
+  MB: ~
+  MH: ~
+  RB: ~
+  TMG: ~
+  TE: ~
+  CA: ~
+  US: ~
+  CDT: ~
+  EDT: ~
+  LMT: ~
+  UL: ~
+  FL: ~
+  SFC: ~
+  QDM: ~
+  QDR: ~
+  OBS: ~
+  HSI: ~
+  TSO: ~
+  RNP: ~
+  GLS: ~
+  DGNSS: ~
+  AM: ~
+  TX: ~
+  LF: ~
+  MF: ~
+  AC: ~
+  ATD: ~
+  EET: ~
+  HGT: ~
+  MSA: ~
+  PCN: ~
+  RWS: ~
+  ATPL: ~
+  ID: ~
+  HLS: ~
+  LA: ~
+  DOP: ~
+  FDE: ~
+  XTK: ~
+  HDG: ~
+  PIT: ~
+  AP: ~
+  AHRS: ~
+  TODR: ~
+  LDR: ~
+  CRP: ~
+  DALR: ~
+  SALR: ~
+  ELR: ~
+  QFF: ~
+  CB: ~
+  TCU: ~
+  NSC: ~
+  NCD: ~
+  ITCZ: ~
+  TTF: ~
+  YPKG: ~
+  YBLN: ~
+  SSR: ~
+  # METAR and TAF codes, taught letter by letter ("S C T, scattered")
+  SCT: ~
+  BKN: ~
+  OVC: ~
+  FM: ~
+  OK: ~
+  RA: ~
+  DZ: ~
+  SH: ~
+  SHRA: ~
+  TS: ~
+  TSRA: ~
+  GR: ~
+  SQ: ~
+  FC: ~
+  FG: ~
+  BR: ~
+  HZ: ~
+  FU: ~
+  DU: ~
+  DS: ~
+  VC: ~
+  # exam units: said as they are written on the screen
+  BAKC: ~
+  RBKA: ~
+  RFRC: ~
+  RMTC: ~
+  PHFC: ~
+  PAKC: ~
+  PAKA: ~
+  GNSSC: ~
+  PFRA: ~
+  PNVC: ~
+  PMTC: ~
+  POPC: ~
+  POPA: ~
+  RPLA: ~
+  PPLA: ~
+  # V speeds
+  Va: V A
+  Vfe: V F E
+  VFE: V F E
+  Vfo: V F O
+  VFO: V F O
+  Vne: V N E
+  VNE: V N E
+  Vno: V N O
+  VNO: V N O
+  Vr: V R
+  Vs: V S
+  Vso: V S O
+  VSO: V S O
+  Vs0: V S zero
+  Vs1: V S one
+  VS1: V S one
+  VS0: V S zero
+  Vx: V X
+  Vy: V Y
+  VB: V B
+  VYSE: V Y S E
+  Vref: V ref
+  VA: V A
+
+units:
+  ft: feet
+  "ft/min": feet per minute
+  fpm: feet per minute
+  kt: knots
+  kts: knots
+  KIAS: knots indicated
+  nm: nautical miles
+  NM: nautical miles
+  km: kilometres
+  "km/h": kilometres per hour
+  m: metres
+  mm: millimetres
+  cm: centimetres
+  kg: kilograms
+  lb: pounds
+  lbs: pounds
+  L: litres
+  "L/h": litres per hour
+  mL: millilitres
+  hPa: hectopascals
+  mb: millibars
+  MHz: megahertz
+  kHz: kilohertz
+  GHz: gigahertz
+  Hz: hertz
+  dB: decibels
+  hr: hours
+  hrs: hours
+  min: minutes
+  USG: US gallons

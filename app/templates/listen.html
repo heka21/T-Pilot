@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% from "_macros.html" import page_header %}
+{% from "_icons.html" import icon %}
+{% block title %}Listen · {{ app_name }}{% endblock %}
+{% block content %}
+{# The hub for listening in the car or on a run. Every play button carries the lesson's descriptor (data-listen) and
+   player.js starts it inside the tap; "Play unit" and "Play all" also hand over the rest as data-listen-queue so the
+   player auto-advances in this page's order. #}
+{% set exam_labels = {"RPLA": "RPL", "PPLA": "PPL"} %}
+{% set ns = namespace(rpla=[], ppla=[]) %}
+{% for g in groups %}
+  {% if "RPLA" in g.exams %}{% set ns.rpla = ns.rpla + g.lessons %}{% endif %}
+  {% if "PPLA" in g.exams %}{% set ns.ppla = ns.ppla + g.lessons %}{% endif %}
+{% endfor %}
+
+{# Where a narration is up to, as "12 min in" (or "40 s in" in the first minute). #}
+{% macro place(seconds) -%}
+  {%- if seconds >= 60 %}{{ (seconds / 60) | minutes_to_hm }}{% else %}{{ seconds | int }} s{% endif %} in
+{%- endmacro %}
+
+{% set sub_line = narrated ~ " of " ~ lessons ~ " lessons narrated" ~ ((" · " ~ ((total_seconds / 60) | minutes_to_hm) ~ " of listening") if narrated else "") ~ "." %}
+{% if ns.rpla or ns.ppla %}
+  {% call page_header("Listen", sub_line, "headphones") %}
+    {% for exam, list in [("RPLA", ns.rpla), ("PPLA", ns.ppla)] if list %}
+      <button type="button" class="{{ 'btn-primary' if loop.first else 'btn-secondary' }}" data-listen-all="{{ exam }}"
+              data-listen="{{ list[0] | tojson | forceescape }}" data-listen-queue="{{ list[1:] | tojson | forceescape }}">
+        {{ icon("play", "size-4") }} Play all {{ exam }} <span class="text-xs font-semibold opacity-75 tabular-nums">{{ list | length }}</span>
+      </button>
+    {% endfor %}
+  {% endcall %}
+{% else %}
+  {{ page_header("Listen", sub_line, "headphones") }}
+{% endif %}
+
+{% if not narrated %}
+  <div class="card-sunken rise flex flex-col items-center gap-3 px-6 py-12 text-center" data-listen-empty>
+    <span class="chip chip-lg chip-brand">{{ icon("headphones") }}</span>
+    <p class="text-lg font-semibold">No lessons are narrated yet.</p>
+    <p class="max-w-md text-sm text-fg-muted">Each lesson gets a listening script in <code>content/audio/</code>, and the
+      narrations are generated from those scripts on the server with</p>
+    <pre class="max-w-full overflow-x-auto rounded-xl bg-surface px-4 py-2 text-left text-sm"><code>python -m tools.audio.build</code></pre>
+    <p class="max-w-md text-sm text-fg-muted">Once a lesson has a narration it shows up here, and its page gets Listen and Watch buttons.</p>
+    <a href="/lessons" class="btn-secondary btn-sm mt-1">{{ icon("notes", "size-4") }} Read the lessons</a>
+  </div>
+{% else %}
+
+{# ------------------------------------------------------------------ continue where you stopped #}
+{% if resume %}
+  {% set r_chapters = resume.chapters | selectattr("t", "le", resume.position) | list %}
+  {% set r_chapter = r_chapters | last if r_chapters else None %}
+  <section class="card rise mb-8 flex items-center gap-4 border-brand/30 bg-brand-soft/30 p-4 sm:p-5" style="--i: 1" aria-label="Continue listening" data-listen-resume>
+    <button type="button" class="mp-play size-14 sm:size-16" data-listen="{{ resume | tojson | forceescape }}"
+            aria-label="Continue {{ resume.title }}">{{ icon("play", "size-6 sm:size-7") }}</button>
+    <div class="min-w-0 flex-1">
+      <p class="eyebrow text-brand-fg">Continue listening</p>
+      <a href="{{ resume.lesson_url }}" class="mt-0.5 block font-semibold leading-snug text-fg no-underline hover:text-brand">{{ resume.title }}</a>
+      <p class="mt-0.5 truncate text-xs text-fg-muted">{{ resume.sid }}{% if r_chapter %} · {{ r_chapter.title }}{% endif %}</p>
+      <div class="mt-2 flex items-center gap-2">
+        <progress class="min-w-0 flex-1" value="{{ resume.position }}" max="{{ resume.duration or 1 }}" aria-label="Listened so far"></progress>
+        <span class="shrink-0 text-xs tabular-nums text-fg-muted">{{ place(resume.position) }} of {{ (resume.duration / 60) | minutes_to_hm }}</span>
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{# ------------------------------------------------------------------ one section per unit #}
+{% for g in groups if g.lessons %}
+  {% set n = g.lessons | length %}
+  <section class="rise mb-10" style="--i: {{ [loop.index + 1, 10] | min }}" aria-labelledby="listen-{{ g.unit.code | lower }}" data-listen-unit="{{ g.unit.code }}">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+      <div class="flex min-w-0 items-center gap-3">
+        <span class="grid h-9 min-w-14 shrink-0 place-items-center rounded-xl bg-grad-brand px-2 text-sm font-extrabold tracking-tight text-on-brand shadow-(--shadow-brand)" aria-hidden="true">{{ g.unit.code }}</span>
+        <div class="min-w-0">
+          <h2 id="listen-{{ g.unit.code | lower }}" class="section-title"><span class="sr-only">{{ g.unit.code }} </span>{{ g.unit.title }}</h2>
+          <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted">
+            {% for ex in g.exams %}<span class="badge {{ 'badge-brand' if ex == 'RPLA' else 'badge-info' }}" title="{{ ex }}">{{ exam_labels.get(ex, ex) }}</span>{% endfor %}
+            {% if n %}
+              <span class="tabular-nums">{{ n }} lesson{{ "s" if n != 1 }} · {{ (g.seconds / 60) | minutes_to_hm }}</span>
+              <span class="tabular-nums">· heard {{ g.heard }} of {{ n }}</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      {% if n %}
+        <button type="button" class="btn-secondary btn-sm" data-listen="{{ g.lessons[0] | tojson | forceescape }}"
+                data-listen-queue="{{ g.lessons[1:] | tojson | forceescape }}">{{ icon("play", "size-3.5") }} Play unit</button>
+      {% endif %}
+    </div>
+
+    {% if n %}
+      <ul class="card divide-y divide-line p-0">
+        {% for d in g.lessons %}
+          <li class="flex items-center gap-3 px-3 py-3 sm:px-4" data-listen-row="{{ d.sid }}">
+            <button type="button" class="mp-play size-11" data-listen="{{ d | tojson | forceescape }}" aria-label="Play {{ d.title }}">{{ icon("play", "size-5") }}</button>
+            <div class="min-w-0 flex-1">
+              <a href="{{ d.lesson_url }}" class="line-clamp-2 font-semibold leading-snug text-fg no-underline hover:text-brand">{{ d.title }}</a>
+              <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted">
+                <span class="font-mono">{{ d.sid }}</span>
+                <span class="inline-flex items-center gap-1 tabular-nums">{{ icon("clock", "size-3.5") }} {{ (d.duration / 60) | minutes_to_hm }}</span>
+                {% if d.completed %}<span class="badge badge-ok">{{ icon("check", "size-3") }} Listened</span>{% endif %}
+                {% if d.position > 0 %}<span class="badge badge-warn tabular-nums">{{ place(d.position) }}</span>{% endif %}
+              </p>
+            </div>
+            <a href="{{ d.watch_url }}" class="btn-secondary btn-sm shrink-0" data-listen="{{ d | tojson | forceescape }}"
+               aria-label="Watch {{ d.title }}" title="Watch: the narration with each visual full-screen">{{ icon("tv", "size-4") }}<span class="hidden sm:inline">Watch</span></a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if g.missing %}
+      <p class="{{ 'mt-2' if n }} text-sm text-fg-muted">{{ g.missing }} lesson{{ "s" if g.missing != 1 }} not narrated yet</p>
+    {% endif %}
+  </section>
+{% endfor %}
+
+{# Units with nothing narrated yet: one compact line each rather than a page of empty sections. #}
+{% set silent = groups | rejectattr("lessons") | list %}
+{% if silent %}
+  <section class="card-sunken rise mb-10" style="--i: 10" aria-labelledby="listen-not-yet" data-listen-silent>
+    <h2 id="listen-not-yet" class="eyebrow mb-2">Not narrated yet</h2>
+    <ul class="row-list text-sm text-fg-muted">
+      {% for g in silent %}
+        <li class="row" data-listen-unit="{{ g.unit.code }}">
+          <span class="min-w-0 flex-1"><span class="font-mono font-semibold">{{ g.unit.code }}</span> {{ g.unit.title }}</span>
+          <span class="tabular-nums">{{ g.missing }} lesson{{ "s" if g.missing != 1 }} not narrated yet</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Watch · {{ lesson.title }} · {{ app_name }}{% endblock %}
+{% block content %}
+{# Watch mode: the lesson's narration with each visual full-screen from the moment the narrator reaches it (cues
+   from tools/audio/build.py), the chapter title in between, and the sentence being spoken as a caption.
+   player.js (bindWatch) drives all of it from the one session-wide player, so Listen and Watch never interrupt each other. #}
+<section class="watch" data-watch-page aria-label="Watch {{ lesson.title }}">
+  <script type="application/json" data-watch-lesson>{{ lesson_json | safe }}</script>
+  <script type="application/json" data-watch-timeline>{{ timeline_json | safe }}</script>
+
+  <header class="watch-top">
+    <a href="{{ lesson.lesson_url }}" class="btn-icon" aria-label="Back to the lesson" title="Back to the lesson">{{ icon("arrow-left") }}</a>
+    <div class="min-w-0 flex-1">
+      <p class="eyebrow truncate">{{ sub.id }} · <span data-watch-chapter-title></span></p>
+      <h1 class="truncate text-base font-bold tracking-tight text-fg sm:text-lg">{{ lesson.title }}</h1>
+    </div>
+    <button type="button" class="btn-icon" data-watch-fullscreen aria-label="Full screen" title="Full screen">{{ icon("maximize") }}</button>
+  </header>
+
+  <div class="watch-stage">
+    <div class="watch-card" data-watch-card>
+      <span class="chip chip-grad chip-lg">{{ icon("headphones", "size-6") }}</span>
+      <p class="eyebrow">{{ sub.id }} · {{ sub.unit.title }}</p>
+      <h2 class="watch-chapter" data-watch-chapter>{{ lesson.title }}</h2>
+    </div>
+    {% for key, figure in visuals %}
+    <div class="watch-visual note-body" data-visual-key="{{ key }}" hidden>{{ figure | safe }}</div>
+    {% endfor %}
+    <button type="button" class="watch-start btn-primary btn-lg" data-player="toggle" data-watch-start hidden>
+      {{ icon("play", "size-5") }} {{ "Resume" if lesson.position else "Play" }}
+    </button>
+  </div>
+
+  <p class="watch-caption" data-watch-caption></p>
+
+  <footer class="watch-controls">
+    <input type="range" class="mp-scrub" min="0" max="1000" value="0" step="1" data-watch-scrub data-watch-bar aria-label="Position in the lesson">
+    <div class="flex items-center justify-center gap-1 sm:gap-2">
+      <span class="mp-time w-24 text-left" data-watch-time></span>
+      <button type="button" class="btn-icon" data-player="prev" aria-label="Previous chapter" title="Previous chapter">{{ icon("skip-back", "size-5") }}</button>
+      <button type="button" class="btn-icon" data-player="back" aria-label="Back 15 seconds" title="Back 15 s">{{ icon("rewind", "size-5") }}</button>
+      <button type="button" class="mp-play size-14" data-player="toggle" aria-label="Play or pause">{{ icon("play", "mp-icon-play size-6") }}{{ icon("pause", "mp-icon-pause size-6") }}</button>
+      <button type="button" class="btn-icon" data-player="forward" aria-label="Forward 30 seconds" title="Forward 30 s">{{ icon("forward", "size-5") }}</button>
+      <button type="button" class="btn-icon" data-player="next" aria-label="Next chapter" title="Next chapter">{{ icon("skip-forward", "size-5") }}</button>
+      <button type="button" class="btn-secondary btn-sm w-24" data-player="speed" title="Playback speed"><span data-watch-speed>1×</span></button>
+    </div>
+  </footer>
+</section>
+{% endblock %}

@@ -30,6 +30,14 @@
     </p>
     <h1 class="page-title">{{ note.title if note else sub.title }}</h1>
     <p class="page-sub">{{ sub.unit.title }}</p>
+    {% if listen %}
+    {# Narration: Listen plays here (and keeps playing across pages); Watch adds the visuals full-screen. #}
+    <div class="btn-row mt-4">
+      <button type="button" class="btn-primary btn-sm" data-listen="{{ listen | tojson | forceescape }}">{{ icon("headphones", "size-4") }} {{ "Listen again" if listen.completed else ("Resume listening" if listen.position else "Listen") }} · {{ (listen.duration / 60) | minutes_to_hm }}</button>
+      <a class="btn-secondary btn-sm" href="{{ listen.watch_url }}" data-listen="{{ listen | tojson | forceescape }}">{{ icon("tv", "size-4") }} Watch</a>
+      {% if listen.completed %}<span class="badge badge-ok">{{ icon("check", "size-3.5") }} Listened</span>{% endif %}
+    </div>
+    {% endif %}
   </div>
   <div class="relative mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
     <span class="eyebrow">Your status</span>

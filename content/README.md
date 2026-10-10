@@ -41,6 +41,14 @@ Cite the source document for every regulatory number so it can be checked agains
 or VFRG. Tables and standard Markdown are supported. `python -m app.seed.lint_lessons` reports lessons that fall
 short of the standard (length, self-checks, worked examples, headings, visuals); `--strict` makes it fail.
 
+## Listening scripts: `audio/<UNIT>/<same file name as the lesson>.md`
+The spoken version of each lesson, which the app plays as Listen (audio) and Watch (audio with each visual
+full-screen as the narrator reaches it). A script never changes its lesson; it records the lesson's hash in
+`source_sha`, so `check_content` warns when the lesson has moved on. The authoring brief, with the format
+(`[[diagram:slug]]` cues, `[[pause 4]]`, `{written|spoken}` overrides), is `AUDIO.md`. `audio/lexicon.yaml` says how
+abbreviations are pronounced. `python -m tools.audio.build` narrates the scripts with Kokoro into `media/audio/`
+(not in git; the container mounts it), rebuilding only what changed; see its docstring.
+
 ## Questions: `questions/<UNIT>.yaml` or `questions/<UNIT>-<topic>.yaml`
 The part before the first `-` is the unit code, so a unit can be split over several files (e.g. `BAKC-engines.yaml`, `BAKC-aerodynamics.yaml`). Ids must be unique across files: use a letter prefix per file, e.g. `BAKC-E001` for engines, `BAKC-A001` for aerodynamics. A list of questions. Two kinds:
 ```

@@ -959,6 +959,71 @@
     background-position: center;
   }
   .sketch-page > svg { @apply absolute inset-0 block h-full w-full; }
+
+  /* ---------------------------------------------------------------- narration (player.js)
+     Mini player: above the mobile dock, bottom-right on larger screens; while it is open (html[data-player-open])
+     the lesson panel button, the resume pill and the page's bottom padding move up to clear it. */
+  .miniplayer {
+    @apply fixed inset-x-3 z-20 overflow-visible rounded-2xl border border-line/80 bg-surface/95 shadow-(--shadow-pop) backdrop-blur-xl
+           bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:inset-x-auto lg:right-8 lg:bottom-6 lg:w-[30rem];
+  }
+  .miniplayer[hidden] { display: none; }
+  html[data-player-open] main { @apply pb-56 lg:pb-32; }
+  html[data-player-open] .lesson-panel-fab,
+  html[data-player-open] .read-resume { @apply bottom-[calc(10rem+env(safe-area-inset-bottom))] lg:bottom-28; }
+  .mp-play {
+    @apply grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-grad-brand text-on-brand shadow-(--shadow-brand) transition hover:brightness-110 active:scale-95;
+  }
+  .mp-play .mp-icon-pause, [data-playing] .mp-play .mp-icon-play { display: none; }
+  [data-playing] .mp-play .mp-icon-pause { display: block; }
+  .mp-text { @apply mx-1.5 flex min-w-0 flex-1 flex-col no-underline; }
+  .mp-title { @apply truncate text-sm font-semibold text-fg; }
+  .mp-sub { @apply truncate text-xs text-fg-muted; }
+  .mp-time { @apply shrink-0 px-1 text-xs tabular-nums text-fg-faint; }
+  /* The position bar is a range input: a thin brand line along the top edge, with a thumb to drag. */
+  .mp-scrub {
+    @apply absolute inset-x-3 -top-px m-0 h-1 cursor-pointer appearance-none rounded-full bg-transparent;
+    background-image: linear-gradient(to right, var(--color-brand) var(--p, 0%), color-mix(in oklab, var(--color-line-strong) 70%, transparent) var(--p, 0%));
+  }
+  .mp-scrub::-webkit-slider-thumb { @apply size-3 appearance-none rounded-full bg-brand opacity-0 transition-opacity; }
+  .mp-scrub::-moz-range-thumb { @apply size-3 rounded-full border-0 bg-brand opacity-0; }
+  .mp-scrub:hover::-webkit-slider-thumb, .mp-scrub:focus-visible::-webkit-slider-thumb { @apply opacity-100; }
+  .mp-scrub:hover::-moz-range-thumb, .mp-scrub:focus-visible::-moz-range-thumb { @apply opacity-100; }
+  .mp-menu { @apply relative; }
+  .mp-menu > summary { @apply list-none; }
+  .mp-menu > summary::-webkit-details-marker { display: none; }
+  .mp-menu[open] > summary { @apply bg-surface-2 text-fg; }
+  .mp-panel {
+    @apply absolute right-0 bottom-12 z-30 flex max-h-[min(60dvh,28rem)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-(--shadow-pop);
+  }
+  .mp-chapters { @apply m-0 min-h-0 flex-1 list-none overflow-y-auto overscroll-contain p-1.5; }
+  .mp-chapter { @apply flex w-full cursor-pointer items-baseline gap-3 rounded-lg px-2.5 py-2 text-left text-sm text-fg hover:bg-surface-2; }
+  .mp-chapter > span { @apply min-w-0 flex-1; }
+  .mp-chapter > time { @apply shrink-0 text-xs tabular-nums text-fg-faint; }
+  .mp-chapters > [data-current] .mp-chapter { @apply bg-brand-soft font-semibold text-brand-fg; }
+
+  /* Watch mode: a full-screen stage over the app (safe-area padded): top bar, the visual as large as fits,
+     the spoken sentence, then the transport. */
+  .watch {
+    @apply fixed inset-0 z-40 flex flex-col bg-bg text-fg;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .watch-top { @apply flex shrink-0 items-center gap-2 border-b border-line/70 px-3 py-2 sm:px-5; }
+  .watch-stage { @apply relative grid min-h-0 flex-1 place-items-center overflow-hidden p-3 sm:p-6; }
+  .watch-card { @apply flex max-w-2xl flex-col items-center gap-3 text-center animate-rise; }
+  .watch-chapter { @apply text-2xl font-extrabold tracking-tight text-balance sm:text-4xl; }
+  .watch-visual { @apply flex h-full w-full max-w-6xl items-center justify-center animate-rise; }
+  .watch-visual[hidden], .watch-card[hidden], .watch-start[hidden] { display: none; }
+  .watch-visual > figure { @apply m-0 flex h-full w-full flex-col items-center justify-center; }
+  .watch-visual > figure > svg { @apply h-auto max-h-[calc(100%-4.5rem)] w-auto max-w-full; }
+  .watch-visual > figure > img, .watch-visual .workbook-page img { @apply h-auto max-h-[calc(100dvh-16rem)] w-auto max-w-full; }
+  .watch-visual figcaption { @apply mt-3 max-w-3xl text-center; }
+  .watch-start { @apply absolute bottom-6 left-1/2 -translate-x-1/2 shadow-(--shadow-pop); }
+  .watch-caption {
+    @apply mx-auto min-h-[3.5rem] w-full max-w-4xl shrink-0 px-4 py-2 text-center text-base leading-snug font-medium text-balance text-fg sm:min-h-[4.5rem] sm:text-xl;
+  }
+  .watch-controls { @apply relative shrink-0 border-t border-line/70 bg-surface/80 px-3 pt-4 pb-3 backdrop-blur-xl; }
+  .watch-controls .mp-scrub { @apply inset-x-0 top-0 h-1.5 rounded-none; }
 }
 
 /* Prev/next links at the bottom of lessons and subtopics. */

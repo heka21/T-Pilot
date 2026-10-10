@@ -13,6 +13,7 @@ from app.db import get_session
 from app.models import STATUSES, ExamUnit, Subtopic, Topic, Unit
 from app.routers.syllabus import _split_id, get_subtopic, neighbours
 from app.services import annotations as annotations_svc
+from app.services import audio as audio_svc
 from app.templating import templates
 
 router = APIRouter(tags=["lessons"])
@@ -66,9 +67,11 @@ def note_page(unit: str, number: str, request: Request, session: Session = Depen
     toc = lesson_toc(sub.note.html) if sub.note else []
     # The student's own notes, highlights and ink ride along as JSON so the page paints with them in place.
     annotations = annotations_svc.bundle(session, sub.id) if sub.note else None
+    listen = audio_svc.for_subtopic(session, sub) if sub.note else None   # None until the lesson is narrated
     return templates.TemplateResponse(request, "note.html", {"sub": sub, "note": sub.note, "prev": prev, "next": nxt,
                                                              "toc": toc if len(toc) >= TOC_MIN_HEADINGS else [],
-                                                             "equations": list(sub.equations), "annotations": annotations})
+                                                             "equations": list(sub.equations), "annotations": annotations,
+                                                             "listen": listen})
 
 
 @router.get("/notes")

@@ -14,11 +14,12 @@ from fastapi.staticfiles import StaticFiles
 from app.db import SessionLocal, init_db
 from app.seed.loader import seed_all
 from app.services import search
+from app.services.audio import media_dir
 
 log = logging.getLogger("app")
 
 STATIC_DIR = Path(__file__).parent / "static"
-ROUTER_MODULES = ["dashboard", "syllabus", "notes", "quiz", "exam", "cards", "planner", "progress", "reference", "search", "annotations", "equations", "mistakes", "diagnostic"]
+ROUTER_MODULES = ["dashboard", "syllabus", "notes", "quiz", "exam", "cards", "planner", "progress", "reference", "search", "annotations", "equations", "mistakes", "diagnostic", "listen"]
 
 
 @asynccontextmanager
@@ -49,6 +50,8 @@ def create_app() -> FastAPI:
     logging.basicConfig(level=logging.INFO)
     app = FastAPI(title="CASA Theory", lifespan=lifespan)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    # Narrated lessons from tools/audio/build.py; may not exist yet (check_dir=False), Range requests let players seek.
+    app.mount("/media", StaticFiles(directory=media_dir(), check_dir=False), name="media")
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:

@@ -94,6 +94,29 @@ progress. To apply changes:
 - **Live editing**: uncomment the `./content:/app/content:ro` line in `docker-compose.yml`, run
   `docker compose up -d` once, then after each edit just `docker compose restart`.
 
+## Lesson audio (Listen and Watch)
+
+Every lesson can be narrated, so you can study while driving or exercising. **Listen** plays the narration with
+lock-screen and CarPlay controls, and it keeps playing while you move around the app; it then moves on to the
+next lesson by itself. **Watch** plays the same narration with each diagram full-screen as the narrator reaches
+it. `/listen` lists everything that has been narrated. Your place in each lesson is saved on the server, so a
+lesson started on the phone resumes on the iPad.
+
+The narration is generated once, offline, with an open-source voice (Kokoro). The listening scripts it reads are
+in `content/audio/` (see `content/AUDIO.md`), and the output goes to `media/audio/`. That folder is not in git
+and not in the image; `docker-compose.yml` mounts `./media` into the container read-only.
+
+```bash
+uv pip install -e ".[audio]"                  # once: Kokoro, the MP3 encoder (the model, ~350 MB, downloads on first run)
+python -m tools.audio.build --sample          # media/audio/samples/: the same passage in four voices
+python -m tools.audio.build                   # narrate every script; only what changed is rebuilt
+python -m tools.audio.build RFRC "BAKC 6.2"   # just some units or lessons
+```
+
+It runs at about 5 times real time on the CPU, so the full set (roughly 45 hours of audio, about 1 GB) takes an
+evening. You can stop it and start it again, and it carries on where it left off. New audio appears in the app
+without a restart.
+
 ## Local development without Docker
 
 Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).

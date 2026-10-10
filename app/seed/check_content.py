@@ -8,7 +8,10 @@ duplicate ids, MCQs without exactly 4 options or out-of-range answers, workbook_
 pages, and visuals: diagram:/widget:/workbook: references to missing files, diagram and widget files nothing references, and style-guide violations
 (see content/diagrams/README.md and app.seed.visuals.lint_svg / lint_widget), and content/equations.yaml (ids, fields,
 lesson links, exam consistency, LaTeX sanity; --katex also renders every formula with the vendored KaTeX when node is
-on PATH).
+on PATH), and the listening scripts in content/audio/ (see content/AUDIO.md): chapters match the lesson's headings,
+cues are visuals the lesson embeds, numbers the voice would misread have overrides, every figure is in the lesson,
+the lesson has not changed since. --audio prints a line per script; --audio-sha NOTE prints the source_sha for a
+lesson (e.g. RFRC/2.3-conditions-of-flight).
 """
 from __future__ import annotations
 
@@ -23,6 +26,7 @@ from pathlib import Path
 
 import yaml
 
+from app.seed import narration
 from app.seed.loader import split_frontmatter
 from app.seed import workbook
 from app.seed.equations import EQUATIONS_FILE, EXAMS, REQUIRED, katex_inputs, load_equations
@@ -240,6 +244,68 @@ def near_duplicates(stems: dict[str, list[tuple[str, str]]]) -> list[str]:
     return out
 
 
+AUDIO_WORDS = (2000, 5000)
+H2_RE = re.compile(r"^## (.+?)\s*$", re.M)
+
+
+def check_audio(notes: dict[str, str], problems: list[str], warnings: list[str], verbose: bool = False) -> int:
+    """Listening scripts against their lessons. notes: subtopic id -> lesson path. Returns the number of scripts."""
+    lexicon = narration.Lexicon.load(CONTENT)
+    paths = narration.script_paths(CONTENT)
+    for path in paths:
+        rel = path.relative_to(CONTENT)
+        script = narration.parse(path, lexicon)
+        lesson_path = narration.lesson_path_for(path, CONTENT)
+        if not lesson_path.is_file():
+            problems.append(f"{rel}: no lesson at {lesson_path.relative_to(CONTENT)} (scripts mirror the lesson's file name)")
+            continue
+        lesson_text = lesson_path.read_text(encoding="utf-8")
+        meta, body = split_frontmatter(lesson_text)
+        if script.subtopic != meta.get("subtopic"):
+            problems.append(f"{rel}: subtopic {script.subtopic!r} but the lesson is {meta.get('subtopic')!r}")
+        if script.source_sha != narration.lesson_sha(lesson_text):
+            warnings.append(f"{rel}: the lesson has changed since the script was written (source_sha "
+                            f"{script.source_sha or 'missing'}, lesson now {narration.lesson_sha(lesson_text)})")
+        headings = [narration.plain_title(h) for h in H2_RE.findall(body)]
+        titles = [c.title for c in script.chapters if c.id != narration.INTRO_ID]
+        for t in titles:
+            if t not in headings:
+                problems.append(f"{rel}: chapter {t!r} is not a heading of the lesson")
+        if missing := [h for h in headings if h not in titles]:
+            warnings.append(f"{rel}: lesson sections with no chapter: {'; '.join(missing)}")
+        elif titles != headings:
+            warnings.append(f"{rel}: chapters are not in the lesson's order")
+        embedded = set(find_refs(body))
+        cued = [(c.kind, c.slug) for c in script.cues()]
+        for kind, slug in cued:
+            if (kind, slug) not in embedded:
+                problems.append(f"{rel}: cue {kind}:{slug} is not a visual this lesson embeds")
+        for dup in {c for c in cued if cued.count(c) > 1}:
+            problems.append(f"{rel}: cue {dup[0]}:{dup[1]} appears more than once")
+        if uncued := sorted(slug for kind, slug in embedded if kind == "diagram" and ("diagram", slug) not in cued):
+            warnings.append(f"{rel}: diagrams never cued: {', '.join(uncued)}")
+        for sp in script.speeches():
+            for issue in narration.speech_issues(sp.raw):
+                problems.append(f"{rel}: {issue}: {sp.raw[:70]}")
+        lesson_numbers = narration.numbers(lesson_text)   # plus the figures in the cued diagrams' descriptions
+        for kind, slug in cued:
+            if kind == "diagram" and visual_path(CONTENT, kind, slug).is_file():
+                desc = re.search(r"<desc>(.*?)</desc>", visual_path(CONTENT, kind, slug).read_text(encoding="utf-8"), re.S)
+                lesson_numbers |= narration.numbers(desc.group(1)) if desc else set()
+        extra = sorted({n for sp in script.speeches() for n in narration.numbers(sp.caption)} - lesson_numbers,
+                       key=lambda n: float(n))
+        if extra:
+            warnings.append(f"{rel}: numbers not in the lesson: {', '.join(extra)}")
+        if script.unknown:
+            warnings.append(f"{rel}: not in audio/lexicon.yaml, will be spelled out: {', '.join(sorted(script.unknown))}")
+        words = script.words()
+        if not AUDIO_WORDS[0] <= words <= AUDIO_WORDS[1]:
+            warnings.append(f"{rel}: {words} words (aim for {AUDIO_WORDS[0]:,} to {AUDIO_WORDS[1]:,})")
+        if verbose:
+            print(f"  {str(rel):60} {words:>5} words  ~{words / 160:4.0f} min  {len(script.chapters):>2} chapters  {len(cued):>2} cues")
+    return len(paths)
+
+
 def load_syllabus() -> tuple[dict[str, dict], dict[str, str]]:
     data = json.loads((CONTENT / "syllabus" / "schedule3.json").read_text(encoding="utf-8"))
     subtopics: dict[str, dict] = {}
@@ -256,6 +322,10 @@ def load_syllabus() -> tuple[dict[str, dict], dict[str, str]]:
 
 
 def main(argv: list[str]) -> int:
+    if "--audio-sha" in argv:
+        note = argv[argv.index("--audio-sha") + 1].removesuffix(".md")
+        print(narration.lesson_sha((CONTENT / "notes" / f"{note}.md").read_text(encoding="utf-8")))
+        return 0
     subtopics, el2st = load_syllabus()
     problems: list[str] = []
     notes: dict[str, str] = {}
@@ -349,6 +419,11 @@ def main(argv: list[str]) -> int:
     equations = check_equations(subtopics, problems, warnings)
     katex_ran = check_katex(equations, problems) if "--katex" in argv else None
     warnings += near_duplicates(q_stems)
+    if "--audio" in argv:
+        print("listening scripts:")
+    scripts = check_audio(notes, problems, warnings, verbose="--audio" in argv)
+    scripted = {narration.lesson_path_for(p, CONTENT).resolve() for p in narration.script_paths(CONTENT)}
+    no_script = [sid for sid, path in notes.items() if Path(path).resolve() not in scripted]
     print(f"{'unit':6} {'notes':>9} {'elems w/ Q':>11} {'elems w/ C':>11} {'questions':>9} {'cards':>6} {'visuals':>8}")
     for code, u in by_unit.items():
         print(f"{code:6} {u.get('notes',0):>4}/{u.get('subtopics',0):<4} {u.get('el_with_q',0):>5}/{u.get('elements',0):<5} {u.get('el_with_c',0):>5}/{u.get('elements',0):<5} {u.get('questions',0):>9} {u.get('cards',0):>6} {visuals.get(code, 0):>8}")
@@ -356,6 +431,7 @@ def main(argv: list[str]) -> int:
     print(f"\nsubtopics without a note: {len(missing_notes)}")
     print(f"elements with no question: {len(no_q)}")
     print(f"elements with no card: {len(no_c)}")
+    print(f"lessons with no listening script: {len(no_script)} ({scripts} scripts)")
     print(f"equations: {len(equations['equations'])} in {len(equations['topics'])} topics"
           + ("" if katex_ran is None else ", KaTeX checked" if katex_ran else ", KaTeX not checked (node is not on PATH)"))
     for w in warnings:
@@ -368,6 +444,7 @@ def main(argv: list[str]) -> int:
     if "--coverage" in argv:
         thin = [f"{c} ({q_elements[c]})" for c in el2st if q_elements[c] < MIN_QUESTIONS_PER_ELEMENT]
         print(f"elements with fewer than {MIN_QUESTIONS_PER_ELEMENT} questions: {len(thin)}", *thin, sep="\n  ")
+        print(f"lessons with no listening script: {len(no_script)}", *no_script, sep="\n  ")
     strict = "--strict" in argv
     return 1 if problems or (strict and (missing_notes or no_q or no_c)) else 0
 
