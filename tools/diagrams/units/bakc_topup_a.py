@@ -152,7 +152,7 @@ def nautical_mile_latitude() -> Canvas:
                "Left: a section through the Earth from pole to pole. One degree of latitude, measured at the centre, is divided into 60 minutes, "
                "and each minute of arc along the surface is one nautical mile, so one degree is 60 NM. Right: the latitude scale on the side of a "
                "chart works as a distance scale; dividers opened to 18 minutes measure 18 NM, about Rottnest to Jandakot. Perth to Geraldton is "
-               "about 4 degrees of latitude, roughly 240 NM.", height=400, prefix="nml")
+               "about 3 degrees of latitude, roughly 190 NM.", height=400, prefix="nml")
     c.add(text(20, 30, "Why the latitude scale on every chart is a distance scale", 15, "start", "fg", weight=700))
     CX, CY, R = 128, 214, 100
     c.add(circle(CX, CY, R, "sky-soft", "fg-muted", SECOND))
@@ -201,7 +201,7 @@ def nautical_mile_latitude() -> Canvas:
     c.add(text(hx + 12, (ya + yb) / 2 + 20, "about Rottnest to Jandakot,", 11, "start", "fg-muted"))
     c.add(text(hx + 12, (ya + yb) / 2 + 34, "on any chart, at any scale", 11, "start", "fg-muted"))
     c.add(rect(20, 362, 600, 30, "surface-2", None, rx=8))
-    c.add(num(32, 382, "1 NM = 1' of latitude = 1,852 m    ·    Perth to Geraldton ≈ 4° × 60 = 240 NM", 12, "start", "fg", weight=600))
+    c.add(num(32, 382, "1 NM = 1' of latitude = 1,852 m    ·    Perth to Geraldton ≈ 3.2° × 60 ≈ 190 NM", 12, "start", "fg", weight=600))
     return c
 
 
