@@ -176,6 +176,33 @@ test("the speed cycles and persists to localStorage", () => {
   assert.equal(next.audio.defaultPlaybackRate, 1.5);
 });
 
+test("the speed menu sets the chosen speed, marks it, and closes", () => {
+  const options = ["0.8", "1", "1.25", "1.5"].map((v) =>
+    `<button data-player="speed" data-speed="${v}" aria-checked="false">${v}×</button>`).join("");
+  const { w, P, audio } = setup({ body: `<div data-miniplayer hidden><details class="mp-menu" open>
+    <details data-speed-menu open><summary><span data-speed-label>1×</span></summary>${options}</details>
+    </details></div><p id="outside">x</p>` });
+  w.document.dispatchEvent(new w.Event("DOMContentLoaded"));   // bindMini, as htmx.onLoad would
+  P.load(lesson("RFRC 2.3"), { queue: [] });
+  const menu = w.document.querySelector("[data-speed-menu]"), outer = w.document.querySelector(".mp-menu");
+  w.document.querySelector('[data-speed="1.5"]').click();
+  assert.equal(audio.playbackRate, 1.5);
+  assert.equal(w.localStorage.getItem("listen:speed"), "1.5");
+  assert.equal(menu.open, false, "choosing a speed closes the speed menu");
+  assert.equal(outer.open, true, "but not the player menu it sits in");
+  assert.equal(w.document.querySelector("[data-speed-label]").textContent, "1.5×");
+  const checked = Array.from(w.document.querySelectorAll("[data-speed]"), (b) => b.getAttribute("aria-checked"));
+  assert.deepEqual(checked, ["false", "false", "false", "true"]);
+
+  menu.open = true;
+  w.document.getElementById("outside").click();
+  assert.equal(menu.open, false, "a click outside closes open menus");
+  assert.equal(outer.open, false);
+  outer.open = true;
+  w.document.dispatchEvent(new w.KeyboardEvent("keydown", { key: "Escape" }));
+  assert.equal(outer.open, false, "Escape closes them too");
+});
+
 test("stop() clears the lesson, the queue and the stored place", () => {
   const { w, P, audio } = setup();
   P.load(lesson("RFRC 2.3"), { autoplay: true, queue: [lesson("RFRC 2.5")] });

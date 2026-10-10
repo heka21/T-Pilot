@@ -615,12 +615,29 @@ function mountLessonAnnotations(host) {
   lesson.listeners.add((what) => { if (what === "destroy") { ro.disconnect(); mo.disconnect(); window.removeEventListener("resize", relayout); document.removeEventListener("casa:fontsizechange", relayout); } });
 
   /* ---- toolbar (server-rendered buttons: data-ink-tool, data-ink-colour, data-ink-width, data-ink-pen-mode,
-          data-ink-draw-mode, data-ink-undo, data-ink-redo, data-ink-clear; .ink-status; .ink-orphans) */
-  const bar = host.querySelector(".ink-toolbar");
+          data-ink-draw-mode, data-ink-undo, data-ink-redo, data-ink-clear; .ink-status; .ink-orphans). It lives in
+          the lesson bar's flyout, which the pen toggle opens and closes (remembered, "inkbar:open"); the toggle
+          wears the current ink colour. */
+  const bar = document.querySelector(".ink-toolbar");
+  const lessonBar = bar && bar.closest("[data-lesson-bar]");
+  const barToggle = lessonBar && lessonBar.querySelector("[data-lesson-bar-toggle]");
+  function setBarOpen(open) {
+    lessonBar.toggleAttribute("data-open", open);
+    barToggle.setAttribute("aria-expanded", String(open));
+    barToggle.title = open ? "Hide the pen tools" : "Show the pen tools";
+    try { localStorage.setItem("inkbar:open", open ? "1" : "0"); } catch (e) {}
+  }
+  if (barToggle) {
+    let saved = null;
+    try { saved = localStorage.getItem("inkbar:open"); } catch (e) {}
+    setBarOpen(saved === "1");
+    barToggle.addEventListener("click", () => setBarOpen(!lessonBar.hasAttribute("data-open")));
+  }
   function syncBar() {
     if (!bar) return;
     bar.hidden = false;
     host.dataset.inkTool = lesson.prefs.tool;
+    if (lessonBar) lessonBar.style.setProperty("--ink", `var(--color-${lesson.prefs.colour})`);
     bar.querySelectorAll("[data-ink-tool]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.inkTool === lesson.prefs.tool)));
     bar.querySelectorAll("[data-ink-colour]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.inkColour === lesson.prefs.colour)));
     bar.querySelectorAll("[data-ink-width]").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.inkWidth === +lesson.prefs.width)));

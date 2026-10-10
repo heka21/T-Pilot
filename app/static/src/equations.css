@@ -11,7 +11,7 @@
 @media print {
   @page { margin: 12mm; }
 
-  #sidebar, #drawer-backdrop, .topbar, nav[aria-label="Quick navigation"], .lesson-filter { display: none !important; }
+  #sidebar, #drawer-backdrop, .topbar, .lesson-filter { display: none !important; }
   main { max-width: none !important; padding: 0 !important; }
 
   /* Light tokens on paper, whatever the screen theme. Unlayered, so this beats the dark values in @layer base. */

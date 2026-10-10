@@ -16,6 +16,7 @@
   <script src="/static/htmx.min.js"></script>
   <script src="{{ static_url('app.js') }}"></script>
   <script src="{{ static_url('player.js') }}"></script>
+  <script src="{{ static_url('follow.js') }}"></script>
   <script defer src="/static/vendor/katex/katex.min.js"></script>
   <script defer src="/static/vendor/katex/auto-render.min.js"></script>
   <script defer src="/static/vendor/alpine.min.js"></script>
@@ -24,6 +25,7 @@
   <script type="module" src="{{ static_url('annotations.js') }}"></script>
 </head>
 {% from "_icons.html" import icon %}
+{% from "_player.html" import speed_menu %}
 {% set path = request.url.path %}
 {% macro nav_link(href, label, name, cls="nav-link") -%}
   {% set active = (path == "/" if href == "/" else path.startswith(href)) %}
@@ -106,44 +108,41 @@
       <div class="read-progress" data-read-progress hidden role="progressbar" aria-label="Read" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
     </header>
 
-    <main class="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-32 pt-6 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
+    <main class="mx-auto w-full max-w-[100rem] flex-1 px-4 pb-20 pt-6 sm:px-6 lg:px-8 lg:pb-16 lg:pt-8">
       {% block content %}{% endblock %}
     </main>
 
-    {# -------------------------------------------------------------- narration mini player (player.js fills and shows it) #}
-    <div class="miniplayer" data-miniplayer hidden role="region" aria-label="Lesson audio">
+    {# -------------------------------------------------------------- narration mini player (player.js fills and shows it)
+       Dragged by its grip or title (app.js floaters, "player:pos"); the X stops playback and closes it. #}
+    <div class="miniplayer" data-miniplayer data-floater="player" hidden role="region" aria-label="Lesson audio">
       <input type="range" class="mp-scrub" min="0" max="1000" value="0" step="1" data-mp-scrub data-mp-bar aria-label="Position in the lesson">
-      <div class="flex items-center gap-1 p-2 pl-2.5">
+      <div class="flex items-center gap-1 p-2 pl-1">
+        <button type="button" class="mp-grip" data-drag-handle data-floater-grip title="Drag to move (or focus and use the arrow keys)">{{ icon("grip", "size-4") }}<span class="sr-only">Move the player</span></button>
         <button type="button" class="mp-play" data-player="toggle" aria-label="Play or pause">{{ icon("play", "mp-icon-play size-5") }}{{ icon("pause", "mp-icon-pause size-5") }}</button>
-        <a class="mp-text" data-mp-lesson href="/listen">
+        <a class="mp-text" data-mp-lesson data-drag-handle draggable="false" href="/listen">
           <span class="mp-title" data-mp-title></span>
           <span class="mp-sub" data-mp-sub></span>
         </a>
         <span class="mp-time hidden sm:inline" data-mp-time></span>
         <button type="button" class="btn-icon size-9" data-player="back" aria-label="Back 15 seconds" title="Back 15 s">{{ icon("rewind", "size-[18px]") }}</button>
         <button type="button" class="btn-icon size-9" data-player="forward" aria-label="Forward 30 seconds" title="Forward 30 s">{{ icon("forward", "size-[18px]") }}</button>
+        <button type="button" class="btn-icon mp-follow size-9 max-sm:hidden" data-player="follow" aria-pressed="false" aria-label="Highlight what is being read" title="Highlight as it reads">{{ icon("highlighter", "size-[18px]") }}</button>
         <details class="mp-menu">
           <summary class="btn-icon size-9" aria-label="Chapters, speed and Watch" title="Chapters and speed">{{ icon("list", "size-[18px]") }}</summary>
           <div class="mp-panel">
             <div class="flex items-center gap-2 border-b border-line p-2">
-              <button type="button" class="btn-secondary btn-sm" data-player="speed" title="Playback speed"><span data-mp-speed>1×</span> speed</button>
+              {{ speed_menu("down") }}
               <a class="btn-secondary btn-sm" data-mp-watch href="/listen">{{ icon("tv", "size-3.5") }} Watch</a>
+              <button type="button" class="btn-secondary btn-sm mp-follow" data-player="follow" aria-pressed="false" title="Highlight as it reads, on the lesson's page">{{ icon("highlighter", "size-3.5") }} Highlight</button>
               <button type="button" class="btn-ghost btn-sm ml-auto" data-player="stop">{{ icon("close", "size-3.5") }} Stop</button>
             </div>
             <ol class="mp-chapters" data-mp-chapters></ol>
           </div>
         </details>
+        <button type="button" class="btn-icon size-9" data-player="stop" aria-label="Stop and close the player" title="Stop and close">{{ icon("close", "size-[18px]") }}</button>
       </div>
     </div>
 
-    {# -------------------------------------------------------------- bottom tabs (mobile only): a floating dock #}
-    <nav class="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-20 flex rounded-3xl border border-line/80 bg-surface/90 p-1 shadow-(--shadow-pop) backdrop-blur-xl lg:hidden" aria-label="Quick navigation">
-      {{ nav_link("/", "Home", "home", "tab-link") }}
-      {{ nav_link("/planner", "Plan", "calendar", "tab-link") }}
-      {{ nav_link("/lessons", "Lessons", "notes", "tab-link") }}
-      {{ nav_link("/quiz", "Quiz", "quiz", "tab-link") }}
-      {{ nav_link("/cards", "Cards", "cards", "tab-link") }}
-    </nav>
   </div>
 
   {% block scripts %}{% endblock %}

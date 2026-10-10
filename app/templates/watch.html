@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_player.html" import speed_menu %}
 {% block title %}Watch · {{ lesson.title }} · {{ app_name }}{% endblock %}
 {% block content %}
 {# Watch mode: the lesson's narration with each visual full-screen from the moment the narrator reaches it (cues
@@ -42,7 +43,7 @@
       <button type="button" class="mp-play size-14" data-player="toggle" aria-label="Play or pause">{{ icon("play", "mp-icon-play size-6") }}{{ icon("pause", "mp-icon-pause size-6") }}</button>
       <button type="button" class="btn-icon" data-player="forward" aria-label="Forward 30 seconds" title="Forward 30 s">{{ icon("forward", "size-5") }}</button>
       <button type="button" class="btn-icon" data-player="next" aria-label="Next chapter" title="Next chapter">{{ icon("skip-forward", "size-5") }}</button>
-      <button type="button" class="btn-secondary btn-sm w-24" data-player="speed" title="Playback speed"><span data-watch-speed>1×</span></button>
+      <div class="flex w-24 justify-end">{{ speed_menu("up", word=false) }}</div>
     </div>
   </footer>
 </section>

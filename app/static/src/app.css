@@ -620,21 +620,41 @@
   .lesson-panel-body { @apply min-h-0 flex-1 overflow-y-auto overscroll-contain p-3; }
   .lesson-panel-backdrop { @apply fixed inset-0 z-30 hidden bg-fg/30 backdrop-blur-sm docked:hidden; }
   .lesson-panel-backdrop.is-open { @apply block; }
-  /* Floating opener for the sheet; sits above the mobile dock, bottom-right on larger screens. */
-  .lesson-panel-fab {
-    @apply btn fixed right-4 z-20 rounded-full border-transparent bg-grad-brand px-4 py-2.5 text-on-brand shadow-(--shadow-pop) hover:text-on-brand hover:brightness-110
-           bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6 lg:right-8 docked:hidden;
+  /* Lesson bar: a vertical strip of tinted round buttons (Listen, Watch, pen toggle, Notes) under a drag grip,
+     floating over the page. CSS parks it bottom-right; app.js then pins it with inline
+     left/top (where it was dragged to, kept clear of the mini player) and sets data-side /
+     data-vside so the pen flyout opens towards the middle of the screen. The pen toggle wears the current ink
+     colour (--ink, from annotations.js) and stays hidden while the toolbar is (annotations.js not mounted). */
+  .lesson-bar {
+    @apply fixed right-3 z-20 flex touch-none flex-col items-center gap-1 rounded-full border border-line/80 bg-surface/95 p-1 shadow-(--shadow-pop) backdrop-blur-xl select-none
+           bottom-[calc(1rem+env(safe-area-inset-bottom))] lg:right-6 lg:bottom-6;
+    --ink: var(--color-ink-1);
   }
-  .lesson-panel-fab > svg { @apply size-4; }
+  .lesson-bar.is-dragging { @apply cursor-grabbing shadow-xl; }
+  .lesson-bar:not([data-open]) > .ink-toolbar,
+  .lesson-bar:has(> .ink-toolbar[hidden]) .lesson-bar-toggle { display: none; }
+  .lesson-bar-grip { @apply grid h-5 w-10 cursor-grab place-items-center rounded-full text-fg-faint hover:text-fg-muted focus-visible:text-fg; }
+  .lesson-bar-btn { @apply btn size-10 shrink-0 rounded-full border-transparent p-0 no-underline hover:brightness-95 dark:hover:brightness-125; }
+  .lesson-bar-listen { @apply bg-accent-soft text-accent-fg hover:text-accent-fg; }
+  .lesson-bar-watch { @apply bg-info-soft text-info-fg hover:text-info-fg; }
+  .lesson-bar-toggle { @apply bg-surface-2 hover:text-(--ink); color: var(--ink); }
+  .lesson-bar-toggle[aria-expanded="true"] { @apply text-white; background: var(--ink); }
+  .lesson-bar-notes { @apply bg-brand-soft text-brand-fg hover:text-brand-fg aria-expanded:ring-2 aria-expanded:ring-brand/40; }
+  /* Collapsed (data-collapsed, app.js): only the fold button shows, as a single round button. */
+  .lesson-bar-collapse { @apply size-8 bg-transparent text-fg-faint hover:text-fg; }
+  .lesson-bar[data-collapsed] > :not(.lesson-bar-collapse) { display: none; }
+  .lesson-bar[data-collapsed] > .lesson-bar-collapse { @apply size-11 bg-grad-brand text-white hover:text-white; }
+  .lesson-bar[data-collapsed] .lesson-bar-fold,
+  .lesson-bar:not([data-collapsed]) .lesson-bar-unfold { display: none; }
 
   /* Reading progress: a 3px gradient bar along the bottom edge of the top bar (scaleX = fraction read),
-     a percentage readout, and a "resume" pill above the dock. */
+     a percentage readout, and a "resume" pill near the bottom. */
   .read-progress { @apply pointer-events-none absolute inset-x-0 -bottom-px h-[3px] overflow-hidden; }
   .read-progress > i { @apply block h-full w-full origin-left bg-grad-brand transition-transform duration-150 ease-out; transform: scaleX(var(--p, 0)); }
   .read-pct { @apply hidden shrink-0 rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-semibold tabular-nums text-fg-muted sm:inline-flex; }
   .read-resume {
     @apply btn fixed left-1/2 z-30 -translate-x-1/2 animate-rise gap-2 rounded-full border-line bg-surface px-4 py-2 text-fg shadow-(--shadow-pop) hover:border-line-strong hover:text-fg
-           bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-6;
+           bottom-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-6;
   }
   .read-resume > svg { @apply size-4 text-brand; }
 
@@ -800,10 +820,6 @@
       .sidebar-icon-open { @apply block; }
     }
   }
-  .tab-link { @apply flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[0.65rem] font-semibold text-fg-muted no-underline hover:text-fg; }
-  .tab-link svg { @apply h-7 w-12 rounded-full px-3.5 py-1 transition-colors duration-200; }
-  .tab-link[aria-current="page"] { @apply text-brand-fg; }
-  .tab-link[aria-current="page"] svg { @apply bg-brand-soft; }
   /* Theme toggle: one icon per state; "system" when no data-theme is set. */
   .theme-icon { @apply hidden size-5; }
   :root:not([data-theme]) .theme-icon-system,
@@ -842,7 +858,7 @@
      Pencil ink over the lesson: .ink-host wraps the toolbar and the article; annotations.js appends an SVG
      .ink-layer over it. The layer never takes pointer events, so links, sliders and widgets underneath keep
      working; drawing is intercepted on the host (capture phase) only when the pen policy says so. */
-  /* The host is the lesson card itself: the pen toolbar is its header, the article its body. */
+  /* The host is the lesson card itself, the article its body; the pen toolbar is in the lesson bar. */
   .ink-host { @apply card relative p-0; }
   .ink-host.is-drawing, .ink-host.is-drawing * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
   .ink-layer { @apply pointer-events-none absolute inset-0 h-full w-full overflow-visible; z-index: 5; }
@@ -850,9 +866,13 @@
   .ink-live { opacity: 0.95; }
   .ink-host[data-ink-tool="erase"] .note-body { cursor: cell; }
 
-  /* Pen toolbar: the card's header, flush with its rounded top edge; sticks under the top bar as the
-     article scrolls (the bottom corners round off once it has left the card edge); wraps on a phone. */
-  .ink-toolbar { @apply sticky top-[4.25rem] z-10 flex flex-wrap items-center gap-2 rounded-t-[inherit] border-b border-line bg-surface/90 px-3 py-2 backdrop-blur-xl; }
+  /* Pen toolbar: the lesson bar's flyout, a card beside the strip (left of it by default; data-side="right" puts it
+     on the right, data-vside="up" lines it up with the strip's bottom edge instead of its top). */
+  .ink-toolbar {
+    @apply absolute top-0 right-full mr-2 flex w-max max-w-[min(17rem,calc(100vw-5rem))] cursor-auto flex-col items-start gap-2 rounded-2xl border border-line/80 bg-surface/95 p-2 shadow-(--shadow-pop) backdrop-blur-xl select-auto;
+  }
+  .lesson-bar[data-side="right"] > .ink-toolbar { @apply right-auto left-full mr-0 ml-2; }
+  .lesson-bar[data-vside="up"] > .ink-toolbar { @apply top-auto bottom-0; }
   .ink-group { @apply inline-flex items-center gap-0.5 rounded-xl bg-surface-2/70 p-0.5; }
   .ink-tool {
     @apply inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-fg-muted transition-colors
@@ -866,7 +886,7 @@
   .ink-width { @apply grid size-7 shrink-0 cursor-pointer place-items-center rounded-lg; }
   .ink-width i { @apply block rounded-full bg-fg; width: calc(var(--w) * 1.6); height: calc(var(--w) * 1.6); }
   .ink-width[aria-pressed="true"] { @apply bg-surface shadow-(--shadow-card); }
-  .ink-status { @apply ml-auto text-xs whitespace-nowrap text-fg-faint tabular-nums; }
+  .ink-status { @apply px-1 text-xs whitespace-nowrap text-fg-faint tabular-nums empty:hidden; }
   .ink-status[data-state="error"] { @apply text-warn-fg; }
   .ink-status[data-state="saving"] { @apply animate-pulse; }
 
@@ -961,16 +981,20 @@
   .sketch-page > svg { @apply absolute inset-0 block h-full w-full; }
 
   /* ---------------------------------------------------------------- narration (player.js)
-     Mini player: above the mobile dock, bottom-right on larger screens; while it is open (html[data-player-open])
-     the lesson panel button, the resume pill and the page's bottom padding move up to clear it. */
+     Mini player: along the bottom, bottom-right on larger screens, until dragged (app.js floaters); while it
+     is open (html[data-player-open]) the resume pill and the page's bottom padding move up to clear it. */
   .miniplayer {
-    @apply fixed inset-x-3 z-20 overflow-visible rounded-2xl border border-line/80 bg-surface/95 shadow-(--shadow-pop) backdrop-blur-xl
-           bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:inset-x-auto lg:right-8 lg:bottom-6 lg:w-[30rem];
+    @apply fixed left-3 z-20 w-[calc(100%-1.5rem)] overflow-visible rounded-2xl border border-line/80 bg-surface/95 shadow-(--shadow-pop) backdrop-blur-xl
+           bottom-[calc(0.75rem+env(safe-area-inset-bottom))] lg:left-auto lg:right-8 lg:bottom-6 lg:w-[30rem];
   }
+  .miniplayer.is-dragging { @apply shadow-xl; }
+  /* Drag handles (app.js floaters): the grip and the title; a finger drag on them moves the player, not the page. */
+  .mp-grip { @apply grid h-10 w-5 shrink-0 cursor-grab touch-none place-items-center rounded-lg text-fg-faint hover:text-fg-muted focus-visible:text-fg; }
+  .miniplayer.is-dragging .mp-grip { @apply cursor-grabbing; }
+  .miniplayer [data-drag-handle] { @apply touch-none select-none; }
   .miniplayer[hidden] { display: none; }
-  html[data-player-open] main { @apply pb-56 lg:pb-32; }
-  html[data-player-open] .lesson-panel-fab,
-  html[data-player-open] .read-resume { @apply bottom-[calc(10rem+env(safe-area-inset-bottom))] lg:bottom-28; }
+  html[data-player-open] main { @apply pb-40 lg:pb-32; }
+  html[data-player-open] .read-resume { @apply bottom-[calc(6rem+env(safe-area-inset-bottom))] lg:bottom-28; }
   .mp-play {
     @apply grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-grad-brand text-on-brand shadow-(--shadow-brand) transition hover:brightness-110 active:scale-95;
   }
@@ -993,14 +1017,39 @@
   .mp-menu > summary { @apply list-none; }
   .mp-menu > summary::-webkit-details-marker { display: none; }
   .mp-menu[open] > summary { @apply bg-surface-2 text-fg; }
+  /* The menu opens above the player, or below it once the player has been dragged into the top half. */
+  .miniplayer[data-vside="down"] .mp-panel { @apply top-12 bottom-auto; }
   .mp-panel {
-    @apply absolute right-0 bottom-12 z-30 flex max-h-[min(60dvh,28rem)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-(--shadow-pop);
+    @apply absolute right-0 bottom-12 z-30 flex max-h-[min(60dvh,28rem)] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-2xl border border-line bg-surface shadow-(--shadow-pop);
   }
-  .mp-chapters { @apply m-0 min-h-0 flex-1 list-none overflow-y-auto overscroll-contain p-1.5; }
+  .mp-chapters { @apply m-0 min-h-0 flex-1 list-none overflow-y-auto overscroll-contain rounded-b-2xl p-1.5; }
+  /* Playback speed menu (_player.html speed_menu): a short list under (or above) its button, current speed marked. */
+  .speed-menu { @apply relative; }
+  .speed-menu > summary { @apply cursor-pointer list-none; }
+  .speed-menu > summary::-webkit-details-marker { display: none; }
+  .speed-menu > summary svg { @apply transition-transform; }
+  .speed-menu[open] > summary { @apply bg-surface-2; }
+  .speed-menu[open] > summary svg { @apply rotate-180; }
+  .speed-options { @apply absolute z-40 flex w-28 flex-col gap-0.5 rounded-xl border border-line bg-surface p-1 shadow-(--shadow-pop); }
+  .speed-menu-down .speed-options { @apply top-full left-0 mt-1.5; }
+  .speed-menu-up .speed-options { @apply right-0 bottom-full mb-2; }
+  .speed-option { @apply flex cursor-pointer items-center rounded-lg px-3 py-1.5 text-left text-sm font-medium tabular-nums text-fg hover:bg-surface-2; }
+  .speed-option[aria-checked="true"] { @apply bg-brand-soft font-semibold text-brand-fg; }
   .mp-chapter { @apply flex w-full cursor-pointer items-baseline gap-3 rounded-lg px-2.5 py-2 text-left text-sm text-fg hover:bg-surface-2; }
   .mp-chapter > span { @apply min-w-0 flex-1; }
   .mp-chapter > time { @apply shrink-0 text-xs tabular-nums text-fg-faint; }
   .mp-chapters > [data-current] .mp-chapter { @apply bg-brand-soft font-semibold text-brand-fg; }
+  .mp-follow[aria-pressed="true"] { @apply bg-brand-soft text-brand-fg hover:bg-brand-soft hover:text-brand-fg; }
+
+  /* Follow along (follow.js): the lesson block being read gets a soft brand tint (a spread shadow, so nothing
+     moves), and the closest sentence in it a stronger one through the CSS Custom Highlight API. */
+  .note-body [data-reading] {
+    @apply rounded-md transition-[background-color,box-shadow] duration-300;
+    background-color: color-mix(in oklab, var(--color-brand-soft) 70%, transparent);
+    box-shadow: 0 0 0 0.35rem color-mix(in oklab, var(--color-brand-soft) 70%, transparent);
+  }
+  .note-body figure[data-reading] { box-shadow: 0 0 0 0.35rem color-mix(in oklab, var(--color-brand) 35%, transparent); background-color: transparent; }
+  ::highlight(casa-reading) { background-color: color-mix(in oklab, var(--color-brand) 22%, transparent); }
 
   /* Watch mode: a full-screen stage over the app (safe-area padded): top bar, the visual as large as fits,
      the spoken sentence, then the transport. */

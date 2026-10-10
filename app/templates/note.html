@@ -59,7 +59,7 @@
 
 {% if equations %}
 {# Formulas registered for this lesson in content/equations.yaml; the full sheet is at /equations. #}
-<details class="disclosure lesson-formulas rise mb-6" style="--i: 2" open data-maths>
+<details class="disclosure lesson-formulas rise mb-6" style="--i: 2" data-maths>
   <summary><span class="flex min-w-0 items-center gap-2.5"><span class="chip chip-sm chip-info">{{ icon("sigma") }}</span> <span>Formulas in this lesson</span> <span class="badge font-normal tabular-nums">{{ equations | length }}</span></span></summary>
   <ul class="formula-list">
     {% for eq in equations %}
@@ -75,32 +75,9 @@
 {% endif %}
 
 {% if note %}
-  {# Pen, highlighter and typed notes live in annotations.js. The toolbar is server-rendered but hidden until the
-     module mounts; strokes are anchored to the article's top-level blocks, so the layer sits over the whole card. #}
+  {# Pen, highlighter and typed notes live in annotations.js. Strokes are anchored to the article's top-level
+     blocks, so the layer sits over the whole card; the pen toolbar is in the lesson bar below. #}
   <div class="ink-host rise" style="--i: 3" data-widget="lesson-annotations" data-sid="{{ sub.id }}">
-    <div class="ink-toolbar" role="toolbar" aria-label="Pen and highlighter" hidden>
-      <div class="ink-group">
-        <button type="button" class="ink-tool" data-ink-tool="pen" aria-pressed="true" title="Pen (Apple Pencil draws, a finger scrolls)">{{ icon("pen", "size-4") }}<span>Pen</span></button>
-        <button type="button" class="ink-tool" data-ink-tool="erase" aria-pressed="false" title="Eraser: touch a stroke to remove it">{{ icon("close", "size-4") }}<span>Erase</span></button>
-      </div>
-      <div class="ink-group" aria-label="Ink colour">
-        {% for c in ["ink-1", "ink-2", "ink-3", "ink-4"] %}<button type="button" class="ink-swatch" style="--ink: var(--color-{{ c }})" data-ink-colour="{{ c }}" aria-pressed="{{ 'true' if loop.first else 'false' }}" aria-label="Colour {{ loop.index }}"></button>{% endfor %}
-      </div>
-      <div class="ink-group" aria-label="Pen width">
-        {% for w, label in [(2, "Fine"), (3, "Medium"), (5, "Thick")] %}<button type="button" class="ink-width" data-ink-width="{{ w }}" aria-pressed="{{ 'true' if w == 3 else 'false' }}" aria-label="{{ label }}"><i style="--w: {{ w }}px"></i></button>{% endfor %}
-      </div>
-      <div class="ink-group">
-        <button type="button" class="ink-tool" data-ink-undo disabled title="Undo (⌘Z)">{{ icon("arrow-left", "size-4") }}<span class="sr-only">Undo</span></button>
-        <button type="button" class="ink-tool" data-ink-redo disabled title="Redo (⇧⌘Z)">{{ icon("arrow-right", "size-4") }}<span class="sr-only">Redo</span></button>
-        <button type="button" class="ink-tool" data-ink-clear disabled title="Remove every stroke on this lesson"><span>Clear</span></button>
-      </div>
-      <div class="ink-group ink-group-modes">
-        <button type="button" class="ink-tool" data-ink-pen-mode aria-pressed="false" title="Let the Pencil tap links and move sliders instead of drawing"><span>Pen selects</span></button>
-        <button type="button" class="ink-tool" data-ink-draw-mode aria-pressed="false" title="Draw with a finger or the mouse too"><span>Finger draws</span></button>
-      </div>
-      <span class="ink-status" aria-live="polite"></span>
-      <span class="ink-orphans text-xs text-warn-fg" hidden></span>
-    </div>
     <article class="note-body p-6 sm:p-10" data-read-target data-lesson-article>{{ note.html | safe }}</article>
     {% if annotations %}<script type="application/json" data-annotations>{{ annotations | tojson }}</script>{% endif %}
   </div>
@@ -148,6 +125,50 @@
 </section>
 
 {{ prev_next(prev, next, note_url) }}
+
+{% if note %}
+{# Lesson bar: a vertical strip of round buttons floating over the page: Listen and Watch (when the lesson is
+   narrated; neither starts playing: Listen loads the mini player paused, Watch opens on its start screen), a pen
+   toggle and Notes. Drag it anywhere by the grip or the bar itself (app.js floaters; the spot is kept as
+   "lessonbar:pos"). The pen toggle opens the pen toolbar as a flyout beside it, on whichever side faces the
+   middle of the screen. The toolbar is server-rendered but hidden (and the toggle with it) until annotations.js
+   mounts; that module wires the buttons and remembers the open state ("inkbar:open"). The last button folds the
+   bar down to itself (app.js, remembered as "lessonbar:collapsed"); folded, it is one round button to drag or
+   tap open. #}
+<div class="lesson-bar" data-lesson-bar data-floater="lessonbar" data-drag-handle>
+  <button type="button" class="lesson-bar-grip" data-floater-grip title="Drag to move (or focus and use the arrow keys)">{{ icon("grip", "size-4") }}<span class="sr-only">Move the lesson bar</span></button>
+  {% if listen %}
+  <button type="button" class="lesson-bar-btn lesson-bar-listen" data-listen="{{ listen | tojson | forceescape }}" data-listen-paused title="{{ 'Listen again' if listen.completed else ('Resume listening' if listen.position else 'Listen') }} · {{ (listen.duration / 60) | minutes_to_hm }}">{{ icon("headphones", "size-4") }}<span class="sr-only">Listen</span></button>
+  <a class="lesson-bar-btn lesson-bar-watch" draggable="false" href="{{ listen.watch_url }}" title="Watch">{{ icon("tv", "size-4") }}<span class="sr-only">Watch</span></a>
+  {% endif %}
+  <button type="button" class="lesson-bar-btn lesson-bar-toggle" data-lesson-bar-toggle aria-controls="ink-toolbar" aria-expanded="false" title="Show the pen tools">{{ icon("pen", "size-4") }}<span class="sr-only">Pen tools</span></button>
+  <button type="button" class="lesson-bar-btn lesson-bar-notes" data-panel-open aria-controls="lesson-panel" aria-expanded="false" title="Notes">{{ icon("notes", "size-4") }}<span class="sr-only">Notes</span></button>
+  <button type="button" class="lesson-bar-btn lesson-bar-collapse" data-floater-collapse aria-expanded="true" title="Collapse the lesson bar">{{ icon("chevron-down", "lesson-bar-fold size-4") }}{{ icon("menu", "lesson-bar-unfold size-4") }}<span class="sr-only">Lesson tools</span></button>
+  <div class="ink-toolbar" id="ink-toolbar" data-no-drag role="toolbar" aria-label="Pen and highlighter" hidden>
+    <div class="ink-group">
+      <button type="button" class="ink-tool" data-ink-tool="pen" aria-pressed="true" title="Pen (Apple Pencil draws, a finger scrolls)">{{ icon("pen", "size-4") }}<span>Pen</span></button>
+      <button type="button" class="ink-tool" data-ink-tool="erase" aria-pressed="false" title="Eraser: touch a stroke to remove it">{{ icon("close", "size-4") }}<span>Erase</span></button>
+    </div>
+    <div class="ink-group" aria-label="Ink colour">
+      {% for c in ["ink-1", "ink-2", "ink-3", "ink-4"] %}<button type="button" class="ink-swatch" style="--ink: var(--color-{{ c }})" data-ink-colour="{{ c }}" aria-pressed="{{ 'true' if loop.first else 'false' }}" aria-label="Colour {{ loop.index }}"></button>{% endfor %}
+    </div>
+    <div class="ink-group" aria-label="Pen width">
+      {% for w, label in [(2, "Fine"), (3, "Medium"), (5, "Thick")] %}<button type="button" class="ink-width" data-ink-width="{{ w }}" aria-pressed="{{ 'true' if w == 3 else 'false' }}" aria-label="{{ label }}"><i style="--w: {{ w }}px"></i></button>{% endfor %}
+    </div>
+    <div class="ink-group">
+      <button type="button" class="ink-tool" data-ink-undo disabled title="Undo (⌘Z)">{{ icon("arrow-left", "size-4") }}<span class="sr-only">Undo</span></button>
+      <button type="button" class="ink-tool" data-ink-redo disabled title="Redo (⇧⌘Z)">{{ icon("arrow-right", "size-4") }}<span class="sr-only">Redo</span></button>
+      <button type="button" class="ink-tool" data-ink-clear disabled title="Remove every stroke on this lesson"><span>Clear</span></button>
+    </div>
+    <div class="ink-group ink-group-modes">
+      <button type="button" class="ink-tool" data-ink-pen-mode aria-pressed="false" title="Let the Pencil tap links and move sliders instead of drawing"><span>Pen selects</span></button>
+      <button type="button" class="ink-tool" data-ink-draw-mode aria-pressed="false" title="Draw with a finger or the mouse too"><span>Finger draws</span></button>
+    </div>
+    <span class="ink-status" aria-live="polite"></span>
+    <span class="ink-orphans text-xs text-warn-fg" hidden></span>
+  </div>
+</div>
+{% endif %}
 </div>{# /.lesson-main #}
 
 {% if note %}
@@ -175,7 +196,6 @@
   </div>
 </aside>
 <div class="lesson-panel-backdrop" data-panel-close></div>
-<button type="button" class="lesson-panel-fab" data-panel-open aria-controls="lesson-panel" aria-expanded="false">{{ icon("pen") }}<span>Notes</span></button>
 {% endif %}
 
 </div>{# /.lesson-layout #}

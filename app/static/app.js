@@ -292,8 +292,9 @@
   });
 
   // Lesson tools panel (note.html): Contents / Notes / Sketch tabs. On wide screens it docks beside the article
-  // (CSS `docked:` variant); otherwise it is a bottom sheet opened by the floating button, closed by the close
-  // button, the backdrop, Escape or following a section link. The chosen tab is remembered ("panel:tab").
+  // (CSS `docked:` variant) and the lesson bar's Notes button switches it to Notes; otherwise it is a bottom sheet
+  // opened by that button, closed by the close button, the backdrop, Escape or following a section link. The
+  // chosen tab is remembered ("panel:tab").
   var PANEL_TABS = ["contents", "notes", "sketch"];
   function lessonPanel() { return document.querySelector("[data-lesson-panel]"); }
   function panelDocked(panel) { return !!panel && getComputedStyle(panel).position === "sticky"; }
@@ -340,7 +341,7 @@
     if (!e.target.closest) return;
     var t;
     if ((t = e.target.closest("[data-panel-tab-btn]"))) setPanelTab(t.dataset.panelTabBtn);
-    else if (e.target.closest("[data-panel-open]")) openPanel();
+    else if (e.target.closest("[data-panel-open]")) { if (panelDocked(lessonPanel())) setPanelTab("notes"); else openPanel(); }
     else if (e.target.closest("[data-panel-close]")) closePanel();
     else if ((t = e.target.closest("[data-lesson-panel] [data-toc-link]")) && !panelDocked(lessonPanel())) closePanel();
   });
@@ -358,6 +359,123 @@
     e.preventDefault();
   });
   window.CasaPanel = { open: openPanel, close: closePanel, setTab: function (name) { setPanelTab(name); } };
+
+  // Floaters: the lesson bar (note.html) and the mini player (base.html), which the reader drags anywhere.
+  // [data-floater="<name>"] is the element; a drag starts on a [data-drag-handle] inside it (the whole lesson bar,
+  // the player's grip and title), never on [data-no-drag] parts or form fields, and a [data-floater-grip] also
+  // takes arrow keys. The spot is kept as fractions of the free space ("<name>:pos") so it survives rotation and
+  // resizes; until moved a floater sits where CSS parks it (the lesson bar beside the docked panel). Each is
+  // kept below the top bar (and the lesson bar above the mini player when that is low
+  // on the screen); data-side / data-vside say which way its flyouts should open, towards the middle.
+  var FLOAT_GAP = 8, FLOAT_STEP = 16;
+  function savedFloatPos(el) {
+    try { var p = JSON.parse(localStorage.getItem(el.dataset.floater + ":pos") || "null"); return p && isFinite(p.x) && isFinite(p.y) ? p : null; } catch (err) { return null; }
+  }
+  function moveFloater(el, x, y) {
+    var w = el.offsetWidth, h = el.offsetHeight, vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    var topbar = document.querySelector(".topbar"), top = Math.max(FLOAT_GAP, (topbar ? topbar.getBoundingClientRect().bottom : 0) + FLOAT_GAP);
+    x = Math.max(FLOAT_GAP, Math.min(vw - w - FLOAT_GAP, x));
+    var bottom = vh - FLOAT_GAP;
+    document.querySelectorAll("[data-miniplayer]").forEach(function (o) {
+      if (o === el) return;
+      var r = o.getBoundingClientRect();
+      if (r.height && r.top > vh / 2 && r.left < x + w && r.right > x) bottom = Math.min(bottom, r.top - FLOAT_GAP);
+    });
+    y = Math.max(top, Math.min(bottom - h, y));
+    el.style.left = x + "px"; el.style.top = y + "px"; el.style.right = "auto"; el.style.bottom = "auto";
+    el.dataset.side = x + w / 2 > vw / 2 ? "left" : "right";
+    el.dataset.vside = y + h / 2 > vh / 2 ? "up" : "down";
+  }
+  function placeFloater(el) {
+    if (!el.getClientRects().length) return;   // hidden (the player with nothing loaded)
+    var pos = savedFloatPos(el), vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    if (pos) { moveFloater(el, pos.x * (vw - el.offsetWidth), pos.y * (vh - el.offsetHeight)); return; }
+    el.style.left = el.style.top = el.style.right = el.style.bottom = "";
+    var r = el.getBoundingClientRect(), panel = lessonPanel();
+    var x = el.hasAttribute("data-lesson-bar") && panelDocked(panel) ? panel.getBoundingClientRect().left - r.width - 3 * FLOAT_GAP / 2 : r.left;
+    moveFloater(el, x, r.top);
+  }
+  // The player first, so the lesson bar is placed against where it now sits.
+  function placeFloaters() {
+    document.querySelectorAll("[data-miniplayer][data-floater]").forEach(placeFloater);
+    document.querySelectorAll("[data-floater]:not([data-miniplayer])").forEach(placeFloater);
+  }
+  function saveFloatPos(el) {
+    var r = el.getBoundingClientRect(), vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    try { localStorage.setItem(el.dataset.floater + ":pos", JSON.stringify({ x: r.left / Math.max(1, vw - r.width), y: r.top / Math.max(1, vh - r.height) })); } catch (err) {}
+  }
+  var floatDrag = null;
+  document.addEventListener("pointerdown", function (e) {
+    var handle = e.target.closest && e.target.closest("[data-drag-handle]");
+    var el = handle && handle.closest("[data-floater]");
+    if (!el || e.target.closest("[data-no-drag], input, select, textarea") || e.button > 0) return;
+    var r = el.getBoundingClientRect();
+    floatDrag = { el: el, id: e.pointerId, sx: e.clientX, sy: e.clientY, x: r.left, y: r.top, moved: false };
+  });
+  document.addEventListener("pointermove", function (e) {
+    var d = floatDrag;
+    if (!d || e.pointerId !== d.id) return;
+    var dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    if (!d.moved) {
+      if (Math.abs(dx) + Math.abs(dy) < 6) return;   // a tap on a button, not a drag
+      d.moved = true;
+      d.el.classList.add("is-dragging");
+      try { d.el.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+    moveFloater(d.el, d.x + dx, d.y + dy);
+    e.preventDefault();
+  });
+  function endFloatDrag(e) {
+    var d = floatDrag;
+    if (!d || e.pointerId !== d.id) return;
+    floatDrag = null;
+    if (!d.moved) return;
+    d.el.classList.remove("is-dragging");
+    saveFloatPos(d.el);
+    // The click that ends a drag is not a press of the button under it.
+    function swallow(ev) { ev.stopPropagation(); ev.preventDefault(); }
+    window.addEventListener("click", swallow, { capture: true, once: true });
+    setTimeout(function () { window.removeEventListener("click", swallow, true); }, 0);
+  }
+  document.addEventListener("pointerup", endFloatDrag);
+  document.addEventListener("pointercancel", endFloatDrag);
+  document.addEventListener("keydown", function (e) {
+    var grip = e.target.closest && e.target.closest("[data-floater-grip]");
+    var step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!grip || !step) return;
+    var el = grip.closest("[data-floater]"), r = el.getBoundingClientRect(), n = e.shiftKey ? 4 * FLOAT_STEP : FLOAT_STEP;
+    moveFloater(el, r.left + step[0] * n, r.top + step[1] * n);
+    saveFloatPos(el);
+    e.preventDefault();
+  });
+  // A [data-floater-collapse] button folds its floater down to just itself (data-collapsed, kept as
+  // "<name>:collapsed"), keeping the floater's bottom edge where it was so the button stays under the finger.
+  function setFloaterCollapsed(el, collapsed) {
+    var btn = el.querySelector("[data-floater-collapse]");
+    el.toggleAttribute("data-collapsed", collapsed);
+    btn.setAttribute("aria-expanded", String(!collapsed));
+    btn.title = collapsed ? "Show the lesson tools" : "Collapse the lesson bar";
+  }
+  function collapseKey(el) { return el.dataset.floater + ":collapsed"; }
+  function restoreCollapsed(root) {
+    root.querySelectorAll("[data-floater-collapse]").forEach(function (btn) {
+      var el = btn.closest("[data-floater]"), saved = null;
+      try { saved = localStorage.getItem(collapseKey(el)); } catch (err) {}
+      setFloaterCollapsed(el, saved === "1");
+    });
+  }
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest && e.target.closest("[data-floater-collapse]");
+    if (!btn) return;
+    var el = btn.closest("[data-floater]"), r = el.getBoundingClientRect(), collapsed = !el.hasAttribute("data-collapsed");
+    setFloaterCollapsed(el, collapsed);
+    try { localStorage.setItem(collapseKey(el), collapsed ? "1" : "0"); } catch (err) {}
+    if (savedFloatPos(el)) { moveFloater(el, r.right - el.offsetWidth, r.bottom - el.offsetHeight); saveFloatPos(el); }
+    else placeFloater(el);
+  });
+  window.addEventListener("resize", placeFloaters);
+  // The mini player showing or hiding changes the room at the bottom (player.js sets html[data-player-open]).
+  new MutationObserver(placeFloaters).observe(document.documentElement, { attributes: true, attributeFilter: ["data-player-open"] });
 
   // Celebrations: an element with data-celebrate ("big" or "small") throws confetti once when it appears.
   // Skipped under reduced motion. Colours come from the theme tokens.
@@ -531,7 +649,7 @@
 
   function init(root) {
     renderMaths(root); mountAll(root); celebrateIn(root); initLessonFilter(root); applyTheme(currentTheme()); syncSidebarToggle();
-    applyFontSize(currentFontSize()); syncPanel();
+    applyFontSize(currentFontSize()); syncPanel(); restoreCollapsed(root); placeFloaters();
     initReading();   // last, so maths and widgets have laid out
     offerResume();
   }

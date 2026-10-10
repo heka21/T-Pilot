@@ -13,6 +13,7 @@ const html = `<!doctype html><html><body>
   </aside>
   <div class="lesson-panel-backdrop" data-panel-close></div>
   <button type="button" data-panel-open aria-expanded="false">Notes</button>
+  <div class="lesson-bar" data-lesson-bar data-floater="lessonbar"><button type="button" data-floater-collapse aria-expanded="true">Fold</button></div>
 </body></html>`;
 const dom = new JSDOM(html, { runScripts: "outside-only", url: "http://localhost/lessons/X/1.1" });
 const { window } = dom;
@@ -49,6 +50,17 @@ check("open adds .is-open", doc.querySelector("[data-lesson-panel]").classList.c
   && doc.querySelector("[data-panel-open]").getAttribute("aria-expanded") === "true");
 doc.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
 check("Escape closes the panel", !doc.querySelector("[data-lesson-panel]").classList.contains("is-open"));
+
+const bar = doc.querySelector("[data-lesson-bar]"), fold = doc.querySelector("[data-floater-collapse]");
+check("lesson bar starts expanded", !bar.hasAttribute("data-collapsed") && fold.getAttribute("aria-expanded") === "true");
+fold.click();
+check("fold button collapses the lesson bar", bar.hasAttribute("data-collapsed") && fold.getAttribute("aria-expanded") === "false"
+  && window.localStorage.getItem("lessonbar:collapsed") === "1");
+bar.removeAttribute("data-collapsed");
+window.dispatchEvent(new window.Event("load"));
+check("collapsed state restored on init", bar.hasAttribute("data-collapsed"));
+fold.click();
+check("fold button expands it again", !bar.hasAttribute("data-collapsed") && window.localStorage.getItem("lessonbar:collapsed") === "0");
 
 window.close();
 if (failures) { console.error(`${failures} check(s) failed`); process.exit(1); }

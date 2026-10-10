@@ -222,10 +222,11 @@
     if (!b) return;
     if (b.hasAttribute("data-listen")) {
       // A lesson's Listen or Watch button: start it now, inside the tap (iOS), then let a Watch link navigate.
+      // data-listen-paused (the lesson bar's Listen) only loads it into the mini player, paused.
       var desc;
       try { desc = JSON.parse(b.getAttribute("data-listen")); } catch (err) { return; }
       var q = b.getAttribute("data-listen-queue");
-      load(desc, { autoplay: true, queue: q ? JSON.parse(q) : undefined });
+      load(desc, { autoplay: !b.hasAttribute("data-listen-paused"), queue: q ? JSON.parse(q) : undefined });
       if (b.tagName !== "A") e.preventDefault();
       return;
     }
@@ -235,12 +236,33 @@
     else if (act === "forward") skip(FORWARD);
     else if (act === "prev") chapter(-1);
     else if (act === "next") chapter(1);
-    else if (act === "speed") cycleSpeed();
+    else if (act === "speed") {
+      var v = parseFloat(b.getAttribute("data-speed"));
+      if (v) setSpeed(v); else cycleSpeed();
+      var menu = b.closest("[data-speed-menu]");
+      if (menu) menu.open = false;
+    }
     else if (act === "stop") stop();
     else if (act === "chapter") seek(parseFloat(b.getAttribute("data-t")) || 0);
     else return;
     e.preventDefault();
   });
+
+  // Speed menus (_player.html): the label shows the current speed and the menu marks it.
+  function markSpeed(root, s) {
+    root.querySelectorAll("[data-speed-label]").forEach(function (el) { el.textContent = (s % 1 ? s : s.toFixed(0)) + "×"; });
+    root.querySelectorAll("[data-speed]").forEach(function (el) {
+      el.setAttribute("aria-checked", String(parseFloat(el.getAttribute("data-speed")) === s));
+    });
+  }
+  // An open player menu closes on a click outside it or on Escape.
+  function closeMenus(except) {
+    document.querySelectorAll("details[data-speed-menu][open], details.mp-menu[open]").forEach(function (d) {
+      if (!except || !d.contains(except)) d.open = false;
+    });
+  }
+  document.addEventListener("click", function (e) { closeMenus(e.target); }, true);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenus(null); });
 
   // The mini player in base.html: shown whenever something is loaded, except on the Watch page (it has its own).
   function bindMini(root) {
@@ -249,10 +271,10 @@
     if (!mini) return;
     var title = mini.querySelector("[data-mp-title]"), sub = mini.querySelector("[data-mp-sub]"),
         bar = mini.querySelector("[data-mp-bar]"), time = mini.querySelector("[data-mp-time]"),
-        speedEl = mini.querySelector("[data-mp-speed]"), chList = mini.querySelector("[data-mp-chapters]"),
+        chList = mini.querySelector("[data-mp-chapters]"),
         lessonLink = mini.querySelector("[data-mp-lesson]"), watchLink = mini.querySelector("[data-mp-watch]"),
         scrub = mini.querySelector("[data-mp-scrub]");
-    var shownSid = null, lastCh = -1;
+    var shownSid = null, lastCh = -1, lastSpeed = null;
     if (scrub) {
       scrub.addEventListener("input", function () { var d = audio.duration || (lesson && lesson.duration) || 0; seek(d * scrub.value / 1000); });
     }
@@ -289,7 +311,7 @@
       if (bar) bar.style.setProperty("--p", d ? (100 * s.time / d).toFixed(2) + "%" : "0%");
       if (scrub && document.activeElement !== scrub) scrub.value = d ? Math.round(1000 * s.time / d) : 0;
       if (time) time.textContent = fmt(s.time) + " / " + fmt(d);
-      if (speedEl) speedEl.textContent = (s.speed % 1 ? s.speed : s.speed.toFixed(0)) + "×";
+      if (s.speed !== lastSpeed) { lastSpeed = s.speed; markSpeed(mini, s.speed); }
     });
   }
 
@@ -304,7 +326,7 @@
     var card = page.querySelector("[data-watch-card]"), cardTitle = page.querySelector("[data-watch-chapter]"),
         caption = page.querySelector("[data-watch-caption]"), bar = page.querySelector("[data-watch-bar]"),
         time = page.querySelector("[data-watch-time]"), cover = page.querySelector("[data-watch-start]"),
-        speedEl = page.querySelector("[data-watch-speed]"), scrub = page.querySelector("[data-watch-scrub]");
+        scrub = page.querySelector("[data-watch-scrub]");
     if (!lesson || lesson.sid !== desc.sid) load(desc, { autoplay: false });
     if (scrub) scrub.addEventListener("input", function () { seek((audio.duration || desc.duration || 0) * scrub.value / 1000); });
 
@@ -313,7 +335,7 @@
       while (lo <= hi) { var mid = (lo + hi) >> 1; if (list[mid].t <= t + 0.05) { ans = mid; lo = mid + 1; } else hi = mid - 1; }
       return ans;
     }
-    var shown = null, lastCap = -2, lastChap = -2, wake = null;
+    var shown = null, lastCap = -2, lastChap = -2, wake = null, lastSpeed = null;
     function wakeLock(on) {
       if (on && !wake && navigator.wakeLock) navigator.wakeLock.request("screen").then(function (w) { wake = w; w.addEventListener("release", function () { wake = null; }); }).catch(function () {});
       if (!on && wake) { wake.release().catch(function () {}); wake = null; }
@@ -354,7 +376,7 @@
       if (bar) bar.style.setProperty("--p", d ? (100 * t / d).toFixed(2) + "%" : "0%");
       if (scrub && document.activeElement !== scrub) scrub.value = d ? Math.round(1000 * t / d) : 0;
       if (time) time.textContent = fmt(t) + " / " + fmt(d);
-      if (speedEl) speedEl.textContent = (s.speed % 1 ? s.speed : s.speed.toFixed(0)) + "×";
+      if (s.speed !== lastSpeed) { lastSpeed = s.speed; markSpeed(page, s.speed); }
     });
     page.addEventListener("click", function (e) {
       if (e.target.closest("[data-watch-fullscreen]")) {

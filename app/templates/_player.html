@@ -1,0 +1,17 @@
+{# Player controls shared by the mini player (base.html) and Watch mode (watch.html); player.js drives them. #}
+{% from "_icons.html" import icon %}
+
+{# Playback speed as a menu of every speed (player.js SPEEDS): the summary shows the current one, the menu marks it.
+   drop="down" opens below the button, "up" above it. #}
+{% macro speed_menu(drop="down", word=true) -%}
+<details class="speed-menu speed-menu-{{ drop }}" data-speed-menu>
+  <summary class="btn-secondary btn-sm" aria-label="Playback speed" title="Playback speed">
+    <span data-speed-label>1×</span>{% if word %} speed{% endif %} {{ icon("chevron-down", "size-3.5") }}
+  </summary>
+  <div class="speed-options" role="menu" aria-label="Playback speed">
+    {%- for s in ["0.8", "1", "1.1", "1.25", "1.5", "1.75", "2"] %}
+    <button type="button" class="speed-option" role="menuitemradio" aria-checked="false" data-player="speed" data-speed="{{ s }}">{{ s }}×</button>
+    {%- endfor %}
+  </div>
+</details>
+{%- endmacro %}
