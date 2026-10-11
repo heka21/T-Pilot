@@ -1,0 +1,159 @@
+<div class="widget" x-data="timeline({
+  duration: 24, loop: false, lvl: 11500, o2: false,
+  // PHFC 2.12: hypoxia is insidious. Early effects: euphoria, over-confidence, lack of self-criticism, a false sense of
+  // security, while judgement, memory and coordination get worse; no breathlessness. The lesson's picture: an hour into
+  // the cruise the pilot feels better than good, has not updated the fuel log, let a radio call slide, and the heading
+  // has wandered ten degrees. Stages by cabin altitude: indifferent to 10,000 ft, compensatory 10,000 to 15,000 ft
+  // (effects after some time). How fast it builds at each level is illustrative.
+  get cap() { return this.o2 ? 0 : this.lvl < 10000 ? 0.05 : this.lvl < 12500 ? 0.5 : 0.65 },
+  get tau() { return this.lvl < 12500 ? 30 : 18 },
+  get min() { return this.t * 60 },
+  imp(m) { return this.cap * (1 - Math.exp(-m / this.tau)) },
+  get I() { return this.imp(this.min) },
+  real(m) { return 1 - this.imp(m) },
+  felt(m) { return Math.min(1.15, 1 + 0.22 * this.imp(m)) },
+  // when the lesson's three slips happen (minutes), or null
+  when(x) { return this.cap > x ? -this.tau * Math.log(1 - x / this.cap) : null },
+  get tLog() { return this.when(0.15) },
+  get tRadio() { return this.when(0.25) },
+  get tHdg() { return this.when(0.35) },
+  get logMissed() { return this.tLog !== null && this.min >= this.tLog },
+  get radioMissed() { return this.tRadio !== null && this.min >= this.tRadio },
+  get drift() { return this.tHdg === null ? 0 : 10 * this.ease(this.seg(this.I, 0.25, 0.35)) },
+  get lastLog() { const stop = this.logMissed ? this.tLog : this.min; return Math.floor(stop / 10) * 10 },
+  get stage() { return this.o2 ? ['Oxygen on', 'ok'] : this.lvl <= 10000 ? ['Indifferent', 'ok'] : ['Compensatory', 'warn'] },
+  get feelText() { const f = this.felt(this.min); return f >= 1.08 ? 'Never better' : f > 1.03 ? 'Good, relaxed' : 'Fine' },
+  get realText() { const r = this.real(this.min); return r > 0.9 ? ['Normal', 'ok'] : r > 0.7 ? ['Slipping', 'warn'] : ['Impaired', 'bad'] },
+  // chart: 0..60 min across x 52..352, 0.3..1.15 up y 230..40
+  X(m) { return 52 + m / 60 * 300 },
+  Y(v) { return 230 - (v - 0.3) / 0.85 * 190 },
+  line(fn) { const pts = []; for (let m = 0; m <= this.min + 0.01; m += 1) pts.push([this.X(m), this.Y(fn(m))]); if (pts.length < 2) pts.push([this.X(0.5), this.Y(fn(0))]); return this.path(pts) },
+  get feltPath() { return this.line((m) => this.felt(m)) },
+  get realPath() { return this.line((m) => this.real(m)) },
+  get gapPath() {
+    const top = [], bot = [];
+    for (let m = 0; m <= this.min + 0.01; m += 1) { top.push([this.X(m), this.Y(this.felt(m))]); bot.unshift([this.X(m), this.Y(this.real(m))]) }
+    return top.length > 1 ? this.path(top.concat(bot)) + ' Z' : '';
+  },
+  get steps() {
+    const s = [{ at: 0, label: 'Level at cruise' }];
+    if (this.tLog !== null) s.push({ at: this.tLog / 60, label: 'Fuel log slips' });
+    if (this.tRadio !== null) s.push({ at: this.tRadio / 60, label: 'Radio call missed' });
+    if (this.tHdg !== null && this.tHdg < 60) s.push({ at: this.tHdg / 60, label: 'Heading wanders' });
+    s.push({ at: 0.98, label: 'An hour in' });
+    return s;
+  },
+  get caption() {
+    if (this.o2 && this.lvl > 10000) return 'On supplemental oxygen the oxygen pressure in your lungs is put back: no slow slide, no false glow. This is why the rules, not your feelings, decide when you use it.';
+    if (this.lvl < 10000) return 'At 9,500 ft, in the indifferent stage, the haemoglobin stays almost fully loaded and thinking holds up. (Night vision is another matter: it fades from about 5,000 ft.)';
+    if (this.min < 5) return 'Levelled at ' + this.fmt(this.lvl) + ' ft above the cloud. You feel good. The body is compensating: breathing and heart rate up a little.';
+    if (this.radioMissed) return 'An observer would see it at once: the fuel log ' + (this.lastLog ? 'stopped ' + this.fmt(this.min - this.lastLog) + ' minutes ago' : 'is empty') + ', a radio call slid by, the heading has wandered ' + this.fmt(this.drift) + '°. Ask the pilot and they would say they are fine, and believe it.';
+    if (this.logMissed) return 'The fuel log is overdue and it does not bother you. Euphoria and over-confidence: the part of the brain that does the checking is the first to suffer.';
+    return 'Nothing feels wrong, and there is no breathlessness: your breathing is driven by carbon dioxide, which has not changed. The effects in the compensatory stage build after some time.';
+  },
+  presets: {
+    'cruise-9500': { lvl: 9500, o2: false, t: 0.98 },
+    'cruise-11500-start': { lvl: 11500, o2: false, t: 0.05 },
+    'cruise-11500-hour': { lvl: 11500, o2: false, t: 0.98 },
+    'cruise-13500': { lvl: 13500, o2: false, t: 0.6 },
+    'oxygen-11500': { lvl: 11500, o2: true, t: 0.98 },
+  },
+})">
+  <svg viewBox="0 0 640 280" role="img" aria-labelledby="hff-title" class="widget-stage">
+    <title id="hff-title">Over an hour's cruise above 10,000 ft without oxygen, how well the pilot feels they are doing rises while how well they are actually doing falls; beside it the slips an observer would see: the fuel log, a missed radio call and the heading wandering</title>
+    <text x="16" y="22" font-size="13" font-weight="600" fill="var(--color-fg)">An hour in the cruise</text>
+    <line x1="52" y1="40" x2="52" y2="230" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="52" y1="230" x2="352" y2="230" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="52" x2="352" :y1="Y(1)" :y2="Y(1)" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="46" :y="Y(1) + 4" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">normal</text>
+    <text x="46" y="234" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">poor</text>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="52" y="248">0</text><text x="152" y="248">20</text><text x="252" y="248">40</text><text x="352" y="248">60 min</text>
+    </g>
+    <path fill="var(--color-bad)" fill-opacity="0.12" :d="gapPath"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2.5" stroke-dasharray="6 4" stroke-linecap="round" :d="feltPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="realPath"/>
+    <circle r="5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2" :cx="X(min)" :cy="Y(felt(min))"/>
+    <circle r="5" fill="var(--color-brand)" :cx="X(min)" :cy="Y(real(min))"/>
+    <line x1="58" y1="264" x2="80" y2="264" stroke="var(--color-info)" stroke-width="2.5" stroke-dasharray="6 4"/>
+    <text x="86" y="268" font-size="12" fill="var(--color-info-fg)">how well you think you are doing</text>
+    <line x1="300" y1="264" x2="322" y2="264" stroke="var(--color-brand)" stroke-width="2.5"/>
+    <text x="328" y="268" font-size="12" fill="var(--color-brand-fg)">how well you really are</text>
+    <text font-size="12" text-anchor="middle" fill="var(--color-bad-fg)" :x="X(min * 0.6)" :y="(Y(felt(min * 0.6)) + Y(real(min * 0.6))) / 2 + 4" x-show="felt(min * 0.6) - real(min * 0.6) > 0.3">the gap you cannot see</text>
+
+    <!-- what you think -->
+    <path d="M400 26 h208 a10 10 0 0 1 10 10 v28 a10 10 0 0 1 -10 10 h-150 l-14 14 l2 -14 h-46 a10 10 0 0 1 -10 -10 v-28 a10 10 0 0 1 10 -10 Z" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25"/>
+    <text x="504" y="56" font-size="14" text-anchor="middle" font-weight="600" fill="var(--color-info-fg)" x-text="feelText === 'Never better' ? '“Never felt better.”' : feelText === 'Good, relaxed' ? '“All going nicely.”' : '“Fine.”'"></text>
+    <!-- what an observer sees -->
+    <text x="400" y="114" font-size="13" font-weight="600" fill="var(--color-fg)">What an observer would see</text>
+    <g font-size="12">
+      <circle cx="408" cy="136" r="7" :fill="logMissed ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <text x="422" y="140" fill="var(--color-fg)" x-text="logMissed ? (lastLog ? 'Fuel log: nothing since ' + lastLog + ' min' : 'Fuel log: nothing written') : 'Fuel log up to date'"></text>
+      <circle cx="408" cy="160" r="7" :fill="radioMissed ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <text x="422" y="164" fill="var(--color-fg)" x-text="radioMissed ? 'Radio call: let it slide' : 'Radio calls answered'"></text>
+      <circle cx="408" cy="184" r="7" :fill="drift >= 9.5 ? 'var(--color-bad)' : drift > 1 ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+      <text x="422" y="188" fill="var(--color-fg)" x-text="'Heading ' + trk(90 + drift) + '°, planned 090°'"></text>
+    </g>
+    <!-- a small heading indicator -->
+    <circle cx="436" cy="236" r="26" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <g :transform="'rotate(' + (-drift) + ' 436 236)'">
+      <line x1="436" y1="212" x2="436" y2="218" stroke="var(--color-fg)" stroke-width="2"/>
+      <text x="436" y="230" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">9</text>
+      <line x1="460" y1="236" x2="455" y2="236" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+      <line x1="412" y1="236" x2="417" y2="236" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    </g>
+    <path d="M436 208 l-5 -8 h10 Z" fill="var(--color-brand)"/>
+    <path d="M436 232 l-5 16 l5 -3 l5 3 Z" fill="var(--color-fg)"/>
+    <text x="472" y="232" font-size="12" fill="var(--color-fg-muted)">heading indicator:</text>
+    <text x="472" y="248" font-size="12" fill="var(--color-fg-muted)" x-text="drift > 1 ? 'the card has turned' : 'on heading'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the hour'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="hff-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Minutes into the cruise">
+    <span class="widget-clock" x-text="fmt(min) + ' min'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="hff-lvl">Cruising level, unpressurised</label>
+      <select id="hff-lvl" class="input" x-model.number="lvl" @change="active = null">
+        <option value="9500">9,500 ft</option>
+        <option value="11500">11,500 ft (over the Darling Range)</option>
+        <option value="13500">13,500 ft</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="hff-o2" class="cursor-pointer"><span>Supplemental oxygen on</span>
+        <input type="checkbox" id="hff-o2" x-model="o2" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">How you feel</dt><dd class="widget-value" x-text="feelText"></dd></div>
+    <div class="widget-readout" :class="realText[1]"><dt class="widget-label">How you are doing</dt><dd class="widget-value"><span x-text="realText[0]"></span><span class="widget-flag bad" x-show="realText[1] === 'bad'">unnoticed</span></dd></div>
+    <div class="widget-readout" :class="stage[1]"><dt class="widget-label">Hypoxia stage</dt><dd class="widget-value" x-text="stage[0]"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Breathless?</dt><dd class="widget-value">No</dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cruise-9500')" :aria-pressed="active === 'cruise-9500'">9,500</button>
+      <button type="button" @click="preset('cruise-11500-start')" :aria-pressed="active === 'cruise-11500-start'">11,500 start</button>
+      <button type="button" @click="preset('cruise-11500-hour')" :aria-pressed="active === 'cruise-11500-hour'">11,500, an hour in</button>
+      <button type="button" @click="preset('cruise-13500')" :aria-pressed="active === 'cruise-13500'">13,500</button>
+      <button type="button" @click="preset('oxygen-11500')" :aria-pressed="active === 'oxygen-11500'">On oxygen</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The two lines move apart: the worse you are doing, the better you feel. Euphoria, over-confidence and the loss of self-criticism hide the slips from the one person who could fix them, and there is no breathlessness to warn you. So the rules and supplemental oxygen decide, not how you feel. The slips are the lesson's; how fast they come at each level is illustrative.</p>
+  <details class="widget-try"><summary>Try it: an hour at 11,500 ft and you feel great. What does the evidence say?</summary><p>Press 11,500, an hour in: the fuel log stopped long ago, a radio call slid by and the heading has wandered ten degrees. The pilot who has hypoxia is very often the last to recognise it; check objective things like the fuel log, not your feelings.</p></details>
+  <details class="widget-try"><summary>Try it: what does supplemental oxygen change?</summary><p>Press On oxygen: the oxygen pressure in the lungs is restored, so the lines stay together. The Part 91 MOS oxygen requirement for unpressurised aircraft starts above 10,000 ft; check the current text for the exact conditions.</p></details>
+</div>

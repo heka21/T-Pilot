@@ -1,0 +1,171 @@
+<div class="widget" x-data="timeline({
+  duration: 22, loop: false,
+  // RBKA 3.8 worked example: bird strike dents the LEFT leading edge; at 3,000 ft in the landing configuration you
+  // slow gradually; at 65 kt full RIGHT aileron is needed to stop a roll to the left (today's minimum controllable
+  // speed); fly the approach at about 75 to 80 kt. Illustrative model: aileron needed = (65 / V)^2 of full travel.
+  vmin: 65,
+  get v() {
+    const t = this.t;
+    if (t < 0.2) return 85;
+    if (t < 0.6) return 85 - 20 * this.at(0.2, 0.6);
+    if (t < 0.66) return 65 - 2 * this.eased(0.6, 0.66);
+    if (t < 0.74) return 63 + 3 * this.eased(0.66, 0.74);
+    return 66 + 14 * this.eased(0.74, 0.95);
+  },
+  get alt() { return 2000 + 1000 * this.eased(0, 0.14) - 100 * this.eased(0.65, 0.74) },
+  get flapDown() { return this.t >= 0.17 },
+  get found() { return this.t >= 0.6 },
+  get need() { return (this.vmin / this.v) ** 2 * 100 },
+  get used() { return Math.min(100, this.need) },
+  // below the minimum the left wing goes down: bank in degrees, positive = left wing down
+  get bank() { return 14 * this.eased(0.6, 0.67) * (1 - this.eased(0.68, 0.75)) },
+  get usedState() { return this.used >= 99.5 ? 'bad' : this.used > 76 ? 'warn' : 'ok' },
+  get bankText() { return this.bank > 1 ? 'Rolling left, ' + this.fmt(this.bank) + '° and growing' : this.bank > 0.2 ? 'Wings coming level' : 'Wings level' },
+  get verdict() {
+    const v = this.v, m = v - this.vmin;
+    if (this.t < 0.6) return { t: this.t < 0.2 ? 'Not known yet: find it by slowing' : 'Keep slowing until the aileron runs out', c: '' };
+    if (v < 64.5) return { t: 'Below the minimum: lower the nose, regain speed', c: 'bad' };
+    if (v < 65.5) return { t: 'The minimum: no aileron left for a gust or a turn', c: 'bad' };
+    if (v < 74.5) return { t: 'Only ' + this.fmt(m) + ' kt above the minimum: not enough', c: 'warn' };
+    return { t: 'Approach speed: ' + this.fmt(m) + ' kt above the 65 kt minimum', c: 'ok' };
+  },
+  steps: [
+    { at: 0, label: 'Climb to 3,000 ft and configure' },
+    { at: 0.2, label: 'Slow gradually' },
+    { at: 0.6, label: 'Full aileron at 65 kt: the minimum' },
+    { at: 0.74, label: 'Back up: approach at 75 to 80 kt' },
+  ],
+  get caption() {
+    const t = this.t;
+    if (t < 0.14) return 'A bird has dented the left wing\'s leading edge. The left wing makes less lift and more drag, so the aeroplane wants to roll left: you hold it level with some right aileron. First, climb to a safe height: 3,000 ft.';
+    if (t < 0.2) return 'At 3,000 ft, set up exactly as you will land: lower the flap you intend to use. The check only means something in the landing configuration.';
+    if (t < 0.6) return 'Slow down gradually. The ailerons weaken as the airflow over them falls, while the damaged wing loses more lift as the angle of attack rises, so more and more right aileron is needed to hold the wings level.';
+    if (t < 0.68 && this.v < 64.5) return 'Below 65 kt even full right aileron cannot hold it: the left wing goes down and the roll grows. This is why you find the edge at 3,000 ft, not on final. Lower the nose and regain speed.';
+    if (t < 0.66) return 'At 65 kt full right aileron only just stops the roll to the left: that is today\'s minimum controllable speed. A knot or two slower and the left wing goes down whatever you do. Do not trust the stall warning: it is set for an undamaged wing.';
+    if (t < 0.74) return 'Lower the nose and let the speed build: the ailerons get their authority back and the wings come level. You have found the edge without going over it at low level.';
+    return 'Add a margin: fly the approach at about 75 to 80 kt. The normal 65 kt approach would sit exactly at the edge, with nothing in hand for a gust or a turn. Longest runway, gentle bank, no flap changes, and expect a longer landing roll.';
+  },
+  // picture: rear view centred at (200, 140); speed tape x 590..630 for 55..95 kt
+  VY(v) { return 300 - (this.clamp(v, 55, 95) - 55) * 6.5 },
+  presets: {
+    'configured-at-3000': { t: 0.19 },
+    'slowing-80kt': { t: 0.3 },
+    'limit-65kt': { t: 0.6 },
+    'below-the-minimum-rolls-left': { t: 0.66 },
+    'approach-75-80': { t: 1 },
+    'do-the-check': { t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="dwc-title" class="widget-stage">
+    <title id="dwc-title">Rear view of a Cessna 152 with a dented left leading edge, the control wheel turned right to hold the wings level, and an airspeed tape: as the aeroplane slows, more right aileron is needed until it runs out at 65 kt</title>
+    <defs>
+      <marker id="dwc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="404" height="228" fill="var(--color-sky-soft)"/>
+    <rect x="404" y="0" width="236" height="340" fill="var(--color-surface)"/>
+    <rect x="0" y="228" width="404" height="112" fill="var(--color-surface)"/>
+    <line x1="0" y1="200" x2="404" y2="200" stroke="var(--color-sky-fg)" stroke-width="1" stroke-dasharray="6 4"/>
+    <text x="396" y="194" font-size="11" text-anchor="end" fill="var(--color-sky-fg)">horizon</text>
+    <text x="12" y="24" font-size="15" font-weight="600" fill="var(--color-fg)" class="num" x-text="fmt(Math.round(alt / 10) * 10) + ' ft'"></text>
+    <text x="12" y="42" font-size="12" fill="var(--color-fg-muted)" x-text="flapDown ? 'landing flap set' : 'climbing to a safe height'"></text>
+    <text x="392" y="24" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">seen from behind</text>
+    <!-- roll from the damage -->
+    <path d="M62 100 A160 160 0 0 0 40 186" fill="none" stroke="var(--color-info)" stroke-width="2" marker-end="url(#dwc-arrow)"/>
+    <text x="12" y="218" font-size="12" fill="var(--color-info)">the damage rolls it left</text>
+    <!-- the C152 from behind (plane tool: rear, scale 2), banked by its wrapper; dent and ailerons drawn on top -->
+    <g :transform="'translate(200 140) rotate(' + (-bank) + ')'">
+      <g transform="translate(0 0) rotate(0) scale(2)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-fg)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="scale(2)">
+        <!-- ailerons: right one up, left one down, by the share of travel used -->
+        <line x1="-46" x2="-25" stroke="var(--color-brand)" stroke-width="1.6" stroke-linecap="round" :y1="-5.4 + used / 100 * 3" :y2="-5.4 + used / 100 * 3"/>
+        <line x1="25" x2="46" stroke="var(--color-brand)" stroke-width="1.6" stroke-linecap="round" :y1="-9.0 - used / 100 * 3" :y2="-9.0 - used / 100 * 3"/>
+        <!-- the dent -->
+        <path d="M-36 -9.2 L-34 -7.4 L-32.5 -8.6 L-31 -7.2 L-29 -9.2 Z" fill="var(--color-bad)" stroke="var(--color-bad)" stroke-width="0.6" stroke-linejoin="round"/>
+      </g>
+      <text x="-70" y="34" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600">aileron down</text>
+      <text x="71" y="-34" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600">aileron up</text>
+    </g>
+    <line x1="135" y1="114" x2="135" y2="88" stroke="var(--color-bad)" stroke-width="1.25"/>
+    <text x="135" y="80" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)">dented leading edge</text>
+
+    <!-- control wheel, turned right -->
+    <text x="70" y="250" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Control wheel</text>
+    <g :transform="'translate(70 288) rotate(' + used * 0.6 + ') scale(0.8)'">
+      <path d="M-34 -6 L-34 10 Q-34 18 -26 18 L26 18 Q34 18 34 10 L34 -6" fill="none" stroke="var(--color-fg)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="-34" y1="-6" x2="34" y2="-6" stroke="var(--color-fg-muted)" stroke-width="3" stroke-linecap="round"/>
+      <circle r="7" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2"/>
+      <line x1="0" y1="-6" x2="0" y2="-16" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text x="70" y="334" font-size="12" text-anchor="middle" class="num" fill="var(--color-fg-muted)" x-text="used > 1 ? 'turned right' : 'centred'"></text>
+    <!-- aileron used / available -->
+    <text x="140" y="262" font-size="12" font-weight="600" fill="var(--color-fg)">Right aileron used / available</text>
+    <rect x="140" y="272" width="240" height="18" rx="4" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="140" y="272" height="18" rx="4" :width="used / 100 * 240"
+      :fill="usedState === 'bad' ? 'var(--color-bad)' : usedState === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    <line x1="380" y1="266" x2="380" y2="296" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="380" y="310" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">full travel</text>
+    <text x="140" y="310" font-size="13" font-weight="700" class="num" :fill="usedState === 'bad' ? 'var(--color-bad-fg)' : usedState === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'"
+      x-text="need > 100.5 ? 'not enough: needs ' + fmt(need) + '%' : fmt(used) + '% used'"></text>
+    <text x="140" y="328" font-size="11" fill="var(--color-fg-faint)" class="num" x-text="'(65 ÷ ' + fmt(v) + ')² = ' + fmt(need) + '%, illustrative'"></text>
+
+    <!-- stall warning lamp: not to be trusted -->
+    <circle cx="426" cy="40" r="9" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <text x="442" y="38" font-size="12" font-weight="600" fill="var(--color-fg)">Stall warning</text>
+    <text x="442" y="53" font-size="11" fill="var(--color-bad-fg)">silent: not to be trusted</text>
+    <!-- airspeed tape -->
+    <text x="610" y="28" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)">IAS</text>
+    <rect x="590" y="36" width="40" height="270" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="590" width="40" fill="var(--color-ok-soft)" :y="VY(80)" :height="VY(75) - VY(80)" :fill-opacity="found ? 1 : 0"/>
+    <rect x="590" width="40" fill="var(--color-bad)" :fill-opacity="found ? 0.25 : 0" :y="VY(65)" :height="VY(55) - VY(65)"/>
+    <g font-size="11" fill="var(--color-fg-muted)" class="num" text-anchor="middle">
+      <text x="610" :y="VY(60) + 4">60</text><text x="610" :y="VY(70) + 4">70</text><text x="610" :y="VY(80) + 4">80</text><text x="610" :y="VY(90) + 4">90</text><text x="610" :y="VY(55) - 2">55</text>
+    </g>
+    <g :opacity="found ? 1 : 0">
+    <line x1="560" x2="598" stroke="var(--color-bad)" stroke-width="2.5" :y1="VY(65)" :y2="VY(65)"/>
+    <text x="556" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-bad-fg)" class="num" :y="VY(65) - 2">65: minimum today</text>
+    <text x="556" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" :y="VY(65) + 13">(also the normal approach)</text>
+    <line x1="560" x2="598" stroke="var(--color-ok)" stroke-width="2.5" :y1="VY(77.5)" :y2="VY(77.5)"/>
+    <text x="556" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-ok-fg)" class="num" :y="VY(77.5) + 4">approach 75 to 80</text>
+    </g>
+    <text x="574" y="250" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" :opacity="found ? 0 : 1">minimum: not found yet</text>
+    <!-- current IAS -->
+    <path fill="var(--color-brand)" stroke="var(--color-brand)" stroke-width="1" stroke-linejoin="round" :d="'M631 ' + VY(v) + ' l8 -8 l0 16 z'"/>
+    <rect x="574" width="56" height="20" rx="4" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2" :y="VY(v) - 10"/>
+    <text x="602" font-size="13" font-weight="700" text-anchor="middle" class="num" fill="var(--color-fg)" :y="VY(v) + 5" x-text="fmt(v) + ' kt'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Do the controllability check'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="dwc-t" min="0" max="1" step="0.002" x-model.number="t" @input="pause()" aria-label="Progress through the controllability check">
+    <span class="widget-clock" x-text="fmt(v) + ' kt'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Indicated airspeed</dt><dd class="widget-value" x-text="fmt(v) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="usedState"><dt class="widget-label">Right aileron used</dt><dd class="widget-value"><span x-text="fmt(used) + '% of full travel'"></span><span class="widget-flag bad" x-show="usedState === 'bad'">none left</span></dd></div>
+    <div class="widget-readout" :class="bank > 1 ? 'bad' : ''"><dt class="widget-label">Wings</dt><dd class="widget-value" x-text="bankText"></dd></div>
+    <div class="widget-readout" :class="verdict.c"><dt class="widget-label">Approach speed margin</dt><dd class="widget-value" x-text="verdict.t"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('configured-at-3000')" :aria-pressed="active === 'configured-at-3000'">Configured at 3,000 ft</button>
+      <button type="button" @click="preset('slowing-80kt')" :aria-pressed="active === 'slowing-80kt'">Slowing, 80 kt</button>
+      <button type="button" @click="preset('limit-65kt')" :aria-pressed="active === 'limit-65kt'">65 kt: full aileron</button>
+      <button type="button" @click="preset('below-the-minimum-rolls-left')" :aria-pressed="active === 'below-the-minimum-rolls-left'">Below it: rolls left</button>
+      <button type="button" @click="preset('approach-75-80')" :aria-pressed="active === 'approach-75-80'">Approach speed</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The slowest safe speed of a damaged aeroplane is found by test, not read from the POH: at a safe height, in the landing configuration, slow down until full control only just holds the wings level. In the lesson's example that is 65 kt with full right aileron, the same as the normal approach speed, so you fly the approach at about 75 to 80 kt instead. The aileron model, (65 ÷ V)² of full travel, the 85 kt starting speed and the bank angles are illustrative; the 65 kt minimum, the 3,000 ft check and the 75 to 80 kt approach are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: why not simply fly the normal 65 kt approach?</summary><p>Press 65 kt: full aileron. At 65 kt all of the right aileron is already in use just to hold the wings level, so a gust, a turn onto final or the flare would have nothing left to answer with. Press Below it to see what a couple of knots less does.</p></details>
+  <details class="widget-try"><summary>Try it: how much aileron is left in hand at 75 and at 80 kt?</summary><p>(65 ÷ 75)² = 0.75 and (65 ÷ 80)² = 0.66 in this model: about three quarters and two thirds of full travel used, leaving a quarter to a third for gusts and turns. That margin is why the lesson adds 10 to 15 kt.</p></details>
+</div>

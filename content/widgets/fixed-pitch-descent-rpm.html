@@ -1,0 +1,160 @@
+<div class="widget" x-data="timeline({
+  duration: 12, loop: false,
+  scen: 'nose',
+  // Fixed-pitch propeller, the lesson's worked example: cruise 2,350 RPM at 100 kt, red line 2,700 RPM; lowering the
+  // nose to 120 kt with the throttle untouched takes the RPM to the red line. Model (illustrative): RPM = throttle
+  // setting + 17.5 RPM per kt above 100 kt, which is what turns +20 kt into +350 RPM.
+  get base() {
+    const e = (a, b) => this.eased(a, b);
+    if (this.scen === 'throttle') return 2350 - 250 * e(0.1, 0.3);
+    if (this.scen === 'recover') return 2350 - 450 * e(0.5, 0.6) + 200 * e(0.86, 0.96);
+    return 2350;
+  },
+  get ias() {
+    const e = (a, b) => this.eased(a, b);
+    if (this.scen === 'throttle') return 100 + 20 * e(0.4, 0.85);
+    if (this.scen === 'recover') return 100 + 20 * e(0.12, 0.45) - 20 * e(0.62, 0.86);
+    return 100 + 20 * e(0.2, 0.75);
+  },
+  get rpm() { return this.base + 17.5 * (this.ias - 100) },
+  get pitch() {
+    const e = (a, b) => this.eased(a, b);
+    if (this.scen === 'throttle') return 5 * e(0.33, 0.43);
+    if (this.scen === 'recover') return 5 * e(0.1, 0.18) - 5 * e(0.62, 0.8);
+    return 5 * e(0.15, 0.25);
+  },
+  get throttleText() { return this.base > 2340 ? 'cruise power' : this.base < 2000 ? 'well back' : 'descent power' },
+  get red() { return this.rpm >= 2695 },
+  get rpmState() { return this.red ? 'bad' : this.rpm >= 2600 ? 'warn' : 'ok' },
+  // tachometer: 1,500 to 3,000 RPM over -120 to +120 degrees about (472, 140)
+  ang(r) { return -120 + (r - 1500) / 1500 * 240 },
+  arc(r0, r1, rad) { const a = this.pol(472, 140, rad, this.ang(r0)), b = this.pol(472, 140, rad, this.ang(r1)); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' A' + rad + ' ' + rad + ' 0 0 1 ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  get needle() { return this.pol(472, 140, 72, this.ang(this.clamp(this.rpm, 1500, 3000))) },
+  // throttle knob: cruise at the top of its slot
+  get knob() { return 78 + (2350 - this.base) / 450 * 110 },
+  get steps() {
+    if (this.scen === 'throttle') return [{ at: 0, label: 'Cruise' }, { at: 0.1, label: 'Throttle back' }, { at: 0.33, label: 'Nose down' }, { at: 1, label: 'Settled' }];
+    if (this.scen === 'recover') return [{ at: 0, label: 'Cruise' }, { at: 0.1, label: 'Nose down' }, { at: 0.45, label: 'Red line' }, { at: 0.5, label: 'Power off' }, { at: 0.62, label: 'Nose up' }, { at: 0.92, label: 'Record it' }];
+    return [{ at: 0, label: 'Cruise' }, { at: 0.15, label: 'Nose down' }, { at: 0.75, label: 'Red line' }];
+  },
+  get caption() {
+    const t = this.t;
+    if (this.scen === 'throttle') {
+      if (t < 0.1) return 'Cruising at 2,350 RPM and 100 kt. This time the left hand moves first.';
+      if (t < 0.33) return 'Throttle back first, to about 2,100 RPM, before the nose moves.';
+      if (t < 0.97) return 'Now lower the nose. The airspeed builds, the blades unload and the RPM rises again, but from the lower starting point.';
+      return 'Settled at 120 kt and about 2,450 RPM: back near the cruise value, well inside the green arc, with the descent you wanted.';
+    }
+    if (this.scen === 'recover') {
+      if (t < 0.1) return 'Cruising at 2,350 RPM and 100 kt.';
+      if (t < 0.45) return 'The nose goes down with the throttle untouched, and the RPM follows the airspeed up.';
+      if (t < 0.5) return 'At the red line. The engine is not making extra power: the propeller, unloaded by the airspeed, is absorbing less of it.';
+      if (t < 0.62) return 'First, reduce power: close the throttle as far as needed. It is immediate and works at any airspeed.';
+      if (t < 0.86) return 'Second, raise the nose smoothly to reduce airspeed: the blades bite harder, load the engine and the RPM falls further. Gently: a sharp pull at high speed overstresses the airframe.';
+      if (t < 0.92) return 'Third, re-establish a normal attitude and power, and next time reduce power before descending.';
+      return 'Fourth, record the exceedance on the maintenance release: the POH or maintenance manual may require an inspection.';
+    }
+    if (t < 0.15) return 'Cruising at 2,350 RPM and 100 kt. You want a 500 ft/min descent and the radio is busy.';
+    if (t < 0.74) return 'Nose down, throttle untouched. The airspeed builds, the helix angle grows, the blades unload, and the engine, meeting less resistance, speeds up.';
+    return 'At 120 kt the RPM has reached the 2,700 red line, before you have finished your radio call. Throttle back, then lower the nose.';
+  },
+  pickScen(s) { this.scen = s; this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'nose-first': { scen: 'nose', t: 0, play: true },
+    'nose-first-at-red-line': { scen: 'nose', t: 1 },
+    'throttle-first': { scen: 'throttle', t: 0, play: true },
+    'throttle-first-settled': { scen: 'throttle', t: 1 },
+    'recover-from-overspeed': { scen: 'recover', t: 0, play: true },
+    'recovered': { scen: 'recover', t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 280" role="img" aria-labelledby="fpd-title" class="widget-stage">
+    <title id="fpd-title">An aeroplane with a fixed-pitch propeller lowering its nose into a descent, beside its tachometer with the green arc and the 2,700 RPM red line and a throttle lever</title>
+    <defs><marker id="fpd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- sky and ground -->
+    <rect x="0" y="0" width="340" height="280" rx="10" fill="var(--color-sky-soft)"/>
+    <path d="M0 232 L340 226 L340 280 L0 280 Z" fill="var(--color-ok)" fill-opacity="0.18"/>
+    <path d="M30 232 L70 214 L110 230 L160 210 L220 229" fill="none" stroke="var(--color-ok)" stroke-opacity="0.5" stroke-width="1.25" stroke-linejoin="round"/>
+    <!-- flight path ahead -->
+    <line stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#fpd-arrow)" :transform="'rotate(' + pitch + ' 170 132)'" x1="212" y1="134" x2="312" y2="134"/>
+    <text x="320" y="60" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="pitch > 2 ? 'descending' : 'level'"></text>
+    <!-- the aeroplane -->
+    <g :transform="'translate(170 130) rotate(' + pitch.toFixed(2) + ')'">
+      <!-- python -m tools.diagrams.plane side scale 1.25 no-gear -->
+<g transform="translate(0 0) rotate(0) scale(1.25)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- airspeed -->
+    <text x="20" y="34" font-size="13" fill="var(--color-fg-muted)">IAS</text>
+    <text x="52" y="34" font-size="18" font-weight="700" class="num" fill="var(--color-fg)" x-text="fmt(ias) + ' kt'"></text>
+    <rect x="20" y="44" width="120" height="6" rx="3" fill="var(--color-surface)"/>
+    <rect x="20" y="44" height="6" rx="3" fill="var(--color-info)" :width="(ias - 80) / 50 * 120"/>
+
+    <!-- tachometer -->
+    <circle cx="472" cy="140" r="96" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path fill="none" stroke="var(--color-ok)" stroke-width="9" :d="arc(2000, 2700, 82)"/>
+    <line stroke="var(--color-bad)" stroke-width="4" stroke-linecap="round" :x1="pol(472, 140, 74, ang(2700)).x" :y1="pol(472, 140, 74, ang(2700)).y" :x2="pol(472, 140, 93, ang(2700)).x" :y2="pol(472, 140, 93, ang(2700)).y"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round">
+      <line x1="394.1" y1="185.0" x2="409.6" y2="176.0"/><line x1="383.4" y1="124.4" x2="393.2" y2="126.1" stroke-width="1"/><line x1="414.1" y1="71.1" x2="425.7" y2="84.8"/>
+      <line x1="472.0" y1="50.0" x2="472.0" y2="60.0" stroke-width="1"/><line x1="529.9" y1="71.1" x2="518.3" y2="84.8"/><line x1="560.6" y1="124.4" x2="550.8" y2="126.1" stroke-width="1"/><line x1="549.9" y1="185.0" x2="534.4" y2="176.0"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" class="num">
+      <text x="423.5" y="172">15</text><text x="436" y="101">20</text><text x="508" y="101">25</text><text x="520.5" y="172">30</text>
+    </g>
+    <text x="472" y="198" font-size="11" fill="var(--color-fg-faint)" text-anchor="middle">dial in hundreds of RPM</text>
+    <line x1="472" y1="140" stroke-width="3.5" stroke-linecap="round" :stroke="red ? 'var(--color-bad)' : 'var(--color-fg)'" :x2="needle.x" :y2="needle.y"/>
+    <circle cx="472" cy="140" r="6" fill="var(--color-fg)"/>
+    <text x="472" y="176" font-size="18" font-weight="700" text-anchor="middle" class="num" :fill="red ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="fmt(Math.round(rpm / 10) * 10)"></text>
+    <text x="472" y="252" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)" x-show="red">RED LINE 2,700</text>
+    <!-- throttle -->
+    <rect x="596" y="70" width="10" height="130" rx="5" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="589" width="24" height="16" rx="4" fill="var(--color-fg)" :y="knob"/>
+    <text x="601" y="58" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">throttle</text>
+    <text x="601" y="218" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">closed</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the descent'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="fpd-t" min="0" max="1" step="0.005" x-model.number="t" @input="pause()" aria-label="Progress of the descent">
+    <span class="widget-clock" x-text="fmt(Math.round(rpm / 10) * 10) + ' RPM'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="fpd-scen">What the pilot does</label>
+      <select id="fpd-scen" class="input" :value="scen" @change="pickScen($event.target.value)">
+        <option value="nose">Nose first, throttle untouched (the wrong way)</option>
+        <option value="throttle">Throttle first, then the nose (the right way)</option>
+        <option value="recover">Recover from an overspeed</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Airspeed</dt><dd class="widget-value" x-text="fmt(ias) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="rpmState">
+      <dt class="widget-label">Engine RPM (red line 2,700)</dt>
+      <dd class="widget-value"><span x-text="fmt(Math.round(rpm / 10) * 10) + ' RPM'"></span><span class="widget-flag bad" x-show="red">red line</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Throttle</dt><dd class="widget-value" x-text="throttleText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('nose-first')" :aria-pressed="active === 'nose-first'">Nose first</button>
+      <button type="button" @click="preset('nose-first-at-red-line')" :aria-pressed="active === 'nose-first-at-red-line'">At the red line</button>
+      <button type="button" @click="preset('throttle-first')" :aria-pressed="active === 'throttle-first'">Throttle first</button>
+      <button type="button" @click="preset('recover-from-overspeed')" :aria-pressed="active === 'recover-from-overspeed'">Recover</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In a fixed-pitch aeroplane the RPM follows the airspeed: nobody touches the throttle, yet lowering the nose from 100 to 120 kt takes 2,350 RPM to the 2,700 red line, because the faster airflow unloads the blades. Throttle back first and the same descent ends near the cruise value. The cure is always less power and less airspeed, in that order, then a note on the maintenance release. The 2,350, 2,100 and 2,700 RPM and 100 to 120 kt are the lesson's illustrative figures; the straight-line link between them and the recovery RPMs are illustrative too.</p>
+  <details class="widget-try"><summary>Try it: why does the RPM rise when nobody touched the throttle?</summary><p>More airspeed swings the helical path forward, so the fixed blade meets the air at a smaller angle of attack and absorbs less torque. The engine's torque is about the same, so it speeds up until the higher RPM restores the balance.</p></details>
+  <details class="widget-try"><summary>Try it: in what order do you fix an overspeed, and why that order?</summary><p>Choose Recover: power off first, because it is immediate and works at any speed; then raise the nose smoothly, because a sharp pull at high speed overstresses the airframe; then normal attitude and power; then record the exceedance on the maintenance release.</p></details>
+</div>

@@ -1,0 +1,339 @@
+<div class="widget" x-data="widget({
+  sc: 'transposed-frequency',
+  done: [],   // checks used, in the order pressed
+  fixed: [],  // fix actions applied
+  last: '',   // the check whose finding is shown
+  checks: [
+    { id: 'power', n: 'Power' }, { id: 'breakers', n: 'Breakers' }, { id: 'frequency', n: 'Frequency' },
+    { id: 'squelch', n: 'Squelch' }, { id: 'audio', n: 'Audio panel' }, { id: 'headset', n: 'Headset' },
+    { id: 'ptt', n: 'Stuck mic' }, { id: 'com2', n: 'COM 2' }, { id: 'range', n: 'Range' },
+  ],
+  // the scenarios, all from PAKC 3.3; faults stay hidden until a check finds them
+  scenarios: {
+    'transposed-frequency': { faults: ['freq'],
+      l1: 'You have left a country strip for the training area and changed frequency.',
+      l2: 'Your call gets no answer, and you have heard nothing for five minutes.',
+      end: 'The radio was never faulty. Reading the active window digit by digit would have caught it before the first call.' },
+    'bringing-it-together': { faults: ['standby', 'phones'],
+      l1: 'Back from a solo in the Jandakot training area, you call the tower at the',
+      l2: 'inbound point and get nothing. You hold clear of the zone, trim and look out.',
+      end: 'Two simple faults stacked on one another, both found by working in order. A loose socket goes on the maintenance release.' },
+    'mic-plug-half-in': { faults: ['mic'],
+      l1: 'You swapped headsets with your instructor before departing Murrayfield. You hear',
+      l2: 'the CTAF clearly, but nobody answers, and a pilot asks if anyone is on the runway.',
+      end: 'The swap disturbed the plug. Until the fix is confirmed, assume nobody has heard you and look out accordingly.' },
+    'wrong-mic-selector': { faults: ['micsel'],
+      l1: 'In a CTAF circuit with both COMs on, you hear everyone clearly,',
+      l2: 'but nobody responds to your broadcasts.',
+      end: 'Both radios were fine: the selectors were not where you thought they were.' },
+    'popped-breaker': { faults: ['cb'],
+      l1: 'In the training area, COM 1 has gone dark and silent on its own.',
+      l2: 'Nothing has been touched.',
+      end: 'A single trip may be a momentary spike, which one reset clears. Had it popped again, you would leave it out.' },
+    'breaker-pops-again': { faults: ['cbbad'],
+      l1: 'Inbound and talking to the tower, the headset goes completely silent.',
+      l2: 'Both COM displays are still lit.',
+      end: '' },
+    'stuck-ptt': { faults: ['ptt'],
+      l1: 'At 3,000 ft over the Avon Valley inbound to Northam, the CTAF that was',
+      l2: 'busy a minute ago falls silent.',
+      end: 'A silent frequency can be a stuck microphone, not a quiet day.' },
+    'behind-the-scarp': { faults: ['terrain'],
+      l1: 'Low behind the Darling Scarp, a coastal-plain station that was readable',
+      l2: 'minutes earlier has gone quiet. Nothing in the cockpit has changed.',
+      end: 'VHF travels in straight lines: climbing, where airspace and cloud allow, extended the line of sight.' },
+    'alternator-failed': { faults: ['alt'],
+      l1: 'Cruising at 4,500 ft east of the Scarp on the way to Northam,',
+      l2: 'a light comes on in the panel. The radio still works, for now.',
+      end: 'The fault-finding found the cause early, which bought time to land with the radio still working.' },
+  },
+  get s() { return this.scenarios[this.sc] },
+  has(f) { return this.s.faults.includes(f) && !this.fixed.includes(f) && !(f === 'cb' && this.fixed.includes('com2')) },
+  // the symptoms follow from the faults still present
+  get rxPath() { return !this.has('cb') && !this.has('cbbad') && !this.has('phones') && !this.has('ptt') },
+  get hearsStations() { return this.rxPath && !this.has('freq') && !this.has('terrain') },
+  get txOk() { return !this.has('cb') && !this.has('cbbad') && !this.has('mic') && !this.has('micsel') && !this.has('ptt') && !this.has('freq') && !this.has('standby') && !this.has('terrain') },
+  get sym() {
+    const st = !this.hearsStations ? ['No', 'bad'] : this.has('standby') ? ['Only the ATIS', 'warn'] : ['Yes', 'ok'];
+    const others = !this.hearsStations || this.has('standby') ? ['No reply heard', 'warn'] : this.txOk ? ['Yes: they answer', 'ok'] : ['No: nobody answers', 'bad'];
+    const alt = this.s.faults.includes('alt');
+    return [
+      { k: 'Hear stations?', v: st[0], c: st[1] },
+      { k: 'Hiss with the squelch open?', v: this.rxPath ? 'Yes' : 'No', c: this.rxPath ? 'ok' : 'bad' },
+      { k: 'Do others hear you?', v: others[0], c: others[1] },
+      { k: 'TX light', v: this.has('ptt') ? 'On, not pressing' : 'Off', c: this.has('ptt') ? 'bad' : 'ok' },
+      { k: 'COM 1 display', v: this.has('cb') ? 'Dark' : 'Lit', c: this.has('cb') ? 'bad' : 'ok' },
+      { k: 'Ammeter', v: !alt ? 'Charging' : this.fixed.includes('alt') ? 'Discharge, load shed' : 'Discharge, low volts', c: !alt ? 'ok' : this.fixed.includes('alt') ? 'warn' : 'bad' },
+    ];
+  },
+  chip(i) { return this.sym[i] },
+  tone(c) { return c === 'ok' ? 'var(--color-ok)' : c === 'warn' ? 'var(--color-warn)' : c === 'bad' ? 'var(--color-bad)' : 'var(--color-line-strong)' },
+  soft(c) { return c === 'ok' ? 'var(--color-ok-soft)' : c === 'warn' ? 'var(--color-warn-soft)' : c === 'bad' ? 'var(--color-bad-soft)' : 'var(--color-surface)' },
+  // what a check finds, in the lesson's words: { s: ok|warn|bad|fixed, text, fix, key }
+  find(id) {
+    const F = (s, text, fix, key) => ({ s: s, text: text, fix: fix || '', key: key || '' });
+    const sc = this.sc, fx = this.fixed;
+    if (id === 'power') {
+      if (sc === 'alternator-failed') return fx.includes('alt')
+        ? F('warn', 'Load shed: non-essential equipment off, one COM left on. The radios will last only as long as the battery, so plan to land at the nearest suitable aerodrome while you can still make your calls.')
+        : F('bad', 'The low voltage light is on and the ammeter shows a discharge: the alternator has failed and the battery is carrying the whole load. The radios will die with it.', 'Load shed: keep one COM', 'alt');
+      if (this.has('cb')) return F('ok', 'Master and avionics master on, ammeter charging, but the COM 1 display is dark. Power reaches the panel, so look for a popped breaker next.');
+      return F('ok', 'Master and avionics master on, COM display lit, ammeter showing a charge. Power is fine.');
+    }
+    if (id === 'breakers') {
+      if (sc === 'popped-breaker' && fx.includes('cb')) return F('fixed', 'Reset once, and it holds: the display lights and the hiss is back.');
+      if (this.has('cb')) return F('bad', 'The COM 1 breaker has popped.', 'Reset it once', 'cb');
+      if (sc === 'popped-breaker') return F('warn', 'The COM 1 breaker is still out. You are working on COM 2: leave it, and write it up after landing.');
+      if (sc === 'breaker-pops-again') return fx.includes('cbbad-tried')
+        ? F('bad', 'It has popped again: leave it out. A second trip means a real fault behind the panel; resetting it again forces current through it and could start an electrical fire. Treat the radio as failed.')
+        : F('bad', 'The audio panel breaker has popped.', 'Reset it once', 'cbbad-tried');
+      return F('ok', 'All breakers in. No tripped circuit.');
+    }
+    if (id === 'frequency') {
+      if (sc === 'transposed-frequency') return fx.includes('freq')
+        ? F('fixed', '126.7 is now in the active window, read digit by digit: hiss, then other traffic.')
+        : F('bad', 'The active window shows 127.6; the frequency you meant to set was 126.7. Transposed digits.', 'Set 126.7', 'freq');
+      if (sc === 'bringing-it-together') return fx.includes('standby')
+        ? F('fixed', 'Tower flipped into the active window.' + (this.has('phones') ? ' You call again and still hear nothing: there is more than one fault.' : ''))
+        : F('bad', 'Tower is in the standby window, the ATIS in the active.', 'Flip it across', 'standby');
+      return F('ok', 'The right frequency is in the active window, read digit by digit.');
+    }
+    if (id === 'squelch') {
+      if (this.has('ptt')) return F('warn', 'No hiss, and the TX light is on: while a radio transmits it cannot receive.');
+      if (!this.rxPath) return F('warn', 'No hiss: the problem is between the radio and your ear. Power to the radio, the breaker, the audio panel selection, the headset or its plugs.');
+      if (!this.hearsStations) return F('ok', 'Hiss but no stations: the receiver, audio panel and headset all work, so the fault is out in front of the radio. The wrong frequency, out of range or shielded by terrain, or nobody talking.');
+      return F('ok', 'Hiss, and stations come through: the receive side works.');
+    }
+    if (id === 'audio') {
+      if (this.has('micsel')) return F('bad', 'Receive is on COM 1, the CTAF, but the MIC selector is on COM 2: your broadcasts are going out on the area frequency.', 'MIC to COM 1', 'micsel');
+      if (sc === 'wrong-mic-selector') return F('fixed', 'MIC and receive both on COM 1 now.');
+      if (sc === 'breaker-pops-again') return F(fx.includes('cbbad-tried') ? 'bad' : 'warn', fx.includes('cbbad-tried') ? 'With its breaker out the audio panel is dead: nothing reaches the headset from either COM. This is the failed link.' : 'The audio panel is dead, its lights out. Look at its breaker.');
+      return F('ok', 'COM 1 selected for both MIC and receive.');
+    }
+    if (id === 'headset') {
+      if (sc === 'bringing-it-together') return fx.includes('phones')
+        ? F('fixed', 'Plug pushed home: the hiss returns, then the tower, asking you to report your position.')
+        : F('bad', 'The headphone plug has worked out of its socket.', 'Push it home', 'phones');
+      if (sc === 'mic-plug-half-in') return fx.includes('mic')
+        ? F('fixed', 'Microphone plug pushed home. Make the call again; until someone answers, assume nobody has heard you.')
+        : F('bad', 'The microphone plug is only half in after the swap.', 'Push it home', 'mic');
+      if (sc === 'breaker-pops-again') return F('ok', 'Plugs fully in. A spare headset, the hand microphone and the cabin speaker are silent too, so it is not the headset.');
+      return F('ok', 'Both plugs fully in, in the correct sockets.');
+    }
+    if (id === 'ptt') {
+      if (sc === 'stuck-ptt') return fx.includes('ptt')
+        ? F('fixed', 'PTT unplugged: the TX light goes out and the traffic is back. You were the reason nobody else could talk.')
+        : F('bad', 'The TX light stays on and you are not pressing the button: the PTT is stuck. You hear nobody, and you are blocking the frequency for everyone.', 'Unplug the PTT', 'ptt');
+      return F('ok', 'The TX light is out when you are not pressing: no stuck microphone.');
+    }
+    if (id === 'com2') {
+      if (sc === 'popped-breaker') return fx.includes('com2')
+        ? F('fixed', 'On COM 2 and talking. COM 2 is a complete second chain, with its own transmitter, receiver and antenna.')
+        : this.has('cb') ? F('ok', 'COM 2 lights up and works: the fault is in COM 1\'s own chain.', 'Change to COM 2', 'com2') : F('ok', 'Not needed: COM 1 is working again.');
+      if (this.has('ptt')) return F('warn', 'Changing radio takes COM 1\'s carrier off this frequency. If the TX light comes on again on COM 2, the PTT itself is stuck: unplug it.');
+      if (this.allFixed) return F('ok', 'Not needed: COM 1 is working.');
+      if (this.has('terrain')) return F('ok', 'COM 2 gives hiss but no stations too: it is not the radio.');
+      if (this.has('alt')) return F('ok', 'Both COMs work, and both now run on the battery: keep only one on.');
+      if (!this.rxPath) return F('warn', 'Still nothing on COM 2: the fault is behind both radios, in the parts they share.');
+      if (this.has('micsel')) return F('ok', 'With COM 2 selected for both MIC and receive, it works: both radios are fine, so look at the selectors.');
+      if (this.has('mic')) return F('ok', 'Still no answer on COM 2: the fault is on the transmit side that both radios share, the microphone plug or the PTT.');
+      return F('ok', 'COM 2 works on its own frequency, so COM 1\'s electronics are probably fine too: read its setting again.');
+    }
+    if (id === 'range') {
+      if (sc === 'behind-the-scarp') return fx.includes('terrain')
+        ? F('fixed', 'Climbing restores the line of sight: the station is readable again.')
+        : F('bad', 'You are low behind the Darling Scarp. VHF is line of sight, like light, and the hill is between you and the station.', 'Climb, if airspace and cloud allow', 'terrain');
+      return F('ok', 'In range and in line of sight of the station: not the cause.');
+    }
+    return F('ok', '');
+  },
+  state(id) { return this.done.includes(id) ? this.find(id).s : 'idle' },
+  ls(i) { return this.state(this.checks[i].id) },
+  get cur() { return this.last ? this.find(this.last) : null },
+  get curFix() { return this.cur && this.cur.fix && !this.fixed.includes(this.cur.key) ? this.cur.fix : '' },
+  get failed() { return this.sc === 'breaker-pops-again' && this.fixed.includes('cbbad-tried') },
+  get allFixed() { return !this.failed && this.s.faults.every((f) => !this.has(f)) },
+  where: { freq: 'frequency', standby: 'frequency', phones: 'headset', mic: 'headset', micsel: 'audio', cb: 'breakers', cbbad: 'breakers', ptt: 'ptt', terrain: 'range', alt: 'power' },
+  get found() { return this.s.faults.filter((f) => this.done.includes(this.where[f]) || (f === 'cb' && this.fixed.includes('com2'))) },
+  get foundText() {
+    const n = this.s.faults.length, k = this.found.length;
+    if (!k) return 'Not found yet';
+    const at = this.found.map((f) => this.checks.findIndex((c) => c.id === this.where[f]) + 1).sort((a, b) => a - b);
+    return (n > 1 ? k + ' of ' + n + ' found, at check ' : 'Found at check ') + at.join(' and ');
+  },
+  get status() {
+    if (this.failed) return ['Failed: radio failure procedure', 'bad'];
+    if (this.s.faults.includes('alt')) return this.fixed.includes('alt') ? ['On battery only: land soon', 'warn'] : ['Working, battery discharging', 'bad'];
+    if (this.allFixed) return ['Working', 'ok'];
+    return ['Not working yet', 'warn'];
+  },
+  check(id) {
+    if (!this.done.includes(id)) this.done = this.done.concat([id]);
+    this.last = id;
+  },
+  apply(key) { if (key && !this.fixed.includes(key)) this.fixed = this.fixed.concat([key]) },
+  get endText() { return this.sc === 'popped-breaker' && !this.fixed.includes('cb') ? 'Write the popped breaker on the maintenance release after landing.' : this.s.end },
+  get caption() {
+    if (!this.last) return 'Fly first: level off or settle into the circuit, trim and look out. Then work along the chain from check 1, one check at a time, looking up between each one.';
+    const i = this.checks.findIndex((c) => c.id === this.last);
+    let t = 'Check ' + (i + 1) + ', ' + this.checks[i].n.toLowerCase() + ': ' + this.cur.text;
+    if (this.failed) return t + ' Stop fault-finding and cope: squawk 7600 if you were talking to ATC, follow the ERSA EMERG radio failure procedure, transmit blind, stay in VMC, land at the most suitable aerodrome, report arrival, and write the defect on the maintenance release.';
+    if (this.allFixed && this.endText) return t + ' ' + this.endText;
+    if (this.curFix) return t + ' Fix it, then look out.';
+    return t + ' Look out, then the next check.';
+  },
+  presets: {
+    'transposed-frequency': { sc: 'transposed-frequency', done: [], fixed: [], last: '' },
+    'bringing-it-together': { sc: 'bringing-it-together', done: [], fixed: [], last: '' },
+    'mic-plug-half-in': { sc: 'mic-plug-half-in', done: [], fixed: [], last: '' },
+    'wrong-mic-selector': { sc: 'wrong-mic-selector', done: [], fixed: [], last: '' },
+    'popped-breaker': { sc: 'popped-breaker', done: [], fixed: [], last: '' },
+    'breaker-pops-again': { sc: 'breaker-pops-again', done: [], fixed: [], last: '' },
+    'stuck-ptt': { sc: 'stuck-ptt', done: [], fixed: [], last: '' },
+    'behind-the-scarp': { sc: 'behind-the-scarp', done: [], fixed: [], last: '' },
+    'alternator-failed': { sc: 'alternator-failed', done: [], fixed: [], last: '' },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="rff-title" class="widget-stage">
+    <title id="rff-title">A radio fault-finding game: the situation and six symptoms at the top, then the radio drawn as a chain of nine links in the order of the routine check, from the battery to the other station. Each link turns green when its check finds nothing wrong, red where the fault is, and green with a tick once it is fixed.</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)" rx="10"/>
+    <!-- the situation -->
+    <text x="16" y="22" font-size="13" fill="var(--color-fg)" x-text="s.l1"></text>
+    <text x="16" y="40" font-size="13" fill="var(--color-fg)" x-text="s.l2"></text>
+    <!-- six symptom chips, written out -->
+    <g>
+      <rect x="16" y="52" width="196" height="40" rx="8" stroke-width="1.25" :fill="soft(chip(0).c)" :stroke="tone(chip(0).c)"/>
+      <text x="26" y="67" font-size="11" fill="var(--color-fg-muted)" x-text="chip(0).k"></text>
+      <text x="26" y="84" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="chip(0).v"></text>
+      <rect x="222" y="52" width="196" height="40" rx="8" stroke-width="1.25" :fill="soft(chip(1).c)" :stroke="tone(chip(1).c)"/>
+      <text x="232" y="67" font-size="11" fill="var(--color-fg-muted)" x-text="chip(1).k"></text>
+      <text x="232" y="84" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="chip(1).v"></text>
+      <rect x="428" y="52" width="196" height="40" rx="8" stroke-width="1.25" :fill="soft(chip(2).c)" :stroke="tone(chip(2).c)"/>
+      <text x="438" y="67" font-size="11" fill="var(--color-fg-muted)" x-text="chip(2).k"></text>
+      <text x="438" y="84" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="chip(2).v"></text>
+      <rect x="16" y="98" width="196" height="40" rx="8" stroke-width="1.25" :fill="soft(chip(3).c)" :stroke="tone(chip(3).c)"/>
+      <text x="26" y="113" font-size="11" fill="var(--color-fg-muted)" x-text="chip(3).k"></text>
+      <text x="26" y="130" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="chip(3).v"></text>
+      <rect x="222" y="98" width="196" height="40" rx="8" stroke-width="1.25" :fill="soft(chip(4).c)" :stroke="tone(chip(4).c)"/>
+      <text x="232" y="113" font-size="11" fill="var(--color-fg-muted)" x-text="chip(4).k"></text>
+      <text x="232" y="130" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="chip(4).v"></text>
+      <rect x="428" y="98" width="196" height="40" rx="8" stroke-width="1.25" :fill="soft(chip(5).c)" :stroke="tone(chip(5).c)"/>
+      <text x="438" y="113" font-size="11" fill="var(--color-fg-muted)" x-text="chip(5).k"></text>
+      <text x="438" y="130" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="chip(5).v"></text>
+    </g>
+    <!-- battery at the start of the chain -->
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" fill="var(--color-surface)" stroke-linejoin="round">
+      <rect x="10" y="182" width="18" height="26" rx="3"/>
+      <rect x="15" y="178" width="8" height="4" rx="1" fill="var(--color-fg-muted)"/>
+    </g>
+    <text x="19" y="200" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">+</text>
+    <!-- the chain: nine links in the order of the routine (even links face on, odd links edge on) -->
+    <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <rect x="37" y="180" width="66" height="30" rx="15" stroke-width="5" :stroke="tone(ls(0))"/>
+      <rect x="99.5" y="190" width="66" height="10" rx="5" stroke-width="3" :stroke="tone(ls(1))" :fill="tone(ls(1))"/>
+      <rect x="162" y="180" width="66" height="30" rx="15" stroke-width="5" :stroke="tone(ls(2))"/>
+      <rect x="224.5" y="190" width="66" height="10" rx="5" stroke-width="3" :stroke="tone(ls(3))" :fill="tone(ls(3))"/>
+      <rect x="287" y="180" width="66" height="30" rx="15" stroke-width="5" :stroke="tone(ls(4))"/>
+      <rect x="349.5" y="190" width="66" height="10" rx="5" stroke-width="3" :stroke="tone(ls(5))" :fill="tone(ls(5))"/>
+      <rect x="412" y="180" width="66" height="30" rx="15" stroke-width="5" :stroke="tone(ls(6))"/>
+      <rect x="474.5" y="190" width="66" height="10" rx="5" stroke-width="3" :stroke="tone(ls(7))" :fill="tone(ls(7))"/>
+      <rect x="537" y="180" width="66" height="30" rx="15" stroke-width="5" :stroke="tone(ls(8))"/>
+    </g>
+    <!-- a broken link shows a gap -->
+    <g fill="var(--color-surface-2)">
+      <rect x="64" y="174" width="12" height="42" x-show="ls(0) === 'bad'"/>
+      <rect x="126.5" y="174" width="12" height="42" x-show="ls(1) === 'bad'"/>
+      <rect x="189" y="174" width="12" height="42" x-show="ls(2) === 'bad'"/>
+      <rect x="251.5" y="174" width="12" height="42" x-show="ls(3) === 'bad'"/>
+      <rect x="314" y="174" width="12" height="42" x-show="ls(4) === 'bad'"/>
+      <rect x="376.5" y="174" width="12" height="42" x-show="ls(5) === 'bad'"/>
+      <rect x="439" y="174" width="12" height="42" x-show="ls(6) === 'bad'"/>
+      <rect x="501.5" y="174" width="12" height="42" x-show="ls(7) === 'bad'"/>
+      <rect x="564" y="174" width="12" height="42" x-show="ls(8) === 'bad'"/>
+    </g>
+    <!-- number badges: a tick once fixed -->
+    <g font-size="12" font-weight="600" text-anchor="middle" class="num">
+      <circle cx="70" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(0) === 'fixed' ? 'ok' : ls(0))" :stroke="tone(ls(0) === 'fixed' ? 'ok' : ls(0))"/>
+      <text x="70" y="164.5" fill="var(--color-fg)" x-text="ls(0) === 'fixed' ? '✓' : '1'"></text>
+      <circle cx="132.5" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(1) === 'fixed' ? 'ok' : ls(1))" :stroke="tone(ls(1) === 'fixed' ? 'ok' : ls(1))"/>
+      <text x="132.5" y="164.5" fill="var(--color-fg)" x-text="ls(1) === 'fixed' ? '✓' : '2'"></text>
+      <circle cx="195" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(2) === 'fixed' ? 'ok' : ls(2))" :stroke="tone(ls(2) === 'fixed' ? 'ok' : ls(2))"/>
+      <text x="195" y="164.5" fill="var(--color-fg)" x-text="ls(2) === 'fixed' ? '✓' : '3'"></text>
+      <circle cx="257.5" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(3) === 'fixed' ? 'ok' : ls(3))" :stroke="tone(ls(3) === 'fixed' ? 'ok' : ls(3))"/>
+      <text x="257.5" y="164.5" fill="var(--color-fg)" x-text="ls(3) === 'fixed' ? '✓' : '4'"></text>
+      <circle cx="320" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(4) === 'fixed' ? 'ok' : ls(4))" :stroke="tone(ls(4) === 'fixed' ? 'ok' : ls(4))"/>
+      <text x="320" y="164.5" fill="var(--color-fg)" x-text="ls(4) === 'fixed' ? '✓' : '5'"></text>
+      <circle cx="382.5" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(5) === 'fixed' ? 'ok' : ls(5))" :stroke="tone(ls(5) === 'fixed' ? 'ok' : ls(5))"/>
+      <text x="382.5" y="164.5" fill="var(--color-fg)" x-text="ls(5) === 'fixed' ? '✓' : '6'"></text>
+      <circle cx="445" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(6) === 'fixed' ? 'ok' : ls(6))" :stroke="tone(ls(6) === 'fixed' ? 'ok' : ls(6))"/>
+      <text x="445" y="164.5" fill="var(--color-fg)" x-text="ls(6) === 'fixed' ? '✓' : '7'"></text>
+      <circle cx="507.5" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(7) === 'fixed' ? 'ok' : ls(7))" :stroke="tone(ls(7) === 'fixed' ? 'ok' : ls(7))"/>
+      <text x="507.5" y="164.5" fill="var(--color-fg)" x-text="ls(7) === 'fixed' ? '✓' : '8'"></text>
+      <circle cx="570" cy="160" r="10" stroke-width="1.5" :fill="soft(ls(8) === 'fixed' ? 'ok' : ls(8))" :stroke="tone(ls(8) === 'fixed' ? 'ok' : ls(8))"/>
+      <text x="570" y="164.5" fill="var(--color-fg)" x-text="ls(8) === 'fixed' ? '✓' : '9'"></text>
+    </g>
+    <!-- link names, alternating rows so they never touch -->
+    <g font-size="12" text-anchor="middle">
+      <text x="70" y="230" :fill="ls(0) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(0) === 'bad' ? 600 : 400">Power</text>
+      <text x="132.5" y="248" :fill="ls(1) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(1) === 'bad' ? 600 : 400">Breakers</text>
+      <text x="195" y="230" :fill="ls(2) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(2) === 'bad' ? 600 : 400">Frequency</text>
+      <text x="257.5" y="248" :fill="ls(3) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(3) === 'bad' ? 600 : 400">Squelch</text>
+      <text x="320" y="230" :fill="ls(4) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(4) === 'bad' ? 600 : 400">Audio panel</text>
+      <text x="382.5" y="248" :fill="ls(5) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(5) === 'bad' ? 600 : 400">Headset</text>
+      <text x="445" y="230" :fill="ls(6) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(6) === 'bad' ? 600 : 400">Stuck mic</text>
+      <text x="507.5" y="248" :fill="ls(7) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(7) === 'bad' ? 600 : 400">COM 2</text>
+      <text x="570" y="230" :fill="ls(8) === 'bad' ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :font-weight="ls(8) === 'bad' ? 600 : 400">Range</text>
+    </g>
+    <!-- the other station at the end of the chain -->
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" fill="none" stroke-linecap="round">
+      <line x1="615" y1="176" x2="615" y2="212"/>
+      <path d="M607 212 L615 196 L623 212"/>
+      <path d="M620 172 q5 5 0 10 M624 168 q8 9 0 18"/>
+    </g>
+    <!-- fly first, always -->
+    <line x1="16" y1="262" x2="624" y2="262" stroke="var(--color-line)" stroke-width="1"/>
+    <g stroke="var(--color-warn)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 282 Q30 271 42 282 Q30 293 18 282 Z"/>
+      <circle cx="30" cy="282" r="3.5" fill="var(--color-warn)"/>
+    </g>
+    <text x="52" y="286.5" font-size="13" font-weight="600" fill="var(--color-fg)">Fly first: level, trimmed, and look out between checks.</text>
+    <text x="624" y="286.5" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="done.length + ' of 9 checks used'"></text>
+  </svg>
+
+  <div class="widget-steps" role="group" aria-label="The routine fault-finding checks, in order">
+    <template x-for="(c, i) in checks" :key="c.id">
+      <button type="button" @click="check(c.id)" :aria-pressed="done.includes(c.id)" x-text="(i + 1) + ' ' + c.n"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-actions" x-show="curFix">
+    <button type="button" class="btn-primary" @click="apply(cur.key)" x-text="curFix"></button>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Checks used</dt><dd class="widget-value" x-text="done.length + ' of 9'"></dd></div>
+    <div class="widget-readout" :class="found.length ? (found.length === s.faults.length ? 'ok' : 'warn') : ''"><dt class="widget-label">Fault</dt><dd class="widget-value" x-text="foundText"></dd></div>
+    <div class="widget-readout" :class="status[1]"><dt class="widget-label">Radio</dt><dd class="widget-value"><span x-text="status[0]"></span><span class="widget-flag bad" x-show="failed">7600</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('transposed-frequency')" :aria-pressed="active === 'transposed-frequency'">New frequency</button>
+      <button type="button" @click="preset('bringing-it-together')" :aria-pressed="active === 'bringing-it-together'">Tower silent</button>
+      <button type="button" @click="preset('mic-plug-half-in')" :aria-pressed="active === 'mic-plug-half-in'">Headset swap</button>
+    </span>
+    <span class="widget-presets">
+      <button type="button" @click="preset('wrong-mic-selector')" :aria-pressed="active === 'wrong-mic-selector'">No responses</button>
+      <button type="button" @click="preset('popped-breaker')" :aria-pressed="active === 'popped-breaker'">Display dark</button>
+      <button type="button" @click="preset('breaker-pops-again')" :aria-pressed="active === 'breaker-pops-again'">Total silence</button>
+    </span>
+    <span class="widget-presets">
+      <button type="button" @click="preset('stuck-ptt')" :aria-pressed="active === 'stuck-ptt'">Quiet CTAF</button>
+      <button type="button" @click="preset('behind-the-scarp')" :aria-pressed="active === 'behind-the-scarp'">Station gone</button>
+      <button type="button" @click="preset('alternator-failed')" :aria-pressed="active === 'alternator-failed'">Panel light</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Almost every "dead radio" here is a plug, a switch, a setting or a breaker, and working along the chain in order finds it. The squelch test halves the search: hiss but no stations puts the fault in front of the radio, no hiss puts it between the radio and your ear. Reset a breaker once only, and fly first: one check, look out, the next check.</p>
+  <details class="widget-try"><summary>Try it: on "Tower silent", why does flipping the frequency not fix it?</summary><p>There are two faults. After the flip you still hear nothing, and opening the squelch gives no hiss, which points behind the radio: the audio panel is set correctly, so check the headset, where the headphone plug has worked out of its socket. Push it home and the tower comes back.</p></details>
+  <details class="widget-try"><summary>Try it: on "Total silence", the breaker pops again after one reset. What now?</summary><p>Leave it out: a second trip means a real fault and a fire risk. Treat the radio as failed: squawk 7600 if you were talking to ATC, follow the ERSA EMERG radio failure procedure, transmit blind, stay in VMC, land at the most suitable aerodrome, report arrival, and write it on the maintenance release.</p></details>
+</div>

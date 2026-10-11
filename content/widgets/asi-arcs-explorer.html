@@ -1,0 +1,179 @@
+<div class="widget" x-data="widget({
+  v: 110, flap: 'up', rough: false, ac: 'dial',
+  // two example aeroplanes, never a real POH: 'dial' is the ASI drawn in BAKC 6.3 (asi-colour-arcs: VS0 45, VS1 50,
+  // one VFE 85, VNO 125, VNE 160; VA 100); 'rbka' is RBKA 4.2's hypothetical aeroplane (VFO 85, VFE 105 for the
+  // first stage and 95 for full flap; flap-load-vs-speed), with RBKA's stall speeds (VS0 50, VS1 55: 1.3 x 50 = the 65 kt approach).
+  speeds: {
+    dial: { vs0: 45, vs1: 50, vfo: 85, vfe1: 85, vfe: 85, va: 100, vno: 125, vne: 160 },
+    rbka: { vs0: 50, vs1: 55, vfo: 85, vfe1: 105, vfe: 95, va: 100, vno: 125, vne: 160 },
+  },
+  get s() { return this.speeds[this.ac] },
+  get twoVfe() { return this.s.vfe1 !== this.s.vfe },
+  cx: 172, cy: 172, R: 132,
+  ang(v) { return (-90 + v * 1.5) * Math.PI / 180 },
+  pt(v, r) { return { x: this.cx + r * Math.cos(this.ang(v)), y: this.cy + r * Math.sin(this.ang(v)) } },
+  arc(v0, v1, r) { const a = this.pt(v0, r), b = this.pt(v1, r); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 ' + ((v1 - v0) * 1.5 > 180 ? 1 : 0) + ' 1 ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  tick(v, r0, r1) { const a = this.pt(v, r0), b = this.pt(v, r1); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  get ticks() { let d = ''; for (let k = 20; k <= 200; k += 10) d += this.tick(k, this.R - (k % 20 ? 38 : 44), this.R - 30) + ' '; return d },
+  lab(k) { return this.pt(k, this.R - 58) },
+  get needle() { return this.pt(this.v, this.R - 40) },
+  get tail() { return this.pt(this.v + 120, 16) },
+  get vfeNow() { return this.flap === 'full' ? this.s.vfe : this.s.vfe1 },
+  get flapOut() { return this.flap !== 'up' },
+  get flapLoad() { return (this.v / this.vfeNow) ** 2 * 100 },
+  get arcName() {
+    const s = this.s, v = this.v;
+    if (v < s.vs0) return { t: 'Below VS0', c: 'bad', k: 0 };
+    if (v < s.vs1) return { t: 'White arc only', c: this.flap === 'full' ? 'warn' : 'bad', k: 1 };
+    if (v <= s.vfe) return { t: 'White and green', c: 'ok', k: 2 };
+    if (v <= s.vno) return { t: 'Green arc', c: 'ok', k: 3 };
+    if (v < s.vne) return { t: 'Yellow arc', c: 'warn', k: 4 };
+    return { t: v > s.vne ? 'Past the red line' : 'Red line, VNE', c: 'bad', k: 5 };
+  },
+  get stall() {
+    const s = this.s, v = this.v;
+    if (v < s.vs0) return 'stalled, any flap';
+    if (v < s.vs1 && this.flap === 'up') return 'stalled, flap up';
+    if (v < s.vs1 && this.flap === 'first') return 'close to the stall';
+    return '';
+  },
+  get moveFlap() { return this.v <= this.s.vfo ? { t: 'Yes, at or below VFO', c: 'ok' } : { t: 'No: above VFO ' + this.s.vfo, c: this.flapOut ? 'warn' : '' } },
+  get flyFlap() {
+    if (!this.flapOut) return { t: this.v <= this.s.vfe ? 'Any stage up to VFE ' + this.s.vfe : this.v <= this.s.vfe1 ? 'First stage only (' + this.s.vfe1 + ')' : 'No flap: above every VFE', c: this.v <= this.s.vfe1 ? 'ok' : '' };
+    return this.v <= this.vfeNow ? { t: 'Yes, below VFE ' + this.vfeNow, c: 'ok' } : { t: 'No: above VFE ' + this.vfeNow, c: 'bad' };
+  },
+  get fullInput() { return this.v <= this.s.va ? { t: 'Stalls first (≤ VA ' + this.s.va + ')', c: 'ok' } : { t: 'Could overstress: above VA', c: 'warn' } },
+  get air() {
+    if (this.v >= this.s.vne) return { t: 'Never: at or past VNE', c: 'bad' };
+    if (this.v > this.s.vno) return this.rough ? { t: 'No: smooth air only', c: 'bad' } : { t: 'Smooth air only, with caution', c: 'warn' };
+    if (this.rough && this.v > this.s.va) return { t: 'Allowed, but slow to about VA', c: 'warn' };
+    return { t: 'Any air (design gusts)', c: 'ok' };
+  },
+  // dragging uses the shared drag() helper from viz.js, which hands over the pointer in viewBox units
+  setNeedle(p) {
+    if (p.x > 340) return;
+    let a = Math.atan2(p.y - this.cy, p.x - this.cx) * 180 / Math.PI + 90;
+    if (a < 0) a += 360;
+    const v = a / 1.5;
+    this.v = Math.round(v > 220 ? 30 : this.clamp(v, 30, 180));
+    this.active = null;
+  },
+  presets: {
+    'white-arc-approach': { ac: 'dial', v: 65, flap: 'full', rough: false },
+    'select-flap-at-vfo': { ac: 'dial', v: 85, flap: 'up', rough: false },
+    'first-stage-at-100': { ac: 'rbka', v: 100, flap: 'first', rough: false },
+    'full-flap-at-112': { ac: 'rbka', v: 112, flap: 'full', rough: false },
+    'turbulence-at-va': { v: 100, flap: 'up', rough: true },
+    'yellow-arc-rough': { v: 140, flap: 'up', rough: true },
+    'yellow-arc-smooth': { v: 140, flap: 'up', rough: false },
+    'red-line': { v: 160, flap: 'up', rough: false },
+  },
+})">
+  <svg viewBox="0 0 640 350" role="img" aria-labelledby="asx-title" class="widget-stage" style="touch-action: none"
+    @pointerdown="drag($event, (p) => setNeedle(p))">
+    <title id="asx-title">An airspeed indicator with the white, green and yellow arcs and the red line; drag the needle to see which arc you are in and what you may do there</title>
+    <!-- dial -->
+    <circle :cx="cx" :cy="cy" :r="R + 8" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2"/>
+    <path fill="none" stroke="var(--color-ok)" stroke-width="13" :d="arc(s.vs1, s.vno, R - 8)"/>
+    <path fill="none" stroke="var(--color-warn)" stroke-width="13" :d="arc(s.vno, s.vne, R - 8)"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="11" :d="arc(s.vs0, s.vfe, R - 23)"/>
+    <path fill="none" stroke="var(--color-surface)" stroke-width="8" :d="arc(s.vs0 + 0.6, s.vfe - 0.6, R - 23)"/>
+    <path stroke="var(--color-bad)" stroke-width="5" :d="tick(s.vne, R - 30, R + 2)"/>
+    <path fill="none" stroke="var(--color-fg)" stroke-width="1.25" :d="ticks"/>
+    <g font-size="12" font-weight="600" fill="var(--color-fg)" text-anchor="middle" class="num">
+      <text :x="lab(20).x" :y="lab(20).y + 5">20</text><text :x="lab(40).x" :y="lab(40).y + 5">40</text><text :x="lab(60).x" :y="lab(60).y + 5">60</text>
+      <text :x="lab(80).x" :y="lab(80).y + 5">80</text><text :x="lab(100).x" :y="lab(100).y + 5">100</text><text :x="lab(120).x" :y="lab(120).y + 5">120</text>
+      <text :x="lab(140).x" :y="lab(140).y + 5">140</text><text :x="lab(160).x" :y="lab(160).y + 5">160</text><text :x="lab(180).x" :y="lab(180).y + 5">180</text>
+    </g>
+    <text font-size="11" font-weight="600" fill="var(--color-fg-muted)" text-anchor="middle" :x="cx" :y="cy - 40">AIRSPEED</text>
+    <text font-size="11" fill="var(--color-fg-muted)" text-anchor="middle" :x="cx" :y="cy - 26">KNOTS</text>
+    <!-- needle -->
+    <line stroke="var(--color-fg)" stroke-width="4" stroke-linecap="round" :x1="tail.x" :y1="tail.y" :x2="needle.x" :y2="needle.y" style="cursor: grab"/>
+    <circle :cx="cx" :cy="cy" r="8" fill="var(--color-fg)"/>
+
+    <!-- key: the arc you are in is highlighted -->
+    <text x="366" y="34" font-size="22" font-weight="700" class="num" :fill="arcName.c === 'bad' ? 'var(--color-bad-fg)' : arcName.c === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-fg)'" x-text="v + ' kt'"></text>
+    <text x="616" y="34" font-size="13" text-anchor="end" fill="var(--color-fg-muted)" x-text="flap === 'up' ? 'flap up' : flap === 'full' ? 'full flap' : 'first stage'"></text>
+    <g>
+      <rect x="356" y="46" width="272" height="36" rx="6" :fill="arcName.k === 1 || arcName.k === 2 ? 'var(--color-brand-soft)' : 'none'"/>
+      <rect x="366" y="52" width="16" height="12" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1"/>
+      <text x="390" y="62" font-size="13" font-weight="700" fill="var(--color-fg)">White arc: flap range</text>
+      <text x="390" y="77" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="'VS0 ' + s.vs0 + ' to VFE ' + s.vfe"></text>
+      <rect x="356" y="84" width="272" height="36" rx="6" :fill="arcName.k === 2 || arcName.k === 3 ? 'var(--color-brand-soft)' : 'none'"/>
+      <rect x="366" y="90" width="16" height="12" fill="var(--color-ok)"/>
+      <text x="390" y="100" font-size="13" font-weight="700" fill="var(--color-fg)">Green arc: normal, any air</text>
+      <text x="390" y="115" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="'VS1 ' + s.vs1 + ' to VNO ' + s.vno"></text>
+      <rect x="356" y="122" width="272" height="36" rx="6" :fill="arcName.k === 4 ? 'var(--color-brand-soft)' : 'none'"/>
+      <rect x="366" y="128" width="16" height="12" fill="var(--color-warn)"/>
+      <text x="390" y="138" font-size="13" font-weight="700" fill="var(--color-fg)">Yellow arc: smooth air only</text>
+      <text x="390" y="153" font-size="12" fill="var(--color-fg-muted)" class="num">VNO 125 to VNE 160</text>
+      <rect x="356" y="160" width="272" height="36" rx="6" :fill="arcName.k === 5 ? 'var(--color-brand-soft)' : 'none'"/>
+      <rect x="366" y="166" width="16" height="12" fill="var(--color-bad)"/>
+      <text x="390" y="176" font-size="13" font-weight="700" fill="var(--color-fg)">Red line: never exceed</text>
+      <text x="390" y="191" font-size="12" fill="var(--color-fg-muted)" class="num">VNE 160</text>
+      <text x="366" y="216" font-size="12" fill="var(--color-fg-faint)" x-text="twoVfe ? 'Not on the dial: VA 100, VFO 85, first-stage' : 'Not on the dial: VA 100.'"></text>
+      <text x="366" y="231" font-size="12" fill="var(--color-fg-faint)" x-text="twoVfe ? 'VFE 105. Example speeds, not your POH.' : 'Example speeds, not your POH.'"></text>
+    </g>
+    <!-- flap load grows with the square of speed -->
+    <g x-show="flapOut">
+      <text x="366" y="258" font-size="13" font-weight="700" fill="var(--color-fg)" x-text="'Air load on the ' + (flap === 'full' ? 'full' : 'first-stage') + ' flap'"></text>
+      <rect x="366" y="268" width="250" height="16" rx="4" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <rect x="366" y="268" height="16" rx="4" :width="Math.min(250, flapLoad / 200 * 250)" :fill="flapLoad > 100.5 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <line x1="491" y1="263" x2="491" y2="289" stroke="var(--color-fg)" stroke-width="2"/>
+      <text x="491" y="303" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="'100% = design load at VFE ' + vfeNow"></text>
+      <text x="366" y="324" font-size="15" font-weight="700" class="num" :fill="flapLoad > 100.5 ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="'(' + v + ' ÷ ' + vfeNow + ')² = ' + fmt(flapLoad) + '%'"></text>
+    </g>
+    <text x="366" y="262" font-size="12" fill="var(--color-fg-faint)" x-show="!flapOut">Lower some flap to see the air load on it.</text>
+    <text x="366" y="340" font-size="12" fill="var(--color-bad-fg)" x-show="stall" x-text="'Below the stall speed: ' + stall"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="asx-v">Indicated airspeed (or drag the needle) <output for="asx-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="asx-v" min="30" max="180" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="asx-flap">Flap</label>
+      <select id="asx-flap" class="input" x-model="flap">
+        <option value="up">Up</option>
+        <option value="first" x-text="'First stage (VFE ' + s.vfe1 + ')'">First stage</option>
+        <option value="full" x-text="'Full (VFE ' + s.vfe + ')'">Full</option>
+      </select>
+      <label for="asx-ac">Example aeroplane</label>
+      <select id="asx-ac" class="input" x-model="ac">
+        <option value="dial">The dial above (one VFE, 85 kt)</option>
+        <option value="rbka">RBKA 4.2's aeroplane (VFO 85, VFE 105 / 95)</option>
+      </select>
+      <label for="asx-rough" class="cursor-pointer mt-2"><span>Rough air</span>
+        <input type="checkbox" id="asx-rough" x-model="rough" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="arcName.c">
+      <dt class="widget-label">Arc</dt>
+      <dd class="widget-value"><span x-text="arcName.t"></span><span class="widget-flag bad" x-show="stall" x-text="stall"></span></dd>
+    </div>
+    <div class="widget-readout" :class="moveFlap.c"><dt class="widget-label">Move the flap now?</dt><dd class="widget-value" x-text="moveFlap.t"></dd></div>
+    <div class="widget-readout" :class="flyFlap.c"><dt class="widget-label" x-text="flapOut ? 'Fly with this flap out?' : 'Flap allowed at this speed'"></dt><dd class="widget-value" x-text="flyFlap.t"></dd></div>
+    <div class="widget-readout" :class="fullInput.c"><dt class="widget-label">Full, abrupt control input</dt><dd class="widget-value" x-text="fullInput.t"></dd></div>
+    <div class="widget-readout" :class="air.c"><dt class="widget-label" x-text="rough ? 'In rough air' : 'Air allowed'"></dt><dd class="widget-value" x-text="air.t"></dd></div>
+    <div class="widget-readout" :class="flapOut ? (flapLoad > 100.5 ? 'bad' : 'ok') : ''">
+      <dt class="widget-label">Load on the flap</dt>
+      <dd class="widget-value"><span x-text="flapOut ? fmt(flapLoad) + '% of design' : 'flap up'"></span><span class="widget-flag bad" x-show="flapOut && flapLoad > 100.5">over VFE</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('white-arc-approach')" :aria-pressed="active === 'white-arc-approach'">Approach, full flap</button>
+      <button type="button" @click="preset('first-stage-at-100')" :aria-pressed="active === 'first-stage-at-100'">First stage at 100 kt</button>
+      <button type="button" @click="preset('full-flap-at-112')" :aria-pressed="active === 'full-flap-at-112'">Full flap at 112 kt</button>
+      <button type="button" @click="preset('turbulence-at-va')" :aria-pressed="active === 'turbulence-at-va'">Turbulence at VA</button>
+      <button type="button" @click="preset('yellow-arc-rough')" :aria-pressed="active === 'yellow-arc-rough'">Yellow arc, rough</button>
+      <button type="button" @click="preset('red-line')" :aria-pressed="active === 'red-line'">Red line</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each arc is a permission. White: flap may be out (VS0 to VFE). Green: any air, clean (VS1 to VNO). Yellow: smooth air only, with caution. Red: never. VA, VFO and any second VFE are not on the dial, so they live in your head and the POH. The air load on extended flap grows with the square of speed, so a little over VFE is a lot over the design load. Example speeds for a light trainer, not your aeroplane.</p>
+  <details class="widget-try"><summary>Try it: rushed on downwind, you select full flap at 112 kt with a full-flap VFE of 95 kt. How much over the design load is the flap?</summary><p>Press Full flap at 112 kt: 112 ÷ 95 = 1.18, and 1.18² = 1.39, so the flap carries about 139% of its design load, 39% over.</p></details>
+  <details class="widget-try"><summary>Try it: at 100 kt with the first stage out (VFO 85, VFE 105 and 95), are you within limits, and may you select full flap?</summary><p>Press First stage at 100 kt: you may fly with that flap (100 is below 105) but may not move it (100 is above VFO 85), and full flap would be over its 95 kt VFE anyway. Slow to 85 kt first.</p></details>
+</div>

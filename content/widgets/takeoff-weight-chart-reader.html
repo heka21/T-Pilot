@@ -1,0 +1,243 @@
+<div class="widget" x-data="widget({
+  pa: 1330, temp: 33, toda: 1100, wind: 13, slope: 1, surface: 'grass', flat: false,
+  // An illustrative take-off weight chart (not a real one) worked the way the workbook charts are: up from the temperature
+  // to the pressure height, across to each reference line, then parallel to the guide lines to the input.
+  // panel 1: temperature 0..45 C across x 60..180, pressure height lines 0..6,000 ft
+  TX(t) { return 60 + t / 45 * 120 },
+  REF(t, pa) { return 150 + pa / 1000 * 20 + t * 1.5 },
+  XT(m) { return 202 + (m - 500) * 0.088 },
+  XW(w) { return 332 + 3 * w },
+  XS(s) { return 439 + 17.5 * s },
+  get XU() { return this.surface === 'grass' ? 546 : 486 },
+  get y1() { return this.REF(this.temp, this.pa) },
+  get y2() { return this.flat ? this.y1 : this.y1 - 0.5 * (this.XT(this.toda) - 202) },
+  get y3() { if (this.flat) return this.y1; const d = this.XW(this.wind) - 332; return d >= 0 ? this.y2 - 0.6 * d : this.y2 - 1.2 * d },
+  get y4() { return this.flat ? this.y1 : this.y3 + 0.6 * (this.XS(this.slope) - 439) },
+  get y5() { return this.flat ? this.y1 : this.y4 + 0.45 * (this.XU - 486) },
+  // the right-hand scale: 1,200 kg at y 60 down to 800 kg at y 340
+  W(y) { return 1200 - (y - 60) / 0.7 },
+  WY(w) { return 60 + (1200 - w) * 0.7 },
+  get runwayKg() { return Math.round(this.W(this.y5) / 5) * 5 },
+  trueY5() {
+    const y2 = this.y1 - 0.5 * (this.XT(this.toda) - 202);
+    const d = this.XW(this.wind) - 332;
+    const y3 = d >= 0 ? y2 - 0.6 * d : y2 - 1.2 * d;
+    return y3 + 0.6 * (this.XS(this.slope) - 439) + 0.45 * (this.XU - 486);
+  },
+  get correctKg() { return Math.round(this.W(this.trueY5()) / 5) * 5 },
+  // climb weight limit: from pressure height and temperature alone (no runway panels)
+  get climbKg() { return Math.round((1200 - (this.y1 - 150) * 3.2) / 5) * 5 },
+  get governs() { return this.climbKg < this.runwayKg ? 'climb' : 'runway' },
+  get permitted() { return Math.min(this.climbKg, this.runwayKg) },
+  c(y) { return this.clamp(y, 60, 340) },
+  get route() {
+    const pts = [[this.TX(this.temp), 340], [this.TX(this.temp), this.y1], [202, this.y1], [this.XT(this.toda), this.y2], [332, this.y2], [this.XW(this.wind), this.y3],
+      [439, this.y3], [this.XS(this.slope), this.y4], [486, this.y4], [this.XU, this.y5], [566, this.y5]];
+    return this.path(pts.map((p) => [p[0], this.c(p[1])]));
+  },
+  get paLine() { return { y1: this.REF(0, this.pa), y2: this.REF(45, this.pa) } },
+  windText(w) { return w === 0 ? 'nil wind' : w > 0 ? w + ' kt headwind' : -w + ' kt tailwind' },
+  slopeText(s) { return s === 0 ? 'level' : Math.abs(s) + '% ' + (s > 0 ? 'up' : 'down') },
+  get caption() {
+    if (this.flat) return 'Drawn straight across, the line ignores the TODA, wind, slope and surface panels: ' + this.fmt(this.runwayKg) + ' kg instead of ' + this.fmt(this.correctKg) + ' kg, ' + this.fmt(Math.abs(this.runwayKg - this.correctKg)) + ' kg out, with nothing on the chart to warn you.';
+    return 'Up from ' + this.temp + '° to ' + this.fmt(this.pa) + ' ft, across to the reference line, then parallel to the guide lines in each panel: TODA ' + this.fmt(this.toda) + ' m, ' + this.windText(this.wind) + ', ' + this.slopeText(this.slope) + ', ' + (this.surface === 'grass' ? 'grass' : 'sealed') + '. Runway-limited weight ' + this.fmt(this.runwayKg) + ' kg.';
+  },
+  presets: {
+    'northam-runway-32': { pa: 1330, temp: 33, toda: 1100, wind: 13, slope: 1, surface: 'grass', flat: false },
+    'northam-drawn-flat': { pa: 1330, temp: 33, toda: 1100, wind: 13, slope: 1, surface: 'grass', flat: true },
+    'cool-sealed-into-wind': { pa: 0, temp: 15, toda: 1100, wind: 13, slope: 0, surface: 'sealed', flat: false },
+    'hot-high-tailwind': { pa: 3000, temp: 40, toda: 1100, wind: -5, slope: 2, surface: 'grass', flat: false },
+  },
+})">
+  <svg viewBox="0 0 640 400" role="img" aria-labelledby="twc-title" class="widget-stage">
+    <title id="twc-title">An illustrative take-off weight chart: a pressure height and temperature grid, then panels for take-off distance available, wind, slope and surface, each with sloping guide lines, ending on a take-off weight scale. A line follows your inputs through every panel</title>
+    <defs><marker id="twc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <text x="20" y="22" font-size="12" font-weight="600" fill="var(--color-warn-fg)">Illustrative chart: the method only. Use the workbook chart or your POH for numbers.</text>
+    <!-- panel frames -->
+    <g fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1">
+      <rect x="30" y="60" width="160" height="280"/><rect x="202" y="60" width="88" height="280"/><rect x="302" y="60" width="90" height="280"/>
+      <rect x="404" y="60" width="70" height="280"/><rect x="486" y="60" width="70" height="280"/>
+    </g>
+    <g font-size="12" font-weight="600" fill="var(--color-fg)" text-anchor="middle">
+      <text x="110" y="52">pressure height</text><text x="246" y="52">TODA</text><text x="347" y="52">wind</text><text x="439" y="52">slope</text><text x="521" y="52">surface</text>
+    </g>
+    <!-- guide lines (generated) -->
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="202.0" y1="76.0" x2="234.0" y2="60.0"/>
+      <line x1="202.0" y1="100.0" x2="282.0" y2="60.0"/>
+      <line x1="202.0" y1="124.0" x2="290.0" y2="80.0"/>
+      <line x1="202.0" y1="148.0" x2="290.0" y2="104.0"/>
+      <line x1="202.0" y1="172.0" x2="290.0" y2="128.0"/>
+      <line x1="202.0" y1="196.0" x2="290.0" y2="152.0"/>
+      <line x1="202.0" y1="220.0" x2="290.0" y2="176.0"/>
+      <line x1="202.0" y1="244.0" x2="290.0" y2="200.0"/>
+      <line x1="202.0" y1="268.0" x2="290.0" y2="224.0"/>
+      <line x1="202.0" y1="292.0" x2="290.0" y2="248.0"/>
+      <line x1="202.0" y1="316.0" x2="290.0" y2="272.0"/>
+      <line x1="202.0" y1="340.0" x2="290.0" y2="296.0"/>
+      <line x1="250.0" y1="340.0" x2="290.0" y2="320.0"/>
+      <line x1="302.0" y1="68.0" x2="308.7" y2="60.0"/>
+      <line x1="302.0" y1="92.0" x2="328.7" y2="60.0"/>
+      <line x1="332.0" y1="80.0" x2="365.3" y2="60.0"/>
+      <line x1="302.0" y1="116.0" x2="332.0" y2="80.0"/>
+      <line x1="332.0" y1="104.0" x2="392.0" y2="68.0"/>
+      <line x1="302.0" y1="140.0" x2="332.0" y2="104.0"/>
+      <line x1="332.0" y1="128.0" x2="392.0" y2="92.0"/>
+      <line x1="302.0" y1="164.0" x2="332.0" y2="128.0"/>
+      <line x1="332.0" y1="152.0" x2="392.0" y2="116.0"/>
+      <line x1="302.0" y1="188.0" x2="332.0" y2="152.0"/>
+      <line x1="332.0" y1="176.0" x2="392.0" y2="140.0"/>
+      <line x1="302.0" y1="212.0" x2="332.0" y2="176.0"/>
+      <line x1="332.0" y1="200.0" x2="392.0" y2="164.0"/>
+      <line x1="302.0" y1="236.0" x2="332.0" y2="200.0"/>
+      <line x1="332.0" y1="224.0" x2="392.0" y2="188.0"/>
+      <line x1="302.0" y1="260.0" x2="332.0" y2="224.0"/>
+      <line x1="332.0" y1="248.0" x2="392.0" y2="212.0"/>
+      <line x1="302.0" y1="284.0" x2="332.0" y2="248.0"/>
+      <line x1="332.0" y1="272.0" x2="392.0" y2="236.0"/>
+      <line x1="302.0" y1="308.0" x2="332.0" y2="272.0"/>
+      <line x1="332.0" y1="296.0" x2="392.0" y2="260.0"/>
+      <line x1="302.0" y1="332.0" x2="332.0" y2="296.0"/>
+      <line x1="332.0" y1="320.0" x2="392.0" y2="284.0"/>
+      <line x1="315.3" y1="340.0" x2="332.0" y2="320.0"/>
+      <line x1="338.7" y1="340.0" x2="392.0" y2="308.0"/>
+      <line x1="378.7" y1="340.0" x2="392.0" y2="332.0"/>
+      <line x1="445.7" y1="60.0" x2="474.0" y2="77.0"/>
+      <line x1="405.7" y1="60.0" x2="474.0" y2="101.0"/>
+      <line x1="404.0" y1="83.0" x2="474.0" y2="125.0"/>
+      <line x1="404.0" y1="107.0" x2="474.0" y2="149.0"/>
+      <line x1="404.0" y1="131.0" x2="474.0" y2="173.0"/>
+      <line x1="404.0" y1="155.0" x2="474.0" y2="197.0"/>
+      <line x1="404.0" y1="179.0" x2="474.0" y2="221.0"/>
+      <line x1="404.0" y1="203.0" x2="474.0" y2="245.0"/>
+      <line x1="404.0" y1="227.0" x2="474.0" y2="269.0"/>
+      <line x1="404.0" y1="251.0" x2="474.0" y2="293.0"/>
+      <line x1="404.0" y1="275.0" x2="474.0" y2="317.0"/>
+      <line x1="404.0" y1="299.0" x2="472.3" y2="340.0"/>
+      <line x1="404.0" y1="323.0" x2="432.3" y2="340.0"/>
+      <line x1="548.2" y1="60.0" x2="556.0" y2="63.5"/>
+      <line x1="494.9" y1="60.0" x2="556.0" y2="87.5"/>
+      <line x1="486.0" y1="80.0" x2="556.0" y2="111.5"/>
+      <line x1="486.0" y1="104.0" x2="556.0" y2="135.5"/>
+      <line x1="486.0" y1="128.0" x2="556.0" y2="159.5"/>
+      <line x1="486.0" y1="152.0" x2="556.0" y2="183.5"/>
+      <line x1="486.0" y1="176.0" x2="556.0" y2="207.5"/>
+      <line x1="486.0" y1="200.0" x2="556.0" y2="231.5"/>
+      <line x1="486.0" y1="224.0" x2="556.0" y2="255.5"/>
+      <line x1="486.0" y1="248.0" x2="556.0" y2="279.5"/>
+      <line x1="486.0" y1="272.0" x2="556.0" y2="303.5"/>
+      <line x1="486.0" y1="296.0" x2="556.0" y2="327.5"/>
+      <line x1="486.0" y1="320.0" x2="530.4" y2="340.0"/>
+    </g>
+    <!-- reference lines -->
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5">
+      <line x1="202" y1="60" x2="202" y2="340"/><line x1="332" y1="60" x2="332" y2="340"/><line x1="439" y1="60" x2="439" y2="340"/><line x1="486" y1="60" x2="486" y2="340"/>
+    </g>
+    <!-- panel 1: pressure height lines -->
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round">
+      <line x1="60" y1="150" x2="180" y2="217.5"/><line x1="60" y1="190" x2="180" y2="257.5"/><line x1="60" y1="230" x2="180" y2="297.5"/><line x1="60" y1="270" x2="180" y2="337.5"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-muted)" text-anchor="end" class="num">
+      <text x="56" y="154">SL</text><text x="56" y="194">2,000</text><text x="56" y="234">4,000</text><text x="56" y="274">6,000</text>
+    </g>
+    <line stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="5 3" x1="60" x2="180" :y1="paLine.y1" :y2="paLine.y2"/>
+    <!-- axis ticks -->
+    <g stroke="var(--color-fg-muted)" stroke-width="1">
+      <line x1="60" y1="340" x2="60" y2="345"/><line x1="100" y1="340" x2="100" y2="345"/><line x1="140" y1="340" x2="140" y2="345"/><line x1="180" y1="340" x2="180" y2="345"/>
+      <line x1="202" y1="340" x2="202" y2="345"/><line x1="246" y1="340" x2="246" y2="345"/><line x1="290" y1="340" x2="290" y2="345"/>
+      <line x1="302" y1="340" x2="302" y2="345"/><line x1="332" y1="340" x2="332" y2="345"/><line x1="362" y1="340" x2="362" y2="345"/><line x1="392" y1="340" x2="392" y2="345"/>
+      <line x1="404" y1="340" x2="404" y2="345"/><line x1="439" y1="340" x2="439" y2="345"/><line x1="474" y1="340" x2="474" y2="345"/>
+      <line x1="486" y1="340" x2="486" y2="345"/><line x1="546" y1="340" x2="546" y2="345"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-muted)" text-anchor="middle" class="num">
+      <text x="60" y="357">0</text><text x="100" y="357">15</text><text x="140" y="357">30</text><text x="183" y="357" text-anchor="end">45</text>
+      <text x="203" y="357" text-anchor="start">500</text><text x="289" y="357" text-anchor="end">1,500</text>
+      <text x="303" y="357" text-anchor="start">10</text><text x="332" y="357">0</text><text x="362" y="357">10</text><text x="391" y="357" text-anchor="end">20</text>
+      <text x="408" y="357">2</text><text x="439" y="357">0</text><text x="471" y="357">2</text>
+      <text x="496" y="357">seal</text><text x="542" y="357">grass</text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle">
+      <text x="120" y="372">temperature °C</text><text x="246" y="372">metres</text><text x="347" y="372">tail · head kt</text><text x="439" y="372">down · up %</text>
+    </g>
+    <!-- weight scale -->
+    <line x1="570" y1="60" x2="570" y2="340" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1">
+      <line x1="570" y1="60" x2="576" y2="60"/><line x1="570" y1="95" x2="574" y2="95"/><line x1="570" y1="130" x2="576" y2="130"/><line x1="570" y1="165" x2="574" y2="165"/>
+      <line x1="570" y1="200" x2="576" y2="200"/><line x1="570" y1="235" x2="574" y2="235"/><line x1="570" y1="270" x2="576" y2="270"/><line x1="570" y1="305" x2="574" y2="305"/><line x1="570" y1="340" x2="576" y2="340"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-muted)" class="num">
+      <text x="580" y="64">1,200</text><text x="580" y="134">1,100</text><text x="580" y="204">1,000</text><text x="580" y="274">900</text><text x="580" y="344">800</text>
+    </g>
+    <text x="604" y="392" font-size="11" fill="var(--color-fg-faint)" text-anchor="middle">kg</text>
+    <!-- climb weight limit mark -->
+    <g x-show="climbKg >= 800 && climbKg <= 1200">
+      <line x1="560" x2="580" stroke="var(--color-info)" stroke-width="3" stroke-linecap="round" :y1="WY(climbKg)" :y2="WY(climbKg)"/>
+    </g>
+    <!-- your line through the chart -->
+    <path fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :stroke="flat ? 'var(--color-bad)' : 'var(--color-brand)'" :d="route"/>
+    <circle r="5" stroke-width="2" fill="var(--color-surface)" :stroke="flat ? 'var(--color-bad)' : 'var(--color-brand)'" cx="570" :cy="c(y5)"/>
+    <g x-show="flat">
+      <circle r="5" fill="var(--color-surface)" stroke="var(--color-ok)" stroke-width="2" stroke-dasharray="3 2" cx="570" :cy="c(trueY5())"/>
+    </g>
+    <text font-size="12" font-weight="700" text-anchor="end" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x="552" :y="c(y5) - 8" :fill="flat ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)'" x-text="fmt(runwayKg) + ' kg'"></text>
+    <text x="20" y="392" font-size="12" fill="var(--color-info)" font-weight="600" class="num" x-text="'Climb weight limit (pressure height and temperature only): ' + fmt(climbKg) + ' kg'"></text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="twc-pa">Pressure height <output for="twc-pa" x-text="fmt(pa) + ' ft'"></output></label>
+      <input type="range" id="twc-pa" min="0" max="6000" step="10" x-model.number="pa" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="twc-temp">Temperature <output for="twc-temp" x-text="temp + ' °C'"></output></label>
+      <input type="range" id="twc-temp" min="0" max="45" step="1" x-model.number="temp" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="twc-toda">TODA <output for="twc-toda" x-text="fmt(toda) + ' m'"></output></label>
+      <input type="range" id="twc-toda" min="500" max="1500" step="10" x-model.number="toda" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="twc-wind">Wind component <output for="twc-wind" x-text="windText(wind)"></output></label>
+      <input type="range" id="twc-wind" min="-10" max="20" step="1" x-model.number="wind" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="twc-slope">Slope in the take-off direction <output for="twc-slope" x-text="slopeText(slope)"></output></label>
+      <input type="range" id="twc-slope" min="-2" max="2" step="0.5" x-model.number="slope" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="twc-surface">Surface</label>
+      <select id="twc-surface" class="input" x-model="surface" @change="active = null">
+        <option value="sealed">Sealed (the baseline)</option>
+        <option value="grass">Grass</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="twc-flat" class="cursor-pointer"><span>Draw straight across the correction panels (the commonest error)</span>
+        <input type="checkbox" id="twc-flat" x-model="flat" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="flat ? 'bad' : ''">
+      <dt class="widget-label">Runway-limited take-off weight</dt>
+      <dd class="widget-value"><span x-text="fmt(runwayKg) + ' kg'"></span><span class="widget-flag bad" x-show="flat" x-text="fmt(Math.abs(runwayKg - correctKg)) + ' kg out'"></span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Climb weight limit</dt><dd class="widget-value" x-text="fmt(climbKg) + ' kg (no runway panels)'"></dd></div>
+    <div class="widget-readout" :class="flat ? 'bad' : 'ok'">
+      <dt class="widget-label">Take off at no more than</dt>
+      <dd class="widget-value" x-text="fmt(permitted) + ' kg, the ' + (governs === 'climb' ? 'climb weight limit' : 'runway limit') + ', and never above the structural MTOW'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('northam-runway-32')" :aria-pressed="active === 'northam-runway-32'">Northam runway 32</button>
+      <button type="button" @click="preset('northam-drawn-flat')" :aria-pressed="active === 'northam-drawn-flat'">Drawn flat</button>
+      <button type="button" @click="preset('cool-sealed-into-wind')" :aria-pressed="active === 'cool-sealed-into-wind'">Cool, sealed, into wind</button>
+      <button type="button" @click="preset('hot-high-tailwind')" :aria-pressed="active === 'hot-high-tailwind'">Hot, high, tailwind</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Enter in the same order every time: pressure height and temperature, then TODA, wind component, slope and surface. In each correction panel the line runs parallel to the guide lines from the reference line to your input; the climb weight limit uses the first panel only. More runway and a headwind raise the weight; heat, height, tailwind, upslope and grass lower it. This chart and its weights are illustrative, built only to show the method: real answers come from the workbook chart or your POH.</p>
+  <details class="widget-try"><summary>Try it: work the Northam inputs (1,330 ft, 33°, TODA 1,100 m, 13 kt headwind, 1% up, grass). Then tick the error box. What changes?</summary><p>The line no longer moves in the TODA, wind, slope and surface panels, so it lands on a different weight with nothing to warn you. In each sloping panel follow the guide lines to the input before carrying straight across.</p></details>
+  <details class="widget-try"><summary>Try it: compare Cool, sealed, into wind with Hot, high, tailwind. Does the answer move the way it should?</summary><p>Yes: the hot, high, tailwind, upslope, grass take-off gives a much lower weight. If a chart answer ever moves the other way, a line went the wrong way in one of the panels.</p></details>
+</div>

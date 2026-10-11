@@ -1,0 +1,149 @@
+<div class="widget" x-data="timeline({
+  b0: 60, hold: false, duration: 12, loop: false,
+  // illustrative hands-off model: lateral stability rolls the aeroplane towards level, the outer wing's extra speed
+  // rolls it further in; the two cancel at a medium bank (bn). rate = K (sin b / sin bn - 1) degrees a second, so a shallow bank
+  // decays towards level and a steep one keeps steepening.
+  bn: 25, K: 1.5,
+  rad(d) { return d * Math.PI / 180 },
+  bankAt(tt) {
+    if (this.hold) return this.b0;
+    let b = this.b0; const n = 120, dt = tt * this.duration / n;
+    for (let i = 0; i < n; i++) { b += this.K * (Math.sin(this.rad(b)) / Math.sin(this.rad(this.bn)) - 1) * dt; if (b > 85) { b = 85; break } if (b < 0) { b = 0; break } }
+    return b;
+  },
+  get bank() { return this.bankAt(this.t) },
+  get zone() { return this.b0 <= 20 ? 'shallow' : this.b0 <= 30 ? 'medium' : 'steep' },
+  // the turn at 90 kt TAS (a level turn, so capped at 70° once it winds into the dive): radius from r = V² / (g tan θ); C152 span 10.2 m, so each tip is 5.1 m from the centre line
+  get r() { const v = 90 * 0.5144; return v * v / (9.81 * Math.tan(this.rad(Math.min(70, Math.max(this.bank, 1))))) },
+  get outer() { return 90 * (this.r + 5.1) / this.r },
+  get inner() { return 90 * (this.r - 5.1) / this.r },
+  get diffPct() { return (this.outer / this.inner - 1) * 100 },
+  // lift arrows, the difference exaggerated 5 times so it can be seen
+  get liftOut() { return 56 * (1 + 5 * (this.outer / 90 - 1)) },
+  get liftIn() { return 56 * (1 + 5 * (this.inner / 90 - 1)) },
+  get trend() { const d = this.bankAt(Math.min(1, this.t + 0.02)) - this.bank; return this.hold ? 0 : d },
+  get spiral() { return !this.hold && this.bank >= 75 },
+  get aileron() { return this.zone === 'shallow' ? 'A little into the turn' : this.zone === 'medium' ? 'About neutral' : 'A little against the turn' },
+  // the control wheel turns left (into this left turn) for a shallow bank, right (against it) for a steep one
+  get wheel() { return this.hold ? (this.zone === 'shallow' ? -18 : this.zone === 'medium' ? 0 : 18) : 0 },
+  get steps() { return [{ at: 0, label: 'Bank set' }, { at: 0.04, label: 'Hands off' }, { at: 0.85, label: this.zone === 'steep' ? 'Spiral starts' : this.zone === 'shallow' ? 'Back towards level' : 'Still at the bank' }] },
+  get caption() {
+    if (this.hold) {
+      if (this.zone === 'shallow') return 'Shallow turn: the aeroplane\'s lateral stability is stronger than the tiny tip-speed difference, so you hold a little aileron into the turn to stop it rolling out.';
+      if (this.zone === 'medium') return 'Medium turn: stability and the overbanking tendency roughly cancel, so the aeroplane stays where you put it with the aileron about neutral.';
+      return 'Steep turn: the outer wing\'s extra speed wins, so you hold a little aileron against the turn. Check the bank with aileron rather than pulling harder.';
+    }
+    if (this.t < 0.03) return 'Bank set at ' + this.b0 + '° in a level left turn. Now let go of the ailerons and watch what the bank does.';
+    if (this.zone === 'shallow') return 'Hands off in a shallow turn the bank slowly washes out: lateral stability beats the outer wing\'s small extra speed, and the aeroplane rolls back towards level.';
+    if (this.zone === 'medium') return 'Hands off in a medium turn the two effects roughly cancel, and the aeroplane holds its bank.';
+    if (this.spiral) return 'Left alone the steep turn has wound in: the bank is past 75°, the nose has dropped and the speed is building. This is the start of a spiral dive.';
+    return 'Hands off in a steep turn the outer wing, flying the bigger circle, is faster and makes more lift: the bank keeps increasing and the nose starts to drop.';
+  },
+  presets: {
+    'shallow-hands-off': { b0: 15, hold: false, t: 0.7 },
+    'medium-hands-off': { b0: 25, hold: false, t: 0.7 },
+    'steep-60-hands-off': { b0: 60, hold: false, t: 0.45 },
+    'steep-winds-into-spiral': { b0: 60, hold: false, t: 1 },
+    'steep-held-with-opposite-aileron': { b0: 60, hold: true, t: 0.7 },
+    'shallow-held-into-turn': { b0: 15, hold: true, t: 0.7 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="obt-title" class="widget-stage">
+    <title id="obt-title">An aeroplane in a level left turn seen from behind, with a lift arrow on each wing; the outer wing flies the bigger circle, so it is faster and makes more lift. Hands off, a shallow turn rolls back towards level and a steep turn keeps steepening</title>
+    <defs>
+      <marker id="obt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="420" height="300" fill="var(--color-sky-soft)"/>
+    <line x1="0" y1="250" x2="420" y2="250" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="14" y="270" font-size="12" fill="var(--color-fg-muted)">horizon</text>
+    <text x="14" y="24" font-size="13" fill="var(--color-fg-muted)">From behind: a level turn to the left</text>
+    <!-- bank arc and figure -->
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"
+      :d="'M330 150 A120 120 0 0 0 ' + (210 + 120 * Math.cos(rad(bank))).toFixed(1) + ' ' + (150 - 120 * Math.sin(rad(bank))).toFixed(1)"/>
+    <line x1="210" y1="150" x2="345" y2="150" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="352" y="155" font-size="15" font-weight="600" class="num" fill="var(--color-fg)" x-text="fmt(bank) + '°'"></text>
+    <!-- the aeroplane, banked left (python -m tools.diagrams.plane rear, scale 2) -->
+    <g :transform="'translate(210 150) rotate(' + (-bank).toFixed(2) + ')'">
+      <g transform="translate(0 0) rotate(0) scale(2)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-fg)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <!-- lift on each wing, perpendicular to the wing: inner (left) and outer (right) -->
+      <line x1="-60" y1="-20" x2="-60" :y2="-20 - liftIn" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#obt-arrow)"/>
+      <line x1="60" y1="-20" x2="60" :y2="-20 - liftOut" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#obt-arrow)"/>
+    </g>
+    <!-- labels, upright and out of the way -->
+    <text x="14" y="236" font-size="12" fill="var(--color-info)" font-weight="600">inner wing: slower</text>
+    <text x="406" y="236" font-size="12" fill="var(--color-brand-fg)" font-weight="600" text-anchor="end">outer wing: faster, more lift</text>
+    <!-- roll tendency, hands off -->
+    <g x-show="!hold && Math.abs(trend) > 0.05">
+      <path fill="none" stroke-width="2.5" stroke-linecap="round" marker-end="url(#obt-arrow)" :stroke="trend > 0 ? 'var(--color-bad)' : 'var(--color-ok)'"
+        :d="trend > 0 ? 'M396 96 A28 28 0 0 0 344 96' : 'M344 96 A28 28 0 0 1 396 96'"/>
+      <text x="370" y="120" font-size="13" font-weight="600" text-anchor="middle" :fill="trend > 0 ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="trend > 0 ? 'rolling further in' : 'rolling out'"></text>
+    </g>
+    <text x="210" y="290" font-size="12" fill="var(--color-fg-faint)" text-anchor="middle">lift difference drawn 5 times larger than it is</text>
+    <!-- right panel: tip speeds and the aileron -->
+    <rect x="420" y="0" width="220" height="300" fill="var(--color-surface)"/>
+    <line x1="420" y1="0" x2="420" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="530" y="26" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Wingtip speed at 90 kt</text>
+    <g font-size="12" class="num">
+      <text x="436" y="54" fill="var(--color-brand-fg)">outer tip</text>
+      <rect x="436" y="60" height="14" rx="3" fill="var(--color-brand)" :width="Math.max(4, (outer - 80) * 9)"/>
+      <text :x="444 + Math.max(4, (outer - 80) * 9)" y="72" fill="var(--color-fg)" x-text="fmt(outer, 1) + ' kt'"></text>
+      <text x="436" y="96" fill="var(--color-info)">inner tip</text>
+      <rect x="436" y="102" height="14" rx="3" fill="var(--color-info)" :width="Math.max(4, (inner - 80) * 9)"/>
+      <text :x="444 + Math.max(4, (inner - 80) * 9)" y="114" fill="var(--color-fg)" x-text="fmt(inner, 1) + ' kt'"></text>
+    </g>
+    <text x="436" y="136" font-size="12" fill="var(--color-fg-faint)">bars start at 80 kt</text>
+    <text x="530" y="162" font-size="13" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'outer ' + fmt(diffPct, 1) + '% faster'"></text>
+    <!-- control wheel -->
+    <text x="530" y="196" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Aileron you hold</text>
+    <g :transform="'rotate(' + wheel + ' 530 246)'">
+      <path d="M494 246 Q494 222 530 222 Q566 222 566 246" fill="none" stroke="var(--color-fg)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="494" y1="246" x2="566" y2="246" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="530" y1="246" x2="530" y2="262" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text x="530" y="288" font-size="12" text-anchor="middle" font-weight="600" :fill="hold ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" x-text="hold ? aileron : 'hands off'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Let go and watch'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="obt-t" min="0" max="1" step="0.002" x-model.number="t" @input="pause()" aria-label="Time after letting go">
+    <span class="widget-clock" x-text="fmt(bank) + '° bank'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="obt-b0">Bank you set <output for="obt-b0" x-text="b0 + '° (' + zone + ')'"></output></label>
+      <input type="range" id="obt-b0" min="10" max="60" step="1" x-model.number="b0" @input="t = 0; pause()">
+    </div>
+    <div class="widget-control">
+      <label for="obt-hold" class="cursor-pointer"><span>Hold the bank with aileron</span>
+        <input type="checkbox" id="obt-hold" x-model="hold" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="spiral ? 'bad' : bank > b0 + 3 ? 'warn' : ''"><dt class="widget-label">Bank now</dt><dd class="widget-value"><span x-text="fmt(bank) + '°'"></span><span class="widget-flag bad" x-show="spiral">spiral dive</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Outer tip faster by</dt><dd class="widget-value" x-text="fmt(outer - inner, 1) + ' kt (' + fmt(diffPct, 1) + '%)'"></dd></div>
+    <div class="widget-readout" :class="hold ? 'ok' : ''"><dt class="widget-label">Aileron to hold the bank</dt><dd class="widget-value" x-text="aileron"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('shallow-hands-off')" :aria-pressed="active === 'shallow-hands-off'">Shallow, hands off</button>
+      <button type="button" @click="preset('medium-hands-off')" :aria-pressed="active === 'medium-hands-off'">Medium, hands off</button>
+      <button type="button" @click="preset('steep-60-hands-off')" :aria-pressed="active === 'steep-60-hands-off'">60°, hands off</button>
+      <button type="button" @click="preset('steep-winds-into-spiral')" :aria-pressed="active === 'steep-winds-into-spiral'">Left alone</button>
+      <button type="button" @click="preset('steep-held-with-opposite-aileron')" :aria-pressed="active === 'steep-held-with-opposite-aileron'">60°, held</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In any level turn the outer wing flies a bigger circle in the same time, so it is faster and makes a little more lift. In a shallow turn that is too small to beat the aeroplane's lateral stability, so it rolls back towards level unless you hold a little aileron into the turn; in a medium turn they cancel; in a steep turn the outer wing wins and the bank keeps growing, so you hold a little aileron against the turn. The tip speeds come from the turn formula and a 10.2 m span at 90 kt; where shallow becomes steep, and how fast the bank changes, are illustrative and vary with the type.</p>
+  <details class="widget-try"><summary>Try it: why is the overbanking tendency stronger at 60° than at 15°?</summary><p>At 90 kt and 15° the circle is about 815 m in radius, so the tips 5 m either side of the centre line differ by barely 1 kt. At 60° the radius is only about 125 m and the outer tip is about 7 kt faster than the inner one: a much bigger lift difference, now stronger than the aeroplane's stability.</p></details>
+  <details class="widget-try"><summary>Try it: halfway round a 60° steep turn the bank creeps towards 70° and the nose drops. Pull harder?</summary><p>No. Press 60°, hands off: that is the overbanking tendency. Check it with aileron against the turn (press 60°, held), then restore the nose attitude. Pulling harder at a steeper bank only raises the load factor; at 75° a level turn already passes 3.8 g.</p></details>
+</div>

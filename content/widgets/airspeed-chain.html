@@ -1,0 +1,153 @@
+<div class="widget" x-data="widget({
+  ias: 100, pe: 0, ph: 8000, oat: -1, wind: 0,
+  get cas() { return this.ias + this.pe },
+  get isa() { return this.isaTemp(this.ph) },
+  get dev() { return this.oat - this.isa },
+  // density height: 120 ft per degree above ISA (BAKC 6.2, PAKC 2.3, PNVC 2.4)
+  get dh() { return this.ph + 120 * this.dev },
+  // rule of thumb: TAS is about 2 percent more than CAS per 1,000 ft of density height
+  get factor() { return 1 + 0.02 * this.dh / 1000 },
+  get tas() { return this.cas * this.factor },
+  get gs() { return this.tas + this.wind },
+  get legMin() { return 48 / this.gs * 60 },
+  // bars: 0..160 kt over y 250..70
+  Y(v) { return 250 - this.clamp(v, 0, 160) / 160 * 180 },
+  // altitude scale: 0..12,000 ft over y 250..40
+  A(h) { return 250 - this.clamp(h, -1000, 12000) / 12000 * 210 },
+  get close() { return Math.abs(this.A(this.dh) - this.A(this.ph)) < 16 },
+  get windText() { return this.wind === 0 ? 'calm' : Math.abs(this.wind) + ' kt ' + (this.wind < 0 ? 'headwind' : 'tailwind') },
+  presets: {
+    'rule-of-thumb-8000': { ias: 100, pe: 0, ph: 8000, oat: -1, wind: 0 },
+    'headwind-20': { ias: 105, pe: 0, ph: 0, oat: 15, wind: -20 },
+    'whole-chain-6000': { ias: 100, pe: -2, ph: 6000, oat: 3, wind: 20 },
+    'northam-cruise': { ias: 87, pe: 0, ph: 4500, oat: 6, wind: -15 },
+    'warm-day-6000': { ias: 105, pe: -2, ph: 6000, oat: 20, wind: 0 },
+    'warm-day-8000': { ias: 100, pe: 0, ph: 8000, oat: 5, wind: 0 },
+    'cold-day-albany': { ias: 105, pe: 0, ph: 7500, oat: -5, wind: 0 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="asc-title" class="widget-stage">
+    <title id="asc-title">The airspeed chain as four bars: indicated airspeed, calibrated airspeed after position error, true airspeed after the density correction, and groundspeed after the wind, beside a height scale comparing pressure height with density height</title>
+    <defs>
+      <marker id="asc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- height scale: pressure height and density height -->
+    <text x="18" y="22" font-size="13" font-weight="600" fill="var(--color-fg)">Height</text>
+    <line x1="40" y1="250" x2="40" y2="40" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="34" y="254">0</text><text x="34" y="184">4</text><text x="34" y="114">8</text><text x="34" y="44">12</text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="36" y1="250" x2="40" y2="250"/><line x1="36" y1="180" x2="40" y2="180"/><line x1="36" y1="110" x2="40" y2="110"/><line x1="36" y1="40" x2="40" y2="40"/>
+    </g>
+    <text x="18" y="272" font-size="11" fill="var(--color-fg-faint)">×1,000 ft</text>
+    <line x1="40" x2="56" stroke="var(--color-fg)" stroke-width="2.5" :y1="A(ph)" :y2="A(ph)"/>
+    <line x1="40" x2="56" stroke="var(--color-brand)" stroke-width="2.5" :y1="A(dh)" :y2="A(dh)"/>
+    <line x1="48" x2="48" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#asc-arrow)" :y1="A(ph)" :y2="A(dh) + (dh > ph ? 4 : -4)" x-show="Math.abs(A(dh) - A(ph)) > 10"/>
+    <text x="62" font-size="12" fill="var(--color-fg)" class="num" :y="close ? (A(ph) < A(dh) ? Math.min(A(ph), A(dh)) - 7 : Math.max(A(ph), A(dh)) + 15) : A(ph) + 4" x-text="'pressure ' + fmt(ph)"></text>
+    <text x="62" font-size="12" font-weight="600" fill="var(--color-brand-fg)" class="num" :y="close ? (A(ph) < A(dh) ? Math.max(A(ph), A(dh)) + 15 : Math.min(A(ph), A(dh)) - 7) : A(dh) + 4" x-text="'density ' + fmt(dh)"></text>
+    <text x="18" y="290" font-size="12" class="num" :fill="dev > 0 ? 'var(--color-bad-fg)' : dev < 0 ? 'var(--color-info-fg)' : 'var(--color-fg-muted)'" x-text="'OAT ' + sign(oat) + ' °C, ISA ' + sign(dev)"></text>
+    <!-- bars -->
+    <line x1="180" y1="250" x2="620" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line)" stroke-width="1" stroke-dasharray="2 4">
+      <line x1="180" y1="205" x2="620" y2="205"/><line x1="180" y1="160" x2="620" y2="160"/><line x1="180" y1="115" x2="620" y2="115"/><line x1="180" y1="70" x2="620" y2="70"/>
+    </g>
+    <!-- IAS -->
+    <rect x="195" width="70" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" :y="Y(ias)" :height="250 - Y(ias)"/>
+    <!-- CAS: the IAS level and the position-error correction -->
+    <rect x="305" width="70" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" :y="Y(cas)" :height="250 - Y(cas)"/>
+    <line x1="299" x2="381" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :y1="Y(ias)" :y2="Y(ias)" x-show="pe !== 0"/>
+    <!-- TAS: the CAS level and the density increase -->
+    <rect x="415" width="70" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" :y="Y(tas)" :height="250 - Y(tas)"/>
+    <rect x="415" width="70" fill="var(--color-brand)" fill-opacity="0.35" :y="Y(Math.max(tas, cas))" :height="Math.abs(Y(cas) - Y(tas))"/>
+    <line x1="409" x2="491" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :y1="Y(cas)" :y2="Y(cas)"/>
+    <!-- GS: the TAS level and the wind -->
+    <rect x="525" width="70" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="2" :y="Y(gs)" :height="250 - Y(gs)"/>
+    <rect x="525" width="70" :y="Y(Math.max(tas, gs))" :height="Math.abs(Y(gs) - Y(tas))" x-show="wind !== 0"
+      :fill="wind < 0 ? 'var(--color-bad)' : 'var(--color-ok)'" fill-opacity="0.25" :stroke="wind < 0 ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <line x1="519" x2="601" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :y1="Y(tas)" :y2="Y(tas)" x-show="wind !== 0"/>
+    <!-- values -->
+    <g font-size="16" font-weight="700" text-anchor="middle" class="num">
+      <text x="230" fill="var(--color-fg)" :y="Y(ias) - 8" x-text="fmt(ias)"></text>
+      <text x="340" fill="var(--color-fg)" :y="Y(cas) - 8" x-text="fmt(cas)"></text>
+      <text x="450" fill="var(--color-brand-fg)" :y="Math.min(Y(tas), Y(cas)) - 8" x-text="fmt(tas)"></text>
+      <text x="560" fill="var(--color-info-fg)" :y="Math.min(Y(gs), Y(tas)) - 8" x-text="fmt(gs)"></text>
+    </g>
+    <!-- names -->
+    <g font-size="14" font-weight="700" text-anchor="middle">
+      <text x="230" y="270" fill="var(--color-fg)">IAS</text><text x="340" y="270" fill="var(--color-fg)">CAS</text>
+      <text x="450" y="270" fill="var(--color-brand-fg)">TAS</text><text x="560" y="270" fill="var(--color-info-fg)">GS</text>
+    </g>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">
+      <text x="230" y="288">the dial</text><text x="340" y="288" x-text="pe === 0 ? 'no correction' : sign(pe) + ' kt (POH)'"></text>
+      <text x="450" y="288" x-text="(factor >= 1 ? '+' : '') + fmt((factor - 1) * 100, 1) + '% (density)'"></text><text x="560" y="288" x-text="windText"></text>
+    </g>
+    <!-- chain arrows -->
+    <g stroke="var(--color-fg-faint)" stroke-width="1.5" fill="none" marker-end="url(#asc-arrow)">
+      <path d="M268 28 L300 28"/><path d="M378 28 L410 28"/><path d="M488 28 L520 28"/>
+    </g>
+    <g font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">
+      <text x="230" y="32">indicated</text><text x="340" y="32">calibrated</text><text x="450" y="32" fill="var(--color-brand-fg)">true</text><text x="560" y="32" fill="var(--color-info-fg)">ground</text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="asc-ias">Indicated airspeed <output for="asc-ias" x-text="ias + ' kt'"></output></label>
+      <input type="range" id="asc-ias" min="50" max="140" step="1" x-model.number="ias" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="asc-pe">Position error, from the POH table <output for="asc-pe" x-text="pe === 0 ? 'none' : 'CAS = IAS ' + sign(pe) + ' kt'"></output></label>
+      <input type="range" id="asc-pe" min="-5" max="5" step="1" x-model.number="pe" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="asc-ph">Pressure height <output for="asc-ph" x-text="fmt(ph) + ' ft'"></output></label>
+      <input type="range" id="asc-ph" min="0" max="10000" step="500" x-model.number="ph" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="asc-oat">Outside air temperature <output for="asc-oat" x-text="sign(oat) + ' °C (ISA ' + sign(isa) + ')'"></output></label>
+      <input type="range" id="asc-oat" min="-15" max="40" step="1" x-model.number="oat" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="asc-wind">Wind along the track <output for="asc-wind" x-text="windText"></output></label>
+      <input type="range" id="asc-wind" min="-30" max="30" step="1" x-model.number="wind" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="pe === 0 ? '' : 'warn'">
+      <dt class="widget-label">CAS (instrument and position error)</dt>
+      <dd class="widget-value" x-text="fmt(cas) + ' kt'"></dd>
+    </div>
+    <div class="widget-readout" :class="dev > 0 ? 'warn' : ''">
+      <dt class="widget-label">Density height</dt>
+      <dd class="widget-value" x-text="fmt(dh) + ' ft = ' + fmt(ph) + ' + 120 × ' + (dev < 0 ? '(' + sign(dev) + ')' : fmt(dev))"></dd>
+    </div>
+    <div class="widget-readout ok">
+      <dt class="widget-label">TAS (2% per 1,000 ft of density height)</dt>
+      <dd class="widget-value" x-text="fmt(tas) + ' kt (' + fmt(tas, 1) + ' = ' + fmt(cas) + ' × ' + fmt(factor, 3) + ')'"></dd>
+    </div>
+    <div class="widget-readout" :class="wind < 0 ? 'warn' : 'ok'">
+      <dt class="widget-label">Groundspeed</dt>
+      <dd class="widget-value" x-text="fmt(gs) + ' kt'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Jandakot to Northam, 48 NM</dt>
+      <dd class="widget-value" x-text="fmt(legMin) + ' min'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('rule-of-thumb-8000')" :aria-pressed="active === 'rule-of-thumb-8000'">100 kt at 8,000 ft</button>
+      <button type="button" @click="preset('headwind-20')" :aria-pressed="active === 'headwind-20'">20 kt headwind</button>
+      <button type="button" @click="preset('whole-chain-6000')" :aria-pressed="active === 'whole-chain-6000'">Whole chain</button>
+      <button type="button" @click="preset('northam-cruise')" :aria-pressed="active === 'northam-cruise'">To Northam</button>
+      <button type="button" @click="preset('warm-day-6000')" :aria-pressed="active === 'warm-day-6000'">Warm day, 6,000 ft</button>
+      <button type="button" @click="preset('warm-day-8000')" :aria-pressed="active === 'warm-day-8000'">Warm day, 8,000 ft</button>
+      <button type="button" @click="preset('cold-day-albany')" :aria-pressed="active === 'cold-day-albany'">Cold day to Albany</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each step corrects one thing, always in the order I, C, T, G: the instrument and its position, then density, then wind. The density step is the big one at height and on a hot day, and it always makes TAS more than CAS above sea level. The TAS here is the 2 percent rule of thumb; the flight computer gives a few knots less.</p>
+  <details class="widget-try"><summary>Try it: at 6,000 ft the ASI shows 100 kt, the POH table says CAS is 2 kt less, and you have a 20 kt tailwind. Roughly what is your groundspeed?</summary><p>CAS 98 kt; on a standard day 6,000 ft adds 12 percent, so TAS is about 110 kt; add the tailwind for about 130 kt. Press Whole chain to check.</p></details>
+  <details class="widget-try"><summary>Try it: same pressure height, same CAS. Is your TAS higher at +20 °C or at ISA?</summary><p>At +20 °C. Press Warm day, 6,000 ft: 17 degrees above ISA adds 2,040 ft of density height, so 103 kt CAS becomes about 120 kt TAS instead of about 115.</p></details>
+</div>

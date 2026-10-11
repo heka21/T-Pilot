@@ -40,5 +40,5 @@
 <text x="457.5" y="158.8" font-size="11" text-anchor="middle" fill="var(--color-warn-fg)">smooth</text>
 <text x="457.5" y="172.8" font-size="11" text-anchor="middle" fill="var(--color-warn-fg)">air only</text>
 <text x="76" y="322" font-size="11" fill="var(--color-fg-faint)">level flight, 1 g</text>
-<text x="620" y="424" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">Extra load grows in proportion to airspeed. Stall curve for VS 55 kt; VNO, VNE schematic.</text>
+<text x="620" y="424" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">Extra load grows in proportion to airspeed. Stall curve for POPC 2.2's example VS of 55 kt; VNO, VNE schematic.</text>
 </svg>

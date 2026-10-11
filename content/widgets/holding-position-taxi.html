@@ -1,0 +1,213 @@
+<div class="widget" x-data="timeline({
+  duration: 40,
+  loop: false,
+  vacating: false,
+  // the taxi routes (plane CG in viewBox units), each leg a list of cubic Bezier segments driven over [t0, t1];
+  // between legs the aeroplane waits (run-up in the bay, holding short). Layout and timings are illustrative.
+  legsOut: [
+    { t0: 0.03, t1: 0.44, s: [[[170,400],[200,400],[230,400],[260,400]], [[260,400],[290,400],[300,390],[300,360]],
+      [[300,360],[300,327.3],[300,294.7],[300,262]], [[300,262],[300,232],[368,244],[368,196]]] },
+    { t0: 0.53, t1: 0.64, s: [[[368,196],[368,193.3],[368,190.7],[368,188]], [[368,188],[368,160],[300,172],[300,146]],
+      [[300,146],[300,141.7],[300,137.3],[300,133]]] },
+    { t0: 0.80, t1: 0.97, s: [[[300,133],[300,118.7],[300,104.3],[300,90]], [[300,90],[300,60],[292,44],[264,44]],
+      [[264,44],[254.7,44],[245.3,44],[236,44]]] },
+  ],
+  legsIn: [
+    { t0: 0, t1: 0.9, e: 1, s: [[[616,44],[524,44],[432,44],[340,44]], [[340,44],[312,44],[300,56],[300,84]],
+      [[300,84],[300,176],[300,268],[300,360]], [[300,360],[300,390],[290,400],[260,400]], [[260,400],[230,400],[200,400],[170,400]]] },
+  ],
+  // the story: key moments (steps) with what the readouts say there
+  outStory: [
+    { at: 0, label: 'Apron', mark: 'None yet', means: 'Apron: where aircraft park, load and refuel', act: 'Taxi out', cls: '',
+      cap: 'On the apron, where aircraft park, load and refuel. Follow the yellow lead-out line towards the taxiway.' },
+    { at: 0.215, label: 'Yellow line', mark: 'Continuous yellow centreline', means: 'Taxiway (manoeuvring area): follow the line', act: 'Continue', cls: 'ok',
+      cap: 'A continuous yellow centreline: you are on a taxiway, part of the manoeuvring area. Yellow paint means taxiway.' },
+    { at: 0.24, label: 'Direction sign', mark: 'Direction sign, black on yellow: 24R ↑', means: 'Information: runway 24R is straight ahead', act: 'Continue', cls: 'ok',
+      cap: 'A direction sign, black letters on yellow: 24R straight ahead, taxiway B to the left. Yellow signs give information; they do not tell you to stop.' },
+    { at: 0.26, label: 'Intermediate', mark: 'Single dashed yellow line', means: 'Intermediate holding position: wait here only if asked to', act: 'Continue unless told to wait', cls: 'ok',
+      cap: 'A single dashed line across the taxiway is an intermediate holding position: you wait here only if asked to, for example to give way at the junction. Otherwise keep taxiing.' },
+    { at: 0.44, label: 'Holding bay', mark: 'Holding bay beside the taxiway', means: 'Wait or run up clear of the taxiway', act: 'Run-up, clear of the taxiway', cls: 'ok',
+      cap: 'The holding bay is a wider area beside the taxiway: do the engine run-up here, clear of the taxiway, while others taxi past you to the runway.' },
+    { at: 0.53, label: 'Red sign ahead', mark: 'Red sign, white letters: 24R', means: 'Mandatory: runway holding position ahead', act: 'Stop before the solid lines', cls: 'warn',
+      cap: 'Ahead: a red sign with white letters, 24R, and two solid yellow lines across the taxiway. Red is mandatory: this is the runway holding position.' },
+    { at: 0.64, label: 'Hold short', mark: 'Two solid lines (then two dashed)', means: 'Runway holding position: the solid lines face you', act: 'Stop', cls: 'bad',
+      cap: 'Stop before the solid lines: they face you on the way to the runway. Here you are clear of aircraft using it. Do not cross until you are ready and, at a controlled aerodrome, cleared.' },
+    { at: 0.80, label: 'Ready, cleared', mark: 'Runway holding position', means: 'Cross only when ready (and cleared at a controlled aerodrome)', act: 'Cross: ready and cleared', cls: 'ok',
+      cap: 'Ready, and cleared at a controlled aerodrome: now you cross the solid lines, then the dashed ones, towards the runway.' },
+    { at: 0.88, label: 'Runway', mark: 'White runway paint', means: 'You are on the runway: have a reason to be here', act: 'Line up on 24R', cls: 'ok',
+      cap: 'Beyond the lines the paint turns white: you are on the runway. Each colour and shape told you something without a word on the radio.' },
+  ],
+  inStory: [
+    { at: 0, label: 'Landing roll', mark: 'White runway centreline', means: 'Runway: the next aircraft needs it', act: 'Vacate at taxiway A', cls: 'warn',
+      cap: 'You have landed on 24R. The paint under you is white: this is the runway, and the next aircraft needs it, so turn off at the first suitable taxiway.' },
+    { at: 0.236, label: 'Dashed side', mark: 'Two dashed yellow lines (runway side)', means: 'Holding position seen from the runway: cross freely', act: 'Continue: cross', cls: 'ok',
+      cap: 'Turning off onto taxiway A, the first lines you meet are the two dashed ones. The dashed side faces the runway: cross it freely when vacating.' },
+    { at: 0.275, label: 'Clear of runway', mark: 'Solid lines, now behind you', means: 'Behind the holding position: clear of runway traffic', act: 'Continue', cls: 'ok',
+      cap: 'Keep going until the whole aeroplane is past the solid lines: behind the holding position you are clear of aircraft using the runway.' },
+    { at: 0.425, label: 'Intermediate', mark: 'Single dashed yellow line', means: 'Intermediate holding position: wait here only if asked to', act: 'Continue unless told to wait', cls: 'ok',
+      cap: 'A single dashed line: an intermediate holding position. Wait only if asked to; otherwise continue to the apron.' },
+    { at: 0.51, label: 'Apron', mark: 'Apron lead-in line', means: 'Apron: park, load and refuel', act: 'Taxi to parking', cls: 'ok',
+      cap: 'Back on the apron. The holding position that stopped you on the way out let you straight through on the way in: it all depends on which side you meet first.' },
+  ],
+  get story() { return this.vacating ? this.inStory : this.outStory },
+  get steps() { return this.story.map((s) => ({ at: s.at, label: s.label })) },
+  get cur() { return this.story[Math.max(0, this.step)] },
+  get caption() { return this.cur.cap },
+  // a point and heading on a list of cubic segments at fraction f of their length
+  along(segs, f) {
+    const pts = [];
+    segs.forEach((p) => {
+      for (let i = 0; i <= 20; i++) {
+        const u = i / 20, g = 1 - u;
+        pts.push([g * g * g * p[0][0] + 3 * g * g * u * p[1][0] + 3 * g * u * u * p[2][0] + u * u * u * p[3][0],
+          g * g * g * p[0][1] + 3 * g * g * u * p[1][1] + 3 * g * u * u * p[2][1] + u * u * u * p[3][1]]);
+      }
+    });
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const want = f * cum[cum.length - 1];
+    let i = 1;
+    while (i < pts.length - 1 && cum[i] < want) i++;
+    const a = pts[i - 1], b = pts[i], k = cum[i] > cum[i - 1] ? (want - cum[i - 1]) / (cum[i] - cum[i - 1]) : 0;
+    return { x: a[0] + (b[0] - a[0]) * k, y: a[1] + (b[1] - a[1]) * k, h: Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI };
+  },
+  get pos() {
+    const legs = this.vacating ? this.legsIn : this.legsOut;
+    let leg = legs[0], f = 0;
+    legs.forEach((g) => { if (this.t >= g.t0) { leg = g; f = this.seg(this.t, g.t0, g.t1) } });
+    // landing roll: fast at first, slowing to a stop at the parking spot; taxi legs start and stop smoothly
+    return this.along(leg.s, leg.e ? 1 - (1 - f) * (1 - f) : this.ease(f));
+  },
+  get planeT() { return 'translate(' + this.pos.x.toFixed(1) + ' ' + this.pos.y.toFixed(1) + ') rotate(' + this.pos.h.toFixed(1) + ')' },
+  get surface() {
+    const p = this.pos;
+    if (p.y < 74) return 'Runway: white paint';
+    if (p.y > 366) return 'Apron';
+    if (p.x > 322) return 'Holding bay: yellow paint';
+    return 'Taxiway: yellow paint';
+  },
+  get holding() { return !this.vacating && this.cur.cls === 'bad' },
+  flip() { this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'apron-to-24r': { vacating: false, t: 0, play: true },
+    'direction-sign': { vacating: false, t: 0.24 },
+    'run-up-in-holding-bay': { vacating: false, t: 0.48 },
+    'stop-at-solid-lines': { vacating: false, t: 0.72 },
+    'on-the-runway-white-paint': { vacating: false, t: 1 },
+    'vacating-dashed-side': { vacating: true, t: 0.24 },
+  },
+})">
+  <svg viewBox="0 0 640 430" role="img" aria-labelledby="hpt-title" class="widget-stage">
+    <title id="hpt-title">Plan view of an aerodrome: an apron at the bottom, taxiway A running up to runway 24R across the top, taxiway B branching left, and a holding bay on the right just before the runway holding position. Along taxiway A: a continuous yellow centreline, a black-on-yellow direction sign showing 24R straight ahead and B to the left, a single dashed intermediate holding position line, then the runway holding position, two solid and two dashed yellow lines across the taxiway beside a red sign with white letters 24R. Beyond it the runway paint is white. An aeroplane taxis from the apron, runs up in the holding bay, stops before the solid lines and then lines up on the runway; with Vacating ticked it lands, meets the dashed lines first and crosses them without stopping.</title>
+    <defs>
+      <marker id="hpt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- grass -->
+    <rect x="0" y="0" width="640" height="430" fill="var(--color-ok-soft)"/>
+    <!-- surfaces: runway, taxiway A, taxiway B, holding bay, apron -->
+    <g fill="var(--color-tarmac)">
+      <rect x="0" y="14" width="640" height="60"/>
+      <rect x="280" y="70" width="40" height="300"/>
+      <rect x="0" y="252" width="300" height="32"/>
+      <rect x="300" y="140" width="114" height="110" rx="8"/>
+      <rect x="100" y="366" width="440" height="70" rx="4"/>
+    </g>
+    <!-- runway markings: white -->
+    <g stroke="var(--color-paint)" fill="none">
+      <path d="M0 18.5 H640 M0 69.5 H640" stroke-width="1.5"/>
+      <path d="M0 44 H556" stroke-width="2.5" stroke-dasharray="16 12"/>
+      <path d="M598 23 H630 M598 29 H630 M598 35 H630 M598 53 H630 M598 59 H630 M598 65 H630" stroke-width="3"/>
+    </g>
+    <text transform="translate(580 44) rotate(-90)" y="6" font-size="17" font-weight="700" text-anchor="middle" fill="var(--color-paint)" class="num">24R</text>
+    <!-- yellow taxiway paint: drawn twice, light paint then amber over it, so it reads yellow on the tarmac in both themes -->
+    <g fill="none" stroke="var(--color-paint)" stroke-linecap="butt">
+      <path d="M110 400 H260 C290 400 300 390 300 360 V74" stroke-width="2"/>
+      <path d="M300 262 C300 232 368 244 368 196 V188 C368 160 300 172 300 146" stroke-width="2"/>
+      <path d="M300 300 C300 276 290 268 266 268 H0" stroke-width="2"/>
+      <path d="M470 432 V384" stroke-width="2"/>
+      <path d="M280 100 H320 M280 106 H320" stroke-width="2.5" stroke-dasharray="5 3"/>
+      <path d="M280 114 H320 M280 120 H320" stroke-width="2.5"/>
+      <path d="M280 306 H320" stroke-width="2.5" stroke-dasharray="5 3"/>
+    </g>
+    <g fill="none" stroke="var(--color-warn)" stroke-opacity="0.6" stroke-linecap="butt">
+      <path d="M110 400 H260 C290 400 300 390 300 360 V74" stroke-width="2"/>
+      <path d="M300 262 C300 232 368 244 368 196 V188 C368 160 300 172 300 146" stroke-width="2"/>
+      <path d="M300 300 C300 276 290 268 266 268 H0" stroke-width="2"/>
+      <path d="M470 432 V384" stroke-width="2"/>
+      <path d="M280 100 H320 M280 106 H320" stroke-width="2.5" stroke-dasharray="5 3"/>
+      <path d="M280 114 H320 M280 120 H320" stroke-width="2.5"/>
+      <path d="M280 306 H320" stroke-width="2.5" stroke-dasharray="5 3"/>
+    </g>
+    <!-- mandatory sign at the runway holding position: white letters on red -->
+    <rect x="206" y="99" width="52" height="26" rx="3" fill="var(--color-bad)" stroke="var(--color-fg)" stroke-width="1"/>
+    <rect x="206" y="99" width="52" height="26" rx="3" fill="var(--color-bad-soft)" fill-opacity="0.35"/>
+    <text x="232" y="117" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-paint)" class="num">24R</text>
+    <text x="232" y="142" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)">mandatory</text>
+    <!-- direction sign before the junction: black letters on yellow -->
+    <rect x="164" y="318" width="44" height="26" rx="3" fill="var(--color-paint)" stroke="var(--color-fg)" stroke-width="1"/>
+    <rect x="164" y="318" width="44" height="26" rx="3" fill="var(--color-warn)" fill-opacity="0.45"/>
+    <rect x="210" y="318" width="58" height="26" rx="3" fill="var(--color-paint)" stroke="var(--color-fg)" stroke-width="1"/>
+    <rect x="210" y="318" width="58" height="26" rx="3" fill="var(--color-warn)" fill-opacity="0.45"/>
+    <text x="186" y="336" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-tarmac)">← B</text>
+    <text x="239" y="336" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-tarmac)">24R ↑</text>
+    <text x="216" y="359" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">information</text>
+    <!-- labels on the grass -->
+    <text x="328" y="105" font-size="12" :font-weight="vacating ? 700 : 400" :fill="vacating ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="vacating ? 'dashed: cross freely' : 'dashed'"></text>
+    <text x="328" y="123" font-size="12" :font-weight="vacating ? 400 : 700" :fill="vacating ? 'var(--color-fg-muted)' : 'var(--color-bad-fg)'" x-text="vacating ? 'solid' : 'solid: hold here'"></text>
+    <text x="328" y="311" font-size="12" fill="var(--color-fg-muted)">single dashed: intermediate holding position</text>
+    <text x="422" y="200" font-size="12" fill="var(--color-fg-muted)">holding bay</text>
+    <text x="270" y="210" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">taxiway A</text>
+    <text x="16" y="244" font-size="12" fill="var(--color-fg-muted)">taxiway B</text>
+    <text x="552" y="404" font-size="12" fill="var(--color-fg-muted)">apron</text>
+    <!-- a parked aircraft on the apron (python -m tools.diagrams.plane top, scale 0.34, colour fg-faint, fill paint) -->
+    <g transform="translate(470 404) rotate(-90)">
+      <g transform="translate(0 0) rotate(0) scale(0.34)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg-faint)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg-faint)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg-faint)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- you (python -m tools.diagrams.plane top, scale 0.34, colour brand, fill paint) -->
+    <g :transform="planeT">
+      <g transform="translate(0 0) rotate(0) scale(0.34)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-paint)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : (vacating ? 'Play the landing and vacating' : 'Play the taxi to the runway')">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="hpt-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress along the taxi">
+    <span class="widget-clock" x-text="stepLabel || 'Start'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="hpt-vac" class="cursor-pointer"><span>Vacating after landing (come from the runway side)</span>
+        <input type="checkbox" id="hpt-vac" x-model="vacating" @change="flip()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">You are on</dt><dd class="widget-value" x-text="surface"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Last sign or marking</dt><dd class="widget-value" x-text="cur.mark"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">What it means</dt><dd class="widget-value" x-text="cur.means"></dd></div>
+    <div class="widget-readout" :class="cur.cls"><dt class="widget-label">Stop or continue</dt><dd class="widget-value"><span x-text="cur.act"></span><span class="widget-flag bad" x-show="holding">hold short</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('apron-to-24r')" :aria-pressed="active === 'apron-to-24r'">Apron to 24R</button>
+      <button type="button" @click="preset('direction-sign')" :aria-pressed="active === 'direction-sign'">Direction sign</button>
+      <button type="button" @click="preset('run-up-in-holding-bay')" :aria-pressed="active === 'run-up-in-holding-bay'">Holding bay</button>
+      <button type="button" @click="preset('stop-at-solid-lines')" :aria-pressed="active === 'stop-at-solid-lines'">Stop at the solid lines</button>
+      <button type="button" @click="preset('on-the-runway-white-paint')" :aria-pressed="active === 'on-the-runway-white-paint'">On the runway</button>
+      <button type="button" @click="preset('vacating-dashed-side')" :aria-pressed="active === 'vacating-dashed-side'">Vacating: dashed side</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The runway holding position works one way: the solid lines face you on the way to the runway and mean stop; the dashed lines face the runway, so after landing you cross them freely. Yellow paint is taxiway, white is runway; red signs are mandatory, yellow signs only inform. The layout and timings are illustrative.</p>
+  <details class="widget-try"><summary>Try it: rolling out after landing, the first lines you meet across the taxiway are two dashed ones. Stop or go?</summary><p>Go. Tick Vacating and play: the dashed side faces the runway, so you cross without stopping, and you keep going until the whole aeroplane is past the solid lines, where you are clear of aircraft using the runway.</p></details>
+  <details class="widget-try"><summary>Try it: which sign told you to stop, and which only told you where to go?</summary><p>The red sign with white letters, 24R, at the holding position is mandatory: you do not pass it without permission. The black-on-yellow direction sign (24R straight ahead, B to the left) is information only.</p></details>
+</div>

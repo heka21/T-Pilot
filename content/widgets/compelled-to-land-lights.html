@@ -1,0 +1,191 @@
+<div class="widget" x-data="timeline({
+  duration: 20,
+  loop: false,
+  sc: 'hold',
+  // illustrative timing and geometry (picture units). The aircraft on final reaches the threshold (x 300) at t 0.5,
+  // rolls out and vacates; the circuit aircraft flies downwind at y 135 and turns base at t 0.6 instead of at x 200.
+  _C: { x: 422, y: 135, h: 270, s: 520, turns: [[0.6, 0.7, -90], [0.8, 0.9, -90]] },
+  hd(d, t) { return d.h + d.turns.reduce((a, q) => a + q[2] * this.ease(this.seg(t, q[0], q[1])), 0) },
+  sim(d, t) {
+    const n = Math.max(2, Math.ceil(t * 160)), dt = t / n;
+    let x = d.x, y = d.y;
+    for (let i = 0; i < n; i++) { const h = this.hd(d, (i + 0.5) * dt) * Math.PI / 180; x += d.s * dt * Math.sin(h); y -= d.s * dt * Math.cos(h) }
+    return { x: x, y: y, h: this.hd(d, t) };
+  },
+  get C() { return this.sim(this._C, this.t) },
+  get D() {
+    const t = this.t;
+    if (t <= 0.5) return { x: 600 * t, y: 250, h: 90 };
+    if (t <= 0.82) { const s = this.seg(t, 0.5, 0.82); return { x: 300 + 160 * (2 * s - s * s), y: 250, h: 90 } }
+    if (t <= 0.92) { const a = this.seg(t, 0.82, 0.92) * Math.PI / 2; return { x: 460 + 14 * Math.sin(a), y: 264 - 14 * Math.cos(a), h: 90 + a * 180 / Math.PI } }
+    return { x: 474, y: 264 + 300 * (t - 0.92), h: 180 };
+  },
+  tf(p) { return 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ') rotate(' + (p.h - 90).toFixed(1) + ')' },
+  // landing lights switched on and off, irregularly and repeatedly, all the way down final; or one flash at night
+  _pat: [1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0],
+  get lightsOn() {
+    if (this.sc === 'ack') return this.t >= 0.24 && this.t < 0.265;
+    return this.t >= 0.04 && this.t < 0.5 && this._pat[Math.floor(this.t * 50) % 13] === 1;
+  },
+  get towerGreen() { return this.sc === 'ack' && this.t >= 0.12 && this.t < 0.36 },
+  get extending() { return this.sc !== 'ack' && this.t >= 0.28 && this.t < 0.6 },
+  get night() { return this.sc === 'ack' },
+  get steps() {
+    if (this.sc === 'ack') return [{ at: 0.12, label: 'Tower shows green' }, { at: 0.24, label: 'One flash' }, { at: 0.3, label: 'Acknowledged' }, { at: 0.5, label: 'It lands' }];
+    return [{ at: 0.04, label: 'Lights on final' }, { at: 0.14, label: 'Recognise' }, { at: 0.28, label: 'Make way' }, { at: 0.5, label: 'It lands' }, { at: 0.88, label: 'Traffic resumes' }];
+  },
+  get caption() {
+    const i = this.step + 1;
+    const c = {
+      hold: [
+        'You are holding short at a country aerodrome, waiting to line up. One aeroplane is on downwind, another on a wide final. No radio call from the one on final.',
+        'The aeroplane on final starts switching its landing lights on and off, over and over. Still no radio call.',
+        'Lights switched on and off repeatedly: it is in difficulty and compelled to land, often because its radio has failed. It needs the aerodrome to make way.',
+        'Give way and expect it to land. You stay clear of the runway at the holding point; the aircraft on downwind extends its downwind instead of turning base in front of it.',
+        'It lands. You keep clear of the runway until it has rolled out and vacated.',
+        'It has vacated, and normal traffic resumes: the circuit aircraft turns base and final behind it, and you line up once that one has landed.'],
+      merredin: [
+        'Jandakot to Merredin: halfway there your radio went silent. You set 7600 and followed the radio failure procedure in ERSA EMERG. At Merredin there is another aeroplane in the circuit.',
+        'On a wide final you switch your landing lights on and off repeatedly: the signal that you are in difficulty and compelled to land.',
+        'The pilot on downwind sees your lights and knows what they mean without a word on the radio: you have to land, and you need the runway.',
+        'They extend downwind and give you the runway.',
+        'You land. Before anything else, because your radio is dead, you borrow a phone and cancel your SARTIME.',
+        'You vacate, and the circuit traffic turns base and final behind you.'],
+      ack: [
+        'At night, at an aerodrome with a tower, an aeroplane is on final. You are holding short.',
+        'The tower aims a steady green at it: cleared to land.',
+        'Its pilot flashes the landing light once: the night acknowledgement of a light signal from the tower.',
+        'One flash in reply to a green is an acknowledgement, not a request for the runway. Nothing changes for you: hold short as normal while it lands.',
+        'It lands as cleared.'],
+    };
+    return c[this.sc][Math.min(i, c[this.sc].length - 1)];
+  },
+  get signal() {
+    return { hold: 'Landing lights switched on and off repeatedly, no radio call',
+      merredin: 'Your landing lights, switched on and off repeatedly',
+      ack: 'One flash of the landing light, in reply to a green from the tower' }[this.sc];
+  },
+  get meaning() {
+    return { hold: 'In difficulty and compelled to land (often radio failure)',
+      merredin: 'You are in difficulty and compelled to land: your radio has failed',
+      ack: 'An acknowledgement of the tower’s signal, not a request for the runway' }[this.sc];
+  },
+  get response() {
+    return { hold: 'Give way: stay clear of the runway; circuit traffic extends or leaves the pattern',
+      merredin: 'The circuit aircraft extends downwind and gives you the runway',
+      ack: 'Nothing special: hold short as normal while it lands' }[this.sc];
+  },
+  pick() { this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'lights-on-final': { sc: 'hold', t: 0.1 },
+    'circuit-traffic-extends': { sc: 'hold', t: 0.48 },
+    'landed-safely': { sc: 'hold', t: 0.66 },
+    'single-flash-acknowledgement': { sc: 'ack', t: 0.25 },
+    'merredin-radio-failure': { sc: 'merredin', t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="ctl-title" class="widget-stage">
+    <title id="ctl-title">Plan view of a country aerodrome: a runway with a holding point, an aircraft in the left-hand circuit on downwind, and an aircraft on a wide final whose landing lights switch on and off repeatedly with no radio call. It is in difficulty and compelled to land: the holding aircraft stays clear and the circuit aircraft extends downwind until it has landed and vacated. A second scenario at night shows a single flash of the landing light in reply to a tower’s green light, which is only an acknowledgement</title>
+    <rect x="0" y="0" width="640" height="360" rx="10" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="360" rx="10" fill="var(--color-ok-soft)" :fill-opacity="night ? 0.15 : 0.5"/>
+    <g x-show="night" fill="var(--color-fg-faint)">
+      <path d="M600 18 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22 Z"/>
+    </g>
+    <!-- runway 09, taxiways, holding point and apron -->
+    <rect x="310" y="322" width="210" height="30" rx="3" fill="var(--color-tarmac)" fill-opacity="0.7"/>
+    <text x="415" y="341" font-size="12" text-anchor="middle" fill="var(--color-paint)">apron</text>
+    <rect x="320" y="261" width="20" height="62" fill="var(--color-tarmac)"/>
+    <rect x="464" y="261" width="20" height="62" fill="var(--color-tarmac)"/>
+    <rect x="300" y="239" width="270" height="22" fill="var(--color-tarmac)"/>
+    <path d="M326 250 L560 250" stroke="var(--color-paint)" stroke-width="2" stroke-dasharray="10 8"/>
+    <path d="M304 242 L304 258 M308 242 L308 258" stroke="var(--color-paint)" stroke-width="1.5"/>
+    <path d="M320 276 L340 276 M320 280 L340 280" stroke="var(--color-warn)" stroke-width="1.5"/>
+    <text x="314" y="283" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">holding point</text>
+    <text x="566" y="232" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">runway</text>
+    <!-- the tower (night scenario) -->
+    <g x-show="sc === 'ack'">
+      <rect x="191" y="311" width="18" height="18" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+      <text x="200" y="348" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">tower</text>
+      <path fill="var(--color-ok)" fill-opacity="0.3" stroke="var(--color-ok)" stroke-opacity="0.6" stroke-width="1" x-show="towerGreen"
+        :d="'M197 314 L' + (D.x - 10) + ' ' + (D.y + 14) + ' L' + (D.x + 10) + ' ' + (D.y + 14) + ' L203 314 Z'"/>
+      <circle cx="200" cy="320" r="5" :fill="towerGreen ? 'var(--color-ok)' : 'var(--color-surface-2)'" stroke="var(--color-fg)" stroke-width="1"/>
+    </g>
+    <!-- the base turn the circuit aircraft does not make -->
+    <g x-show="extending || (sc !== 'ack' && t >= 0.14 && t < 0.6)">
+      <path d="M232 135 Q200 135 200 167 L200 218 Q200 250 232 250" fill="none" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="4 3" stroke-opacity="0.8"/>
+      <path d="M193 186 l14 14 m0 -14 l-14 14" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round"/>
+      <text x="214" y="176" font-size="12" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">normal base turn: not now</text>
+    </g>
+    <!-- the circuit aircraft (tools.diagrams.plane top, scale 0.44, colour fg-muted, fill surface) -->
+    <g x-show="sc !== 'ack'" :transform="tf(C)"><g transform="translate(0 0) rotate(0) scale(0.44)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <g x-show="sc !== 'ack'" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" text-anchor="middle">
+      <text font-size="13" font-weight="600" fill="var(--color-fg)" :x="C.x" :y="C.y > 200 ? C.y + 40 : C.y - 30">Circuit traffic</text>
+      <text font-size="12" fill="var(--color-fg-muted)" :x="C.x" :y="C.y > 200 ? C.y + 55 : C.y - 46" x-text="t < 0.28 ? 'on downwind' : t < 0.6 ? 'extends downwind' : t < 0.8 ? 'turns base' : 'on final'"></text>
+    </g>
+    <!-- the aircraft on final, and its landing lights -->
+    <g :transform="tf(D)">
+      <g x-show="lightsOn">
+        <path d="M14 -5 L84 -24 L84 24 L14 5 Z" fill="var(--color-warn)" fill-opacity="0.3"/>
+        <circle cx="13" cy="0" r="7" fill="var(--color-warn)" fill-opacity="0.85"/>
+      </g>
+      <!-- (tools.diagrams.plane top, scale 0.44, colour fg-muted, fill surface) -->
+      <g x-show="sc !== 'merredin'"><g transform="translate(0 0) rotate(0) scale(0.44)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <!-- (tools.diagrams.plane top, scale 0.44, colour brand, fill brand-soft) -->
+      <g x-show="sc === 'merredin'"><g transform="translate(0 0) rotate(0) scale(0.44)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    </g>
+    <g paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" text-anchor="middle">
+      <text font-size="13" font-weight="600" :fill="sc === 'merredin' ? 'var(--color-brand-fg)' : 'var(--color-fg)'" :x="D.y > 270 ? D.x + 30 : clamp(D.x, 60, 590)" :y="D.y > 270 ? D.y + 4 : D.y - 32" :text-anchor="D.y > 270 ? 'start' : 'middle'" x-text="sc === 'merredin' ? 'You, radio failed' : t < 0.5 ? 'On final' : t < 0.82 ? 'Landed' : 'Vacated'"></text>
+      <text font-size="12" fill="var(--color-warn-fg)" :x="clamp(D.x, 60, 590)" :y="D.y - 48" x-show="sc !== 'ack' && t >= 0.04 && t < 0.5">lights on, off, on…</text>
+      <text font-size="12" fill="var(--color-warn-fg)" :x="clamp(D.x, 60, 590)" :y="D.y - 48" x-show="sc === 'ack' && t >= 0.24 && t < 0.36">one flash</text>
+    </g>
+    <!-- you at the holding point (tools.diagrams.plane top, scale 0.44, colour brand, fill brand-soft) -->
+    <g x-show="sc !== 'merredin'" transform="translate(330 300) rotate(-90)"><g transform="translate(0 0) rotate(0) scale(0.44)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <text x="358" y="305" font-size="13" font-weight="700" fill="var(--color-brand-fg)" x-show="sc !== 'merredin'" x-text="sc === 'ack' ? 'You, holding' : t >= 0.14 && t < 0.88 ? 'You: stay clear' : 'You, holding'"></text>
+    <text x="20" y="28" font-size="15" font-weight="600" fill="var(--color-fg)" x-text="{ hold: 'Country aerodrome, no tower', merredin: 'Merredin: your radio has failed', ack: 'Night, aerodrome with a tower' }[sc]"></text>
+    <text x="20" y="46" font-size="12" fill="var(--color-fg-faint)">seen from above; left-hand circuit, runway 09</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the arrival'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ctl-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress of the arrival">
+    <span class="widget-clock" x-text="stepLabel || 'Start'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ctl-sc">Scenario</label>
+      <select id="ctl-sc" class="input" x-model="sc" @change="pick()">
+        <option value="hold">You are holding short; lights on final</option>
+        <option value="merredin">Merredin: you are the one with the radio failure</option>
+        <option value="ack">Night: one flash after a tower’s green</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="sc === 'ack' ? '' : 'warn'"><dt class="widget-label">Signal</dt><dd class="widget-value" x-text="signal"></dd></div>
+    <div class="widget-readout" :class="sc === 'ack' ? 'ok' : 'warn'"><dt class="widget-label">Meaning</dt><dd class="widget-value"><span x-text="meaning"></span><span class="widget-flag warn" x-show="sc !== 'ack'">give way</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label" x-text="sc === 'merredin' ? 'What the other pilot does' : 'What you do'"></dt><dd class="widget-value" x-text="response"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('lights-on-final')" :aria-pressed="active === 'lights-on-final'">Lights on final</button>
+      <button type="button" @click="preset('circuit-traffic-extends')" :aria-pressed="active === 'circuit-traffic-extends'">Circuit traffic extends</button>
+      <button type="button" @click="preset('landed-safely')" :aria-pressed="active === 'landed-safely'">Landed safely</button>
+      <button type="button" @click="preset('single-flash-acknowledgement')" :aria-pressed="active === 'single-flash-acknowledgement'">One flash at night</button>
+      <button type="button" @click="preset('merredin-radio-failure')" :aria-pressed="active === 'merredin-radio-failure'">Merredin</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Landing or navigation lights switched on and off repeatedly mean the aircraft is in difficulty and compelled to land, often with a radio failure, so everyone else makes way: stay off the runway, and in the circuit extend or leave the pattern. Context decides the meaning: a single flash in reply to a tower’s green light at night is only an acknowledgement. Positions, speeds and timings here are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you are on downwind and see an aircraft on final switching its landing lights on and off. What do you do?</summary><p>Give way: it is in difficulty and compelled to land. Extend your downwind (or leave the pattern) rather than turning base in front of it, and expect it to land. Choose “Circuit traffic extends” to see the base turn you do not make.</p></details>
+  <details class="widget-try"><summary>Try it: at night an aircraft on final flashes its landing light once, just after the tower shows it a green. Should you give it the runway as an emergency?</summary><p>No. One flash in reply to a tower’s light signal is the night acknowledgement; the steady green has already cleared it to land. Repeated, irregular switching on approach with no other explanation is the request for the runway.</p></details>
+</div>

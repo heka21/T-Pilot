@@ -1,0 +1,207 @@
+<div class="widget" x-data="widget({
+  p: 0, flap: 0,
+  // the path before your last change (shown dashed): set by the presets and whenever you grab a control
+  gp: 0, gf: 0,
+  // the lesson: glide sin γ = D / W, with power sin γ = (D − T) / W; clean best L/D 9:1. Flap L/D and the thrust
+  // scale are illustrative: thrust at full power = 2/9 of the weight, so thrust equals the clean drag at 50%
+  ld: [9, 7, 5.5],
+  shift: [0, 2, 4], // flap makes the lift at a smaller angle of attack: 4° less at full flap (lift-curve-flap), half that at the first stage
+  rig: 1.5, // rigging angle, chord above the fuselage datum (illustrative, as aoa-speed-attitude)
+  tmax: 2 / 9,
+  fpm: 65 * 6076 / 60, // 65 kt in ft/min
+  flapName: ['up', 'first stage', 'full'],
+  rad(d) { return d * Math.PI / 180 },
+  deg(r) { return r * 180 / Math.PI },
+  // W sin γ = D − T with D = W cos γ / (L/D): exact for the lesson's tan γ = D / L at idle
+  gam(p, f) { const k = 1 / this.ld[f], t = this.tmax * p / 100; return this.deg(Math.atan(k) - Math.asin(t / Math.sqrt(1 + k * k))) },
+  // angle of attack from aoa-speed-attitude's calibration: CL 0.6 at 70 kt (4°), 0.1 per degree, lift = W cos γ
+  aoa(p, f) { const cl = 0.6 * (70 / 65) ** 2 * Math.cos(this.rad(this.gam(p, f))); return cl / 0.1 - 2 - this.shift[f] },
+  att(p, f) { return this.aoa(p, f) - this.rig - this.gam(p, f) },
+  rod(p, f) { return this.fpm * Math.sin(this.rad(this.gam(p, f))) },
+  get g() { return this.gam(this.p, this.flap) },
+  get th() { return this.att(this.p, this.flap) },
+  get r() { return this.rod(this.p, this.flap) },
+  get G() { return this.gam(this.gp, this.gf) },
+  get ghost() { return this.gp !== this.p || this.gf !== this.flap },
+  get level() { return Math.abs(this.g) < 0.3 },
+  get climbing() { return this.g <= -0.3 },
+  mark() { this.gp = this.p; this.gf = this.flap },
+  pw(p) { return p === 0 ? 'idle' : p + '%' },
+  r10(x) { return Math.round(x / 10) * 10 },
+  vs(x) { return Math.abs(x) < 15 ? 'zero' : this.fmt(this.r10(Math.abs(x))) + ' ft/min ' + (x > 0 ? 'down' : 'up') },
+  attText(a) { return Math.abs(a) < 0.25 ? 'level' : this.fmt(Math.abs(a), 1) + '° nose ' + (a > 0 ? 'up' : 'down') },
+  angText(gm) { return Math.abs(gm) < 0.3 ? 'level' : this.fmt(Math.abs(gm), 1) + '° ' + (gm > 0 ? 'down' : 'up') },
+  get drag() { return Math.cos(this.rad(this.g)) / this.ld[this.flap] },
+  get thrust() { return this.tmax * this.p / 100 },
+  get tdText() { return this.p === 0 ? 'no thrust: a glide' : this.level ? 'thrust = drag: level' : this.fmt(100 * this.thrust / this.drag) + '% of the drag' },
+  get rodText() { return this.level ? 'zero (level)' : this.climbing ? 'climbing ' + this.fmt(this.r10(-this.r)) + ' ft/min' : this.fmt(this.r10(this.r)) + ' ft/min' },
+  get angleText() { return this.level ? '0° (level)' : this.climbing ? 'climbing ' + this.fmt(-this.g, 1) + '°' : this.fmt(this.g, 1) + '° (1 in ' + this.fmt(1 / Math.tan(this.rad(this.g)), 1) + ')' },
+  chg(now, was, dp, unit) { const d = now - was; return Math.abs(d) < (dp ? 0.05 : 5) ? '' : (d > 0 ? '+' : '−') + this.fmt(Math.abs(d), dp) + unit + ' on before' },
+  get caption() {
+    const dp = this.p - this.gp, df = this.flap - this.gf;
+    if (!dp && !df) {
+      if (this.level) return 'Thrust equals drag, so W sin γ = D − T = 0: at 65 kt the path is level, the VSI shows zero and the nose is ' + this.attText(this.th) + '. Any more power and the path tilts up into a climb.';
+      if (this.climbing) return 'Thrust is more than drag, so the path tilts up: at 65 kt with this much power the aeroplane climbs at ' + this.fmt(this.r10(-this.r)) + ' ft/min.';
+      if (this.p === 0) return 'Power at idle with the flap ' + this.flapName[this.flap] + ': only the forward part of the weight balances the drag, so the path is as steep as drag over lift: ' + this.fmt(this.g, 1) + '° (1 in ' + this.ld[this.flap] + '), ' + this.vs(this.r) + ', attitude ' + this.attText(this.th) + '.';
+      return ['Flap up', 'First stage of flap', 'Full flap'][this.flap] + ' and ' + this.p + '% power: thrust takes part of the drag and the forward part of the weight the rest, so the path is ' + this.fmt(this.g, 1) + '° at ' + this.vs(this.r) + ', attitude ' + this.attText(this.th) + '. Small power changes now move the aim point.';
+    }
+    const R = this.rod(this.gp, this.gf), TH = this.att(this.gp, this.gf), G = this.G;
+    let what = '';
+    if (dp) what = 'Power ' + (dp > 0 ? 'up' : 'down') + ' (' + this.pw(this.gp) + ' → ' + this.pw(this.p) + ')';
+    if (df) what += (dp ? ' and flap ' : 'Flap ') + (df > 0 ? 'down' : 'up') + ' (' + this.flapName[this.gf] + ' → ' + this.flapName[this.flap] + ')';
+    const more = (a, b) => a > b + 0.01;
+    let s = what + ' at a constant 65 kt: the rate of descent ' + (more(this.r, R) ? 'increases' : 'decreases') + ' (' + this.vs(R) + ' → ' + this.vs(this.r) + '), the angle of descent ' +
+      (more(this.g, G) ? 'increases' : 'decreases') + ' (' + this.angText(G) + ' → ' + this.angText(this.g) + ') and the nose ' + (this.th > TH ? 'comes up ' : 'goes down ') + this.fmt(Math.abs(this.th - TH), 1) + '° to hold the speed.';
+    if (dp && !df) s += dp > 0 ? ' Thrust now carries more of the drag, so less of the weight is needed along the path.' : ' With less thrust, more of the weight must act along the path: a steeper path keeps the speed up.';
+    if (df && !dp) s += df > 0 ? ' Flap adds drag, so the path steepens, and the cambered wing makes its lift at a smaller angle of attack: the nose comes down on both counts.' : ' Less drag flattens the path, and the clean wing needs a larger angle of attack.';
+    s += this.g < 0.3 ? ' The path no longer meets the runway.' : this.g < G ? ' The aim point moves further down the runway.' : ' The aim point moves closer.';
+    return s;
+  },
+  // close-up (true angles): CG at 180 92
+  get dir() { return { c: Math.cos(this.rad(this.g)), s: Math.sin(this.rad(this.g)) } },
+  get pA() { return { x: 180 - 130 * this.dir.c, y: 92 - 130 * this.dir.s } },
+  get pB() { return { x: 180 + 222 * this.dir.c, y: 92 + 222 * this.dir.s } },
+  get arc() { const r = 190; return 'M370 92 A' + r + ' ' + r + ' 0 0 ' + (this.g > 0 ? 1 : 0) + ' ' + (180 + r * this.dir.c).toFixed(1) + ' ' + (92 + r * this.dir.s).toFixed(1) },
+  get flapEnd() { const d = this.rad([0, 15, 35][this.flap]); return { x: -20 - 20 * Math.cos(d), y: -12.4 + 20 * Math.sin(d) } },
+  // VSI: zero at 9 o'clock, ±2,000 ft/min at ±170°
+  vsiAt(fpm, rr) { return this.pol(575, 76, rr, 270 + this.clamp(fpm, -2000, 2000) / 2000 * 170) },
+  get needle() { return this.vsiAt(-this.r, 38) },
+  // force balance along the path, 900 px per weight
+  get dragW() { return (this.drag + (this.climbing ? -Math.sin(this.rad(this.g)) : 0)) * 900 },
+  get dragOnly() { return this.drag * 900 },
+  get thrustW() { return this.thrust * 900 },
+  get wsinW() { return Math.max(0, Math.sin(this.rad(this.g))) * 900 },
+  // approach view: aeroplane 400 ft up at x 44, 0.062 px per ft across, heights × 3
+  meetX(gm) { return gm < 0.3 ? 9999 : 44 + 400 / Math.tan(this.rad(gm)) * 0.062 },
+  endOf(gm) { const m = this.meetX(gm); return m <= 640 ? { x: m, y: 330 } : { x: 640, y: 255.6 + 596 * 3 * Math.tan(this.rad(gm)) } },
+  get end() { return this.endOf(this.g) },
+  get gEnd() { return this.endOf(this.G) },
+  get onRunway() { return this.meetX(this.g) <= 640 },
+  presets: {
+    'glide-clean': { p: 0, flap: 0, gp: 0, gf: 0 },
+    'getting-low-add-power': { p: 45, flap: 1, gp: 30, gf: 1 },
+    'too-high-add-flap': { p: 0, flap: 2, gp: 0, gf: 1 },
+    'level-at-65': { p: 50, flap: 0, gp: 0, gf: 0 },
+    'normal-approach': { p: 30, flap: 1, gp: 30, gf: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 350" role="img" aria-labelledby="dpf-title" class="widget-stage">
+    <title id="dpf-title">A Cessna 152 descending at a constant 65 knots: above, a close-up at true angles with its flight path, its nose attitude and a vertical speed indicator; below, the approach to the runway with the vertical scale exaggerated, showing where the path meets the ground</title>
+    <defs>
+      <marker id="dpf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- close-up, true angles -->
+    <rect x="0" y="0" width="640" height="200" fill="var(--color-sky-soft)"/>
+    <line x1="20" y1="92" x2="420" y2="92" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="420" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" :y="g >= 0 ? 84 : 108">horizontal</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.25" :d="arc" x-show="!level"/>
+    <line stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#dpf-arrow)" :x1="pA.x" :y1="pA.y" :x2="pB.x" :y2="pB.y"/>
+    <text font-size="13" font-weight="600" class="num" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :x="pB.x + 10" :y="pB.y + (g >= 0 ? 10 : 0)" x-text="level ? 'level path' : 'path ' + angText(g)"></text>
+    <!-- the aeroplane, pitched by its attitude -->
+    <g :transform="'translate(180 92) rotate(' + (-th).toFixed(2) + ')'">
+      <!-- python -m tools.diagrams.plane side, scale 2 -->
+      <g transform="translate(0 0) rotate(0) scale(2)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      <line stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" x1="-20" y1="-12.4" :x2="flapEnd.x" :y2="flapEnd.y" x-show="flap > 0"/>
+    </g>
+    <text x="16" y="24" font-size="14" font-weight="600" fill="var(--color-fg)" class="num" x-text="'attitude ' + attText(th)"></text>
+    <text x="250" y="24" font-size="13" fill="var(--color-brand-fg)" font-weight="600" class="num">IAS 65 kt, held by attitude</text>
+    <text x="250" y="42" font-size="12" fill="var(--color-fg-muted)" x-text="'flap ' + flapName[flap] + ', power ' + pw(p)"></text>
+    <!-- vertical speed indicator -->
+    <circle cx="575" cy="76" r="50" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <g stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round">
+      <line :x1="vsiAt(0, 42).x" :y1="vsiAt(0, 42).y" :x2="vsiAt(0, 49).x" :y2="vsiAt(0, 49).y"/>
+      <line :x1="vsiAt(500, 43).x" :y1="vsiAt(500, 43).y" :x2="vsiAt(500, 49).x" :y2="vsiAt(500, 49).y"/>
+      <line :x1="vsiAt(1000, 43).x" :y1="vsiAt(1000, 43).y" :x2="vsiAt(1000, 49).x" :y2="vsiAt(1000, 49).y"/>
+      <line :x1="vsiAt(1500, 43).x" :y1="vsiAt(1500, 43).y" :x2="vsiAt(1500, 49).x" :y2="vsiAt(1500, 49).y"/>
+      <line :x1="vsiAt(-500, 43).x" :y1="vsiAt(-500, 43).y" :x2="vsiAt(-500, 49).x" :y2="vsiAt(-500, 49).y"/>
+      <line :x1="vsiAt(-1000, 43).x" :y1="vsiAt(-1000, 43).y" :x2="vsiAt(-1000, 49).x" :y2="vsiAt(-1000, 49).y"/>
+      <line :x1="vsiAt(-1500, 43).x" :y1="vsiAt(-1500, 43).y" :x2="vsiAt(-1500, 49).x" :y2="vsiAt(-1500, 49).y"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg)" text-anchor="middle" class="num">
+      <text :x="vsiAt(0, 32).x" :y="vsiAt(0, 32).y + 4">0</text>
+      <text :x="vsiAt(500, 32).x" :y="vsiAt(500, 32).y + 4">5</text>
+      <text :x="vsiAt(1000, 32).x" :y="vsiAt(1000, 32).y + 4">10</text>
+      <text :x="vsiAt(1500, 32).x" :y="vsiAt(1500, 32).y + 4">15</text>
+      <text :x="vsiAt(-500, 32).x" :y="vsiAt(-500, 32).y + 4">5</text>
+      <text :x="vsiAt(-1000, 32).x" :y="vsiAt(-1000, 32).y + 4">10</text>
+      <text :x="vsiAt(-1500, 32).x" :y="vsiAt(-1500, 32).y + 4">15</text>
+    </g>
+    <text x="602" y="72" font-size="11" fill="var(--color-fg-muted)" text-anchor="middle">UP</text>
+    <text x="602" y="90" font-size="11" fill="var(--color-fg-muted)" text-anchor="middle">DOWN</text>
+    <line stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" x1="575" y1="76" :x2="needle.x" :y2="needle.y"/>
+    <circle cx="575" cy="76" r="4" fill="var(--color-fg)"/>
+    <text x="575" y="144" font-size="11" fill="var(--color-fg-muted)" text-anchor="middle">VSI, 100 ft/min</text>
+    <text x="575" y="162" font-size="13" font-weight="600" fill="var(--color-brand-fg)" text-anchor="middle" class="num" x-text="Math.abs(r) < 15 ? 'zero' : fmt(r10(Math.abs(r))) + (r > 0 ? ' down' : ' up')"></text>
+    <!-- forces along the path: what balances the drag -->
+    <text x="142" y="161" font-size="12" text-anchor="end" fill="var(--color-fg)" x-text="climbing ? 'drag + weight' : 'drag'"></text>
+    <rect x="150" y="151" height="14" rx="2" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1" :width="dragOnly"/>
+    <rect y="151" height="14" rx="2" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1" :x="150 + dragOnly" :width="dragW - dragOnly" x-show="climbing"/>
+    <text x="142" y="183" font-size="12" text-anchor="end" fill="var(--color-fg)" x-text="p === 0 ? 'weight' : climbing || level ? 'thrust' : 'thrust + weight'"></text>
+    <rect x="150" y="173" height="14" rx="2" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1" :width="thrustW" x-show="p > 0"/>
+    <rect y="173" height="14" rx="2" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1" :x="150 + thrustW" :width="wsinW" x-show="wsinW > 0.5"/>
+    <text x="380" y="168" font-size="12" fill="var(--color-fg-muted)">along the path:</text>
+    <text x="380" y="185" font-size="13" fill="var(--color-fg)" class="num">W sin γ = D − T</text>
+    <!-- the approach, heights exaggerated -->
+    <rect x="0" y="200" width="640" height="150" fill="var(--color-sky-soft)"/>
+    <line x1="0" y1="200" x2="640" y2="200" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="16" y="220" font-size="12" fill="var(--color-fg-muted)">the approach, heights × 3</text>
+    <rect x="0" y="330" width="640" height="20" fill="var(--color-surface-2)"/>
+    <line x1="0" y1="330" x2="640" y2="330" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <rect x="150" y="326" width="490" height="5" fill="var(--color-tarmac)"/>
+    <rect x="152" y="327" width="10" height="3" fill="var(--color-paint)"/>
+    <text x="630" y="345" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">runway</text>
+    <line x1="24" y1="262" x2="24" y2="330" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="30" y="306" font-size="12" fill="var(--color-fg-muted)" class="num">400 ft</text>
+    <!-- the path before your last change -->
+    <g x-show="ghost">
+      <line stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round" x1="44" y1="255.6" :x2="gEnd.x" :y2="gEnd.y"/>
+      <circle r="4" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" :cx="gEnd.x" :cy="gEnd.y" x-show="gEnd.y === 330"/>
+      <text font-size="11" fill="var(--color-fg-muted)" text-anchor="middle" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="Math.min(600, gEnd.x)" y="346" x-show="gEnd.y === 330">before</text>
+    </g>
+    <line stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" x1="44" y1="255.6" :x2="end.x" :y2="end.y"/>
+    <g transform="translate(44 255.6)">
+      <g :transform="'rotate(' + (-th).toFixed(2) + ')'">
+        <!-- python -m tools.diagrams.plane side, scale 0.45, colour brand -->
+        <g transform="translate(0 0) rotate(0) scale(0.45)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-brand)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-brand)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+      </g>
+    </g>
+    <g x-show="onRunway">
+      <circle r="6" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2" :cx="end.x" cy="330"/>
+      <text font-size="13" font-weight="600" fill="var(--color-brand-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="clamp(end.x, 60, 590)" y="314">aim point</text>
+    </g>
+    <text x="630" font-size="12" font-weight="600" fill="var(--color-brand-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :y="level || climbing ? 240 : 314" x-show="!onRunway" x-text="climbing ? 'climbing away' : level ? 'level: never meets the runway' : 'meets the ground beyond →'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dpf-p">Power <output for="dpf-p" x-text="pw(p)"></output></label>
+      <input type="range" id="dpf-p" min="0" max="100" step="5" x-model.number="p" @pointerdown="mark()" @keydown="mark()" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="dpf-flap">Flap <output for="dpf-flap" x-text="flapName[flap]"></output></label>
+      <input type="range" id="dpf-flap" min="0" max="2" step="1" x-model.number="flap" @pointerdown="mark()" @keydown="mark()" @input="active = null">
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="level ? 'ok' : climbing ? 'warn' : ''"><dt class="widget-label">Rate of descent (VSI)</dt><dd class="widget-value"><span x-text="rodText"></span><span class="widget-flag ok" x-show="level">level</span><span class="widget-flag warn" x-show="climbing">climbing</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Angle of descent</dt><dd class="widget-value" x-text="angleText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Nose attitude</dt><dd class="widget-value" x-text="attText(th)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Thrust against drag</dt><dd class="widget-value" x-text="tdText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('glide-clean')" :aria-pressed="active === 'glide-clean'">Glide, flap up</button>
+      <button type="button" @click="preset('getting-low-add-power')" :aria-pressed="active === 'getting-low-add-power'">Low: add power</button>
+      <button type="button" @click="preset('too-high-add-flap')" :aria-pressed="active === 'too-high-add-flap'">High: more flap</button>
+      <button type="button" @click="preset('level-at-65')" :aria-pressed="active === 'level-at-65'">Level at 65 kt</button>
+      <button type="button" @click="preset('normal-approach')" :aria-pressed="active === 'normal-approach'">Normal approach</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The speed never changes: attitude holds the 65 kt and power sets the rate of descent. More power flattens the path, cuts the rate of descent and needs a higher nose; enough power to equal the drag gives level flight. More flap steepens the path, raises the rate of descent and lowers the nose, both because the path is steeper and because the cambered wing needs a smaller angle of attack. The lesson's 9:1 clean glide (about 6.3°) and its equations are exact here; the flap L/D (7 and 5.5), the angle-of-attack shift, the power scale and the 400 ft picture are illustrative.</p>
+  <details class="widget-try"><summary>Try it: a glide approach at 65 kt with the first stage of flap, and the aim point is moving down the windscreen. What do you do, and what happens?</summary><p>You are too high and the power is already at idle, so lower a further stage of flap and lower the nose to hold 65 kt. Press High: more flap: the angle of descent goes from about 8.1° to 10.3°, the rate of descent from about 930 to 1,180 ft/min, and the nose drops by about 4°. The aim point moves back towards you.</p></details>
+  <details class="widget-try"><summary>Try it: on a normal approach you are getting low. Back pressure or power?</summary><p>Power, with the nose raised just enough to hold 65 kt. Press Low: add power: the rate of descent falls from about 500 to 280 ft/min, the path flattens from about 4.3° to 2.4° and the nose comes up about 2°. Back pressure alone would only cost speed, and slower than the glide speed the path steepens.</p></details>
+</div>

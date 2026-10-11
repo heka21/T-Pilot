@@ -1,0 +1,319 @@
+<div class="widget" x-data="timeline({
+  duration: 10,
+  loop: false,
+  msg: 'readback',
+  lead: 0.5,
+  tail: 0.2,
+  // the clock in seconds: PTT pressed at 0.45 s; the transmitter takes about half a second to come up to power
+  // (PAKC 3.1 and 3.2: press, pause about half a second, speak, finish, release). Timings illustrative.
+  press: 0.45,
+  warm: 0.5,
+  _msgs: {
+    readback: [['Hold'], ['short'], ['runway'], ['two'], ['four', ','], ['Alpha'], ['Bravo'], ['Charlie']],
+    traffic: [['Alpha'], ['Bravo'], ['Charlie', ','], ['traffic', ','], ['Piper', ','], [&quot;2 o'clock&quot;, ','], ['5 miles', ','], ['same'], ['level']],
+  },
+  _cs: { readback: [5, 6, 7], traffic: [0, 1, 2] },
+  // a word takes longer the more letters it has; a comma adds a short pause (illustrative speaking pace)
+  dur(w) { return 0.08 + 0.065 * w.length },
+  get list() { return this._msgs[this.msg] || this._msgs.readback },
+  get speech() { return this.list.reduce((s, w, i) => s + this.dur(w[0]) + (w[1] && i < this.list.length - 1 ? 0.08 : 0), 0) },
+  // the axis fits the longest the controls allow: lead up to 0.6 s, release up to 0.4 s after the last word
+  get span() { return this.press + 0.6 + this.speech + 0.45 },
+  X(s) { return 20 + s / this.span * 600 },
+  get start() { return this.press + this.lead },
+  get up() { return this.press + this.warm },
+  get end() { return this.start + this.speech },
+  get rel() { return this.end + this.tail },
+  get time() { return this.t * this.span },
+  // each word: when it is spoken, and what part of it falls inside the window [transmitter at power, release]
+  get res() {
+    let s = this.start;
+    return this.list.map((w, i) => {
+      const word = w[0], d = this.dur(word), ws = s, we = s + d, n = word.length;
+      s = we + (w[1] && i < this.list.length - 1 ? 0.08 : 0);
+      const a = Math.round(this.clamp(this.up - ws, 0, d) / d * n), b = Math.round(this.clamp(we - this.rel, 0, d) / d * n);
+      const state = a + b >= n ? 'lost' : a + b === 0 ? 'heard' : 'partial';
+      const heard = state === 'lost' ? word : (a ? '…' : '') + word.slice(a, n - b) + (b ? '…' : '');
+      return { word, punct: w[1] || '', ws, we, state, heard };
+    })
+  },
+  // tiles for the picture, padded to nine so the written-out SVG elements always find an object
+  get T() {
+    const out = this.res.map((r) => {
+      const x = this.X(r.ws) + 1, w = Math.max(4, this.X(r.we) - this.X(r.ws) - 2), shown = this.time >= r.we - 1e-6;
+      const st = { heard: ['var(--color-ok-soft)', 'var(--color-ok)', 'var(--color-fg)', 'none'], partial: ['var(--color-warn-soft)', 'var(--color-warn)', 'var(--color-warn-fg)', 'none'], lost: ['var(--color-surface)', 'var(--color-bad)', 'var(--color-fg-faint)', '4 3'] }[r.state];
+      return { ...r, x, w, cx: x + w / 2, op: this.time >= r.ws - 1e-6 ? 1 : 0.35, now: this.time >= r.ws && this.time < r.we, shown,
+        lfill: shown ? st[0] : 'none', lstroke: shown ? st[1] : 'var(--color-line)', ldash: shown ? st[3] : '3 3', ltext: st[2] };
+    });
+    while (out.length < 9) out.push({ word: '', heard: '', state: '', x: -50, w: 4, cx: -50, op: 0, now: false, shown: false, lfill: 'none', lstroke: 'none', ldash: 'none', ltext: 'none' });
+    return out;
+  },
+  transcript(upTo) {
+    const r = this.res.filter((x) => x.we <= upTo + 1e-6);
+    let s = '', gap = false;
+    r.forEach((x, i) => {
+      if (x.state === 'lost') { gap = true; return }
+      s += (s ? ' ' : '') + (gap && !x.heard.startsWith('…') ? '… ' : '') + x.heard + (i < this.res.length - 1 && !x.heard.endsWith('…') ? x.punct : '');
+      gap = false;
+    });
+    if (gap && s && !s.endsWith('…')) s += ' …';
+    return s;
+  },
+  get heardAll() { return this.transcript(99) },
+  get heardNow() { return this.transcript(this.time) },
+  ok(idx) { return idx.every((i) => this.res[i].state === 'heard') },
+  get csIdx() { return this._cs[this.msg] || this._cs.readback },
+  get csOk() { return this.ok(this.csIdx) },
+  get csText() { return this.csIdx.map((i) => this.res[i]).filter((r) => r.state !== 'lost').map((r) => r.heard).join(' ') },
+  get csLost() { return this.csIdx.every((i) => this.res[i].state === 'lost') },
+  get keyIdx() { return this.msg === 'readback' ? [0, 1, 2, 3, 4] : [3, 4, 5, 6, 7, 8] },
+  get keyOk() { return this.ok(this.keyIdx) },
+  get holdShortOk() { return this.msg === 'readback' && this.ok([0, 1]) },
+  get holdShortGone() { return this.msg === 'readback' && this.res[0].state === 'lost' && this.res[1].state === 'lost' },
+  get lostWords() { return this.res.filter((r) => r.state !== 'heard').map((r) => r.state === 'lost' ? r.word : r.word + ' (part)') },
+  get allOk() { return this.lostWords.length === 0 },
+  get early() { return this.lead < this.warm - 1e-9 },
+  get late() { return this.tail < -1e-9 },
+  get technique() {
+    if (!this.early && !this.late) return 'Press, pause, speak, release';
+    const p = [];
+    if (this.lead < 0) p.push('spoke before pressing'); else if (this.early) p.push('spoke before full power');
+    if (this.late) p.push('released before the end');
+    return p.join(', ').replace(/^./, (c) => c.toUpperCase());
+  },
+  get result() {
+    if (this.msg === 'readback') {
+      if (this.allOk) return 'Clear readback';
+      if (this.holdShortGone) return 'Meaning reversed';
+      if (!this.holdShortOk) return 'First words clipped';
+      if (!this.keyOk) return 'Runway not confirmed';
+      return 'Who acknowledged?';
+    }
+    if (this.allOk) return 'Traffic for you';
+    if (!this.csOk) return 'Say again: who for?';
+    return 'Say again';
+  },
+  get leadText() { return this.lead < 0 ? this.fmt(-this.lead, 2) + ' s before the press' : this.fmt(this.lead, 2) + ' s after the press' },
+  get tailText() { return this.tail < 0 ? this.fmt(-this.tail, 2) + ' s before the end' : this.fmt(this.tail, 2) + ' s after the last word' },
+  get who() { return this.msg === 'readback' ? 'You read back a hold-short instruction to the tower' : 'A station calls with traffic; you are listening' },
+  get steps() {
+    const s = [{ at: this.press / this.span, label: 'PTT pressed' }, { at: this.up / this.span, label: 'Transmitter at power' },
+      { at: this.start / this.span, label: 'Speaking starts' }, { at: this.end / this.span, label: 'Last word ends' }, { at: this.rel / this.span, label: 'PTT released' }];
+    return s.sort((a, b) => a.at - b.at);
+  },
+  get caption() {
+    const tm = this.time;
+    if (tm < Math.min(this.press, this.start)) return 'Listen first so you do not cut across anyone, then press the PTT fully.';
+    if (tm < this.press) return 'Already talking, but the PTT is not pressed yet: these words go nowhere.';
+    if (tm < this.up) return 'PTT pressed. The transmitter takes about half a second to come up to power' + (tm >= this.start ? ', so words spoken now are lost.' : ': pause and let it.');
+    if (tm < this.rel) {
+      if (tm < this.start) return 'The transmitter is at power: now speak.';
+      if (tm >= this.end) return 'Finished speaking, still on air: now release.';
+      return 'On air: every word inside the window between full power and release reaches the listener.';
+    }
+    if (this.msg === 'readback') {
+      if (this.allOk) return 'The tower hears the whole readback, “Hold short runway two four, Alpha Bravo Charlie”: the instruction, then the call-sign that says which aircraft acknowledged.';
+      if (this.holdShortGone) return 'The tower hears “' + this.heardAll + '”. Without “hold short” the readback no longer says you will stop: the meaning has reversed.' + (this.csOk ? '' : ' The call-sign is clipped too.');
+      if (!this.holdShortOk) return 'The tower hears “' + this.heardAll + '”. The key words at the start are damaged: a little earlier and “hold short” is gone, turning the readback into its opposite.' + (this.csOk ? '' : ' The call-sign is clipped too.');
+      if (this.res[7].state === 'lost') return 'The call-sign at the end is cut' + (this.csText ? ' to “' + this.csText + '”' : '') + ': that could be Alpha Bravo Charlie or Alpha Bravo Delta, so the controller cannot tell which aircraft acknowledged.';
+      return 'The end is clipped, so the controller cannot be sure which aircraft acknowledged, or that the runway was read back correctly.';
+    }
+    if (this.allOk) return 'You hear the whole call, starting with your full call-sign “Alpha Bravo Charlie”: the traffic is for you.';
+    if (!this.csOk) return (this.csLost ? 'The call-sign is gone' : '“' + this.csText + '” fits Alpha Bravo Charlie, and a Kilo Lima Charlie is also on frequency') + '. Do not assume it was for you: reply “Station calling Alpha Bravo Charlie, say again”.';
+    return 'The end of the traffic information is clipped, so it has to be asked for again, and every “say again” clogs the frequency.';
+  },
+  presets: {
+    'press-pause-speak-release': { msg: 'readback', lead: 0.5, tail: 0.2, t: 1 },
+    'spoke-too-early': { msg: 'readback', lead: -0.25, tail: 0.2, t: 1 },
+    'released-too-soon': { msg: 'readback', lead: 0.5, tail: -0.7, t: 1 },
+    'clipped-callsign-traffic': { msg: 'traffic', lead: -0.35, tail: 0.2, t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 334" role="img" aria-labelledby="clt-title" class="widget-stage">
+    <title id="clt-title">A transmission against time: the press-to-talk switch, the transmitter coming up to power about half a second after the press, the words spoken, and the words the listener actually hears, with the words outside the transmit window lost</title>
+    <text x="20" y="24" font-size="15" font-weight="600" fill="var(--color-fg)" x-text="who"></text>
+    <text x="620" y="24" font-size="14" font-weight="600" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="fmt(time, 2) + ' s'"></text>
+    <!-- the transmit window: from full power to release -->
+    <rect y="108" height="152" fill="var(--color-brand)" fill-opacity="0.07" :x="X(up)" :width="Math.max(0, X(rel) - X(up))"/>
+    <g stroke="var(--color-brand)" stroke-width="1" stroke-dasharray="4 3">
+      <line y1="108" y2="260" :x1="X(up)" :x2="X(up)"/>
+      <line y1="108" y2="260" :x1="X(rel)" :x2="X(rel)"/>
+    </g>
+    <!-- PTT switch -->
+    <line y1="84" y2="84" stroke="var(--color-line-strong)" stroke-width="1.25" :x1="X(0)" :x2="X(span)"/>
+    <rect y="62" height="22" rx="4" fill="var(--color-fg-muted)" fill-opacity="0.14" stroke="var(--color-fg-muted)" stroke-width="1.25" :x="X(press)" :width="X(rel) - X(press)"/>
+    <text y="77" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" :x="(X(press) + X(rel)) / 2">pressed</text>
+    <!-- transmitter power: ramps up for about half a second, full until release -->
+    <line y1="134" y2="134" stroke="var(--color-line-strong)" stroke-width="1.25" :x1="X(0)" :x2="X(span)"/>
+    <path fill="var(--color-brand)" fill-opacity="0.22" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round"
+      :d="path([[X(press), 134], [X(up), 112], [X(rel), 112], [X(rel), 134]])"/>
+    <text y="128" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)" :x="(X(up) + X(rel)) / 2">on air</text>
+    <!-- track labels -->
+    <g font-size="13" font-weight="600" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text x="20" y="54">PTT switch</text>
+      <text x="20" y="104">Transmitter</text>
+      <text x="20" y="154">Spoken</text>
+      <text x="20" y="216">Listener hears</text>
+    </g>
+    <!-- spoken words, written out (no x-for inside svg) -->
+      <g :display="(0 < res.length) ? null : 'none'" :opacity="T[0].op">
+        <rect y="160" height="28" rx="5" :x="T[0].x" :width="T[0].w" :fill="T[0].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[0].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[0].cx" x-text="T[0].word"></text>
+      </g>
+      <g :display="(1 < res.length) ? null : 'none'" :opacity="T[1].op">
+        <rect y="160" height="28" rx="5" :x="T[1].x" :width="T[1].w" :fill="T[1].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[1].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[1].cx" x-text="T[1].word"></text>
+      </g>
+      <g :display="(2 < res.length) ? null : 'none'" :opacity="T[2].op">
+        <rect y="160" height="28" rx="5" :x="T[2].x" :width="T[2].w" :fill="T[2].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[2].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[2].cx" x-text="T[2].word"></text>
+      </g>
+      <g :display="(3 < res.length) ? null : 'none'" :opacity="T[3].op">
+        <rect y="160" height="28" rx="5" :x="T[3].x" :width="T[3].w" :fill="T[3].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[3].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[3].cx" x-text="T[3].word"></text>
+      </g>
+      <g :display="(4 < res.length) ? null : 'none'" :opacity="T[4].op">
+        <rect y="160" height="28" rx="5" :x="T[4].x" :width="T[4].w" :fill="T[4].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[4].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[4].cx" x-text="T[4].word"></text>
+      </g>
+      <g :display="(5 < res.length) ? null : 'none'" :opacity="T[5].op">
+        <rect y="160" height="28" rx="5" :x="T[5].x" :width="T[5].w" :fill="T[5].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[5].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[5].cx" x-text="T[5].word"></text>
+      </g>
+      <g :display="(6 < res.length) ? null : 'none'" :opacity="T[6].op">
+        <rect y="160" height="28" rx="5" :x="T[6].x" :width="T[6].w" :fill="T[6].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[6].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[6].cx" x-text="T[6].word"></text>
+      </g>
+      <g :display="(7 < res.length) ? null : 'none'" :opacity="T[7].op">
+        <rect y="160" height="28" rx="5" :x="T[7].x" :width="T[7].w" :fill="T[7].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[7].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[7].cx" x-text="T[7].word"></text>
+      </g>
+      <g :display="(8 < res.length) ? null : 'none'" :opacity="T[8].op">
+        <rect y="160" height="28" rx="5" :x="T[8].x" :width="T[8].w" :fill="T[8].now ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="T[8].now ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/>
+        <text y="179" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" fill="var(--color-fg)" :x="T[8].cx" x-text="T[8].word"></text>
+      </g>
+    <!-- what the listener hears -->
+      <g :display="(0 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[0].x" :width="T[0].w" :fill="T[0].lfill" :stroke="T[0].lstroke" :stroke-dasharray="T[0].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[0].cx" :fill="T[0].ltext" :display="(0 < res.length) ? null : 'none'" :opacity="T[0].shown ? 1 : 0" x-text="T[0].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[0].shown &amp;&amp; T[0].state === 'lost' ? 1 : 0" :x1="T[0].x + 5" :x2="T[0].x + T[0].w - 5"/>
+      </g>
+      <g :display="(1 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[1].x" :width="T[1].w" :fill="T[1].lfill" :stroke="T[1].lstroke" :stroke-dasharray="T[1].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[1].cx" :fill="T[1].ltext" :display="(1 < res.length) ? null : 'none'" :opacity="T[1].shown ? 1 : 0" x-text="T[1].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[1].shown &amp;&amp; T[1].state === 'lost' ? 1 : 0" :x1="T[1].x + 5" :x2="T[1].x + T[1].w - 5"/>
+      </g>
+      <g :display="(2 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[2].x" :width="T[2].w" :fill="T[2].lfill" :stroke="T[2].lstroke" :stroke-dasharray="T[2].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[2].cx" :fill="T[2].ltext" :display="(2 < res.length) ? null : 'none'" :opacity="T[2].shown ? 1 : 0" x-text="T[2].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[2].shown &amp;&amp; T[2].state === 'lost' ? 1 : 0" :x1="T[2].x + 5" :x2="T[2].x + T[2].w - 5"/>
+      </g>
+      <g :display="(3 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[3].x" :width="T[3].w" :fill="T[3].lfill" :stroke="T[3].lstroke" :stroke-dasharray="T[3].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[3].cx" :fill="T[3].ltext" :display="(3 < res.length) ? null : 'none'" :opacity="T[3].shown ? 1 : 0" x-text="T[3].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[3].shown &amp;&amp; T[3].state === 'lost' ? 1 : 0" :x1="T[3].x + 5" :x2="T[3].x + T[3].w - 5"/>
+      </g>
+      <g :display="(4 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[4].x" :width="T[4].w" :fill="T[4].lfill" :stroke="T[4].lstroke" :stroke-dasharray="T[4].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[4].cx" :fill="T[4].ltext" :display="(4 < res.length) ? null : 'none'" :opacity="T[4].shown ? 1 : 0" x-text="T[4].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[4].shown &amp;&amp; T[4].state === 'lost' ? 1 : 0" :x1="T[4].x + 5" :x2="T[4].x + T[4].w - 5"/>
+      </g>
+      <g :display="(5 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[5].x" :width="T[5].w" :fill="T[5].lfill" :stroke="T[5].lstroke" :stroke-dasharray="T[5].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[5].cx" :fill="T[5].ltext" :display="(5 < res.length) ? null : 'none'" :opacity="T[5].shown ? 1 : 0" x-text="T[5].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[5].shown &amp;&amp; T[5].state === 'lost' ? 1 : 0" :x1="T[5].x + 5" :x2="T[5].x + T[5].w - 5"/>
+      </g>
+      <g :display="(6 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[6].x" :width="T[6].w" :fill="T[6].lfill" :stroke="T[6].lstroke" :stroke-dasharray="T[6].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[6].cx" :fill="T[6].ltext" :display="(6 < res.length) ? null : 'none'" :opacity="T[6].shown ? 1 : 0" x-text="T[6].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[6].shown &amp;&amp; T[6].state === 'lost' ? 1 : 0" :x1="T[6].x + 5" :x2="T[6].x + T[6].w - 5"/>
+      </g>
+      <g :display="(7 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[7].x" :width="T[7].w" :fill="T[7].lfill" :stroke="T[7].lstroke" :stroke-dasharray="T[7].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[7].cx" :fill="T[7].ltext" :display="(7 < res.length) ? null : 'none'" :opacity="T[7].shown ? 1 : 0" x-text="T[7].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[7].shown &amp;&amp; T[7].state === 'lost' ? 1 : 0" :x1="T[7].x + 5" :x2="T[7].x + T[7].w - 5"/>
+      </g>
+      <g :display="(8 < res.length) ? null : 'none'">
+        <rect y="222" height="28" rx="5" :x="T[8].x" :width="T[8].w" :fill="T[8].lfill" :stroke="T[8].lstroke" :stroke-dasharray="T[8].ldash" stroke-width="1.25"/>
+        <text y="241" :font-size="msg === 'traffic' ? 11.5 : 12" text-anchor="middle" :x="T[8].cx" :fill="T[8].ltext" :display="(8 < res.length) ? null : 'none'" :opacity="T[8].shown ? 1 : 0" x-text="T[8].heard"></text>
+        <line y1="236" y2="236" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" :opacity="T[8].shown &amp;&amp; T[8].state === 'lost' ? 1 : 0" :x1="T[8].x + 5" :x2="T[8].x + T[8].w - 5"/>
+      </g>
+    <!-- time axis -->
+    <line y1="266" y2="266" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(0)" :x2="X(span)"/>
+      <g :display="(0 <= span) ? null : 'none'"><line y1="266" y2="271" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(0)" :x2="X(0)"/><text y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num" :x="X(0)">0 s</text></g>
+      <g :display="(1 <= span) ? null : 'none'"><line y1="266" y2="271" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(1)" :x2="X(1)"/><text y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num" :x="X(1)">1 s</text></g>
+      <g :display="(2 <= span) ? null : 'none'"><line y1="266" y2="271" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(2)" :x2="X(2)"/><text y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num" :x="X(2)">2 s</text></g>
+      <g :display="(3 <= span) ? null : 'none'"><line y1="266" y2="271" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(3)" :x2="X(3)"/><text y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num" :x="X(3)">3 s</text></g>
+      <g :display="(4 <= span) ? null : 'none'"><line y1="266" y2="271" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(4)" :x2="X(4)"/><text y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num" :x="X(4)">4 s</text></g>
+      <g :display="(5 <= span) ? null : 'none'"><line y1="266" y2="271" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(5)" :x2="X(5)"/><text y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num" :x="X(5)">5 s</text></g>
+      <g :display="(6 <= span) ? null : 'none'"><line y1="266" y2="271" stroke="var(--color-line-strong)" stroke-width="1" :x1="X(6)" :x2="X(6)"/><text y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num" :x="X(6)">6 s</text></g>
+    <!-- playhead -->
+    <line y1="40" y2="266" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" :x1="X(time)" :x2="X(time)"/>
+    <!-- transcript -->
+    <text x="20" y="308" font-size="13" fill="var(--color-fg)"><tspan font-weight="600" fill="var(--color-fg-muted)">Heard: </tspan><tspan x-text="heardNow ? '“' + heardNow + '”' : '…'"></tspan></text>
+    <text x="20" y="326" font-size="12" fill="var(--color-bad-fg)" x-text="msg === 'traffic' &amp;&amp; !csOk &amp;&amp; time >= rel ? 'Alpha Bravo Charlie? Kilo Lima Charlie? Not sure, so ask.' : ''"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the transmission'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="clt-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time through the transmission">
+    <span class="widget-clock" x-text="fmt(time, 1) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="clt-lead">Speaking starts <output for="clt-lead" x-text="leadText"></output></label>
+      <input type="range" id="clt-lead" min="-0.4" max="0.6" step="0.05" x-model.number="lead">
+    </div>
+    <div class="widget-control">
+      <label for="clt-tail">PTT released <output for="clt-tail" x-text="tailText"></output></label>
+      <input type="range" id="clt-tail" min="-1.4" max="0.4" step="0.05" x-model.number="tail">
+    </div>
+    <div class="widget-control">
+      <label for="clt-msg">Message</label>
+      <select id="clt-msg" x-model="msg">
+        <option value="readback">Your readback: “Hold short runway two four, Alpha Bravo Charlie”</option>
+        <option value="traffic">Traffic call to you: “Alpha Bravo Charlie, traffic, Piper, 2 o'clock, 5 miles, same level”</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="csOk ? 'ok' : 'bad'">
+      <dt class="widget-label">Call-sign</dt>
+      <dd class="widget-value"><span x-text="csOk ? 'Heard' : csLost ? 'Lost' : '“' + csText + '”'"></span><span class="widget-flag bad" x-show="!csOk">clipped</span></dd>
+    </div>
+    <div class="widget-readout" :class="keyOk ? 'ok' : 'bad'">
+      <dt class="widget-label" x-text="msg === 'readback' ? 'Hold short runway two four' : 'Traffic details'"></dt>
+      <dd class="widget-value" x-text="keyOk ? 'Heard' : holdShortGone ? '“Hold short” lost' : 'Partly lost'"></dd>
+    </div>
+    <div class="widget-readout" :class="allOk ? 'ok' : 'bad'">
+      <dt class="widget-label">Result</dt>
+      <dd class="widget-value" x-text="result"></dd>
+    </div>
+    <div class="widget-readout" :class="!early &amp;&amp; !late ? 'ok' : allOk ? 'warn' : 'bad'">
+      <dt class="widget-label">Technique</dt>
+      <dd class="widget-value" x-text="technique"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('press-pause-speak-release')" :aria-pressed="active === 'press-pause-speak-release'">Press, pause, speak, release</button>
+      <button type="button" @click="preset('spoke-too-early')" :aria-pressed="active === 'spoke-too-early'">Spoke too early</button>
+      <button type="button" @click="preset('released-too-soon')" :aria-pressed="active === 'released-too-soon'">Released too soon</button>
+      <button type="button" @click="preset('clipped-callsign-traffic')" :aria-pressed="active === 'clipped-callsign-traffic'">…harlie, traffic</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Only the words between the transmitter reaching power and the release get out, and the words at the edges are the ones that matter: the call-sign first, the key words and your call-sign last. Press the PTT, pause about half a second, speak, finish, then release. The timings and speaking pace here are illustrative, and the clock runs slowed down.</p>
+  <details class="widget-try"><summary>Try it: you pause only 0.3 s after pressing. Does the readback still get through?</summary><p>Set Speaking starts to 0.30 s after the press: the transmitter is still coming up to power for the first 0.2 s, so the tower hears “…ld short runway two four, Alpha Bravo Charlie”. The first word is damaged; start a little earlier and “hold short” is gone altogether. That is why the pause is about half a second.</p></details>
+  <details class="widget-try"><summary>Try it: you are expecting traffic information and hear “…harlie, traffic, Piper, 2 o'clock, 5 miles, same level”. Why not just reply as if it were yours?</summary><p>Choose “…harlie, traffic”: the clipped call-sign fits Alpha Bravo Charlie and the Kilo Lima Charlie also on frequency. Never assume a clipped call was for you, even when you expected it. Reply “Station calling Alpha Bravo Charlie, say again”.</p></details>
+</div>

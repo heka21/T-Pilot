@@ -1,0 +1,155 @@
+<div class="widget" x-data="widget({
+  from: 3000, to: 7000, dev: 0, wind: 0, tas: 75,
+  // the lesson's climb table rows, cumulative from sea level (its examples' rows merged into one table)
+  alts: [0, 2000, 3000, 6000, 7000],
+  mins: [0, 3, 5, 11, 13],
+  litres: [0, 2, 3, 6, 7],
+  nms: [0, 4, 6, 15, 17],
+  interp(a, col) {
+    const A = this.alts, V = this[col];
+    for (let i = 1; i < A.length; i++) if (a <= A[i]) return V[i - 1] + (V[i] - V[i - 1]) * (a - A[i - 1]) / (A[i] - A[i - 1]);
+    return V[V.length - 1];
+  },
+  get lo() { return Math.min(this.from, this.to) },
+  get hi() { return Math.max(this.from, this.to) },
+  onRow(a) { return this.alts.includes(a) },
+  get f() { return 1 + this.dev / 100 },
+  get isaMin() { return this.interp(this.hi, 'mins') - this.interp(this.lo, 'mins') },
+  get isaL() { return this.interp(this.hi, 'litres') - this.interp(this.lo, 'litres') },
+  get isaNm() { return this.interp(this.hi, 'nms') - this.interp(this.lo, 'nms') },
+  get time() { return this.isaMin * this.f },
+  get fuel() { return this.isaL * this.f },
+  get still() { return this.isaNm * this.f },
+  get gs() { return this.tas + this.wind },
+  get ground() { return this.time / 60 * this.gs },
+  get roc() { return this.time > 0 ? (this.hi - this.lo) / this.time : 0 },
+  windText(w) { return w === 0 ? 'still air' : w > 0 ? w + ' kt tailwind' : -w + ' kt headwind' },
+  rowState(a) { return a === this.hi || a === this.lo ? 'use' : '' },
+  n1(v) { return this.fmt(v, 1) },
+  get caption() {
+    const sub = (this.onRow(this.lo) && this.onRow(this.hi) ? 'Subtract the ' + this.altLabel(this.lo) + ' row from the ' + this.altLabel(this.hi) + ' row' : 'Interpolate between the rows, then subtract') + ': ' + this.n1(this.isaMin) + ' min, ' + this.n1(this.isaL) + ' L, ' + this.n1(this.isaNm) + ' nm at ISA. ';
+    const temp = this.dev ? 'ISA +' + this.dev + ' adds ' + this.dev + ' percent to all three. ' : '';
+    const wind = this.wind ? 'The ' + this.windText(this.wind) + ' puts the top of climb at ' + this.n1(this.ground) + ' nm over the ground (the table says ' + this.n1(this.still) + ' nm through the air), with the same time and fuel.' : 'In still air, time × TAS (' + this.n1(this.ground) + ' nm) differs a little from the table distance unless ' + this.tas + ' kt is the table\'s own average climb speed; use time × groundspeed.';
+    return sub + temp + wind;
+  },
+  altLabel(a) { return a === 0 ? 'Sea level' : this.fmt(a) + ' ft' },
+  // profile: 0..30 nm across x 300..620, 0..7,000 ft up y 260..50
+  X(nm) { return 300 + Math.min(30, nm) * 10.667 },
+  Y(ft) { return 260 - ft * 0.03 },
+  presets: {
+    'climb-3000-to-7000': { from: 3000, to: 7000, dev: 0, wind: 0, tas: 75 },
+    'aerodrome-1000-to-6000': { from: 1000, to: 6000, dev: 0, wind: 0, tas: 75 },
+    'warm-day-tailwind': { from: 3000, to: 7000, dev: 10, wind: 20, tas: 75 },
+    'hot-day-headwind': { from: 2000, to: 6000, dev: 20, wind: -15, tas: 80 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="ctc-title" class="widget-stage">
+    <title id="ctc-title">A time, fuel and distance to climb table, cumulative from sea level, with the rows you use highlighted and the subtraction worked below it; beside it a side profile of the climb from your aerodrome to the top of climb, with and without the wind</title>
+    <!-- the table -->
+    <text x="20" y="22" font-size="13" font-weight="700" fill="var(--color-fg)">Climb table: from sea level</text>
+    <g font-size="11" font-weight="600" fill="var(--color-fg-muted)" text-anchor="end">
+      <text x="24" y="46" text-anchor="start">Pressure alt</text><text x="150" y="46">min</text><text x="198" y="46">L</text><text x="248" y="46">nm</text>
+    </g>
+    <line x1="20" y1="52" x2="252" y2="52" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <!-- row highlights -->
+    <rect x="20" y="57" width="232" height="22" rx="3" :fill="rowState(0) === 'use' ? 'var(--color-brand)' : 'var(--color-fg-faint)'" :fill-opacity="rowState(0) === 'use' ? 0.18 : 0" />
+    <rect x="20" y="81" width="232" height="22" rx="3" :fill="rowState(2000) === 'use' ? 'var(--color-brand)' : 'var(--color-fg-faint)'" :fill-opacity="rowState(2000) === 'use' ? 0.18 : 0"/>
+    <rect x="20" y="105" width="232" height="22" rx="3" :fill="rowState(3000) === 'use' ? 'var(--color-brand)' : 'var(--color-fg-faint)'" :fill-opacity="rowState(3000) === 'use' ? 0.18 : 0"/>
+    <rect x="20" y="129" width="232" height="22" rx="3" :fill="rowState(6000) === 'use' ? 'var(--color-brand)' : 'var(--color-fg-faint)'" :fill-opacity="rowState(6000) === 'use' ? 0.18 : 0"/>
+    <rect x="20" y="153" width="232" height="22" rx="3" :fill="rowState(7000) === 'use' ? 'var(--color-brand)' : 'var(--color-fg-faint)'" :fill-opacity="rowState(7000) === 'use' ? 0.18 : 0"/>
+    <g font-size="13" fill="var(--color-fg)" class="num" text-anchor="end">
+      <text x="24" y="73" text-anchor="start">Sea level</text><text x="150" y="73">0</text><text x="198" y="73">0</text><text x="248" y="73">0</text>
+      <text x="24" y="97" text-anchor="start">2,000</text><text x="150" y="97">3</text><text x="198" y="97">2</text><text x="248" y="97">4</text>
+      <text x="24" y="121" text-anchor="start">3,000</text><text x="150" y="121">5</text><text x="198" y="121">3</text><text x="248" y="121">6</text>
+      <text x="24" y="145" text-anchor="start">6,000</text><text x="150" y="145">11</text><text x="198" y="145">6</text><text x="248" y="145">15</text>
+      <text x="24" y="169" text-anchor="start">7,000</text><text x="150" y="169">13</text><text x="198" y="169">7</text><text x="248" y="169">17</text>
+    </g>
+    <!-- the working -->
+    <g font-size="12" class="num" text-anchor="end">
+      <text x="24" y="200" text-anchor="start" fill="var(--color-fg-muted)" x-text="'To ' + fmt(hi) + (onRow(hi) ? '' : '*')"></text>
+      <text x="150" y="200" fill="var(--color-fg)" x-text="n1(interp(hi, 'mins'))"></text><text x="198" y="200" fill="var(--color-fg)" x-text="n1(interp(hi, 'litres'))"></text><text x="248" y="200" fill="var(--color-fg)" x-text="n1(interp(hi, 'nms'))"></text>
+      <text x="24" y="218" text-anchor="start" fill="var(--color-fg-muted)" x-text="'From ' + fmt(lo) + (onRow(lo) ? '' : '*')"></text>
+      <text x="150" y="218" fill="var(--color-fg)" x-text="'−' + n1(interp(lo, 'mins'))"></text><text x="198" y="218" fill="var(--color-fg)" x-text="'−' + n1(interp(lo, 'litres'))"></text><text x="248" y="218" fill="var(--color-fg)" x-text="'−' + n1(interp(lo, 'nms'))"></text>
+      <text x="24" y="242" text-anchor="start" fill="var(--color-fg)" font-weight="600">Climb at ISA</text>
+      <text x="150" y="242" fill="var(--color-fg)" font-weight="600" x-text="n1(isaMin)"></text><text x="198" y="242" fill="var(--color-fg)" font-weight="600" x-text="n1(isaL)"></text><text x="248" y="242" fill="var(--color-fg)" font-weight="600" x-text="n1(isaNm)"></text>
+      <text x="24" y="266" text-anchor="start" fill="var(--color-brand-fg)" font-weight="700" x-text="dev ? '× ' + fmt(f, 2) + ' (+' + dev + '°)' : '× 1.00 (ISA)'"></text>
+      <text x="150" y="266" fill="var(--color-brand-fg)" font-weight="700" x-text="n1(time)"></text><text x="198" y="266" fill="var(--color-brand-fg)" font-weight="700" x-text="n1(fuel)"></text><text x="248" y="266" fill="var(--color-brand-fg)" font-weight="700" x-text="n1(still)"></text>
+    </g>
+    <line x1="100" y1="226" x2="252" y2="226" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="20" y="292" font-size="11" fill="var(--color-fg-faint)">Rows: the lesson's examples, one table</text>
+    <text x="20" y="308" font-size="11" fill="var(--color-brand-fg)" x-show="!onRow(lo) || !onRow(hi)">* interpolated between the rows either side</text>
+
+    <!-- the profile -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="300" y1="200" x2="620" y2="200"/><line x1="300" y1="140" x2="620" y2="140"/><line x1="300" y1="80" x2="620" y2="80"/>
+    </g>
+    <line x1="300" y1="260" x2="620" y2="260" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <line x1="300" y1="50" x2="300" y2="260" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="294" y="264">0</text><text x="294" y="204">2,000</text><text x="294" y="144">4,000</text><text x="294" y="84">6,000</text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="300" y="276">0</text><text x="353.3" y="276">5</text><text x="406.7" y="276">10</text><text x="460" y="276">15</text><text x="513.3" y="276">20</text><text x="566.7" y="276">25</text><text x="614" y="276">30</text>
+    </g>
+    <text x="460" y="294" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">nm from your aerodrome (ground distance)</text>
+    <!-- levels -->
+    <line x1="300" x2="620" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :y1="Y(hi)" :y2="Y(hi)"/>
+    <text x="614" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num" :y="Y(hi) - 6" x-text="'cruise ' + fmt(hi) + ' ft'"></text>
+    <!-- still-air path (table distance) and the real path over the ground -->
+    <line stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-dasharray="5 4" stroke-linecap="round" x1="300" :y1="Y(lo)" :x2="X(still)" :y2="Y(hi)"/>
+    <line stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" x1="300" :y1="Y(lo)" :x2="X(ground)" :y2="Y(hi)"/>
+    <circle r="5" fill="var(--color-fg-muted)" :cx="X(still)" :cy="Y(hi)" x-show="Math.abs(X(still) - X(ground)) > 6"/>
+    <circle r="6" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="3" :cx="X(ground)" :cy="Y(hi)"/>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="Math.min(560, X(ground) + 8)" :y="Y(hi) + 20" x-text="'TOPC ' + n1(ground) + ' nm'"></text>
+    <text font-size="11" fill="var(--color-fg-muted)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" text-anchor="end" :x="X(still) - 8" :y="Y(hi) - 8" x-show="Math.abs(X(still) - X(ground)) > 40" x-text="'still air ' + n1(still)"></text>
+    <!-- your aerodrome -->
+    <rect x="296" width="22" height="5" rx="1.5" fill="var(--color-tarmac)" :y="Y(lo) - 2"/>
+    <text x="306" font-size="12" fill="var(--color-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="Y(lo) + 18" x-text="lo ? 'aerodrome ' + fmt(lo) + ' ft' : 'sea-level aerodrome'"></text>
+    <text x="614" y="18" font-size="12" text-anchor="end" font-weight="600" :fill="wind ? 'var(--color-info)' : 'var(--color-fg-faint)'" x-text="windText(wind) + ', ' + gs + ' kt over the ground'"></text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ctc-from">From: aerodrome pressure height <output for="ctc-from" x-text="fmt(from) + ' ft'"></output></label>
+      <input type="range" id="ctc-from" min="0" max="7000" step="100" x-model.number="from" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ctc-to">To: cruising pressure altitude <output for="ctc-to" x-text="fmt(to) + ' ft'"></output></label>
+      <input type="range" id="ctc-to" min="0" max="7000" step="100" x-model.number="to" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ctc-dev">Temperature above ISA <output for="ctc-dev" x-text="'ISA +' + dev + ' (add ' + dev + '%)'"></output></label>
+      <input type="range" id="ctc-dev" min="0" max="30" step="5" x-model.number="dev" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ctc-wind">Wind component <output for="ctc-wind" x-text="windText(wind)"></output></label>
+      <input type="range" id="ctc-wind" min="-30" max="30" step="1" x-model.number="wind" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ctc-tas">Climb TAS <output for="ctc-tas" x-text="tas + ' kt'"></output></label>
+      <input type="range" id="ctc-tas" min="60" max="100" step="1" x-model.number="tas" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Time and fuel for the climb</dt><dd class="widget-value" x-text="n1(time) + ' min, ' + n1(fuel) + ' L'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Distance: still air, then over the ground</dt><dd class="widget-value" x-text="n1(still) + ' nm, ' + n1(ground) + ' nm (' + n1(time) + ' ÷ 60 × ' + gs + ')'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Average rate of climb</dt><dd class="widget-value" x-text="fmt(roc) + ' ft/min (' + fmt(hi - lo) + ' ft ÷ ' + n1(time) + ' min)'"></dd></div>
+    <div class="widget-readout warn" x-show="lo > 0">
+      <dt class="widget-label">Top row alone (the trap)</dt>
+      <dd class="widget-value"><span x-text="n1(interp(hi, 'mins')) + ' min, ' + n1(interp(hi, 'litres')) + ' L, ' + n1(interp(hi, 'nms')) + ' nm: from sea level'"></span><span class="widget-flag warn">wrong</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('climb-3000-to-7000')" :aria-pressed="active === 'climb-3000-to-7000'">3,000 to 7,000 ft</button>
+      <button type="button" @click="preset('aerodrome-1000-to-6000')" :aria-pressed="active === 'aerodrome-1000-to-6000'">From a 1,000 ft aerodrome</button>
+      <button type="button" @click="preset('warm-day-tailwind')" :aria-pressed="active === 'warm-day-tailwind'">ISA +10, tailwind</button>
+      <button type="button" @click="preset('hot-day-headwind')" :aria-pressed="active === 'hot-day-headwind'">ISA +20, headwind</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every row runs from sea level, so a climb between two altitudes is the difference between their rows, interpolated when you fall between rows. Then correct for temperature (here the lesson's 10 percent per 10 degrees above ISA, applied to time, fuel and distance), and only then for wind: the wind moves the top of climb along your track but never changes the time or the fuel. The rows are the lesson's worked examples merged into one illustrative table; your POH governs.</p>
+  <details class="widget-try"><summary>Try it: climb from 2,000 to 6,000 ft, 20 degrees above ISA, into a 15 kt headwind at 80 kt TAS.</summary><p>ISA figures 11 − 3 = 8 min, 6 − 2 = 4 L, 15 − 4 = 11 nm. Add 20 percent: 9.6 min, 4.8 L, about 13 nm still air. Groundspeed 65 kt: 9.6 ÷ 60 × 65 = 10.4 nm over the ground.</p></details>
+  <details class="widget-try"><summary>Try it: why does a headwind not make the climb take longer or burn more fuel?</summary><p>The aeroplane climbs through the moving air at the same rate, so the time to gain the height and the fuel for it are unchanged. Only the ground covered in that time changes: drag the wind and watch the TOPC slide while the time and fuel stay put.</p></details>
+</div>

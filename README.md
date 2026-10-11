@@ -1,4 +1,4 @@
-# CASA Theory
+# T-Pilot
 
 A self-hosted study app for the Australian CASA **RPL(A)** and **PPL(A)** pilot theory exams.
 It runs on your own machine (for example a Mac mini on your home network) and works fully offline:

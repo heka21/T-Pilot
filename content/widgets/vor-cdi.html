@@ -1,0 +1,160 @@
+<div class="widget" x-data="widget({
+  radial: 90, dist: 20, obs: 270, hdg: 270, alt: 3000,
+  n(x) { return ((x % 360) + 360) % 360 },
+  w180(x) { return ((x % 360) + 540) % 360 - 180 },
+  // FROM when flying the selected course would carry you away from the station (you are on its side of the line
+  // through the station at right angles to the course), TO otherwise
+  get from() { return Math.abs(this.w180(this.radial - this.obs)) < 90 },
+  // angular distance off the selected course; negative: needle left (the course is to your left)
+  get dev() { return this.from ? -this.w180(this.radial - this.obs) : this.w180(this.radial - this.obs - 180) },
+  // needle: full scale 10° here (2° a dot), a typical VOR indicator
+  get needle() { return 500 + this.clamp(this.dev, -10, 10) / 10 * 55 },
+  get dots() { return Math.abs(this.dev) / 2 },
+  get offNm() { return this.dist * Math.abs(this.dev) / 60 },
+  get reverse() { return Math.abs(this.w180(this.hdg - this.obs)) > 90 },
+  get slant() { return Math.sqrt(this.dist * this.dist + Math.pow(this.alt / 6076, 2)) },
+  get cdiText() {
+    if (Math.abs(this.dev) < 0.5) return 'centred';
+    const side = this.dev < 0 ? 'left' : 'right';
+    return Math.abs(this.dev) >= 10 ? 'full scale ' + side : this.fmt(this.dots, 1) + ' dots ' + side + ' (' + this.fmt(Math.abs(this.dev)) + '°)';
+  },
+  // plan: 3.5 px per NM about the VOR at (200, 170)
+  get P() { return this.pol(200, 170, this.dist * 3.5, this.radial) },
+  get courseLine() { const a = this.pol(200, 170, 140, this.obs + 180), b = this.pol(200, 170, 140, this.obs); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  get courseHead() { const t = this.pol(200, 170, 140, this.obs), l = this.pol(200, 170, 124, this.obs - 4), r = this.pol(200, 170, 124, this.obs + 4); return 'M' + t.x.toFixed(1) + ' ' + t.y.toFixed(1) + 'L' + l.x.toFixed(1) + ' ' + l.y.toFixed(1) + 'L' + r.x.toFixed(1) + ' ' + r.y.toFixed(1) + 'Z' },
+  get fromHalf() {
+    const a = this.pol(200, 170, 140, this.obs - 90), b = this.pol(200, 170, 140, this.obs + 90);
+    return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'A140 140 0 0 1 ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + 'Z';
+  },
+  get divider() { const a = this.pol(200, 170, 140, this.obs - 90), b = this.pol(200, 170, 140, this.obs + 90); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  card(k) { return this.pol(500, 128, 70, k * 30 - this.obs) },
+  onDrag(p) {
+    const dx = p.x - 200, dy = 170 - p.y;
+    this.dist = Math.round(this.clamp(Math.hypot(dx, dy) / 3.5, 0, 40) * 2) / 2;
+    this.radial = this.n(Math.round(Math.atan2(dx, dy) * 180 / Math.PI)) || 360;
+    this.active = null;
+  },
+  presets: {
+    'inbound-270-to': { radial: 90, dist: 20, obs: 270, hdg: 270, alt: 3000 },
+    'same-place-090-from': { radial: 90, dist: 20, obs: 90, hdg: 270, alt: 3000 },
+    'six-degrees-off': { radial: 84, dist: 20, obs: 270, hdg: 270, alt: 3000 },
+    'on-the-030-radial': { radial: 30, dist: 15, obs: 30, hdg: 30, alt: 3000 },
+    'fix-047-at-35': { radial: 47, dist: 35, obs: 47, hdg: 50, alt: 3500 },
+    'overhead-at-6000': { radial: 90, dist: 0, obs: 270, hdg: 270, alt: 6000 },
+    'twenty-out-at-6000': { radial: 90, dist: 20, obs: 270, hdg: 270, alt: 6000 },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="vor-title" class="widget-stage">
+    <title id="vor-title">Left, plan view of a VOR with its radials, the selected course and the line that divides the TO side from the FROM side, and the aeroplane. Right, the VOR indicator with its course card, deviation needle and TO/FROM flag, and a side view of the DME slant range</title>
+    <defs>
+      <marker id="vor-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <circle cx="200" cy="170" r="140" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/><path d="M200.0 30.0L200.0 36.0M224.3 32.1L223.3 38.0M247.9 38.4L245.8 44.1M270.0 48.8L267.0 54.0M290.0 62.8L286.1 67.4M307.2 80.0L302.6 83.9M321.2 100.0L316.0 103.0M331.6 122.1L325.9 124.2M337.9 145.7L332.0 146.7M340.0 170.0L334.0 170.0M337.9 194.3L332.0 193.3M331.6 217.9L325.9 215.8M321.2 240.0L316.0 237.0M307.2 260.0L302.6 256.1M290.0 277.2L286.1 272.6M270.0 291.2L267.0 286.0M247.9 301.6L245.8 295.9M224.3 307.9L223.3 302.0M200.0 310.0L200.0 304.0M175.7 307.9L176.7 302.0M152.1 301.6L154.2 295.9M130.0 291.2L133.0 286.0M110.0 277.2L113.9 272.6M92.8 260.0L97.4 256.1M78.8 240.0L84.0 237.0M68.4 217.9L74.1 215.8M62.1 194.3L68.0 193.3M60.0 170.0L66.0 170.0M62.1 145.7L68.0 146.7M68.4 122.1L74.1 124.2M78.8 100.0L84.0 103.0M92.8 80.0L97.4 83.9M110.0 62.8L113.9 67.4M130.0 48.8L133.0 54.0M152.1 38.4L154.2 44.1M175.7 32.1L176.7 38.0" stroke="var(--color-fg-faint)" stroke-width="1"/><path d="M200.0 30.0L200.0 42.0M270.0 48.8L264.0 59.1M321.2 100.0L310.9 106.0M340.0 170.0L328.0 170.0M321.2 240.0L310.9 234.0M270.0 291.2L264.0 280.9M200.0 310.0L200.0 298.0M130.0 291.2L136.0 280.9M78.8 240.0L89.1 234.0M60.0 170.0L72.0 170.0M78.8 100.0L89.1 106.0M130.0 48.8L136.0 59.1" stroke="var(--color-fg-muted)" stroke-width="1.5"/><text x="200.0" y="21.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">360</text><text x="276.5" y="41.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">030</text><text x="332.5" y="97.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">060</text><text x="353.0" y="174.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">090</text><text x="332.5" y="250.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">120</text><text x="276.5" y="306.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">150</text><text x="200.0" y="327.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">180</text><text x="123.5" y="306.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">210</text><text x="67.5" y="250.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">240</text><text x="47.0" y="174.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">270</text><text x="67.5" y="97.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">300</text><text x="123.5" y="41.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">330</text>
+    <!-- FROM half, TO/FROM line and the selected course -->
+    <path fill="var(--color-brand)" fill-opacity="0.08" :d="fromHalf"/>
+    <path stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :d="divider"/>
+    <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="pol(200, 170, 108, obs + 35).x" :y="pol(200, 170, 108, obs + 35).y + 4">FROM side</text>
+    <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="pol(200, 170, 108, obs + 215).x" :y="pol(200, 170, 108, obs + 215).y + 4">TO side</text>
+    <path stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="8 5" :d="courseLine"/>
+    <path fill="var(--color-brand)" :d="courseHead"/>
+    <!-- DME circle and the radial you are on -->
+    <circle cx="200" cy="170" fill="none" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="3 4" :r="dist * 3.5" x-show="dist > 0"/>
+    <line x1="200" y1="170" stroke="var(--color-fg-muted)" stroke-width="1.5" :x2="P.x" :y2="P.y"/>
+    <!-- the VOR -->
+    <path d="M192 170 L196 163 L204 163 L208 170 L204 177 L196 177 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <circle cx="200" cy="170" r="2.5" fill="var(--color-fg)"/>
+    <!-- the aeroplane -->
+    <g :transform="'translate(' + P.x + ' ' + P.y + ') rotate(' + (hdg - 90) + ') scale(0.32)'"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <text font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="pol(200, 170, Math.max(dist * 3.5 + 26, 34), radial).x" :y="pol(200, 170, Math.max(dist * 3.5 + 26, 34), radial).y + 4" x-text="'R' + dir(radial)" x-show="dist > 0"></text>
+    <rect x="0" y="0" width="360" height="340" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: move" @pointerdown="drag($event, (p) => onDrag(p))"/>
+    <!-- the VOR indicator -->
+    <circle cx="500" cy="128" r="96" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/><circle cx="500" cy="128" r="88" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M500.0 40.0L500.0 46.0M515.3 41.3L514.2 47.2M530.1 45.3L528.0 50.9M544.0 51.8L541.0 57.0M556.6 60.6L552.7 65.2M567.4 71.4L562.8 75.3M576.2 84.0L571.0 87.0M582.7 97.9L577.1 100.0M586.7 112.7L580.8 113.8M588.0 128.0L582.0 128.0M586.7 143.3L580.8 142.2M582.7 158.1L577.1 156.0M576.2 172.0L571.0 169.0M567.4 184.6L562.8 180.7M556.6 195.4L552.7 190.8M544.0 204.2L541.0 199.0M530.1 210.7L528.0 205.1M515.3 214.7L514.2 208.8M500.0 216.0L500.0 210.0M484.7 214.7L485.8 208.8M469.9 210.7L472.0 205.1M456.0 204.2L459.0 199.0M443.4 195.4L447.3 190.8M432.6 184.6L437.2 180.7M423.8 172.0L429.0 169.0M417.3 158.1L422.9 156.0M413.3 143.3L419.2 142.2M412.0 128.0L418.0 128.0M413.3 112.7L419.2 113.8M417.3 97.9L422.9 100.0M423.8 84.0L429.0 87.0M432.6 71.4L437.2 75.3M443.4 60.6L447.3 65.2M456.0 51.8L459.0 57.0M469.9 45.3L472.0 50.9M484.7 41.3L485.8 47.2" stroke="var(--color-fg-faint)" stroke-width="1"/><path d="M500.0 40.0L500.0 51.0M544.0 51.8L538.5 61.3M576.2 84.0L566.7 89.5M588.0 128.0L577.0 128.0M576.2 172.0L566.7 166.5M544.0 204.2L538.5 194.7M500.0 216.0L500.0 205.0M456.0 204.2L461.5 194.7M423.8 172.0L433.3 166.5M412.0 128.0L423.0 128.0M423.8 84.0L433.3 89.5M456.0 51.8L461.5 61.3" stroke="var(--color-fg-muted)" stroke-width="1.5"/><circle cx="500" cy="128" r="10" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.5"/><circle cx="445" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="456" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="467" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="478" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="489" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="511" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="522" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="533" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="544" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/><circle cx="555" cy="128" r="3.2" fill="none" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">
+      <text :x="card(0).x" :y="card(0).y + 4">N</text><text :x="card(1).x" :y="card(1).y + 4">3</text><text :x="card(2).x" :y="card(2).y + 4">6</text>
+      <text :x="card(3).x" :y="card(3).y + 4">E</text><text :x="card(4).x" :y="card(4).y + 4">12</text><text :x="card(5).x" :y="card(5).y + 4">15</text>
+      <text :x="card(6).x" :y="card(6).y + 4">S</text><text :x="card(7).x" :y="card(7).y + 4">21</text><text :x="card(8).x" :y="card(8).y + 4">24</text>
+      <text :x="card(9).x" :y="card(9).y + 4">W</text><text :x="card(10).x" :y="card(10).y + 4">30</text><text :x="card(11).x" :y="card(11).y + 4">33</text>
+    </g>
+    <path d="M492 30 L508 30 L500 41 Z" fill="var(--color-brand)"/>
+    <!-- TO/FROM window -->
+    <rect x="478" y="70" width="44" height="20" rx="3" stroke-width="1.5" :fill="from ? 'var(--color-warn-soft)' : 'var(--color-ok-soft)'" :stroke="from ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    <text x="500" y="85" font-size="12" font-weight="700" text-anchor="middle" :fill="from ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-text="from ? 'FROM' : 'TO'"></text>
+    <!-- the needle -->
+    <line y1="98" y2="168" stroke-width="3.5" stroke-linecap="round" :x1="needle" :x2="needle" :stroke="Math.abs(dev) < 0.5 ? 'var(--color-ok)' : 'var(--color-brand)'"/>
+    <text x="500" y="244" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'OBS ' + dir(obs) + (from ? ' FROM' : ' TO')"></text>
+    <text x="500" y="230" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">needle: 2° a dot, 10° full scale (typical)</text>
+    <!-- DME: slant range in side view (heights exaggerated) -->
+    <line x1="412" y1="322" x2="626" y2="322" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <path d="M406 322 L410 314 L414 314 L418 322 Z" fill="var(--color-fg)"/>
+    <text x="406" y="337" font-size="11" fill="var(--color-fg-faint)">station</text>
+    <line x1="412" y1="322" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 3" :x2="412 + dist * 5" y2="322"/>
+    <line stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 3" :x1="412 + dist * 5" y1="322" :x2="412 + dist * 5" :y2="322 - alt / 10000 * 50"/>
+    <line x1="412" y1="318" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" :x2="412 + dist * 5" :y2="322 - alt / 10000 * 50"/>
+    <circle r="4" fill="var(--color-fg)" :cx="412 + dist * 5" :cy="322 - alt / 10000 * 50"/>
+    <text x="626" y="264" font-size="12" text-anchor="end" fill="var(--color-info-fg)" class="num" x-text="'DME (slant) ' + fmt(slant, 1) + ' NM'"></text>
+    <text x="626" y="280" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="'ground ' + fmt(dist, 1) + ' NM, height ' + fmt(alt / 6076, 2) + ' NM'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vor-obs">OBS: the course you select <output for="vor-obs" x-text="dir(obs)"></output></label>
+      <input type="range" id="vor-obs" min="1" max="360" step="1" x-model.number="obs" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="vor-rad">Where you are: the radial (or drag the aeroplane) <output for="vor-rad" x-text="'R' + dir(radial)"></output></label>
+      <input type="range" id="vor-rad" min="1" max="360" step="1" x-model.number="radial" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="vor-dist">Ground distance from the station <output for="vor-dist" x-text="fmt(dist, 1) + ' NM'"></output></label>
+      <input type="range" id="vor-dist" min="0" max="40" step="0.5" x-model.number="dist" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="vor-hdg">Your heading <output for="vor-hdg" x-text="dir(hdg) + '°M'"></output></label>
+      <input type="range" id="vor-hdg" min="5" max="360" step="5" x-model.number="hdg" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="vor-alt">Your height <output for="vor-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="vor-alt" min="0" max="10000" step="500" x-model.number="alt" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">You are on</dt>
+      <dd class="widget-value" x-text="dist > 0 ? 'the ' + dir(radial) + ' radial, ' + fmt(dist, 1) + ' NM out' : 'overhead the station'"></dd>
+    </div>
+    <div class="widget-readout" :class="Math.abs(dev) < 0.5 ? 'ok' : Math.abs(dev) >= 10 ? 'bad' : 'warn'">
+      <dt class="widget-label">Needle</dt>
+      <dd class="widget-value"><span x-text="cdiText + (Math.abs(dev) >= 0.5 && dist > 0 ? ', about ' + fmt(offNm, 1) + ' NM off (1 in 60)' : '')"></span></dd>
+    </div>
+    <div class="widget-readout" :class="from ? '' : 'ok'">
+      <dt class="widget-label">Flag</dt>
+      <dd class="widget-value" x-text="from ? 'FROM: flying ' + dir(obs) + ' takes you away' : 'TO: flying ' + dir(obs) + ' takes you to the station'"></dd>
+    </div>
+    <div class="widget-readout" :class="reverse ? 'bad' : 'ok'">
+      <dt class="widget-label">Sensing, for your heading</dt>
+      <dd class="widget-value"><span x-text="reverse ? 'reversed: heading ' + dir(hdg) + ' is opposite the course' : 'normal: fly towards the needle'"></span><span class="widget-flag bad" x-show="reverse">reverse</span></dd>
+    </div>
+    <div class="widget-readout" :class="slant - dist > 0.1 ? 'warn' : ''">
+      <dt class="widget-label">DME reads the slant range</dt>
+      <dd class="widget-value" x-text="fmt(slant, 1) + ' NM (' + fmt(slant, 2) + '); ground ' + fmt(dist, 1) + ' NM'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('inbound-270-to')" :aria-pressed="active === 'inbound-270-to'">R090, OBS 270</button>
+      <button type="button" @click="preset('same-place-090-from')" :aria-pressed="active === 'same-place-090-from'">R090, OBS 090</button>
+      <button type="button" @click="preset('six-degrees-off')" :aria-pressed="active === 'six-degrees-off'">6° off, 20 NM</button>
+      <button type="button" @click="preset('on-the-030-radial')" :aria-pressed="active === 'on-the-030-radial'">030 FROM</button>
+      <button type="button" @click="preset('fix-047-at-35')" :aria-pressed="active === 'fix-047-at-35'">Fix: R047, 35 DME</button>
+      <button type="button" @click="preset('overhead-at-6000')" :aria-pressed="active === 'overhead-at-6000'">Overhead at 6,000 ft</button>
+      <button type="button" @click="preset('twenty-out-at-6000')" :aria-pressed="active === 'twenty-out-at-6000'">20 NM at 6,000 ft</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The needle and the flag depend only on where you are and the course you have set, never on your heading: turn the aeroplane and nothing on the indicator moves. The flag reads TO on one side of the line through the station at right angles to the course and FROM on the other. Fly the reciprocal of the course you have set and the needle works backwards. The needle shows degrees off the course, so the same deflection is fewer miles close in; full scale here is 10°, 2° a dot, as on a typical indicator. The DME measures the slant from you to the station.</p>
+  <details class="widget-try"><summary>Try it: with 030 set the needle is centred and the flag reads FROM. Where are you, and what do you set to track to the station?</summary><p>On the 030 radial, north-north-east of the station: press 030 FROM. Set the reciprocal, 210, and the needle centres with TO; fly about 210°M, corrected for drift.</p></details>
+  <details class="widget-try"><summary>Try it: you cross directly over a DME at 6,000 ft. What does it read, and what does it read 20 NM out?</summary><p>Overhead it reads the height, 6,000 ÷ 6,076 ≈ 1.0 NM, although the ground distance is nil. Twenty miles out it reads √(20² + 1²) ≈ 20.02 NM: the slant matters only close in and high.</p></details>
+</div>

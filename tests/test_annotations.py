@@ -175,7 +175,7 @@ def test_export(client: TestClient) -> None:
     client.post(f"{BASE}/ink/sketch/1", json={"rev": 0, "strokes": [_stroke()]})
     r = client.get("/my-notes/export.json")
     assert r.status_code == 200 and r.headers["content-type"].startswith("application/json")
-    assert r.headers["content-disposition"] == f'attachment; filename="casa-theory-notes-{date.today().isoformat()}.json"'
+    assert r.headers["content-disposition"] == f'attachment; filename="t-pilot-notes-{date.today().isoformat()}.json"'
     data = r.json()
     assert data["format"] == svc.EXPORT_FORMAT and data["exported_at"]
     assert [n["text"] for n in data["notes"]] == ["Backup me"] and data["notes"][0]["subtopic_id"] == SID

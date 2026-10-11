@@ -1,0 +1,138 @@
+<div class="widget" x-data="timeline({
+  duration: 26, loop: false,
+  drinks: 6, finish: 1380, coffee: false,
+  // t 0..1 is the 26 hours after the last drink. The liver removes about one standard drink an hour, whatever you
+  // do (PHFC 2.2); the 8-hour rule and the 0.02 limit are minimums (RFRC 2.3).
+  get h() { return this.t * 26 },
+  get clock() { return this.hhmm(this.finish + this.h * 60) },
+  at8() { return this.hhmm(this.finish + 480) },
+  get left() { return Math.max(0, this.drinks - this.h) },
+  get zeroAt() { return this.hhmm(this.finish + this.drinks * 60) },
+  get earliestH() { return Math.max(8, this.drinks) },
+  get earliest() { return this.hhmm(this.finish + this.earliestH * 60) },
+  get heavy() { return this.drinks > 8 },
+  get legal() { return this.h >= this.earliestH - 1e-6 },
+  get fit() {
+    if (!this.legal) return ['No: not legal yet', 'bad'];
+    if (this.heavy && this.h < 24) return ['Legal, but allow 24 h', 'warn'];
+    if (this.drinks >= 5) return ['Legal: are you fit?', 'warn'];
+    return ['Legal: drink water', 'ok'];
+  },
+  // chart: -2 h (drinking) to +26 h across x 60..620; standard drinks 0..12 up y 220..40
+  X(h) { return 60 + (h + 2) / 28 * 560 },
+  Y(d) { return 220 - d / 12 * 180 },
+  tick(i) { return this.hhmm(this.finish + (i * 4 - 2) * 60) },
+  get curve() { return this.path([[this.X(0), this.Y(this.drinks)], [this.X(this.drinks), this.Y(0)], [this.X(26), this.Y(0)]]) },
+  // hangover: starts as the alcohol falls and outlasts it; 24 h or more after heavy drinking (PHFC 2.2), otherwise
+  // its length is illustrative
+  get hangEnd() { return this.heavy ? 24 : this.drinks >= 5 ? this.earliestH + 5 : this.earliestH },
+  get steps() {
+    const s = [{ at: 0, label: 'Last drink' }];
+    const a = { at: this.drinks / 26, label: 'Alcohol about gone' }, b = { at: 8 / 26, label: '8 hours' };
+    if (this.drinks < 8) s.push(a, b); else if (this.drinks > 8) s.push(b, a); else s.push({ at: 8 / 26, label: '8 hours, alcohol gone' });
+    if (this.heavy) s.push({ at: 24 / 26, label: '24 hours' });
+    return s;
+  },
+  get caption() {
+    const h = this.h;
+    if (h < 1.5) return 'Last drink at ' + this.hhmm(this.finish) + '. Blood alcohol is still rising for 30 to 90 minutes while the last drinks are absorbed; food slows that but does not reduce the total.';
+    if (this.left > 0) return (this.coffee ? 'Coffee, a cold shower and a run change nothing: ' : '') + 'The liver is clearing about one standard drink an hour, a fixed pace that nothing speeds up. About ' + this.fmt(Math.ceil(this.left - 1e-6)) + ' still to go: still over the 0.02 limit, which in practice means none.' + (h >= 8 ? ' The 8 hours have passed, but the alcohol has not.' : '');
+    if (!this.legal) return 'The alcohol is about gone, but the 8-hour minimum has not passed: not before ' + this.at8() + '.';
+    if (this.heavy && h < 24) return 'Legal now, and the breath test may read zero, but after heavy drinking the hangover (dehydration, poor sleep, alcohol still in the inner ear) lasts 24 hours or more. Zero blood alcohol is not fitness.';
+    if (this.drinks >= 5) return 'Legal from ' + this.earliest + ', but the hangover can last well beyond that. A breath test proves you are legal, not that you are fit: run IMSAFE honestly.';
+    return 'Legal from ' + this.earliest + ', and a few drinks with food should not leave a serious hangover. You will be a little dry: water at breakfast.';
+  },
+  presets: {
+    'six-by-2300': { drinks: 6, finish: 1380, coffee: false, t: 0.3077 },
+    'wedding-ten-midnight': { drinks: 10, finish: 1440, coffee: false, t: 0.3462 },
+    'birthday-four-2230': { drinks: 4, finish: 1350, coffee: false, t: 0.4423 },
+    'one-glass-2100': { drinks: 1, finish: 1260, coffee: false, t: 0.4231 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="alc-title" class="widget-stage">
+    <title id="alc-title">Standard drinks still in the body after the last drink, falling about one an hour; the 8-hour line, the time the alcohol is about gone, and the hangover that outlasts it</title>
+    <defs>
+      <linearGradient id="alc-fade" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="var(--color-warn)" stop-opacity="0.45"/><stop offset="0.7" stop-color="var(--color-warn)" stop-opacity="0.3"/><stop offset="1" stop-color="var(--color-warn)" stop-opacity="0"/></linearGradient>
+    </defs>
+    <!-- drinking -->
+    <rect x="60" y="40" height="180" fill="var(--color-fg-faint)" fill-opacity="0.12" :width="X(0) - 60"/>
+    <text x="80" y="34" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">drinking</text>
+    <!-- axes -->
+    <line x1="60" y1="220" x2="620" y2="220" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="60" y1="40" x2="60" y2="220" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">
+      <text x="54" y="224">0</text><text x="54" y="164">4</text><text x="54" y="104">8</text><text x="54" y="44">12</text>
+    </g>
+    <text x="18" y="130" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 18 130)">standard drinks in the body</text>
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="60" y="236" x-text="tick(0)"></text><text x="140" y="236" x-text="tick(1)"></text><text x="220" y="236" x-text="tick(2)"></text><text x="300" y="236" x-text="tick(3)"></text>
+      <text x="380" y="236" x-text="tick(4)"></text><text x="460" y="236" x-text="tick(5)"></text><text x="540" y="236" x-text="tick(6)"></text><text x="620" y="236" x-text="tick(7)"></text>
+    </g>
+    <!-- hangover band -->
+    <rect y="248" height="18" rx="4" fill="url(#alc-fade)" :x="X(1.5)" :width="X(hangEnd) - X(1.5)"/>
+    <text y="261" font-size="12" fill="var(--color-warn-fg)" :x="X(1.5) + 6" x-text="heavy ? 'hangover: allow 24 hours or more' : drinks >= 5 ? 'hangover: can last well beyond the legal time' : 'little hangover: rehydrate'"></text>
+    <line stroke="var(--color-warn)" stroke-width="2" marker-end="url(#alc-arrow)" x-show="heavy" :x1="X(24)" :x2="X(25.6)" y1="257" y2="257"/>
+    <defs><marker id="alc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- 8 hours -->
+    <line stroke="var(--color-fg)" stroke-width="1.5" stroke-dasharray="5 3" y1="40" y2="220" :x1="X(8)" :x2="X(8)"/>
+    <text font-size="12" font-weight="600" fill="var(--color-fg)" y="52" :x="X(8) + 6" x-text="'8 hours: ' + at8()"></text>
+    <text font-size="11" fill="var(--color-fg-muted)" y="67" :x="X(8) + 6">no earlier, by law</text>
+    <!-- the liver's line -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="curve"/>
+    <text font-size="12" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="drinks >= 3" :x="X(0) + 10" :y="Y(drinks) - 10">−1 drink an hour, fixed</text>
+    <circle r="5" fill="var(--color-ok)" :cx="X(drinks)" :cy="Y(0)"/>
+    <text font-size="12" fill="var(--color-ok-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="X(drinks)" :y="Y(0) - (Math.abs(drinks - 8) < 2.5 ? 30 : 12)" x-text="'about zero ' + zeroAt"></text>
+    <text font-size="12" fill="var(--color-info)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="coffee" :x="X(drinks) + 10" :y="Y(0) - 40">coffee, shower, run: no change</text>
+    <!-- now -->
+    <line stroke="var(--color-fg-muted)" stroke-width="1.25" y1="74" y2="220" :x1="X(h)" :x2="X(h)"/>
+    <circle r="7" fill="var(--color-surface)" stroke-width="3" :stroke="left > 0 ? 'var(--color-bad)' : 'var(--color-ok)'" :cx="X(h)" :cy="Y(left)"/>
+    <text font-size="13" font-weight="600" class="num" fill="var(--color-fg)" text-anchor="middle" y="284" :x="Math.min(590, Math.max(80, X(h)))" x-text="clock"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the night and the next day'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="alc-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Hours after the last drink">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="alc-drinks">Standard drinks <output for="alc-drinks" x-text="drinks"></output></label>
+      <input type="range" id="alc-drinks" min="1" max="12" step="1" x-model.number="drinks">
+    </div>
+    <div class="widget-control">
+      <label for="alc-finish">Last drink finished <output for="alc-finish" x-text="hhmm(finish)"></output></label>
+      <input type="range" id="alc-finish" min="1080" max="1560" step="30" x-model.number="finish">
+    </div>
+    <div class="widget-control">
+      <label for="alc-coffee" class="cursor-pointer"><span>Strong coffee, cold shower and a run</span>
+        <input type="checkbox" id="alc-coffee" x-model="coffee" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="left > 0 ? 'bad' : 'ok'"><dt class="widget-label">Drinks still in you</dt><dd class="widget-value"><span x-text="left > 0 ? 'about ' + fmt(Math.ceil(left - 1e-6)) : 'about zero'"></span><span class="widget-flag bad" x-show="left > 0">over 0.02</span></dd></div>
+    <div class="widget-readout" :class="h >= 8 ? 'ok' : 'bad'"><dt class="widget-label">8 hours bottle to throttle</dt><dd class="widget-value" x-text="h >= 8 ? 'Met at ' + at8() : 'Not until ' + at8()"></dd></div>
+    <div class="widget-readout" :class="fit[1]"><dt class="widget-label" x-text="'Fly at ' + clock + '?'"></dt><dd class="widget-value" x-text="fit[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('six-by-2300')" :aria-pressed="active === 'six-by-2300'">6 by 2300</button>
+      <button type="button" @click="preset('wedding-ten-midnight')" :aria-pressed="active === 'wedding-ten-midnight'">Wedding</button>
+      <button type="button" @click="preset('birthday-four-2230')" :aria-pressed="active === 'birthday-four-2230'">4 at dinner</button>
+      <button type="button" @click="preset('one-glass-2100')" :aria-pressed="active === 'one-glass-2100'">1 glass</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Two clocks run at once: the law's 8 hours and the liver's roughly one standard drink an hour, and you fly by the later one. After more than about eight drinks the liver is the later one. Then the hangover outlasts both: 24 hours or more after heavy drinking. Real blood alcohol depends on your size and food, so the line counts drinks, not a reading; the hangover's length here is illustrative except for that 24 hours, and the lesson does not define "heavy": taking it as more than eight drinks is this widget's choice.</p>
+  <details class="widget-try"><summary>Try it: ten drinks at a Swan Valley wedding, the last at midnight. Can you make a 0900 lesson?</summary><p>Press Wedding: at 0900 the 8 hours (0800) have passed, but about one drink is still in you; the alcohol is about gone at 1000. No, and after that many drinks the hangover means rebooking for the next day.</p></details>
+  <details class="widget-try"><summary>Try it: does a strong coffee and a run get you clear sooner?</summary><p>Tick it: the line does not move. The liver works at a fixed pace; coffee only makes you feel more awake while the alcohol is still there.</p></details>
+</div>

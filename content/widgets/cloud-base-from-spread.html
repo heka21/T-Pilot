@@ -1,0 +1,131 @@
+<div class="widget" x-data="widget({
+  temp: 24, dew: 16, h: 2000,
+  // PMTC 2.3: a thermal cools at the DALR, 3 °C per 1,000 ft; its dew point falls about 0.5 °C per 1,000 ft, so the
+  // spread closes 2.5 °C per 1,000 ft: 400 ft per degree. Above the base the cloudy air cools at the SALR, about 1.5.
+  get td() { return Math.min(this.dew, this.temp) },
+  get spread() { return this.temp - this.td },
+  get base() { return this.spread * 400 },
+  get tBase() { return this.temp - 3 * this.base / 1000 },
+  get top() { const need = this.base + 1200; return [2000, 4000, 6000, 8000, 10000, 14000].find((v) => v >= need) || 14000 },
+  get ph() { return Math.min(this.h, this.top) },
+  get inCloud() { return this.ph >= this.base },
+  tAt(ft) { return ft <= this.base ? this.temp - 3 * ft / 1000 : this.tBase - 1.5 * (ft - this.base) / 1000 },
+  dAt(ft) { return ft <= this.base ? this.td - 0.5 * ft / 1000 : this.tAt(ft) },
+  get pT() { return this.tAt(this.ph) },
+  get pD() { return this.dAt(this.ph) },
+  // shared height axis: ground y 288, top of axis y 40
+  Y(ft) { return 288 - ft / this.top * 248 },
+  // chart temperature axis
+  get tLo() { return Math.min(this.dAt(this.top), this.tAt(this.top)) - 2 },
+  get tHi() { return this.temp + 3 },
+  X(c) { return 392 + (c - this.tLo) / (this.tHi - this.tLo) * 226 },
+  get tStep() { return this.tHi - this.tLo > 30 ? 10 : 5 },
+  tick(i) { return Math.ceil(this.tLo / this.tStep) * this.tStep + i * this.tStep },
+  tickOn(i) { return this.tick(i) <= this.tHi },
+  get tPath() { return this.path([[this.X(this.temp), this.Y(0)], [this.X(this.tBase), this.Y(this.base)], [this.X(this.tAt(this.top)), this.Y(this.top)]]) },
+  get dPath() { return this.path([[this.X(this.td), this.Y(0)], [this.X(this.tBase), this.Y(this.base)]]) },
+  // the cumulus on top of the thermal: flat base at the condensation level
+  get cloudD() { const y = this.Y(this.base), s = Math.max(0.55, Math.min(0.85, (288 - y) / 120 + 0.4)); return 'M' + (205 - 86 * s) + ' ' + y + ' a' + 22 * s + ' ' + 22 * s + ' 0 0 1 ' + 14 * s + ' ' + (-30 * s) + ' a' + 30 * s + ' ' + 30 * s + ' 0 0 1 ' + 46 * s + ' ' + (-36 * s) + ' a' + 34 * s + ' ' + 34 * s + ' 0 0 1 ' + 58 * s + ' ' + (-8 * s) + ' a' + 26 * s + ' ' + 26 * s + ' 0 0 1 ' + 40 * s + ' ' + (34 * s) + ' a' + 18 * s + ' ' + 18 * s + ' 0 0 1 ' + 14 * s + ' ' + (40 * s) + ' Z' },
+  get state() { return this.spread <= 3 ? 'warn' : 'ok' },
+  presets: {
+    'spring-morning': { temp: 24, dew: 16, h: 3200 },
+    'northam-morning': { temp: 18, dew: 10, h: 3200 },
+    'jandakot-dry': { temp: 29, dew: 13, h: 6400 },
+    'kalgoorlie': { temp: 36, dew: 6, h: 12000 },
+    'fog-risk': { temp: 12, dew: 11, h: 400 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="cbs-title" class="widget-stage">
+    <title id="cbs-title">Left: a thermal rising from a hot paddock to the flat base of a cumulus cloud, with the parcel of air marked at its current height and its temperature and dew point beside it. Right, on the same height scale: the parcel's temperature falling 3 degrees per 1,000 ft and its dew point 0.5, meeting at the cloud base</title>
+    <defs>
+      <marker id="cbs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-surface-2)" rx="10"/>
+    <clipPath id="cbs-sky"><rect x="64" y="30" width="282" height="258"/></clipPath>
+    <rect x="64" y="30" width="282" height="258" fill="var(--color-sky-soft)"/>
+    <!-- height axis shared by both panels -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="64" x2="618" :y1="Y(top / 4)" :y2="Y(top / 4)"/><line x1="64" x2="618" :y1="Y(top / 2)" :y2="Y(top / 2)"/>
+      <line x1="64" x2="618" :y1="Y(top * 3 / 4)" :y2="Y(top * 3 / 4)"/><line x1="64" x2="618" :y1="Y(top)" :y2="Y(top)"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="58" y="292">0</text>
+      <text x="58" :y="Y(top / 4) + 4" x-text="fmt(top / 4)"></text><text x="58" :y="Y(top / 2) + 4" x-text="fmt(top / 2)"></text>
+      <text x="58" :y="Y(top * 3 / 4) + 4" x-text="fmt(top * 3 / 4)"></text><text x="58" :y="Y(top) + 4" x-text="fmt(top)"></text>
+    </g>
+    <text x="14" y="164" font-size="12" fill="var(--color-fg-muted)" transform="rotate(-90 14 164)" text-anchor="middle">height above the ground (ft)</text>
+    <!-- ground and the hot paddock -->
+    <line x1="64" y1="288" x2="346" y2="288" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="165" y="286" width="80" height="5" rx="2" fill="var(--color-warn)" fill-opacity="0.6"/>
+    <text x="205" y="310" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">hot paddock</text>
+    <!-- the thermal -->
+    <g stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="4 3" fill="none" marker-end="url(#cbs-arrow)">
+      <line x1="180" y1="280" :x2="180" :y2="Y(base) + 30" x-show="base > top * 0.2"/>
+      <line x1="230" y1="280" :x2="230" :y2="Y(base) + 30" x-show="base > top * 0.2"/>
+    </g>
+    <!-- the cumulus and its flat base -->
+    <path clip-path="url(#cbs-sky)" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round" :d="cloudD"/>
+    <line x1="68" x2="342" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="6 4" :y1="Y(base)" :y2="Y(base)"/>
+    <text x="70" font-size="13" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :y="base > top * 0.1 ? Y(base) + 18 : Y(base) - 8" x-text="(spread === 0 ? 'fog: saturated at the ground' : 'base ≈ ' + fmt(base) + ' ft')"></text>
+    <!-- the parcel -->
+    <circle cx="205" r="13" stroke-width="2" :cy="Y(ph) - 13" :fill="inCloud ? 'var(--color-paint)' : 'var(--color-brand-soft)'" stroke="var(--color-brand)"/>
+
+    <!-- RIGHT: the same climb as a chart -->
+    <text x="505" y="22" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">T falls 3, Td 0.5 per 1,000 ft</text>
+    <line x1="392" y1="288" x2="618" y2="288" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text y="304" :x="X(tick(0))" x-show="tickOn(0)" x-text="tick(0)"></text><text y="304" :x="X(tick(1))" x-show="tickOn(1)" x-text="tick(1)"></text>
+      <text y="304" :x="X(tick(2))" x-show="tickOn(2)" x-text="tick(2)"></text><text y="304" :x="X(tick(3))" x-show="tickOn(3)" x-text="tick(3)"></text>
+      <text y="304" :x="X(tick(4))" x-show="tickOn(4)" x-text="tick(4)"></text><text y="304" :x="X(tick(5))" x-show="tickOn(5)" x-text="tick(5)"></text>
+      <text y="304" :x="X(tick(6))" x-show="tickOn(6)" x-text="tick(6)"></text><text y="304" :x="X(tick(7))" x-show="tickOn(7)" x-text="tick(7)"></text>
+    </g>
+    <text x="505" y="318" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">temperature (°C)</text>
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4" :d="dPath"/>
+      <path stroke="var(--color-brand)" stroke-width="2.5" :d="tPath"/>
+    </g>
+    <circle r="5" fill="var(--color-brand)" :cx="X(tBase)" :cy="Y(base)"/>
+    <!-- the parcel on both lines, and its spread -->
+    <line stroke="var(--color-fg-muted)" stroke-width="1.25" :x1="X(pD)" :x2="X(pT)" :y1="Y(ph)" :y2="Y(ph)" x-show="!inCloud"/>
+    <circle r="4.5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2" :cx="X(pD)" :cy="Y(ph)" x-show="!inCloud"/>
+    <circle r="4.5" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2" :cx="X(pT)" :cy="Y(ph)"/>
+    <g font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text fill="var(--color-brand-fg)" font-weight="600" :x="X(pT) + 8" :y="Y(ph) - 8" x-text="'T ' + fmt(pT, 1)"></text>
+      <text fill="var(--color-info-fg)" font-weight="600" text-anchor="end" :x="X(pD) - 8" :y="Y(ph) + 4" x-show="!inCloud" x-text="'Td ' + fmt(pD, 1)"></text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cbs-temp">Surface temperature <output for="cbs-temp" x-text="temp + ' °C'"></output></label>
+      <input type="range" id="cbs-temp" min="0" max="45" step="1" x-model.number="temp">
+    </div>
+    <div class="widget-control">
+      <label for="cbs-dew">Dew point <output for="cbs-dew" x-text="td + ' °C'"></output></label>
+      <input type="range" id="cbs-dew" min="-10" max="45" step="1" x-model.number="dew">
+    </div>
+    <div class="widget-control">
+      <label for="cbs-h">Lift the parcel <output for="cbs-h" x-text="fmt(ph) + ' ft'"></output></label>
+      <input type="range" id="cbs-h" min="0" step="100" :max="top" x-model.number="h">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="state"><dt class="widget-label">Spread at the surface</dt><dd class="widget-value"><span x-text="temp + ' − ' + td + ' = ' + spread + ' °C'"></span><span class="widget-flag warn" x-show="spread <= 3">fog risk</span></dd></div>
+    <div class="widget-readout" :class="state"><dt class="widget-label">Cumulus base (above the ground)</dt><dd class="widget-value" x-text="spread + ' × 400 ≈ ' + fmt(base) + ' ft'"></dd></div>
+    <div class="widget-readout" :class="inCloud ? 'ok' : ''"><dt class="widget-label">The parcel</dt><dd class="widget-value" x-text="Math.abs(ph - base) < 50 ? 'Saturated: cloud base' : inCloud ? 'In cloud at ' + fmt(ph) + ' ft' : 'Spread ' + fmt(pT - pD, 1) + ' °C at ' + fmt(ph) + ' ft'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('spring-morning')" :aria-pressed="active === 'spring-morning'">24/16</button>
+      <button type="button" @click="preset('northam-morning')" :aria-pressed="active === 'northam-morning'">Northam 18/10</button>
+      <button type="button" @click="preset('jandakot-dry')" :aria-pressed="active === 'jandakot-dry'">Jandakot 29/13</button>
+      <button type="button" @click="preset('kalgoorlie')" :aria-pressed="active === 'kalgoorlie'">Kalgoorlie 36/06</button>
+      <button type="button" @click="preset('fog-risk')" :aria-pressed="active === 'fog-risk'">12/11</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The rising air cools 3 °C per 1,000 ft but its dew point falls only 0.5, so the spread closes 2.5 °C per 1,000 ft: every degree of spread is about 400 ft of cloud base. The drier the air, the higher the base; a spread of 2 or 3 degrees means a low base and possible fog. It is a rule of thumb for cumulus from surface thermals only, and the answer is above the ground at that station.</p>
+  <details class="widget-try"><summary>Try it: the METAR says 24/16. Lift the parcel to 2,000 ft. How far is it from making cloud?</summary><p>At 2,000 ft it has cooled 6 degrees to 18 °C and its dew point has fallen 1 degree to 15 °C: a spread of 3 °C still to close, at 2.5 per 1,000 ft, which is another 1,200 ft. The base is at 8 × 400 = 3,200 ft.</p></details>
+  <details class="widget-try"><summary>Try it: Kalgoorlie reports 36/06. Why are its storms often dry?</summary><p>Press Kalgoorlie 36/06: a 30 degree spread puts the base near 12,000 ft above the ground. Rain falling from that high base evaporates in the dry air beneath (virga), chilling it into strong, dusty downdraughts.</p></details>
+</div>

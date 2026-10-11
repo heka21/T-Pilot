@@ -244,13 +244,13 @@
 - id: RFRC-C023
   elements: ["RFRC 2.4.3"]
   front: "When must seat belts be worn?"
-  back: "Take-off, landing, below 1,000 ft AGL, in turbulence, and when the PIC directs. PIC harness fastened at all times."
-  stem: "Seat belts must be worn by all occupants during:"
+  back: "Taxiing, take-off and landing, and whenever the PIC directs (for example in turbulence; a fasten-seat-belt sign counts). PIC harness fastened at all times. No height rule: the old 1,000 ft AGL rule was CAO 20.16.3."
+  stem: "Under Part 91, passengers must have their seat belts fastened:"
   options:
-    - "Take-off, landing, flight below 500 ft above ground level, turbulence, and when the PIC directs."
-    - "Take-off, landing, flight below 1,000 ft AGL, turbulence, and when the PIC directs."
-    - "Take-off and landing only, unless the pilot in command directs otherwise."
-    - "Take-off, landing, flight below 3,000 ft above ground level, and when the PIC directs."
+    - "During take-off and landing, and whenever the aircraft is below 1,000 ft AGL."
+    - "During taxiing, take-off and landing, and whenever the pilot in command directs, for example in turbulence."
+    - "During take-off and landing only; the pilot in command cannot require them at other times."
+    - "At all times from engine start to shutdown, whatever the pilot in command directs."
   answer: 1
 - id: RFRC-C024
   elements: ["RFRC 2.4.3"]

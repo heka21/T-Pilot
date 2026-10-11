@@ -1,0 +1,205 @@
+<div class="widget" x-data="timeline({
+  duration: 36, loop: false,
+  wind: 3, cloud: false, spread: 2,
+  // the clock: t 0..1 is 1700 to 1100 next morning (a winter night in the Avon valley); m = minutes after 1700.
+  // Sunset about 1730, sunrise about 0715. Temperatures and timings are illustrative; the dew point is held at 7 °C
+  // (Northam's 09/07 evening in PMTC 2.2) and the spread at sunset is the control.
+  get m() { return this.t * 1080 },
+  get clock() { return this.hhmm(1020 + this.m) },
+  td: 7,
+  get t0() { return this.td + this.spread },
+  // how far a night can cool the air at the ground, and how deep the chilled layer is (RMTC 2.1, PMTC 2.4: calm gives
+  // dew and only shallow ground fog, about 2 to 5 kt gives fog a few hundred feet deep, much over 10 kt gives none)
+  get regime() { return this.cloud ? 'cloud' : this.wind > 10 ? 'windy' : this.wind < 2 ? 'calm' : this.wind <= 5 ? 'light' : 'breezy' },
+  // the most a night can cool the screen air (illustrative). No helper calls in here: steps (below) reads it before Alpine starts.
+  get cmax() { return { cloud: 0.8, windy: 1.2, calm: 3.2, light: 2.8, breezy: 2.8 - 1.2 * (this.wind - 5) / 5 }[this.regime] },
+  get hinv() { return { cloud: 0, windy: 0, calm: 100, light: 500, breezy: 400 }[this.regime] },
+  f(m) { return m <= 30 ? 0 : 1 - Math.exp(-(Math.min(m, 900) - 30) / 600) },
+  // the coldest time is just after sunrise (0730), then the sun warms the ground
+  tpot(m) { const low = this.cmax * this.f(900); return m <= 900 ? this.t0 - this.cmax * this.f(m) : this.t0 - low + (low + 7) * this.ease(this.seg(m, 900, 1080)) },
+  get tpotNow() { return this.tpot(this.m) },
+  get ts() { return Math.max(this.tpotNow, this.td) },
+  get tTop() { return this.t0 - 0.5 },
+  // fog fills the chilled layer up to where it is still at its dew point; after sunrise it lifts from below
+  depthAt(m) { const a = this.fogForms; return a < 0 || m < a ? 0 : this.hinv * (0.25 + 0.6 * this.ease(this.seg(Math.min(m, 900), a, a + 300))) },
+  get fogTop() { return this.depthAt(this.m) },
+  get fogBottom() { return this.m <= 960 ? 0 : this.fogTop * this.ease(this.seg(this.m, 960, 1050)) },
+  get fogOn() { return this.fogTop > 8 && this.fogBottom < this.fogTop - 8 },
+  get fogAtGround() { return this.fogOn && this.fogBottom < 5 },
+  get stratus() { return this.regime === 'windy' && this.spread <= 3 && this.m > 300 && this.m < 1000 },
+  // inversion strength 0..1: builds through a clear night, broken by mid-morning heating
+  get inv() { return this.hinv === 0 ? 0 : this.ease(this.seg(this.m, 60, 600)) * (1 - this.ease(this.seg(this.m, 930, 1050))) },
+  get day() { return Math.min(1, (1 - this.ease(this.seg(this.m, 0, 70))) + this.ease(this.seg(this.m, 830, 900))) },
+  get sunUp() { return this.m < 30 || this.m > 855 },
+  get sun() { const s = this.m < 30 ? 0.08 - this.m / 400 : this.seg(this.m, 855, 1200); return { x: this.m < 30 ? 40 : 380 - 130 * s, y: this.m < 30 ? 150 + this.m * 2 : 160 - 120 * s } },
+  // the profile chart: height 0-1,000 ft up y 270..70, temperature 0-20 °C across x 424..620
+  CX(c) { return 424 + c * 9.8 },
+  CY(ft) { return 270 - ft * 0.2 },
+  get hm() { return this.hinv * this.ease(this.seg(this.m, 930, 1020)) },
+  get profile() {
+    const ts = this.ts, ttop = this.tTop, top = 1000;
+    if (this.m < 30 || this.hinv === 0) return this.path([[this.CX(ts), this.CY(0)], [this.CX(ts - 3), this.CY(top)]]);
+    const h = Math.max(30, this.hinv * Math.min(1, 0.3 + this.inv)), above = ttop - 2 * (top - h) / 1000;
+    if (this.m <= 900) return this.path([[this.CX(ts), this.CY(0)], [this.CX(ttop), this.CY(h)], [this.CX(above), this.CY(top)]]);
+    const tmin = this.tpot(900), invAt = tmin + (ttop - tmin) * this.hm / this.hinv, mix = Math.max(ts - 3 * this.hm / 1000, invAt);
+    return this.path([[this.CX(ts), this.CY(0)], [this.CX(mix), this.CY(this.hm)], [this.CX(Math.max(ttop, mix)), this.CY(Math.max(h, this.hm))], [this.CX(above), this.CY(top)]]);
+  },
+  get surfWind() { return this.wind * (1 - 0.9 * this.inv) },
+  get aloftWind() { return this.wind * (1 + 1.2 * this.inv) + (this.inv > 0 ? 6 * this.inv : 0) },
+  get shear() { return this.inv > 0.5 && this.hinv >= 400 },
+  get vis() {
+    if (this.fogAtGround) return this.regime === 'calm' ? { text: 'Dew or frost; shallow ground fog at most', s: 'warn' } : { text: 'Fog, under 1,000 m', s: 'bad' };
+    if (this.fogOn) return { text: 'Fog lifting into low stratus', s: 'warn' };
+    if (this.stratus) return { text: 'Low stratus, no fog', s: 'warn' };
+    if (this.ts - this.td <= 0.5 && this.m > 60 && this.m < 960) return { text: 'Mist possible', s: 'warn' };
+    return { text: 'Good', s: 'ok' };
+  },
+  // when the cooling closes the spread (-1: not before 0730)
+  get fogForms() { const fr = this.spread / this.cmax; return this.hinv > 0 && fr < 1 - Math.exp(-870 / 600) ? 30 - 600 * Math.log(1 - fr) : -1 },
+  get steps() {
+    const s = [{ at: 0.028, label: 'Sunset' }, { at: 0.222, label: 'Spread closing' }];
+    if (this.fogForms > 0) s.push({ at: this.fogForms / 1080, label: 'Fog forms' });
+    s.push({ at: 0.75, label: 'Dawn: shear aloft' }, { at: 0.792, label: 'Sunrise, coldest' }, { at: 0.889, label: 'Fog lifts' }, { at: 0.972, label: 'Mid-morning' });
+    return s.sort((a, b) => a.at - b.at);
+  },
+  get caption() {
+    if (this.m < 30) return 'Late afternoon: the air near the ground is well mixed and the dew point spread is ' + this.spread + ' °C. What happens tonight depends on the sky, the wind and that spread.';
+    if (this.cloud && this.m < 900) return 'Cloud sends the ground\'s heat back down, so the ground and the air touching it cool only a little: no inversion and no fog.';
+    if (this.regime === 'windy' && this.m < 900) return 'A wind well over 10 kt mixes the chilled air with warmer air above, so no layer stays on the cold ground long enough to reach its dew point' + (this.stratus ? '; with air this moist, low stratus can form instead.' : '.');
+    if (this.m >= 1050) return 'By mid-morning the sun has heated the ground, the inversion has broken and the fog has cleared.';
+    if (this.fogOn && this.fogBottom > 5) return 'The sun heats the ground through the fog and the droplets evaporate from below: the fog lifts into low stratus before it clears.';
+    if (this.m > 855 && this.fogAtGround) return 'Just after sunrise is the coldest time of all, so the fog often thickens briefly after first light before the sun gets to work.';
+    if (this.shear && this.m > 700) return 'Under the inversion the surface air is cut off from the wind above: calm at the ground, but a few hundred feet up the wind blows on, sometimes faster than by day. Climbing through the top of the inversion means a sudden wind change.';
+    if (this.fogAtGround) return this.regime === 'calm' ? 'Dead calm: only a thin layer touching the ground cools, giving dew or frost on the grass and at most shallow ground fog.' : 'The chilled air has reached its dew point: radiation fog, deepening through the night as the ground keeps cooling.';
+    return 'With a clear sky the ground radiates its heat to space and chills the air touching it. The coldest air lies at the bottom under warmer air, an inversion, and drains into the valley; the spread closes towards zero.';
+  },
+  presets: {
+    'fog-at-dawn': { wind: 3, cloud: false, spread: 2, t: 0.778 },
+    'calm-dew': { wind: 0, cloud: false, spread: 2, t: 0.778 },
+    'windy-night': { wind: 20, cloud: false, spread: 2, t: 0.778 },
+    'cloudy-night': { wind: 3, cloud: true, spread: 2, t: 0.778 },
+    'dry-air': { wind: 3, cloud: false, spread: 10, t: 0.778 },
+    'dawn-shear': { wind: 4, cloud: false, spread: 10, t: 0.76 },
+    'burn-off': { wind: 3, cloud: false, spread: 2, t: 0.92 },
+    'whole-night': { wind: 3, cloud: false, spread: 2, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="onc-title" class="widget-stage">
+    <title id="onc-title">Left: a cross-section of a valley with an aerodrome on its floor through a winter night: the sky darkening and the stars out, cold air pooling in the valley under an inversion, fog filling it when the air reaches its dew point, the wind calm at the ground but blowing above the inversion, and the sun burning the fog off after sunrise. Right: the temperature against height near the ground, with the dew point, showing the inversion forming overnight and breaking in the morning</title>
+    <defs>
+      <marker id="onc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="onc-left"><rect x="0" y="0" width="404" height="320"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-surface-2)" rx="10"/>
+    <g clip-path="url(#onc-left)">
+      <!-- sky: blue by day, stars by night -->
+      <rect x="0" y="0" width="404" height="320" fill="var(--color-sky-soft)" :fill-opacity="day"/>
+      <g fill="var(--color-fg-faint)" :fill-opacity="cloud ? 0 : 1 - day">
+        <circle cx="60" cy="40" r="1.5"/><circle cx="130" cy="70" r="1.2"/><circle cx="210" cy="30" r="1.5"/><circle cx="270" cy="84" r="1.2"/>
+        <circle cx="330" cy="46" r="1.5"/><circle cx="96" cy="110" r="1.2"/><circle cx="170" cy="120" r="1.2"/>
+        <path d="M360 26 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22 Z"/>
+      </g>
+      <circle r="13" fill="var(--color-warn)" :cx="sun.x" :cy="sun.y" x-show="sunUp"/>
+      <!-- overcast -->
+      <path x-show="cloud" d="M0 50 q20 -16 44 -6 q22 -14 46 -2 q24 -12 48 0 q24 -10 48 2 q24 -12 48 0 q22 -10 46 2 q24 -12 48 0 q20 -8 40 4 L404 70 L0 70 Z" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <!-- the inversion: cold air pooled in the valley -->
+      <rect x="0" width="404" fill="var(--color-sky-fg)" :fill-opacity="0.12 * inv" :y="270 - hinv * 0.25 - 10" :height="hinv * 0.25 + 10"/>
+      <!-- fog, between its base and top, above the valley floor (the hills hide what is below the ground) -->
+      <rect x="0" width="404" fill="var(--color-fg-faint)" fill-opacity="0.55" x-show="fogOn" :y="270 - fogTop * 0.25" :height="Math.max(0, (fogTop - fogBottom) * 0.25)"/>
+      <!-- low stratus on a windy night -->
+      <g x-show="stratus" :transform="'translate(0 ' + (270 - 0.25 * Math.max(250, (ts - td) * 400) - 126) + ')'">
+        <path d="M0 112 q30 -10 60 0 q30 -10 60 0 q30 -10 60 0 q30 -10 60 0 q30 -10 60 0 q30 -10 60 0 q30 -10 60 0 L420 126 L0 126 Z" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+        <text x="300" y="100" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">low stratus</text>
+      </g>
+      <!-- the valley -->
+      <path d="M0 150 C40 152 70 196 110 240 C130 262 150 270 170 270 L250 270 C270 270 290 262 310 238 C340 200 370 156 404 150 L404 320 L0 320 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="180" y="268" width="60" height="4" fill="var(--color-tarmac)"/>
+      <text x="210" y="290" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Northam</text>
+      <text x="210" y="306" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">Avon valley floor</text>
+      <text x="40" y="200" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">hills</text>
+      <!-- dew or frost on a calm night -->
+      <g x-show="regime === 'calm' &amp;&amp; m > 300 &amp;&amp; m < 1000" fill="var(--color-info)">
+        <circle cx="160" cy="266" r="1.8"/><circle cx="172" cy="267" r="1.8"/><circle cx="250" cy="267" r="1.8"/><circle cx="262" cy="266" r="1.8"/><circle cx="276" cy="263" r="1.8"/><circle cx="146" cy="263" r="1.8"/>
+      </g>
+      <text x-show="regime === 'calm' &amp;&amp; m > 300 &amp;&amp; m < 1000" x="300" y="290" font-size="11" fill="var(--color-info-fg)">dew or frost</text>
+      <!-- labels for the cold pool and the fog -->
+      <text x-show="fogOn" font-size="13" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x="210" text-anchor="middle" :y="270 - (fogTop + fogBottom) / 2 * 0.25 + 5">fog</text>
+      <text x-show="inv > 0.3 &amp;&amp; hinv >= 400" x="396" text-anchor="end" font-size="12" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="270 - hinv * 0.25 - 16">inversion top</text>
+      <!-- the wind: at the surface and above the inversion (arrows point where it blows to) -->
+      <line x1="150" x2="150" y1="250" y2="250" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#onc-arrow)" x-show="surfWind >= 1" :x1="150 + surfWind * 3" :x2="150 - surfWind * 3"/>
+      <text x="150" y="246" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" x-show="surfWind < 1 &amp;&amp; !fogAtGround">calm</text>
+      <g x-show="hinv >= 400 &amp;&amp; inv > 0.2">
+        <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#onc-arrow)" :y1="270 - hinv * 0.25 - 30" :y2="270 - hinv * 0.25 - 30" :x1="220 + aloftWind * 3" :x2="220 - aloftWind * 3"/>
+        <text x="220" text-anchor="middle" font-size="12" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="270 - hinv * 0.25 - 40" x-text="shear ? 'wind above the inversion: shear' : 'wind above'"></text>
+      </g>
+    </g>
+    <!-- RIGHT: temperature against height -->
+    <text x="522" y="26" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">temperature near the ground</text>
+    <g stroke="var(--color-line)" stroke-width="1"><line x1="424" y1="170" x2="620" y2="170"/><line x1="424" y1="70" x2="620" y2="70"/></g>
+    <line x1="424" y1="270" x2="620" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="424" y1="62" x2="424" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num">
+      <text x="420" y="274" text-anchor="end">0</text><text x="420" y="174" text-anchor="end">500</text><text x="420" y="64" text-anchor="end">1,000 ft</text>
+      <text x="424" y="286" text-anchor="middle">0</text><text x="473" y="286" text-anchor="middle">5</text><text x="522" y="286" text-anchor="middle">10</text><text x="571" y="286" text-anchor="middle">15</text><text x="620" y="286" text-anchor="middle">20</text>
+    </g>
+    <text x="522" y="304" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">°C</text>
+    <rect x="425" width="195" fill="var(--color-fg-faint)" fill-opacity="0.3" x-show="fogOn" :y="CY(fogTop)" :height="Math.max(0, (fogTop - fogBottom) * 0.2)"/>
+    <line stroke="var(--color-info)" stroke-width="2" stroke-dasharray="5 4" :x1="CX(td)" :x2="CX(td)" y1="270" y2="206"/>
+    <text font-size="12" fill="var(--color-info-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="CX(td) - 5" y="214">dew point</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="profile"/>
+    <circle r="4.5" fill="var(--color-brand)" :cx="CX(ts)" :cy="CY(0)"/>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x="618" y="48" text-anchor="end" x-text="'surface ' + fmt(ts, 1) + ' °C'"></text>
+    <!-- clock -->
+    <text x="14" y="26" font-size="16" font-weight="600" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" fill="var(--color-fg)" x-text="clock + ' WST'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the night'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="onc-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time of night">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="onc-wind">Wind overnight <output for="onc-wind" x-text="wind + ' kt'"></output></label>
+      <input type="range" id="onc-wind" min="0" max="20" step="1" x-model.number="wind">
+    </div>
+    <div class="widget-control">
+      <label for="onc-spread">Dew point spread at sunset <output for="onc-spread" x-text="spread + ' °C'"></output></label>
+      <input type="range" id="onc-spread" min="1" max="12" step="1" x-model.number="spread">
+    </div>
+    <div class="widget-control">
+      <label for="onc-cloud" class="cursor-pointer"><span>Cloud cover overnight</span>
+        <input type="checkbox" id="onc-cloud" x-model="cloud" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="ts - td <= 1 ? 'warn' : ''"><dt class="widget-label">Temperature / dew point</dt><dd class="widget-value" x-text="fmt(ts, 1) + ' / ' + td + ' °C'"></dd></div>
+    <div class="widget-readout" :class="vis.s"><dt class="widget-label">Visibility at Northam</dt><dd class="widget-value"><span x-text="vis.text"></span><span class="widget-flag bad" x-show="vis.s === 'bad'">below VMC</span></dd></div>
+    <div class="widget-readout" :class="shear ? 'warn' : 'ok'"><dt class="widget-label">Inversion top</dt><dd class="widget-value" x-text="shear ? 'Calm below, wind above: shear' : inv > 0.2 ? 'Shallow inversion' : 'No inversion'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('fog-at-dawn')" :aria-pressed="active === 'fog-at-dawn'">Fog at dawn</button>
+      <button type="button" @click="preset('calm-dew')" :aria-pressed="active === 'calm-dew'">Dead calm</button>
+      <button type="button" @click="preset('windy-night')" :aria-pressed="active === 'windy-night'">20 kt</button>
+      <button type="button" @click="preset('cloudy-night')" :aria-pressed="active === 'cloudy-night'">Cloudy</button>
+      <button type="button" @click="preset('dry-air')" :aria-pressed="active === 'dry-air'">Dry air</button>
+      <button type="button" @click="preset('dawn-shear')" :aria-pressed="active === 'dawn-shear'">Dawn shear</button>
+      <button type="button" @click="preset('burn-off')" :aria-pressed="active === 'burn-off'">Burn-off</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Radiation fog needs all four: a clear sky, a light wind of about 2 to 5 kt, moist air with a small spread at sunset, and a long night. The ground chills the air touching it, an inversion forms with the coldest air at the bottom, and the cold air pools in the valley. Calm gives dew or frost, a wind much over 10 kt or a cloudy sky gives no fog. The same inversion leaves the surface calm under a stronger wind aloft: shear at its top around dawn. Temperatures and timings are illustrative.</p>
+  <details class="widget-try"><summary>Try it: Northam reads 09/07 at dusk, the sky is clearing and the wind is light. Will your 0700 departure go?</summary><p>Press Fog at dawn: the 2 degree spread closes in the early hours and the valley fills with fog by dawn, thickening just after sunrise. Drag on to see it lift into stratus and clear by mid-morning: plan to leave then.</p></details>
+  <details class="widget-try"><summary>Try it: same humid evening, but a 20 kt wind all night. Fog?</summary><p>Press 20 kt: the wind mixes the chilled air with warmer air above, so the ground never chills a layer to its dew point and there is no inversion. No fog; at most low stratus, because the air is so moist.</p></details>
+</div>

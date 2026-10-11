@@ -1,0 +1,155 @@
+<div class="widget" x-data="widget({
+  kind: 'mayday',
+  placed: [],
+  _order: ['sig', 'stn', 'cs', 'nat', 'int', 'pos', 'oth'],
+  // the chips come in this fixed, shuffled order
+  _deck: ['pos', 'cs', 'oth', 'sig', 'int', 'stn', 'nat'],
+  _names: { sig: 'Signal ×3', stn: 'Station addressed', cs: 'Call-sign and type', nat: 'Nature of emergency', int: 'Intentions', pos: 'Position, level, heading', oth: 'Other information' },
+  // PAKC 3.7 worked examples, word for word
+  _words: {
+    mayday: { sig: 'MAYDAY MAYDAY MAYDAY', stn: 'Melbourne Centre', cs: 'Cessna 172 Alpha Bravo Charlie, Alpha Bravo Charlie, Alpha Bravo Charlie', nat: 'engine failure',
+              int: 'forced landing in a paddock', pos: '8 miles north-east of Northam, passing 2,000, heading 230', oth: 'two POB' },
+    pan: { sig: 'PAN PAN, PAN PAN, PAN PAN', stn: 'Melbourne Centre', cs: 'Cessna 172 Alpha Bravo Charlie', nat: 'rough-running engine',
+           int: 'diverting to York', pos: '10 miles west of York, 3,500 ft', oth: 'two POB, endurance two hours' },
+  },
+  get W() { return this._words[this.kind] },
+  name(k) { return k === 'pos' && this.kind === 'pan' ? 'Position and level' : this._names[k] },
+  get left() { return this._deck.filter((k) => !this.placed.includes(k)) },
+  get firstWrong() { for (let i = 0; i < this.placed.length; i++) if (this.placed[i] !== this._order[i]) return i; return -1 },
+  get complete() { return this.placed.length === 7 },
+  get allRight() { return this.complete && this.firstWrong < 0 },
+  // slot i: what was placed there, if anything
+  slot(i) { return this.placed[i] || null },
+  sstate(i) { const k = this.slot(i); return !k ? 'empty' : k === this._order[i] ? 'ok' : 'bad' },
+  sfill(i) { const s = this.sstate(i); return s === 'ok' ? 'var(--color-ok-soft)' : s === 'bad' ? 'var(--color-bad-soft)' : 'var(--color-surface)' },
+  sedge(i) { const s = this.sstate(i); return s === 'ok' ? 'var(--color-ok)' : s === 'bad' ? 'var(--color-bad)' : 'var(--color-line-strong)' },
+  sink(i) { const s = this.sstate(i); return s === 'ok' ? 'var(--color-ok-fg)' : s === 'bad' ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)' },
+  // the words of a slot over at most two lines of about 60 characters
+  wl(i, n) {
+    const k = this.slot(i); if (!k) return n === 0 ? 'tap the next item below' : '';
+    const str = this.W[k] + (i === 6 ? '.' : ',');
+    if (str.length <= 52) return n === 0 ? str : '';
+    const w = str.split(' '); let a = '';
+    while (w.length && (a + ' ' + w[0]).trim().length <= 52) a = (a + ' ' + w.shift()).trim();
+    return n === 0 ? a : w.join(' ');
+  },
+  sname(i) { const k = this.slot(i); return k ? this.name(k) : '' },
+  get trap() {
+    const p = this.placed, ip = p.indexOf('pos'), inat = p.indexOf('nat'), iint = p.indexOf('int');
+    if (ip >= 3 && (inat < 0 || inat > ip) && p.slice(0, ip).every((k, j) => k === this._order[j])) return 'Position before nature: one of the usual distractors.';
+    if (iint >= 0 && ip >= 0 && iint > ip) return 'Intentions last (after the position): the other usual distractor.';
+    const i = this.firstWrong;
+    return i < 0 ? '' : 'Item ' + (i + 1) + ' should be ' + this.name(this._order[i]).toLowerCase() + '.';
+  },
+  get spoken() { return this.placed.map((k) => this.W[k]).join(', ') + (this.complete ? '.' : this.placed.length ? ', …' : '') },
+  get orderText() { if (!this.placed.length) return 'Nothing yet'; return this.firstWrong < 0 ? (this.complete ? 'Correct' : 'Correct so far') : 'Out of order at item ' + (this.firstWrong + 1) },
+  get thenText() {
+    if (!this.allRight) return '–';
+    return this.kind === 'mayday' ? 'Squawk 7700, fly the aeroplane, ELT as the landing becomes certain' : 'Keep flying; upgrade to MAYDAY if it worsens';
+  },
+  get caption() {
+    if (!this.placed.length) return (this.kind === 'mayday' ? 'Engine failure 8 miles north-east of Northam, passing 2,000 ft, heading 230, two on board, on the Melbourne Centre frequency. ' : 'Rough-running engine still producing power, 10 miles west of York at 3,500 ft, two on board, two hours of fuel. ') + 'Tap the items in the order you would say them.';
+    if (this.firstWrong >= 0) return this.trap + ' After the signal and the station it is call-sign, nature of the emergency, intentions, position, then the rest. Undo and try again.';
+    if (this.allRight && this.kind === 'mayday') return 'Together: “' + this.spoken + '” Then squawk 7700, return to flying the aeroplane, and activate the ELT as the landing becomes certain.';
+    if (this.allRight) return 'Together: “' + this.spoken + '” The engine is still working, you are in control and you have a plan, so this is urgency, not distress.';
+    return '“' + this.spoken + '” The most essential items go first, so even if the call is cut off now, they have already gone out.';
+  },
+  place(k) { if (!this.placed.includes(k)) this.placed = this.placed.concat([k]); this.active = null },
+  undo() { this.placed = this.placed.slice(0, -1); this.active = null },
+  setKind(k) { this.kind = k; this.placed = []; this.active = null },
+  presets: {
+    'start-mayday': { kind: 'mayday', placed: [] },
+    'northam-mayday': { kind: 'mayday', placed: ['sig', 'stn', 'cs', 'nat', 'int', 'pos', 'oth'] },
+    'york-pan-pan': { kind: 'pan', placed: ['sig', 'stn', 'cs', 'nat', 'int', 'pos', 'oth'] },
+    'position-before-nature': { kind: 'mayday', placed: ['sig', 'stn', 'cs', 'pos', 'nat', 'int', 'oth'] },
+    'intentions-last': { kind: 'mayday', placed: ['sig', 'stn', 'cs', 'nat', 'pos', 'oth', 'int'] },
+  },
+})">
+  <svg viewBox="0 0 640 372" role="img" aria-labelledby="dmb-title" class="widget-stage">
+    <title id="dmb-title">Seven numbered slots for a distress or urgency call, filled in the order you choose: signal, station addressed, call-sign, nature of the emergency, intentions, position, other information. Each slot turns green when its item is in the right place and red when it is not</title>
+    <rect x="0" y="0" width="640" height="372" rx="10" fill="var(--color-surface-2)"/>
+    <text x="20" y="28" font-size="16" font-weight="700" :fill="kind === 'mayday' ? 'var(--color-bad-fg)' : 'var(--color-warn-fg)'" x-text="kind === 'mayday' ? 'MAYDAY: build the call in order' : 'PAN PAN: the same order'"></text>
+    <text x="620" y="28" font-size="13" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="placed.length + ' of 7'"></text>
+    <!-- seven slots, written out -->
+    <g>
+      <circle cx="30" cy="62" r="12" stroke-width="1.25" :fill="sfill(0)" :stroke="sedge(0)"/><text x="30" y="66.5" font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="sink(0)">1</text>
+      <text x="50" y="66.5" font-size="13" font-weight="700" :fill="sink(0)" x-text="sname(0)"></text>
+      <rect x="240" y="44" width="384" height="36" rx="8" stroke-width="1.25" :fill="sfill(0)" :stroke="sedge(0)" :stroke-dasharray="slot(0) ? null : '4 3'"/>
+      <text x="252" font-size="12.5" font-style="italic" :y="wl(0, 1) ? 59 : 66.5" :fill="slot(0) ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="wl(0, 0)"></text><text x="252" y="74" font-size="12.5" font-style="italic" fill="var(--color-fg)" x-text="wl(0, 1)"></text>
+    </g>
+    <g>
+      <circle cx="30" cy="106" r="12" stroke-width="1.25" :fill="sfill(1)" :stroke="sedge(1)"/><text x="30" y="110.5" font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="sink(1)">2</text>
+      <text x="50" y="110.5" font-size="13" font-weight="700" :fill="sink(1)" x-text="sname(1)"></text>
+      <rect x="240" y="88" width="384" height="36" rx="8" stroke-width="1.25" :fill="sfill(1)" :stroke="sedge(1)" :stroke-dasharray="slot(1) ? null : '4 3'"/>
+      <text x="252" font-size="12.5" font-style="italic" :y="wl(1, 1) ? 103 : 110.5" :fill="slot(1) ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="slot(1) || placed.length === 1 ? wl(1, 0) : ''"></text><text x="252" y="118" font-size="12.5" font-style="italic" fill="var(--color-fg)" x-text="wl(1, 1)"></text>
+    </g>
+    <g>
+      <circle cx="30" cy="150" r="12" stroke-width="1.25" :fill="sfill(2)" :stroke="sedge(2)"/><text x="30" y="154.5" font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="sink(2)">3</text>
+      <text x="50" y="154.5" font-size="13" font-weight="700" :fill="sink(2)" x-text="sname(2)"></text>
+      <rect x="240" y="132" width="384" height="36" rx="8" stroke-width="1.25" :fill="sfill(2)" :stroke="sedge(2)" :stroke-dasharray="slot(2) ? null : '4 3'"/>
+      <text x="252" font-size="12.5" font-style="italic" :y="wl(2, 1) ? 147 : 154.5" :fill="slot(2) ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="slot(2) || placed.length === 2 ? wl(2, 0) : ''"></text><text x="252" y="162" font-size="12.5" font-style="italic" fill="var(--color-fg)" x-text="wl(2, 1)"></text>
+    </g>
+    <g>
+      <circle cx="30" cy="194" r="12" stroke-width="1.25" :fill="sfill(3)" :stroke="sedge(3)"/><text x="30" y="198.5" font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="sink(3)">4</text>
+      <text x="50" y="198.5" font-size="13" font-weight="700" :fill="sink(3)" x-text="sname(3)"></text>
+      <rect x="240" y="176" width="384" height="36" rx="8" stroke-width="1.25" :fill="sfill(3)" :stroke="sedge(3)" :stroke-dasharray="slot(3) ? null : '4 3'"/>
+      <text x="252" font-size="12.5" font-style="italic" :y="wl(3, 1) ? 191 : 198.5" :fill="slot(3) ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="slot(3) || placed.length === 3 ? wl(3, 0) : ''"></text><text x="252" y="206" font-size="12.5" font-style="italic" fill="var(--color-fg)" x-text="wl(3, 1)"></text>
+    </g>
+    <g>
+      <circle cx="30" cy="238" r="12" stroke-width="1.25" :fill="sfill(4)" :stroke="sedge(4)"/><text x="30" y="242.5" font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="sink(4)">5</text>
+      <text x="50" y="242.5" font-size="13" font-weight="700" :fill="sink(4)" x-text="sname(4)"></text>
+      <rect x="240" y="220" width="384" height="36" rx="8" stroke-width="1.25" :fill="sfill(4)" :stroke="sedge(4)" :stroke-dasharray="slot(4) ? null : '4 3'"/>
+      <text x="252" font-size="12.5" font-style="italic" :y="wl(4, 1) ? 235 : 242.5" :fill="slot(4) ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="slot(4) || placed.length === 4 ? wl(4, 0) : ''"></text><text x="252" y="250" font-size="12.5" font-style="italic" fill="var(--color-fg)" x-text="wl(4, 1)"></text>
+    </g>
+    <g>
+      <circle cx="30" cy="282" r="12" stroke-width="1.25" :fill="sfill(5)" :stroke="sedge(5)"/><text x="30" y="286.5" font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="sink(5)">6</text>
+      <text x="50" y="286.5" font-size="13" font-weight="700" :fill="sink(5)" x-text="sname(5)"></text>
+      <rect x="240" y="264" width="384" height="36" rx="8" stroke-width="1.25" :fill="sfill(5)" :stroke="sedge(5)" :stroke-dasharray="slot(5) ? null : '4 3'"/>
+      <text x="252" font-size="12.5" font-style="italic" :y="wl(5, 1) ? 279 : 286.5" :fill="slot(5) ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="slot(5) || placed.length === 5 ? wl(5, 0) : ''"></text><text x="252" y="294" font-size="12.5" font-style="italic" fill="var(--color-fg)" x-text="wl(5, 1)"></text>
+    </g>
+    <g>
+      <circle cx="30" cy="326" r="12" stroke-width="1.25" :fill="sfill(6)" :stroke="sedge(6)"/><text x="30" y="330.5" font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="sink(6)">7</text>
+      <text x="50" y="330.5" font-size="13" font-weight="700" :fill="sink(6)" x-text="sname(6)"></text>
+      <rect x="240" y="308" width="384" height="36" rx="8" stroke-width="1.25" :fill="sfill(6)" :stroke="sedge(6)" :stroke-dasharray="slot(6) ? null : '4 3'"/>
+      <text x="252" font-size="12.5" font-style="italic" :y="wl(6, 1) ? 323 : 330.5" :fill="slot(6) ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="slot(6) || placed.length === 6 ? wl(6, 0) : ''"></text><text x="252" y="338" font-size="12.5" font-style="italic" fill="var(--color-fg)" x-text="wl(6, 1)"></text>
+    </g>
+    <text x="320" y="364" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">most essential first: if the call is cut short, the top items have already gone</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">Which call</span>
+      <div class="widget-steps">
+        <button type="button" @click="setKind('mayday')" :aria-pressed="kind === 'mayday'">MAYDAY: engine failure near Northam</button>
+        <button type="button" @click="setKind('pan')" :aria-pressed="kind === 'pan'">PAN PAN: rough engine near York</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">Tap the next item</span>
+      <div class="widget-steps">
+        <template x-for="k in left" :key="kind + k">
+          <button type="button" @click="place(k)" x-text="W[k]"></button>
+        </template>
+        <button type="button" @click="undo()" x-show="placed.length">↶ Undo</button>
+      </div>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="!placed.length ? '' : firstWrong < 0 ? 'ok' : 'bad'"><dt class="widget-label">Order</dt><dd class="widget-value"><span x-text="orderText"></span><span class="widget-flag bad" x-show="firstWrong >= 0">trap</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Signal</dt><dd class="widget-value" x-text="W.sig"></dd></div>
+    <div class="widget-readout" :class="allRight ? 'ok' : ''"><dt class="widget-label">Then</dt><dd class="widget-value text-sm" x-text="thenText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('start-mayday')" :aria-pressed="active === 'start-mayday'">Start a MAYDAY</button>
+      <button type="button" @click="preset('northam-mayday')" :aria-pressed="active === 'northam-mayday'">Northam MAYDAY</button>
+      <button type="button" @click="preset('york-pan-pan')" :aria-pressed="active === 'york-pan-pan'">York PAN PAN</button>
+      <button type="button" @click="preset('position-before-nature')" :aria-pressed="active === 'position-before-nature'">Position before nature</button>
+      <button type="button" @click="preset('intentions-last')" :aria-pressed="active === 'intentions-last'">Intentions last</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The order is the thing to learn: signal, station, call-sign, nature, intentions, position, the rest. Who you are and what is wrong go out before where you are, and persons on board, endurance and colour come last because they help but are least essential. A PAN PAN uses exactly the same order.</p>
+  <details class="widget-try"><summary>Try it: five minutes after the York PAN PAN, the rough engine stops altogether. What do you do on the radio?</summary><p>Upgrade to distress on the same frequency, after flying the aeroplane: “MAYDAY MAYDAY MAYDAY”, then station, call-sign, nature (engine failure), intentions (forced landing, at York if you can reach it), position, level and heading, and persons on board, in the standard order. Squawk 7700 if you have not already, and activate the ELT if the landing will be off-aerodrome.</p></details>
+</div>

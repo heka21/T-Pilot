@@ -1,0 +1,252 @@
+<div class="widget" x-data="widget({
+  mode: 'to', book: 500, avail: 800, dh: 0, wt: 100, wind: 0, vlo: 60, slope: 0, surface: 'sealed',
+  // density: ISA density falls about 2.9% per 1,000 ft (POPA 2.3); power about 3% per 1,000 ft (BAKC 6.2)
+  get sigma() { return 1 - 0.029 * this.dh / 1000 },
+  get powerPct() { return 100 - 3 * this.dh / 1000 },
+  get to() { return this.mode === 'to' },
+  // each row: the factor the lessons give (f), or a direction with no figure (u: +1 longer, -1 shorter)
+  get rows() {
+    const r = [];
+    let d = this.book;
+    const add = (k, set, f, u, note) => { const prev = d; d = d * f; r.push({ k, set, f, u, note, prev, cum: d }) };
+    r.push({ k: 'Book figure', set: 'level, dry, sealed, nil wind', f: 1, u: 0, note: this.fmt(this.book) + ' m', prev: 0, cum: d });
+    // the lesson's three effects of thin air: engine power, propeller thrust (density) and the wing's higher TAS
+    const fd = this.to ? 1 / ((this.powerPct / 100) * this.sigma * this.sigma) : 1 / this.sigma;
+    add('Density height', this.fmt(this.dh) + ' ft', fd, 0, this.dh === 0 ? '×1.00' : 'about ×' + this.fmt(fd, 1) + ', illustrative');
+    if (this.to) add('Weight', this.wt + '% of maximum', (this.wt / 100) ** 2, 0, '×' + this.fmt((this.wt / 100) ** 2, 2));
+    else add('Weight', this.wt + '% of maximum', 1, this.wt > 100 ? 1 : this.wt < 100 ? -1 : 0, this.wt === 100 ? '×1.00' : (this.wt > 100 ? 'longer' : 'shorter') + ': no figure');
+    const fw = ((this.vlo - this.wind) / this.vlo) ** 2;
+    add('Wind', this.wind === 0 ? 'nil' : Math.abs(this.wind) + ' kt ' + (this.wind > 0 ? 'head' : 'tail'), fw, 0, '×' + this.fmt(fw, 2));
+    const sl = this.slope;
+    if (sl === 0) add('Slope', 'level', 1, 0, '×1.00');
+    else if (this.to && sl > 0) add('Slope', sl + '% up', 1 + 0.05 * sl, 0, '×' + this.fmt(1 + 0.05 * sl, 2));
+    else {
+      const longer = this.to ? sl > 0 : sl < 0;
+      add('Slope', Math.abs(sl) + '% ' + (sl > 0 ? 'up' : 'down'), 1, longer ? 1 : -1, (longer ? 'longer' : 'shorter') + ': no figure');
+    }
+    const s = this.surface;
+    if (s === 'sealed') add('Surface', 'dry sealed', 1, 0, '×1.00');
+    else if (s === 'wet-sealed') add('Surface', 'wet sealed', this.to ? 1 : 1.15, this.to ? 0 : 1, this.to ? 'little change' : '×1.15 or more');
+    else if (s === 'grass') add('Surface', 'dry grass', 1, 1, 'longer: POH factor');
+    else if (s === 'wet-grass') add('Surface', 'wet grass', 1, 1, 'longer: POH factor');
+    else add('Surface', 'slush', 1, 1, 'greatly longer');
+    return r;
+  },
+  row(i) { return this.rows[i] },
+  get dist() { return this.rows[this.rows.length - 1].cum },
+  get factor() { return this.dist / this.book },
+  get longer() { return this.rows.some((r) => r.u > 0) },
+  get shorter() { return this.rows.some((r) => r.u < 0) },
+  get margin() { return this.avail - Math.round(this.dist) },
+  get availName() { return this.to ? 'TODA' : 'LDA' },
+  get distText() {
+    const m = this.fmt(this.dist) + ' m';
+    if (this.longer && !this.shorter) return 'at least ' + m;
+    if (this.shorter && !this.longer) return 'at most ' + m;
+    if (this.longer && this.shorter) return m + ' ± POH corrections';
+    return m;
+  },
+  get state() {
+    if (this.surface === 'slush') return 'bad';
+    if (this.margin < 0) return this.shorter ? 'warn' : 'bad';
+    if (this.longer || this.margin / this.avail < 0.115) return 'warn';
+    return 'ok';
+  },
+  get verdict() {
+    if (this.surface === 'slush') return 'Do not operate: no POH figures for slush';
+    if (this.margin < 0) return this.fmt(-this.margin) + ' m short' + (this.shorter ? ' before the corrections that shorten it' : '');
+    const spare = this.fmt(this.margin) + ' m spare (' + this.fmt(100 * this.margin / this.avail) + '%)';
+    if (this.longer) return spare + ' before any further POH correction';
+    return spare + (this.margin / this.avail < 0.115 ? ': thin' : '');
+  },
+  // drawing: distances 0..maxD across x 170..610
+  get maxD() { const m = Math.max(this.avail, ...this.rows.map((r) => Math.max(r.cum, r.prev))) * 1.12; return Math.ceil(m / 200) * 200 },
+  X(d) { return 170 + d / this.maxD * 440 },
+  tick(i) { return this.fmt(this.maxD * i / 4) },
+  barEnd(i) { const r = this.row(i); return this.X(Math.max(r.cum, r.prev)) },
+  noteX(i) { return this.barEnd(i) + (this.row(i).u ? 34 : 6) },
+  noteInside(i) { return this.noteX(i) > 520 },
+  get planeX() { return Math.min(this.X(this.dist), 628) },
+  presets: {
+    'headwind-10kt': { mode: 'to', book: 500, avail: 800, dh: 0, wt: 100, wind: 10, vlo: 60, slope: 0, surface: 'sealed' },
+    'tailwind-10kt': { mode: 'to', book: 500, avail: 800, dh: 0, wt: 100, wind: -10, vlo: 60, slope: 0, surface: 'sealed' },
+    'upslope-and-tailwind': { mode: 'to', book: 500, avail: 800, dh: 0, wt: 100, wind: -6, vlo: 60, slope: 2, surface: 'sealed' },
+    'farm-strip-upslope': { mode: 'to', book: 520, avail: 600, dh: 0, wt: 100, wind: 0, vlo: 60, slope: 2, surface: 'sealed' },
+    'wet-sealed-landing': { mode: 'ldg', book: 450, avail: 550, dh: 0, wt: 100, wind: 0, vlo: 60, slope: 0, surface: 'wet-sealed' },
+    'ten-percent-overweight': { mode: 'to', book: 500, avail: 800, dh: 0, wt: 110, wind: 0, vlo: 60, slope: 0, surface: 'sealed' },
+    'hot-afternoon-inland': { mode: 'to', book: 500, avail: 750, dh: 5010, wt: 100, wind: 0, vlo: 60, slope: 0, surface: 'sealed' },
+  },
+})">
+  <svg viewBox="0 0 640 316" role="img" aria-labelledby="tfs-title" class="widget-stage">
+    <title id="tfs-title">The book take-off or landing distance corrected factor by factor, each row multiplying the distance the row above produced, and the result laid on the runway against the distance available</title>
+    <defs><marker id="tfs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="640" height="316" fill="var(--color-surface)"/>
+    <!-- distance available, through every row -->
+    <line y1="26" y2="272" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" :x1="X(avail)" :x2="X(avail)"/>
+    <text y="18" font-size="12" font-weight="600" fill="var(--color-fg)" class="num" :x="X(avail)" :text-anchor="X(avail) > 560 ? 'end' : 'middle'" x-text="availName + ' ' + fmt(avail) + ' m'"></text>
+    <rect y="4" height="268" width="20" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: ew-resize" :x="X(avail) - 10"
+      @pointerdown="drag($event, (p) => { avail = Math.round(clamp((p.x - 170) / 440 * maxD, 300, 1600) / 10) * 10; active = null })"/>
+    <!-- six rows written out: name, setting, bar, change and note -->
+    <g font-size="13">
+      <text x="160" y="43" text-anchor="end" fill="var(--color-fg)" font-weight="600" x-text="row(0).k"></text>
+      <text x="160" y="56" text-anchor="end" font-size="11" fill="var(--color-fg-faint)" x-text="row(0).set"></text>
+      <rect y="34" height="20" rx="3" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25" :x="X(0)" :width="X(row(0).cum) - X(0)"/>
+      <text y="49" font-size="12" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="X(row(0).cum) + 6" x-text="row(0).note"></text>
+    </g>
+    <g font-size="13">
+      <text x="160" y="77" text-anchor="end" fill="var(--color-fg)" font-weight="600" x-text="row(1).k"></text>
+      <text x="160" y="90" text-anchor="end" font-size="11" fill="var(--color-fg-faint)" x-text="row(1).set"></text>
+      <rect y="68" height="20" rx="3" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1" :x="X(0)" :width="X(Math.min(row(1).prev, row(1).cum)) - X(0)"/>
+      <rect y="68" height="20" stroke-width="1.25" :x="X(Math.min(row(1).prev, row(1).cum))" :width="Math.abs(X(row(1).cum) - X(row(1).prev))"
+        :fill="row(1).cum > row(1).prev ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="row(1).cum > row(1).prev ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <line y1="78" y2="78" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#tfs-arrow)" x-show="row(1).u" :x1="barEnd(1) + 2" :x2="barEnd(1) + (row(1).u > 0 ? 28 : -28)"/>
+      <text y="83" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="noteInside(1) ? barEnd(1) - 6 : noteX(1)" :text-anchor="noteInside(1) ? 'end' : 'start'"
+        :fill="row(1).cum > row(1).prev + 0.5 ? 'var(--color-bad-fg)' : row(1).cum < row(1).prev - 0.5 ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="row(1).note"></text>
+    </g>
+    <g font-size="13">
+      <text x="160" y="111" text-anchor="end" fill="var(--color-fg)" font-weight="600" x-text="row(2).k"></text>
+      <text x="160" y="124" text-anchor="end" font-size="11" fill="var(--color-fg-faint)" x-text="row(2).set"></text>
+      <rect y="102" height="20" rx="3" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1" :x="X(0)" :width="X(Math.min(row(2).prev, row(2).cum)) - X(0)"/>
+      <rect y="102" height="20" stroke-width="1.25" :x="X(Math.min(row(2).prev, row(2).cum))" :width="Math.abs(X(row(2).cum) - X(row(2).prev))"
+        :fill="row(2).cum > row(2).prev ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="row(2).cum > row(2).prev ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <line y1="112" y2="112" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#tfs-arrow)" x-show="row(2).u" :x1="barEnd(2) + 2" :x2="barEnd(2) + (row(2).u > 0 ? 28 : -28)"/>
+      <text y="117" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="noteInside(2) ? barEnd(2) - 6 : noteX(2)" :text-anchor="noteInside(2) ? 'end' : 'start'"
+        :fill="row(2).cum > row(2).prev + 0.5 ? 'var(--color-bad-fg)' : row(2).cum < row(2).prev - 0.5 ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="row(2).note"></text>
+    </g>
+    <g font-size="13">
+      <text x="160" y="145" text-anchor="end" fill="var(--color-fg)" font-weight="600" x-text="row(3).k"></text>
+      <text x="160" y="158" text-anchor="end" font-size="11" fill="var(--color-fg-faint)" x-text="row(3).set"></text>
+      <rect y="136" height="20" rx="3" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1" :x="X(0)" :width="X(Math.min(row(3).prev, row(3).cum)) - X(0)"/>
+      <rect y="136" height="20" stroke-width="1.25" :x="X(Math.min(row(3).prev, row(3).cum))" :width="Math.abs(X(row(3).cum) - X(row(3).prev))"
+        :fill="row(3).cum > row(3).prev ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="row(3).cum > row(3).prev ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <line y1="146" y2="146" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#tfs-arrow)" x-show="row(3).u" :x1="barEnd(3) + 2" :x2="barEnd(3) + (row(3).u > 0 ? 28 : -28)"/>
+      <text y="151" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="noteInside(3) ? barEnd(3) - 6 : noteX(3)" :text-anchor="noteInside(3) ? 'end' : 'start'"
+        :fill="row(3).cum > row(3).prev + 0.5 ? 'var(--color-bad-fg)' : row(3).cum < row(3).prev - 0.5 ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="row(3).note"></text>
+    </g>
+    <g font-size="13">
+      <text x="160" y="179" text-anchor="end" fill="var(--color-fg)" font-weight="600" x-text="row(4).k"></text>
+      <text x="160" y="192" text-anchor="end" font-size="11" fill="var(--color-fg-faint)" x-text="row(4).set"></text>
+      <rect y="170" height="20" rx="3" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1" :x="X(0)" :width="X(Math.min(row(4).prev, row(4).cum)) - X(0)"/>
+      <rect y="170" height="20" stroke-width="1.25" :x="X(Math.min(row(4).prev, row(4).cum))" :width="Math.abs(X(row(4).cum) - X(row(4).prev))"
+        :fill="row(4).cum > row(4).prev ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="row(4).cum > row(4).prev ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <line y1="180" y2="180" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#tfs-arrow)" x-show="row(4).u" :x1="barEnd(4) + 2" :x2="barEnd(4) + (row(4).u > 0 ? 28 : -28)"/>
+      <text y="185" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="noteInside(4) ? barEnd(4) - 6 : noteX(4)" :text-anchor="noteInside(4) ? 'end' : 'start'"
+        :fill="row(4).cum > row(4).prev + 0.5 ? 'var(--color-bad-fg)' : row(4).cum < row(4).prev - 0.5 ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="row(4).note"></text>
+    </g>
+    <g font-size="13">
+      <text x="160" y="213" text-anchor="end" fill="var(--color-fg)" font-weight="600" x-text="row(5).k"></text>
+      <text x="160" y="226" text-anchor="end" font-size="11" fill="var(--color-fg-faint)" x-text="row(5).set"></text>
+      <rect y="204" height="20" rx="3" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1" :x="X(0)" :width="X(Math.min(row(5).prev, row(5).cum)) - X(0)"/>
+      <rect y="204" height="20" stroke-width="1.25" :x="X(Math.min(row(5).prev, row(5).cum))" :width="Math.abs(X(row(5).cum) - X(row(5).prev))"
+        :fill="row(5).cum > row(5).prev ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="row(5).cum > row(5).prev ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <line y1="214" y2="214" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#tfs-arrow)" x-show="row(5).u" :x1="barEnd(5) + 2" :x2="barEnd(5) + (row(5).u > 0 ? 28 : -28)"/>
+      <text y="219" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="noteInside(5) ? barEnd(5) - 6 : noteX(5)" :text-anchor="noteInside(5) ? 'end' : 'start'"
+        :fill="row(5).cum > row(5).prev + 0.5 ? 'var(--color-bad-fg)' : row(5).cum < row(5).prev - 0.5 ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="row(5).note"></text>
+    </g>
+    <!-- the runway: the distance available, and the corrected distance on it -->
+    <text x="160" y="248" text-anchor="end" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="to ? 'Take-off' : 'Landing'"></text>
+    <text x="160" y="262" text-anchor="end" font-size="11" fill="var(--color-fg-faint)" x-text="to ? 'to 50 ft' : 'from 50 ft'"></text>
+    <rect y="232" height="36" rx="2" fill="var(--color-tarmac)" :x="X(0)" :width="X(avail) - X(0)"/>
+    <line y1="250" y2="250" stroke="var(--color-paint)" stroke-width="2" stroke-dasharray="12 10" :x1="X(0) + 16" :x2="X(avail) - 6"/>
+    <g stroke="var(--color-paint)" stroke-width="2">
+      <line x1="174" x2="174" y1="235" y2="245"/><line x1="174" x2="174" y1="255" y2="265"/>
+      <line x1="179" x2="179" y1="235" y2="245"/><line x1="179" x2="179" y1="255" y2="265"/>
+    </g>
+    <rect y="232" height="36" :x="X(0)" :width="X(dist) - X(0)" fill-opacity="0.28" stroke-width="2"
+      :fill="state === 'bad' ? 'var(--color-bad)' : state === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"
+      :stroke="state === 'bad' ? 'var(--color-bad)' : state === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    <g :transform="'translate(' + (planeX - 6) + ' 250)'">
+      <g transform="scale(0.27)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- distance scale -->
+    <line x1="170" y1="276" x2="610" y2="276" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="170" x2="170" y1="276" y2="281"/><line x1="280" x2="280" y1="276" y2="281"/><line x1="390" x2="390" y1="276" y2="281"/><line x1="500" x2="500" y1="276" y2="281"/><line x1="610" x2="610" y1="276" y2="281"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="middle">
+      <text x="170" y="295" x-text="tick(0)"></text><text x="280" y="295" x-text="tick(1)"></text><text x="390" y="295" x-text="tick(2)"></text><text x="500" y="295" x-text="tick(3)"></text><text x="606" y="295" text-anchor="end" x-text="tick(4)"></text>
+    </g>
+    <text x="390" y="311" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">metres</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tfs-mode">Distance</label>
+      <select id="tfs-mode" class="input" x-model="mode">
+        <option value="to">Take-off distance (to 50 ft) against TODA</option>
+        <option value="ldg">Landing distance (from 50 ft) against LDA</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="tfs-book">Book figure (level, dry, sealed, nil wind) <output for="tfs-book" x-text="fmt(book) + ' m'"></output></label>
+      <input type="range" id="tfs-book" min="200" max="1200" step="10" x-model.number="book">
+    </div>
+    <div class="widget-control">
+      <label for="tfs-avail"><span x-text="availName"></span> <output for="tfs-avail" x-text="fmt(avail) + ' m'"></output></label>
+      <input type="range" id="tfs-avail" min="300" max="1600" step="10" x-model.number="avail">
+    </div>
+    <div class="widget-control">
+      <label for="tfs-dh">Density height <output for="tfs-dh" x-text="fmt(dh) + ' ft'"></output></label>
+      <input type="range" id="tfs-dh" min="-1000" max="8000" step="10" x-model.number="dh">
+    </div>
+    <div class="widget-control">
+      <label for="tfs-wt">Weight <output for="tfs-wt" x-text="wt + '% of maximum'"></output></label>
+      <input type="range" id="tfs-wt" min="80" max="115" step="1" x-model.number="wt">
+    </div>
+    <div class="widget-control">
+      <label for="tfs-wind">Wind component <output for="tfs-wind" x-text="wind === 0 ? 'nil' : Math.abs(wind) + ' kt ' + (wind > 0 ? 'headwind' : 'tailwind')"></output></label>
+      <input type="range" id="tfs-wind" min="-15" max="20" step="1" x-model.number="wind">
+    </div>
+    <div class="widget-control">
+      <label for="tfs-vlo"><span x-text="to ? 'Lift-off speed' : 'Touchdown speed'"></span> <output for="tfs-vlo" x-text="vlo + ' kt'"></output></label>
+      <input type="range" id="tfs-vlo" min="45" max="75" step="1" x-model.number="vlo">
+    </div>
+    <div class="widget-control">
+      <label for="tfs-slope">Slope, in the direction you roll <output for="tfs-slope" x-text="slope === 0 ? 'level' : Math.abs(slope) + '% ' + (slope > 0 ? 'up' : 'down')"></output></label>
+      <input type="range" id="tfs-slope" min="-2" max="2" step="0.5" x-model.number="slope">
+    </div>
+    <div class="widget-control">
+      <label for="tfs-surface">Surface</label>
+      <select id="tfs-surface" class="input" x-model="surface">
+        <option value="sealed">Dry sealed (the chart's baseline)</option>
+        <option value="wet-sealed">Wet sealed</option>
+        <option value="grass">Dry grass</option>
+        <option value="wet-grass">Wet grass</option>
+        <option value="slush">Slush or standing water</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="state">
+      <dt class="widget-label" x-text="to ? 'Take-off distance required' : 'Landing distance required'"></dt>
+      <dd class="widget-value" x-text="distText"></dd>
+    </div>
+    <div class="widget-readout" :class="state">
+      <dt class="widget-label" x-text="'Against the ' + availName + ' of ' + fmt(avail) + ' m'"></dt>
+      <dd class="widget-value"><span x-text="verdict"></span><span class="widget-flag bad" x-show="state === 'bad'">no go</span></dd>
+    </div>
+    <div class="widget-readout" :class="factor > 1.005 ? 'warn' : factor < 0.995 ? 'ok' : ''">
+      <dt class="widget-label">All the factors multiplied</dt>
+      <dd class="widget-value" x-text="(dh === 0 ? '×' : 'about ×') + fmt(factor, 2) + ' (' + fmt(factor * 100) + '% of the book figure' + (dh === 0 ? ')' : '; the density row is a model)')"></dd>
+    </div>
+    <div class="widget-readout" x-show="to">
+      <dt class="widget-label">Engine power at this density height</dt>
+      <dd class="widget-value" x-text="'about ' + fmt(Math.min(100, powerPct)) + '% (3% less per 1,000 ft)'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('headwind-10kt')" :aria-pressed="active === 'headwind-10kt'">10 kt headwind</button>
+      <button type="button" @click="preset('tailwind-10kt')" :aria-pressed="active === 'tailwind-10kt'">10 kt tailwind</button>
+      <button type="button" @click="preset('upslope-and-tailwind')" :aria-pressed="active === 'upslope-and-tailwind'">Upslope + tailwind</button>
+      <button type="button" @click="preset('farm-strip-upslope')" :aria-pressed="active === 'farm-strip-upslope'">Farm strip, 2% up</button>
+      <button type="button" @click="preset('wet-sealed-landing')" :aria-pressed="active === 'wet-sealed-landing'">Wet runway landing</button>
+      <button type="button" @click="preset('ten-percent-overweight')" :aria-pressed="active === 'ten-percent-overweight'">10% overweight</button>
+      <button type="button" @click="preset('hot-afternoon-inland')" :aria-pressed="active === 'hot-afternoon-inland'">Hot afternoon inland</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each factor multiplies the distance the one before it produced, so penalties compound: 2% upslope (×1.10) and a tailwind of 10% of the lift-off speed (×1.21) make 133%, not 130%. Only a headwind shortens both distances. The wind row is the lessons' square law, $(V \mp w)^2 / V^2$; slope (2% up ≈ +10% take-off), wet sealed (landing +15% or more) and weight (take-off ∝ weight²) are their rules of thumb. Where a lesson gives a direction but no figure (grass, landing slope), the arrow shows which way and the POH supplies the number. The density height row is illustrative: the lesson's three losses (3% engine power per 1,000 ft, thinner air for the propeller, a higher TAS for the wing) multiplied together.</p>
+  <details class="widget-try"><summary>Try it: a 10 kt wind on a 60 kt lift-off. Why does the tailwind cost more than the headwind saves?</summary><p>Press 10 kt headwind: the groundspeed at lift-off is 50 kt and $(50/60)^2 = 0.69$, about 30% shorter. Press 10 kt tailwind: 70 kt and $(70/60)^2 = 1.36$, about 36% longer. Energy goes with the square of groundspeed, so the same 10 kt is worth more against you than for you (BAKC 6.2).</p></details>
+  <details class="widget-try"><summary>Try it: the chart gives 520 m and the farm strip, 600 m long, slopes 2% up the only way you can go. Is it on?</summary><p>Press Farm strip, 2% up: 520 × 1.10 = 572 m, leaving 28 m, under 5% of the strip. Legal, but too thin to accept: wait for cooler air, take less weight, or use the other direction if the wind allows (RBKA 4.1). Now switch the surface to wet grass: the arrow says it gets longer still, by a figure only the POH can give.</p></details>
+</div>

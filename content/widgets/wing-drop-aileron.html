@@ -1,0 +1,157 @@
+<div class="widget" x-data="timeline({
+  fix: 'aileron', duration: 14, loop: false,
+  // illustrative angles and timings; the mechanism is the lesson's (RBKA 3.6): the dropping wing meets air from below,
+  // a down-going aileron raises that wing's angle further, and only less angle of attack unstalls it
+  clUp(a) { if (a <= 12) return 0.1 * (a + 2); if (a <= 16) { const t = (a - 12) / 4; return 1.4 + 0.1 * (1 - (1 - t) ** 2) } return 1.5 - 0.055 * (a - 16) ** 1.35 },
+  get ail() { return this.fix === 'aileron' },
+  get base() { return 13 + 3.4 * this.eased(0, 0.15) },
+  get stick() { // 0 = neutral, 1 = right aileron (pick the left wing up)
+    if (this.ail) return this.eased(0.3, 0.38);
+    return this.t >= 0.75 ? 0.6 * (1 - this.eased(0.9, 1)) : 0;
+  },
+  get rudder() { return !this.ail && this.t >= 0.3 ? 1 - this.eased(0.7, 0.8) : 0 },
+  get forward() { return !this.ail && this.t >= 0.5 ? this.eased(0.5, 0.65) : 0 },
+  get dropRate() { return this.ail ? this.eased(0.15, 0.3) + 1.6 * this.eased(0.3, 0.6) : this.eased(0.15, 0.3) * (1 - this.eased(0.3, 0.42)) },
+  get aoaL() { return this.base + 1.4 * this.dropRate + 3.5 * this.stick * (this.ail ? 1 : 0) - 8 * this.forward },
+  get aoaR() { return this.base - 1.4 * this.eased(0.15, 0.3) - (this.ail ? this.stick - 2.8 * this.eased(0.6, 1) : 0) - 8 * this.forward },
+  get bank() {
+    if (this.ail) return 18 * this.eased(0.15, 0.3) + 32 * this.eased(0.3, 0.6) + 30 * this.eased(0.6, 1);
+    return 18 * this.eased(0.15, 0.3) - 18 * this.eased(0.75, 1);
+  },
+  get spin() { return this.ail && this.t >= 0.6 },
+  stalledAt(a) { return a > 16 },
+  get L() { return { a: this.aoaL, s: this.aoaL > 16 } },
+  get R() { return { a: this.aoaR, s: this.aoaR > 16 } },
+  // CL chart: 0..24° across x 440..624, CL 0..1.6 up y 250..70
+  X(a) { return 440 + a / 24 * 184 },
+  Y(c) { return 250 - c / 1.6 * 180 },
+  get curve() { const p = []; for (let a = 0; a <= 24.01; a += 0.5) p.push([this.X(a), this.Y(this.clUp(a))]); return this.path(p) },
+  get steps() {
+    return this.ail
+      ? [{ at: 0, label: 'Approaching the stall' }, { at: 0.15, label: 'Left wing drops' }, { at: 0.3, label: 'Aileron to pick it up' }, { at: 0.6, label: 'Spin entry' }]
+      : [{ at: 0, label: 'Approaching the stall' }, { at: 0.15, label: 'Left wing drops' }, { at: 0.3, label: 'Rudder, ailerons neutral' }, { at: 0.5, label: 'Stick forward: unstall' }, { at: 0.75, label: 'Then roll level' }];
+  },
+  get caption() {
+    if (this.t < 0.15) return 'Approaching the stall, both wings close in on the critical angle, about 16°. Wings are never perfectly matched, so one usually gets there first.';
+    if (this.t < 0.3) return 'The left wing passes the critical angle first and drops. As it drops, the air meets it from below as well as ahead, which raises its angle of attack further.';
+    if (this.ail) {
+      if (this.t < 0.6) return 'Instinct says stick right to pick the wing up. That lowers the LEFT aileron, raising that wing\'s camber and its angle of attack: the stall deepens, lift falls, drag rises, and the wing drops faster and yaws the aeroplane left.';
+      return 'A deeply stalled, draggy left wing and yaw to the left: the recipe for autorotation. This is a spin entry. Ailerons neutral, opposite rudder and stick forward are now the only way out.';
+    }
+    if (this.t < 0.5) return 'Ailerons roughly neutral. Right rudder stops the yaw and holds the wings from rolling further, without lowering an aileron on the stalled wing.';
+    if (this.t < 0.75) return 'Now the cure: ease the stick forward. Both wings come back below the critical angle and the flow reattaches. Unstall first.';
+    return 'With both wings flying again the ailerons work normally: roll level with aileron, add power and climb away. Unstall, then roll.';
+  },
+  presets: {
+    'left-wing-drops': { fix: 'aileron', t: 0.28 },
+    'aileron-deepens-stall': { fix: 'aileron', t: 0.5 },
+    'spin-entry': { fix: 'aileron', t: 1 },
+    'rudder-holds-wings': { fix: 'rudder', t: 0.45 },
+    'unstalled-then-roll-level': { fix: 'rudder', t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="wda-title" class="widget-stage">
+    <title id="wda-title">An aeroplane seen from behind at the stall with its left wing dropping, a small section of each wing showing its angle of attack, and a lift curve with a dot for each wing: aileron to pick up the dropped wing pushes it further past the critical angle, while rudder and a forward stick unstall both wings first</title>
+    <defs>
+      <marker id="wda-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="424" height="300" fill="var(--color-sky-soft)"/>
+    <line x1="0" y1="142" x2="424" y2="142" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="14" y="24" font-size="13" fill="var(--color-fg-muted)">From behind</text>
+    <!-- spin rotation -->
+    <g :opacity="spin ? 1 : 0">
+      <path d="M118 66 A100 70 0 0 0 112 214" fill="none" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#wda-arrow)"/>
+      <text x="22" y="122" font-size="13" font-weight="600" fill="var(--color-bad-fg)">autorotation</text>
+    </g>
+    <!-- the aeroplane, banked left -->
+    <g :transform="'translate(212 132) rotate(' + (-bank).toFixed(2) + ')'">
+      <!-- python -m tools.diagrams.plane rear, scale 2 -->
+      <g transform="translate(0 0) rotate(0) scale(2)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-fg)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <!-- ailerons, outer trailing edge: left goes down when the stick goes right -->
+      <rect x="-94" width="26" height="6" rx="2" :y="-12 + 9 * stick" :fill="stick > 0.05 ? 'var(--color-brand)' : 'var(--color-surface-2)'" stroke="var(--color-fg)" stroke-width="1"/>
+      <rect x="68" width="26" height="6" rx="2" :y="-12 - 9 * stick" :fill="stick > 0.05 ? 'var(--color-info)' : 'var(--color-surface-2)'" stroke="var(--color-fg)" stroke-width="1"/>
+      <!-- rudder -->
+      <line x1="0" y1="2" x2="0" y2="-24" stroke-width="4" stroke-linecap="round" :stroke="rudder > 0.05 ? 'var(--color-brand)' : 'var(--color-fg)'" :transform="'rotate(' + (-14 * rudder) + ' 0 2)'"/>
+    </g>
+    <g font-size="12" font-weight="600">
+      <text x="14" y="200" :fill="stick > 0.05 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" x-text="stick > 0.05 ? 'left aileron DOWN' : 'ailerons neutral'"></text>
+      <text x="410" y="200" text-anchor="end" fill="var(--color-brand-fg)" :opacity="rudder > 0.05 ? 1 : 0">right rudder</text>
+      <text x="410" y="40" text-anchor="end" fill="var(--color-ok-fg)" :opacity="forward > 0.05 ? 1 : 0">stick forward</text>
+    </g>
+    <!-- wing sections: left and right -->
+    <g :transform="'translate(100 252)'">
+      <line x1="80" y1="0" x2="40" y2="0" stroke="var(--color-sky-fg)" stroke-width="1.25" marker-end="url(#wda-arrow)"/>
+      <g :transform="'rotate(' + (-aoaL).toFixed(1) + ')'">
+        <path d="M26 0 C24 -7 8 -9 -12 -5 L-28 0 C-8 1 18 3 26 0 Z" :fill="L.s ? 'var(--color-bad-soft)' : 'var(--color-surface)'" :stroke="L.s ? 'var(--color-bad)' : 'var(--color-fg)'" stroke-width="1.5"/>
+      </g>
+      <text x="-60" y="34" font-size="12" font-weight="600" :fill="L.s ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="'left wing α ' + fmt(aoaL, 1) + '°' + (L.s ? ' stalled' : '')"></text>
+    </g>
+    <g :transform="'translate(310 252)'">
+      <line x1="80" y1="0" x2="40" y2="0" stroke="var(--color-sky-fg)" stroke-width="1.25" marker-end="url(#wda-arrow)"/>
+      <g :transform="'rotate(' + (-aoaR).toFixed(1) + ')'">
+        <path d="M26 0 C24 -7 8 -9 -12 -5 L-28 0 C-8 1 18 3 26 0 Z" :fill="R.s ? 'var(--color-bad-soft)' : 'var(--color-surface)'" :stroke="R.s ? 'var(--color-bad)' : 'var(--color-fg)'" stroke-width="1.5"/>
+      </g>
+      <text x="-60" y="34" font-size="12" font-weight="600" :fill="R.s ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="'right wing α ' + fmt(aoaR, 1) + '°' + (R.s ? ' stalled' : '')"></text>
+    </g>
+    <!-- lift curve with a dot for each wing -->
+    <rect x="424" y="0" width="216" height="300" fill="var(--color-surface)"/>
+    <line x1="424" y1="0" x2="424" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="532" y="24" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">lift coefficient against α</text>
+    <rect x="563" y="60" width="61" height="190" fill="var(--color-bad)" fill-opacity="0.08"/>
+    <line x1="563" y1="60" x2="563" y2="250" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="568" y="52" font-size="12" fill="var(--color-bad-fg)">stalled</text>
+    <text x="558" y="52" font-size="12" text-anchor="end" fill="var(--color-bad-fg)">16°</text>
+    <line x1="440" y1="250" x2="624" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="440" y1="60" x2="440" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="2" :d="curve"/>
+    <circle r="7" :fill="L.s ? 'var(--color-bad)' : 'var(--color-brand)'" :cx="X(Math.min(24, Math.max(0, aoaL)))" :cy="Y(clUp(Math.min(24, Math.max(0, aoaL))))"/>
+    <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)" :x="X(Math.min(24, Math.max(0, aoaL)))" :y="Y(clUp(Math.min(24, Math.max(0, aoaL)))) + 24">L</text>
+    <circle r="7" fill="var(--color-surface)" stroke-width="3" :stroke="R.s ? 'var(--color-bad)' : 'var(--color-info)'" :cx="X(Math.min(24, Math.max(0, aoaR)))" :cy="Y(clUp(Math.min(24, Math.max(0, aoaR))))"/>
+    <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)" :x="X(Math.min(24, Math.max(0, aoaR)))" :y="Y(clUp(Math.min(24, Math.max(0, aoaR)))) - 14">R</text>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text x="440" y="266">0</text><text x="501" y="266">8</text><text x="563" y="266">16</text><text x="624" y="266">24°</text></g>
+    <text x="532" y="288" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">angle of attack</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the stall'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="wda-t" min="0" max="1" step="0.002" x-model.number="t" @input="pause()" aria-label="Time through the stall">
+    <span class="widget-clock" x-text="fmt(bank) + '° left bank'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wda-fix">When the left wing drops, you</label>
+      <select id="wda-fix" class="input" x-model="fix" @change="t = 0.15; pause()">
+        <option value="aileron">Pick it up with aileron (stick right)</option>
+        <option value="rudder">Rudder, ailerons neutral, unstall, then roll</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="L.s ? 'bad' : 'ok'"><dt class="widget-label">Left (dropped) wing</dt><dd class="widget-value"><span x-text="'α ' + fmt(aoaL, 1) + '°'"></span><span class="widget-flag bad" x-show="L.s">stalled</span></dd></div>
+    <div class="widget-readout" :class="R.s ? 'bad' : 'ok'"><dt class="widget-label">Right wing</dt><dd class="widget-value"><span x-text="'α ' + fmt(aoaR, 1) + '°'"></span><span class="widget-flag bad" x-show="R.s">stalled</span></dd></div>
+    <div class="widget-readout" :class="spin ? 'bad' : bank > 30 ? 'warn' : ''"><dt class="widget-label">Bank</dt><dd class="widget-value"><span x-text="fmt(bank) + '° left'"></span><span class="widget-flag bad" x-show="spin">spin entry</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('left-wing-drops')" :aria-pressed="active === 'left-wing-drops'">Wing drops</button>
+      <button type="button" @click="preset('aileron-deepens-stall')" :aria-pressed="active === 'aileron-deepens-stall'">Aileron</button>
+      <button type="button" @click="preset('spin-entry')" :aria-pressed="active === 'spin-entry'">Spin entry</button>
+      <button type="button" @click="preset('rudder-holds-wings')" :aria-pressed="active === 'rudder-holds-wings'">Rudder</button>
+      <button type="button" @click="preset('unstalled-then-roll-level')" :aria-pressed="active === 'unstalled-then-roll-level'">Unstall, then roll</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A wing beyond the critical angle cannot be lifted by making it work harder. The down-going aileron raises that wing's angle of attack, so the dot on the lift curve moves further into the stalled region: less lift, more drag, a faster drop and yaw towards it, the start of a spin. Keep the ailerons neutral, stop the yaw with rudder, ease the stick forward until both dots are back below about 16°, and only then roll level. The angles and timings are illustrative.</p>
+  <details class="widget-try"><summary>Try it: why does the dropping wing stall more deeply even before you touch the ailerons?</summary><p>Press Wing drops: as the wing moves down, the air meets it from below as well as from ahead, so its angle of attack is larger than the rising wing's. That is also what keeps a spin going.</p></details>
+  <details class="widget-try"><summary>Try it: in what order do you recover from a wing drop at the stall?</summary><p>Choose the rudder option and play it: ailerons neutral with rudder to stop the yaw, stick forward to reduce the angle of attack (power to minimise the height loss), and only when both wings are flying again, level the wings with aileron.</p></details>
+</div>

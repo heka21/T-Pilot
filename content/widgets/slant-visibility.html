@@ -1,0 +1,116 @@
+<div class="widget" x-data="widget({
+  dist: 0,
+  hgt: 1,
+  sun: false,
+  // the aeroplane: dist 0 far from the runway to 1 nearly overhead it; hgt 1 well above the haze to 0 low in the thin haze. Heights exaggerated
+  get ac() { return { x: this.lerp(40, 500, this.dist), y: this.lerp(236, 56, this.hgt) } },
+  rwy: { x: 530, y: 257 },
+  // the haze: a dense band at the top of the inversion (y 168 to 200) and thinner haze below it
+  top: 168, mid: 200, gnd: 258,
+  // length of the sight line between two heights
+  seg(y0, y1) {
+    const a = this.ac, r = this.rwy, dy = r.y - a.y, len = Math.hypot(r.x - a.x, dy);
+    if (dy <= 0) return 0;
+    const lo = Math.max(y0, a.y), hi = Math.min(y1, r.y);
+    return hi > lo ? (hi - lo) / dy * len : 0;
+  },
+  get band() { return this.seg(this.top, this.mid) },
+  get thin() { return this.seg(this.mid, this.gnd) },
+  // illustrative contrast: dense band counts far more than the thin haze; looking into the sun roughly doubles it
+  get contrast() { return Math.exp(-(this.band / 85 + this.thin / 420) * (this.sun ? 1.9 : 1)) },
+  get seen() { return this.contrast > 0.5 ? 'clear' : this.contrast > 0.25 ? 'faint' : 'lost' },
+  get times() { return this.band / (this.mid - this.top) },
+  get where() { return this.ac.y < this.top ? 'above the haze' : this.ac.y < this.mid ? 'in the dense layer' : 'under the dense layer' },
+  get caption() {
+    if (this.ac.y < this.top && this.times < 1.4) return 'Looking steeply down, your sight line crosses the haze by nearly the shortest path, about ' + this.fmt(this.times, 1) + ' times its depth, so the ground beneath shows through. It is the shallow look ahead that loses it.';
+    if (this.ac.y < this.top) return 'From above, your line of sight slants through the dense top of the haze layer: ' + this.fmt(this.times, 1) + ' times its depth' + (this.sun ? ', and looking into the sun every particle glows' : '') + '. The ground ahead ' + (this.seen === 'lost' ? 'all but disappears.' : this.seen === 'faint' ? 'is faint.' : 'is still visible.');
+    if (this.ac.y < this.mid) return 'Descending through the top of the layer: the haze is thickest here, at the inversion, and the view is at its worst.';
+    return 'Under the dense band the air is clearer, and you are looking through thin haze only: much the same air the surface observer measured as 9999.';
+  },
+  presets: {
+    'above-the-layer': { dist: 0, hgt: 1, sun: false },
+    'looking-into-the-sun': { dist: 0, hgt: 1, sun: true },
+    'metar-9999-descending': { dist: 0.3, hgt: 0.62, sun: false },
+    'looking-straight-down': { dist: 0.96, hgt: 1, sun: false },
+    'below-the-layer': { dist: 0.55, hgt: 0.1, sun: false },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="slv-title" class="widget-stage">
+    <title id="slv-title">Side view, heights exaggerated: a haze layer trapped under an inversion, densest at its top, an observer on the ground looking horizontally through the thinner haze below it, and an aeroplane descending towards a runway, its line of sight to the runway slanting through the dense band</title>
+    <defs>
+      <marker id="slv-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="258" fill="var(--color-sky-soft)" fill-opacity="0.7"/>
+    <!-- sun -->
+    <circle r="16" fill="var(--color-warn)" :cx="sun ? 600 : 34" :cy="sun ? 120 : 34"/>
+    <!-- haze: thin below, dense band at the top of the inversion -->
+    <rect x="0" y="200" width="640" height="58" fill="var(--color-fg-faint)" fill-opacity="0.16"/>
+    <rect x="0" y="168" width="640" height="32" fill="var(--color-fg-faint)" fill-opacity="0.42"/>
+    <rect x="0" y="168" width="640" height="32" fill="var(--color-warn)" :fill-opacity="sun ? 0.22 : 0"/>
+    <line x1="0" y1="168" x2="640" y2="168" stroke="var(--color-warn)" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="8" y="160" font-size="12" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">top of the inversion: haze trapped below</text>
+    <text x="8" y="189" font-size="12" fill="var(--color-fg)" font-weight="600">dense haze</text>
+    <!-- ground, runway, observer -->
+    <rect x="0" y="258" width="640" height="42" fill="var(--color-ok-soft)"/>
+    <line x1="0" y1="258" x2="640" y2="258" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="510" y="254" width="110" height="8" rx="1" fill="var(--color-tarmac)" :opacity="Math.max(0.08, contrast)"/>
+    <line x1="518" y1="258" x2="614" y2="258" stroke="var(--color-paint)" stroke-width="1.5" stroke-dasharray="8 6" :opacity="Math.max(0.08, contrast)"/>
+    <text x="565" y="282" font-size="12" text-anchor="middle" fill="var(--color-fg)" :opacity="Math.max(0.25, contrast)">runway</text>
+    <g transform="translate(120 258)">
+      <circle cx="0" cy="-22" r="4" fill="var(--color-fg-muted)"/>
+      <path d="M0 -18 V-6 M0 -6 L-4 0 M0 -6 L4 0 M-5 -14 H5" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+    <line x1="128" y1="238" x2="300" y2="238" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#slv-arrow)"/>
+    <text x="128" y="284" font-size="12" fill="var(--color-fg-muted)">observer: 9999 (10 km or more)</text>
+    <!-- the slant line of sight, brand where it crosses the dense band -->
+    <line :x1="ac.x" :y1="ac.y" :x2="rwy.x" :y2="rwy.y" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="2 4" stroke-linecap="round"/>
+    <line stroke="var(--color-brand)" stroke-width="5" stroke-linecap="round" opacity="0.75" x-show="band > 1"
+      :x1="lerp(ac.x, rwy.x, (Math.max(top, ac.y) - ac.y) / (rwy.y - ac.y))" :y1="Math.max(top, ac.y)"
+      :x2="lerp(ac.x, rwy.x, (mid - ac.y) / (rwy.y - ac.y))" :y2="mid"/>
+    <!-- aeroplane -->
+    <g :transform="'translate(' + ac.x + ' ' + ac.y + ')'">
+      <g transform="translate(0 0) rotate(0) scale(0.45)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="632" y="28" font-size="15" text-anchor="end" font-weight="700" :fill="seen === 'clear' ? 'var(--color-ok-fg)' : seen === 'faint' ? 'var(--color-warn-fg)' : 'var(--color-bad)'"
+      x-text="seen === 'clear' ? 'Runway in sight' : seen === 'faint' ? 'Runway faint' : 'Runway almost lost'"></text>
+    <text x="632" y="47" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">contrast model illustrative; heights exaggerated</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="slv-hgt">Your height <output for="slv-hgt" x-text="where"></output></label>
+      <input type="range" id="slv-hgt" min="0" max="1" step="0.01" x-model.number="hgt" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="slv-dist">Closer to the runway <output for="slv-dist" x-text="dist > 0.85 ? 'nearly overhead' : dist > 0.4 ? 'closer' : 'well back'"></output></label>
+      <input type="range" id="slv-dist" min="0" max="1" step="0.01" x-model.number="dist" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="slv-sun" class="cursor-pointer"><span>Looking into the sun</span>
+        <input type="checkbox" id="slv-sun" x-model="sun" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Reported surface visibility</dt><dd class="widget-value">9999: 10 km or more</dd></div>
+    <div class="widget-readout" :class="times > 1.5 ? 'warn' : ''"><dt class="widget-label">Dense haze along your sight line</dt><dd class="widget-value" x-text="band > 1 ? fmt(times, 1) + ' × the layer\'s depth' : 'none: you are under it'"></dd></div>
+    <div class="widget-readout" :class="seen === 'clear' ? 'ok' : seen === 'faint' ? 'warn' : 'bad'">
+      <dt class="widget-label">Slant visibility to the runway</dt>
+      <dd class="widget-value"><span x-text="seen === 'clear' ? 'Clear' : seen === 'faint' ? 'Faint' : 'Almost lost'"></span><span class="widget-flag bad" x-show="seen === 'lost'">worse than reported</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('above-the-layer')" :aria-pressed="active === 'above-the-layer'">Above the layer</button>
+      <button type="button" @click="preset('looking-into-the-sun')" :aria-pressed="active === 'looking-into-the-sun'">Into the sun</button>
+      <button type="button" @click="preset('metar-9999-descending')" :aria-pressed="active === 'metar-9999-descending'">METAR 9999, descending</button>
+      <button type="button" @click="preset('looking-straight-down')" :aria-pressed="active === 'looking-straight-down'">Looking straight down</button>
+      <button type="button" @click="preset('below-the-layer')" :aria-pressed="active === 'below-the-layer'">Under the layer</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The METAR's visibility is horizontal, measured at the surface below or in the bottom of the layer. Looking down from above, your line of sight slants through the haze trapped at the top of the inversion, so far more particles lie along it, and into the sun they glow. Slant visibility can be much worse than the reported figure. The haze profile and contrast are illustrative.</p>
+  <details class="widget-try"><summary>Try it: the METAR shows 9999, yet descending through smoke you can barely see the runway. Why?</summary><p>Press METAR 9999, descending: the surface observer looks horizontally through the thinner air under the layer, while your sight line slants through the dense band at its top. Tick Into the sun and it gets worse again.</p></details>
+  <details class="widget-try"><summary>Try it: why can you see the ground below you but not the runway ahead?</summary><p>Press Under the layer: no dense haze lies between you and the runway any more, so you see it about as well as the observer reported. Now press Looking straight down: from above, the ground right beneath you shows through, because you cross the layer by the shortest path. It is the shallow look ahead that loses it.</p></details>
+</div>

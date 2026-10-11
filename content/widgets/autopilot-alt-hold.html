@@ -1,0 +1,168 @@
+<div class="widget" x-data="timeline({
+  duration: 14, loop: false,
+  scen: 'thermal',
+  // Illustrative: a 60 ft thermal bump, a 110 kt cruise and the pitch angles. From the lesson: ALT holds the altitude at
+  // engagement with the elevator only; stall 48 kt, warning 55 kt in level flight; cruise at 6,500 ft.
+  get alt() {
+    if (this.scen === 'power') return 6500 - 15 * this.eased(0.12, 0.25) + 15 * this.eased(0.25, 0.4);
+    return 6500 + 60 * this.eased(0.1, 0.35) - 60 * this.eased(0.5, 0.85);
+  },
+  get ias() { return this.scen === 'power' ? 110 - 55 * this.eased(0.18, 1) : 110 },
+  get pitch() {
+    if (this.scen === 'power') return 2 + 12 * this.eased(0.2, 1);
+    return 2 - 3 * this.eased(0.4, 0.55) + 3 * this.eased(0.78, 0.92);
+  },
+  get elev() {
+    if (this.scen === 'power') return this.eased(0.2, 0.9);
+    return -this.eased(0.4, 0.5) + this.eased(0.8, 0.9);
+  },
+  get elevText() { return Math.abs(this.elev) < 0.08 ? 'neutral' : this.elev < 0 ? 'nose down' : this.scen === 'power' && this.elev > 0.6 ? 'nose up, and more' : 'nose up' },
+  get powerBack() { return this.scen === 'power' && this.t >= 0.1 },
+  get warning() { return this.ias <= 55.5 },
+  // which box of the loop is acting
+  get box() {
+    const t = this.t;
+    if (this.scen === 'power') { if (t < 0.18) return ''; return ['sensors', 'computer', 'servo', 'elevator'][Math.floor(t * 40) % 4] }
+    if (t >= 0.15 && t < 0.3) return 'sensors';
+    if (t >= 0.3 && t < 0.4) return 'computer';
+    if (t >= 0.4 && t < 0.5) return 'servo';
+    if (t >= 0.5 && t < 0.85) return 'elevator';
+    return '';
+  },
+  bx(name) { return this.box === name },
+  get planeY() { return 150 - (this.alt - 6500) * 0.6 },
+  get steps() {
+    if (this.scen === 'power') return [{ at: 0, label: 'Steady' }, { at: 0.1, label: 'Power back' }, { at: 0.3, label: 'Nose rises' }, { at: 0.6, label: 'Speed decays' }, { at: 1, label: 'Stall warning' }];
+    return [{ at: 0, label: 'Steady' }, { at: 0.12, label: 'Thermal' }, { at: 0.3, label: 'Compare' }, { at: 0.4, label: 'Elevator down' }, { at: 0.9, label: 'Back on altitude' }];
+  },
+  get caption() {
+    const t = this.t;
+    if (this.scen === 'power') {
+      if (t < 0.1) return 'Cruising at 6,500 ft in ALT, about 110 kt. Altitude hold moves the elevator; nothing in the autopilot moves the throttle.';
+      if (t < 0.3) return 'You bring the power back without changing mode. The aeroplane starts to sink and the sensors see it.';
+      if (t < 0.6) return 'To hold 6,500 ft the autopilot raises the nose, and keeps raising it. The altitude looks perfect.';
+      if (t < 0.99) return 'Height is held at the expense of airspeed, and nothing tells you: the IAS keeps falling as the nose comes up.';
+      return 'Stall warning at 55 kt, 7 kt above the stall. The autopilot held exactly what you asked for. Disconnect, fly by hand and set the power, or select a descent mode such as VS.';
+    }
+    if (t < 0.12) return 'Cruising at 6,500 ft in ALT, the loop quiet: sensors, computer, servo and elevator all agree.';
+    if (t < 0.3) return 'A thermal lifts the aeroplane. The sensors see it climbing above the selected altitude.';
+    if (t < 0.4) return 'The computer compares what the sensors say with what you selected, 6,500 ft, and works out the correction: nose down.';
+    if (t < 0.5) return 'The elevator servo, an electric motor on the control cable, drives the elevator down through its clutch.';
+    if (t < 0.9) return 'The aeroplane eases back down; the sensors see the result and the loop keeps correcting until the error is gone.';
+    return 'Back on 6,500 ft with the elevator neutral. The same loop, run continuously, is what an autopilot is.';
+  },
+  pickScen(s) { this.scen = s; this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'thermal-bump': { scen: 'thermal', t: 0, play: true },
+    'loop-corrects': { scen: 'thermal', t: 1 },
+    'power-back': { scen: 'power', t: 0, play: true },
+    'speed-decays': { scen: 'power', t: 0.6 },
+    'stall-warning': { scen: 'power', t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="aah-title" class="widget-stage">
+    <title id="aah-title">An aeroplane in altitude hold beside the autopilot's control loop: sensors, computer, elevator servo and elevator, with the throttle not connected. A thermal lifts the aeroplane and the loop brings it back; or the pilot reduces power and the loop raises the nose until the speed decays to the stall warning</title>
+    <defs><marker id="aah-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="396" height="300" rx="10" fill="var(--color-sky-soft)"/>
+    <!-- selected altitude -->
+    <line x1="16" y1="150" x2="380" y2="150" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="6 4"/>
+    <text x="376" y="170" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-info)">ALT 6,500 ft selected</text>
+    <!-- thermal -->
+    <g stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round" x-show="scen === 'thermal' &amp;&amp; t > 0.08 &amp;&amp; t < 0.4">
+      <line x1="150" y1="270" x2="150" y2="214" marker-end="url(#aah-arrow)"/><line x1="190" y1="280" x2="190" y2="220" marker-end="url(#aah-arrow)"/><line x1="230" y1="270" x2="230" y2="214" marker-end="url(#aah-arrow)"/>
+    </g>
+    <text x="250" y="262" font-size="12" font-weight="600" fill="var(--color-warn-fg)" x-show="scen === 'thermal' &amp;&amp; t > 0.08 &amp;&amp; t < 0.4">thermal</text>
+    <!-- the aeroplane -->
+    <g :transform="'translate(196 ' + planeY.toFixed(1) + ') rotate(' + (-pitch).toFixed(2) + ')'">
+      <!-- python -m tools.diagrams.plane side scale 1.3 no-gear -->
+<g transform="translate(0 0) rotate(0) scale(1.3)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- instruments -->
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <text x="20" y="28">ALT</text><text x="140" y="28">IAS</text><text x="250" y="28">pitch</text>
+    </g>
+    <text x="50" y="28" font-size="16" font-weight="700" class="num" :fill="Math.abs(alt - 6500) > 30 ? 'var(--color-warn-fg)' : 'var(--color-fg)'" x-text="fmt(Math.round(alt / 10) * 10)"></text>
+    <text x="168" y="28" font-size="16" font-weight="700" class="num" :fill="warning ? 'var(--color-bad-fg)' : ias < 65 ? 'var(--color-warn-fg)' : 'var(--color-fg)'" x-text="fmt(ias) + ' kt'"></text>
+    <text x="290" y="28" font-size="16" font-weight="700" class="num" fill="var(--color-fg)" x-text="sign(Math.round(pitch)) + '°'"></text>
+    <g x-show="warning">
+      <rect x="20" y="240" width="140" height="28" rx="6" fill="var(--color-bad)"/>
+      <text x="90" y="259" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-surface)">STALL WARNING</text>
+    </g>
+    <g x-show="powerBack">
+      <rect x="250" y="240" width="130" height="28" rx="6" fill="var(--color-surface)" stroke="var(--color-bad)" stroke-width="1.5"/>
+      <text x="315" y="259" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)">power reduced</text>
+    </g>
+
+    <!-- the loop -->
+    <g font-size="13" font-weight="600" text-anchor="middle">
+      <rect x="420" y="16" width="150" height="34" rx="8" stroke-width="2" :fill="bx('sensors') ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="bx('sensors') ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="495" y="38" :fill="bx('sensors') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">Sensors</text>
+      <rect x="420" y="74" width="150" height="34" rx="8" stroke-width="2" :fill="bx('computer') ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="bx('computer') ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="495" y="96" :fill="bx('computer') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">Computer</text>
+      <rect x="420" y="132" width="150" height="34" rx="8" stroke-width="2" :fill="bx('servo') ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="bx('servo') ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="495" y="154" :fill="bx('servo') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">Elevator servo</text>
+      <rect x="420" y="190" width="150" height="34" rx="8" stroke-width="2" :fill="bx('elevator') ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="bx('elevator') ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="495" y="212" :fill="bx('elevator') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">Elevator</text>
+    </g>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" fill="none" marker-end="url(#aah-arrow)">
+      <line x1="495" y1="50" x2="495" y2="72"/><line x1="495" y1="108" x2="495" y2="130"/><line x1="495" y1="166" x2="495" y2="188"/>
+      <path d="M570 207 L604 207 L604 33 L572 33"/>
+    </g>
+    <text x="610" y="124" font-size="11" fill="var(--color-fg-faint)" transform="rotate(90 610 124)" text-anchor="middle">the aeroplane responds</text>
+    <g font-size="11" fill="var(--color-fg-faint)">
+      <text x="489" y="64" text-anchor="end">what it is doing</text>
+      <text x="489" y="122" text-anchor="end">vs what you set</text>
+    </g>
+    <!-- throttle: not part of the loop -->
+    <rect x="420" y="248" width="176" height="34" rx="8" fill="var(--color-surface)" stroke-width="1.5" stroke-dasharray="4 3" :stroke="powerBack ? 'var(--color-bad)' : 'var(--color-line-strong)'"/>
+    <text x="446" y="270" font-size="12" :fill="powerBack ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">Throttle: not connected</text>
+    <path d="M428 256 L440 274 M440 256 L428 274" stroke="var(--color-fg-faint)" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="aah-t" min="0" max="1" step="0.005" x-model.number="t" @input="pause()" aria-label="Progress">
+    <span class="widget-clock" x-text="fmt(ias) + ' kt'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="aah-scen">What happens in ALT</label>
+      <select id="aah-scen" class="input" :value="scen" @change="pickScen($event.target.value)">
+        <option value="thermal">A thermal lifts the aeroplane: the loop at work</option>
+        <option value="power">You bring the power back without changing mode</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="Math.abs(alt - 6500) > 30 ? 'warn' : 'ok'"><dt class="widget-label">Altitude (6,500 selected)</dt><dd class="widget-value" x-text="fmt(Math.round(alt / 10) * 10) + ' ft'"></dd></div>
+    <div class="widget-readout" :class="warning ? 'bad' : ias < 65 ? 'warn' : ''">
+      <dt class="widget-label">Airspeed (stall 48 kt)</dt>
+      <dd class="widget-value"><span x-text="fmt(ias) + ' kt'"></span><span class="widget-flag bad" x-show="warning">stall warning</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Pitch attitude</dt><dd class="widget-value" x-text="sign(Math.round(pitch)) + '°'"></dd></div>
+    <div class="widget-readout" :class="scen === 'power' &amp;&amp; elev > 0.6 ? 'warn' : ''"><dt class="widget-label">Elevator servo</dt><dd class="widget-value" x-text="elevText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('thermal-bump')" :aria-pressed="active === 'thermal-bump'">Thermal bump</button>
+      <button type="button" @click="preset('loop-corrects')" :aria-pressed="active === 'loop-corrects'">Loop corrects</button>
+      <button type="button" @click="preset('power-back')" :aria-pressed="active === 'power-back'">Power back</button>
+      <button type="button" @click="preset('speed-decays')" :aria-pressed="active === 'speed-decays'">Speed decays</button>
+      <button type="button" @click="preset('stall-warning')" :aria-pressed="active === 'stall-warning'">Stall warning</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> An autopilot is a loop: sensors see what the aeroplane is doing, the computer compares it with what you selected, the servo moves the control, and the sensors see the result. Altitude hold works through the elevator only, so with the power reduced it holds the height by raising the nose and lets the airspeed decay towards the stall: the autopilot holds what you ask, you manage the speed. The 48 kt stall and 55 kt warning are the lesson's; the thermal, the cruise speed, the pitch angles and the timing are illustrative.</p>
+  <details class="widget-try"><summary>Try it: in ALT you bring the power back for a planning check without changing mode. What happens?</summary><p>Press Power back and play it: the altitude stays at 6,500 ft while the nose rises and the IAS falls, until the stall warning at 55 kt. Altitude hold moves the elevator, not the throttle, so it trades airspeed for height without telling you.</p></details>
+  <details class="widget-try"><summary>Try it: which box would never move in either story, and why does that matter?</summary><p>The throttle: no light-aircraft pitch mode controls power. Whatever mode is engaged, the airspeed is yours to manage.</p></details>
+</div>

@@ -1,0 +1,162 @@
+<div class="widget" x-data="widget({
+  rb: 45,
+  // relative bearing the wind comes FROM, clockwise from the nose (RBKA 3.7 taxi rule: front quadrants aileron into
+  // wind, elevator neutral; rear quadrants aileron away from the wind, elevator forward). On the beam (090, 270)
+  // the rule changes over; this widget counts the beam as ahead. How far each control moves is drawn in proportion
+  // to the crosswind part (aileron) and the tailwind part (elevator) of the wind: illustrative.
+  n(x) { return ((Math.round(x) % 360) + 360) % 360 },
+  get rad() { return this.rb * Math.PI / 180 },
+  get ahead() { return this.rb <= 90 || this.rb >= 270 },
+  get side() { return this.rb === 0 || this.rb === 180 ? '' : this.rb < 180 ? 'right' : 'left' },
+  get other() { return this.side === 'right' ? 'left' : 'right' },
+  // aileron: + = control column to the right; elevator: 0..1 forward
+  get ail() { const s = Math.sin(this.rad); return Math.abs(s) < 0.03 ? 0 : (this.ahead ? s : -s) },
+  get elev() { return this.ahead ? 0 : Math.max(0, -Math.cos(this.rad)) },
+  get colSide() { return this.ail > 0 ? 'right' : this.ail < 0 ? 'left' : '' },
+  // each aileron: 1 raised, -1 lowered, 0 neutral (column right raises the right aileron)
+  get rAil() { return this.ail > 0 ? 1 : this.ail < 0 ? -1 : 0 },
+  get lAil() { return -this.rAil },
+  get mag() { return Math.abs(this.ail) },
+  surf(s) { return s > 0 ? 'var(--color-info)' : s < 0 ? 'var(--color-brand)' : 'none' },
+  word(s) { return s > 0 ? 'UP' : s < 0 ? 'DOWN' : 'neutral' },
+  get rearQ() { return !this.ahead && this.side !== '' },
+  get quarter() {
+    if (this.rb === 0) return 'straight ahead';
+    if (this.rb === 180) return 'straight behind';
+    if (this.rb === 90 || this.rb === 270) return this.side + ', on the beam';
+    return this.side + (this.ahead ? ' front' : ' rear') + ' quarter';
+  },
+  get fromText() { return this.quarter.charAt(0).toUpperCase() + this.quarter.slice(1) + ' (' + this.rb + '°)' },
+  get ailText() {
+    if (!this.colSide) return 'Neutral';
+    const rel = this.ahead ? 'into wind' : 'away from the wind';
+    return 'Column ' + this.colSide + ' (' + rel + '): ' + this.side + ' aileron ' + (this.ahead ? 'up' : 'down');
+  },
+  get elevText() { return this.elev > 0.03 ? 'Forward: elevator down' : 'Neutral' },
+  get why() {
+    if (this.rb === 0) return 'Nothing pushes one wing up more than the other, so the ailerons stay neutral; elevator neutral in a tricycle.';
+    if (this.ahead) return 'The raised ' + this.side + ' (upwind) aileron spoils some lift on that wing and lets the wind press it down. Elevator neutral in a tricycle.';
+    if (this.rb === 180) return 'Ailerons neutral; the wind from behind presses on top of the lowered elevator and holds the tail down.';
+    return 'The wind from behind presses on top of the lowered ' + this.side + ' aileron and the lowered elevator, holding the upwind wing and the tail down: dive away from the wind.';
+  },
+  get caption() {
+    if (this.active === 'jandakot-taxi-out') return 'Jandakot, runway 24, sea breeze from about 270. Taxiing out on about 060 towards the 24 threshold, the wind is 30° left of your tail: dive away from it, column right and forward. Line up and it is 30° off the nose on the right, so the take-off starts with full right aileron.';
+    if (this.rb === 0) return 'A headwind: hold the controls about neutral and taxi on. Drag the wind round to the side and watch the column follow it.';
+    if (this.ahead) return 'Wind from the ' + this.quarter + ': climb into it. Column ' + this.colSide + ', towards the wind, so the upwind aileron goes up; elevator neutral.';
+    if (this.rb === 180) return 'A tailwind: column forward, elevator down, so the wind blowing over the tail presses it down. Ailerons neutral.';
+    return 'Wind from the ' + this.quarter + ': dive away from it. Column ' + this.colSide + ' and forward, so the upwind aileron and the elevator go down and the wind presses on top of them.' + (this.rb === 90 || this.rb === 270 ? ' Exactly on the beam the rule changes over.' : '');
+  },
+  // picture: wind ring centred on the CG at (200, 185)
+  at(r) { return this.pol(200, 185, r, this.rb) },
+  onDrag(p) {
+    this.rb = this.n(Math.round(Math.atan2(p.x - 200, 185 - p.y) * 180 / Math.PI / 5) * 5);
+    this.active = null;
+  },
+  presets: {
+    'headwind': { rb: 0 },
+    'left-front-quarter': { rb: 315 },
+    'right-rear-quarter': { rb: 135 },
+    'tailwind': { rb: 180 },
+    'jandakot-taxi-out': { rb: 210 },
+  },
+})">
+  <svg viewBox="0 0 640 380" role="img" aria-labelledby="ctc-title" class="widget-stage">
+    <title id="ctc-title">Plan view of the taxiing aeroplane, nose up the page, inside a ring with the front quadrants and rear quadrants shaded. A wind arrow you can drag round the ring shows where the wind comes from; the ailerons and elevator are coloured raised or lowered, and beside it the control wheel as the pilot sees it, turned and pushed to match</title>
+    <defs>
+      <marker id="ctc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- quadrants: ahead (front) and behind (rear), the one the wind is in stronger -->
+    <g class="cursor-pointer" style="touch-action: none" @pointerdown="drag($event, (p) => onDrag(p))">
+    <path d="M200 185 L200 35 A150 150 0 0 1 350 185 Z" fill="var(--color-ok-soft)" :fill-opacity="ahead && side !== 'left' ? 1 : 0.4"/>
+    <path d="M200 185 L50 185 A150 150 0 0 1 200 35 Z" fill="var(--color-ok-soft)" :fill-opacity="ahead && side !== 'right' ? 1 : 0.4"/>
+    <path d="M200 185 L350 185 A150 150 0 0 1 200 335 Z" fill="var(--color-warn-soft)" :fill-opacity="!ahead && side !== 'left' ? 1 : 0.4"/>
+    <path d="M200 185 L200 335 A150 150 0 0 1 50 185 Z" fill="var(--color-warn-soft)" :fill-opacity="!ahead && side !== 'right' ? 1 : 0.4"/>
+    </g>
+    <circle cx="200" cy="185" r="150" fill="none" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"><line x1="50" y1="185" x2="350" y2="185"/><line x1="200" y1="35" x2="200" y2="335"/></g>
+    <g font-size="12" font-weight="600">
+      <text x="12" y="22" fill="var(--color-ok-fg)">wind from ahead:</text>
+      <text x="12" y="37" fill="var(--color-ok-fg)">climb into it</text>
+      <text x="12" y="352" fill="var(--color-warn-fg)">wind from behind:</text>
+      <text x="12" y="367" fill="var(--color-warn-fg)">dive away from it</text>
+    </g>
+    <!-- the aeroplane, nose up the page (python -m tools.diagrams.plane top, scale 2.3, heading 0, x 200, y 185) -->
+    <g transform="translate(200 185) rotate(-90) scale(2.3)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <!-- control surfaces in the aeroplane's own frame: ailerons x -12.7 to -9.6 at |y| 25 to 46, elevator x -51 to -46 -->
+    <g transform="translate(200 185) rotate(-90) scale(2.3)" stroke-width="0.6" stroke-linejoin="round">
+      <rect x="-12.7" y="25" width="3.1" height="21" :fill="surf(rAil)" :fill-opacity="0.3 + 0.7 * mag" :stroke="rAil ? surf(rAil) : 'none'"/>
+      <rect x="-12.7" y="-46" width="3.1" height="21" :fill="surf(lAil)" :fill-opacity="0.3 + 0.7 * mag" :stroke="lAil ? surf(lAil) : 'none'"/>
+      <rect x="-50.9" y="1.4" width="4.9" height="15.2" fill="var(--color-brand)" :fill-opacity="0.3 + 0.7 * elev" stroke="var(--color-brand)" :opacity="elev > 0.03 ? 1 : 0"/>
+      <rect x="-50.9" y="-16.6" width="4.9" height="15.2" fill="var(--color-brand)" :fill-opacity="0.3 + 0.7 * elev" stroke="var(--color-brand)" :opacity="elev > 0.03 ? 1 : 0"/>
+    </g>
+    <g font-size="12" font-weight="600" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text x="270" y="236" :fill="rAil > 0 ? 'var(--color-info)' : rAil < 0 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" x-text="word(rAil)"></text>
+      <text x="130" y="236" :fill="lAil > 0 ? 'var(--color-info)' : lAil < 0 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" x-text="word(lAil)"></text>
+      <text x="270" y="251" font-weight="400" font-size="11" fill="var(--color-fg-muted)">right aileron</text>
+      <text x="130" y="251" font-weight="400" font-size="11" fill="var(--color-fg-muted)">left aileron</text>
+      <text y="300" :x="side === 'right' ? 156 : 244" :text-anchor="side === 'right' ? 'end' : 'start'" :fill="elev > 0.03 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" x-text="elev > 0.03 ? 'elevator DOWN' : 'elevator neutral'"></text>
+    </g>
+    <!-- high-wing caution: a gust from a rear quarter can lift the upwind wing -->
+    <g :opacity="rearQ ? 1 : 0" font-size="12" font-weight="600" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :text-anchor="side === 'right' ? 'end' : 'start'">
+      <text :x="side === 'right' ? 336 : 64" y="146">a gust can lift</text>
+      <text :x="side === 'right' ? 336 : 64" y="161">this high wing</text>
+    </g>
+    <!-- the wind: drag the handle round the ring (the arrow points where the wind blows to) -->
+    <line stroke="var(--color-sky-fg)" stroke-width="3.5" stroke-linecap="round" marker-end="url(#ctc-arrow)" :x1="at(168).x" :y1="at(168).y" :x2="at(126).x" :y2="at(126).y"/>
+    <circle r="13" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="2" class="cursor-pointer" style="touch-action: none" :cx="at(168).x" :cy="at(168).y" @pointerdown="drag($event, (p) => onDrag(p))"/>
+    <text font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-sky-fg)" pointer-events="none" :x="at(168).x" :y="at(168).y + 4">W</text>
+    <!-- right panel: the control wheel as you see it, and the column from the side -->
+    <rect x="400" y="0" width="240" height="380" fill="var(--color-surface-2)"/>
+    <line x1="400" y1="0" x2="400" y2="380" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="520" y="24" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Control wheel, as you see it</text>
+    <line x1="520" y1="44" x2="520" y2="62" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 3"/>
+    <g :transform="'translate(520 108) rotate(' + ail * 40 + ') scale(' + (1 - 0.18 * elev) + ')'">
+      <path d="M-62 -34 C-72 -10 -66 10 -46 12 L46 12 C66 10 72 -10 62 -34" fill="none" stroke="var(--color-fg)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="-16" y="-2" width="32" height="22" rx="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <line x1="0" y1="-48" x2="0" y2="-36" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <text x="520" y="170" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" x-text="colSide ? 'Turned ' + colSide + (ahead ? ' (into wind)' : ' (away from it)') : 'Wheel level'"></text>
+    <text x="520" y="208" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Column, from the side</text>
+    <line x1="430" y1="224" x2="430" y2="290" stroke="var(--color-fg-muted)" stroke-width="3" stroke-linecap="round"/>
+    <text x="438" y="300" font-size="11" fill="var(--color-fg-faint)">panel</text>
+    <line x1="580" y1="232" x2="580" y2="282" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="580" y="300" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">neutral</text>
+    <line x1="430" y1="257" y2="257" stroke="var(--color-fg)" stroke-width="4" stroke-linecap="round" :x2="580 - 70 * elev"/>
+    <rect y="235" width="9" height="44" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2.5" :x="576 - 70 * elev"/>
+    <line y1="246" y2="246" stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#ctc-arrow)" :opacity="elev > 0.03 ? 1 : 0" x1="600" :x2="590 - 70 * elev"/>
+    <text x="616" y="262" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">you</text>
+    <text x="520" y="324" font-size="13" font-weight="600" text-anchor="middle" :fill="elev > 0.03 ? 'var(--color-brand-fg)' : 'var(--color-fg)'" x-text="elev > 0.03 ? 'Pushed forward' : 'Elevator neutral'"></text>
+    <!-- key -->
+    <rect x="414" y="346" width="12" height="12" rx="2" fill="var(--color-info)"/>
+    <text x="432" y="357" font-size="12" fill="var(--color-fg-muted)">raised (up)</text>
+    <rect x="516" y="346" width="12" height="12" rx="2" fill="var(--color-brand)"/>
+    <text x="534" y="357" font-size="12" fill="var(--color-fg-muted)">lowered (down)</text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ctc-rb">Wind from (relative to the nose) <output for="ctc-rb" x-text="rb + '°, ' + quarter"></output></label>
+      <input type="range" id="ctc-rb" min="0" max="359" step="1" x-model.number="rb" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="rearQ ? 'warn' : ''"><dt class="widget-label">Wind from</dt><dd class="widget-value text-sm"><span x-text="fromText"></span><span class="widget-flag warn" x-show="rearQ">high wing: gusts</span></dd></div>
+    <div class="widget-readout" :class="colSide ? 'ok' : ''"><dt class="widget-label">Aileron</dt><dd class="widget-value text-sm" x-text="ailText"></dd></div>
+    <div class="widget-readout" :class="elev > 0.03 ? 'ok' : ''"><dt class="widget-label">Elevator</dt><dd class="widget-value text-sm" x-text="elevText"></dd></div>
+    <div class="widget-readout" style="grid-column: 1 / -1"><dt class="widget-label">Why</dt><dd class="widget-value text-sm" x-text="why"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('headwind')" :aria-pressed="active === 'headwind'">Headwind</button>
+      <button type="button" @click="preset('left-front-quarter')" :aria-pressed="active === 'left-front-quarter'">Left front quarter</button>
+      <button type="button" @click="preset('right-rear-quarter')" :aria-pressed="active === 'right-rear-quarter'">Right rear quarter</button>
+      <button type="button" @click="preset('tailwind')" :aria-pressed="active === 'tailwind'">Tailwind</button>
+      <button type="button" @click="preset('jandakot-taxi-out')" :aria-pressed="active === 'jandakot-taxi-out'">Jandakot taxi-out</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Drag the wind round: the column follows it while it is ahead of the wing (climb into it) and jumps to the other side and forward once it is behind (dive away from it). The surface the wind can get under is the one you raise; the surface it blows over the top of is the one you lower. A high wing is most at risk with the wind from a rear quarter. How far each control moves is drawn in proportion to the crosswind and tailwind parts of the wind (illustrative); the beam, where the rule changes over, is counted as ahead.</p>
+  <details class="widget-try"><summary>Try it: taxiing a high-wing aeroplane with a strong wind from the right rear quarter, where do you hold the controls?</summary><p>Press Right rear quarter: column left, away from the wind, so the right (upwind) aileron goes down, and forward, so the elevator goes down. The wind from behind presses on top of both, holding the right wing and the tail down. That is the lesson's check question.</p></details>
+  <details class="widget-try"><summary>Try it: you turn from taxiing into a left front quarter wind to taxiing the opposite way. What changes?</summary><p>Press Left front quarter (column left, elevator neutral), then drag the wind to 135°: after the turn it comes from the right rear quarter, so the column goes left and forward. The wind moved to the other side of the aeroplane and behind it, so you dive away from it now.</p></details>
+</div>

@@ -1,0 +1,263 @@
+<div class="widget" x-data="timeline({
+  duration: 36,
+  sky: 'clear', grad: 'weak', jan: false,
+  // the clock: t 0..1 is 0000 to 2400 WST. Sunrise about 0600 and sunset about 1900; all timings illustrative
+  get h() { return this.t * 24 },
+  get clock() { return this.hhmm(this.t * 1440) },
+  get clear() { return this.sky === 'clear' },
+  get strong() { return this.grad === 'strong' },
+  // how big the daily swing is: clear sky and weak gradient give the full swing; cloud and a strong gradient damp it
+  get amp() { return this.clear ? (this.strong ? 0.15 : 1) : (this.strong ? 0.1 : 0.3) },
+  // can a radiation inversion form? A strong gradient stirs it away; cloud leaves a weak one at most
+  get invAmp() { return this.strong ? 0 : this.clear ? 1 : 0.3 },
+  // thermal mixing by day: builds through the morning, peaks about 1430, dies by about 1930
+  mixAt(h) { return h < 7 || h > 19.5 ? 0 : h < 14.5 ? Math.sin(Math.PI / 2 * (h - 7) / 7.5) : 1 - this.ease((h - 14.5) / 5) },
+  // the inversion: forms after sunset, strongest by dawn, burnt off by about 0930
+  invAt(h) { return h >= 18.5 ? this.ease((h - 18.5) / 4) : h < 6.5 ? 1 : h < 9.5 ? 1 - this.ease((h - 6.5) / 3) : 0 },
+  // through the night the surface air is cut off for longer, so the wind keeps dying until dawn
+  nightAt(h) { return h >= 18.5 ? (h - 18.5) / 11.5 : Math.min(1, (h + 5.5) / 11.5) },
+  // the swing: +1 strongest mixing, -1 most cut off
+  swingAt(h) { return this.mixAt(h) - this.invAt(h) * (0.55 + 0.45 * this.nightAt(h)) },
+  // surface wind as a fraction of the gradient wind, about the lesson's land average of a half to two-thirds (0.58)
+  fAt(h) { const s = this.swingAt(h); return 0.58 + this.amp * (s > 0 ? 0.22 * s : 0.56 * s) },
+  // veer from the gradient direction, about the lesson's land average of 30 degrees
+  vAt(h) { const s = this.swingAt(h); return 30 + this.amp * (s > 0 ? -18 * s : -20 * s) },
+  get mix() { return this.mixAt(this.h) },
+  get inv() { return this.invAt(this.h) * this.invAmp },
+  get f() { return this.fAt(this.h) },
+  get veer() { return this.vAt(this.h) },
+  get calm() { return this.f < 0.08 },
+  get rel() { return this.amp * this.swingAt(this.h) },
+  get thermal() { return this.mix * (this.clear ? 1 : 0.4) },
+  get gustIdx() { return this.calm ? 0 : Math.max(this.thermal, this.strong ? 0.35 : 0) },
+  get jet() { return this.inv > 0.5 },
+  // speed at height z (ft) as a fraction of the gradient wind: mixed by day, a jet above the inversion at night
+  speedAt(z) {
+    const f = this.f, a = this.lerp(0.55, 0.2, this.thermal);
+    const n = f + (1 - f) * Math.pow(Math.min(z, 2000) / 2000, a);
+    const nn = z < 800 ? f + (1.12 - f) * Math.pow(z / 800, 1.4) : 1.12 - 0.12 * this.seg(z, 800, 2000);
+    return this.lerp(n, nn, this.inv);
+  },
+  // the side view: height up the axis at x 330, 0.1 px per ft from the ground at y 290; arrows point where the wind blows (west)
+  Y(z) { return 290 - z * 0.1 },
+  L(frac) { return frac * (this.strong ? 205 : 150) },
+  tip(z) { return 330 - this.L(this.speedAt(z)) },
+  get profileD() { const p = []; for (let z = 0; z <= 2400; z += 100) p.push([this.tip(z), this.Y(z)]); return this.path(p) },
+  get gustTip() { return 330 - this.L(this.f + this.gustIdx * (1 - this.f) * 0.8) },
+  get invTop() { return this.Y(150 + 550 * this.invAt(this.h)) },
+  // sky
+  get daylight() { return this.ease(this.seg(this.h, 5.5, 6.5)) * (1 - this.ease(this.seg(this.h, 18.5, 19.5))) },
+  get sunUp() { return this.h > 6 && this.h < 19 },
+  get sun() { const s = this.seg(this.h, 6, 19); return { x: 150 + 150 * s, y: 58 - 26 * Math.sin(Math.PI * s) } },
+  // windsock droop from the vertical, limp when calm
+  get sockAngle() { return this.lerp(-82, -6, this.clamp(this.f / 0.75, 0, 1)) },
+  // plan view, north up: gradient wind easterly (the lesson's January high in the Bight); surface veered from it
+  get gradFrom() { return this.jan ? 90 - this.vAt(10) : 90 },
+  get surfFrom() { return this.gradFrom + this.veer },
+  cxP: 500, cyP: 100,
+  across(from, len) { const a = this.pol(this.cxP, this.cyP, len / 2, from), b = this.pol(this.cxP, this.cyP, len / 2, this.windTo(from)); return { x1: a.x, y1: a.y, x2: b.x, y2: b.y } },
+  get gradArrow() { return this.across(this.gradFrom, 96) },
+  get surfArrow() { return this.across(this.surfFrom, Math.max(16, 96 * this.f)) },
+  get veerArc() {
+    const r = 38, s = this.pol(this.cxP, this.cyP, r, this.gradFrom), e = this.pol(this.cxP, this.cyP, r, this.surfFrom);
+    return 'M' + s.x.toFixed(1) + ' ' + s.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + e.x.toFixed(1) + ' ' + e.y.toFixed(1);
+  },
+  // the 24 hour chart
+  CXh(h) { return 424 + h / 24 * 200 },
+  CYf(f) { return 300 - f * 84 },
+  get chartD() { const p = []; for (let i = 0; i <= 96; i++) { const h = i / 4; p.push([this.CXh(h), this.CYf(this.fAt(h))]); } return this.path(p) },
+  r5(x) { return Math.round(x / 5) * 5 },
+  get surfText() { return this.calm ? 'Calm' : '≈ ' + this.r5(this.f * 100) + '% of the gradient, veered ≈ ' + this.r5(this.veer) + '°' },
+  get relText() {
+    if (this.calm) return 'Calm: the lightest of the day';
+    if (this.rel > 0.25) return 'Stronger, and backed towards the gradient';
+    if (this.rel < -0.25) return 'Lighter, and more veered';
+    return 'About average (½ to ⅔, veered about 30°)';
+  },
+  get gust() {
+    if (this.calm) return { text: 'Calm', s: '' };
+    if (this.thermal >= 0.45) return { text: this.strong ? 'Gusty: thermals and mechanical' : 'Gusty: thermals', s: 'warn' };
+    if (this.strong) return { text: 'Gusts from mechanical stirring', s: 'warn' };
+    if (this.thermal >= 0.2) return { text: 'Some gusts', s: '' };
+    return { text: this.inv > 0.3 ? 'Smooth: no mixing' : 'Steady', s: '' };
+  },
+  get invText() {
+    if (this.strong) return { text: 'No: the strong wind keeps the layer mixed', s: 'ok' };
+    if (this.inv > 0.5) return { text: 'Yes: surface cut off, jet above', s: 'warn' };
+    if (this.inv > 0.08) return { text: this.clear ? (this.h < 12 ? 'Breaking up' : 'Forming') : 'Weak at most: cloud', s: '' };
+    return { text: this.mix > 0.1 ? 'No: thermals mix the layer' : 'No', s: 'ok' };
+  },
+  get lessonDay() { return this.jan && this.clear && !this.strong },
+  steps: [
+    { at: 0.083, label: 'Small hours' }, { at: 0.25, label: 'Dawn' }, { at: 0.354, label: 'Inversion burns off' },
+    { at: 0.604, label: 'Afternoon peak' }, { at: 0.771, label: 'Evening' }, { at: 0.896, label: 'Inversion forms' },
+  ],
+  get caption() {
+    const h = this.h;
+    if (this.lessonDay && h >= 5.5 && h < 7.5) return 'The lesson\'s January day: at 0600 the Jandakot windsock hangs limp under a radiation inversion, but climbing out you meet a 25 kt easterly at about 800 ft, the low-level jet, with a sharp bump as you pass through the top of the inversion.';
+    if (this.lessonDay && h >= 9.5 && h < 11) return 'The lesson\'s January day: by 1000 the inversion has burned off and thermals mix the easterly down. The surface wind is 090 at 15 gusting 25, backed towards the gradient direction and gusty.';
+    let c;
+    if (this.strong) c = 'A strong gradient wind stirs the lowest layers mechanically day and night, so no inversion can form and the surface wind stays close to its average: about half to two-thirds of the gradient wind, veered about 30°. The daily swing is small.';
+    else if (!this.clear) c = 'An overcast sky blankets both the day\'s heating and the night\'s cooling, so the thermals are weak, the inversion is weak at most and the surface wind swings only a little either side of its average.';
+    else if (h < 5.5 || h >= 21) c = 'Under a clear sky the ground radiates its heat away and a radiation inversion forms. The mixing stops and the surface air is cut off from the wind above, so friction slows it and veers it. Just above the inversion the low-level jet blows faster than it does by day.';
+    else if (h < 7) c = 'Dawn: the lightest surface wind of the day, often calm, while the gradient wind still blows a few hundred feet up. Expect shear climbing out through the top of the inversion.';
+    else if (h < 10.5) c = 'The sun heats the ground, the inversion burns off and thermals start mixing faster gradient-level air down. The surface wind picks up, backs towards the gradient direction and turns gusty.';
+    else if (h < 16.5) c = 'The heating builds to its peak in the early to mid afternoon. The thermals mix hardest then, so the surface wind is at its strongest and gustiest, closest to the gradient wind in speed and direction.';
+    else c = 'Late afternoon and evening: the heating fades, the thermals die and the inversion starts to form again. The surface wind eases and veers.';
+    if (this.lessonDay && h >= 13 && h < 19.5) c += ' (On the lesson\'s January day the Fremantle Doctor takes over at Jandakot at 1400: a local wind left out here.)';
+    return c;
+  },
+  presets: {
+    'dawn-calm-clear-weak': { sky: 'clear', grad: 'weak', jan: false, t: 0.25 },
+    'afternoon-gusty': { sky: 'clear', grad: 'weak', jan: false, t: 0.604 },
+    'overcast-small-swing': { sky: 'overcast', grad: 'weak', jan: false, t: 0.25 },
+    'strong-gradient-small-swing': { sky: 'clear', grad: 'strong', jan: false, t: 0.25 },
+    'january-dawn-jet': { sky: 'clear', grad: 'weak', jan: true, t: 0.25 },
+    'january-1000-gusty': { sky: 'clear', grad: 'weak', jan: true, t: 0.4167 },
+    'whole-day': { sky: 'clear', grad: 'weak', jan: false, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="dsw-title" class="widget-stage">
+    <title id="dsw-title">Left: a side view of the lowest 2,400 ft over land through 24 hours, with wind arrows at 2,000 ft, 1,300 ft, 800 ft and the surface and a windsock: thermals by day mix the gradient wind down and the surface wind is strong and gusty; at night a radiation inversion cuts the surface off, the windsock goes limp and a low-level jet blows just above the inversion. Right: a plan view of the gradient and surface winds showing the veer, and a 24 hour graph of the surface wind as a fraction of the gradient wind</title>
+    <defs>
+      <marker id="dsw-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="dsw-left"><rect x="0" y="0" width="400" height="340"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="340" fill="var(--color-surface-2)" rx="10"/>
+    <g clip-path="url(#dsw-left)">
+      <!-- sky: blue by day, stars by night -->
+      <rect x="0" y="0" width="400" height="290" fill="var(--color-sky-soft)" :fill-opacity="daylight"/>
+      <g fill="var(--color-fg-faint)" :fill-opacity="clear ? 1 - daylight : 0">
+        <circle cx="160" cy="30" r="1.5"/><circle cx="210" cy="56" r="1.2"/><circle cx="250" cy="24" r="1.5"/><circle cx="120" cy="60" r="1.2"/>
+        <circle cx="340" cy="56" r="1.2"/><circle cx="60" cy="110" r="1.2"/><circle cx="180" cy="124" r="1.2"/>
+        <path d="M292 22 a13 13 0 1 0 11 20 a10 10 0 1 1 -11 -20 Z"/>
+      </g>
+      <circle r="12" fill="var(--color-warn)" :cx="sun.x" :cy="sun.y" x-show="sunUp &amp;&amp; clear"/>
+      <!-- overcast deck -->
+      <path x-show="!clear" d="M0 40 q20 -14 42 -4 q22 -12 44 -2 q22 -12 44 0 q22 -10 44 2 q22 -12 44 0 q22 -10 44 2 q22 -12 44 0 q22 -10 44 2 q20 -8 50 2 L400 58 L0 58 Z" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <!-- the radiation inversion: cold air lying on the ground -->
+      <rect x="0" width="400" fill="var(--color-sky-fg)" :fill-opacity="0.16 * inv" :y="invTop" :height="290 - invTop"/>
+      <line x1="0" x2="322" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-dasharray="4 3" :y1="invTop" :y2="invTop" x-show="inv > 0.3"/>
+      <text x="12" font-size="12" fill="var(--color-sky-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="invTop + 16" x-show="inv > 0.3">radiation inversion</text>
+      <!-- thermals by day -->
+      <g fill="none" stroke="var(--color-fg-faint)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 4" :opacity="Math.min(1, thermal * 1.4)" marker-end="url(#dsw-arrow)" x-show="thermal > 0.1">
+        <path d="M60 286 q-10 -22 0 -44 q10 -22 0 -44 q-10 -22 0 -44"/>
+        <path d="M150 286 q10 -22 0 -44 q-10 -22 0 -44 q10 -22 0 -44"/>
+        <path d="M240 286 q-10 -22 0 -44 q10 -22 0 -44"/>
+      </g>
+      <text x="12" y="250" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="thermal > 0.3">thermals mix faster air down</text>
+      <!-- ground -->
+      <rect x="0" y="290" width="400" height="50" fill="var(--color-surface)"/>
+      <line x1="0" y1="290" x2="400" y2="290" stroke="var(--color-fg-muted)" stroke-width="2"/>
+      <text x="16" y="318" font-size="12" fill="var(--color-fg-muted)">over land</text>
+    </g>
+    <!-- height axis -->
+    <line x1="330" y1="290" x2="330" y2="56" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num">
+      <line x1="330" x2="336" y1="240" y2="240" stroke="var(--color-line-strong)"/><text x="340" y="244">500</text>
+      <line x1="330" x2="336" y1="190" y2="190" stroke="var(--color-line-strong)"/><text x="340" y="194">1,000</text>
+      <line x1="330" x2="336" y1="140" y2="140" stroke="var(--color-line-strong)"/><text x="340" y="144">1,500</text>
+      <line x1="330" x2="336" y1="90" y2="90" stroke="var(--color-line-strong)"/><text x="340" y="94">2,000 ft</text>
+    </g>
+    <!-- the wind profile: tips of the arrows at every height -->
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :d="profileD"/>
+    <!-- arrows point where the wind blows TO -->
+    <line x1="330" y1="90" y2="90" stroke="var(--color-info)" stroke-width="2.5" marker-end="url(#dsw-arrow)" :x2="tip(2000)"/>
+    <text x="322" y="80" font-size="12" text-anchor="end" fill="var(--color-info-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">gradient wind: steady</text>
+    <line x1="330" y1="160" y2="160" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#dsw-arrow)" :x2="tip(1300)"/>
+    <line x1="330" y1="210" y2="210" marker-end="url(#dsw-arrow)" :stroke="jet ? 'var(--color-warn)' : 'var(--color-fg-muted)'" :stroke-width="jet ? 3 : 2" :x2="tip(800)"/>
+    <text x="322" y="201" font-size="12" text-anchor="end" font-weight="600" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="jet" x-text="lessonDay &amp;&amp; h >= 5.5 &amp;&amp; h < 7.5 ? 'low-level jet: about 25 kt' : 'low-level jet'"></text>
+    <!-- surface wind, with its gusts dashed -->
+    <line x1="330" y1="280" y2="280" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="3 3" x-show="gustIdx >= 0.2" :x2="gustTip"/>
+    <line x1="330" y1="280" y2="280" stroke="var(--color-brand)" stroke-width="3" marker-end="url(#dsw-arrow)" x-show="!calm" :x2="tip(0)"/>
+    <text x="322" y="271" font-size="12" text-anchor="end" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      x-text="calm ? 'surface: calm' : lessonDay &amp;&amp; h >= 9.5 &amp;&amp; h < 11 ? 'surface 090/15G25' : gustIdx >= 0.2 ? 'surface wind (gusts dashed)' : 'surface wind'"></text>
+    <!-- windsock (streams downwind) -->
+    <line x1="372" y1="290" x2="372" y2="258" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M372 254 L344 256 L344 260 L372 262 Z" fill="var(--color-warn)" stroke="var(--color-warn-fg)" stroke-width="1" stroke-linejoin="round" :transform="'rotate(' + sockAngle + ' 372 258)'"/>
+    <!-- clock -->
+    <text x="14" y="28" font-size="16" font-weight="600" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-text="clock + ' WST'"></text>
+
+    <!-- RIGHT: plan view of the two winds -->
+    <text x="420" y="26" font-size="13" font-weight="600" fill="var(--color-fg)">seen from above</text>
+    <circle :cx="cxP" :cy="cyP" r="52" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text :x="cxP" :y="cyP - 58" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">N</text>
+    <line stroke="var(--color-info)" stroke-width="2.5" marker-end="url(#dsw-arrow)" :x1="gradArrow.x1" :y1="gradArrow.y1" :x2="gradArrow.x2" :y2="gradArrow.y2"/>
+    <line stroke="var(--color-brand)" stroke-width="3" marker-end="url(#dsw-arrow)" x-show="!calm" :x1="surfArrow.x1" :y1="surfArrow.y1" :x2="surfArrow.x2" :y2="surfArrow.y2"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.5" x-show="!calm" :d="veerArc"/>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" x="560" :y="cyP - 2" x-show="!calm">veered</text>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" class="num" x="560" :y="cyP + 14" x-show="!calm" x-text="'≈ ' + r5(veer) + '°'"></text>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" :x="cxP" :y="cyP + 30" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="calm">surface calm</text>
+    <g font-size="12">
+      <line x1="420" y1="174" x2="440" y2="174" stroke="var(--color-info)" stroke-width="2.5"/><text x="446" y="178" fill="var(--color-info-fg)">gradient</text>
+      <line x1="514" y1="174" x2="534" y2="174" stroke="var(--color-brand)" stroke-width="3"/><text x="540" y="178" fill="var(--color-brand-fg)">surface</text>
+    </g>
+    <!-- RIGHT: the surface wind through 24 hours -->
+    <text x="420" y="206" font-size="12" fill="var(--color-fg-muted)">surface speed ÷ gradient, 24 h</text>
+    <rect x="424" width="200" :y="CYf(2 / 3)" :height="CYf(0.5) - CYf(2 / 3)" fill="var(--color-ok)" fill-opacity="0.15"/>
+    <text x="620" y="226" font-size="11" text-anchor="end" fill="var(--color-ok-fg)">band: average ½ to ⅔</text>
+    <line x1="424" y1="300" x2="624" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="424" y1="214" x2="424" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num">
+      <text x="419" y="220" text-anchor="end">1</text><text x="419" y="303" text-anchor="end">0</text>
+      <text x="424" y="314" text-anchor="middle">00</text><text x="474" y="314" text-anchor="middle">06</text><text x="524" y="314" text-anchor="middle">12</text>
+      <text x="574" y="314" text-anchor="middle">18</text><text x="624" y="314" text-anchor="middle">24</text>
+    </g>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round" :d="chartD"/>
+    <line stroke="var(--color-fg-muted)" stroke-width="1" stroke-dasharray="3 3" y1="214" y2="300" :x1="CXh(h)" :x2="CXh(h)"/>
+    <circle r="4.5" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5" :cx="CXh(h)" :cy="CYf(f)"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the day'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="dsw-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time of day">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dsw-sky">Sky</label>
+      <select id="dsw-sky" class="input" x-model="sky">
+        <option value="clear">Clear</option>
+        <option value="overcast">Overcast</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="dsw-grad">Gradient wind</label>
+      <select id="dsw-grad" class="input" x-model="grad">
+        <option value="weak">Weak (isobars far apart)</option>
+        <option value="strong">Strong (isobars close)</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Time</dt><dd class="widget-value" x-text="clock + ' WST'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Surface wind vs gradient</dt><dd class="widget-value" x-text="surfText"></dd></div>
+    <div class="widget-readout" :class="rel > 0.25 || calm ? 'ok' : ''"><dt class="widget-label">Compared with the average</dt><dd class="widget-value" x-text="relText"></dd></div>
+    <div class="widget-readout" :class="gust.s"><dt class="widget-label">Gustiness</dt><dd class="widget-value" x-text="gust.text"></dd></div>
+    <div class="widget-readout" :class="invText.s"><dt class="widget-label">Inversion</dt><dd class="widget-value"><span x-text="invText.text"></span><span class="widget-flag warn" x-show="jet">shear on climb-out</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('dawn-calm-clear-weak')" :aria-pressed="active === 'dawn-calm-clear-weak'">Calm dawn</button>
+      <button type="button" @click="preset('afternoon-gusty')" :aria-pressed="active === 'afternoon-gusty'">Gusty afternoon</button>
+      <button type="button" @click="preset('overcast-small-swing')" :aria-pressed="active === 'overcast-small-swing'">Overcast</button>
+      <button type="button" @click="preset('strong-gradient-small-swing')" :aria-pressed="active === 'strong-gradient-small-swing'">Strong gradient</button>
+      <button type="button" @click="preset('january-dawn-jet')" :aria-pressed="active === 'january-dawn-jet'">January 0600</button>
+      <button type="button" @click="preset('january-1000-gusty')" :aria-pressed="active === 'january-1000-gusty'">January 1000</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The gradient wind at about 2,000 ft hardly changes; what changes is how well the air below is mixed with it. By day thermals bring its speed and direction down, so the surface wind is stronger, backed towards the gradient and gusty, peaking in the early to mid afternoon. At night a radiation inversion cuts the surface off: the wind goes lighter and more veered, often calm by dawn, with the low-level jet just above. Cloud or a strong gradient keeps the swing small. The lesson's land rule of thumb (about half to two-thirds, veered about 30°) is the average; the percentages and timings either side of it are illustrative.</p>
+  <details class="widget-try"><summary>Try it: which gives the calmest dawn at Northam, clear with a weak gradient or overcast with a strong one?</summary><p>Press Calm dawn: clear and weak lets a strong inversion form, the surface is cut off and the windsock goes limp. Now set Overcast and Strong: the graph flattens, there is no inversion, and the dawn wind stays near its average of about half to two-thirds of the gradient wind.</p></details>
+  <details class="widget-try"><summary>Try it: you depart Jandakot at 0600 on the lesson's January day. What happens a few hundred feet up?</summary><p>Press January 0600: the windsock is limp, but just above the inversion the low-level jet blows at about 25 kt. Expect a sudden increase in headwind or crosswind, and a bump, as you climb through the top of the inversion.</p></details>
+</div>

@@ -1,0 +1,167 @@
+<div class="widget" x-data="timeline({
+  duration: 36, loop: false, walk: false,
+  // PHFC 2.14 worked example: a forced landing on a station track 120 nm east of Kalgoorlie on a 40 degree day,
+  // uninjured, with 4 litres of water. Protection (shade under the wing), location (PLB or ELT on and left on; a call on
+  // the area frequency and 121.5 MHz), signals (a large V near the aircraft; a smoky fire ready, away from the aircraft
+  // and fuel, lit when an aircraft is heard), water (rest in the shade by day to cut sweat loss, drink what you need).
+  // Stay with the aircraft: it is easier to see, gives shelter, and the search follows the notified route. The clock
+  // runs from 1400 to 0900 next day; when the search arrives and how fast water goes are illustrative.
+  get min() { return 840 + this.t * 1140 },
+  get clock() { return this.hhmm(this.min) },
+  get daylight() { const m = this.min % 1440; return m > 1140 && m < 1170 ? 1 - this.seg(m, 1140, 1170) : m >= 1170 || m < 330 ? 0 : m < 390 ? this.seg(m, 330, 390) : 1 },
+  get sunPos() { const m = this.min % 1440; const a = Math.PI * this.seg(m, 360, 1170); return { x: 330 - 290 * Math.cos(a), y: 150 - 120 * Math.sin(a) } },
+  get sunUp() { const m = this.min % 1440; return m > 360 && m < 1170 },
+  get hot() { const m = this.min % 1440; return m >= 600 && m < 1080 },
+  // walking: leaves at 1500, out of sight by about 1700
+  get walkerX() { return this.walk ? this.clamp(176 + (this.min - 900) * 2.2, 176, 700) : 176 },
+  get walking() { return this.walk && this.min > 900 && this.walkerX < 640 },
+  // water: illustrative. In the shade the 4 L lasts the night; walking in the sun it is gone by early evening.
+  get water() { const h = (this.min - 840) / 60; return this.walk ? this.clamp(1 - Math.max(0, h - 1) * 0.3 - Math.min(1, h) * 0.05, 0, 1) : this.clamp(1 - h * 0.035, 0, 1) },
+  get dry() { const h = (this.min - 840) / 60; return this.walk ? this.clamp((h - 4.3) * 0.12, 0, 1) : 0 },
+  get firstHour() { return this.min < 900 },
+  get vLaid() { return this.min >= 870 },
+  get fireReady() { return this.min >= 890 },
+  // the search: along the notified route, arriving at dawn
+  get searchX() { return this.lerp(-60, 200, this.ease(this.seg(this.min, 1860, 1890))) },
+  get searching() { return this.min >= 1860 },
+  get smoke() { return !this.walk && this.min >= 1866 },
+  get found() { return this.min >= 1890 },
+  get steps() {
+    const s = [{ at: 0, label: 'Into the shade' }, { at: 0.02, label: 'PLB on, radio call' }, { at: 0.026, label: 'V laid out' }, { at: 0.044, label: 'Fire ready' }];
+    if (this.walk) s.push({ at: 0.053, label: 'Sets off walking' });
+    s.push({ at: 0.1, label: 'Afternoon heat' }, { at: 0.29, label: 'Nightfall' }, { at: 0.895, label: 'Aircraft heard' }, { at: 0.925, label: this.walk ? 'Wreck found' : 'Found' });
+    return s;
+  },
+  get caption() {
+    const m = this.min;
+    if (m < 852) return 'Down safely on a station track 120 nm east of Kalgoorlie, 40 degrees, nobody hurt, 4 litres of water. Protection first: out of the sun, into the shade of the wing.';
+    if (m < 870) return 'Location: the PLB is on and stays on, and a call goes out on the area frequency and 121.5 MHz. The 406 MHz signal gives searchers your position by satellite.';
+    if (m < 890) return 'Signals: a large V (require assistance) near the aircraft, as big and contrasting as the materials allow.';
+    if (m < 905) return this.walk ? 'A shimmer on the horizon might be a homestead. You set off to walk to it, taking the water with you.' : 'A smoky fire is laid, away from the aircraft and any fuel, ready to light the moment you hear an aircraft.';
+    if (m < 1140) return this.walk ? (this.water > 0.05 ? 'Walking in the afternoon sun: every step costs sweat, and the water goes fast. The shimmer gets no closer.' : 'The water is gone and the sun has not set. Dehydration is the main killer in the WA outback.') : 'Resting in the shade through the hottest hours: the work is done, sweat loss is low, and you drink what you need. Conserve sweat, not water.';
+    if (m < 1800) return this.walk ? 'Night in the scrub, far from the aircraft and its shelter, with no water left.' : 'Night by the aircraft: shelter from the cold, the PLB still transmitting, the signals ready.';
+    if (m < 1866) return 'Dawn. The search follows your notified route and the PLB\'s position.';
+    if (!this.found) return this.walk ? 'An aircraft! But you are kilometres away in the scrub: a person on foot is almost invisible from the air.' : 'An aircraft heard: light the fire. Smoke by day, flame by night.';
+    return this.walk ? 'The searchers find the aircraft and the V, but not you. Now they must start a fresh search, while you have no water. Had you left, an arrow should point the way you went.' : 'Seen: a large unnatural shape, a V and a column of smoke on the notified route. Staying with the aircraft is what got you found.';
+  },
+  presets: {
+    'first-hour': { walk: false, t: 0.04 },
+    'afternoon-in-shade': { walk: false, t: 0.12 },
+    'afternoon-walking': { walk: true, t: 0.12 },
+    'found-at-dawn': { walk: false, t: 0.95 },
+    'walker-not-found': { walk: true, t: 0.95 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="osw-title" class="widget-stage">
+    <title id="osw-title">After an outback forced landing: the sun crossing the sky over an aeroplane on a claypan, the pilot in the wing's shade or walking away, the water left, and next morning a search aircraft and its view from above</title>
+    <!-- sky: daylight tint, stars by night -->
+    <rect x="0" y="0" width="640" height="236" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="236" fill="var(--color-sky-soft)" :fill-opacity="daylight"/>
+    <g fill="var(--color-fg-faint)" :fill-opacity="1 - daylight">
+      <circle cx="60" cy="40" r="1.5"/><circle cx="150" cy="80" r="1.2"/><circle cx="260" cy="30" r="1.5"/><circle cx="360" cy="70" r="1.2"/>
+      <circle cx="420" cy="26" r="1.5"/><circle cx="500" cy="90" r="1.2"/><circle cx="110" cy="120" r="1.2"/>
+    </g>
+    <path d="M40 150 A290 120 0 0 1 620 150" fill="none" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <circle r="13" fill="var(--color-warn)" :cx="sunPos.x" :cy="sunPos.y" x-show="sunUp"/>
+    <path d="M470 40 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22 Z" fill="var(--color-fg-muted)" :fill-opacity="1 - daylight"/>
+    <!-- the claypan -->
+    <rect x="0" y="236" width="640" height="64" fill="var(--color-warn)" fill-opacity="0.18"/>
+    <line x1="0" y1="236" x2="640" y2="236" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <g fill="none" stroke="var(--color-ok)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6">
+      <path d="M420 236 q4 -14 8 0 q4 -10 8 0"/><path d="M520 236 q4 -12 8 0 q4 -16 8 0"/><path d="M600 236 q4 -10 8 0"/>
+    </g>
+    <!-- shade under the wing -->
+    <ellipse cx="190" cy="240" rx="40" ry="4" fill="var(--color-fg-faint)" :fill-opacity="sunUp ? 0.45 : 0"/>
+    <!-- python -m tools.diagrams.plane side, scale 1.1, x 200, y 214.5 -->
+    <g transform="translate(200 214.5) rotate(0) scale(1.1)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <!-- the V, laid out beside the aircraft (seen edge-on here) -->
+    <g fill="var(--color-fg-muted)" x-show="vLaid">
+      <circle cx="262" cy="244" r="3"/><circle cx="272" cy="248" r="3"/><circle cx="282" cy="252" r="3"/><circle cx="292" cy="248" r="3"/><circle cx="302" cy="244" r="3"/>
+    </g>
+    <text x="282" y="270" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" x-show="vLaid">V of rocks</text>
+    <!-- the signal fire, away from the aircraft -->
+    <g x-show="fireReady">
+      <path d="M52 236 L76 236 M56 236 L72 226 M72 236 L56 226" stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M64 226 q-6 -8 0 -16 q6 8 0 16 Z" fill="var(--color-warn)" x-show="smoke"/>
+      <path d="M64 208 q-8 -20 2 -40 q10 -20 30 -32 q18 -10 38 -12" fill="none" stroke="var(--color-fg-faint)" stroke-width="12" stroke-linecap="round" stroke-opacity="0.55" x-show="smoke"/>
+      <text x="64" y="256" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" x-text="smoke ? 'smoke' : 'fire, ready'"></text>
+    </g>
+    <!-- PLB -->
+    <g x-show="min >= 852">
+      <rect x="242" y="222" width="10" height="14" rx="2" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.25"/>
+      <circle cx="247" cy="219" r="2.5" fill="var(--color-bad)"/>
+      <text x="256" y="220" font-size="11" font-weight="700" fill="var(--color-bad-fg)">PLB</text>
+    </g>
+    <!-- the pilot -->
+    <g :transform="'translate(' + walkerX + ' 0)'" x-show="walkerX < 640">
+      <circle cx="0" cy="210" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+        :d="walking ? 'M0 216 L0 226 M0 226 L-5 236 M0 226 L5 236 M0 219 L6 224' : 'M0 216 L0 230 L10 230 L12 236 M0 221 L8 226'"/>
+    </g>
+    <!-- the search aircraft -->
+    <g x-show="searching" :transform="'translate(' + searchX + ' 70)'">
+      <!-- python -m tools.diagrams.plane side, scale 0.35, no gear -->
+      <g transform="translate(0 0) rotate(0) scale(0.35)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- clock -->
+    <text x="16" y="28" font-size="16" font-weight="700" class="num" fill="var(--color-fg)" x-text="clock"></text>
+    <text x="16" y="46" font-size="12" fill="var(--color-fg-muted)" x-text="min < 1080 ? 'day 1, 40 °C' : min < 1170 ? 'day 1, evening' : min < 1770 ? 'night' : 'next morning'"></text>
+    <!-- water -->
+    <rect x="590" y="40" width="30" height="110" rx="6" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <rect x="593" width="24" rx="4" fill="var(--color-sky-fg)" fill-opacity="0.6" :y="147 - 104 * water" :height="104 * water"/>
+    <text x="605" y="166" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">water</text>
+    <text x="605" y="32" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">4 L</text>
+    <!-- seen from the search aircraft -->
+    <g x-show="found">
+      <rect x="380" y="20" width="196" height="132" rx="10" fill="var(--color-warn-soft)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <text x="390" y="38" font-size="12" font-weight="600" fill="var(--color-fg)">from the search aircraft</text>
+      <g transform="translate(440 96)"><g transform="translate(0 0) rotate(0) scale(0.42)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <g fill="var(--color-fg)">
+        <circle cx="500" cy="80" r="3"/><circle cx="506" cy="92" r="3"/><circle cx="512" cy="104" r="3"/><circle cx="518" cy="92" r="3"/><circle cx="524" cy="80" r="3"/>
+      </g>
+      <ellipse cx="398" cy="64" rx="13" ry="8" fill="var(--color-fg-faint)" fill-opacity="0.6" x-show="!walk"/>
+      <text x="478" y="144" font-size="11" text-anchor="middle" :fill="walk ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="walk ? 'the aircraft, but no pilot' : 'aircraft, V and smoke: found'"></text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the wait'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="osw-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time since the forced landing">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="osw-walk" class="cursor-pointer"><span>Walk to the shimmer on the horizon</span>
+        <input type="checkbox" id="osw-walk" x-model="walk" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="walking || (walk && min > 900) ? 'bad' : 'ok'"><dt class="widget-label">Where you are</dt><dd class="widget-value text-sm" x-text="!walk || min <= 900 ? 'With the aircraft, in shade' : walkerX < 640 ? 'Walking in the sun' : 'Out in the scrub'"></dd></div>
+    <div class="widget-readout" :class="water > 0.5 ? 'ok' : water > 0.05 ? 'warn' : 'bad'"><dt class="widget-label">Water left</dt><dd class="widget-value" x-text="water > 0.02 ? 'about ' + fmt(water * 4, 1) + ' of 4 L' : 'None'"></dd></div>
+    <div class="widget-readout" :class="dry > 0.5 ? 'bad' : dry > 0 ? 'warn' : 'ok'"><dt class="widget-label">You</dt><dd class="widget-value" x-text="dry > 0.5 ? 'Badly dehydrated' : dry > 0 ? 'Dehydrating' : 'Hydrated'"></dd></div>
+    <div class="widget-readout" :class="found ? (walk ? 'bad' : 'ok') : ''"><dt class="widget-label">Search</dt><dd class="widget-value text-sm" x-text="found ? (walk ? 'Aircraft found, not you' : 'Found you') : searching ? 'Aircraft overhead' : min >= 852 ? 'PLB transmitting' : 'Not yet alerted'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('first-hour')" :aria-pressed="active === 'first-hour'">First hour</button>
+      <button type="button" @click="preset('afternoon-in-shade')" :aria-pressed="active === 'afternoon-in-shade'">In the shade</button>
+      <button type="button" @click="preset('afternoon-walking')" :aria-pressed="active === 'afternoon-walking'">Walking</button>
+      <button type="button" @click="preset('found-at-dawn')" :aria-pressed="active === 'found-at-dawn'">Found</button>
+      <button type="button" @click="preset('walker-not-found')" :aria-pressed="active === 'walker-not-found'">Not found</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Protection, location, water, food, in that order, and stay with the aircraft. In the shade the 4 litres lasts; walking in the sun it is gone by evening, because the water you lose is sweat. And from the air an aeroplane, a big V and a column of smoke are easy to see; a person on foot in the scrub is not. When the search arrives and how fast the water goes are illustrative.</p>
+  <details class="widget-try"><summary>Try it: why is "walk to the town for help" the wrong answer?</summary><p>Turn on Walk and play to the end: the water is gone by evening, the night is spent without shelter, and the searchers, following your notified route and the PLB, find the aircraft but not you. Stay with the aircraft unless help is certain and close.</p></details>
+  <details class="widget-try"><summary>Try it: should you ration the 4 litres to a few mouthfuls a day?</summary><p>No: compare In the shade with Walking. Dehydration harms you whether the water is lost as sweat or never drunk. Rest in the shade by day, work in the cool, and drink what you need: conserve sweat, not water.</p></details>
+</div>

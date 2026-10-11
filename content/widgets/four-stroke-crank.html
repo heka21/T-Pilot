@@ -1,0 +1,221 @@
+<div class="widget" x-data="timeline({
+  duration: 12, rpm: 2400,
+  // the clock is crank angle: t 0..1 is 0..720 degrees, two turns of the crankshaft, from top dead centre at the
+  // start of induction. Ideal textbook timing (BAKC 3.1): each stroke half a turn, valves open for a whole stroke,
+  // the spark just before the top of the compression stroke.
+  get th() { return this.t * 720 },
+  get stroke() { return Math.min(3, Math.floor(this.th / 180)) },
+  names: ['Induction', 'Compression', 'Power', 'Exhaust'],
+  aka: ['suck', 'squeeze', 'bang', 'blow'],
+  get inletOpen() { return this.th < 180 },
+  get exhaustOpen() { return this.th >= 540 },
+  get sparking() { return this.th >= 340 && this.th < 366 },
+  get burning() { return this.th >= 352 && this.th < 540 },
+  get cam() { return this.th / 2 },
+  get turn() { return this.th < 360 ? 1 : 2 },
+  // mechanism: crank centre (170, 272), throw 40, connecting rod 120; the piston top is 22 above the gudgeon pin
+  cx: 170, cy: 272, cr: 40, rod: 120,
+  get pin() { const a = this.th * Math.PI / 180; return { x: this.cx + this.cr * Math.sin(a), y: this.cy - this.cr * Math.cos(a) } },
+  get gy() { const a = this.th * Math.PI / 180, s = this.cr * Math.sin(a); return this.cy - (this.cr * Math.cos(a) + Math.sqrt(this.rod * this.rod - s * s)) },
+  get top() { return this.gy - 22 },
+  get down() { const s = this.th % 360; return s > 0.5 && s < 179.5 },
+  get up() { const s = this.th % 360; return s > 180.5 && s < 359.5 },
+  // what fills the cylinder: fresh mixture, squeezed mixture, burning gas, burnt gas
+  get gasFill() { return this.burning ? 'var(--color-bad)' : this.stroke === 3 ? 'var(--color-fg-faint)' : 'var(--color-brand)' },
+  get gasOp() {
+    if (this.burning) return this.lerp(0.5, 0.14, this.seg(this.th, 352, 540));
+    if (this.stroke === 3) return this.lerp(0.28, 0.06, this.seg(this.th, 540, 720));
+    if (this.stroke === 1) return this.lerp(0.14, 0.42, this.seg(this.th, 180, 352));
+    return 0.14;
+  },
+  get gasLabel() { return this.burning ? 'burning gas' : this.stroke === 3 ? 'burnt gas' : this.stroke === 1 ? 'squeezed mixture' : 'fresh mixture' },
+  // valve lift: open through their stroke, eased at each end
+  get inLift() { return 9 * Math.sin(Math.PI * this.seg(this.th, 0, 180)) ** 0.5 },
+  get exLift() { return 9 * Math.sin(Math.PI * this.seg(this.th, 540, 720)) ** 0.5 },
+  // camshaft dial: centre (414, 306), radius 30; it turns at half crank speed; its lobes face the followers while
+  // their valve is open (inlet lobe for cam 0-90, exhaust lobe for cam 270-360)
+  get camHand() { return this.pol(414, 306, 26, this.cam) },
+  get crankHand() { return this.pol(170, 272, 40, this.th) },
+  sectorPath(a0, a1, r) { const p = this.pol(414, 306, r, a0), q = this.pol(414, 306, r, a1); return 'M414 306 L' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + ' Z' },
+  boxY(i) { return 22 + i * 58 },
+  powerStrokes() { return 2 * this.rpm },
+  dragCrank(p) {
+    let a = Math.atan2(p.x - this.cx, this.cy - p.y) * 180 / Math.PI;
+    if (a < 0) a += 360;
+    const th = this.th, cur = th % 360;
+    let rev = th >= 360 ? 1 : 0;
+    if (cur > 270 && a < 90) rev += 1;
+    else if (cur < 90 && a > 270) rev -= 1;
+    rev = ((rev % 2) + 2) % 2;
+    this.pause();
+    this.active = null;
+    this.t = Math.min(0.9999, (rev * 360 + a) / 720);
+  },
+  steps: [
+    { at: 0, label: 'Induction' },
+    { at: 0.25, label: 'Compression' },
+    { at: 0.4722, label: 'Spark' },
+    { at: 0.5, label: 'Power' },
+    { at: 0.75, label: 'Exhaust' },
+  ],
+  get caption() {
+    const th = this.th;
+    if (th < 180) return 'Induction (suck): the inlet valve is open and the piston moves down. The space above it grows, the pressure falls, and fuel-air mixture flows in to fill it.';
+    if (th < 340) return 'Compression (squeeze): both valves are shut and the piston moves up, squeezing the mixture into a fraction of its volume. Compressed mixture burns faster and pushes harder.';
+    if (th < 366) return 'Just before the piston reaches the top, both spark plugs fire. The crank has turned almost once, and no power has been made yet.';
+    if (th < 540) return 'Power (bang): the burning gas heats, its pressure rises sharply and it drives the piston down. This is the only stroke that does work; the other three are carried by the crankshaft\'s momentum and the other cylinders.';
+    return 'Exhaust (blow): the exhaust valve opens and the piston moves up, pushing the burnt gas out. At the top the cycle starts again: two crank turns, one turn of the camshaft, one spark.';
+  },
+  presets: {
+    'induction': { t: 0.125 },
+    'compression': { t: 0.375 },
+    'spark-near-top': { t: 0.4861 },
+    'power-stroke': { t: 0.6 },
+    'exhaust': { t: 0.875 },
+    'one-turn-later': { t: 0.4999 },
+    'play-the-cycle': { t: 0, play: true },
+    'rpm-1200': { rpm: 1200 },
+  },
+})">
+  <svg viewBox="0 0 640 372" role="img" aria-labelledby="fsk-title" class="widget-stage">
+    <title id="fsk-title">One cylinder of a four-stroke engine with its crankshaft, connecting rod, piston, inlet and exhaust valves and spark plug, a camshaft dial turning at half speed, and the four strokes listed with the current one highlighted</title>
+    <defs>
+      <marker id="fsk-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- cooling fins -->
+    <g stroke="var(--color-line-strong)" stroke-width="3" stroke-linecap="round">
+      <line x1="100" y1="86" x2="116" y2="86"/><line x1="100" y1="102" x2="116" y2="102"/><line x1="100" y1="118" x2="116" y2="118"/><line x1="100" y1="134" x2="116" y2="134"/><line x1="100" y1="150" x2="116" y2="150"/><line x1="100" y1="166" x2="116" y2="166"/><line x1="100" y1="182" x2="116" y2="182"/>
+      <line x1="224" y1="86" x2="240" y2="86"/><line x1="224" y1="102" x2="240" y2="102"/><line x1="224" y1="118" x2="240" y2="118"/><line x1="224" y1="134" x2="240" y2="134"/><line x1="224" y1="150" x2="240" y2="150"/><line x1="224" y1="166" x2="240" y2="166"/><line x1="224" y1="182" x2="240" y2="182"/>
+    </g>
+    <text x="84" y="138" font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" transform="rotate(-90 84 138)">cooling fins</text>
+    <!-- gas in the cylinder, above the piston -->
+    <rect x="122" y="72" width="96" :height="Math.max(0, top - 72)" :fill="gasFill" :fill-opacity="gasOp"/>
+    <!-- cylinder walls -->
+    <g stroke="var(--color-fg-muted)" stroke-width="4" stroke-linecap="round">
+      <line x1="120" y1="72" x2="120" y2="210"/><line x1="220" y1="72" x2="220" y2="210"/>
+    </g>
+    <!-- cylinder head with the inlet and exhaust ports -->
+    <path d="M100 30 L240 30 L240 72 L100 72 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M20 38 L158 38 L158 72 L138 72 L138 56 L20 56 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+    <path d="M314 38 L182 38 L182 72 L202 72 L202 56 L314 56 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+    <!-- flow in the ports -->
+    <line x1="30" y1="47" x2="78" y2="47" stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#fsk-arrow)" x-show="inletOpen"/>
+    <line x1="248" y1="47" x2="298" y2="47" stroke="var(--color-fg-muted)" stroke-width="2.5" marker-end="url(#fsk-arrow)" x-show="exhaustOpen"/>
+    <text x="22" y="26" font-size="13" :fill="inletOpen ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" :font-weight="inletOpen ? 600 : 400">inlet valve</text>
+    <text x="300" y="26" font-size="13" text-anchor="end" :fill="exhaustOpen ? 'var(--color-fg)' : 'var(--color-fg-muted)'" :font-weight="exhaustOpen ? 600 : 400">exhaust valve</text>
+    <text x="22" y="74" font-size="12" fill="var(--color-fg-faint)">mixture in</text>
+    <text x="248" y="74" font-size="12" fill="var(--color-fg-faint)">exhaust out</text>
+    <!-- valves: stems and poppet heads; they move down into the cylinder to open -->
+    <g :transform="'translate(0 ' + inLift + ')'">
+      <line x1="148" y1="10" x2="148" y2="66" :stroke="inletOpen ? 'var(--color-brand)' : 'var(--color-fg)'" stroke-width="3" stroke-linecap="round"/>
+      <path d="M137 72 L159 72 L153 65 L143 65 Z" :fill="inletOpen ? 'var(--color-brand)' : 'var(--color-fg)'"/>
+    </g>
+    <g :transform="'translate(0 ' + exLift + ')'">
+      <line x1="192" y1="10" x2="192" y2="66" :stroke="exhaustOpen ? 'var(--color-brand)' : 'var(--color-fg)'" stroke-width="3" stroke-linecap="round"/>
+      <path d="M181 72 L203 72 L197 65 L187 65 Z" :fill="exhaustOpen ? 'var(--color-brand)' : 'var(--color-fg)'"/>
+    </g>
+    <!-- spark plug between the valves -->
+    <rect x="165" y="8" width="10" height="26" rx="2" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <line x1="170" y1="34" x2="170" y2="76" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <path d="M170 84 L174 78 L182 80 L176 74 L180 66 L171 72 L166 64 L166 73 L157 72 L164 78 L158 84 L167 80 Z" fill="var(--color-warn)" x-show="sparking"/>
+    <!-- what is in the cylinder -->
+    <text x="170" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="(72 + top) / 2 + 9" x-show="top - 72 > 34 && !sparking" x-text="gasLabel"></text>
+    <!-- power push on the piston -->
+    <line x1="170" x2="170" stroke="var(--color-bad)" stroke-width="2.5" marker-end="url(#fsk-arrow)" :y1="top - 30" :y2="top - 6" x-show="burning && top - 72 > 40"/>
+    <!-- piston with its rings -->
+    <g :transform="'translate(0 ' + (top - 90) + ')'">
+      <rect x="124" y="90" width="92" height="38" rx="3" :fill="down || up ? 'var(--color-brand-soft)' : 'var(--color-surface)'" stroke="var(--color-fg)" stroke-width="2"/>
+      <line x1="124" y1="98" x2="216" y2="98" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <line x1="124" y1="104" x2="216" y2="104" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <line x1="124" y1="114" x2="216" y2="114" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="3 2"/>
+    </g>
+    <text x="244" font-size="12" fill="var(--color-fg-muted)" :y="top + 22">piston</text>
+    <!-- crankcase, crank and connecting rod -->
+    <circle cx="170" cy="272" r="56" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <circle cx="170" cy="272" r="40" fill="none" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="170" y1="272" stroke="var(--color-fg)" stroke-width="9" stroke-linecap="round" :x2="pin.x" :y2="pin.y"/>
+    <line stroke="var(--color-fg)" stroke-width="7" stroke-linecap="round" :x1="pin.x" :y1="pin.y" x2="170" :y2="gy"/>
+    <circle r="5" fill="var(--color-fg-muted)" cx="170" :cy="gy"/>
+    <circle cx="170" cy="272" r="7" fill="var(--color-fg)"/>
+    <!-- the handle: drag the crank pin round -->
+    <circle r="16" fill="var(--color-brand)" fill-opacity="0.15" stroke="var(--color-brand)" stroke-width="2" :cx="pin.x" :cy="pin.y"
+      style="touch-action: none; cursor: grab" @pointerdown="drag($event, (p) => dragCrank(p))"/>
+    <text x="170" y="348" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">crankshaft: drag the pin round</text>
+    <text x="236" y="248" font-size="12" fill="var(--color-fg-faint)">rod</text>
+    <!-- the four strokes -->
+    <g font-size="14">
+      <rect x="330" width="296" height="50" rx="8" :y="boxY(0)" :fill="stroke === 0 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="stroke === 0 ? 'var(--color-brand)' : 'var(--color-line)'" stroke-width="1.5"/>
+      <rect x="330" width="296" height="50" rx="8" :y="boxY(1)" :fill="stroke === 1 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="stroke === 1 ? 'var(--color-brand)' : 'var(--color-line)'" stroke-width="1.5"/>
+      <rect x="330" width="296" height="50" rx="8" :y="boxY(2)" :fill="stroke === 2 ? 'var(--color-bad-soft)' : 'var(--color-surface)'" :stroke="stroke === 2 ? 'var(--color-bad)' : 'var(--color-line)'" stroke-width="1.5"/>
+      <rect x="330" width="296" height="50" rx="8" :y="boxY(3)" :fill="stroke === 3 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="stroke === 3 ? 'var(--color-brand)' : 'var(--color-line)'" stroke-width="1.5"/>
+      <text x="344" font-weight="600" fill="var(--color-fg)" :y="boxY(0) + 21">1 · Induction</text>
+      <text x="344" font-weight="600" fill="var(--color-fg)" :y="boxY(1) + 21">2 · Compression</text>
+      <text x="344" font-weight="600" :fill="stroke === 2 ? 'var(--color-bad-fg)' : 'var(--color-fg)'" :y="boxY(2) + 21">3 · Power: the only one that works</text>
+      <text x="344" font-weight="600" fill="var(--color-fg)" :y="boxY(3) + 21">4 · Exhaust</text>
+      <text x="344" font-size="12" fill="var(--color-fg-muted)" :y="boxY(0) + 40">inlet open, piston down: suck</text>
+      <text x="344" font-size="12" fill="var(--color-fg-muted)" :y="boxY(1) + 40">both shut, piston up: squeeze</text>
+      <text x="344" font-size="12" fill="var(--color-fg-muted)" :y="boxY(2) + 40">spark, both shut, piston driven down: bang</text>
+      <text x="344" font-size="12" fill="var(--color-fg-muted)" :y="boxY(3) + 40">exhaust open, piston up: blow</text>
+      <text x="612" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" class="num" :y="boxY(0) + 21">0–180°</text>
+      <text x="612" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" class="num" :y="boxY(1) + 21">180–360°</text>
+      <text x="612" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" class="num" :y="boxY(3) + 21">540–720°</text>
+    </g>
+    <!-- camshaft dial: half speed, one lobe per valve -->
+    <circle cx="414" cy="306" r="30" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <path :d="sectorPath(0, 90, 30)" fill="var(--color-brand)" fill-opacity="0.18"/>
+    <path :d="sectorPath(270, 360, 30)" fill="var(--color-fg-faint)" fill-opacity="0.25"/>
+    <text x="434" y="276" font-size="11" fill="var(--color-brand-fg)">in</text>
+    <text x="383" y="276" font-size="11" fill="var(--color-fg-muted)">ex</text>
+    <line x1="414" y1="306" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" :x2="camHand.x" :y2="camHand.y"/>
+    <circle cx="414" cy="306" r="4" fill="var(--color-brand)"/>
+    <text x="414" y="356" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">camshaft</text>
+    <g font-size="13" fill="var(--color-fg)">
+      <text x="462" y="290">crank: <tspan class="num" x-text="fmt(th) + '°'"></tspan> <tspan fill="var(--color-fg-muted)" x-text="'(turn ' + turn + ' of 2)'"></tspan></text>
+      <text x="462" y="312">camshaft: <tspan class="num" x-text="fmt(cam) + '°'"></tspan></text>
+      <text x="462" y="334" font-size="12" fill="var(--color-fg-muted)">geared to half crank speed</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Turn the engine'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="fsk-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Crank angle, 0 to 720 degrees">
+    <span class="widget-clock" x-text="fmt(th) + '°'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="fsk-rpm">Engine RPM, to count the power strokes <output for="fsk-rpm" x-text="fmt(rpm) + ' RPM'"></output></label>
+      <input type="range" id="fsk-rpm" min="600" max="2700" step="100" x-model.number="rpm">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="stroke === 2 ? 'ok' : ''"><dt class="widget-label">Stroke</dt><dd class="widget-value" x-text="names[stroke] + ' (' + aka[stroke] + ')'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Valves</dt><dd class="widget-value" x-text="inletOpen ? 'inlet open, exhaust shut' : exhaustOpen ? 'exhaust open, inlet shut' : 'both shut'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Piston</dt><dd class="widget-value" x-text="down ? 'moving down' : up ? 'moving up' : (th % 360 < 90 || th % 360 > 270) ? 'at the top' : 'at the bottom'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Power strokes a minute, four cylinders</dt><dd class="widget-value" x-text="fmt(powerStrokes()) + ' (' + fmt(rpm / 2) + ' per cylinder)'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('induction')" :aria-pressed="active === 'induction'">Induction</button>
+      <button type="button" @click="preset('compression')" :aria-pressed="active === 'compression'">Compression</button>
+      <button type="button" @click="preset('spark-near-top')" :aria-pressed="active === 'spark-near-top'">Spark</button>
+      <button type="button" @click="preset('power-stroke')" :aria-pressed="active === 'power-stroke'">Power</button>
+      <button type="button" @click="preset('exhaust')" :aria-pressed="active === 'exhaust'">Exhaust</button>
+      <button type="button" @click="preset('one-turn-later')" :aria-pressed="active === 'one-turn-later'">One turn later</button>
+      <button type="button" @click="preset('rpm-1200')" :aria-pressed="active === 'rpm-1200'">1,200 RPM</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each stroke is half a turn of the crank, so one cycle takes two turns and gives one spark. The piston is at the top at 0° and again at 360°, but at 0° the inlet valve is about to open and at 360° both stay shut for the spark: the valves must work once every two turns, which is why the camshaft is geared to half speed. Real engines open the valves a little early and close them late; the timing here is the ideal textbook one.</p>
+  <details class="widget-try"><summary>Try it: the piston is at the top at 0° and at 360°. Why can't the valves be driven straight off the crankshaft?</summary><p>Press One turn later: the piston is in the same place as at the start, but now it is the top of the compression stroke and both valves must stay shut. A cam on the crankshaft would open the inlet valve every turn. Geared to half speed, the camshaft brings each lobe round once per cycle (it has turned 180°, not 360°).</p></details>
+  <details class="widget-try"><summary>Try it: how many power strokes a minute does a four-cylinder engine make at 2,400 RPM, and at 1,200?</summary><p>Each cylinder fires once every two turns: 2,400 ÷ 2 = 1,200 power strokes a minute per cylinder, × 4 cylinders = 4,800. At 1,200 RPM, half as many: 2,400. More RPM for the same charge is more power (BAKC 3.1).</p></details>
+</div>

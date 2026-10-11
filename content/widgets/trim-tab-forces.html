@@ -1,0 +1,126 @@
+<div class="widget" x-data="widget({
+  v: 90, power: false, tab: 0,
+  // illustrative model: the elevator angle needed (up positive) grows as you slow below the 90 kt the aeroplane is
+  // trimmed for, and more power pitches the nose up, so it needs less up elevator (RBKA 3.2's table). The air tries to
+  // streamline the elevator, which the pilot must hold; the tab, deflected the other way, makes a force at the very
+  // back that holds it instead. Both scale with dynamic pressure, (V / 90)².
+  get need() { return 12 * (90 * 90 / (this.v * this.v) - 1) - (this.power ? 5 : 0) },
+  get qf() { return (this.v / 90) ** 2 },
+  get stick() { return this.qf * (this.need - 1.5 * this.tab) },
+  get trimTab() { return this.need / 1.5 },
+  get forceWord() { const f = this.stick; return Math.abs(f) < 0.6 ? 'none' : (f > 0 ? 'pull' : 'push') + (Math.abs(f) > 8 ? ', heavy' : Math.abs(f) > 3.5 ? ', firm' : ', light') },
+  get forceState() { return Math.abs(this.stick) < 0.6 ? 'ok' : Math.abs(this.stick) > 8 ? 'bad' : 'warn' },
+  get trimHint() { const d = this.trimTab - this.tab; return Math.abs(d) < 0.4 ? 'trimmed' : 'wind ' + (d > 0 ? 'nose-up' : 'nose-down') + ' trim' },
+  // drawing: hinge at (300 120); elevator 150 long, tab 56 long; angles in degrees, up elevator rotates anticlockwise
+  rad(d) { return d * Math.PI / 180 },
+  get eTip() { return { x: 300 + 150 * Math.cos(this.rad(this.need)), y: 120 - 150 * Math.sin(this.rad(this.need)) } },
+  get tabAbs() { return this.need - this.tab },
+  get tabMid() { return { x: this.eTip.x + 30 * Math.cos(this.rad(this.tabAbs)), y: this.eTip.y - 30 * Math.sin(this.rad(this.tabAbs)) } },
+  get elMid() { return { x: 300 + 80 * Math.cos(this.rad(this.need)), y: 120 - 80 * Math.sin(this.rad(this.need)) } },
+  // arrow lengths: air on the tab (up when the tab is down), air on the elevator (pushing it back towards neutral)
+  get tabF() { return Math.max(-50, Math.min(50, 5 * this.qf * this.tab)) },
+  get elF() { return Math.max(-50, Math.min(50, 3.4 * this.qf * this.need)) },
+  get caption() {
+    if (Math.abs(this.stick) < 0.6) return Math.abs(this.tab) < 0.4 ? 'Trimmed at ' + this.v + ' kt with the tab in line: no force on the column.' : 'The tab, deflected opposite to the elevator, makes an air force at the very back that holds the elevator where it is. No force from you: the aeroplane holds this attitude hands off.';
+    const s = this.stick > 0 ? 'You must pull to hold the elevator up: the air is trying to streamline it.' : 'You must push to hold the nose down.';
+    return s + ' Hold the attitude, let the speed settle, then ' + this.trimHint + ' until the force is gone.';
+  },
+  presets: {
+    'trimmed-cruise': { v: 90, power: false, tab: 0 },
+    'slowed-down-untrimmed': { v: 65, power: false, tab: 0 },
+    'nose-up-trimmed': { v: 65, power: false, tab: 7.34 },
+    'power-increased': { v: 65, power: true, tab: 7.34 },
+    'over-trimmed': { v: 90, power: false, tab: 5 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ttf-title" class="widget-stage">
+    <title id="ttf-title">Side view of the tailplane, elevator and trim tab with the airflow from the left: the air pushes on the deflected elevator, and the tab deflected the other way makes a force that holds it; below, the force you feel on the control column and the trim wheel</title>
+    <defs>
+      <marker id="ttf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="204" fill="var(--color-sky-soft)"/>
+    <g stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-linecap="round" marker-end="url(#ttf-arrow)">
+      <line x1="16" y1="100" x2="64" y2="100"/><line x1="16" y1="140" x2="64" y2="140"/><line x1="16" y1="180" x2="64" y2="180"/>
+    </g>
+    <text x="16" y="82" font-size="12" fill="var(--color-sky-fg)">airflow</text>
+    <!-- neutral reference -->
+    <line x1="300" y1="120" x2="510" y2="120" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="514" y="124" font-size="12" fill="var(--color-fg-faint)">neutral</text>
+    <!-- tailplane (fixed) -->
+    <path d="M82 120 C94 102 150 104 296 112 L296 128 C150 136 94 138 82 120 Z" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="180" y="160" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">tailplane (fixed)</text>
+    <!-- elevator and tab -->
+    <g :transform="'translate(300 120) rotate(' + (-need).toFixed(2) + ')'">
+      <path d="M0 -8 C20 -9 70 -7 150 -3 L150 3 C70 7 20 9 0 8 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+      <g :transform="'translate(150 0) rotate(' + tab.toFixed(2) + ')'">
+        <path d="M0 -3.5 L56 -1.5 L56 1.5 L0 3.5 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round"/>
+      </g>
+    </g>
+    <circle cx="300" cy="120" r="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <!-- air force on the elevator, trying to return it to neutral -->
+    <line stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#ttf-arrow)" x-show="Math.abs(elF) > 4"
+      :x1="elMid.x" :y1="elMid.y + (elF > 0 ? -14 - elF : 14 - elF)" :x2="elMid.x" :y2="elMid.y + (elF > 0 ? -12 : 12)"/>
+    <text font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" x-show="Math.abs(elF) > 4" :x="elMid.x" :y="elF > 0 ? elMid.y - 22 - elF : elMid.y + 32 - elF + (elF < 0 ? 0 : 0)" x-text="'air pushes the elevator ' + (elF > 0 ? 'down' : 'up')"></text>
+    <!-- air force on the tab -->
+    <line stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#ttf-arrow)" x-show="Math.abs(tabF) > 4"
+      :x1="tabMid.x" :y1="tabMid.y + (tabF > 0 ? 12 + tabF : -12 + tabF)" :x2="tabMid.x" :y2="tabMid.y + (tabF > 0 ? 10 : -10)"/>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" text-anchor="middle" x-show="Math.abs(tabF) > 4" :x="tabMid.x + 22" :y="tabF > 0 ? tabMid.y + 28 + tabF : tabMid.y - 22 + tabF" x-text="'air on the tab: ' + (tabF > 0 ? 'up' : 'down')"></text>
+    <g font-size="13" font-weight="600">
+      <text x="96" y="30" fill="var(--color-fg)" x-text="'elevator ' + (Math.abs(need) < 0.5 ? 'neutral' : fmt(Math.abs(need), 0) + '° ' + (need > 0 ? 'UP' : 'DOWN'))"></text>
+      <text x="96" y="48" fill="var(--color-brand-fg)" x-text="'tab ' + (Math.abs(tab) < 0.5 ? 'in line' : fmt(Math.abs(tab), 0) + '° ' + (tab > 0 ? 'DOWN' : 'UP') + ' from it')"></text>
+    </g>
+    <!-- cockpit: the column and the trim wheel -->
+    <rect x="0" y="204" width="640" height="96" fill="var(--color-surface)"/>
+    <line x1="0" y1="204" x2="640" y2="204" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="20" y="226" font-size="13" fill="var(--color-fg-muted)">Control column</text>
+    <line x1="86" y1="290" x2="86" y2="246" stroke="var(--color-fg)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M66 246 L106 246" stroke="var(--color-fg)" stroke-width="5" stroke-linecap="round"/>
+    <line y1="256" y2="256" :stroke="'var(--color-' + forceState + ')'" stroke-width="4" stroke-linecap="round" marker-end="url(#ttf-arrow)" x-show="Math.abs(stick) >= 0.6"
+      :x1="stick > 0 ? 116 : 56" :x2="stick > 0 ? 116 + Math.min(70, 8 * Math.abs(stick)) : 56 - Math.min(46, 8 * Math.abs(stick))"/>
+    <text x="20" y="290" font-size="12" fill="var(--color-fg-faint)">push ←</text>
+    <text x="196" y="290" font-size="12" fill="var(--color-fg-faint)" text-anchor="end">→ pull</text>
+    <text x="260" y="226" font-size="13" fill="var(--color-fg-muted)">Trim wheel</text>
+    <rect x="276" y="236" width="20" height="56" rx="6" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <g stroke="var(--color-fg-faint)" stroke-width="1"><line x1="278" y1="248" x2="294" y2="248"/><line x1="278" y1="258" x2="294" y2="258"/><line x1="278" y1="268" x2="294" y2="268"/><line x1="278" y1="278" x2="294" y2="278"/></g>
+    <path d="M300 264 l10 -6 l0 12 z" fill="var(--color-brand)" :transform="'translate(0 ' + (-2 * tab).toFixed(1) + ')'"/>
+    <text x="316" y="246" font-size="12" fill="var(--color-fg-faint)">nose up</text>
+    <text x="316" y="290" font-size="12" fill="var(--color-fg-faint)">nose down</text>
+    <text x="420" y="226" font-size="13" fill="var(--color-fg-muted)">Force you hold</text>
+    <text x="420" y="254" font-size="16" font-weight="600" :fill="'var(--color-' + forceState + '-fg)'" x-text="forceWord"></text>
+    <text x="420" y="280" font-size="12" fill="var(--color-fg-muted)" x-text="Math.abs(stick) < 0.6 ? 'trimmed: hands off' : 'then: ' + trimHint"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ttf-v">Airspeed you are holding <output for="ttf-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="ttf-v" min="60" max="110" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="ttf-power" class="cursor-pointer"><span>More power (nose pitches up)</span>
+        <input type="checkbox" id="ttf-power" x-model="power" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ttf-tab">Trim wheel (tab) <output for="ttf-tab" x-text="Math.abs(tab) < 0.5 ? 'tab in line' : fmt(Math.abs(tab), 1) + '° ' + (tab > 0 ? 'down, nose-up trim' : 'up, nose-down trim')"></output></label>
+      <input type="range" id="ttf-tab" min="-8" max="12" step="0.1" x-model.number="tab">
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Elevator</dt><dd class="widget-value" x-text="Math.abs(need) < 0.5 ? 'neutral' : fmt(Math.abs(need), 0) + '° ' + (need > 0 ? 'up' : 'down')"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Tab</dt><dd class="widget-value" x-text="Math.abs(tab) < 0.5 ? 'in line' : fmt(Math.abs(tab), 0) + '° ' + (tab > 0 ? 'down' : 'up')"></dd></div>
+    <div class="widget-readout" :class="forceState"><dt class="widget-label">Stick force</dt><dd class="widget-value"><span x-text="forceWord"></span><span class="widget-flag ok" x-show="forceState === 'ok'">trimmed</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('trimmed-cruise')" :aria-pressed="active === 'trimmed-cruise'">Trimmed, 90 kt</button>
+      <button type="button" @click="preset('slowed-down-untrimmed')" :aria-pressed="active === 'slowed-down-untrimmed'">Slowed to 65 kt</button>
+      <button type="button" @click="preset('nose-up-trimmed')" :aria-pressed="active === 'nose-up-trimmed'">Nose-up trim</button>
+      <button type="button" @click="preset('power-increased')" :aria-pressed="active === 'power-increased'">Add power</button>
+      <button type="button" @click="preset('over-trimmed')" :aria-pressed="active === 'over-trimmed'">Over-trimmed</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The tab always moves opposite to the elevator. To hold the elevator up for a slower speed, wind on nose-up trim: the tab goes down, the air pushes up on it, and that force at the very back holds the elevator's trailing edge up, so the force on the column disappears. Trim does not fly the aeroplane: attitude first with the elevator, let the speed settle, then trim the pressure away. More power pitches the nose up, so you push, then trim nose-down. The angles and forces are illustrative; the directions are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: trimmed at 90 kt, you slow to 65 kt and hold the new attitude. What do you feel, and which way do you trim?</summary><p>Press Slowed to 65 kt: you must pull, because the elevator is up and the air is trying to streamline it. Wind on nose-up trim until the force is gone (press Nose-up trim): the tab ends up down and the elevator stays up on its own.</p></details>
+  <details class="widget-try"><summary>Try it: trimmed at 65 kt, you open the throttle. What happens?</summary><p>Press Add power: the nose pitches up, so to hold the attitude you now push, and the old trim is too far nose-up. Wind on nose-down trim until the push is gone.</p></details>
+</div>

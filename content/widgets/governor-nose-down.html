@@ -1,0 +1,177 @@
+<div class="widget" x-data="timeline({
+  duration: 12, loop: false,
+  scen: 'normal',
+  // Blade geometry from the lesson: 345 kt rotational speed three-quarters out at 2,400 RPM; at 80 kt the helix angle is
+  // 13 degrees, so a 21 degree blade works at 8 degrees. The governor's job is to keep that 8 degrees. Illustrative model:
+  // the RPM rises 25 RPM for every degree the angle of attack falls below 8; the fine stop is 12 degrees.
+  get ias() { return this.scen === 'oil' ? 80 + 40 * this.eased(0.45, 0.85) : 80 + 40 * this.eased(0.1, 0.4) },
+  get phi() { return Math.atan(this.ias / 345) * 180 / Math.PI },
+  get beta() {
+    if (this.scen === 'oil') return 21 - 9 * this.eased(0.12, 0.38);
+    return 21 + (Math.atan(120 / 345) * 180 / Math.PI + 8 - 21) * this.eased(0.3, 0.7);
+  },
+  get aoa() { return this.beta - this.phi },
+  get rpm() { return 2400 + 25 * Math.max(0, 8 - this.aoa) },
+  get excess() { return this.clamp((this.rpm - 2400) / 150, 0, 1) },
+  get over() { return this.rpm >= 2700 },
+  get flowing() { return this.scen === 'normal' && this.excess > 0.15 },
+  // governor picture
+  get theta() { return 20 + 30 * this.excess },
+  get lift() { return 14 * this.excess },
+  wl() { const a = this.theta * Math.PI / 180; return { x: 92 - 46 * Math.sin(a), y: 232 - 46 * Math.cos(a) } },
+  wr() { const a = this.theta * Math.PI / 180; return { x: 160 + 46 * Math.sin(a), y: 232 - 46 * Math.cos(a) } },
+  get spring() { const y0 = 66, y1 = 112 - this.lift, n = 8, pts = [[126, y0]]; for (let i = 1; i < n; i++) pts.push([126 + (i % 2 ? 9 : -9), y0 + (y1 - y0) * i / n]); pts.push([126, y1]); return this.path(pts) },
+  get piston() { return 300 + (this.beta - 12) / 18 * 70 },
+  // blade section: origin (300, 270), angles measured up from the plane of rotation
+  ray(deg, r) { const a = deg * Math.PI / 180; return { x: 290 + r * Math.cos(a), y: 270 - r * Math.sin(a) } },
+  arcD(a0, a1, r) { const p = this.ray(a0, r), q = this.ray(a1, r); return 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 ' + (a1 > a0 ? 0 : 1) + ' ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) },
+  get blade() { const c = this.ray(this.beta, 92); return 'translate(' + c.x.toFixed(1) + ' ' + c.y.toFixed(1) + ') rotate(' + (-this.beta).toFixed(2) + ')' },
+  // tachometer: 2,000 to 3,000 RPM over -120 to +120 degrees about (565, 150)
+  get needle() { return this.pol(565, 150, 46, -120 + (this.clamp(this.rpm, 2000, 3000) - 2000) / 1000 * 240) },
+  get steps() {
+    if (this.scen === 'oil') return [{ at: 0, label: 'Steady' }, { at: 0.12, label: 'Oil pressure lost' }, { at: 0.38, label: 'Fine stop' }, { at: 0.45, label: 'Nose down' }, { at: 1, label: 'Overspeed' }];
+    return [{ at: 0, label: 'Steady' }, { at: 0.1, label: 'Nose down' }, { at: 0.24, label: 'RPM rises' }, { at: 0.42, label: 'Oil to the hub' }, { at: 0.75, label: 'Back on speed' }];
+  },
+  get caption() {
+    const t = this.t;
+    if (this.scen === 'oil') {
+      if (t < 0.12) return 'Steady at 80 kt and 2,400 RPM, the governor holding the blades at 21 degrees.';
+      if (t < 0.4) return 'The oil pressure is lost. On many singles oil drives the blades coarse, and a spring and the blades\' own twisting forces drive them fine: with no oil, they run to the fine stop.';
+      if (t < 0.97) return 'Fine pitch is where a fixed-pitch propeller overspeeds: the blades meet the air at a small angle, absorb little torque, and the RPM follows the airspeed up. The flyweights swing out, but there is no oil to answer them.';
+      return 'Over the red line. Throttle back, slow down and pull the propeller lever back; falling oil pressure means the POH emergency procedure for your type.';
+    }
+    if (t < 0.1) return 'Steady at 80 kt and 2,400 RPM: the flyweights balance the speeder spring, the pilot valve is centred and the 21 degree blades work at 8 degrees.';
+    if (t < 0.24) return 'Nose down: the airspeed rises, the helix angle grows and the blades\' angle of attack falls, exactly as on a fixed-pitch propeller. They unload.';
+    if (t < 0.42) return 'The RPM starts to rise. The flyweights swing outwards against the spring and lift the pilot valve.';
+    if (t < 0.75) return 'The lifted valve sends pump-boosted oil to the hub piston, which turns the blades coarser: the angle of attack and the load come back.';
+    return 'Back at 2,400 RPM with the blades at about 27 degrees: the flyweights are upright again and the valve centred. A steady tachometer: read power from the manifold pressure gauge.';
+  },
+  pickScen(s) { this.scen = s; this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'cruise-80-kt': { scen: 'normal', t: 0 },
+    'nose-down': { scen: 'normal', t: 0, play: true },
+    'rpm-starts-rising': { scen: 'normal', t: 0.3 },
+    'blades-coarsen': { scen: 'normal', t: 0.5 },
+    'back-on-speed': { scen: 'normal', t: 1 },
+    'oil-pressure-lost': { scen: 'oil', t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="gnd-title" class="widget-stage">
+    <title id="gnd-title">A constant-speed propeller governor with flyweights, speeder spring and pilot valve sending oil to the hub piston, beside a blade section showing its blade angle, helix angle and angle of attack, and a tachometer</title>
+    <defs><marker id="gnd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- governor -->
+    <rect x="16" y="40" width="220" height="250" rx="10" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="20" y="30" font-size="14" font-weight="700" fill="var(--color-fg)">Governor</text>
+    <text x="20" y="84" font-size="11" fill="var(--color-info)">propeller lever</text>
+    <text x="20" y="99" font-size="11" fill="var(--color-info)">sets the spring</text>
+    <text x="150" y="92" font-size="12" fill="var(--color-fg-muted)">speeder</text>
+    <text x="150" y="107" font-size="12" fill="var(--color-fg-muted)">spring</text>
+    <rect x="100" y="58" width="52" height="7" rx="2" fill="var(--color-info)"/>
+    <path fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round" :d="spring"/>
+    <!-- oil supply -->
+    <path d="M40 262 L40 188 L110 188" fill="none" stroke="var(--color-warn)" stroke-width="2.5" stroke-linejoin="round" marker-end="url(#gnd-arrow)" :stroke-opacity="scen === 'oil' &amp;&amp; t > 0.12 ? 0.25 : 1"/>
+    <text x="28" y="280" font-size="11" fill="var(--color-fg-muted)" x-text="scen === 'oil' &amp;&amp; t > 0.12 ? 'no oil pressure' : 'engine oil'"></text>
+    <!-- pilot valve -->
+    <rect x="112" y="110" width="28" height="96" rx="4" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <g :transform="'translate(0 ' + (-lift).toFixed(1) + ')'">
+      <line x1="126" y1="112" x2="126" y2="212" :stroke="excess > 0.15 ? 'var(--color-brand)' : 'var(--color-fg)'" stroke-width="2.5"/>
+      <rect x="115" y="140" width="22" height="12" rx="2" :fill="excess > 0.15 ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="excess > 0.15 ? 'var(--color-brand)' : 'var(--color-fg-muted)'" stroke-width="1.25"/>
+      <rect x="115" y="178" width="22" height="12" rx="2" :fill="excess > 0.15 ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="excess > 0.15 ? 'var(--color-brand)' : 'var(--color-fg-muted)'" stroke-width="1.25"/>
+    </g>
+    <text x="104" y="132" font-size="12" text-anchor="end" fill="var(--color-brand-fg)" font-weight="600" x-show="excess > 0.15">valve lifts</text>
+    <!-- flyweights on the spinning base -->
+    <rect x="76" y="232" width="100" height="8" rx="2" fill="var(--color-fg-muted)"/>
+    <line x1="126" y1="240" x2="126" y2="290" stroke="var(--color-fg)" stroke-width="3"/>
+    <line x1="92" y1="232" :x2="wl().x" :y2="wl().y" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="160" y1="232" :x2="wr().x" :y2="wr().y" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="92" y1="232" x2="118" :y2="214 - lift" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="160" y1="232" x2="134" :y2="214 - lift" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle r="11" :cx="wl().x" :cy="wl().y" :fill="excess > 0.15 ? 'var(--color-brand)' : 'var(--color-fg-muted)'"/>
+    <circle r="11" :cx="wr().x" :cy="wr().y" :fill="excess > 0.15 ? 'var(--color-brand)' : 'var(--color-fg-muted)'"/>
+    <text x="170" y="260" font-size="12" fill="var(--color-fg-muted)">flyweights</text>
+    <text x="134" y="284" font-size="11" fill="var(--color-fg-faint)">engine-driven</text>
+    <!-- oil to the hub -->
+    <path d="M140 158 L262 158 L262 76 L288 76" fill="none" stroke="var(--color-warn)" stroke-width="2.5" stroke-linejoin="round" :stroke-opacity="flowing ? 1 : 0.3"/>
+    <path d="M140 158 L262 158 L262 76 L288 76" fill="none" stroke="var(--color-surface)" stroke-width="2.5" stroke-dasharray="6 10" x-show="flowing" :stroke-dashoffset="(-t * 900).toFixed(1)"/>
+    <text x="200" y="150" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-warn-fg)" x-show="flowing">oil to the hub</text>
+    <!-- hub piston -->
+    <rect x="288" y="52" width="112" height="48" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="344" y="46" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">hub piston</text>
+    <rect x="296" y="64" height="24" rx="2" fill="var(--color-warn)" fill-opacity="0.25" :width="piston - 296"/>
+    <rect y="60" width="7" height="32" rx="1.5" fill="var(--color-fg-muted)" :x="piston"/>
+    <text x="394" y="118" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">fine ← → coarse</text>
+    <!-- blade section -->
+    <text x="290" y="150" font-size="12" font-weight="600" fill="var(--color-fg)">blade section, ¾ out</text>
+    <line x1="280" y1="270" x2="460" y2="270" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="460" y="288" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">plane of rotation</text>
+    <line x1="290" y1="270" stroke="var(--color-info)" stroke-width="1.5" :x2="ray(phi, 150).x" :y2="ray(phi, 150).y"/>
+    <line x1="290" y1="270" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="3 3" :x2="ray(beta, 150).x" :y2="ray(beta, 150).y"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" :d="arcD(0, phi, 44)"/>
+    <text x="282" y="288" font-size="11" fill="var(--color-info)" class="num" x-text="'helix angle ' + fmt(phi) + '°'"></text>
+    <g :transform="blade">
+      <path d="M40 0 C34 -6 12 -9 -8 -7 C-24 -5 -35 -2 -40 0 C-30 2 -10 3 8 3 C24 3 35 2 40 0 Z" stroke-width="2" stroke-linejoin="round" :fill="aoa < 4 ? 'var(--color-warn-soft)' : 'var(--color-brand-soft)'" :stroke="aoa < 4 ? 'var(--color-warn)' : 'var(--color-brand)'"/>
+    </g>
+    <path fill="none" stroke-width="2" :stroke="aoa < 4 ? 'var(--color-warn)' : 'var(--color-brand)'" :d="arcD(phi, beta, 142)"/>
+    <text font-size="12" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :fill="aoa < 4 ? 'var(--color-warn-fg)' : 'var(--color-brand-fg)'" :x="ray((phi + beta) / 2, 150).x + 6" :y="ray((phi + beta) / 2, 150).y + 4" x-text="'AoA ' + fmt(aoa) + '°'"></text>
+    <text font-size="11" fill="var(--color-fg-muted)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="ray(beta, 128).x - 8" :y="ray(beta, 128).y - 10" text-anchor="end" x-text="'blade ' + fmt(beta) + '°'"></text>
+    <!-- airspeed and tachometer -->
+    <text x="508" y="34" font-size="13" fill="var(--color-fg-muted)">IAS</text>
+    <text x="540" y="34" font-size="18" font-weight="700" class="num" fill="var(--color-fg)" x-text="fmt(ias) + ' kt'"></text>
+    <circle cx="565" cy="150" r="60" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round"><line x1="516.5" y1="178.0" x2="526.9" y2="172.0"/><line x1="509.3" y1="155.9" x2="515.3" y2="155.2" stroke-width="1"/><line x1="511.7" y1="132.7" x2="517.4" y2="134.5" stroke-width="1"/><line x1="523.4" y1="112.5" x2="527.8" y2="116.5" stroke-width="1"/><line x1="542.2" y1="98.8" x2="544.7" y2="104.3" stroke-width="1"/><line x1="565.0" y1="94.0" x2="565.0" y2="106.0"/><line x1="587.8" y1="98.8" x2="585.3" y2="104.3" stroke-width="1"/><line x1="606.6" y1="112.5" x2="602.2" y2="116.5" stroke-width="1"/><line x1="618.3" y1="132.7" x2="612.6" y2="134.5" stroke-width="1"/><line x1="620.7" y1="155.9" x2="614.7" y2="155.2" stroke-width="1"/><line x1="613.5" y1="178.0" x2="603.1" y2="172.0"/></g>
+    <line x1="606.6" y1="112.5" x2="616.3" y2="103.8" stroke="var(--color-bad)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M539.5 103.5 L545.5 98 L547 106 Z" fill="var(--color-info)"/>
+    <g font-size="11" fill="var(--color-fg-muted)" text-anchor="middle" class="num"><text x="535.6" y="171">20</text><text x="565" y="120">25</text><text x="594.4" y="171">30</text></g>
+    <line x1="565" y1="150" stroke-width="3" stroke-linecap="round" :stroke="over ? 'var(--color-bad)' : 'var(--color-fg)'" :x2="needle.x" :y2="needle.y"/>
+    <circle cx="565" cy="150" r="4.5" fill="var(--color-fg)"/>
+    <text x="565" y="234" font-size="15" font-weight="700" text-anchor="middle" class="num" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="fmt(Math.round(rpm / 10) * 10) + ' RPM'"></text>
+    <text x="565" y="250" font-size="11" text-anchor="middle" fill="var(--color-info)">set: 2,400</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Lower the nose'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="gnd-t" min="0" max="1" step="0.005" x-model.number="t" @input="pause()" aria-label="Progress">
+    <span class="widget-clock" x-text="fmt(ias) + ' kt'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gnd-scen">Story</label>
+      <select id="gnd-scen" class="input" :value="scen" @change="pickScen($event.target.value)">
+        <option value="normal">Lower the nose: the governor at work</option>
+        <option value="oil">The oil pressure is lost</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Airspeed</dt><dd class="widget-value" x-text="fmt(ias) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="over ? 'bad' : rpm > 2430 ? 'warn' : 'ok'">
+      <dt class="widget-label">RPM (set 2,400)</dt>
+      <dd class="widget-value"><span x-text="fmt(Math.round(rpm / 10) * 10)"></span><span class="widget-flag bad" x-show="over">overspeed</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Blade angle</dt><dd class="widget-value" x-text="fmt(beta) + '°'"></dd></div>
+    <div class="widget-readout" :class="aoa < 4 ? 'warn' : ''"><dt class="widget-label">Blade angle of attack</dt><dd class="widget-value" x-text="fmt(aoa) + '° = ' + fmt(beta) + '° − ' + fmt(phi) + '° helix'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('nose-down')" :aria-pressed="active === 'nose-down'">Lower the nose</button>
+      <button type="button" @click="preset('rpm-starts-rising')" :aria-pressed="active === 'rpm-starts-rising'">RPM rising</button>
+      <button type="button" @click="preset('blades-coarsen')" :aria-pressed="active === 'blades-coarsen'">Blades coarsen</button>
+      <button type="button" @click="preset('back-on-speed')" :aria-pressed="active === 'back-on-speed'">Back on speed</button>
+      <button type="button" @click="preset('oil-pressure-lost')" :aria-pressed="active === 'oil-pressure-lost'">Oil lost</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The governor turns a would-be RPM change into a blade-angle change: the rising RPM swings the flyweights out, they lift the pilot valve, oil goes to the hub and the blades go coarser until the angle of attack, the load and the RPM are back. Without oil the blades run to fine pitch and the propeller overspeeds like a fixed-pitch one. The blade and helix angles follow the lesson's triangle (345 kt round at 2,400 RPM); the RPM overshoot, timings, fine stop and 2,700 red line are illustrative.</p>
+  <details class="widget-try"><summary>Try it: why is the tachometer steady when you lower the nose in a constant-speed aeroplane?</summary><p>Play it: a brief rise in RPM swings the flyweights out, the valve sends oil to the hub and the blades coarsen from 21 to about 27 degrees, which restores the 8 degree angle of attack and the load. The pilot reads power from the manifold pressure gauge instead.</p></details>
+  <details class="widget-try"><summary>Try it: why does a constant-speed propeller still overspeed if it loses oil pressure?</summary><p>Choose the oil story: on many singles oil drives the blades coarse, so without it the spring and the blades' twisting forces take them to the fine stop, where they absorb little torque and the RPM follows the airspeed. Throttle back, slow down, pull the propeller lever back and follow the POH.</p></details>
+</div>

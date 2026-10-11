@@ -1,0 +1,110 @@
+<div class="widget" x-data="widget({
+  tilt: 0, tints: true,
+  // an illustrative hill as a chart draws it: contours every 500 ft, crowded on the east face (steep) and spread on
+  // the west (gentle), layer tints darkening with height, and a spot height on the top
+  L: [
+    { h: 500, cx: 300, cy: 176, rx: 210, ry: 104 },
+    { h: 1000, cx: 344, cy: 172, rx: 150, ry: 78 },
+    { h: 1500, cx: 384, cy: 168, rx: 92, ry: 50 },
+    { h: 2000, cx: 420, cy: 166, rx: 40, ry: 24 },
+  ],
+  top: { x: 432, y: 165, h: 2180 },
+  // the 3D lift: squash the map north-south and raise each layer by its height
+  get sq() { return 1 - 0.5 * this.tilt },
+  get k() { return 0.045 * this.tilt },
+  Y(y, h) { return 176 + (y - 176) * this.sq - h * this.k },
+  ring(i, dh) {
+    const l = this.L[i], pts = [];
+    for (let j = 0; j <= 48; j++) { const a = j / 48 * 2 * Math.PI; pts.push([l.cx + l.rx * Math.cos(a), this.Y(l.cy + l.ry * Math.sin(a), l.h - (dh || 0))]) }
+    return this.path(pts) + ' Z';
+  },
+  // the slab under each layer: the front half of the ring 500 ft lower joined to the back half of the ring itself
+  side(i) {
+    const l = this.L[i], pts = [];
+    for (let j = 0; j <= 24; j++) { const a = j / 24 * Math.PI; pts.push([l.cx + l.rx * Math.cos(a), this.Y(l.cy + l.ry * Math.sin(a), l.h - 500)]) }
+    for (let j = 24; j <= 48; j++) { const a = j / 24 * Math.PI; pts.push([l.cx + l.rx * Math.cos(a), this.Y(l.cy + l.ry * Math.sin(a), l.h)]) }
+    return this.path(pts) + ' Z';
+  },
+  op(i) { return this.tints ? [0.12, 0.22, 0.34, 0.48][i] : 0 },
+  lab(i) { const l = this.L[i]; return { x: l.cx - l.rx * 0.62, y: this.Y(l.cy + l.ry * 0.79, l.h) + 4 } },
+  get topPt() { return { x: this.top.x, y: this.Y(this.top.y, this.top.h) } },
+  get view() { return this.tilt < 0.15 ? 'Plan view: the chart' : this.tilt > 0.85 ? 'Lifted: the hill the chart describes' : 'Lifting the contours' },
+  presets: {
+    'flat-chart': { tilt: 0, tints: true },
+    'contours-only': { tilt: 0, tints: false },
+    'halfway': { tilt: 0.5, tints: true },
+    'lifted-3d': { tilt: 1, tints: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ctt-title" class="widget-stage">
+    <title id="ctt-title">An illustrative hill drawn as chart contours with layer tints and a spot height, which lift into a 3D terraced hill as you tilt the view: crowded contours become a steep face, spread contours a gentle slope</title>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-surface-2)"/>
+    <text x="20" y="30" font-size="15" font-weight="700" fill="var(--color-fg)" x-text="view"></text>
+    <!-- slabs, lowest first: an opaque base so higher layers hide what is behind them -->
+    <g stroke-linejoin="round">
+      <path stroke="none" fill="var(--color-surface-2)" :d="side(0)"/>
+      <path stroke="var(--color-warn)" stroke-width="1" x-show="tilt > 0.02" fill="var(--color-warn)" :fill-opacity="op(0) + 0.2" :d="side(0)"/>
+      <path stroke="none" fill="var(--color-surface-2)" :d="ring(0)"/>
+      <path stroke="var(--color-warn)" stroke-width="1.5" fill="var(--color-warn)" :fill-opacity="op(0)" :d="ring(0)"/>
+      <path stroke="none" fill="var(--color-surface-2)" :d="side(1)"/>
+      <path stroke="var(--color-warn)" stroke-width="1" x-show="tilt > 0.02" fill="var(--color-warn)" :fill-opacity="op(1) + 0.2" :d="side(1)"/>
+      <path stroke="none" fill="var(--color-surface-2)" :d="ring(1)"/>
+      <path stroke="var(--color-warn)" stroke-width="1.5" fill="var(--color-warn)" :fill-opacity="op(1)" :d="ring(1)"/>
+      <path stroke="none" fill="var(--color-surface-2)" :d="side(2)"/>
+      <path stroke="var(--color-warn)" stroke-width="1" x-show="tilt > 0.02" fill="var(--color-warn)" :fill-opacity="op(2) + 0.2" :d="side(2)"/>
+      <path stroke="none" fill="var(--color-surface-2)" :d="ring(2)"/>
+      <path stroke="var(--color-warn)" stroke-width="1.5" fill="var(--color-warn)" :fill-opacity="op(2)" :d="ring(2)"/>
+      <path stroke="none" fill="var(--color-surface-2)" :d="side(3)"/>
+      <path stroke="var(--color-warn)" stroke-width="1" x-show="tilt > 0.02" fill="var(--color-warn)" :fill-opacity="op(3) + 0.2" :d="side(3)"/>
+      <path stroke="none" fill="var(--color-surface-2)" :d="ring(3)"/>
+      <path stroke="var(--color-warn)" stroke-width="1.5" fill="var(--color-warn)" :fill-opacity="op(3)" :d="ring(3)"/>
+    </g>
+    <!-- contour values on the gentle side -->
+    <g font-size="12" class="num" fill="var(--color-warn-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="3.5" stroke-linejoin="round">
+      <text :x="lab(0).x" :y="lab(0).y">500</text>
+      <text :x="lab(1).x" :y="lab(1).y">1000</text>
+      <text :x="lab(2).x" :y="lab(2).y">1500</text>
+    </g>
+    <!-- spot height -->
+    <circle r="4" fill="var(--color-fg)" :cx="topPt.x" :cy="topPt.y"/>
+    <text font-size="13" font-weight="700" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="topPt.x + 8" :y="topPt.y - 6">2180</text>
+    <!-- steep and gentle -->
+    <text x="560" y="96" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)">steep east face</text>
+    <text x="560" y="114" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">contours crowded</text>
+    <text x="80" y="96" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-ok-fg)">gentle west slope</text>
+    <text x="80" y="114" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">contours spread out</text>
+    <path d="M524 124 L496 158" stroke="var(--color-fg-faint)" stroke-width="1.25" fill="none"/>
+    <path d="M100 124 L132 160" stroke="var(--color-fg-faint)" stroke-width="1.25" fill="none"/>
+    <!-- north arrow and note -->
+    <g x-show="tilt < 0.15"><path d="M610 70 L610 40 M604 48 L610 40 L616 48" stroke="var(--color-fg-muted)" stroke-width="1.5" fill="none"/><text x="610" y="86" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">N</text></g>
+    <text x="620" y="290" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">illustrative hill; contours every 500 ft; heights in ft AMSL</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ctt-tilt">Lift the contours into 3D <output for="ctt-tilt" x-text="Math.round(tilt * 100) + '%'"></output></label>
+      <input type="range" id="ctt-tilt" min="0" max="1" step="0.01" x-model.number="tilt" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ctt-tints" class="cursor-pointer"><span>Layer (hypsometric) tints</span>
+        <input type="checkbox" id="ctt-tints" x-model="tints" class="size-5 accent-[var(--color-brand)]" @change="active = null"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Where is it high?</dt><dd class="widget-value" x-text="tints ? 'tints: the darker the layer, the higher' : 'tints off: count the contour rings'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">How steep, which way?</dt><dd class="widget-value">contours close together: steep (east face)</dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">How high exactly?</dt><dd class="widget-value">spot height on the top: 2180 ft AMSL</dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('flat-chart')" :aria-pressed="active === 'flat-chart'">As charted</button>
+      <button type="button" @click="preset('contours-only')" :aria-pressed="active === 'contours-only'">Contours only</button>
+      <button type="button" @click="preset('halfway')" :aria-pressed="active === 'halfway'">Halfway</button>
+      <button type="button" @click="preset('lifted-3d')" :aria-pressed="active === 'lifted-3d'">Lifted into 3D</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The chart shows height three ways, and each answers a different question: the tints say where it is high, the spacing of the contours says how steep and which way, and the spot height says exactly how high. Lift the rings and the crowded side becomes the cliff and the spread side the gentle slope. The hill and its heights are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you plan to cross this hill from the west at 2,000 ft on QNH. Which figure do you check, and is it enough?</summary><p>The spot height, 2180 ft above sea level, the same datum as your QNH altimeter. 2,000 ft is below the top, so you would fly into the hill: climb, or route round it. On a VNC or VTC the maximum elevation figure for the grid square gives the same warning with a margin built in.</p></details>
+  <details class="widget-try"><summary>Try it: turn the tints off. Can you still tell which face is steep?</summary><p>Yes: press Contours only. The rings crowd together on the east side, so that face climbs 1,500 ft in a short distance; on the west they are far apart, a gentle slope.</p></details>
+</div>

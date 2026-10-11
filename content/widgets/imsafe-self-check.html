@@ -1,0 +1,113 @@
+<div class="widget" x-data="widget({
+  i: 0, m: 0, s: 0, a: 0, f: 0, e: 0,
+  // each IMSAFE question, its options (0 fine, 1 a slice off, 2 a no) and the part of the pilot system it attacks
+  // (PHFC 2.1). How big a slice each 'not too bad' takes is illustrative.
+  items: [
+    { key: 'i', letter: 'I', word: 'Illness', part: 'sensors, structure', opts: [['None', 0], ['Mild headache', 1], ['Cold, blocked nose, gastro, migraine', 2]] },
+    { key: 'm', letter: 'M', word: 'Medication', part: 'processor', opts: [['None, or cleared by a DAME', 0], ['New or not cleared', 2]] },
+    { key: 's', letter: 'S', word: 'Stress', part: 'processor', opts: [['Settled', 0], ['A worry on your mind', 1], ['Preoccupied, cannot switch off', 2]] },
+    { key: 'a', letter: 'A', word: 'Alcohol', part: 'processor, oxygen', opts: [['None, or a little, well over 8 hours ago', 0], ['Within 8 hours, or hungover', 2]] },
+    { key: 'f', letter: 'F', word: 'Fatigue', part: 'processor', opts: [['Well rested', 0], ['Slept badly', 1], ['Exhausted', 2]] },
+    { key: 'e', letter: 'E', word: 'Eating', part: 'fuel', opts: [['Fed and watered', 0], ['Skipped a meal, not drinking enough', 1]] },
+  ],
+  lvl(k) { const it = this.items.find((x) => x.key === k); return it.opts[this[k]][1] },
+  optText(k) { const it = this.items.find((x) => x.key === k); return it.opts[this[k]][0] },
+  cycle(k) { const it = this.items.find((x) => x.key === k); this[k] = (this[k] + 1) % it.opts.length; this.active = null },
+  get nos() { return this.items.filter((it) => this.lvl(it.key) === 2) },
+  get minors() { return this.items.filter((it) => this.lvl(it.key) === 1) },
+  get left() { return this.nos.length ? 0 : Math.max(0, 100 - 22 * this.minors.length) },
+  get decision() {
+    if (this.nos.length) return ['Cancel: one honest no is enough', 'bad'];
+    if (this.minors.length >= 2) return ['They add up: fix them, then decide', 'warn'];
+    if (this.minors.length === 1) return ['Go, if clear-headed', 'ok'];
+    return ['Go', 'ok'];
+  },
+  tile(k) { const l = this.lvl(k); return l === 2 ? 'var(--color-bad-soft)' : l === 1 ? 'var(--color-warn-soft)' : 'var(--color-ok-soft)' },
+  edge(k) { const l = this.lvl(k); return l === 2 ? 'var(--color-bad)' : l === 1 ? 'var(--color-warn)' : 'var(--color-ok)' },
+  word(k) { const l = this.lvl(k); return l === 2 ? 'NO' : l === 1 ? 'not too bad' : 'fine' },
+  // capacity bar x 40..600: the slices come off the right-hand end
+  get slices() { return this.minors.map((it, n) => ({ x: 600 - (n + 1) * 22 * 5.6, w: 22 * 5.6, letter: it.letter })) },
+  sl(n) { return this.slices[n] || { x: 0, w: 0, letter: '' } },
+  get caption() {
+    if (this.nos.length) return this.nos.map((it) => it.word).join(' and ') + ': ' + (this.lvl('i') === 2 ? 'a cold blocks the ears and sinuses on the descent, and gastro or a migraine can incapacitate you in minutes. ' : '') + 'Any single honest no cancels the flight. The decision is yours as pilot in command.';
+    if (this.minors.length >= 2) return 'None of these alone would cancel the flight, but they do not arrive alone: each takes a slice, and together they make a poorer pilot than usual. Water, a proper meal and an honest look at the worry; if you are clear-headed by the briefing, fly. If not, rebook.';
+    if (this.minors.length === 1) return 'One slice off. Fix what can be fixed (water, food, a word with someone) before you walk out, and be honest at the briefing about whether you are clear-headed.';
+    return 'Six honest answers, all fine. The medical certificate says you met the standard on the day you were examined; this check says you meet it today.';
+  },
+  presets: {
+    'all-clear': { i: 0, m: 0, s: 0, a: 0, f: 0, e: 0 },
+    'blocked-nose': { i: 2, m: 1, s: 0, a: 0, f: 0, e: 0 },
+    'northam-saturday': { i: 1, m: 0, s: 1, a: 0, f: 1, e: 1 },
+    'after-water-and-a-meal': { i: 0, m: 0, s: 0, a: 0, f: 1, e: 0 },
+    'hungover': { i: 1, m: 0, s: 0, a: 1, f: 1, e: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 250" role="img" aria-labelledby="ims-title" class="widget-stage">
+    <title id="ims-title">The six IMSAFE questions as tiles, each fine, not too bad or a no, and a bar of the capacity you have left for the flight once the slices are taken off</title>
+    <!-- the six tiles: click one to change it -->
+    <g style="cursor: pointer" @click="cycle('i')"><rect x="20" y="16" width="94" height="112" rx="10" :fill="tile('i')" :stroke="edge('i')" stroke-width="2"/><text x="67" y="62" font-size="36" font-weight="700" text-anchor="middle" fill="var(--color-fg)">I</text><text x="67" y="84" font-size="12" text-anchor="middle" fill="var(--color-fg)">Illness</text><text x="67" y="116" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)" x-text="word('i')"></text></g>
+    <g style="cursor: pointer" @click="cycle('m')"><rect x="122" y="16" width="94" height="112" rx="10" :fill="tile('m')" :stroke="edge('m')" stroke-width="2"/><text x="169" y="62" font-size="36" font-weight="700" text-anchor="middle" fill="var(--color-fg)">M</text><text x="169" y="84" font-size="12" text-anchor="middle" fill="var(--color-fg)">Medication</text><text x="169" y="116" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)" x-text="word('m')"></text></g>
+    <g style="cursor: pointer" @click="cycle('s')"><rect x="224" y="16" width="94" height="112" rx="10" :fill="tile('s')" :stroke="edge('s')" stroke-width="2"/><text x="271" y="62" font-size="36" font-weight="700" text-anchor="middle" fill="var(--color-fg)">S</text><text x="271" y="84" font-size="12" text-anchor="middle" fill="var(--color-fg)">Stress</text><text x="271" y="116" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)" x-text="word('s')"></text></g>
+    <g style="cursor: pointer" @click="cycle('a')"><rect x="326" y="16" width="94" height="112" rx="10" :fill="tile('a')" :stroke="edge('a')" stroke-width="2"/><text x="373" y="62" font-size="36" font-weight="700" text-anchor="middle" fill="var(--color-fg)">A</text><text x="373" y="84" font-size="12" text-anchor="middle" fill="var(--color-fg)">Alcohol</text><text x="373" y="116" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)" x-text="word('a')"></text></g>
+    <g style="cursor: pointer" @click="cycle('f')"><rect x="428" y="16" width="94" height="112" rx="10" :fill="tile('f')" :stroke="edge('f')" stroke-width="2"/><text x="475" y="62" font-size="36" font-weight="700" text-anchor="middle" fill="var(--color-fg)">F</text><text x="475" y="84" font-size="12" text-anchor="middle" fill="var(--color-fg)">Fatigue</text><text x="475" y="116" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)" x-text="word('f')"></text></g>
+    <g style="cursor: pointer" @click="cycle('e')"><rect x="530" y="16" width="94" height="112" rx="10" :fill="tile('e')" :stroke="edge('e')" stroke-width="2"/><text x="577" y="62" font-size="36" font-weight="700" text-anchor="middle" fill="var(--color-fg)">E</text><text x="577" y="84" font-size="12" text-anchor="middle" fill="var(--color-fg)">Eating</text><text x="577" y="116" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)" x-text="word('e')"></text></g>
+    <!-- what is left of you for the flight -->
+    <text x="40" y="160" font-size="13" fill="var(--color-fg-muted)">Your capacity for today’s flight</text>
+    <rect x="40" y="170" width="560" height="40" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="40" y="170" height="40" rx="8" fill="var(--color-ok)" fill-opacity="0.75" :width="left * 5.6" x-show="left > 0"/>
+    <g x-show="!nos.length">
+      <rect y="170" height="40" fill="var(--color-warn)" fill-opacity="0.45" stroke="var(--color-surface)" stroke-width="2" :x="sl(0).x" :width="sl(0).w" x-show="minors.length > 0"/>
+      <rect y="170" height="40" fill="var(--color-warn)" fill-opacity="0.45" stroke="var(--color-surface)" stroke-width="2" :x="sl(1).x" :width="sl(1).w" x-show="minors.length > 1"/>
+      <rect y="170" height="40" fill="var(--color-warn)" fill-opacity="0.45" stroke="var(--color-surface)" stroke-width="2" :x="sl(2).x" :width="sl(2).w" x-show="minors.length > 2"/>
+      <rect y="170" height="40" fill="var(--color-warn)" fill-opacity="0.45" stroke="var(--color-surface)" stroke-width="2" :x="sl(3).x" :width="sl(3).w" x-show="minors.length > 3"/>
+      <g font-size="15" font-weight="700" text-anchor="middle" fill="var(--color-warn-fg)">
+        <text y="196" :x="sl(0).x + sl(0).w / 2" x-text="sl(0).letter"></text><text y="196" :x="sl(1).x + sl(1).w / 2" x-text="sl(1).letter"></text>
+        <text y="196" :x="sl(2).x + sl(2).w / 2" x-text="sl(2).letter"></text><text y="196" :x="sl(3).x + sl(3).w / 2" x-text="sl(3).letter"></text>
+      </g>
+    </g>
+    <g x-show="nos.length">
+      <rect x="40" y="170" width="560" height="40" rx="8" fill="var(--color-bad)" fill-opacity="0.3"/>
+      <text x="320" y="196" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)" x-text="'NO: ' + nos.map((n) => n.word).join(', ')"></text>
+    </g>
+    <text x="48" y="196" font-size="13" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="left >= 40" x-text="left === 100 ? 'all of you' : 'what is left'"></text>
+    <text x="40" y="236" font-size="12" fill="var(--color-fg-faint)">Click a tile to change it.</text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ims-i">Illness (sensors, structure)</label>
+      <select id="ims-i" class="input" x-model.number="i"><option value="0">None</option><option value="1">Mild headache</option><option value="2">Cold, blocked nose, gastro, migraine</option></select>
+      <label for="ims-m">Medication (processor)</label>
+      <select id="ims-m" class="input" x-model.number="m"><option value="0">None, or cleared by a DAME</option><option value="1">New or not cleared</option></select>
+      <label for="ims-s">Stress (processor)</label>
+      <select id="ims-s" class="input" x-model.number="s"><option value="0">Settled</option><option value="1">A worry on your mind</option><option value="2">Preoccupied, cannot switch off</option></select>
+    </div>
+    <div class="widget-control">
+      <label for="ims-a">Alcohol (processor, oxygen)</label>
+      <select id="ims-a" class="input" x-model.number="a"><option value="0">None, or a little, well over 8 hours ago</option><option value="1">Within 8 hours, or hungover</option></select>
+      <label for="ims-f">Fatigue (processor)</label>
+      <select id="ims-f" class="input" x-model.number="f"><option value="0">Well rested</option><option value="1">Slept badly</option><option value="2">Exhausted</option></select>
+      <label for="ims-e">Eating and drinking (fuel)</label>
+      <select id="ims-e" class="input" x-model.number="e"><option value="0">Fed and watered</option><option value="1">Skipped a meal, not drinking enough</option></select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="nos.length ? 'bad' : 'ok'"><dt class="widget-label">Honest noes</dt><dd class="widget-value" x-text="nos.length ? nos.map((n) => n.word).join(', ') : 'None'"></dd></div>
+    <div class="widget-readout" :class="minors.length >= 2 ? 'warn' : 'ok'"><dt class="widget-label">Slices off</dt><dd class="widget-value" x-text="minors.length ? minors.map((n) => n.word).join(', ') : 'None'"></dd></div>
+    <div class="widget-readout" :class="decision[1]"><dt class="widget-label">Decision</dt><dd class="widget-value" x-text="decision[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('all-clear')" :aria-pressed="active === 'all-clear'">All clear</button>
+      <button type="button" @click="preset('blocked-nose')" :aria-pressed="active === 'blocked-nose'">Blocked nose</button>
+      <button type="button" @click="preset('northam-saturday')" :aria-pressed="active === 'northam-saturday'">Northam Saturday</button>
+      <button type="button" @click="preset('after-water-and-a-meal')" :aria-pressed="active === 'after-water-and-a-meal'">After water and a meal</button>
+      <button type="button" @click="preset('hungover')" :aria-pressed="active === 'hungover'">Hungover</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> IMSAFE forces a separate, honest answer to each question. One no cancels the flight on its own; several "not too bad" answers take a slice each and add up. The decision is yours as pilot in command, every day, whatever your medical certificate says. How big a slice each factor takes is illustrative; the questions and the rules are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: you wake with a blocked nose before a solo navigation exercise and think a decongestant will get you through. Go or no go?</summary><p>Press Blocked nose: Illness is a no on its own (the ears and sinuses block on the descent), and a decongestant you have not cleared with a DAME is a second no that may wear off in flight. Cancel and rebook.</p></details>
+  <details class="widget-try"><summary>Try it: two beers finished at 2100, a bad night, no breakfast, a headache and a work worry before an 1100 solo to Northam. What now?</summary><p>Press Northam Saturday: the alcohol is fine, but four slices are off. Press After water and a meal: the headache has gone and the worry is put away, leaving one slice. If you are clear-headed by the briefing, fly; if not, rebook.</p></details>
+</div>

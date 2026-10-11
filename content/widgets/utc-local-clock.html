@@ -1,0 +1,165 @@
+<div class="widget" x-data="widget({
+  m: 930, dn: 7, mo: 9, summer: false, win: false, wa: 360, wb: 840,
+  // m: minutes into the Perth (WST) day shown on the stage; dn/mo: that day's date (calendar of 2025 for weekdays)
+  // the stage is one WST day, 0000 to 2400 WST: x 96 to 616
+  X(min) { return 96 + min * 520 / 1440 },
+  W: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  M: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  date(delta, short) { const d = new Date(Date.UTC(2025, this.mo, this.dn + delta)); return this.W[d.getUTCDay()] + ' ' + d.getUTCDate() + (short ? '' : ' ' + this.M[d.getUTCMonth()]) },
+  // a zone's offset from WST in minutes: UTC is 8 hours behind, the eastern states 2 (standard) or 3 (summer) ahead
+  get eastOff() { return this.summer ? 180 : 120 },
+  // time in a zone at WST minute w, and that zone's date relative to the Perth date
+  zt(w, off) { return this.hhmm(w + off) },
+  zd(w, off) { return Math.floor((w + off) / 1440) },
+  // WST minute at which a zone's midnight falls inside the Perth day
+  mid(off) { return ((-off) % 1440 + 1440) % 1440 },
+  // hour labels: zone hours 00, 04 ... 20 placed at their WST minute
+  hx(off, k) { return this.X(((k * 240 - off) % 1440 + 1440) % 1440) },
+  hl(k) { return this.hhmm(k * 240) },
+  get ticks() { let d = ''; for (let h = 0; h <= 24; h++) { const x = this.X(h * 60).toFixed(1); d += 'M' + x + ' 0 V' + (h % 4 ? 4 : 7) + ' ' } return d },
+  pillX(w) { return this.clamp(this.X(w), 122, 590) },
+  // the activity window, kept inside the Perth day
+  get lo() { return Math.min(this.wa, this.wb) },
+  get hi() { return Math.max(this.wa, this.wb) },
+  wst(w) { return w >= 1440 ? '2400' : this.hhmm(w) },
+  utcAt(w) { return this.hhmm(w - 480) + ' UTC ' + this.date(this.zd(w, -480), true) },
+  get inside() { return this.win && this.m >= this.lo && this.m < this.hi },
+  get winText() { return 'in force ' + this.hhmm(this.lo - 480) + '–' + this.hhmm(this.hi - 480) + ' UTC = ' + this.wst(this.lo) + '–' + this.wst(this.hi) + ' WST' },
+  get utcShift() { return this.zd(this.m, -480) },
+  get eastShift() { return this.zd(this.m, this.eastOff) },
+  presets: {
+    'jandakot-1530': { m: 930, dn: 7, mo: 9, summer: false, win: false },
+    'dawn-departure': { m: 345, dn: 7, mo: 9, summer: false, win: false },
+    'notam-2300-utc': { m: 420, dn: 4, mo: 9, summer: false, win: false },
+    'area-2200-0600-utc': { m: 360, dn: 4, mo: 9, summer: false, win: true, wa: 360, wb: 840 },
+    'notam-0100-0800-utc': { m: 600, dn: 4, mo: 9, summer: false, win: true, wa: 540, wb: 960 },
+    'kalbarri-works': { m: 340, dn: 6, mo: 11, summer: false, win: true, wa: 540, wb: 660 },
+    'brisbane-notam': { m: 360, dn: 4, mo: 9, summer: false, win: false },
+    'melbourne-summer': { m: 360, dn: 15, mo: 0, summer: true, win: false },
+  },
+})">
+  <svg viewBox="0 0 640 276" role="img" aria-labelledby="ulc-title" class="widget-stage">
+    <title id="ulc-title">One Perth day from midnight to midnight as three aligned clock tapes, WST on top, UTC below and the eastern states at the bottom, with a marker for the chosen moment showing the time and date on each, and an optional NOTAM or restricted-area window given in UTC</title>
+    <rect x="0" y="0" width="640" height="276" fill="var(--color-surface-2)" rx="10"/>
+    <!-- WST tape -->
+    <text x="12" y="60" font-size="15" font-weight="700" fill="var(--color-brand-fg)">WST</text>
+    <text x="12" y="76" font-size="12" fill="var(--color-fg-muted)" class="num">UTC + 8</text>
+    <text x="100" y="40" font-size="12" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="date(0) + ', Perth'"></text>
+    <rect x="96" y="46" width="520" height="30" rx="4" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25"/>
+    <path transform="translate(0 76)" stroke="var(--color-brand)" stroke-width="1" fill="none" :d="ticks"/>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text y="96" :x="hx(0, 0)" x-text="hl(0)"></text><text y="96" :x="hx(0, 1)" x-text="hl(1)"></text><text y="96" :x="hx(0, 2)" x-text="hl(2)"></text>
+      <text y="96" :x="hx(0, 3)" x-text="hl(3)"></text><text y="96" :x="hx(0, 4)" x-text="hl(4)"></text><text y="96" :x="hx(0, 5)" x-text="hl(5)"></text>
+      <text y="96" x="616">2400</text>
+    </g>
+
+    <!-- UTC tape: the part before UTC midnight (0800 WST) is still the previous date -->
+    <text x="12" y="144" font-size="15" font-weight="700" fill="var(--color-fg)">UTC</text>
+    <text x="12" y="160" font-size="12" fill="var(--color-fg-muted)">Zulu</text>
+    <rect y="130" height="30" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25" x="96" :width="X(480) - 96"/>
+    <rect y="130" height="30" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25" :x="X(480)" :width="616 - X(480)"/>
+    <path transform="translate(0 160)" stroke="var(--color-line-strong)" stroke-width="1" fill="none" :d="ticks"/>
+    <g font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text x="100" y="124" fill="var(--color-warn-fg)" x-text="date(-1)"></text>
+      <text y="124" fill="var(--color-fg)" :x="X(480) + 6" x-text="date(0) + '  (UTC midnight = 0800 WST)'"></text>
+    </g>
+    <line y1="116" y2="160" stroke="var(--color-fg)" stroke-width="2" :x1="X(480)" :x2="X(480)"/>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text y="180" :x="hx(-480, 0)" x-text="hl(0)"></text><text y="180" :x="hx(-480, 1)" x-text="hl(1)"></text><text y="180" :x="hx(-480, 2)" x-text="hl(2)"></text>
+      <text y="180" :x="hx(-480, 3)" x-text="hl(3)"></text><text y="180" :x="hx(-480, 4)" x-text="hl(4)"></text><text y="180" :x="hx(-480, 5)" x-text="hl(5)"></text>
+      <text y="180" x="616">1600</text>
+    </g>
+
+    <!-- eastern states: the part after their midnight is already the next date -->
+    <text x="12" y="228" font-size="15" font-weight="700" fill="var(--color-fg)" x-text="summer ? 'EDT' : 'EST'"></text>
+    <text x="12" y="244" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="summer ? 'UTC + 11' : 'UTC + 10'"></text>
+    <rect y="214" height="30" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25" x="96" :width="X(mid(eastOff)) - 96"/>
+    <rect y="214" height="30" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25" :x="X(mid(eastOff))" :width="616 - X(mid(eastOff))"/>
+    <path transform="translate(0 244)" stroke="var(--color-line-strong)" stroke-width="1" fill="none" :d="ticks"/>
+    <g font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text x="100" y="208" fill="var(--color-fg)" x-text="date(0) + (summer ? ', east in summer (EDT)' : ', eastern states')"></text>
+      <text y="208" fill="var(--color-info-fg)" :x="X(mid(eastOff)) + 6" x-text="date(1, true)"></text>
+    </g>
+    <line y1="200" y2="244" stroke="var(--color-fg)" stroke-width="2" :x1="X(mid(eastOff))" :x2="X(mid(eastOff))"/>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text y="264" :x="hx(eastOff, 0)" x-text="hl(0)"></text><text y="264" :x="hx(eastOff, 1)" x-text="hl(1)"></text><text y="264" :x="hx(eastOff, 2)" x-text="hl(2)"></text>
+      <text y="264" :x="hx(eastOff, 3)" x-text="hl(3)"></text><text y="264" :x="hx(eastOff, 4)" x-text="hl(4)"></text><text y="264" :x="hx(eastOff, 5)" x-text="hl(5)"></text>
+    </g>
+
+    <!-- NOTAM / PRD window: a column through all three tapes -->
+    <g x-show="win">
+      <rect y="30" height="218" fill="var(--color-bad)" fill-opacity="0.12" :x="X(lo)" :width="X(hi) - X(lo)"/>
+      <rect y="130" height="30" fill="none" stroke="var(--color-bad)" stroke-width="2.5" :x="X(lo)" :width="X(hi) - X(lo)"/>
+      <text y="20" font-size="12" text-anchor="middle" fill="var(--color-bad-fg)" class="num" :x="clamp((X(lo) + X(hi)) / 2, 250, 466)" x-text="winText"></text>
+    </g>
+
+    <!-- the moment: one vertical line, the same instant on every tape -->
+    <line y1="46" y2="244" stroke="var(--color-brand)" stroke-width="2" :x1="X(m)" :x2="X(m)"/>
+    <g class="num" font-size="14" font-weight="700" text-anchor="middle">
+      <rect y="50" width="52" height="22" rx="6" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2" :x="pillX(m) - 26"/>
+      <text y="66" fill="var(--color-brand-fg)" :x="pillX(m)" x-text="zt(m, 0)"></text>
+      <rect y="134" width="52" height="22" rx="6" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2" :x="pillX(m) - 26"/>
+      <text y="150" fill="var(--color-fg)" :x="pillX(m)" x-text="zt(m, -480)"></text>
+      <rect y="218" width="52" height="22" rx="6" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2" :x="pillX(m) - 26"/>
+      <text y="234" fill="var(--color-fg)" :x="pillX(m)" x-text="zt(m, eastOff)"></text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ulc-m">Time in Perth <output for="ulc-m" x-text="hhmm(m) + ' WST'"></output></label>
+      <input type="range" id="ulc-m" min="0" max="1435" step="5" x-model.number="m">
+    </div>
+    <div class="widget-control">
+      <label for="ulc-dn">Date in Perth <output for="ulc-dn" x-text="date(0)"></output></label>
+      <input type="range" id="ulc-dn" min="1" max="28" step="1" x-model.number="dn">
+    </div>
+    <div class="widget-control">
+      <label for="ulc-win" class="cursor-pointer"><span>Lay a NOTAM or restricted-area window (in UTC) on the day</span>
+        <input type="checkbox" id="ulc-win" x-model="win" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ulc-summer" class="cursor-pointer"><span>Eastern summer time, Oct to Apr (NSW, Vic, ACT, Tas; not Qld)</span>
+        <input type="checkbox" id="ulc-summer" x-model="summer" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="win">
+      <label for="ulc-wa">Window from <output for="ulc-wa" x-text="utcAt(lo)"></output></label>
+      <input type="range" id="ulc-wa" min="0" max="1440" step="15" x-model.number="wa">
+    </div>
+    <div class="widget-control" x-show="win">
+      <label for="ulc-wb">Window to <output for="ulc-wb" x-text="utcAt(hi)"></output></label>
+      <input type="range" id="ulc-wb" min="0" max="1440" step="15" x-model.number="wb">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Perth (WST)</dt><dd class="widget-value" x-text="hhmm(m) + ' ' + date(0)"></dd></div>
+    <div class="widget-readout" :class="utcShift ? 'warn' : 'ok'">
+      <dt class="widget-label">UTC</dt>
+      <dd class="widget-value"><span x-text="zt(m, -480) + ' ' + date(utcShift)"></span><span class="widget-flag warn" x-show="utcShift">day before</span></dd>
+    </div>
+    <div class="widget-readout" :class="eastShift ? 'warn' : ''">
+      <dt class="widget-label" x-text="summer ? 'Eastern summer (EDT)' : 'Eastern states (EST)'"></dt>
+      <dd class="widget-value"><span x-text="zt(m, eastOff) + ' ' + date(eastShift)"></span><span class="widget-flag warn" x-show="eastShift">next day</span></dd>
+    </div>
+    <div class="widget-readout" :class="inside ? 'bad' : 'ok'" x-show="win">
+      <dt class="widget-label">Window in Perth time</dt>
+      <dd class="widget-value"><span x-text="wst(lo) + '–' + wst(hi) + ' WST'"></span><span class="widget-flag" :class="inside ? 'bad' : 'ok'" x-text="inside ? 'in force' : 'clear'"></span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('jandakot-1530')" :aria-pressed="active === 'jandakot-1530'">1530 WST</button>
+      <button type="button" @click="preset('dawn-departure')" :aria-pressed="active === 'dawn-departure'">Dawn departure</button>
+      <button type="button" @click="preset('notam-2300-utc')" :aria-pressed="active === 'notam-2300-utc'">NOTAM 2300Z</button>
+      <button type="button" @click="preset('area-2200-0600-utc')" :aria-pressed="active === 'area-2200-0600-utc'">Area 2200–0600Z</button>
+      <button type="button" @click="preset('notam-0100-0800-utc')" :aria-pressed="active === 'notam-0100-0800-utc'">NOTAM 0100–0800Z</button>
+      <button type="button" @click="preset('kalbarri-works')" :aria-pressed="active === 'kalbarri-works'">Kalbarri works</button>
+      <button type="button" @click="preset('brisbane-notam')" :aria-pressed="active === 'brisbane-notam'">Brisbane</button>
+      <button type="button" @click="preset('melbourne-summer')" :aria-pressed="active === 'melbourne-summer'">Melbourne summer</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The hours are the easy part; the date is the trap. A WST time before 0800 is still the previous day in UTC (the amber end of the UTC tape), and a UTC time from 1600 onwards is already tomorrow in Perth. WA stays on UTC + 8 all year. The eastern row is there for contrast: on standard time the east is 2 hours ahead of Perth, and with summer time in NSW, Victoria, the ACT and Tasmania it is 3 (PNVC 2.2; verify the current arrangements in AIP GEN 2.1). Exam conversions are to standard time unless the question says otherwise.</p>
+  <details class="widget-try"><summary>Try it: a NOTAM closes a runway from 1700 UTC on Thursday. When does it start in Perth?</summary><p>Set the Perth date to a Friday and drag until the UTC pill reads 1700: the marker sits at 0100 WST, and the UTC readout says the day before. 0100 WST on Friday. Any UTC time from 1600 onward is the next day in Perth.</p></details>
+  <details class="widget-try"><summary>Try it: Kalbarri works. You take off at 0540 WST and land at 0840. Which UTC dates go on the flight notification, and do you beat the closure?</summary><p>Take-off is 2140 UTC on Friday (before 0800 WST, so the day before); drag to 0840 and the landing is 0040 UTC on Saturday. The closure, 0100–0300 UTC, is 0900–1100 WST: you land 20 minutes before it starts.</p></details>
+</div>

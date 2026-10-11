@@ -1,0 +1,121 @@
+<div class="widget" x-data="widget({
+  leg: 96, dep: 100, cruise: 5500, roc: 500, cgs: 75, cct: 1100, rod: 500, dgs: 110,
+  get climbFt() { return this.cruise - this.dep },
+  get climbMin() { return this.climbFt / this.roc },
+  get climbNm() { return this.climbMin * this.cgs / 60 },
+  get descFt() { return this.cruise - this.cct },
+  get descMin() { return this.descFt / this.rod },
+  get descNm() { return this.descMin * this.dgs / 60 },
+  get cruiseNm() { return this.leg - this.climbNm - this.descNm },
+  get noCruise() { return this.cruiseNm < 0 },
+  // picture: distance 0..leg on x 60..600; height 0..10,000 ft on y 252..52
+  X(nm) { return 60 + this.clamp(nm, 0, this.leg) * 540 / this.leg },
+  Y(ft) { return 252 - ft * 200 / 10000 },
+  get xc() { return this.X(this.climbNm) },
+  get xd() { return this.X(this.leg - this.descNm) },
+  get profile() { return this.path([[this.X(0), this.Y(this.dep)], [this.xc, this.Y(this.cruise)], [this.xd, this.Y(this.cruise)], [this.X(this.leg), this.Y(this.cct)]]) },
+  get ticks() { let d = ''; for (let n = 0; n <= this.leg; n += 10) d += 'M' + this.X(n).toFixed(1) + ' 252 v' + (n % 50 ? 4 : 8) + ' '; return d },
+  dp(v) { return Math.abs(v - Math.round(v)) < 0.05 ? this.fmt(v) : this.fmt(v, 1) },
+  nm(v) { return Math.abs(v - Math.round(v)) < 0.15 ? this.fmt(v) : this.fmt(v, 1) },
+  get caption() {
+    if (this.noCruise) return 'The climb and the descent overlap: on this leg you never reach ' + this.fmt(this.cruise) + ' ft. Choose a lower cruising level or accept a shorter cruise.';
+    return 'Climbing ' + this.fmt(this.climbFt) + ' ft at ' + this.roc + ' ft/min takes ' + this.dp(this.climbMin) + ' min; at ' + this.cgs + ' kt over the ground that is ' + this.nm(this.climbNm) + ' NM. Descending ' + this.fmt(this.descFt) + ' ft at ' + this.rod + ' ft/min takes ' + this.dp(this.descMin) + ' min, ' + this.nm(this.descNm) + ' NM at ' + this.dgs + ' kt.';
+  },
+  presets: {
+    'wheatbelt-still-air': { leg: 96, dep: 100, cruise: 5500, roc: 500, cgs: 75, cct: 1100, rod: 500, dgs: 110 },
+    'headwind-climb': { leg: 96, dep: 1500, cruise: 7500, roc: 600, cgs: 70, cct: 1500, rod: 500, dgs: 120 },
+    'headwind-descent': { leg: 96, dep: 1500, cruise: 8500, roc: 600, cgs: 70, cct: 1500, rod: 500, dgs: 120 },
+    'jandakot-wheatbelt': { leg: 96, dep: 100, cruise: 6500, roc: 500, cgs: 70, cct: 1500, rod: 500, dgs: 90 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ttp-title" class="widget-stage">
+    <title id="ttp-title">Side profile of a leg: the climb from the departure aerodrome to the top of climb, the cruise, and the descent from the top of descent to circuit height at the destination, with distances along the bottom</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface)" rx="10"/>
+    <rect x="60" y="52" width="540" height="200" fill="var(--color-sky-soft)" fill-opacity="0.55"/>
+    <!-- height grid -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="60" y1="212" x2="600" y2="212"/><line x1="60" y1="172" x2="600" y2="172"/><line x1="60" y1="132" x2="600" y2="132"/><line x1="60" y1="92" x2="600" y2="92"/><line x1="60" y1="52" x2="600" y2="52"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="54" y="256">0</text><text x="54" y="216">2,000</text><text x="54" y="176">4,000</text><text x="54" y="136">6,000</text><text x="54" y="96">8,000</text><text x="54" y="56">10,000</text>
+    </g>
+    <text x="14" y="40" font-size="11" fill="var(--color-fg-faint)">ft</text>
+    <line x1="60" y1="252" x2="600" y2="252" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path :d="ticks" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="600" y="274" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num" x-text="leg + ' NM'"></text>
+        <text x="330" y="292" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">distance along the track (heights exaggerated)</text>
+    <!-- aerodromes -->
+    <rect x="52" width="22" height="5" rx="1.5" fill="var(--color-tarmac)" :y="Y(dep)"/>
+    <text x="66" font-size="12" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="Y(dep) + 20" x-text="'dep ' + fmt(dep) + ' ft'"></text>
+    <line x1="560" x2="600" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :y1="Y(cct)" :y2="Y(cct)"/>
+    <text x="596" text-anchor="end" font-size="12" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="Y(cct) + 18" x-text="'circuit ' + fmt(cct) + ' ft'"></text>
+    <!-- the profile -->
+    <line x1="60" x2="600" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :y1="Y(cruise)" :y2="Y(cruise)" :display="(noCruise) ? 'inline' : 'none'"/>
+    <path :d="profile" fill="none" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" :stroke="noCruise ? 'var(--color-bad)' : 'var(--color-fg)'"/>
+    <text font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" class="num" :x="(xc + xd) / 2" :y="Y(cruise) - 8" :display="(!noCruise) ? 'inline' : 'none'" x-text="'cruise ' + fmt(cruise) + ' ft · ' + nm(cruiseNm) + ' NM'"></text>
+    <!-- TOPC and TOPD -->
+    <line stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" y2="252" :x1="xc" :x2="xc" :y1="Y(cruise)"/>
+    <line stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" y2="252" :x1="xd" :x2="xd" :y1="Y(cruise)"/>
+    <circle r="6" fill="var(--color-brand)" :cx="xc" :cy="Y(cruise)"/>
+    <circle r="6" fill="var(--color-brand)" :cx="xd" :cy="Y(cruise)"/>
+    <g font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text font-weight="700" fill="var(--color-brand-fg)" :x="xc + 8" :y="Y(cruise) + 22" x-text="'TOPC ' + nm(climbNm) + ' NM'"></text>
+      <text fill="var(--color-brand-fg)" :x="xc + 8" :y="Y(cruise) + 37" x-text="'from departure, ' + dp(climbMin) + ' min'"></text>
+      <text font-weight="700" fill="var(--color-brand-fg)" text-anchor="end" :x="xd - 8" :y="Y(cruise) + 62" x-text="'TOPD ' + nm(descNm) + ' NM'"></text>
+      <text fill="var(--color-brand-fg)" text-anchor="end" :x="xd - 8" :y="Y(cruise) + 77" x-text="'before destination, ' + dp(descMin) + ' min'"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ttp-cruise">Cruising altitude <output for="ttp-cruise" x-text="fmt(cruise) + ' ft'"></output></label>
+      <input type="range" id="ttp-cruise" min="2500" max="9500" step="500" x-model.number="cruise">
+    </div>
+    <div class="widget-control">
+      <label for="ttp-leg">Leg distance <output for="ttp-leg" x-text="leg + ' NM'"></output></label>
+      <input type="range" id="ttp-leg" min="40" max="150" step="1" x-model.number="leg">
+    </div>
+    <div class="widget-control">
+      <label for="ttp-dep">Departure elevation <output for="ttp-dep" x-text="fmt(dep) + ' ft'"></output></label>
+      <input type="range" id="ttp-dep" min="0" max="2000" step="100" x-model.number="dep">
+    </div>
+    <div class="widget-control">
+      <label for="ttp-cct">Circuit height at the destination <output for="ttp-cct" x-text="fmt(cct) + ' ft'"></output></label>
+      <input type="range" id="ttp-cct" min="500" max="2500" step="100" x-model.number="cct">
+    </div>
+    <div class="widget-control">
+      <label for="ttp-roc">Rate of climb <output for="ttp-roc" x-text="roc + ' ft/min'"></output></label>
+      <input type="range" id="ttp-roc" min="300" max="900" step="50" x-model.number="roc">
+    </div>
+    <div class="widget-control">
+      <label for="ttp-cgs">Climb groundspeed (TAS ± wind) <output for="ttp-cgs" x-text="cgs + ' kt'"></output></label>
+      <input type="range" id="ttp-cgs" min="50" max="110" step="1" x-model.number="cgs">
+    </div>
+    <div class="widget-control">
+      <label for="ttp-rod">Rate of descent <output for="ttp-rod" x-text="rod + ' ft/min'"></output></label>
+      <input type="range" id="ttp-rod" min="300" max="900" step="50" x-model.number="rod">
+    </div>
+    <div class="widget-control">
+      <label for="ttp-dgs">Descent groundspeed (TAS ± wind) <output for="ttp-dgs" x-text="dgs + ' kt'"></output></label>
+      <input type="range" id="ttp-dgs" min="60" max="150" step="1" x-model.number="dgs">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Top of climb</dt><dd class="widget-value" x-text="fmt(climbFt) + ' ft ÷ ' + roc + ' = ' + dp(climbMin) + ' min × ' + fmt(cgs / 60, 2) + ' NM/min = ' + nm(climbNm) + ' NM from departure'"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Top of descent</dt><dd class="widget-value" x-text="fmt(descFt) + ' ft ÷ ' + rod + ' = ' + dp(descMin) + ' min × ' + fmt(dgs / 60, 2) + ' NM/min = ' + nm(descNm) + ' NM before destination'"></dd></div>
+    <div class="widget-readout" :class="noCruise ? 'bad' : ''"><dt class="widget-label">Cruise</dt><dd class="widget-value"><span x-text="noCruise ? 'none' : nm(cruiseNm) + ' NM at ' + fmt(cruise) + ' ft'"></span><span class="widget-flag bad" x-show="noCruise">no cruise</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('wheatbelt-still-air')" :aria-pressed="active === 'wheatbelt-still-air'">Wheatbelt, 5,500 ft</button>
+      <button type="button" @click="preset('headwind-climb')" :aria-pressed="active === 'headwind-climb'">Climb into a headwind</button>
+      <button type="button" @click="preset('headwind-descent')" :aria-pressed="active === 'headwind-descent'">Descent into a headwind</button>
+      <button type="button" @click="preset('jandakot-wheatbelt')" :aria-pressed="active === 'jandakot-wheatbelt'">Jandakot plan, 6,500 ft</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Height to change ÷ rate gives the time; time × the groundspeed for that phase gives the distance. Subtract the starting height, and use the groundspeed (TAS corrected for the wind component), not the cruise TAS. A headwind on the climb pulls TOPC closer to departure; a tailwind on the descent pushes TOPD further out.</p>
+  <details class="widget-try"><summary>Try it: climb from 1,500 ft to 7,500 ft at 600 ft/min, climb TAS 80 kt into a 10 kt headwind. Where is TOPC?</summary><p>6,000 ÷ 600 = 10 min; groundspeed 80 − 10 = 70 kt, 1.17 NM/min; 10 × 1.17 = 11.7 NM from departure. Press Climb into a headwind.</p></details>
+  <details class="widget-try"><summary>Try it: descent from 8,500 ft to 1,500 ft at 500 ft/min, TAS 135 kt into a 15 kt headwind. Where is TOPD?</summary><p>7,000 ÷ 500 = 14 min; groundspeed 120 kt, 2 NM/min; 14 × 2 = 28 NM before the destination. Press Descent into a headwind.</p></details>
+</div>

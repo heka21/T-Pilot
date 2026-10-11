@@ -1,0 +1,161 @@
+<div class="widget" x-data="timeline({
+  duration: 12,
+  loop: false,
+  close: false,
+  friction: false,
+  // illustrative model (Southern Hemisphere, f = 1): the pressure gradient force G points south towards the low,
+  // Coriolis f·V acts to the LEFT of the motion, friction k·V opposes it (k = tan 30° turns the steady wind 30° across
+  // the isobars). A little extra damping stops the parcel looping round its balance point.
+  get sim() {
+    const G = this.close ? 1.5 : 1, f = 1, k = this.friction ? Math.tan(Math.PI / 6) : 0, c = 0.6, dt = 0.05;
+    const den = f * f + k * k, us = G * f / den, vs = -G * k / den;
+    let u = 0, v = 0, x = 0, y = 0;
+    const pts = [];
+    for (let i = 0; i <= 260; i++) {
+      if (i % 2 === 0) pts.push({ x: x, y: y, u: u, v: v });
+      const ax = -f * v - k * u - c * (u - us), ay = f * u - G - k * v - c * (v - vs);
+      u += ax * dt; v += ay * dt; x += u * dt; y += v * dt;
+    }
+    return { G: G, k: k, pts: pts };
+  },
+  // the clock runs slow at first so the turn takes up most of it
+  get i() { return Math.round(Math.pow(this.t, 1.7) * (this.sim.pts.length - 1)) },
+  phaseOf(p) {
+    const sp = Math.hypot(p.u, p.v), cr = Math.atan2(-p.v, p.u) * 180 / Math.PI;
+    return sp < 0.04 ? 'rest' : cr > 55 ? 'pgf' : cr > (this.friction ? 34 : 6) ? 'turning' : 'balanced';
+  },
+  tOf(name) {
+    const pts = this.sim.pts, n = pts.length - 1;
+    for (let k = 0; k <= n; k++) if (this.phaseOf(pts[k]) === name) return Math.pow(k / n, 1 / 1.7);
+    return 1;
+  },
+  get s() { return this.sim.pts[this.i] },
+  // picture: 17 px per model unit, starting near the top left
+  sx(x) { return 70 + x * 17 },
+  sy(y) { return 120 - y * 17 },
+  get P() { return { x: this.sx(this.s.x), y: this.sy(this.s.y) } },
+  get trackD() { return this.path(this.sim.pts.slice(0, this.i + 1).map((p) => [this.sx(p.x), this.sy(p.y)])) },
+  get speed() { return Math.hypot(this.s.u, this.s.v) },
+  // arrows on the parcel, 55 px per model unit (screen y is down, so north components flip sign)
+  get pgf() { return { x: 0, y: this.sim.G * 55 } },
+  get cor() { return { x: -this.s.v * 55, y: -this.s.u * 55 } },
+  get fri() { return { x: -this.sim.k * this.s.u * 55, y: this.sim.k * this.s.v * 55 } },
+  get vel() { const m = this.friction ? 0.75 : 1; return { x: this.s.u * 55 * m, y: -this.s.v * 40 * m } },
+  // the angle the motion makes with the isobars, positive towards the low
+  get cross() { return Math.atan2(-this.s.v, this.s.u) * 180 / Math.PI },
+  get toBearing() { return Math.atan2(this.s.u, this.s.v) * 180 / Math.PI },
+  get fromDir() { return this.dir(this.toBearing + 180) },
+  get compass() {
+    const names = ['northerly', 'north-easterly', 'easterly', 'south-easterly', 'southerly', 'south-westerly', 'westerly', 'north-westerly'];
+    return names[Math.round((((this.toBearing + 180) % 360) + 360) % 360 / 45) % 8];
+  },
+  get phase() {
+    return this.phaseOf(this.s);
+  },
+  get winning() {
+    return { rest: 'Pressure gradient force, unopposed', pgf: 'Pressure gradient force: speeding up towards the low', turning: 'Coriolis growing, turning it left', balanced: this.friction ? 'Balanced: pressure gradient = Coriolis + friction' : 'Balanced: pressure gradient = Coriolis' }[this.phase];
+  },
+  get steps() {
+    return [{ at: 0, label: 'At rest' }, { at: Math.min(this.tOf('pgf'), 0.04), label: 'Pressure force starts it' }, { at: this.tOf('turning'), label: 'Coriolis turns it left' }, { at: this.tOf('balanced'), label: 'Balanced' }];
+  },
+  get caption() {
+    if (this.phase === 'rest') return 'Still air between a high to the north and a low to the south. The pressure gradient force points straight across the isobars, towards the low; Coriolis is zero because the air is not moving.';
+    if (this.phase === 'pgf') return 'The air sets off towards the low. As soon as it moves, Coriolis pushes it to its left, which for air moving south is towards the east.';
+    if (this.phase === 'turning') return 'Faster air feels more Coriolis, so the turn to the left tightens until the air is moving at right angles to the pressure gradient.';
+    if (this.friction) return 'Near the ground friction slows the air, so Coriolis weakens and the pressure gradient force wins a little: the wind crosses the isobars towards the low by about 30 degrees. Veered and lighter than the gradient wind.';
+    return 'Balanced: the pressure gradient force pulls towards the low, Coriolis pushes towards the high, and the air flows along the isobars with the low on its right. A westerly: the geostrophic wind.';
+  },
+  presets: {
+    'from-rest': { close: false, friction: false, t: 0, play: true },
+    'balanced-westerly': { close: false, friction: false, t: 1 },
+    'close-isobars': { close: true, friction: false, t: 1 },
+    'friction-over-land': { close: false, friction: true, t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="gwb-title" class="widget-stage">
+    <title id="gwb-title">Plan view, north up, Southern Hemisphere: straight east-west isobars with higher pressure to the north and lower pressure to the south. A parcel of air starts at rest, is pushed towards the low by the pressure gradient force, is turned to its left by Coriolis, and ends up flowing east along the isobars, or across them towards the low when friction acts</title>
+    <defs>
+      <marker id="gwb-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="360" fill="var(--color-surface)"/>
+    <rect x="0" y="0" width="640" height="60" fill="var(--color-warn-soft)" fill-opacity="0.6"/>
+    <rect x="0" y="300" width="640" height="60" fill="var(--color-sky-soft)" fill-opacity="0.8"/>
+    <!-- isobars -->
+    <g stroke="var(--color-line-strong)" stroke-width="1.25" x-show="!close">
+      <line x1="0" y1="60" x2="640" y2="60"/><line x1="0" y1="140" x2="640" y2="140"/><line x1="0" y1="220" x2="640" y2="220"/><line x1="0" y1="300" x2="640" y2="300"/>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1.25" x-show="close">
+      <line x1="0" y1="60" x2="640" y2="60"/><line x1="0" y1="108" x2="640" y2="108"/><line x1="0" y1="156" x2="640" y2="156"/><line x1="0" y1="204" x2="640" y2="204"/><line x1="0" y1="252" x2="640" y2="252"/><line x1="0" y1="300" x2="640" y2="300"/>
+    </g>
+    <text x="20" y="26" font-size="16" font-weight="700" fill="var(--color-warn-fg)">H</text>
+    <text x="40" y="26" font-size="13" fill="var(--color-warn-fg)">higher pressure to the north</text>
+    <text x="20" y="346" font-size="16" font-weight="700" fill="var(--color-bad)">L</text>
+    <text x="40" y="346" font-size="13" fill="var(--color-sky-fg)">lower pressure to the south</text>
+    <text x="630" y="290" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" x-text="close ? 'isobars close: strong gradient' : 'isobars wide apart: gentle gradient'"></text>
+    <g transform="translate(606 30)">
+      <path d="M0 -16 L6 2 L0 -2 L-6 2 Z" fill="var(--color-fg-muted)"/>
+      <text x="0" y="16" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">N</text>
+    </g>
+    <!-- the track so far -->
+    <path :d="trackD" fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round" opacity="0.7"/>
+    <!-- forces on the parcel -->
+    <g stroke-width="2.5" stroke-linecap="round" marker-end="url(#gwb-arrow)">
+      <line :x1="P.x" :y1="P.y" :x2="P.x + pgf.x" :y2="P.y + pgf.y" stroke="var(--color-info)"/>
+      <line :x1="P.x" :y1="P.y" :x2="P.x + cor.x" :y2="P.y + cor.y" stroke="var(--color-warn)" x-show="speed > 0.04"/>
+      <line :x1="P.x" :y1="P.y" :x2="P.x + fri.x" :y2="P.y + fri.y" stroke="var(--color-fg-muted)" x-show="friction && speed > 0.04"/>
+      <line :x1="P.x" :y1="P.y" :x2="P.x + vel.x" :y2="P.y + vel.y" stroke="var(--color-brand)" stroke-width="3.5" x-show="speed > 0.04"/>
+    </g>
+    <circle r="7" :cx="P.x" :cy="P.y" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2"/>
+    <g font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text :x="P.x + 8" :y="P.y + pgf.y + 4" fill="var(--color-info)">pressure gradient</text>
+      <text :x="P.x + cor.x + (cor.x < 0 ? -6 : 6)" :y="P.y + cor.y - 6" :text-anchor="cor.x < 0 ? 'end' : 'start'" fill="var(--color-warn-fg)" x-show="speed > 0.04">Coriolis</text>
+      <text :x="P.x + fri.x - 6" :y="P.y + fri.y + 16" text-anchor="end" fill="var(--color-fg-muted)" x-show="friction && speed > 0.04">friction</text>
+      <text :x="P.x + vel.x + 8" :y="P.y + vel.y + (vel.y > 10 ? 14 : -6)" fill="var(--color-brand-fg)" x-show="speed > 0.04">wind</text>
+    </g>
+    <text x="630" y="84" font-size="15" text-anchor="end" font-weight="700" fill="var(--color-fg)" class="num" x-text="speed < 0.04 ? 'calm' : fromDir + ', ' + compass"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Release the air'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="gwb-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time since the air was released">
+    <span class="widget-clock" x-text="phase === 'balanced' ? 'balanced' : 'turning'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gwb-close" class="cursor-pointer"><span>Isobars close together (strong gradient)</span>
+        <input type="checkbox" id="gwb-close" x-model="close" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="gwb-friction" class="cursor-pointer"><span>Near the surface over land (friction)</span>
+        <input type="checkbox" id="gwb-friction" x-model="friction" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="phase === 'balanced' ? 'ok' : ''"><dt class="widget-label">Wind (from)</dt><dd class="widget-value num" x-text="speed < 0.04 ? 'calm' : fromDir + '°, ' + compass"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Against the isobars</dt><dd class="widget-value" x-text="speed < 0.04 ? '–' : Math.abs(cross) < 4 ? 'along them' : fmt(Math.abs(cross)) + '° across, ' + (cross > 0 ? 'towards the low' : 'towards the high: overshooting')"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Speed</dt><dd class="widget-value" x-text="phase !== 'balanced' ? 'building up' : friction ? 'lighter: about half to two-thirds of the gradient wind (rule of thumb)' : close ? 'strong: close isobars' : 'the gradient (geostrophic) speed'"></dd></div>
+    <div class="widget-readout" :class="phase === 'balanced' ? 'ok' : 'warn'"><dt class="widget-label">Forces</dt><dd class="widget-value" x-text="winning"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('from-rest')" :aria-pressed="active === 'from-rest'">Release the air</button>
+      <button type="button" @click="preset('balanced-westerly')" :aria-pressed="active === 'balanced-westerly'">Balanced westerly</button>
+      <button type="button" @click="preset('close-isobars')" :aria-pressed="active === 'close-isobars'">Close isobars</button>
+      <button type="button" @click="preset('friction-over-land')" :aria-pressed="active === 'friction-over-land'">Friction over land</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The pressure gradient force starts the air towards the low; Coriolis, to the left in the Southern Hemisphere and growing with speed, turns it until the two balance and the wind blows along the isobars with the low on its right. Close isobars mean a bigger push and a faster balanced wind. Near the ground friction slows the air, Coriolis weakens, and the wind turns across the isobars towards the low: veered and lighter. The path is an illustrative model.</p>
+  <details class="widget-try"><summary>Try it: with the high to the north and the low to the south, what wind do you get, and which way would an overseas textbook have it turn?</summary><p>Press Release the air: Coriolis turns it left until it blows east, a westerly, the westerlies of the Southern Ocean. In the Northern Hemisphere Coriolis acts to the right, so the same pressure pattern there would give an easterly.</p></details>
+  <details class="widget-try"><summary>Try it: why is the surface wind veered from the 2,000 ft wind?</summary><p>Tick friction: the slower air feels less Coriolis, the unchanged pressure gradient force wins a little and the wind turns towards the low. With the low on your right, turning towards it is turning clockwise: veered, here from 270 to about 300.</p></details>
+</div>

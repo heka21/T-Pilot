@@ -1,0 +1,171 @@
+<div class="widget" x-data="widget({
+  low: 2, lowBase: 2000, up: 5, upBase: 4500,
+  // codes from oktas (RMTC 2.2, PMTC 2.3): FEW 1-2, SCT 3-4, BKN 5-7, OVC 8; BKN and OVC are a ceiling
+  code(n) { return n <= 0 ? '' : n <= 2 ? 'FEW' : n <= 4 ? 'SCT' : n <= 7 ? 'BKN' : 'OVC' },
+  word(n) { return n <= 0 ? 'none' : n <= 2 ? 'few' : n <= 4 ? 'scattered' : n <= 7 ? 'broken' : 'overcast' },
+  hund(ft) { return String(Math.round(ft / 100)).padStart(3, '0') },
+  group(n, ft) { return n > 0 ? this.code(n) + this.hund(ft) : '' },
+  isCeil(n) { return n >= 5 },
+  // the upper layer is always above the lower one
+  get top() { return Math.max(this.upBase, this.lowBase + 500) },
+  get groups() { const g = [this.group(this.low, this.lowBase), this.group(this.up, this.top)].filter((s) => s); return g.length ? g.join(' ') : 'NSC' },
+  get ceiling() { return this.isCeil(this.low) ? this.lowBase : this.isCeil(this.up) ? this.top : null },
+  get ceilText() { return this.ceiling === null ? 'None' : this.fmt(this.ceiling) + ' ft above the aerodrome' },
+  get ceilWhy() {
+    if (this.ceiling === null) return this.low + this.up === 0 ? 'no cloud' : 'no layer of 5 oktas or more';
+    if (this.ceiling === this.top && this.low > 0) return 'the lowest BKN or OVC layer, not the ' + this.code(this.low) + ' below it';
+    return 'the lowest BKN or OVC layer';
+  },
+  layerText(n) { return n === 0 ? '0 oktas: no layer' : n + (n === 1 ? ' okta' : ' oktas') + ': ' + this.code(n) + (this.isCeil(n) ? ', a ceiling' : ', not a ceiling') },
+  // side view: 0-5,500 ft above the aerodrome up y 268..48
+  Y(ft) { return 268 - ft * 0.04 },
+  // a slot of the side-view layer is cloudy when its rank (spread out evenly) is under the oktas
+  rank: [0, 4, 2, 6, 1, 5, 3, 7],
+  on(n, i) { return this.rank[i] < n },
+  // pie slice i (of 8) for the pushed-together view, centred (cx, cy), radius r
+  slice(cx, cy, r, i) { const a = this.pol(cx, cy, r, i * 45), b = this.pol(cx, cy, r, i * 45 + 45); return 'M' + cx + ' ' + cy + ' L' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + ' Z' },
+  presets: {
+    'few-030': { low: 2, lowBase: 3000, up: 0, upBase: 4500 },
+    'jandakot-taf': { low: 2, lowBase: 3000, up: 4, upBase: 4500 },
+    'tempo-bkn020': { low: 6, lowBase: 2000, up: 0, upBase: 4500 },
+    'northam-ceiling': { low: 2, lowBase: 2000, up: 6, upBase: 4500 },
+    'overcast': { low: 8, lowBase: 1500, up: 0, upBase: 4500 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="oks-title" class="widget-stage">
+    <title id="oks-title">Two views of the same sky: on the left, looking straight up at the dome of the sky divided into eight slices, with the cloud of each layer drawn over it; on the right, the layers seen from the side above the aerodrome, each with its okta count pushed together into a pie, its code, and the ceiling marked at the lowest broken or overcast layer</title>
+    <defs>
+      <clipPath id="oks-dome"><circle cx="150" cy="158" r="112"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)" rx="10"/>
+    <!-- LEFT: the sky dome from below -->
+    <text x="150" y="26" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Looking straight up</text>
+    <circle cx="150" cy="158" r="112" fill="var(--color-sky-soft)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g clip-path="url(#oks-dome)">
+      <!-- upper layer: patches of about an eighth of the dome each, written out (no x-for in svg); whole dome at 8 -->
+      <g fill="var(--color-paint)" fill-opacity="0.55" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-linejoin="round">
+        <rect x="30" y="38" width="240" height="240" x-show="up >= 8"/>
+        <path transform="translate(196 112) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 1 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(102 198) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 2 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(98 102) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 3 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(204 204) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 4 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(150 154) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 5 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(150 252) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 6 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(244 150) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 7 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(58 160) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 5 &amp;&amp; up &lt; 8"/>
+        <path transform="translate(150 62) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="up >= 7 &amp;&amp; up &lt; 8"/>
+      </g>
+      <!-- lower layer: solid, drawn over the upper one -->
+      <g fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round">
+        <rect x="30" y="38" width="240" height="240" x-show="low >= 8"/>
+        <path transform="translate(108 116) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 1 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(198 198) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 2 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(204 104) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 3 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(94 206) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 4 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(152 160) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 5 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(56 148) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 6 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(246 166) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 7 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(150 246) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 6 &amp;&amp; low &lt; 8"/>
+        <path transform="translate(150 66) scale(1.1)" d="M-38 8 a16 16 0 0 1 6 -28 a20 20 0 0 1 34 -14 a18 18 0 0 1 34 10 a16 16 0 0 1 2 30 a18 18 0 0 1 -26 14 a20 20 0 0 1 -34 4 a14 14 0 0 1 -16 -16 Z" x-show="low >= 7 &amp;&amp; low &lt; 8"/>
+      </g>
+    </g>
+    <!-- the eight slices, drawn on top so the reader can count -->
+    <g stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="150" y1="46" x2="150" y2="270"/><line x1="38" y1="158" x2="262" y2="158"/>
+      <line x1="70.8" y1="78.8" x2="229.2" y2="237.2"/><line x1="229.2" y1="78.8" x2="70.8" y2="237.2"/>
+    </g>
+    <circle cx="150" cy="158" r="112" fill="none" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="150" y="292" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">each slice of the dome is one okta</text>
+
+    <!-- RIGHT: the layers from the side -->
+    <text x="476" y="26" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">From the side</text>
+    <line x1="350" y1="268" x2="630" y2="268" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="440" y="266" width="120" height="5" fill="var(--color-tarmac)"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="344" y="272">0</text><text x="344" y="192">2,000</text><text x="344" y="112">4,000</text>
+    </g>
+    <g stroke="var(--color-line)" stroke-width="1"><line x1="350" y1="188" x2="630" y2="188"/><line x1="350" y1="108" x2="630" y2="108"/></g>
+    <text x="344" y="58" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">ft</text>
+    <!-- circuit aeroplane at 1,000 ft for scale -->
+    <g transform="translate(400 228)">
+      <g transform="translate(0 0) rotate(0) scale(0.32)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+    </g>
+    <text x="400" y="250" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">circuit 1,000 ft</text>
+    <!-- ceiling line -->
+    <g x-show="ceiling !== null">
+      <line x1="350" x2="630" stroke="var(--color-bad)" stroke-width="1.5" stroke-dasharray="6 4" :y1="Y(ceiling || 0) + 2" :y2="Y(ceiling || 0) + 2"/>
+      <text x="626" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="Y(ceiling || 0) + 16" x-text="'ceiling ' + fmt(ceiling || 0) + ' ft'"></text>
+    </g>
+    <!-- upper layer: 8 slots of 30 px from x 380, cloudy ones drawn -->
+    <g x-show="up > 0" fill="var(--color-paint)" fill-opacity="0.55" stroke="var(--color-fg-faint)" stroke-width="1.25" :transform="'translate(0 ' + Y(top) + ')'">
+      <rect x="390" y="-16" width="30" height="16" rx="7" x-show="on(up, 0)"/><rect x="420" y="-16" width="30" height="16" rx="7" x-show="on(up, 1)"/>
+      <rect x="450" y="-16" width="30" height="16" rx="7" x-show="on(up, 2)"/><rect x="480" y="-16" width="30" height="16" rx="7" x-show="on(up, 3)"/>
+      <rect x="510" y="-16" width="30" height="16" rx="7" x-show="on(up, 4)"/><rect x="540" y="-16" width="30" height="16" rx="7" x-show="on(up, 5)"/>
+      <rect x="570" y="-16" width="30" height="16" rx="7" x-show="on(up, 6)"/><rect x="600" y="-16" width="30" height="16" rx="7" x-show="on(up, 7)"/>
+    </g>
+    <g x-show="low > 0" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.5" :transform="'translate(0 ' + Y(lowBase) + ')'">
+      <rect x="390" y="-16" width="30" height="16" rx="7" x-show="on(low, 0)"/><rect x="420" y="-16" width="30" height="16" rx="7" x-show="on(low, 1)"/>
+      <rect x="450" y="-16" width="30" height="16" rx="7" x-show="on(low, 2)"/><rect x="480" y="-16" width="30" height="16" rx="7" x-show="on(low, 3)"/>
+      <rect x="510" y="-16" width="30" height="16" rx="7" x-show="on(low, 4)"/><rect x="540" y="-16" width="30" height="16" rx="7" x-show="on(low, 5)"/>
+      <rect x="570" y="-16" width="30" height="16" rx="7" x-show="on(low, 6)"/><rect x="600" y="-16" width="30" height="16" rx="7" x-show="on(low, 7)"/>
+    </g>
+    <!-- layer labels with the oktas pushed together into a pie -->
+    <g x-show="up > 0" :transform="'translate(372 ' + (Y(top) - 8) + ')'">
+      <circle r="11" fill="var(--color-surface)" stroke="var(--color-fg-faint)" stroke-width="1"/>
+      <path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 0)" x-show="up >= 1"/><path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 1)" x-show="up >= 2"/>
+      <path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 2)" x-show="up >= 3"/><path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 3)" x-show="up >= 4"/>
+      <path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 4)" x-show="up >= 5"/><path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 5)" x-show="up >= 6"/>
+      <path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 6)" x-show="up >= 7"/><path fill="var(--color-fg-faint)" :d="slice(0, 0, 11, 7)" x-show="up >= 8"/>
+      <text x="18" y="-12" font-size="13" font-weight="600" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="group(up, top)"></text>
+    </g>
+    <g x-show="low > 0" :transform="'translate(372 ' + (Y(lowBase) - 8) + ')'">
+      <circle r="11" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1"/>
+      <path fill="var(--color-brand)" :d="slice(0, 0, 11, 0)" x-show="low >= 1"/><path fill="var(--color-brand)" :d="slice(0, 0, 11, 1)" x-show="low >= 2"/>
+      <path fill="var(--color-brand)" :d="slice(0, 0, 11, 2)" x-show="low >= 3"/><path fill="var(--color-brand)" :d="slice(0, 0, 11, 3)" x-show="low >= 4"/>
+      <path fill="var(--color-brand)" :d="slice(0, 0, 11, 4)" x-show="low >= 5"/><path fill="var(--color-brand)" :d="slice(0, 0, 11, 5)" x-show="low >= 6"/>
+      <path fill="var(--color-brand)" :d="slice(0, 0, 11, 6)" x-show="low >= 7"/><path fill="var(--color-brand)" :d="slice(0, 0, 11, 7)" x-show="low >= 8"/>
+      <text x="18" y="-12" font-size="13" font-weight="600" class="num" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="group(low, lowBase)"></text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="oks-low">Lower layer <output for="oks-low" x-text="low + ' oktas (' + word(low) + ')'"></output></label>
+      <input type="range" id="oks-low" min="0" max="8" step="1" x-model.number="low">
+    </div>
+    <div class="widget-control">
+      <label for="oks-lowbase">Lower base <output for="oks-lowbase" x-text="fmt(lowBase) + ' ft'"></output></label>
+      <input type="range" id="oks-lowbase" min="500" max="4500" step="100" x-model.number="lowBase">
+    </div>
+    <div class="widget-control">
+      <label for="oks-up">Upper layer <output for="oks-up" x-text="up + ' oktas (' + word(up) + ')'"></output></label>
+      <input type="range" id="oks-up" min="0" max="8" step="1" x-model.number="up">
+    </div>
+    <div class="widget-control">
+      <label for="oks-upbase">Upper base <output for="oks-upbase" x-text="fmt(top) + ' ft'"></output></label>
+      <input type="range" id="oks-upbase" min="1000" max="5000" step="100" x-model.number="upBase">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Cloud groups</dt><dd class="widget-value" x-text="groups"></dd></div>
+    <div class="widget-readout" :class="isCeil(low) ? 'warn' : low > 0 ? 'ok' : ''"><dt class="widget-label">Lower layer</dt><dd class="widget-value" x-text="layerText(low)"></dd></div>
+    <div class="widget-readout" :class="ceiling === null ? 'ok' : 'warn'">
+      <dt class="widget-label">Ceiling</dt>
+      <dd class="widget-value"><span x-text="ceilText"></span><span class="widget-flag warn" x-show="ceiling !== null">ceiling</span></dd>
+    </div>
+  </dl>
+  <p class="widget-caption" aria-live="polite" x-text="'Ceiling: ' + ceilWhy + '.'"></p>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('few-030')" :aria-pressed="active === 'few-030'">FEW030</button>
+      <button type="button" @click="preset('jandakot-taf')" :aria-pressed="active === 'jandakot-taf'">FEW030 SCT045</button>
+      <button type="button" @click="preset('tempo-bkn020')" :aria-pressed="active === 'tempo-bkn020'">BKN020</button>
+      <button type="button" @click="preset('northam-ceiling')" :aria-pressed="active === 'northam-ceiling'">FEW020 BKN045</button>
+      <button type="button" @click="preset('overcast')" :aria-pressed="active === 'overcast'">Overcast</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Oktas count how many eighths of the sky the cloud would fill if you pushed it all together: FEW 1 to 2, SCT 3 to 4, BKN 5 to 7, OVC 8. Only BKN and OVC make a ceiling, because then the sky is more cloud than gap, and the ceiling is the lowest such layer, which need not be the lowest cloud. Bases in a TAF or METAR are above the aerodrome. The cloud shapes are illustrative.</p>
+  <details class="widget-try"><summary>Try it: the Jandakot TAF opens with FEW030 SCT045. Is there a ceiling?</summary><p>Press FEW030 SCT045: 2 oktas and 4 oktas, neither of them 5 or more, so no ceiling. Push the upper layer up by one okta to 5 and it becomes BKN045: now there is a ceiling at 4,500 ft.</p></details>
+  <details class="widget-try"><summary>Try it: a Northam METAR reads FEW020 BKN045. Where is the ceiling?</summary><p>Press FEW020 BKN045: the ceiling is the broken layer at 4,500 ft above the aerodrome, not the few cloud at 2,000 ft. With Northam about 500 ft above sea level, that is 5,000 ft AMSL.</p></details>
+</div>

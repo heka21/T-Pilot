@@ -1,0 +1,199 @@
+<div class="widget" x-data="timeline({
+  duration: 45,
+  loop: false,
+  // the clock: t 0..1 is 17 to 26 minutes past the hour (illustrative)
+  get m() { return 17 + this.t * 9 },
+  get clock() { return '10:' + String(Math.floor(this.m + 1e-6)).padStart(2, '0') },
+  calls: [
+    { m: 17.33, who: 'archer', pre: '', open: 'Northam traffic,', l1: ' Piper Archer Sierra Uniform November,', l2: 'turning base runway 23, ' },
+    { m: 17.83, who: 'warrior', pre: '', open: 'Northam traffic,', l1: ' Piper Warrior Delta Echo Golf, taxiing runway 23', l2: 'for the south-west training area, ' },
+    { m: 18.33, who: 'ktr', pre: '[tuned in late] ', open: '', l1: '… Kilo Tango Romeo, 5 miles east, 2,500, inbound,', l2: 'estimate circuit at 22, ' },
+    { m: 18.83, who: 'archer', pre: '', open: 'Northam traffic,', l1: ' Archer Sierra Uniform November, clear of runway 23,', l2: '' },
+    { m: 19, who: 'you', pre: '', open: 'Northam traffic,', l1: ' Cessna 172 Alpha Bravo Charlie, 10 miles south, 2,500,', l2: 'inbound, estimate circuit at 25, ' },
+    { m: 19.75, who: 'warrior', pre: '', open: 'Northam traffic,', l1: ' Warrior Delta Echo Golf, entering and rolling runway 23,', l2: 'departing to the south-west, ' },
+    { m: 21.67, who: 'ktr', pre: '', open: 'Northam traffic,', l1: ' Cessna 182 Kilo Tango Romeo, joining downwind runway 23,', l2: '' },
+    { m: 24, who: 'you', pre: '', open: 'Northam traffic,', l1: ' Cessna Alpha Bravo Charlie, joining crosswind runway 23,', l2: '' },
+  ],
+  get steps() {
+    const names = ['Archer on base', 'Warrior taxiing', 'Half-heard call', 'Archer clear', 'Your inbound call', 'Warrior rolling', '182 joining downwind', 'Your joining call'];
+    return [{ at: 0, label: 'Listen first' }].concat(this.calls.map((c, i) => ({ at: (c.m - 17) / 9, label: names[i] })));
+  },
+  heard(i) { return this.m + 1e-6 >= this.calls[i].m },
+  get ci() { let k = -1; this.calls.forEach((c, i) => { if (this.heard(i)) k = i }); return k },
+  get call() { return this.ci >= 0 ? this.calls[this.ci] : { who: '', pre: '', open: '', l1: 'Listening on the CTAF before the inbound call…', l2: '' } },
+  // fresh calls bright, older ones fade: what you know is where each aircraft was when it called
+  age(i) { return this.ci === i ? 1 : 0.6 },
+  // you: 100 kt, 10 nm south at 10:19, estimate circuit at 25; the picture compresses the distance
+  get dist() { return 10 - (this.m - 19) * 100 / 60 },
+  wp: [[13.34, 114, 424], [10, 122, 404], [4, 140, 336], [1.67, 170, 292], [0, 204.2, 280.3]],
+  get me() {
+    const d = this.dist, w = this.wp;
+    if (d <= 0) { const f = Math.min(1, (this.m - 25) / 1.5); return { x: this.lerp(204.2, 271.7, f * 0.66), y: this.lerp(280.3, 360.7, f * 0.66), h: 140 } }
+    for (let i = 1; i < w.length; i++) if (d >= w[i][0]) {
+      const f = this.seg(d, w[i - 1][0], w[i][0]);
+      const h = Math.atan2(w[i][1] - w[i - 1][1], -(w[i][2] - w[i - 1][2])) * 180 / Math.PI;
+      return { x: this.lerp(w[i - 1][1], w[i][1], f), y: this.lerp(w[i - 1][2], w[i][2], f), h: h };
+    }
+    return { x: w[0][1], y: w[0][2], h: 20 };
+  },
+  get flown() {
+    const pts = this.wp.filter((p) => p[0] > Math.max(0, this.dist)).map((p) => [p[1], p[2]]);
+    if (this.dist <= 0) pts.push([204.2, 280.3]);
+    pts.push([this.me.x, this.me.y]);
+    return this.path(pts);
+  },
+  get archerBase() { return this.heard(0) && !this.heard(3) },
+  get archerClear() { return this.heard(3) },
+  get warriorTaxi() { return this.heard(1) && !this.heard(5) },
+  get warriorRoll() { return this.heard(5) },
+  get ktrEast() { return this.heard(2) && !this.heard(6) },
+  get ktrJoin() { return this.heard(6) },
+  get picture() {
+    const a = [];
+    if (this.archerBase) a.push('Archer SUN');
+    if (this.heard(1)) a.push('Warrior DEG');
+    if (this.ktrEast) a.push('? KTR');
+    if (this.ktrJoin) a.push('182 KTR');
+    return a;
+  },
+  get follow() {
+    if (this.ktrJoin) return '182 KTR, on downwind';
+    if (this.ktrEast) return 'KTR, circuit at 22';
+    return 'No one yet';
+  },
+  get toCircuit() { return this.dist > 0.05 ? this.fmt(this.dist, 1) + ' nm, ' + this.fmt(this.dist / 100 * 60, 1) + ' min' : 'In the circuit' },
+  get caption() {
+    return [
+      'You are 13 miles south at 2,500 ft, about 8 minutes out. Before the inbound call, listen to the CTAF for a while to learn which runway is in use and who is in the circuit.',
+      'First call: an Archer turning base runway 23. Now you know the runway in use, and that the circuit is on the south-east side. It is about to land, long before you arrive.',
+      'A Warrior is taxiing for runway 23, for the south-west training area: soon someone will be on the runway, then climbing out to the south-west.',
+      'You tuned in halfway through and missed the type. Only the closing “Northam” tells you the call is about your aerodrome and not another one on the same frequency: someone 5 miles east, inbound, circuit at 22, three minutes ahead of you.',
+      'The Archer is clear of runway 23: it is on the ground and out of the picture, and the waiting Warrior can line up.',
+      'Your inbound call, made by 10 nm: at 100 kt it gives everyone in the circuit about 6 minutes to look for you (10 ÷ 100 × 60 = 6).',
+      'The Warrior is rolling on 23 and departing to the south-west: it will climb out past the upwind end, close to where you plan to join. Look for it.',
+      'The aircraft from the east is a Cessna 182, Kilo Tango Romeo, joining downwind. It will be ahead of you in the circuit: that is the one you follow.',
+      'Your joining call tells everyone exactly where you will appear: crosswind for runway 23, then downwind behind the 182.',
+    ][this.step] || '';
+  },
+  presets: {
+    'listening-first': { t: 0 },
+    'half-heard-call': { t: 0.1478 },
+    'inbound-call-10nm': { t: 0.2223 },
+    'joining-crosswind': { t: 0.7778 },
+  },
+})">
+  <svg viewBox="0 0 640 416" role="img" aria-labelledby="ctp-title" class="widget-stage">
+    <title id="ctp-title">Plan view of Northam with runway 23 in use and a left-hand circuit on the south-east side. The latest CTAF call is shown at the top, and each call places a marker where it puts that aircraft, so the traffic picture builds up as you fly in from the south</title>
+    <rect x="0" y="0" width="640" height="416" fill="var(--color-surface-2)" rx="10"/>
+    <!-- the latest call -->
+    <rect x="8" y="8" width="624" height="56" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" fill="none" stroke-linecap="round">
+      <path d="M22 24 q4 4 0 8 M18 21 q7 7 0 14"/>
+    </g>
+    <text x="30" y="32" font-size="11" fill="var(--color-fg-muted)" font-weight="600">CTAF</text>
+    <text x="18" y="54" font-size="14" font-weight="600" class="num" fill="var(--color-fg)" x-text="clock"></text>
+    <line x1="72" y1="16" x2="72" y2="56" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="82" y="31" font-size="13" :fill="call.who === 'you' ? 'var(--color-brand-fg)' : 'var(--color-fg)'"><tspan font-style="italic" fill="var(--color-fg-faint)" x-text="call.pre"></tspan><tspan font-weight="700" x-text="call.open"></tspan><tspan x-text="call.l1"></tspan></text>
+    <text x="82" y="51" font-size="13" :fill="call.who === 'you' ? 'var(--color-brand-fg)' : 'var(--color-fg)'"><tspan x-text="call.l2"></tspan><tspan font-weight="700" x-text="ci >= 0 ? 'Northam.' : ''"></tspan></text>
+    <g transform="translate(0 -24)">
+    <!-- the circuit for runway 23, left-hand, drawn faintly with its leg names -->
+    <path d="M252.5 239.9 L204.2 280.3 L271.7 360.7 L463.3 200.1 L395.8 119.7 L347.5 160.1" fill="none" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-dasharray="4 3" stroke-linejoin="round"/>
+    <g font-size="12" fill="var(--color-fg-faint)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text x="222" y="250" text-anchor="end">upwind</text>
+      <text x="214" y="342" text-anchor="end">crosswind</text>
+      <text x="428" y="258">downwind</text>
+      <text x="442" y="150">base</text>
+      <text x="364" y="128" text-anchor="end">final</text>
+    </g>
+    <!-- runway 23/05 -->
+    <polygon points="352,165.5 343,154.7 248,234.5 257,245.3" fill="var(--color-tarmac)" stroke-linejoin="round"/>
+    <g font-size="11" font-weight="700" fill="var(--color-paint)" text-anchor="middle" class="num">
+      <text transform="translate(336.8 169.1) rotate(-40)" y="4">23</text>
+      <text transform="translate(263.2 230.9) rotate(-40)" y="4">05</text>
+    </g>
+    <text x="286" y="196" font-size="14" font-weight="700" text-anchor="end" fill="var(--color-fg)">Northam</text>
+    <!-- north -->
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round" fill="none"><line x1="606" y1="412" x2="606" y2="384"/><path d="M600 392 L606 384 L612 392"/></g>
+    <text x="606" y="430" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" font-weight="600">N</text>
+    <!-- your track from the south (distance compressed) -->
+    <path d="M114 424 L122 404 L140 336 L170 292 L204.2 280.3 L271.7 360.7" fill="none" stroke="var(--color-brand)" stroke-opacity="0.35" stroke-width="1.25" stroke-dasharray="4 3" stroke-linejoin="round"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :d="flown"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"><line x1="122" y1="372" x2="138" y2="366"/><line x1="124" y1="378" x2="140" y2="372"/></g>
+    <text x="116" y="374" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">not to scale</text>
+    <line x1="116" y1="404" x2="128" y2="404" stroke="var(--color-brand)" stroke-width="1.5"/>
+    <text x="98" y="408" font-size="12" text-anchor="end" fill="var(--color-brand-fg)" font-weight="600">10 nm</text>
+    <!-- other traffic, placed where each call puts it -->
+    <g x-show="archerBase" :opacity="age(0)">
+      <circle cx="463.3" cy="200.1" r="17" fill="none" stroke="var(--color-warn)" stroke-width="1.5" x-show="ci === 0"/>
+      <g transform="translate(463.3 200.1) rotate(230)"><!-- python -m tools.diagrams.plane top, scale 0.26, heading 90, colour fg --><g transform="translate(0 0) rotate(0) scale(0.26)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <text x="482" y="205" font-size="12" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">Archer SUN</text>
+    </g>
+    <g x-show="archerClear" :opacity="age(3) * 0.8">
+      <circle cx="251.4" cy="212" r="17" fill="none" stroke="var(--color-warn)" stroke-width="1.5" x-show="ci === 3"/>
+      <g transform="translate(251.4 212) rotate(230)"><!-- python -m tools.diagrams.plane top, scale 0.26, heading 90, colour fg --><g transform="translate(0 0) rotate(0) scale(0.26)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <text x="236" y="210" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">Archer SUN, clear</text>
+    </g>
+    <g x-show="warriorTaxi" :opacity="age(1)">
+      <circle cx="326.9" cy="151.3" r="17" fill="none" stroke="var(--color-warn)" stroke-width="1.5" x-show="ci === 1"/>
+      <g transform="translate(326.9 151.3) rotate(50)"><!-- python -m tools.diagrams.plane top, scale 0.26, heading 90, colour fg --><g transform="translate(0 0) rotate(0) scale(0.26)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <text x="310" y="140" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">Warrior DEG, taxiing</text>
+    </g>
+    <g x-show="warriorRoll" :opacity="age(5)">
+      <circle cx="312" cy="190" r="17" fill="none" stroke="var(--color-warn)" stroke-width="1.5" x-show="ci === 5"/>
+      <g transform="translate(312 190) rotate(140)"><!-- python -m tools.diagrams.plane top, scale 0.26, heading 90, colour fg --><g transform="translate(0 0) rotate(0) scale(0.26)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <text x="332" y="212" font-size="12" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">Warrior DEG, rolling</text>
+    </g>
+    <g x-show="ktrEast" :opacity="age(2)">
+      <circle cx="596" cy="200" r="17" fill="none" stroke="var(--color-warn)" stroke-width="1.5" x-show="ci === 2"/>
+      <g transform="translate(596 200) rotate(180)"><!-- python -m tools.diagrams.plane top, scale 0.26, heading 90, colour fg --><g transform="translate(0 0) rotate(0) scale(0.26)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <text x="596" y="176" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">? KTR</text>
+      <text x="596" y="232" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">5 nm east</text>
+    </g>
+    <g x-show="ktrJoin" :opacity="age(6)">
+      <circle cx="367.5" cy="280.4" r="17" fill="none" stroke="var(--color-warn)" stroke-width="1.5" x-show="ci === 6"/>
+      <g transform="translate(367.5 280.4) rotate(-40)"><!-- python -m tools.diagrams.plane top, scale 0.26, heading 90, colour fg --><g transform="translate(0 0) rotate(0) scale(0.26)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <text x="382" y="302" font-size="12" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">182 KTR</text>
+    </g>
+    <!-- you -->
+    <g>
+      <circle r="18" fill="none" stroke="var(--color-warn)" stroke-width="1.5" :cx="me.x" :cy="me.y" x-show="call.who === 'you'"/>
+      <g :transform="'translate(' + me.x + ' ' + me.y + ') rotate(' + (me.h - 90) + ')'"><!-- python -m tools.diagrams.plane top, scale 0.3, heading 90, colour brand --><g transform="translate(0 0) rotate(0) scale(0.3)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <text font-size="12" font-weight="700" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+        :x="me.x + 24" :y="me.y + 4">You, ABC</text>
+    </g>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the calls'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ctp-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Aircraft in the picture</dt><dd class="widget-value" x-text="picture.length ? picture.length + ': ' + picture.join(', ') : 'None yet'"></dd></div>
+    <div class="widget-readout" :class="ktrJoin ? 'ok' : ''"><dt class="widget-label">You will follow</dt><dd class="widget-value" x-text="follow"></dd></div>
+    <div class="widget-readout" :class="dist > 9.95 && dist < 10.05 ? 'ok' : ''"><dt class="widget-label">To the circuit at 100 kt</dt><dd class="widget-value" x-text="toCircuit"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('listening-first')" :aria-pressed="active === 'listening-first'">Listen</button>
+      <button type="button" @click="preset('half-heard-call')" :aria-pressed="active === 'half-heard-call'">Half-heard</button>
+      <button type="button" @click="preset('inbound-call-10nm')" :aria-pressed="active === 'inbound-call-10nm'">Inbound 10 nm</button>
+      <button type="button" @click="preset('joining-crosswind')" :aria-pressed="active === 'joining-crosswind'">Joining</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every call follows the same order, location traffic, type, call-sign, position, level, intentions, location, so each one drops an aircraft onto your mental map: by the time you join, the radio alone has told you the runway, who is ahead and whom to follow. Distances are compressed, and the call-signs other than Alpha Bravo Charlie and the timings are made up for the example; markers fade because each one shows where that aircraft was when it called.</p>
+  <details class="widget-try"><summary>Try it: on the half-heard call, how do you know it matters to you?</summary><p>You missed "Northam traffic" and the type, but the call ends with "Northam". The aerodrome name at the end is there for exactly this: the frequency is shared, and the last word tells a late listener which aerodrome the call is about.</p></details>
+  <details class="widget-try"><summary>Try it: at your inbound call, how long before you reach the circuit, and who might you meet on the way in?</summary><p>10 nm at 100 kt is 6 minutes (10 ÷ 100 × 60). The aircraft from the east estimates the circuit at 22, ahead of you, and the Warrior about to depart to the south-west will be climbing out near the upwind end as you approach the crosswind join.</p></details>
+</div>

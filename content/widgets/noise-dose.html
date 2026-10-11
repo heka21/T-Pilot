@@ -1,0 +1,117 @@
+<div class="widget" x-data="widget({
+  cabin: 94, hours: 2, prot: 0,
+  // the guide in PHFC 2.5 and 2.6: 85 dB(A) for 8 hours, the safe time halving for every 3 dB more
+  get ear() { return this.cabin - this.prot },
+  get safe() { return 8 / Math.pow(2, (this.ear - 85) / 3) },
+  get dose() { return this.hours / this.safe * 100 },
+  dur(h) {
+    const m = Math.round(h * 60);
+    if (m < 60) return m + ' min';
+    const hh = Math.floor(m / 60), mm = m % 60;
+    return hh + ' h' + (mm ? ' ' + mm + ' min' : '');
+  },
+  get doseState() { return this.dose > 100.5 ? 'bad' : this.dose >= 99.5 ? 'warn' : 'ok' },
+  // chart: 80-103 dB across x 70..370; safe time on a doubling scale, 7.5 min (y 240) to 32 h (y 130)
+  X(db) { return 70 + (db - 80) / 23 * 300 },
+  YT(h) { return 240 - (Math.log2(h) + 3) / 8 * 110 },
+  get curve() { return this.path([[this.X(80), this.YT(8 * Math.pow(2, 5 / 3))], [this.X(103), this.YT(8 / Math.pow(2, 6))]]) },
+  get earX() { return this.X(this.clamp(this.ear, 80, 103)) },
+  get earY() { return this.YT(this.clamp(this.safe, 0.125, 32)) },
+  get hoursY() { return this.YT(this.hours) },
+  // dose bar: 0 to 400 % up y 240..130
+  get barH() { return Math.min(this.dose, 400) / 400 * 110 },
+  presets: {
+    'geraldton-94': { cabin: 94, hours: 2, prot: 0 },
+    'kalbarri-unprotected': { cabin: 94, hours: 3, prot: 0 },
+    'kalbarri-headset': { cabin: 94, hours: 3, prot: 12 },
+    'ear-at-97': { cabin: 97, hours: 0.5, prot: 0 },
+    'cabin-100': { cabin: 100, hours: 0.25, prot: 0 },
+  },
+})">
+  <svg viewBox="0 0 640 270" role="img" aria-labelledby="nds-title" class="widget-stage">
+    <title id="nds-title">Cabin noise passing through hearing protection to the ear, the safe daily exposure time at that level on a chart where every 3 dB halves the time, and the day's noise dose as a bar against the daily guide</title>
+    <defs><marker id="nds-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- cabin, protection, ear -->
+    <rect x="16" y="14" width="160" height="80" rx="12" fill="var(--color-surface-2)"/>
+    <text x="96" y="36" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Cabin</text>
+    <text x="96" y="68" font-size="26" font-weight="700" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="cabin + ' dB'"></text>
+    <text x="96" y="86" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">piston single: 85 to 100</text>
+    <line x1="182" y1="54" x2="236" y2="54" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#nds-arrow)"/>
+    <g :opacity="prot > 0 ? 1 : 0.35">
+      <path d="M262 62 C262 22 334 22 334 62" fill="none" stroke="var(--color-brand)" stroke-width="5" stroke-linecap="round"/>
+      <rect x="250" y="50" width="22" height="34" rx="9" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2"/>
+      <rect x="324" y="50" width="22" height="34" rx="9" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2"/>
+    </g>
+    <text x="298" y="106" font-size="15" font-weight="700" text-anchor="middle" class="num" fill="var(--color-brand-fg)" x-show="prot > 0" x-text="'−' + prot + ' dB'"></text>
+    <text x="298" y="106" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="prot === 0">no protection</text>
+    <line x1="358" y1="54" x2="412" y2="54" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#nds-arrow)"/>
+    <rect x="420" y="14" width="200" height="80" rx="12" stroke-width="2" :fill="ear >= 85 ? 'var(--color-warn-soft)' : 'var(--color-ok-soft)'" :stroke="ear >= 85 ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    <text x="520" y="36" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">At your eardrum</text>
+    <text x="520" y="68" font-size="26" font-weight="700" text-anchor="middle" class="num" :fill="ear >= 85 ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-text="ear + ' dB(A)'"></text>
+    <text x="520" y="86" font-size="11" text-anchor="middle" :fill="ear >= 85 ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-text="ear > 85 ? 'above the 85 dB guide' : ear === 85 ? 'at the 85 dB guide' : 'below the 85 dB guide'"></text>
+
+    <!-- safe time against level -->
+    <text x="70" y="124" font-size="12" fill="var(--color-fg-muted)">Safe time per day</text>
+    <line x1="70" y1="240" x2="370" y2="240" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" y1="130" x2="70" y2="240" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="70" y1="226" x2="370" y2="226"/><line x1="70" y1="199" x2="370" y2="199"/><line x1="70" y1="171" x2="370" y2="171"/><line x1="70" y1="144" x2="370" y2="144"/>
+    </g>
+    <g font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">
+      <text x="64" y="230">15 min</text><text x="64" y="203">1 h</text><text x="64" y="175">4 h</text><text x="64" y="148">16 h</text>
+    </g>
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="70" y="254">80</text><text x="135" y="254">85</text><text x="200" y="254">90</text><text x="265" y="254">95</text><text x="331" y="254">100</text>
+    </g>
+    <text x="220" y="268" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">level at the ear, dB(A): each +3 dB halves the time</text>
+    <circle cx="135" r="4" fill="var(--color-fg-muted)" :cy="YT(8)"/>
+    <text x="141" font-size="11" fill="var(--color-fg-muted)" :y="YT(8) - 6">8 h at 85</text>
+    <line stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" x1="70" x2="370" :y1="hoursY" :y2="hoursY"/>
+    <text x="76" font-size="11" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" fill="var(--color-brand-fg)" :y="hoursY - 5" x-text="'your exposure ' + dur(hours)"></text>
+    <path fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" :d="curve"/>
+    <line stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" y2="240" :x1="earX" :x2="earX" :y1="earY"/>
+    <circle r="6" stroke-width="3" fill="var(--color-surface)" :cx="earX" :cy="earY" :stroke="doseState === 'bad' ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+
+    <!-- the dose -->
+    <text x="510" y="124" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">Today's dose</text>
+    <rect x="470" y="130" width="80" height="110" rx="6" fill="var(--color-surface-2)"/>
+    <rect x="470" width="80" rx="6" :y="240 - barH" :height="barH" :fill="doseState === 'bad' ? 'var(--color-bad)' : doseState === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'" fill-opacity="0.8"/>
+    <line x1="462" y1="212.5" x2="558" y2="212.5" stroke="var(--color-fg)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="564" y="216" font-size="11" fill="var(--color-fg-muted)">100%</text>
+    <text x="564" y="134" font-size="11" fill="var(--color-fg-faint)">400%</text>
+    <text x="510" y="258" font-size="15" font-weight="700" text-anchor="middle" class="num" :fill="doseState === 'bad' ? 'var(--color-bad-fg)' : doseState === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-text="fmt(dose) + '%'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="nds-cabin">Cabin noise <output for="nds-cabin" x-text="cabin + ' dB(A)'"></output></label>
+      <input type="range" id="nds-cabin" min="80" max="103" step="1" x-model.number="cabin">
+    </div>
+    <div class="widget-control">
+      <label for="nds-hours">Time in the noise today <output for="nds-hours" x-text="dur(hours)"></output></label>
+      <input type="range" id="nds-hours" min="0.25" max="8" step="0.25" x-model.number="hours">
+    </div>
+    <div class="widget-control">
+      <label for="nds-prot">Hearing protection takes off <output for="nds-prot" x-text="prot + ' dB'"></output></label>
+      <input type="range" id="nds-prot" min="0" max="25" step="1" x-model.number="prot">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="ear >= 85 ? 'warn' : 'ok'"><dt class="widget-label">Level at your ear</dt><dd class="widget-value" x-text="ear + ' dB(A)'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Safe time per day</dt><dd class="widget-value" x-text="dur(safe)"></dd></div>
+    <div class="widget-readout" :class="doseState"><dt class="widget-label">Daily guide used</dt><dd class="widget-value"><span x-text="fmt(dose) + '%'"></span><span class="widget-flag bad" x-show="doseState === 'bad'" x-text="'× ' + fmt(dose / 100, 1)"></span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('geraldton-94')" :aria-pressed="active === 'geraldton-94'">Geraldton 94</button>
+      <button type="button" @click="preset('kalbarri-unprotected')" :aria-pressed="active === 'kalbarri-unprotected'">Kalbarri bare</button>
+      <button type="button" @click="preset('kalbarri-headset')" :aria-pressed="active === 'kalbarri-headset'">Kalbarri headset</button>
+      <button type="button" @click="preset('ear-at-97')" :aria-pressed="active === 'ear-at-97'">97 dB</button>
+      <button type="button" @click="preset('cabin-100')" :aria-pressed="active === 'cabin-100'">100 dB</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The dose is level times time, but the level is the strong lever: every 3 dB off at the ear doubles the safe time, so a well-sealed headset turns three times the daily guide into a fifth of it on the same flight. The guide is the lessons' 85 dB(A) for 8 hours with 3 dB halving; the protection figure is yours to set from your own headset's rating.</p>
+  <details class="widget-try"><summary>Try it: on a 3-hour flight in a 94 dB cabin, how much does a headset that brings your ear down to 82 dB save?</summary><p>Press Kalbarri bare: 94 dB gives 1 hour a day, so 3 hours is 300%. Press Kalbarri headset: 82 dB gives 16 hours, so the same flight is about 19%.</p></details>
+  <details class="widget-try"><summary>Try it: 2 hours at 88 dB in the air, then an hour unprotected at 91 dB in the run-up area. How much of the day's guide is gone?</summary><p>Set 88 dB and 2 h: 50% (4 hours allowed). Then 91 dB and 1 h: another 50% (2 hours allowed). Together 100%: the whole daily guide, half of it on the ground.</p></details>
+</div>

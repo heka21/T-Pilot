@@ -1,0 +1,32 @@
+<div class="widget" data-widget="explorer" data-explorer="gyro">
+  <div class="widget-canvas" data-canvas aria-label="3D view of a spinning gyroscope rotor in its gimbals inside an aeroplane's instrument case"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="gy3-roll">Roll the aeroplane around the gyro</label><input id="gy3-roll" type="range" min="-60" max="60" step="1" value="0" data-param="roll"></div>
+    <div class="widget-control"><label for="gy3-pitch">Pitch the aeroplane</label><input id="gy3-pitch" type="range" min="-30" max="30" step="1" value="0" data-param="pitch"></div>
+    <div class="widget-control"><label for="gy3-at">Where you push down on the rim (0° = front, 90° = right)</label><input id="gy3-at" type="range" min="0" max="270" step="90" value="0" data-param="pushAt"></div>
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="push"> Push on the rim</label>
+      <label class="check"><input type="checkbox" data-param="reverse"> Spin the rotor the other way</label>
+    </div>
+    <div class="widget-control"><label for="gy3-min">Minutes since the DI was set to the compass</label><input id="gy3-min" type="range" min="0" max="60" step="5" value="0" data-param="minutes"></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Rigidity</dt><dd data-out="attitude" class="text-sm">the case moves, the rotor axis does not</dd></div>
+    <div class="widget-readout"><dt>Precession</dt><dd data-out="precession" class="text-sm">push on the rim to see precession</dd></div>
+    <div class="widget-readout"><dt>Rotation</dt><dd data-out="spin" class="text-sm">clockwise seen from above</dd></div>
+    <div class="widget-readout ok"><dt>DI drift</dt><dd><span data-out="drift" class="text-sm">just set to the compass</span><span class="widget-flag warn" data-flag="reset" style="display:none">Reset to the compass</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Demonstrations">
+      <button type="button" data-preset="rigidity-in-a-roll" data-set='{"roll": 40, "pitch": 0, "push": false}'>Roll 40°: rigidity</button>
+      <button type="button" data-preset="rigidity-in-a-climb" data-set='{"roll": 0, "pitch": 20, "push": false}'>Pitch 20°: rigidity</button>
+      <button type="button" data-preset="precession-push-at-the-front" data-set='{"roll": 0, "pitch": 0, "push": true, "pushAt": 0, "reverse": false}'>Push at the front</button>
+      <button type="button" data-preset="precession-reversed-spin" data-set='{"roll": 0, "pitch": 0, "push": true, "pushAt": 0, "reverse": true}'>Same push, spin reversed</button>
+      <button type="button" data-preset="di-drift-15-minutes" data-set='{"minutes": 15, "push": false}'>15 min since set</button>
+    </div>
+    <button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A spinning rotor has two properties. Rigidity in space: roll or pitch the aeroplane and the gimbals turn so the spin axis holds its direction, which is what the attitude indicator and the directional indicator rely on. Precession: push on the rim and the rotor tilts not where you pushed but 90° further round in the direction of rotation; reverse the spin and the response moves to the other side. That is what the turn coordinator uses. The DI holds a direction in space, so friction and the Earth's rotation make it drift: reset it to the compass about every 10 to 15 minutes, in straight, level, unaccelerated flight. The drift rate drawn is illustrative; the lesson gives none.</p>
+  <details class="widget-try"><summary>Try this: push at the front with the rotor spinning clockwise from above. Which side dips, and what happens if you reverse the spin?</summary><p>The right side dips: the force acts 90° on in the direction of rotation. Reverse the spin and the same push makes the left side dip. The response always follows the rotation, never the push.</p></details>
+  <details class="widget-try"><summary>Try this: set 15 minutes and roll the aeroplane 30°. Why must the DI be reset straight and level rather than now?</summary><p>Only in straight, level, unaccelerated flight is the compass free of its turning and acceleration errors. Reset the DI from a compass that is swinging in a turn and you copy the compass's error into the instrument that would otherwise have been the more accurate of the two.</p></details>
+</div>

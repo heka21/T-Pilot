@@ -1,0 +1,128 @@
+<div class="widget" x-data="widget({
+  kind: 'tree', d: 150, h: 50,
+  // the take-off and approach surface: 1 in 20 (5 percent) from the end of the strip, as POPA 2.1 gives it (AC 91-02; verify)
+  get surf() { return this.d * 3.2808 / 20 },
+  get margin() { return this.surf - this.h },
+  get state() { return this.margin >= 2 ? 'ok' : this.margin > -2 ? 'warn' : 'bad' },
+  get needM() { return this.h * 20 / 3.2808 },
+  // picture: 0..600 m across x 110..610, 0..110 ft up from the ground at y 250 (heights exaggerated)
+  X(m) { return 110 + m * 0.8333 },
+  Y(ft) { return 250 - ft * 1.65 },
+  get ox() { return this.X(this.d) },
+  get oy() { return this.Y(this.h) },
+  get sy() { return this.Y(this.surf) },
+  get name() { return { tree: 'tree', pole: 'power line', shed: 'shed' }[this.kind] },
+  get verdict() {
+    if (this.state === 'ok') return 'below the surface by ' + this.fmt(this.margin) + ' ft';
+    if (this.state === 'warn') return 'level with the surface';
+    return 'breaks the surface by ' + this.fmt(-this.margin) + ' ft';
+  },
+  get caption() {
+    const at = this.fmt(this.d) + ' m out the surface is only ' + this.fmt(this.surf) + ' ft up. ';
+    if (this.state === 'bad') return at + 'A ' + this.fmt(this.h) + ' ft ' + this.name + ' here pokes through it, so the strip fails this test however long it is: depart the other way or find another strip.';
+    if (this.state === 'warn') return at + 'A ' + this.fmt(this.h) + ' ft ' + this.name + ' sits right on it: ' + this.fmt(this.h) + ' × 20 = ' + this.fmt(this.h * 20) + ' ft, about ' + this.fmt(this.needM, 0) + ' m, is the least distance that keeps it below.';
+    return at + 'The ' + this.fmt(this.h) + ' ft ' + this.name + ' stays below it. The aeroplane must still out-climb the surface, which a tailwind or a hot day makes harder.';
+  },
+  drag2(p) { this.d = Math.round(this.clamp((p.x - 110) / 0.8333, 0, 600) / 5) * 5; this.h = Math.round(this.clamp((250 - p.y) / 1.65, 5, 100)); this.active = null },
+  presets: {
+    'gums-at-150m': { kind: 'tree', d: 150, h: 50 },
+    'tree-50ft-at-300m': { kind: 'tree', d: 300, h: 50 },
+    'tall-gums-at-300m': { kind: 'tree', d: 300, h: 70 },
+    'power-line-at-100m': { kind: 'pole', d: 100, h: 30 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ots-title" class="widget-stage">
+    <title id="ots-title">Side view beyond the end of an aeroplane landing area: the 1 in 20 take-off and approach surface rising from the end of the strip, and an obstacle you can drag to see whether it pokes through</title>
+    <rect x="0" y="0" width="640" height="250" fill="var(--color-sky-soft)" fill-opacity="0.5"/>
+    <!-- the surface and the protected space below it -->
+    <path d="M110 250 L610 250 L610 87.6 Z" fill="var(--color-brand)" fill-opacity="0.12"/>
+    <line x1="110" y1="250" x2="610" y2="87.6" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="604" y="46" font-size="13" font-weight="600" text-anchor="end" fill="var(--color-brand-fg)">1 in 20 surface (5%)</text>
+    <text x="604" y="64" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">rises 1 ft for every 20 ft out</text>
+    <!-- ground and strip -->
+    <rect x="20" y="246" width="90" height="8" rx="2" fill="var(--color-ok)" fill-opacity="0.45"/>
+    <line x1="20" y1="250" x2="620" y2="250" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="64" y="270" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">end of strip</text>
+    <!-- climbing out over the end of the strip (side, scale 0.4, pitch 8, fg-muted) -->
+    <g transform="translate(72 148)">
+      <g transform="translate(0 0) rotate(-8) scale(0.4)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg-muted)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg-muted)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- distance scale -->
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="110" y1="250" x2="110" y2="256"/><line x1="193.3" y1="250" x2="193.3" y2="256"/><line x1="276.7" y1="250" x2="276.7" y2="256"/><line x1="360" y1="250" x2="360" y2="256"/>
+      <line x1="443.3" y1="250" x2="443.3" y2="256"/><line x1="526.7" y1="250" x2="526.7" y2="256"/><line x1="610" y1="250" x2="610" y2="256"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="193.3" y="268">100</text><text x="276.7" y="268">200</text><text x="360" y="268">300</text><text x="443.3" y="268">400</text><text x="526.7" y="268">500</text><text x="610" y="268">600 m</text>
+    </g>
+    <text x="360" y="290" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">distance beyond the end of the strip (heights exaggerated)</text>
+    <!-- height scale -->
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="start" class="num">
+      <text x="22" y="213">25 ft</text><text x="22" y="172">50 ft</text><text x="22" y="130">75 ft</text><text x="22" y="89">100 ft</text>
+    </g>
+    <g stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="62" y1="208.8" x2="104" y2="208.8"/><line x1="62" y1="167.5" x2="104" y2="167.5"/><line x1="66" y1="126.3" x2="104" y2="126.3"/><line x1="70" y1="85" x2="104" y2="85"/>
+    </g>
+    <!-- gap between obstacle top and the surface -->
+    <line stroke-width="1.25" stroke-dasharray="4 3" :stroke="state === 'ok' ? 'var(--color-ok)' : 'var(--color-bad)'" :x1="ox + 22" :x2="ox + 22" :y1="oy" :y2="sy" x-show="Math.abs(oy - sy) > 6"/>
+    <circle r="4" fill="var(--color-brand)" :cx="ox" :cy="sy"/>
+    <!-- the obstacle -->
+    <g :fill="'var(--color-' + state + '-soft)'" :stroke="'var(--color-' + state + ')'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <g x-show="kind === 'tree'">
+        <line :x1="ox" :x2="ox" y1="250" :y2="oy + 18"/>
+        <ellipse :cx="ox" :cy="oy + Math.min(14, (250 - oy) / 3)" rx="14" :ry="Math.min(14, (250 - oy) / 3)"/>
+      </g>
+      <g x-show="kind === 'pole'">
+        <line :x1="ox" :x2="ox" y1="250" :y2="oy"/>
+        <line :x1="ox - 10" :x2="ox + 10" :y1="oy + 4" :y2="oy + 4"/>
+        <circle :cx="ox - 9" :cy="oy + 2" r="2"/><circle :cx="ox + 9" :cy="oy + 2" r="2"/>
+      </g>
+      <g x-show="kind === 'shed'">
+        <path :d="'M' + (ox - 18) + ' 250 L' + (ox - 18) + ' ' + (oy + 8) + ' L' + ox + ' ' + oy + ' L' + (ox + 18) + ' ' + (oy + 8) + ' L' + (ox + 18) + ' 250 Z'"/>
+      </g>
+    </g>
+    <text font-size="13" font-weight="600" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :fill="'var(--color-' + state + '-fg)'" :x="Math.min(560, Math.max(150, ox))" :y="Math.max(18, oy - 10)" x-text="fmt(h) + ' ft ' + name"></text>
+    <!-- drag handle -->
+    <circle r="16" fill="var(--color-fg)" fill-opacity="0" style="touch-action: none; cursor: grab" :cx="ox" :cy="oy + 6" @pointerdown="drag($event, (p) => drag2(p))"/>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ots-kind">Obstacle</label>
+      <select id="ots-kind" class="input" x-model="kind" @change="active = null">
+        <option value="tree">Tree</option>
+        <option value="pole">Power line</option>
+        <option value="shed">Shed</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="ots-d">Distance beyond the end of the strip <output for="ots-d" x-text="fmt(d) + ' m'"></output></label>
+      <input type="range" id="ots-d" min="0" max="600" step="5" x-model.number="d" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ots-h">Height of the obstacle <output for="ots-h" x-text="fmt(h) + ' ft'"></output></label>
+      <input type="range" id="ots-h" min="5" max="100" step="1" x-model.number="h" @input="active = null">
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Surface height here</dt><dd class="widget-value" x-text="fmt(surf) + ' ft (' + fmt(d) + ' m × 3.28 ÷ 20)'"></dd></div>
+    <div class="widget-readout" :class="state">
+      <dt class="widget-label">The obstacle</dt>
+      <dd class="widget-value"><span x-text="verdict"></span><span class="widget-flag bad" x-show="state === 'bad'">strip fails</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Least distance for this height</dt><dd class="widget-value" x-text="fmt(h) + ' × 20 = ' + fmt(h * 20) + ' ft, about ' + fmt(needM) + ' m'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('gums-at-150m')" :aria-pressed="active === 'gums-at-150m'">Gums at 150 m</button>
+      <button type="button" @click="preset('tree-50ft-at-300m')" :aria-pressed="active === 'tree-50ft-at-300m'">50 ft tree at 300 m</button>
+      <button type="button" @click="preset('tall-gums-at-300m')" :aria-pressed="active === 'tall-gums-at-300m'">Tall gums at 300 m</button>
+      <button type="button" @click="preset('power-line-at-100m')" :aria-pressed="active === 'power-line-at-100m'">Power line at 100 m</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The surface rises 1 ft for every 20 ft out, so close to the strip it is very low: only about 25 ft at 150 m, about 50 ft at 300 m. Anything poking through it fails the strip, however long the runway is. Drag the obstacle or use the sliders. The 1 in 20 figure is the lesson's from AC 91-02: verify it against the current AC.</p>
+  <details class="widget-try"><summary>Try it: how far beyond the end of the strip must a 50 ft tree be?</summary><p>50 × 20 = 1,000 ft, about 305 m. Press 50 ft tree at 300 m: at 300 m the surface is about 49 ft, so the tree is level with it; a few metres further out it is below.</p></details>
+  <details class="widget-try"><summary>Try it: the farm strip has trees about 300 m beyond its northern end. What is the most they can be?</summary><p>About 50 ft. Press Tall gums at 300 m: a 70 ft gum breaks the surface by about 21 ft, so plan to depart the other way, into wind if you can.</p></details>
+</div>

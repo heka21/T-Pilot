@@ -1,0 +1,289 @@
+<div class="widget" x-data="widget({
+  type: 'restricted', hrs: 'notam', uf: 60, ut: 480, sr: 360, ss: 1080,
+  notam: 'activate', nf: 60, nt: 480, wst: 660, inside: true, clear: false,
+  // times in minutes since midnight: ERSA and NOTAM windows (uf/ut, nf/nt) in UTC, your time and HJ sunrise/sunset in
+  // WST. WST = UTC + 8 (RFRC 2.6, BAKC 2.3). The strip shows one WST day, x 64 to 604.
+  X(m) { return 64 + m * 0.375 },
+  uOf(w) { return ((w - 480) % 1440 + 1440) % 1440 },
+  wOf(u) { return (u + 480) % 1440 },
+  inWin(u, a, b) { return a === b ? false : a < b ? u >= a && u < b : u >= a || u < b },
+  get srLo() { return Math.min(this.sr, this.ss) },
+  get ssHi() { return Math.max(this.sr, this.ss) },
+  base(w) {
+    if (this.hrs === 'h24') return true;
+    if (this.hrs === 'hj') return w >= this.srLo && w < this.ssHi;
+    if (this.hrs === 'utc') return this.inWin(this.uOf(w), this.uf, this.ut);
+    return false; // by NOTAM: inactive unless a NOTAM says otherwise
+  },
+  nAct(w) { return this.notam === 'activate' && this.inWin(this.uOf(w), this.nf, this.nt) },
+  act(w) {
+    if (this.type === 'prohibited') return true;
+    if (this.notam === 'deactivate') return false;
+    return this.base(w) || this.nAct(w);
+  },
+  get on() { return this.act(this.wst) },
+  // a row of the strip as rectangles where fn(w) is true, sampled every 5 minutes
+  row(fn, y, h) {
+    let d = '', start = -1;
+    for (let m = 0; m <= 1440; m += 5) {
+      const v = m < 1440 && fn(m);
+      if (v && start < 0) start = m;
+      if (!v && start >= 0) { d += 'M' + this.X(start).toFixed(1) + ' ' + y + 'h' + ((m - start) * 0.375).toFixed(1) + 'v' + h + 'h' + (-(m - start) * 0.375).toFixed(1) + 'Z'; start = -1 }
+    }
+    return d;
+  },
+  get ersaPath() { return this.row((w) => this.base(w), 132, 18) },
+  get notamPath() { return this.row((w) => this.nAct(w), 158, 18) },
+  get actPath() { return this.row((w) => this.act(w), 184, 20) },
+  win(a, b) { return this.hhmm(a) + '–' + this.hhmm(b) },
+  get youText() { return this.hhmm(this.wst) + ' WST = ' + this.hhmm(this.uOf(this.wst)) + ' UTC' },
+  get typeName() { return { prohibited: 'Prohibited area', restricted: 'Restricted area', danger: 'Danger area' }[this.type] },
+  get prohib() { return this.type === 'prohibited' },
+  // the pipeline boxes
+  get ersaA() { return this.prohib ? 'no hours' : { h24: 'H24', hj: 'HJ', utc: this.win(this.uf, this.ut) + ' UTC', notam: 'by NOTAM' }[this.hrs] },
+  get ersaB() { return this.prohib ? 'never enter' : { h24: 'always active', hj: 'sunrise–sunset', utc: '= ' + this.win(this.wOf(this.uf), this.wOf(this.ut)) + ' WST', notam: 'unless notified' }[this.hrs] },
+  get notamA() { return this.prohib ? '–' : { none: 'none today', activate: 'activates', deactivate: 'deactivates' }[this.notam] },
+  get notamB() { return this.prohib ? '' : this.notam === 'activate' ? this.win(this.nf, this.nt) + ' UTC' : this.notam === 'deactivate' ? 'for today' : 'ERSA hours stand' },
+  get call() {
+    if (this.prohib || !this.inside) return ['not needed', 'chart settles it'];
+    if (this.type === 'restricted') return this.on ? (this.clear ? ['clearance', 'held'] : ['request a', 'clearance']) : ['only if', 'still unsure'];
+    return this.on ? ['to know', 'the risk'] : ['only if', 'still unsure'];
+  },
+  // which source settled it: 0 chart, 1 ERSA, 2 NOTAM
+  get src() {
+    if (this.prohib || !this.inside) return 0;
+    if (this.notam === 'deactivate' || this.nAct(this.wst)) return 2;
+    return 1;
+  },
+  get srcText() { return ['The chart', 'ERSA PRD (no NOTAM changes it at your time)', 'The NOTAM'][this.src] + (this.src === 2 ? ', the more recent information' : '') },
+  get dec() {
+    if (this.prohib) return this.inside ? { w: 'Never', s: 'prohibited', c: 'bad', e: 'Never: a prohibited area may not be entered at all' } : { w: 'Not entering', s: 'outside its limits', c: 'ok', e: 'Not entering: you pass outside its vertical limits' };
+    if (!this.inside) return { w: 'Not entering', s: 'outside its limits', c: 'ok', e: 'Not entering: you pass outside its vertical limits' };
+    if (this.type === 'restricted') {
+      if (!this.on) return { w: 'Route through', s: 'inactive then', c: 'ok', e: 'Inactive at your time: you may route through' };
+      return this.clear ? { w: 'Enter', s: 'with your clearance', c: 'ok', e: 'Active, and you hold the controlling authority\'s clearance: you may enter' }
+        : { w: 'Stay out', s: 'no clearance', c: 'bad', e: 'Active and no clearance: you must stay out' };
+    }
+    return this.on ? { w: 'May enter', s: 'the risk is yours', c: 'warn', e: 'You may enter, but it is your responsibility to know the risk' }
+      : { w: 'May enter', s: 'inactive then', c: 'ok', e: 'You may enter; it is inactive at your time' };
+  },
+  get caption() {
+    if (this.prohib) return 'A prohibited area may not be entered at all: no hours, no NOTAM and no clearance change that.' + (this.inside ? '' : ' Your planned altitude is outside its vertical limits, so you pass clear of it.');
+    const e = { notam: 'ERSA says by NOTAM: inactive unless a NOTAM says otherwise.', h24: 'ERSA says H24: active all the time.',
+      hj: 'ERSA says HJ: active from sunrise (' + this.hhmm(this.srLo) + ' WST as you set it) to sunset (' + this.hhmm(this.ssHi) + ' WST).',
+      utc: 'ERSA says active ' + this.win(this.uf, this.ut) + ' UTC, which is ' + this.win(this.wOf(this.uf), this.wOf(this.ut)) + ' WST.' }[this.hrs];
+    const n = { none: 'No NOTAM changes it.', activate: 'A NOTAM activates it ' + this.win(this.nf, this.nt) + ' UTC, which is ' + this.win(this.wOf(this.nf), this.wOf(this.nt)) + ' WST.',
+      deactivate: 'A NOTAM deactivates it today, and the NOTAM is the more recent information.' }[this.notam];
+    const t = 'At ' + this.hhmm(this.wst) + ' WST (' + this.hhmm(this.uOf(this.wst)) + ' UTC) it is ' + (this.on ? 'active' : 'inactive') + '.';
+    let d;
+    if (!this.inside) d = 'Your planned altitude is outside its vertical limits, so you do not enter it.';
+    else if (this.type === 'restricted') d = !this.on ? 'You may route through.' : this.clear ? 'With the controlling authority\'s clearance you may enter.' : 'Without a clearance you must stay out: plan a route around it, a time outside the activation, or contact the controlling authority.';
+    else d = 'You may enter a danger area, but it is your responsibility to know the risk.';
+    return [e, n, t, d].join(' ');
+  },
+  presets: {
+    'saturday-by-notam-active': { type: 'restricted', hrs: 'notam', notam: 'activate', nf: 60, nt: 480, wst: 660, inside: true, clear: false },
+    'no-notam-inactive': { type: 'restricted', hrs: 'notam', notam: 'none', nf: 60, nt: 480, wst: 660, inside: true, clear: false },
+    'h24-deactivated-by-notam': { type: 'restricted', hrs: 'h24', notam: 'deactivate', wst: 660, inside: true, clear: false },
+    'danger-area': { type: 'danger', hrs: 'h24', notam: 'none', wst: 660, inside: true, clear: false },
+    'prohibited-never': { type: 'prohibited', hrs: 'h24', notam: 'none', wst: 660, inside: true, clear: false },
+  },
+})">
+  <svg viewBox="0 0 640 256" role="img" aria-labelledby="pac-title" class="widget-stage">
+    <title id="pac-title">The pre-flight check for a prohibited, restricted or danger area as four steps and a decision: the chart for where and how high, ERSA PRD for when it is normally active and who controls it, the NOTAMs for whether today is different, a call if in doubt. Below, one Perth day as a strip with UTC under WST: the ERSA hours, the NOTAM window, the resulting activity, and your planned time through the area.</title>
+    <defs>
+      <marker id="pac-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="256" rx="10" fill="var(--color-surface-2)"/>
+
+    <!-- the four steps and the decision -->
+    <g text-anchor="middle">
+      <rect x="10" y="10" width="110" height="84" rx="8" fill="var(--color-surface)" :stroke="src === 0 ? 'var(--color-info)' : 'var(--color-line-strong)'" :stroke-width="src === 0 ? 2.5 : 1.25"/>
+      <text x="65" y="30" font-size="13" font-weight="700" fill="var(--color-fg)">1 Chart</text>
+      <text x="65" y="46" font-size="12" fill="var(--color-fg-muted)">where, how high</text>
+      <text x="65" y="66" font-size="12" fill="var(--color-fg)" x-text="typeName"></text>
+      <text x="65" y="82" font-size="12" font-weight="600" :fill="inside ? 'var(--color-fg)' : 'var(--color-ok-fg)'" x-text="inside ? 'inside its limits' : 'outside its limits'"></text>
+
+      <rect x="130" y="10" width="110" height="84" rx="8" fill="var(--color-surface)" :stroke="src === 1 ? 'var(--color-info)' : 'var(--color-line-strong)'" :stroke-width="src === 1 ? 2.5 : 1.25"/>
+      <text x="185" y="30" font-size="13" font-weight="700" fill="var(--color-fg)">2 ERSA PRD</text>
+      <text x="185" y="46" font-size="12" fill="var(--color-fg-muted)">hours, authority</text>
+      <text x="185" y="66" font-size="12" font-weight="600" fill="var(--color-fg)" class="num" x-text="ersaA"></text>
+      <text x="185" y="82" font-size="12" fill="var(--color-fg)" x-text="ersaB"></text>
+
+      <rect x="250" y="10" width="110" height="84" rx="8" fill="var(--color-surface)" :stroke="src === 2 ? 'var(--color-info)' : 'var(--color-line-strong)'" :stroke-width="src === 2 ? 2.5 : 1.25"/>
+      <text x="305" y="30" font-size="13" font-weight="700" fill="var(--color-fg)">3 NOTAM</text>
+      <text x="305" y="46" font-size="12" fill="var(--color-fg-muted)">changes today?</text>
+      <text x="305" y="66" font-size="12" font-weight="600" fill="var(--color-fg)" x-text="notamA"></text>
+      <text x="305" y="82" font-size="12" fill="var(--color-fg)" :class="notam === 'activate' ? 'num' : ''" x-text="notamB"></text>
+
+      <rect x="370" y="10" width="110" height="84" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <text x="425" y="30" font-size="13" font-weight="700" fill="var(--color-fg)">4 Call</text>
+      <text x="425" y="46" font-size="12" fill="var(--color-fg-muted)">if in doubt</text>
+      <text x="425" y="66" font-size="12" font-weight="600" fill="var(--color-fg)" x-text="call[0]"></text>
+      <text x="425" y="82" font-size="12" fill="var(--color-fg)" x-text="call[1]"></text>
+
+      <rect x="490" y="10" width="140" height="84" rx="8" stroke-width="2"
+        :fill="'var(--color-' + dec.c + '-soft)'" :stroke="'var(--color-' + dec.c + ')'"/>
+      <text x="560" y="30" font-size="13" font-weight="700" fill="var(--color-fg)">Decision</text>
+      <text x="560" y="60" font-size="16" font-weight="700" :fill="'var(--color-' + dec.c + '-fg)'" x-text="dec.w"></text>
+      <text x="560" y="80" font-size="12" :fill="'var(--color-' + dec.c + '-fg)'" x-text="dec.s"></text>
+    </g>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.5" fill="none">
+      <line x1="120.5" y1="52" x2="129" y2="52" marker-end="url(#pac-arrow)"/>
+      <line x1="240.5" y1="52" x2="249" y2="52" marker-end="url(#pac-arrow)"/>
+      <line x1="360.5" y1="52" x2="369" y2="52" marker-end="url(#pac-arrow)"/>
+      <line x1="480.5" y1="52" x2="489" y2="52" marker-end="url(#pac-arrow)"/>
+    </g>
+
+    <!-- the day strip: rows -->
+    <g font-size="12" text-anchor="end" fill="var(--color-fg-muted)">
+      <text x="56" y="145">ERSA</text>
+      <text x="56" y="171">NOTAM</text>
+      <text x="56" y="198" font-weight="700" fill="var(--color-fg)">Active</text>
+    </g>
+    <g fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1">
+      <rect x="64" y="132" width="540" height="18"/>
+      <rect x="64" y="158" width="540" height="18"/>
+      <rect x="64" y="184" width="540" height="20"/>
+    </g>
+    <path x-show="!prohib" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25" :d="ersaPath"/>
+    <path x-show="!prohib" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25" :d="notamPath"/>
+    <rect x-show="!prohib && notam === 'deactivate'" x="64" y="158" width="540" height="18" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <path :fill="type === 'danger' ? 'var(--color-warn-soft)' : 'var(--color-bad-soft)'" :stroke="type === 'danger' ? 'var(--color-warn)' : 'var(--color-bad)'" stroke-width="1.5" :d="actPath"/>
+    <g font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text x="72" y="145" x-show="!prohib && hrs === 'notam'">by NOTAM: inactive unless notified</text>
+      <text x="72" y="145" x-show="prohib">a prohibited area has no hours</text>
+      <text x="72" y="171" x-show="!prohib && notam === 'none'">no NOTAM</text>
+      <text x="72" y="171" x-show="!prohib && notam === 'deactivate'" fill="var(--color-ok-fg)">deactivated by NOTAM</text>
+      <text x="72" y="198" x-show="prohib" fill="var(--color-bad-fg)">never enter</text>
+      <text x="72" y="198" x-show="!prohib && !actPath">inactive all day</text>
+    </g>
+    <!-- sunrise and sunset ticks for HJ -->
+    <g x-show="!prohib && hrs === 'hj'" font-size="12" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text y="145" text-anchor="end" :x="X(srLo) - 6">sunrise</text>
+      <text y="145" :x="X(ssHi) + 6">sunset</text>
+    </g>
+
+    <!-- axis: WST above UTC -->
+    <line x1="64" y1="210" x2="604" y2="210" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="64" y1="210" x2="64" y2="215"/><line x1="131.5" y1="210" x2="131.5" y2="215"/><line x1="199" y1="210" x2="199" y2="215"/>
+      <line x1="266.5" y1="210" x2="266.5" y2="215"/><line x1="334" y1="210" x2="334" y2="215"/><line x1="401.5" y1="210" x2="401.5" y2="215"/>
+      <line x1="469" y1="210" x2="469" y2="215"/><line x1="536.5" y1="210" x2="536.5" y2="215"/><line x1="604" y1="210" x2="604" y2="215"/>
+    </g>
+    <g font-size="12" text-anchor="middle" class="num">
+      <text x="44" y="228" text-anchor="end" font-weight="700" fill="var(--color-fg)">WST</text>
+      <g fill="var(--color-fg)">
+        <text x="64" y="228">0000</text><text x="131.5" y="228">0300</text><text x="199" y="228">0600</text><text x="266.5" y="228">0900</text>
+        <text x="334" y="228">1200</text><text x="401.5" y="228">1500</text><text x="469" y="228">1800</text><text x="536.5" y="228">2100</text><text x="604" y="228">2400</text>
+      </g>
+      <text x="44" y="245" text-anchor="end" font-weight="700" fill="var(--color-fg-muted)">UTC</text>
+      <g fill="var(--color-fg-muted)">
+        <text x="64" y="245">1600</text><text x="131.5" y="245">1900</text><text x="199" y="245">2200</text><text x="266.5" y="245">0100</text>
+        <text x="334" y="245">0400</text><text x="401.5" y="245">0700</text><text x="469" y="245">1000</text><text x="536.5" y="245">1300</text><text x="604" y="245">1600</text>
+      </g>
+    </g>
+
+    <!-- your planned time through the area -->
+    <line y1="122" y2="210" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :x1="X(wst)" :x2="X(wst)"/>
+    <circle cy="194" r="5" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5" :cx="X(wst)"/>
+    <text y="118" font-size="12" font-weight="700" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="clamp(X(wst), 120, 548)" text-anchor="middle" x-text="'you ' + hhmm(wst) + ' WST'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="pac-type">Area on your chart</label>
+      <select id="pac-type" class="input" x-model="type" @change="active = null">
+        <option value="prohibited">Prohibited area</option>
+        <option value="restricted">Restricted area</option>
+        <option value="danger">Danger area</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="pac-inside" class="cursor-pointer"><span>Planned altitude inside its vertical limits</span>
+        <input type="checkbox" id="pac-inside" x-model="inside" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="!prohib">
+      <label for="pac-hrs">ERSA PRD hours</label>
+      <select id="pac-hrs" class="input" x-model="hrs" @change="active = null">
+        <option value="h24">H24 (always)</option>
+        <option value="hj">HJ (sunrise to sunset)</option>
+        <option value="utc">Specified UTC times</option>
+        <option value="notam">By NOTAM</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="!prohib && hrs === 'utc'">
+      <label for="pac-uf">ERSA from <output for="pac-uf" x-text="hhmm(uf) + ' UTC = ' + hhmm(wOf(uf)) + ' WST'"></output></label>
+      <input type="range" id="pac-uf" min="0" max="1425" step="15" x-model.number="uf">
+    </div>
+    <div class="widget-control" x-show="!prohib && hrs === 'utc'">
+      <label for="pac-ut">ERSA to <output for="pac-ut" x-text="hhmm(ut) + ' UTC = ' + hhmm(wOf(ut)) + ' WST'"></output></label>
+      <input type="range" id="pac-ut" min="0" max="1425" step="15" x-model.number="ut">
+    </div>
+    <div class="widget-control" x-show="!prohib && hrs === 'hj'">
+      <label for="pac-sr">Sunrise, set it from the day's tables <output for="pac-sr" x-text="hhmm(sr) + ' WST'"></output></label>
+      <input type="range" id="pac-sr" min="240" max="600" step="5" x-model.number="sr">
+    </div>
+    <div class="widget-control" x-show="!prohib && hrs === 'hj'">
+      <label for="pac-ss">Sunset, set it from the day's tables <output for="pac-ss" x-text="hhmm(ss) + ' WST'"></output></label>
+      <input type="range" id="pac-ss" min="960" max="1320" step="5" x-model.number="ss">
+    </div>
+    <div class="widget-control" x-show="!prohib">
+      <label for="pac-notam">NOTAM for the day</label>
+      <select id="pac-notam" class="input" x-model="notam" @change="active = null">
+        <option value="none">None</option>
+        <option value="activate">Activates it (UTC times)</option>
+        <option value="deactivate">Deactivates it</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="!prohib && notam === 'activate'">
+      <label for="pac-nf">NOTAM from <output for="pac-nf" x-text="hhmm(nf) + ' UTC = ' + hhmm(wOf(nf)) + ' WST'"></output></label>
+      <input type="range" id="pac-nf" min="0" max="1425" step="15" x-model.number="nf">
+    </div>
+    <div class="widget-control" x-show="!prohib && notam === 'activate'">
+      <label for="pac-nt">NOTAM to <output for="pac-nt" x-text="hhmm(nt) + ' UTC = ' + hhmm(wOf(nt)) + ' WST'"></output></label>
+      <input type="range" id="pac-nt" min="0" max="1425" step="15" x-model.number="nt">
+    </div>
+    <div class="widget-control">
+      <label for="pac-wst">Your time through the area <output for="pac-wst" x-text="youText"></output></label>
+      <input type="range" id="pac-wst" min="0" max="1425" step="15" x-model.number="wst">
+    </div>
+    <div class="widget-control" x-show="type === 'restricted'">
+      <label for="pac-clear" class="cursor-pointer"><span>Clearance from the controlling authority</span>
+        <input type="checkbox" id="pac-clear" x-model="clear" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Your time</dt>
+      <dd class="widget-value num" x-text="youText"></dd>
+    </div>
+    <div class="widget-readout" :class="prohib ? 'bad' : on ? (type === 'danger' ? 'warn' : 'bad') : 'ok'">
+      <dt class="widget-label">Active at your time?</dt>
+      <dd class="widget-value" x-text="prohib ? 'Always prohibited' : on ? 'Yes, active' : 'No, inactive'"></dd>
+    </div>
+    <div class="widget-readout" :class="dec.c">
+      <dt class="widget-label">Entry</dt>
+      <dd class="widget-value"><span x-text="dec.e"></span><span class="widget-flag bad" x-show="dec.c === 'bad'">keep out</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Settled by</dt>
+      <dd class="widget-value" x-text="srcText"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('saturday-by-notam-active')" :aria-pressed="active === 'saturday-by-notam-active'">Saturday: by NOTAM, NOTAM out</button>
+      <button type="button" @click="preset('no-notam-inactive')" :aria-pressed="active === 'no-notam-inactive'">No NOTAM</button>
+      <button type="button" @click="preset('h24-deactivated-by-notam')" :aria-pressed="active === 'h24-deactivated-by-notam'">H24, deactivated</button>
+      <button type="button" @click="preset('danger-area')" :aria-pressed="active === 'danger-area'">Danger area</button>
+      <button type="button" @click="preset('prohibited-never')" :aria-pressed="active === 'prohibited-never'">Prohibited</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The chart only tells you where and how high; ERSA gives the standing hours and the controlling authority, and a NOTAM can switch an area on or off, so the bottom row is the answer only after all three. ERSA and NOTAM times are UTC: add 8 hours for WST. Prohibited means never, restricted means only with a clearance when active, danger means you may enter but the risk is yours to know. The lesson gives no sunrise or sunset times: for HJ, set them yourself.</p>
+  <details class="widget-try"><summary>Try it: on the Saturday example, from what time WST could you route through without a clearance?</summary><p>The NOTAM activates the area 0100 to 0800 UTC, which is 0900 to 1600 WST. Drag your time to 1600 WST: the activation has ended and the "by NOTAM" entry means it is inactive again, so you may route through (and before 0900 WST too).</p></details>
+  <details class="widget-try"><summary>Try it: the restricted area is active at your time. What changes if the controlling authority gives you a clearance?</summary><p>Tick the clearance: a restricted area is treated like controlled airspace, so with the controlling authority's clearance you may enter while it is active. A prohibited area offers no such option, and a danger area needs no clearance at all.</p></details>
+</div>

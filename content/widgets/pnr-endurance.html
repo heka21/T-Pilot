@@ -1,0 +1,183 @@
+<div class="widget" x-data="widget({
+  mode: 'hours', Eh: 2.5, fuel: 117, taxi: 0, flow: 36, keep: 0, tas: 110, w: -10,
+  // w: wind component along the outbound track, negative a headwind outbound
+  get gsOut() { return this.tas + this.w },
+  get gsHome() { return this.tas - this.w },
+  get reserve() { return 30 * this.flow / 60 },
+  get keepL() { return this.keep * this.flow / 60 },
+  get avail() { return this.fuel - this.taxi - this.reserve - this.keepL },
+  // safe endurance, unrounded (the lesson says not to round until the end): 131 / 32 = 4.094 h gives 213.5 nm
+  get E() { return this.mode === 'hours' ? this.Eh : Math.max(0, this.avail / this.flow) },
+  // E to 2 decimals where that is exact (2.75), 3 where it is not (4.094), so the PNR readout can be checked by hand
+  get eText() { return Math.abs(this.E - Math.round(this.E * 100) / 100) < 1e-9 ? this.fmt(this.E, 2) : this.fmt(this.E, 3) },
+  pnrAt(w) { const o = this.tas + w, h = this.tas - w; return this.E * o * h / (o + h) },
+  get pnr() { return this.pnrAt(this.w) },
+  get still() { return this.E * this.tas / 2 },
+  get tOut() { return this.pnr / this.gsOut },
+  get tHome() { return this.pnr / this.gsHome },
+  get windText() { return this.w === 0 ? 'still air' : Math.abs(this.w) + ' kt ' + (this.w < 0 ? 'headwind' : 'tailwind') + ' outbound' },
+  min(h) { return Math.round(h * 60) },
+  // out-and-back picture: 0 to 350 nm across x 60..600
+  X(d) { return 60 + Math.min(d, 350) / 350 * 540 },
+  // the bar: fuel in litres, or time in hours
+  get segs() {
+    if (this.mode === 'hours') return [
+      { l: 'out', v: this.tOut, c: 'brand', s: 'brand-soft', t: this.min(this.tOut) + ' min' },
+      { l: 'back', v: this.tHome, c: 'info', s: 'info-soft', t: this.min(this.tHome) + ' min' },
+      { l: '', v: 0, c: 'warn', s: 'warn-soft', t: '' }, { l: '', v: 0, c: 'bad', s: 'bad-soft', t: '' }, { l: '', v: 0, c: 'fg-faint', s: 'surface', t: '' } ];
+    const outL = this.tOut * this.flow, backL = this.tHome * this.flow;
+    return [
+      { l: 'taxi', v: this.taxi, c: 'fg-faint', s: 'surface', t: this.fmt(this.taxi) + ' L' },
+      { l: 'out', v: outL, c: 'brand', s: 'brand-soft', t: this.fmt(outL) + ' L' },
+      { l: 'back', v: backL, c: 'info', s: 'info-soft', t: this.fmt(backL) + ' L' },
+      { l: 'kept', v: this.keepL, c: 'warn', s: 'warn-soft', t: this.fmt(this.keepL) + ' L' },
+      { l: 'reserve', v: this.reserve, c: 'bad', s: 'bad-soft', t: this.fmt(this.reserve) + ' L' } ];
+  },
+  get segTotal() { return this.segs.reduce((s, g) => s + g.v, 0) || 1 },
+  sA(i) { let a = 0; for (let k = 0; k < i; k++) a += this.segs[k].v; return 60 + a / this.segTotal * 540 },
+  sW(i) { return this.segs[i].v / this.segTotal * 540 },
+  // chart: PNR against the wind component, -30..+30 kt across x 330..600, zoomed y axis
+  get yTop() { return this.still },
+  get yBot() { return this.pnrAt(30) * 0.98 },
+  CX(w) { return 330 + (w + 30) / 60 * 270 },
+  CY(d) { return 352 - (d - this.yBot) / (this.yTop - this.yBot) * 84 },
+  get curve() { const pts = []; for (let w = -30; w <= 30; w += 2) pts.push([this.CX(w), this.CY(this.pnrAt(w))]); return this.path(pts) },
+  get caption() {
+    const a = 'The PNR is ' + this.fmt(this.pnr, 1) + ' nm out, reached ' + this.min(this.tOut) + ' min after setting course; the trip home takes ' + this.min(this.tHome) + ' min, and the two add up to the whole endurance of ' + this.eText + ' h. ';
+    if (this.w === 0) return a + 'In still air the PNR is simply half the endurance times the TAS.';
+    return a + 'Any wind, either way, brings it ' + this.fmt(this.still - this.pnr, 1) + ' nm closer than in still air: you lose more time on the into-wind leg than you gain on the other. ' + (this.w > 0 ? 'With the wind behind you outbound you simply reach it sooner.' : '');
+  },
+  presets: {
+    'endurance-2-5-h': { mode: 'hours', Eh: 2.5, tas: 110, w: -10 },
+    'tailwind-swap': { mode: 'hours', Eh: 2.5, tas: 110, w: 10 },
+    'solution-117-l': { mode: 'fuel', fuel: 117, taxi: 0, flow: 36, keep: 0, tas: 100, w: -20 },
+    'kalgoorlie': { mode: 'fuel', fuel: 150, taxi: 3, flow: 32, keep: 0, tas: 110, w: -25 },
+    'kalgoorlie-extra-30-l': { mode: 'fuel', fuel: 180, taxi: 3, flow: 32, keep: 0, tas: 110, w: -25 },
+  },
+})">
+  <svg viewBox="0 0 640 380" role="img" aria-labelledby="pnr-title" class="widget-stage">
+    <title id="pnr-title">An out-and-back flight from departure to the point of no return and home again with the wind along the track, the fuel or time split between the trip out and the trip back, and a graph of how far out the PNR lies for every wind from a 30 kt headwind to a 30 kt tailwind</title>
+    <defs>
+      <marker id="pnr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="380" rx="10" fill="var(--color-surface-2)"/>
+    <!-- wind -->
+    <text x="60" y="26" font-size="13" font-weight="600" fill="var(--color-sky-fg)" x-text="w === 0 ? 'Still air' : 'Wind: ' + windText"></text>
+    <g x-show="w !== 0" stroke="var(--color-sky-fg)" stroke-linecap="round" marker-end="url(#pnr-arrow)" :stroke-width="Math.abs(w) >= 20 ? 2.5 : 1.75">
+      <line y1="21" y2="21" :x1="w < 0 ? 420 : 370" :x2="w < 0 ? 370 : 420"/>
+      <line y1="21" y2="21" :x1="w < 0 ? 510 : 460" :x2="w < 0 ? 460 : 510"/>
+      <line y1="21" y2="21" :x1="w < 0 ? 600 : 550" :x2="w < 0 ? 550 : 600"/>
+    </g>
+    <!-- track -->
+    <line x1="60" y1="92" x2="600" y2="92" stroke="var(--color-line)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="60" cy="92" r="7" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="52" y="126" font-size="13" font-weight="600" fill="var(--color-fg)">Departure</text>
+    <!-- out and back -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#pnr-arrow)" :d="'M68 72 L' + (X(pnr) - 4) + ' 72'"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#pnr-arrow)" :d="'M' + (X(pnr) - 4) + ' 72 Q' + (X(pnr) + 22) + ' 92 ' + (X(pnr) - 4) + ' 112 L70 112'"/>
+    <text y="64" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="Math.max((68 + X(pnr)) / 2 + 20, 180)" x-text="'out at ' + gsOut + ' kt: ' + min(tOut) + ' min'"></text>
+    <text y="130" font-size="12" text-anchor="middle" fill="var(--color-info-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="Math.max((68 + X(pnr)) / 2 + 40, 270)" x-text="'home at ' + gsHome + ' kt: ' + min(tHome) + ' min'"></text>
+    <!-- still-air PNR ghost -->
+    <line y1="56" y2="128" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 3" :x1="X(still)" :x2="X(still)" x-show="Math.abs(still - pnr) > 0.05"/>
+    <text y="148" font-size="11" fill="var(--color-fg-faint)" class="num" :x="X(still) + 6" x-show="Math.abs(still - pnr) > 0.05" x-text="'still air ' + fmt(still, 1)"></text>
+    <!-- the PNR -->
+    <path fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5" :d="'M' + X(pnr) + ' 82 l10 10 l-10 10 l-10 -10 Z'"/>
+    <text y="48" font-size="13" font-weight="700" fill="var(--color-brand-fg)" class="num" :x="Math.min(X(pnr), 520)" :text-anchor="X(pnr) > 520 ? 'end' : 'middle'" x-text="'PNR ' + fmt(pnr, 1) + ' nm'"></text>
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="60" y="168">0</text><text x="214.3" y="168">100</text><text x="368.6" y="168">200</text><text x="522.9" y="168">300 nm</text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1"><line x1="60" y1="152" x2="600" y2="152"/><line x1="60" y1="152" x2="60" y2="156"/><line x1="214.3" y1="152" x2="214.3" y2="156"/><line x1="368.6" y1="152" x2="368.6" y2="156"/><line x1="522.9" y1="152" x2="522.9" y2="156"/></g>
+    <!-- the bar -->
+    <text x="60" y="196" font-size="13" font-weight="600" fill="var(--color-fg-muted)" x-text="mode === 'hours' ? 'Endurance ' + eText + ' h: time out + time back' : 'Fuel on board ' + fuel + ' L: where it goes'"></text>
+    <g stroke-width="1.5">
+      <rect y="204" height="30" :x="sA(0)" :width="sW(0)" :fill="'var(--color-' + segs[0].s + ')'" :stroke="'var(--color-' + segs[0].c + ')'" x-show="segs[0].v > 0"/>
+      <rect y="204" height="30" :x="sA(1)" :width="sW(1)" :fill="'var(--color-' + segs[1].s + ')'" :stroke="'var(--color-' + segs[1].c + ')'" x-show="segs[1].v > 0"/>
+      <rect y="204" height="30" :x="sA(2)" :width="sW(2)" :fill="'var(--color-' + segs[2].s + ')'" :stroke="'var(--color-' + segs[2].c + ')'" x-show="segs[2].v > 0"/>
+      <rect y="204" height="30" :x="sA(3)" :width="sW(3)" :fill="'var(--color-' + segs[3].s + ')'" :stroke="'var(--color-' + segs[3].c + ')'" x-show="segs[3].v > 0"/>
+      <rect y="204" height="30" :x="sA(4)" :width="sW(4)" :fill="'var(--color-' + segs[4].s + ')'" :stroke="'var(--color-' + segs[4].c + ')'" x-show="segs[4].v > 0"/>
+    </g>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">
+      <text y="224" :x="sA(0) + sW(0) / 2" x-show="sW(0) > 64" x-text="segs[0].l + ' ' + segs[0].t"></text>
+      <text y="224" :x="sA(1) + sW(1) / 2" x-show="sW(1) > 64" x-text="segs[1].l + ' ' + segs[1].t"></text>
+      <text y="224" :x="sA(2) + sW(2) / 2" x-show="sW(2) > 64" x-text="segs[2].l + ' ' + segs[2].t"></text>
+      <text y="224" :x="sA(3) + sW(3) / 2" x-show="sW(3) > 64" x-text="segs[3].l + ' ' + segs[3].t"></text>
+      <text y="224" :x="sA(4) + sW(4) / 2" x-show="sW(4) > 64" x-text="segs[4].l + ' ' + segs[4].t"></text>
+    </g>
+    <text x="60" y="252" font-size="12" fill="var(--color-fg-faint)" x-show="mode === 'fuel'" x-text="'reserve 30 min × ' + flow + ' L/h = ' + fmt(reserve) + ' L stays in the tanks' + (taxi ? '; taxi ' + taxi + ' L burned first' : '')"></text>
+    <!-- chart: PNR against wind -->
+    <text x="60" y="290" font-size="13" font-weight="600" fill="var(--color-fg-muted)">How far out is the PNR</text>
+    <text x="60" y="308" font-size="13" font-weight="600" fill="var(--color-fg-muted)">for each wind?</text>
+    <text x="60" y="330" font-size="12" fill="var(--color-fg-faint)">Same fuel and TAS; the axis</text>
+    <text x="60" y="346" font-size="12" fill="var(--color-fg-faint)">is zoomed, it does not start at 0.</text>
+    <line x1="330" y1="352" x2="600" y2="352" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="330" y1="262" x2="330" y2="352" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="465" y1="262" x2="465" y2="352" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="3 3"/>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num">
+      <text x="322" text-anchor="end" :y="CY(yTop) + 4" x-text="fmt(yTop, 1)"></text>
+      <text x="322" text-anchor="end" y="356" x-text="fmt(yBot, 1)"></text>
+      <text x="330" y="370" text-anchor="start">30 kt head</text><text x="465" y="370" text-anchor="middle">0</text><text x="600" y="370" text-anchor="end">30 kt tail</text>
+    </g>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" :d="curve"/>
+    <circle r="5.5" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2" :cx="CX(w)" :cy="CY(pnr)"/>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="CX(w) + (w > 10 ? -10 : 10)" :text-anchor="w > 10 ? 'end' : 'start'" :y="CY(pnr) + 18" x-text="fmt(pnr, 1) + ' nm'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="pnr-mode">Endurance from</label>
+      <select id="pnr-mode" class="input" x-model="mode">
+        <option value="hours">Safe endurance given in hours</option>
+        <option value="fuel">Fuel on board, taxi, flow and reserve</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="mode === 'hours'">
+      <label for="pnr-eh">Safe endurance E <output for="pnr-eh" x-text="fmt(Eh, 2) + ' h'"></output></label>
+      <input type="range" id="pnr-eh" min="1" max="5" step="0.05" x-model.number="Eh">
+    </div>
+    <div class="widget-control" x-show="mode === 'fuel'">
+      <label for="pnr-fuel">Fuel on board <output for="pnr-fuel" x-text="fuel + ' L'"></output></label>
+      <input type="range" id="pnr-fuel" min="40" max="200" step="1" x-model.number="fuel">
+    </div>
+    <div class="widget-control" x-show="mode === 'fuel'">
+      <label for="pnr-flow">Fuel flow <output for="pnr-flow" x-text="flow + ' L/h (reserve ' + fmt(reserve) + ' L)'"></output></label>
+      <input type="range" id="pnr-flow" min="20" max="45" step="1" x-model.number="flow">
+    </div>
+    <div class="widget-control" x-show="mode === 'fuel'">
+      <label for="pnr-taxi">Taxi allowance <output for="pnr-taxi" x-text="taxi + ' L'"></output></label>
+      <input type="range" id="pnr-taxi" min="0" max="6" step="1" x-model.number="taxi">
+    </div>
+    <div class="widget-control" x-show="mode === 'fuel'">
+      <label for="pnr-keep">Holding kept for the return <output for="pnr-keep" x-text="keep ? keep + ' min' : 'none'"></output></label>
+      <input type="range" id="pnr-keep" min="0" max="60" step="15" x-model.number="keep">
+    </div>
+    <div class="widget-control">
+      <label for="pnr-w">Wind along the track <output for="pnr-w" x-text="windText"></output></label>
+      <input type="range" id="pnr-w" min="-30" max="30" step="1" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="pnr-tas">True airspeed <output for="pnr-tas" x-text="tas + ' kt'"></output></label>
+      <input type="range" id="pnr-tas" min="80" max="140" step="1" x-model.number="tas">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Safe endurance E</dt><dd class="widget-value" x-text="mode === 'hours' ? eText + ' h' : fmt(avail) + ' L ÷ ' + flow + ' L/h = ' + eText + ' h'"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">PNR from departure</dt><dd class="widget-value" x-text="fmt(pnr, 1) + ' nm'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Reached after</dt><dd class="widget-value" x-text="fmt(tOut, 2) + ' h, about ' + min(tOut) + ' min'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Check: out + back</dt><dd class="widget-value" x-text="fmt(tOut, 2) + ' + ' + fmt(tHome, 2) + ' = ' + fmt(tOut + tHome, 2) + ' h'"></dd></div>
+    <div class="widget-readout" :class="w ? 'warn' : ''"><dt class="widget-label">Still-air PNR</dt><dd class="widget-value" x-text="fmt(still, 1) + ' nm' + (w ? ' (wind costs ' + fmt(still - pnr, 1) + ')' : '')"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('endurance-2-5-h')" :aria-pressed="active === 'endurance-2-5-h'">2.5 h, headwind</button>
+      <button type="button" @click="preset('tailwind-swap')" :aria-pressed="active === 'tailwind-swap'">Swap to tailwind</button>
+      <button type="button" @click="preset('solution-117-l')" :aria-pressed="active === 'solution-117-l'">117 L, 20 kt</button>
+      <button type="button" @click="preset('kalgoorlie')" :aria-pressed="active === 'kalgoorlie'">Kalgoorlie</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The PNR is set by fuel: time out plus time back equals the safe endurance, which is the fuel after taxi and the fixed reserve (and any holding you keep) divided by the flow. More fuel moves it out; wind from either direction brings it in, and the graph is symmetrical, so a tailwind outbound only gets you there sooner. $\text{PNR} = E \times GS_\text{out} \times GS_\text{home} \div (GS_\text{out} + GS_\text{home})$.</p>
+  <details class="widget-try"><summary>Try it: on the 2.5 h example, swap the 10 kt headwind for a 10 kt tailwind. What changes and what does not?</summary><p>The PNR stays at 136.4 nm, because the two groundspeeds appear symmetrically. What changes is the time: at 120 kt out you reach it after 1.14 h, about 68 min, instead of 82 min.</p></details>
+  <details class="widget-try"><summary>Try it: on the Kalgoorlie plan, add 30 L of fuel. Which point moves, the PNR or the ETP?</summary><p>Only the PNR: 161 L available after taxi and reserve gives E = 5.03 h and a PNR about 262 nm out. The ETP (181 nm) has no fuel in it and stays put.</p></details>
+</div>

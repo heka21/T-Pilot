@@ -1,0 +1,174 @@
+<div class="widget" x-data="widget({
+  chart: 'wac',
+  // BAKC 5.1: WAC 1:1,000,000 topography, no airspace; VNC 1:500,000 topography and airspace; VTC 1:250,000 detailed
+  // topography, airspace and VFR routes; ERC-L airspace, air routes and navaids, no topography (scale varies)
+  C: {
+    wac: { name: 'WAC', full: 'World Aeronautical Chart', scale: '1:1,000,000', kmcm: 10, topo: true, air: false, vfr: false, ifr: false, use: 'Long-distance visual navigation; the exam chart' },
+    vnc: { name: 'VNC', full: 'Visual Navigation Chart', scale: '1:500,000', kmcm: 5, topo: true, air: true, vfr: false, ifr: false, use: 'Visual navigation near controlled airspace' },
+    vtc: { name: 'VTC', full: 'Visual Terminal Chart', scale: '1:250,000', kmcm: 2.5, topo: true, air: true, vfr: true, ifr: false, use: 'Terminal areas such as Perth and Jandakot' },
+    erc: { name: 'ERC-L', full: 'En Route Chart Low', scale: 'various', kmcm: 10, topo: false, air: true, vfr: false, ifr: true, use: 'IFR; the VFR airspace reference en route' },
+  },
+  get c() { return this.C[this.chart] },
+  // the chart window is a same-size piece of paper: 380 px wide stands for 10 cm, so 38 px per cm
+  get s() { return 38 / this.c.kmcm },
+  get kmWide() { return 380 / this.s },
+  S(x, y) { return { x: 206 + x * this.s, y: 160 - y * this.s } },
+  P(pts) { return pts.map((p, i) => (i ? 'L' : 'M') + this.S(p[0], p[1]).x.toFixed(1) + ' ' + this.S(p[0], p[1]).y.toFixed(1)).join(' ') },
+  inside(x, y) { const p = this.S(x, y); return p.x > 30 && p.x < 382 && p.y > 30 && p.y < 292 },
+  // an illustrative patch of country around an aerodrome, in km (east, north)
+  coast: [[-26, 60], [-30, 40], [-27, 22], [-31, 6], [-28, -10], [-32, -30], [-29, -60]],
+  get sea() { return this.P([[-90, 60], ...this.coast, [-90, -60]]) + ' Z' },
+  get coastD() { return this.P(this.coast) },
+  get riverSolid() { return this.P([[-29, -8], [-20, -6], [-11, -9], [-4, -12], [6, -14], [15, -13]]) },
+  get riverDry() { return this.P([[15, -13], [24, -18], [34, -22], [46, -30], [60, -36]]) },
+  rail: [[-60, 30], [-24, 22], [-6, 12], [9, 8], [30, 14], [70, 22]],
+  get railD() { return this.P(this.rail) },
+  get railTicks() { let d = ''; const pts = this.rail.map((p) => this.S(p[0], p[1])); for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], L = Math.hypot(b.x - a.x, b.y - a.y), ux = (b.x - a.x) / L, uy = (b.y - a.y) / L; for (let t = 6; t < L; t += 12) { const x = a.x + ux * t, y = a.y + uy * t; d += 'M' + (x - uy * 4).toFixed(1) + ' ' + (y + ux * 4).toFixed(1) + 'L' + (x + uy * 4).toFixed(1) + ' ' + (y - ux * 4).toFixed(1) } } return d },
+  get roadD() { return this.P([[-60, 14], [-22, 16], [-5, 7], [9, 6], [36, 3], [80, -2]]) },
+  get minorRoadD() { return this.P([[2, 1], [5, -5], [11, -11], [16, -22]]) },
+  get powerD() { return this.P([[-14, -2], [-2, 10], [12, 26], [26, 44]]) },
+  get isoD() { return this.P([[16, 70], [19, 0], [23, -70]]) },
+  ell(x, y, rx, ry) { const c = this.S(x, y); return { cx: c.x, cy: c.y, rx: rx * this.s, ry: ry * this.s } },
+  get rArea() { return this.P([[-12, -3], [-5, -3], [-5, -8], [-12, -8]]) + ' Z' },
+  get vfrD() { return this.P([[-10, 7], [0, 0], [11, -3]]) },
+  get routeA() { return this.P([[0, 0], [70, 34]]) },
+  get routeB() { return this.P([[0, 0], [-70, -26]]) },
+  get bar() { return 10 * this.s },
+  presets: {
+    'wac-no-airspace': { chart: 'wac' },
+    'vnc-airspace-added': { chart: 'vnc' },
+    'vtc-most-detail': { chart: 'vtc' },
+    'erc-l-no-topography': { chart: 'erc' },
+  },
+})">
+  <svg viewBox="0 0 640 336" role="img" aria-labelledby="csa-title" class="widget-stage">
+    <title id="csa-title">The same piece of paper printed as a WAC, VNC, VTC or ERC-L: an illustrative area around an aerodrome drawn at that chart's scale, with the topography and the airspace each chart shows or leaves out, and a 10 km scale bar</title>
+    <defs>
+      <clipPath id="csa-clip"><rect x="16" y="16" width="380" height="288" rx="6"/></clipPath>
+    </defs>
+    <rect x="16" y="16" width="380" height="288" rx="6" :fill="c.topo ? 'var(--color-surface)' : 'var(--color-surface-2)'" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g clip-path="url(#csa-clip)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <!-- graticule: on every chart -->
+      <g stroke="var(--color-line)" stroke-width="1"><path :d="P([[-90, 18], [90, 18]])"/><path :d="P([[-14, -90], [-14, 90]])"/><path :d="P([[42, -90], [42, 90]])"/></g>
+      <!-- topography -->
+      <g x-show="c.topo">
+        <path :d="sea" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25"/>
+        <!-- hill: contours and layer tints, steep on the west face -->
+        <ellipse fill="var(--color-warn)" fill-opacity="0.1" stroke="var(--color-warn)" stroke-width="1" :cx="ell(36, -26, 16, 11).cx" :cy="ell(36, -26, 16, 11).cy" :rx="ell(36, -26, 16, 11).rx" :ry="ell(36, -26, 16, 11).ry"/>
+        <ellipse fill="var(--color-warn)" fill-opacity="0.18" stroke="var(--color-warn)" stroke-width="1" :cx="ell(31, -25, 10, 7).cx" :cy="ell(31, -25, 10, 7).cy" :rx="ell(31, -25, 10, 7).rx" :ry="ell(31, -25, 10, 7).ry"/>
+        <ellipse fill="var(--color-warn)" fill-opacity="0.28" stroke="var(--color-warn)" stroke-width="1" :cx="ell(27, -24, 5, 3.5).cx" :cy="ell(27, -24, 5, 3.5).cy" :rx="ell(27, -24, 5, 3.5).rx" :ry="ell(27, -24, 5, 3.5).ry"/>
+        <!-- towns and built-up area -->
+        <ellipse fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25" :cx="ell(-18, 22, 8, 6).cx" :cy="ell(-18, 22, 8, 6).cy" :rx="ell(-18, 22, 8, 6).rx" :ry="ell(-18, 22, 8, 6).ry"/>
+        <circle fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25" :cx="S(10, 9).x" :cy="S(10, 9).y" :r="Math.max(3, 1.6 * s)"/>
+        <!-- water: the river runs only near the coast; dashed where intermittent -->
+        <path :d="riverSolid" stroke="var(--color-sky-fg)" stroke-width="2"/>
+        <path :d="riverDry" stroke="var(--color-sky-fg)" stroke-width="2" stroke-dasharray="6 4"/>
+        <!-- culture -->
+        <path :d="roadD" stroke="var(--color-bad)" stroke-width="2"/>
+        <path :d="minorRoadD" stroke="var(--color-bad)" stroke-width="1.25" x-show="chart !== 'wac'"/>
+        <path :d="railD" stroke="var(--color-fg)" stroke-width="1.5"/>
+        <path :d="railTicks" stroke="var(--color-fg)" stroke-width="1.25"/>
+        <path :d="powerD" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="2 5"/>
+        <!-- obstacle -->
+        <path stroke="var(--color-fg)" stroke-width="1.5" :d="'M' + (S(-7, 11).x - 5) + ' ' + (S(-7, 11).y + 6) + ' L' + S(-7, 11).x + ' ' + (S(-7, 11).y - 8) + ' L' + (S(-7, 11).x + 5) + ' ' + (S(-7, 11).y + 6)"/>
+        <!-- isogonal -->
+        <path :d="isoD" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="8 5"/>
+      </g>
+      <!-- airspace and PRD -->
+      <g x-show="c.air">
+        <circle stroke="var(--color-brand)" stroke-width="2" :cx="S(0, 0).x" :cy="S(0, 0).y" :r="9 * s"/>
+        <circle stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="10 5" :cx="S(0, 0).x" :cy="S(0, 0).y" :r="20 * s"/>
+        <circle stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="10 5" :cx="S(0, 0).x" :cy="S(0, 0).y" :r="36 * s"/>
+        <path :d="rArea" fill="var(--color-bad)" fill-opacity="0.12" stroke="var(--color-bad)" stroke-width="1.5"/>
+      </g>
+      <!-- VFR route and reporting point: VTC -->
+      <g x-show="c.vfr">
+        <path :d="vfrD" stroke="var(--color-brand)" stroke-width="2.5" stroke-dasharray="7 4"/>
+        <path fill="var(--color-brand)" :d="'M' + S(-10, 7).x + ' ' + (S(-10, 7).y - 7) + ' l6 11 h-12 z'"/>
+      </g>
+      <!-- IFR: navaid and air routes -->
+      <g x-show="c.ifr">
+        <path :d="routeA" stroke="var(--color-info)" stroke-width="2"/>
+        <path :d="routeB" stroke="var(--color-info)" stroke-width="2"/>
+        <path fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2" :d="'M' + (S(0, 0).x - 8) + ' ' + S(0, 0).y + ' l4 -7 h8 l4 7 l-4 7 h-8 z'"/>
+      </g>
+      <!-- the aerodrome -->
+      <g x-show="c.topo || c.air">
+        <circle fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" r="6" :cx="S(0, 0).x" :cy="S(0, 0).y" x-show="!c.ifr"/>
+        <path stroke="var(--color-fg)" stroke-width="2" x-show="!c.ifr" :d="'M' + (S(0, 0).x - 4) + ' ' + (S(0, 0).y + 3) + ' l8 -6'"/>
+      </g>
+      <!-- labels: only where they fit inside the window -->
+      <g font-size="12" stroke="var(--color-surface)" stroke-width="3.5" paint-order="stroke">
+        <text fill="var(--color-fg)" font-weight="600" :x="S(0, 0).x + 10" :y="S(0, 0).y - 8" x-show="c.topo || c.air">Aerodrome</text>
+        <text fill="var(--color-sky-fg)" :x="S(-33, -40).x" :y="S(-33, -40).y" x-show="c.topo && inside(-33, -40)" text-anchor="end">sea</text>
+        <text fill="var(--color-warn-fg)" :x="S(10, 9).x + 8" :y="S(10, 9).y + 16" x-show="c.topo && inside(10, 9)">town</text>
+        <text fill="var(--color-warn-fg)" :x="S(-18, 22).x" :y="S(-18, 22).y + 4" text-anchor="middle" x-show="c.topo && inside(-18, 22)">city</text>
+        <text fill="var(--color-warn-fg)" :x="S(36, -26).x" :y="S(36, -26).y + 11 * s + 14" text-anchor="middle" x-show="c.topo && inside(36, -30)">hill: contours and tints</text>
+        <text fill="var(--color-sky-fg)" :x="S(24, -18).x - 4" :y="S(24, -18).y - 10" x-show="c.topo && inside(24, -18)" text-anchor="end">dry creek</text>
+        <text fill="var(--color-sky-fg)" :x="S(-6, -11).x" :y="S(-6, -11).y + 16" text-anchor="middle" x-show="c.topo && inside(-6, -11) && chart !== 'wac'">river</text>
+        <text fill="var(--color-fg)" :x="S(30, 14).x" :y="S(30, 14).y - 10" text-anchor="middle" x-show="c.topo && inside(30, 14)">railway</text>
+        <text fill="var(--color-bad-fg)" :x="S(36, 3).x" :y="S(36, 3).y + 16" text-anchor="middle" x-show="c.topo && inside(36, 3)">highway</text>
+        <text fill="var(--color-fg)" :x="S(-7, 11).x - 8" :y="S(-7, 11).y + 4" text-anchor="end" x-show="c.topo && inside(-7, 11)">obstacle</text>
+        <text fill="var(--color-info)" :x="S(19, 0).x + 6" :y="S(20, -6).y" x-show="c.topo && inside(19, -6)">isogonal 1°W</text>
+        <text fill="var(--color-brand-fg)" font-weight="600" :x="S(0, -9).x" :y="S(0, -9).y + 15" text-anchor="middle" x-show="c.air && inside(0, -10)">CTR</text>
+        <text fill="var(--color-brand-fg)" :x="S(14, 14).x + 4" :y="S(14, 14).y" x-show="c.air && inside(14, 14)">CTA step</text>
+        <text fill="var(--color-brand-fg)" :x="S(26, 25).x + 4" :y="S(26, 25).y" x-show="c.air && inside(26, 25)">CTA step</text>
+        <text fill="var(--color-bad-fg)" font-weight="600" :x="S(-8.5, -5.5).x" :y="S(-8.5, -5.5).y + 4" text-anchor="middle" x-show="c.air">R</text>
+        <text fill="var(--color-brand-fg)" :x="S(-10, 7).x + 10" :y="S(-10, 7).y - 6" x-show="c.vfr">reporting point</text>
+        <text fill="var(--color-brand-fg)" :x="S(6, -1.5).x" :y="S(6, -1.5).y + 18" text-anchor="middle" x-show="c.vfr">VFR route</text>
+        <text fill="var(--color-info)" :x="S(0, 0).x + 12" :y="S(0, 0).y + 18" x-show="c.ifr">navaid</text>
+        <text fill="var(--color-info)" :x="S(-40, -15).x" :y="S(-40, -15).y + 18" text-anchor="middle" x-show="c.ifr">air route</text>
+      </g>
+    </g>
+    <!-- 10 km scale bar -->
+    <rect x="16" y="314" height="8" fill="var(--color-fg)" :width="bar"/>
+    <text y="323" font-size="12" fill="var(--color-fg)" class="num" :x="bar + 26" x-text="'10 km' + (chart === 'erc' ? ' (scale varies)' : ' = ' + (10 / c.kmcm) + ' cm')"></text>
+
+    <!-- what this chart carries -->
+    <g>
+      <text x="414" y="40" font-size="18" font-weight="700" fill="var(--color-brand-fg)" x-text="c.name"></text>
+      <text x="414" y="60" font-size="12" fill="var(--color-fg-muted)" x-text="c.full"></text>
+      <text x="414" y="84" font-size="15" font-weight="600" fill="var(--color-fg)" class="num" x-text="c.scale"></text>
+      <text x="414" y="104" font-size="12" fill="var(--color-fg-muted)" x-text="chart === 'erc' ? 'paper shown at about WAC scale' : 'this sheet: about ' + fmt(kmWide) + ' km across'"></text>
+      <g font-size="13">
+        <text x="414" y="140" :fill="c.topo ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="(c.topo ? '✓ ' : '✗ ') + 'Topography'"></text>
+        <text x="414" y="164" :fill="c.air ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" font-weight="700" x-text="(c.air ? '✓ ' : '✗ ') + 'Controlled airspace'"></text>
+        <text x="414" y="188" :fill="c.air ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" font-weight="700" x-text="(c.air ? '✓ ' : '✗ ') + 'PRD areas'"></text>
+        <text x="414" y="212" :fill="c.vfr ? 'var(--color-ok-fg)' : 'var(--color-fg-faint)'" x-text="(c.vfr ? '✓ ' : '– ') + 'VFR routes, lanes'"></text>
+        <text x="414" y="236" :fill="c.ifr ? 'var(--color-ok-fg)' : 'var(--color-fg-faint)'" x-text="(c.ifr ? '✓ ' : '– ') + 'Air routes, navaids'"></text>
+      </g>
+      <text x="414" y="276" font-size="12" fill="var(--color-bad-fg)" x-show="!c.air">No airspace: you could fly</text>
+      <text x="414" y="292" font-size="12" fill="var(--color-bad-fg)" x-show="!c.air">straight into the CTR unwarned</text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="csa-chart">Print the same sheet as</label>
+      <select id="csa-chart" class="input" x-model="chart" @change="active = null">
+        <option value="wac">WAC, 1:1,000,000</option>
+        <option value="vnc">VNC, 1:500,000</option>
+        <option value="vtc">VTC, 1:250,000</option>
+        <option value="erc">ERC-L (IFR)</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">10 km on the paper</dt><dd class="widget-value" x-text="chart === 'erc' ? 'scale varies' : (10 / c.kmcm) + ' cm (1 cm = ' + c.kmcm + ' km)'"></dd></div>
+    <div class="widget-readout" :class="c.topo ? 'ok' : 'bad'"><dt class="widget-label">Topography</dt><dd class="widget-value" x-text="c.topo ? (chart === 'vtc' ? 'yes, detailed' : 'yes') : 'none'"></dd></div>
+    <div class="widget-readout" :class="c.air ? 'ok' : 'bad'"><dt class="widget-label">Controlled airspace and PRD areas</dt><dd class="widget-value"><span x-text="c.air ? 'shown, with limits' : 'not shown'"></span><span class="widget-flag bad" x-show="!c.air">WAC trap</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Main use</dt><dd class="widget-value" x-text="c.use"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('wac-no-airspace')" :aria-pressed="active === 'wac-no-airspace'">WAC</button>
+      <button type="button" @click="preset('vnc-airspace-added')" :aria-pressed="active === 'vnc-airspace-added'">VNC</button>
+      <button type="button" @click="preset('vtc-most-detail')" :aria-pressed="active === 'vtc-most-detail'">VTC</button>
+      <button type="button" @click="preset('erc-l-no-topography')" :aria-pressed="active === 'erc-l-no-topography'">ERC-L</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The paper stays the same size: halve the number after the colon and the country on it shrinks to a quarter while every feature grows, so the VTC shows the most detail and the least area. The WAC carries the ground but no airspace; the VNC and VTC carry both; the ERC-L carries the airspace with no ground. The area, the CTR and steps, the R area and the isogonal value are illustrative, not a real chart.</p>
+  <details class="widget-try"><summary>Try it: you will route east past the aerodrome. Which charts show you the CTR and the R area beside your track?</summary><p>Press WAC: the aerodrome, railway and highway are there, but no CTR, no steps and no R area. Press VNC or VTC and they appear with their limits; ERC-L shows them too, without the ground. Then look up the R area's hours in ERSA.</p></details>
+  <details class="widget-try"><summary>Try it: on a 1:500,000 VNC, how far on the ground is 4 cm?</summary><p>One centimetre is 5 km, so 4 cm is 20 km. Press VNC and compare the 10 km bar: it is 2 cm long, twice the WAC's 1 cm.</p></details>
+</div>

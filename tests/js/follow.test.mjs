@@ -162,3 +162,14 @@ test("spot(): where Listen starts for a reader scrolled into the lesson", async 
   layout(w, 650);    // past "Reduce power": the closed check box is next, read from its question
   assert.equal(F.spot("PAKA 2.1", 21), 69.8);
 });
+
+test("spot(..., here): the passage on screen, even when the one being read is showing too", async () => {
+  const { w, F } = setup({ listen: true });
+  await tick();
+  layout(w, 250);    // "Nothing has broken" at the top; it is what plays at 21 s
+  assert.equal(F.spot("PAKA 2.1", 21), null);
+  assert.equal(F.spot("PAKA 2.1", 41, true), 19.8, "back to the top of the screen");
+  layout(w, 0);
+  assert.equal(F.spot("PAKA 2.1", 41, true), 0, "at the top of the lesson: from the start");
+  assert.equal(F.spot("RFRC 2.3", 41, true), null, "only for this page's lesson");
+});

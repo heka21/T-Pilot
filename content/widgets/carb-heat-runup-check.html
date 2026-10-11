@@ -1,0 +1,246 @@
+<div class="widget" x-data="timeline({
+  duration: 20, loop: false, sc: 'normal',
+  // The RPMs are BAKC 3.4's worked example and its two variations: run-up at 1,700; normal: heat on 1,580 (a 120
+  // drop), no rise with the heat held ten seconds, cold 1,700. (a) ice: 1,560 (a 140 drop), rising to 1,610 with
+  // the heat still on, cold 1,740. (b) heat not working: 1,700 throughout. The clock (0 to 20 seconds) is
+  // illustrative: heat on at 3 s, the drop complete by 4 s, held ten seconds, cold at 14 s.
+  rpmAt(tt) {
+    const e = (a, b) => this.ease(this.seg(tt, a, b));
+    if (this.sc === 'broken') return 1700;
+    if (this.sc === 'normal') return tt < 0.7 ? 1700 - 120 * e(0.15, 0.2) : 1580 + 120 * e(0.7, 0.75);
+    if (tt < 0.27) return 1700 - 140 * e(0.15, 0.2);
+    if (tt < 0.7) return 1560 + 50 * e(0.27, 0.6);
+    return 1610 + 130 * e(0.7, 0.76);
+  },
+  get rpm() { return Math.round(this.rpmAt(this.t)) },
+  get sec() { return this.t * 20 },
+  get heat() { return this.t >= 0.15 && this.t < 0.7 },
+  // the knob moves for every scenario; the flap only when the control works
+  get knob() { return this.t < 0.7 ? this.ease(this.seg(this.t, 0.15, 0.17)) : 1 - this.ease(this.seg(this.t, 0.7, 0.72)) },
+  get flap() { return this.sc === 'broken' ? 0 : this.knob },
+  get hotFlow() { return this.flap > 0.5 },
+  get ice() { return this.sc !== 'ice' ? 0 : this.t < 0.27 ? 1 : 1 - this.ease(this.seg(this.t, 0.27, 0.6)) },
+  get drop() { return this.t < 0.15 ? null : 1700 - Math.round(this.rpmAt(Math.min(this.t, 0.2))) },
+  get rise() { return this.t < 0.25 ? null : Math.round(this.rpmAt(Math.min(this.t, 0.7)) - this.rpmAt(0.2)) },
+  get final() { return this.t < 0.76 ? null : this.rpm },
+  get dropText() {
+    if (this.drop === null) return 'Heat still cold';
+    if (this.t >= 0.2 && this.drop === 0) return '0 RPM: stays at 1,700';
+    return this.fmt(this.drop) + ' RPM (1,700 → ' + this.fmt(1700 - this.drop) + ')';
+  },
+  get dropState() { return this.t < 0.2 ? '' : this.drop === 0 ? 'bad' : this.drop >= 100 && this.drop <= 150 ? 'ok' : 'warn' },
+  get riseText() {
+    if (this.rise === null) return '–';
+    if (this.sc === 'broken') return 'Nothing to rise from';
+    if (this.rise === 0) return this.t < 0.6 ? 'None so far' : 'None: no ice';
+    return '+' + this.fmt(this.rise) + ' RPM (' + this.fmt(1700 - this.drop) + ' → ' + this.fmt(1700 - this.drop + this.rise) + ')';
+  },
+  get riseState() { return this.rise === null ? '' : this.sc === 'broken' ? 'bad' : this.rise > 0 ? 'warn' : 'ok' },
+  get finalText() {
+    if (this.final === null) return '–';
+    const d = this.final - 1700;
+    return this.fmt(this.final) + ' RPM' + (d > 0 ? ' (' + this.fmt(d) + ' higher than the start)' : ' (the starting value)');
+  },
+  get verdict() {
+    if (this.t < 0.2) return { text: 'Heat on, then watch the tachometer', state: '' };
+    if (this.sc === 'broken') return { text: 'No drop: the heat is not working. Unserviceable where carburettor ice is possible', state: 'bad' };
+    if (this.sc === 'ice' && this.t >= 0.4) return { text: this.t >= 0.8 ? 'Heat works, and there was ice: expect more, use heat as the POH requires, cold for take-off' : 'A rise with the heat on: there was ice', state: 'warn' };
+    if (this.t >= 0.8) return { text: 'Heat works, carburettor clear: select cold for take-off', state: 'ok' };
+    return { text: 'A drop: hot air is reaching the carburettor', state: 'ok' };
+  },
+  get steps() { return [{ at: 0, label: 'Run-up, 1,700' }, { at: 0.15, label: 'Full heat' }, { at: 0.25, label: 'Hold it on' }, { at: 0.7, label: 'Back to cold' }, { at: 0.8, label: 'Verdict' }] },
+  get caption() {
+    const t = this.t, s = this.sc;
+    if (t < 0.15) return s === 'ice' ? 'Run-up at 1,700 RPM after a long taxi at low power on a humid morning. Ice has formed in the venturi, but the pilot cannot see it. Note the RPM.' : 'Run-up at the POH check RPM, here 1,700, with the carburettor heat cold. Note the RPM before you pull the knob.';
+    if (t < 0.25) {
+      if (s === 'broken') return 'Knob pulled to full heat, but the RPM stays at 1,700: no drop. The flap has not moved, so no hot air is reaching the carburettor.';
+      return 'Full heat: the flap swings across to the hot-air duct. Hot air is less dense, so the RPM drops to ' + (s === 'ice' ? '1,560, a drop of 140' : '1,580, a drop of 120') + ', within the normal 100 to 150. Hot air is reaching the carburettor.';
+    }
+    if (t < 0.7) {
+      if (s === 'broken') return 'Still no drop. A disconnected control, or a damaged hot-air duct or flap: the carburettor heat is not working.';
+      if (s === 'ice') return 'With the heat still on, the RPM climbs from 1,560 to 1,610, 50 more: the hot air is melting ice that formed during the taxi, and the engine breathes more freely.';
+      return 'Heat held on for ten seconds: the RPM stays at 1,580. No rise, so there was no ice.';
+    }
+    if (t < 0.8) {
+      if (s === 'ice') return 'Back to cold: the RPM settles at 1,740, 40 higher than the start, because the starting figure was already reduced by the ice.';
+      return s === 'broken' ? 'Back to cold: 1,700, as before. Nothing changed at any point.' : 'Back to cold: the RPM returns to 1,700, the starting value.';
+    }
+    if (s === 'ice') return 'Ice was present and has melted. Taxiing at low power in humid air iced the carburettor: expect more, and use heat as the POH requires. Select cold before take-off.';
+    if (s === 'broken') return 'The carburettor heat is not working, so the aeroplane is unserviceable for any flight where carburettor ice is possible, which on a humid morning is every flight.';
+    return 'The system works and the carburettor was clear. Select cold before take-off so full power is available.';
+  },
+  pick() { this.pause(); this.t = 0; this.active = null },
+  // tachometer: 0 to 3,500 RPM over 240 degrees, centre (318, 196)
+  tip(rpm, r) { return this.pol(318, 196, r, -120 + 240 * this.clamp(rpm, 0, 3500) / 3500) },
+  tick(rpm, r0, r1) { const a = this.tip(rpm, r0), b = this.tip(rpm, r1); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  // RPM trace: 0..20 s across x 440..620, 1,500..1,800 RPM up y 250..50
+  TX(tt) { return 440 + tt * 180 },
+  RY(r) { return 250 - (r - 1500) / 300 * 200 },
+  trace(t1) { const pts = []; for (let tt = 0; tt <= t1 + 1e-9; tt += 0.005) pts.push([this.TX(tt), this.RY(this.rpmAt(tt))]); pts.push([this.TX(t1), this.RY(this.rpmAt(t1))]); return this.path(pts) },
+  get fullTrace() { return this.trace(1) },
+  get doneTrace() { return this.trace(this.t) },
+  // carburettor sketch: flap pivots at the airbox corner (180, 280); 0 = up, closing the hot duct; 1 = across the cold inlet
+  get flapEnd() { return this.pol(180, 280, 46, -90 * this.flap) },
+  get crank() { return this.pol(180, 280, 14, 180 - 90 * this.flap) },
+  get iceW() { return 9 * this.ice },
+  presets: {
+    'heat-check-normal': { sc: 'normal', t: 1 },
+    'ice-found-at-runup': { sc: 'ice', t: 1 },
+    'ice-melting-heat-on': { sc: 'ice', t: 0.64 },
+    'heat-not-working': { sc: 'broken', t: 0.5 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="chr-title" class="widget-stage">
+    <title id="chr-title">The pre-take-off carburettor heat check: a carburettor with its hot-air flap and cable, the carburettor heat knob, the tachometer and a trace of the RPM through the check</title>
+    <defs><marker id="chr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-surface)"/>
+
+    <!-- carburettor -->
+    <text x="110" y="16" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">to the cylinders</text>
+    <!-- airflow: cold and filtered, or hot from the exhaust muff -->
+    <g fill="none" stroke-width="2" stroke-linecap="round" marker-end="url(#chr-arrow)">
+      <path d="M155 312 L155 296" :stroke="hotFlow ? 'var(--color-fg-faint)' : 'var(--color-info)'"/>
+      <path d="M155 274 C155 236 112 234 110 192" stroke="var(--color-info)" x-show="!hotFlow"/>
+      <path d="M224 249 L196 249 C150 249 112 236 110 192" stroke="var(--color-bad)" x-show="hotFlow"/>
+      <path d="M110 58 L110 32" :stroke="hotFlow ? 'var(--color-bad)' : 'var(--color-info)'"/>
+    </g>
+    <!-- duct walls: venturi, butterfly, airbox -->
+    <path d="M74 24 L74 112 L86 126 Q92 138 86 146 Q62 170 62 186 L62 280 L132 280" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M146 24 L146 112 L134 126 Q128 138 134 146 Q158 170 158 186 L158 200 L180 200 L180 226 M180 272 L180 280" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linejoin="round"/>
+    <!-- hot-air duct from the exhaust muff -->
+    <path d="M180 226 L226 226 M180 272 L226 272" fill="none" stroke="var(--color-fg)" stroke-width="2.5"/>
+    <rect x="180" y="226" width="46" height="46" fill="var(--color-bad)" :fill-opacity="hotFlow ? 0.18 : 0.06"/>
+    <text x="184" y="218" font-size="12" :fill="hotFlow || (heat && sc === 'broken') ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" :font-weight="hotFlow || (heat && sc === 'broken') ? 600 : 400" x-text="heat && sc === 'broken' ? 'no heat' : 'hot air'"></text>
+    <!-- cold-air filter -->
+    <rect x="134" y="282" width="42" height="8" rx="1" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <text x="144" y="312" font-size="12" text-anchor="end" :fill="hotFlow ? 'var(--color-fg-faint)' : 'var(--color-info)'">cold, filtered</text>
+    <!-- ice in the venturi (variation a) -->
+    <g x-show="ice > 0.02" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-linejoin="round">
+      <path :d="'M83 150 Q' + (89 + iceW) + ' 142 ' + (89 + iceW * 0.9) + ' 136 Q' + (88 + iceW) + ' 128 82 122 L86 126 Q92 138 86 146 Z'"/>
+      <path :d="'M137 150 Q' + (131 - iceW) + ' 142 ' + (131 - iceW * 0.9) + ' 136 Q' + (132 - iceW) + ' 128 138 122 L134 126 Q128 138 134 146 Z'"/>
+    </g>
+    <text x="68" y="142" font-size="12" font-weight="700" text-anchor="end" fill="var(--color-sky-fg)" x-show="ice > 0.3">ice</text>
+    <!-- fuel -->
+    <rect x="166" y="110" width="26" height="46" rx="4" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <rect x="168" y="130" width="22" height="24" rx="2" fill="var(--color-warn)" fill-opacity="0.3"/>
+    <path d="M166 148 L142 148 Q136 148 132 142 L114 138" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="179" y="172" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">fuel</text>
+    <!-- throttle butterfly, run-up setting -->
+    <path d="M92.8 100.6 L127.2 51.4" fill="none" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="110" cy="76" r="3" fill="var(--color-fg)"/>
+    <!-- the flap and its cable from the knob -->
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-dasharray="5 3" stroke-linejoin="round" :d="'M262 60 L246 60 L246 306 L' + crank.x.toFixed(1) + ' 306 L' + crank.x.toFixed(1) + ' ' + crank.y.toFixed(1)"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-linecap="round" :d="'M180 280 L' + crank.x.toFixed(1) + ' ' + crank.y.toFixed(1)"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round" :d="'M180 280 L' + flapEnd.x.toFixed(1) + ' ' + flapEnd.y.toFixed(1)"/>
+    <circle cx="180" cy="280" r="4" fill="var(--color-brand)"/>
+
+    <!-- carburettor heat knob, side view: panel at x 262, the pilot pulls it to the right -->
+    <text x="300" y="20" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">carb heat</text>
+    <line x1="262" y1="32" x2="262" y2="92" stroke="var(--color-fg-muted)" stroke-width="5" stroke-linecap="round"/>
+    <line y1="60" y2="60" x1="262" stroke="var(--color-fg)" stroke-width="3" :x2="272 + 26 * knob"/>
+    <rect y="46" width="18" height="28" rx="5" :x="272 + 26 * knob" :fill="heat ? 'var(--color-bad)' : 'var(--color-fg-muted)'"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" marker-end="url(#chr-arrow)" d="M300 92 L336 92" x-show="!heat && t < 0.15"/>
+    <text x="300" y="112" font-size="12" text-anchor="middle" :fill="heat ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" :font-weight="heat ? 600 : 400" x-text="heat ? 'pulled: full hot' : 'in: cold'"></text>
+
+    <!-- tachometer -->
+    <circle cx="318" cy="196" r="56" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <g fill="none" stroke="var(--color-fg-muted)" stroke-linecap="round">
+      <path stroke-width="2" :d="tick(0, 47, 54) + ' ' + tick(1000, 47, 54) + ' ' + tick(2000, 47, 54) + ' ' + tick(3000, 47, 54)"/>
+      <path stroke-width="1.25" :d="tick(500, 50, 54) + ' ' + tick(1500, 50, 54) + ' ' + tick(2500, 50, 54) + ' ' + tick(3500, 50, 54)"/>
+    </g>
+    <g font-size="11" class="num" fill="var(--color-fg-muted)" text-anchor="middle">
+      <text :x="tip(0, 32).x" :y="tip(0, 32).y + 4">0</text>
+      <text :x="tip(1000, 32).x" :y="tip(1000, 32).y + 4">10</text>
+      <text :x="tip(2000, 32).x" :y="tip(2000, 32).y + 4">20</text>
+      <text :x="tip(3000, 32).x" :y="tip(3000, 32).y + 4">30</text>
+    </g>
+    <text x="318" y="236" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">RPM ×100</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" stroke-opacity="0.5" :d="tick(1700, 44, 56)"/>
+    <line x1="318" y1="196" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round" :x2="tip(rpm, 44).x" :y2="tip(rpm, 44).y"/>
+    <circle cx="318" cy="196" r="4.5" fill="var(--color-fg)"/>
+    <text x="318" y="284" font-size="18" font-weight="700" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="fmt(rpm) + ' RPM'"></text>
+    <text x="318" y="304" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">tachometer</text>
+
+    <!-- RPM trace -->
+    <rect y="50" height="200" fill="var(--color-warn)" fill-opacity="0.14" :x="TX(0.15)" :width="TX(0.7) - TX(0.15)"/>
+    <text y="40" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-warn-fg)" :x="(TX(0.15) + TX(0.7)) / 2">heat ON</text>
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="440" x2="620" :y1="RY(1600)" :y2="RY(1600)"/><line x1="440" x2="620" :y1="RY(1800)" :y2="RY(1800)"/>
+    </g>
+    <line x1="440" x2="620" :y1="RY(1700)" :y2="RY(1700)" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="434" :y="RY(1500) + 4">1,500</text><text x="434" :y="RY(1600) + 4">1,600</text><text x="434" :y="RY(1700) + 4">1,700</text><text x="434" :y="RY(1800) + 4">1,800</text>
+    </g>
+    <line x1="440" y1="250" x2="620" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num" text-anchor="middle">
+      <text :x="TX(0)" y="266">0</text><text :x="TX(0.25)" y="266">5</text><text :x="TX(0.5)" y="266">10</text><text :x="TX(0.75)" y="266">15</text><text :x="TX(1)" y="266">20</text>
+    </g>
+    <text x="530" y="286" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">seconds →</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 3" :d="fullTrace"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" :d="doneTrace"/>
+    <!-- annotations: the drop, the rise with heat on, the final reading -->
+    <g font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text :x="TX(0.21)" :y="RY(1700 - (drop || 0)) + 18" fill="var(--color-ok-fg)" x-show="t >= 0.2 && drop > 0" x-text="'−' + drop"></text>
+      <text :x="TX(0.21)" :y="RY(1700) + 18" fill="var(--color-bad-fg)" x-show="t >= 0.2 && drop === 0">no drop</text>
+      <text :x="TX(0.45)" :y="RY(1610) - 12" text-anchor="middle" fill="var(--color-warn-fg)" x-show="sc === 'ice' && t >= 0.6">+50, heat on</text>
+      <text :x="TX(1) - 2" :y="RY(final || 1700) - 10" text-anchor="end" :fill="final > 1700 ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-show="t >= 0.76 && sc !== 'broken'" x-text="final > 1700 ? fmt(final) + ': +' + (final - 1700) : fmt(final || 1700) + ': as before'"></text>
+    </g>
+    <circle r="5" fill="var(--color-brand)" :cx="TX(t)" :cy="RY(rpm)"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the check'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="chr-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time">
+    <span class="widget-clock" x-text="fmt(sec) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="chr-sc">What the check finds</label>
+      <select id="chr-sc" class="input" x-model="sc" @change="pick()">
+        <option value="normal">Heat working, no ice (the worked example)</option>
+        <option value="ice">Ice in the carburettor (variation a)</option>
+        <option value="broken">Heat not working (variation b)</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="dropState">
+      <dt class="widget-label">Drop with heat on</dt>
+      <dd class="widget-value"><span x-text="dropText"></span><span class="widget-flag bad" x-show="dropState === 'bad'">no drop</span></dd>
+    </div>
+    <div class="widget-readout" :class="riseState">
+      <dt class="widget-label">Rise with heat still on</dt>
+      <dd class="widget-value"><span x-text="riseText"></span><span class="widget-flag warn" x-show="riseState === 'warn'">ice</span></dd>
+    </div>
+    <div class="widget-readout" :class="final === null ? '' : final > 1700 ? 'warn' : 'ok'">
+      <dt class="widget-label">Back on cold</dt>
+      <dd class="widget-value" x-text="finalText"></dd>
+    </div>
+    <div class="widget-readout" :class="verdict.state">
+      <dt class="widget-label">Verdict</dt>
+      <dd class="widget-value" x-text="verdict.text"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('heat-check-normal')" :aria-pressed="active === 'heat-check-normal'">Normal: 1,700 → 1,580 → 1,700</button>
+      <button type="button" @click="preset('ice-melting-heat-on')" :aria-pressed="active === 'ice-melting-heat-on'">Rising with heat on</button>
+      <button type="button" @click="preset('ice-found-at-runup')" :aria-pressed="active === 'ice-found-at-runup'">Ice found: 1,740 on cold</button>
+      <button type="button" @click="preset('heat-not-working')" :aria-pressed="active === 'heat-not-working'">No drop</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Full heat should always cost RPM, typically about 100 to 150 in a trainer (your POH may give its own figure), because hot air is less dense: the drop proves hot air is reaching the carburettor. A rise while the heat is still on means there was ice, and back on cold the RPM ends higher than it started. No drop at all means the heat is not working. The RPMs are the lesson's worked example and its two variations; the timings are illustrative.</p>
+  <details class="widget-try"><summary>Try it: run-up at 1,700. Heat on gives 1,560, then 1,610 with the heat still on; on cold it settles at 1,740. What happened?</summary><p>The drop of 1,700 − 1,560 = 140 RPM shows the heat works. The rise of 1,610 − 1,560 = 50 RPM with the heat still on means ice was present and has melted. The 1,740 on cold is 40 higher than the start, because the starting figure was already reduced by the ice. Expect more ice and use heat as the POH requires, then select cold for take-off.</p></details>
+  <details class="widget-try"><summary>Try it: you pull the knob and the RPM stays at 1,700. Can you take off?</summary><p>Choose No drop: no drop means no hot air is reaching the carburettor (a disconnected control, or a damaged duct or flap). The aeroplane is unserviceable for any flight where carburettor ice is possible, and on a humid morning that is every flight.</p></details>
+</div>

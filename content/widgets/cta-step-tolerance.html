@@ -1,0 +1,127 @@
+<div class="widget" x-data="widget({
+  pos: 6, alt: 3000, hpa: 0, tol: 1,
+  // PFRA 2.6 worked example: step 2 'C LL 3500' further out, step 1 'C LL 2500' nearer the airport.
+  // Along-track distances are illustrative: 0 to 20 nm, the step boundary at 10 nm.
+  // Altimeter may be up to 100 ft out (RFRC 2.3); each hPa of subscale error is about 30 ft (PFRA 2.6).
+  X(nm) { return 60 + nm * 27 },
+  Y(ft) { return 290 - (ft - 1500) * 0.1 },
+  ll(nm) { return nm < 10 ? 3500 : 2500 },
+  // subscale set hpa BELOW the real QNH: the altimeter under-reads, so you are higher than it says
+  get trueAlt() { return this.alt + this.hpa * 30 },
+  get top() { return this.trueAlt + 100 },
+  get bottom() { return this.trueAlt - 100 },
+  get a() { return Math.max(0, this.pos - this.tol) },
+  get b() { return Math.min(20, this.pos + this.tol) },
+  // the lowest lower limit anywhere you could be: if the box reaches past the boundary, step 1's 2,500 ft applies
+  get limit() { return this.b >= 10 ? 2500 : 3500 },
+  get spans() { return this.a < 10 && this.b >= 10 },
+  get margin() { return this.limit - this.top },
+  get state() { return this.margin <= 0 ? 'bad' : this.margin < 200 ? 'warn' : 'ok' },
+  get boxStroke() { return 'var(--color-' + this.state + ')' },
+  get underStep() { return this.pos < 10 ? 'step 2, C LL 3500' : 'step 1, C LL 2500' },
+  get caption() {
+    if (this.state === 'bad' && this.alt === this.ll(this.pos)) return 'You are flying at the lower limit itself. A lower limit is the bottom of the controlled airspace, so any error upwards puts you in Class C without a clearance.';
+    if (this.state === 'bad' && this.spans) return 'Your altitude is fine for step 2, but the box of where you could really be reaches past the step boundary, where Class C starts at 2,500 ft. Descend first, then cross the boundary.';
+    if (this.state === 'bad') return 'Somewhere inside the box of where you could really be, you are in Class C. Plan lower, or get a clearance before you reach it.';
+    if (this.state === 'warn') return 'Clear, but only just: the errors have eaten most of your margin. This is why the plan is 500 ft below a step, not 100.';
+    if (this.hpa > 0) return 'The subscale is ' + this.hpa + ' hPa below the QNH, so the altimeter under-reads by about ' + this.hpa * 30 + ' ft and you are higher than it says. The 500 ft margin still keeps the whole box below the step.';
+    return 'The box is every place you could really be: the navigation tolerance along the track, and up to 100 ft of altimeter error up or down. Planned 500 ft below the step, the whole box stays in Class G.';
+  },
+  presets: {
+    'cruise-at-ll-3500': { pos: 5, alt: 3500, hpa: 0, tol: 1 },
+    'plan-500-below-step-2': { pos: 5, alt: 3000, hpa: 0, tol: 1 },
+    'subscale-3-hpa-low': { pos: 5, alt: 3000, hpa: 3, tol: 1 },
+    'boundary-within-tolerance': { pos: 9.4, alt: 3000, hpa: 0, tol: 1 },
+    'descended-past-boundary': { pos: 13, alt: 2000, hpa: 0, tol: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="cst-title" class="widget-stage">
+    <title id="cst-title">A side profile along your track towards Perth: an outer control area step labelled C LL 3500 and an inner step labelled C LL 2500, with Class G beneath both. Your aeroplane flies under them inside a box showing where it could really be, given the navigation tolerance along the track and up to 100 ft of altimeter error; the box turns red if any part of it reaches controlled airspace</title>
+    <defs>
+      <pattern id="cst-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.35"/></pattern>
+    </defs>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-surface-2)" rx="10"/>
+    <!-- controlled airspace: the two steps -->
+    <path d="M60 90 L330 90 L330 190 L600 190 L600 30 L60 30 Z" fill="var(--color-info-soft)"/>
+    <path d="M60 90 L330 90 L330 190 L600 190 L600 30 L60 30 Z" fill="url(#cst-hatch)"/>
+    <path d="M60 90 L330 90 L330 190 L600 190" fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="195" y="52" font-size="15" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)">C LL 3500</text>
+    <text x="195" y="68" font-size="12" text-anchor="middle" fill="var(--color-info-fg)">step 2, further out</text>
+    <text x="465" y="160" font-size="15" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)">C LL 2500</text>
+    <text x="465" y="178" font-size="12" text-anchor="middle" fill="var(--color-info-fg)">step 1, nearer the airport</text>
+    <text x="70" y="282" font-size="13" font-weight="600" fill="var(--color-ok-fg)">Class G: no clearance needed</text>
+    <!-- planning lines 500 ft below each step -->
+    <line x1="60" y1="140" x2="330" y2="140" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <line x1="330" y1="240" x2="600" y2="240" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="64" y="134" font-size="12" fill="var(--color-ok-fg)" class="num">plan 3,000</text>
+    <text x="596" y="234" font-size="12" text-anchor="end" fill="var(--color-ok-fg)" class="num">plan 2,000</text>
+    <!-- boundary -->
+    <line x1="330" y1="30" x2="330" y2="296" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="330" y="310" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">step boundary</text>
+    <text x="600" y="310" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">towards the airport →</text>
+    <!-- height scale -->
+    <g font-size="11" class="num" fill="var(--color-fg-faint)" text-anchor="end">
+      <text x="54" y="44">4,000</text><text x="54" y="94">3,500</text><text x="54" y="144">3,000</text><text x="54" y="194">2,500</text><text x="54" y="244">2,000</text><text x="54" y="294">1,500</text>
+    </g>
+    <line x1="60" y1="296" x2="600" y2="296" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <!-- where you could really be -->
+    <rect stroke-width="2" rx="4" :x="X(a)" :width="X(b) - X(a)" :y="Y(top)" :height="Y(bottom) - Y(top)"
+      :fill="boxStroke" fill-opacity="0.18" :stroke="boxStroke"/>
+    <!-- indicated altitude (what the altimeter says) when it differs from the true one -->
+    <line stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="3 3" :opacity="(hpa !== 0) ? 1 : 0" :x1="X(pos) - 30" :x2="X(pos) + 30" :y1="Y(alt)" :y2="Y(alt)"/>
+    <g :transform="'translate(' + X(pos) + ' ' + Y(trueAlt) + ')'">
+      <!-- tools/diagrams/plane.py: side, scale 0.4, no gear, colour brand, fill surface -->
+      <g transform="translate(0 0) rotate(0) scale(0.4)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="12" class="num" text-anchor="middle" :x="clamp(X(pos), 110, 560)" :y="Y(top) - 8 < 84 ? Y(bottom) + 16 : Y(top) - 8" :fill="'var(--color-' + state + '-fg)'"
+      paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      x-text="margin > 0 ? fmt(margin) + ' ft to spare' : 'could be in Class C'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cst-pos">Position along the track <output for="cst-pos" x-text="pos < 10 ? fmt(10 - pos, 1) + ' nm before the boundary' : fmt(pos - 10, 1) + ' nm past the boundary'"></output></label>
+      <input type="range" id="cst-pos" min="1" max="19" step="0.1" x-model.number="pos">
+    </div>
+    <div class="widget-control">
+      <label for="cst-alt">Altitude you fly (on the altimeter) <output for="cst-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="cst-alt" min="1500" max="3800" step="100" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="cst-hpa">Subscale set below the QNH by <output for="cst-hpa" x-text="hpa + ' hPa (' + (hpa * 30) + ' ft)'"></output></label>
+      <input type="range" id="cst-hpa" min="0" max="5" step="1" x-model.number="hpa">
+    </div>
+    <div class="widget-control">
+      <label for="cst-tol">Navigation tolerance <output for="cst-tol" x-text="'± ' + fmt(tol, 1) + ' nm'"></output></label>
+      <input type="range" id="cst-tol" min="0" max="2" step="0.1" x-model.number="tol">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Lowest step over you</dt>
+      <dd class="widget-value num" x-text="'C LL ' + limit + (spans ? ' (across the boundary)' : '')"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Highest you could be</dt>
+      <dd class="widget-value num" x-text="fmt(top) + ' ft (true ' + fmt(trueAlt) + ' + 100)'"></dd>
+    </div>
+    <div class="widget-readout" :class="state">
+      <dt class="widget-label">Clear of Class C?</dt>
+      <dd class="widget-value"><span x-text="margin > 0 ? 'Yes, ' + fmt(margin) + ' ft to spare' : 'No: possible infringement'"></span><span class="widget-flag bad" x-show="state === 'bad'">clearance needed</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cruise-at-ll-3500')" :aria-pressed="active === 'cruise-at-ll-3500'">At 3,500</button>
+      <button type="button" @click="preset('plan-500-below-step-2')" :aria-pressed="active === 'plan-500-below-step-2'">500 ft below</button>
+      <button type="button" @click="preset('subscale-3-hpa-low')" :aria-pressed="active === 'subscale-3-hpa-low'">Subscale 3 hPa low</button>
+      <button type="button" @click="preset('boundary-within-tolerance')" :aria-pressed="active === 'boundary-within-tolerance'">Near the boundary</button>
+      <button type="button" @click="preset('descended-past-boundary')" :aria-pressed="active === 'descended-past-boundary'">Past the boundary</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> You are never at a single point: navigation has a tolerance, the altimeter may be up to 100 ft out and every hectopascal of subscale error adds about 30 ft. Plan so the whole box stays in Class G: 500 ft below each step's lower limit; flying in towards a lower step, descend before you are within your tolerance of its boundary, and flying out, climb only once you are clearly past it. The along-track distances are illustrative, and the source note gives the lateral buffer only as a nautical mile or two; the tolerance for each means of navigation is in AIP ENR 1.1 (verify there).</p>
+  <details class="widget-try"><summary>Try it: why not cruise at 3,500 ft under the C LL 3500 step?</summary><p>Choose At 3,500: the lower limit is the bottom of Class C, so at 3,500 ft you are already at the boundary, and the 100 ft of altimeter error puts you inside it. At 3,000 ft the box stays clear with 400 ft to spare.</p></details>
+  <details class="widget-try"><summary>Try it: at 3,000 ft you are approaching the step 1 boundary. When may you descend to 2,000 ft?</summary><p>Choose Near the boundary: 0.6 nm short, with a 1 nm tolerance, you could already be under step 1, where Class C starts at 2,500 ft, so 3,000 ft could be inside it. Descend to 2,000 ft before you get within your tolerance of the boundary, then cross it.</p></details>
+</div>

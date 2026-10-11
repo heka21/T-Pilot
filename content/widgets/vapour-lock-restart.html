@@ -1,0 +1,245 @@
+<div class="widget" x-data="timeline({
+  duration: 24, loop: false, boost: false, boostAt: 2,
+  // The sequence is BAKC 3.4's: a hot day, shut down, heat soak with no cooling air, the fuel in the lines and pump
+  // boils, a pump cannot move vapour, so the restart gives fluctuating fuel pressure and flow, rough running,
+  // surging and hard starting; the booster pump raises the pressure, pushing the vapour through or collapsing it
+  // back to liquid. Timings and needle positions are illustrative. boostAt is the clock time the booster went on
+  // (2 = never); the restart is at 0.45 and cranking starts at 0.5.
+  wig(tt, k) { return Math.sin(tt * 420 + k) * Math.sin(tt * 97 + 1 + k) },
+  soakAt(tt) { return this.ease(this.seg(tt, 0.13, 0.42)) },
+  clearAt(tt) { return this.boostAt <= 1 ? this.ease(this.seg(tt, this.boostAt, this.boostAt + 0.1)) : 0 },
+  vapAt(tt) { return this.soakAt(tt) * (1 - this.clearAt(tt)) },
+  get startAt() { return this.boostAt <= 0.5 ? 0.53 : 0.58 },
+  onAt(tt) { return this.boostAt <= 1 && tt >= this.boostAt },
+  pAt(tt) {
+    const e = (a, b) => this.ease(this.seg(tt, a, b));
+    if (tt < 0.1) return 0.5;
+    if (tt < 0.45) return 0.5 * (1 - e(0.1, 0.13));
+    const on = this.onAt(tt), base = on ? 0.62 * e(this.boostAt, this.boostAt + 0.03) : 0;
+    const engine = tt >= 0.5 ? 0.5 * e(0.5, 0.52) : 0;
+    const p = Math.max(base, engine);
+    return this.clamp(p - (p > 0 ? this.vapAt(tt) * (0.22 + 0.16 * this.wig(tt, 0)) : 0), 0, 1);
+  },
+  flowAt(tt) {
+    const e = (a, b) => this.ease(this.seg(tt, a, b));
+    if (tt < 0.1) return 0.45 * (1 - e(0.08, 0.1));
+    if (tt < 0.5) return 0;
+    const f = tt < this.startAt ? 0.15 : 0.4 * e(this.startAt, this.startAt + 0.03);
+    return this.clamp(f - this.vapAt(tt) * (0.14 + 0.12 * this.wig(tt, 2)), 0, 1);
+  },
+  get vap() { return this.vapAt(this.t) },
+  get p() { return this.pAt(this.t) },
+  get flow() { return this.flowAt(this.t) },
+  get boostOn() { return this.onAt(this.t) },
+  get off() { return this.t >= 0.1 && this.t < 0.5 },
+  get cranking() { return this.t >= 0.5 && this.t < this.startAt },
+  get running() { return this.t < 0.1 || this.t >= this.startAt },
+  get rough() { return this.t >= this.startAt && this.vap > 0.25 },
+  get clearing() { return this.boostOn && this.t >= 0.45 && this.vap > 0.05 && this.clearAt(this.t) > 0 },
+  // heat under the cowl: carried away while running, soaking in when stopped, easing once air flows again
+  get heat() { const t = this.t; return t < 0.1 ? 0.3 : t < this.startAt ? 0.3 + 0.7 * this.ease(this.seg(t, 0.1, 0.4)) : 1 - 0.6 * this.ease(this.seg(t, this.startAt, 1)) },
+  get flowing() { return this.t >= 0.5 },
+  slide(i) { return this.flowing ? (this.t * 25 + i / 3) % 1 : i / 3 },
+  setBoost() {
+    if (!this.boost) { if (this.t < this.boostAt) this.boostAt = 2; return }
+    this.boostAt = this.clamp(this.t, 0.45, 0.85);
+    if (this.t > 0.85) { this.t = 0.85; this.play() }
+  },
+  get steps() {
+    const s = [{ at: 0, label: 'Landed, hot day' }, { at: 0.1, label: 'Shut down' }, { at: 0.15, label: 'Heat soak' }, { at: 0.45, label: 'Restart' }];
+    if (this.boostAt <= 1) {
+      if (this.boostAt > 0.46) s.push({ at: this.boostAt, label: 'Booster pump on' }); else s[3].label = 'Restart, booster on';
+      s.push({ at: Math.min(1, this.boostAt + 0.1), label: 'Flow steady' });
+    } else s.push({ at: 0.6, label: 'Rough, surging' });
+    return s;
+  },
+  get engineText() {
+    if (this.t < 0.1) return 'running';
+    if (this.t < 0.15) return 'shut down';
+    if (this.off) return this.t < 0.45 ? 'off, heat soaking' : 'off, about to restart';
+    if (this.cranking) return this.vap > 0.25 ? 'cranking, hard start' : 'cranking';
+    return this.rough ? 'rough, surging' : 'running smoothly';
+  },
+  get caption() {
+    const t = this.t;
+    if (t < 0.1) return 'The end of a flight on a hot day. With the engine running, air through the cowling carries its heat away, and the fuel in the lines stays liquid: steady fuel pressure and flow.';
+    if (t < 0.15) return 'Shut down: the propeller stops and so does the cooling air. The engine-driven pump stops, so the fuel pressure falls away.';
+    if (t < 0.45) return 'Heat soak: with no air flowing, heat soaks from the hot engine into the fuel lines and pump. Heat the fuel, or lower the pressure on it, and it boils into vapour.';
+    if (t < 0.5) return this.boostOn ? 'Restart with the booster pump on: it raises the pressure in the lines before the engine turns.' : 'Restart. The engine-driven pump is designed to move liquid; it cannot move bubbles.';
+    if (this.cranking) return this.vap > 0.25 ? 'Hard starting: the pump delivers slugs of vapour and liquid, so the engine catches and dies.' : 'The vapour is clearing, so the engine fires.';
+    if (this.clearing) return 'Booster pump on: it raises the pressure in the lines, pushing the vapour through or collapsing it back into liquid.';
+    if (this.rough) return 'Vapour lock: the supply to the engine is intermittent, so the fuel pressure and flow fluctuate and the engine runs rough and surges. Fix it: switch the booster pump on.';
+    return 'Liquid fuel again: pressure and flow steady, the engine smooth. Enrich if needed and follow the POH hot-start procedure; on fuel-injected engines it usually keeps the mixture at idle cut-off until the engine fires. Your POH takes precedence.';
+  },
+  get pText() {
+    if (this.off || this.cranking && this.p < 0.05) return this.t < 0.13 ? 'Falling' : 'None: pumps stopped';
+    if (this.vap > 0.25 && !this.clearing) return 'Fluctuating';
+    if (this.clearing) return 'Rising, steadying';
+    return 'Steady';
+  },
+  get pState() { return this.pText === 'Fluctuating' ? 'bad' : this.pText === 'Rising, steadying' ? 'warn' : this.pText === 'Steady' ? 'ok' : '' },
+  get fuelText() {
+    if (this.vap < 0.05) return this.t > 0.45 ? 'Liquid again' : 'Liquid';
+    if (this.clearing) return 'Vapour collapsing back to liquid';
+    if (this.t < 0.45) return this.vap < 0.9 ? 'Boiling into vapour' : 'Full of vapour bubbles';
+    return 'Vapour bubbles';
+  },
+  // gauges: 240 degree sweep, arcs at radius 38
+  tip(cx, cy, v, r) { return this.pol(cx, cy, r || 33, -120 + 240 * this.clamp(v, 0, 1)) },
+  arc(cx, cy, v0, v1) {
+    const a = this.tip(cx, cy, v0, 38), b = this.tip(cx, cy, v1, 38);
+    return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' A38 38 0 ' + ((v1 - v0) * 240 > 180 ? 1 : 0) + ' 1 ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
+  },
+  // trace: 0..1 across x 372..620, pressure 0..1 up y 265..185
+  TX(tt) { return 372 + tt * 248 },
+  PY(p) { return 265 - p * 80 },
+  trace(t1) { const pts = []; for (let tt = 0; tt <= t1 + 1e-9; tt += 0.002) pts.push([this.TX(tt), this.PY(this.pAt(tt))]); pts.push([this.TX(t1), this.PY(this.pAt(t1))]); return this.path(pts) },
+  get doneTrace() { return this.trace(this.t) },
+  presets: {
+    'heat-soak': { boost: false, boostAt: 2, t: 0.35 },
+    'restart-fluctuating': { boost: false, boostAt: 2, t: 0.68 },
+    'booster-pump-on': { boost: true, boostAt: 0.7, t: 0.9 },
+  },
+})">
+  <svg viewBox="0 0 640 296" role="img" aria-labelledby="vlr-title" class="widget-stage">
+    <title id="vlr-title">A cutaway of the engine compartment through a hot shutdown and restart: heat soaking into the fuel line and pump, vapour bubbles forming, and the fuel pressure and flow gauges and trace fluctuating until the booster pump steadies them</title>
+    <defs><marker id="vlr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="640" height="296" fill="var(--color-surface)"/>
+
+    <!-- hot day -->
+    <circle cx="22" cy="26" r="11" fill="var(--color-warn)"/>
+    <text x="40" y="31" font-size="12" fill="var(--color-warn-fg)" font-weight="600">hot day</text>
+    <text x="304" y="31" font-size="12" text-anchor="end" font-weight="600" :fill="rough || (cranking && vap > 0.25) ? 'var(--color-bad-fg)' : running ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="'engine: ' + engineText"></text>
+
+    <!-- cowling, heat under it -->
+    <path d="M60 60 L240 60 Q300 66 304 140 L304 190 Q300 254 240 260 L60 260 Z" fill="var(--color-bad)" :fill-opacity="0.16 * heat"/>
+    <path d="M60 60 L240 60 Q300 66 304 140 L304 190 Q300 254 240 260 L60 260" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+    <line x1="60" y1="56" x2="60" y2="264" stroke="var(--color-fg-muted)" stroke-width="5" stroke-linecap="round"/>
+    <!-- propeller: a disc when turning, a blade when stopped -->
+    <path d="M304 146 Q338 165 304 184 Z" fill="var(--color-fg-muted)"/>
+    <ellipse cx="316" cy="165" rx="6" ry="88" fill="var(--color-fg-faint)" fill-opacity="0.25" stroke="var(--color-fg-faint)" stroke-width="1" x-show="running || cranking"/>
+    <rect x="312" y="80" width="7" height="170" rx="3.5" fill="var(--color-fg-muted)" x-show="!running && !cranking"/>
+    <!-- engine and exhaust -->
+    <rect x="150" y="100" width="130" height="75" rx="6" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2"/>
+    <rect x="150" y="100" width="130" height="75" rx="6" fill="var(--color-bad)" :fill-opacity="0.08 + 0.22 * heat"/>
+    <path d="M162 100 V114 M174 100 V114 M186 100 V114 M198 100 V114 M210 100 V114 M222 100 V114 M234 100 V114 M246 100 V114 M258 100 V114 M270 100 V114" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <text x="215" y="150" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">engine</text>
+    <path d="M262 175 L262 228 L208 228 L208 260" fill="none" stroke="var(--color-fg-muted)" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M262 175 L262 228 L208 228 L208 260" fill="none" stroke="var(--color-bad)" stroke-width="3" stroke-linejoin="round" :stroke-opacity="0.3 + 0.7 * heat"/>
+    <text x="236" y="248" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">exhaust</text>
+    <!-- cooling air, only while the propeller turns -->
+    <path d="M298 86 L172 86" fill="none" stroke="var(--color-info)" stroke-width="2" marker-end="url(#vlr-arrow)" x-show="running"/>
+    <text x="236" y="78" font-size="12" text-anchor="middle" :fill="running ? 'var(--color-info)' : 'var(--color-bad-fg)'" :font-weight="running ? 400 : 600" x-text="running ? 'cooling air' : 'no cooling air'"></text>
+    <!-- heat soaking into the lines -->
+    <g fill="none" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" marker-end="url(#vlr-arrow)" :stroke-opacity="off ? 0.3 + 0.7 * heat : 0" x-show="off">
+      <path d="M84 122 q5 6 0 12 t0 12 t0 12 t0 12 t0 14"/>
+      <path d="M106 122 q5 6 0 12 t0 12 t0 12 t0 12 t0 14"/>
+      <path d="M128 122 q5 6 0 12 t0 12 t0 12 t0 12 t0 14"/>
+    </g>
+    <text x="106" y="112" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-bad-fg)" x-show="off && t >= 0.15">heat soak</text>
+    <!-- fuel line: from the tank, booster pump, through the firewall, engine-driven pump, up into the engine -->
+    <text x="2" y="186" font-size="11" fill="var(--color-fg-muted)">from tank</text>
+    <path d="M0 205 L170 205 L170 175" fill="none" stroke="var(--color-brand)" stroke-width="8" stroke-linejoin="round"/>
+    <circle cx="32" cy="205" r="12" stroke-width="2" :fill="boostOn ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="boostOn ? 'var(--color-brand)' : 'var(--color-fg-muted)'"/>
+    <text x="32" y="209" font-size="11" font-weight="700" text-anchor="middle" :fill="boostOn ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">B</text>
+    <text x="32" y="236" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">booster</text>
+    <text x="32" y="250" font-size="11" text-anchor="middle" :font-weight="boostOn ? 700 : 400" :fill="boostOn ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" x-text="boostOn ? 'pump ON' : 'pump off'"></text>
+    <circle cx="132" cy="205" r="12" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="132" y="236" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">engine</text>
+    <text x="132" y="250" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">pump</text>
+    <!-- vapour bubbles: sliding along when the pump turns, shrinking as the booster collapses them -->
+    <g fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="1.25" x-show="vap > 0.03">
+      <circle cy="205" :cx="72 + slide(0) * 42" :r="5.5 * vap"/>
+      <circle cy="205" :cx="72 + slide(1) * 42" :r="4.5 * vap"/>
+      <circle cy="205" :cx="72 + slide(2) * 42" :r="5 * vap"/>
+      <circle cx="128" cy="201" :r="4.5 * vap"/>
+      <circle cx="137" cy="210" :r="3.5 * vap"/>
+      <circle cy="205" :cx="152 + slide(1) * 12" :r="4.5 * vap"/>
+      <circle cx="170" :cy="196 - slide(2) * 14" :r="4 * vap"/>
+    </g>
+    <text x="90" y="226" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-bad-fg)" x-show="vap > 0.4">vapour</text>
+
+    <!-- fuel pressure gauge -->
+    <circle cx="410" cy="78" r="56" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <g fill="none" stroke-width="6">
+      <path stroke="var(--color-bad)" :d="arc(410, 78, 0, 0.1) + ' ' + arc(410, 78, 0.88, 1)"/>
+      <path stroke="var(--color-warn)" :d="arc(410, 78, 0.1, 0.25) + ' ' + arc(410, 78, 0.75, 0.88)"/>
+      <path stroke="var(--color-ok)" :d="arc(410, 78, 0.25, 0.75)"/>
+    </g>
+    <line x1="410" y1="78" stroke-width="3" stroke-linecap="round" :stroke="pState === 'bad' ? 'var(--color-bad)' : 'var(--color-fg)'" :x2="tip(410, 78, p).x" :y2="tip(410, 78, p).y"/>
+    <circle cx="410" cy="78" r="4.5" fill="var(--color-fg)"/>
+    <text x="410" y="152" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">fuel pressure</text>
+    <text x="410" y="118" font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)" x-show="pState === 'bad'">flickering</text>
+    <!-- fuel flow gauge -->
+    <circle cx="556" cy="78" r="56" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="arc(556, 78, 0.2, 0.8)"/>
+    <line x1="556" y1="78" stroke-width="3" stroke-linecap="round" :stroke="pState === 'bad' ? 'var(--color-bad)' : 'var(--color-fg)'" :x2="tip(556, 78, flow).x" :y2="tip(556, 78, flow).y"/>
+    <circle cx="556" cy="78" r="4.5" fill="var(--color-fg)"/>
+    <text x="556" y="152" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">fuel flow</text>
+    <text x="556" y="118" font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)" x-show="pState === 'bad'">flickering</text>
+
+    <!-- fuel pressure trace -->
+    <text x="372" y="176" font-size="12" fill="var(--color-fg-muted)">fuel pressure through the restart</text>
+    <rect y="185" height="80" fill="var(--color-bad)" fill-opacity="0.08" :x="TX(0.1)" :width="TX(0.5) - TX(0.1)"/>
+    <text y="200" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" :x="(TX(0.1) + TX(0.5)) / 2">engine off</text>
+    <rect y="185" height="80" fill="var(--color-brand)" fill-opacity="0.1" x-show="boostAt <= 1" :x="TX(Math.min(1, boostAt))" :width="TX(1) - TX(Math.min(1, boostAt))"/>
+    <text y="200" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)" x-show="boostAt <= 0.8" :x="(TX(Math.min(1, boostAt)) + TX(1)) / 2">booster on</text>
+    <line :x1="TX(0.5)" :x2="TX(0.5)" y1="185" y2="265" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="372" y1="265" x2="620" y2="265" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text :x="TX(0.5)" y="280" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">restart</text>
+    <text x="620" y="280" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">time →</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round" :d="doneTrace"/>
+    <circle r="4.5" :cx="TX(t)" :cy="PY(p)" :fill="pState === 'bad' ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="vlr-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vlr-boost" class="cursor-pointer"><span>Electric booster pump on (switch it on before or after the restart)</span>
+        <input type="checkbox" id="vlr-boost" x-model="boost" @change="setBoost()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="pState">
+      <dt class="widget-label">Fuel pressure and flow</dt>
+      <dd class="widget-value"><span x-text="pText"></span><span class="widget-flag bad" x-show="pState === 'bad'">vapour</span></dd>
+    </div>
+    <div class="widget-readout" :class="vap < 0.05 ? 'ok' : clearing ? 'warn' : 'bad'">
+      <dt class="widget-label">Fuel in the lines and pump</dt>
+      <dd class="widget-value" x-text="fuelText"></dd>
+    </div>
+    <div class="widget-readout" :class="rough || (cranking && vap > 0.25) ? 'bad' : running ? 'ok' : ''">
+      <dt class="widget-label">Engine</dt>
+      <dd class="widget-value" x-text="engineText.charAt(0).toUpperCase() + engineText.slice(1)"></dd>
+    </div>
+    <div class="widget-readout" :class="boostOn ? 'ok' : ''">
+      <dt class="widget-label">Booster pump</dt>
+      <dd class="widget-value" x-text="boostOn ? 'On: raising the pressure in the lines' : boost ? 'On at the restart' : 'Off'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('heat-soak')" :aria-pressed="active === 'heat-soak'">Heat soak</button>
+      <button type="button" @click="preset('restart-fluctuating')" :aria-pressed="active === 'restart-fluctuating'">Restart: fluctuating</button>
+      <button type="button" @click="preset('booster-pump-on')" :aria-pressed="active === 'booster-pump-on'">Booster pump on</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Vapour lock is worst after a hot engine is shut down and restarted: no cooling air, so heat soaks into the fuel lines and pump and the fuel boils, and a pump made for liquid cannot move bubbles. The symptoms are what an intermittent supply looks like: fluctuating fuel pressure and flow, rough running, surging and hard starting. The booster pump's extra pressure pushes the vapour through or collapses it back to liquid. This aeroplane has an engine-driven pump, an electric booster pump and a fuel pressure gauge, as low-wing and fuel-injected types usually do; a gravity-fed high-wing trainer such as the Cessna 152 has none of them. Timings and needle positions are illustrative; follow your POH hot-start procedure.</p>
+  <details class="widget-try"><summary>Try it: play the restart with the booster pump off. When the needles start to flicker, what do you do?</summary><p>Tick the booster pump: the pressure rises and steadies within a few moments as the vapour is pushed through or collapses back to liquid, and the engine smooths out. Then enrich if needed and follow the POH hot-start procedure.</p></details>
+  <details class="widget-try"><summary>Try it: why is vapour lock more likely after a short stop on a hot day than in cruise?</summary><p>In cruise, air through the cowling carries the engine's heat away. Once the engine stops, the cooling air stops too, so heat soaks from the hot engine into the fuel lines and pump, and the fuel in them boils into vapour.</p></details>
+</div>

@@ -10,10 +10,12 @@
 
    On a lesson's page the mini player is not a separate bar: it moves into the lesson bar as a flyout beside the
    Listen button (data-player-dock), which opens and closes it and wears a ring for the progress; closed is kept
-   as "player:collapsed".
+   as "player:collapsed". While it plays with the flyout closed (or the lesson bar folded) the button is a pause
+   button instead.
 
    On a lesson's own page, Listen and play start from the passage on screen when the reader has scrolled away from
-   where the narration would resume (follow.js works out the spot).
+   where the narration would resume (follow.js works out the spot); the player's "Play from here" button
+   (data-player="here", shown there) starts from the passage on screen whatever is playing.
 
    lesson: the descriptor from services.audio.descriptor (sid, title, unit, src, duration, chapters, position, ...).
    The lock screen, CarPlay and headphone buttons work through the Media Session API. */
@@ -136,9 +138,15 @@
 
   function toggle() { if (!lesson) return; if (audio.paused) audio.play().catch(function () {}); else audio.pause(); }
 
-  // Where a reader on the lesson's page wants it to start instead of time t (follow.js), or null.
-  function readingSpot(sid, t) {
-    try { return window.CasaFollow && window.CasaFollow.spot ? window.CasaFollow.spot(sid, t) : null; } catch (e) { return null; }
+  // Where a reader on the lesson's page wants it to start instead of time t (follow.js), or null. `here`: the
+  // passage on screen even when the one being read is on screen too ("Play from here").
+  function readingSpot(sid, t, here) {
+    try { return window.CasaFollow && window.CasaFollow.spot ? window.CasaFollow.spot(sid, t, !!here) : null; } catch (e) { return null; }
+  }
+  // Whether this page is the lesson `sid` itself (note.html), where "Play from here" means something.
+  function onLessonPage(sid) {
+    var article = document.querySelector("[data-lesson-article]"), host = article && article.closest("[data-sid]");
+    return !!host && host.getAttribute("data-sid") === sid;
   }
   function seek(t) {
     if (!lesson) return;
@@ -190,6 +198,11 @@
     if (on) flyMini(true, function () { collapsed = true; emit("dock"); });
     else { collapsed = false; emit("dock"); flyMini(false); }
   }
+  // The Listen button is a pause button while playing with the flyout closed or the lesson bar folded.
+  function dockPauses(dock) {
+    var bar = dock.closest("[data-lesson-bar]");
+    return !!lesson && !audio.paused && (collapsed || (!!bar && bar.hasAttribute("data-collapsed")));
+  }
   function miniShown() { var mini = document.querySelector("[data-miniplayer]"); return !!mini && !mini.hidden; }
 
   // ------------------------------------------------------------ lock screen, CarPlay, headphones
@@ -200,7 +213,7 @@
       navigator.mediaSession.metadata = new MediaMetadata({
         title: lesson.title,
         artist: lesson.sid + (ch ? " · " + ch.title : ""),
-        album: "CASA Theory",
+        album: "T-Pilot",
         artwork: [{ src: "/static/listen-art.png", sizes: "512x512", type: "image/png" }]
       });
     } catch (e) {}
@@ -261,7 +274,7 @@
     var b = e.target.closest("[data-listen], [data-player]");
     if (!b) return;
     if (b.hasAttribute("data-player-dock") && lesson) {   // the Listen button the player flies out of
-      setCollapsed(!collapsed);
+      if (dockPauses(b)) audio.pause(); else setCollapsed(!collapsed);
       e.preventDefault();
       return;
     }
@@ -285,6 +298,12 @@
     if (act === "toggle") {
       if (lesson && audio.paused) { var spot = readingSpot(lesson.sid, audio.currentTime); if (spot != null) seek(spot); }
       toggle();
+    }
+    else if (act === "here") {
+      if (!lesson) return;
+      var here = readingSpot(lesson.sid, audio.currentTime, true);
+      if (here != null) seek(here);
+      audio.play().catch(function () {});
     }
     else if (act === "back") skip(-BACK);
     else if (act === "forward") skip(FORWARD);
@@ -328,7 +347,8 @@
         bar = mini.querySelector("[data-mp-bar]"), time = mini.querySelector("[data-mp-time]"),
         chList = mini.querySelector("[data-mp-chapters]"),
         lessonLink = mini.querySelector("[data-mp-lesson]"), watchLink = mini.querySelector("[data-mp-watch]"),
-        scrub = mini.querySelector("[data-mp-scrub]"), fold = mini.querySelector("[data-player='collapse']");
+        scrub = mini.querySelector("[data-mp-scrub]"), fold = mini.querySelector("[data-player='collapse']"),
+        hereBtn = mini.querySelector("[data-player='here']");
     // On a lesson's page the player becomes the lesson bar's flyout, lined up with the Listen button (--dock-y), and
     // moves with the bar; nothing inside it drags.
     var dock = document.querySelector("[data-player-dock]"), bar = dock && dock.closest("[data-lesson-bar]");
@@ -354,6 +374,7 @@
       mini.toggleAttribute("data-playing", !s.paused);
       if (shownSid !== s.lesson.sid) {
         shownSid = s.lesson.sid; lastCh = -1;
+        if (hereBtn) hereBtn.hidden = !onLessonPage(s.lesson.sid);
         if (title) title.textContent = s.lesson.title;
         if (lessonLink) lessonLink.href = s.lesson.lesson_url;
         if (watchLink) watchLink.href = s.lesson.watch_url;
@@ -455,19 +476,28 @@
   }
 
   // The lesson bar's Listen button once something is loaded: the bar carries the progress (--p) for the ring on the
-  // button (or on the bar's own fold button when the bar is folded), and the button says whether the flyout is open.
+  // button (or on the bar's own fold button when the bar is folded), and the button says whether the flyout is open,
+  // or is a pause button (data-pause) while playing with the flyout closed or the bar folded.
   function bindDock(root) {
     var dock = root.querySelector ? root.querySelector("[data-player-dock]") : null;
     if (!dock) return;
-    var bar = dock.closest("[data-lesson-bar]") || dock, label = dock.title, was = null;
-    subscribe(dock, function (s) {
+    var bar = dock.closest("[data-lesson-bar]") || dock, label = dock.title, was = null, last = null;
+    function mark(s) {
+      last = s;
       if (s.lesson) bar.style.setProperty("--p", s.duration ? (100 * s.time / s.duration).toFixed(2) + "%" : "0%");
-      var state = !s.lesson ? "none" : collapsed ? "closed" : "open";
+      var state = !s.lesson ? "none" : dockPauses(dock) ? "pause" : collapsed ? "closed" : "open";
       if (state === was) return;
       was = state;
-      dock.title = state === "none" ? label : state === "open" ? "Hide the player" : "Show the player";
+      dock.toggleAttribute("data-pause", state === "pause");
+      dock.title = { none: label, pause: "Pause", open: "Hide the player", closed: "Show the player" }[state];
+      if (state === "pause") dock.setAttribute("aria-label", "Pause"); else dock.removeAttribute("aria-label");
       if (state === "none") dock.removeAttribute("aria-expanded"); else dock.setAttribute("aria-expanded", String(state === "open"));
-    });
+    }
+    subscribe(dock, mark);
+    // Folding the bar (app.js) turns the button into a pause button while playing, and back.
+    if (bar !== dock && window.MutationObserver) {
+      new MutationObserver(function () { if (last) mark(last); }).observe(bar, { attributes: true, attributeFilter: ["data-collapsed"] });
+    }
   }
 
   function init(root) { bindMini(root); bindWatch(root); bindDock(root); }

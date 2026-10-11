@@ -1,0 +1,136 @@
+<div class="widget" x-data="timeline({
+  duration: 12, loop: false,
+  tas: 95, wind: -15, dist: 48, vis: 10,
+  // BAKC 2.2: GS = TAS − headwind (+ tailwind) for a wind straight along the track; time (min) = distance ÷ GS × 60;
+  // NM per minute = GS ÷ 60; visibility in NM = km × 0.54
+  get gs() { return this.tas + this.wind },
+  get legMin() { return this.dist / this.gs * 60 },
+  get stillMin() { return this.dist / this.tas * 60 },
+  get tMax() { return Math.max(this.legMin, this.stillMin) },
+  get el() { return this.t * this.tMax },
+  get pos() { return Math.min(this.dist, this.gs * this.el / 60) },
+  get ghost() { return Math.min(this.dist, this.tas * this.el / 60) },
+  get visNm() { return this.vis * 0.54 },
+  get sightMin() { return Math.max(0, this.dist - this.visNm) / this.gs * 60 },
+  get inSight() { return this.dist - this.pos <= this.visNm + 1e-9 },
+  get arrived() { return this.pos >= this.dist - 1e-9 },
+  get windText() { return this.wind === 0 ? 'still air' : Math.abs(this.wind) + ' kt ' + (this.wind < 0 ? 'headwind' : 'tailwind') },
+  // picture: Jandakot at x 70, the destination at x 570
+  get k() { return 500 / this.dist },
+  X(nm) { return 70 + nm * this.k },
+  ticks(speed, y) { let d = ''; const step = speed / 60; for (let n = 1; n * step < this.dist - 0.01; n++) { const x = this.X(n * step).toFixed(1); d += 'M' + x + ' ' + y + ' v' + (n % 5 ? 7 : 13) + ' ' } return d },
+  get todayTicks() { return this.ticks(this.gs, 184) },
+  get stillTicks() { return this.ticks(this.tas, 94) },
+  mmss(min) { const s = Math.round(min * 60); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') },
+  get steps() {
+    const s = [{ at: 0, label: 'Depart' }];
+    if (this.sightMin > 0.05) s.push({ at: this.sightMin / this.tMax, label: 'In sight' });
+    if (this.wind !== 0) s.push({ at: this.stillMin / this.tMax, label: 'Still-air arrival' });
+    s.push({ at: this.legMin / this.tMax, label: 'Arrival' });
+    return s.sort((a, b) => a.at - b.at);
+  },
+  get caption() {
+    if (this.arrived) return 'Overhead after ' + this.mmss(this.legMin) + ' min at ' + this.gs + ' kt over the ground' + (this.wind < 0 ? ', ' + this.fmt(this.legMin - this.stillMin) + ' minutes (and that much fuel) longer than in still air.' : this.wind > 0 ? ', ' + this.fmt(this.stillMin - this.legMin) + ' minutes sooner than in still air.' : '.');
+    if (this.inSight) return 'With ' + this.vis + ' km visibility you see the town from ' + this.fmt(this.visNm, 1) + ' NM out (km × 0.54), not before: until then you hold heading and time.';
+    if (this.t > 0) return 'Each tick under the aeroplane is one minute: ' + this.gs + ' kt is ' + this.fmt(this.gs / 60, 2) + ' NM a minute. ' + (this.wind < 0 ? 'The headwind packs the ticks closer than in still air.' : this.wind > 0 ? 'The tailwind spreads them wider than in still air.' : '');
+    return 'The airspeed is the same on both lines; only the wind differs. The distance is over the ground, so the leg time uses the groundspeed.';
+  },
+  presets: {
+    'northam-headwind': { tas: 95, wind: -15, dist: 48, vis: 10, t: 0, play: true },
+    'northam-arrival': { tas: 95, wind: -15, dist: 48, vis: 10, t: 1 },
+    'headwind-20': { tas: 105, wind: -20, dist: 48, vis: 10, t: 1 },
+    'tailwind-20': { tas: 105, wind: 20, dist: 48, vis: 10, t: 1 },
+    'two-nm-a-minute': { tas: 120, wind: 0, dist: 50, vis: 10, t: 1 },
+    'visibility-8-km': { tas: 95, wind: -15, dist: 48, vis: 8, t: 0.92 },
+  },
+})">
+  <svg viewBox="0 0 640 270" role="img" aria-labelledby="glt-title" class="widget-stage">
+    <title id="glt-title">Two aeroplanes fly the same leg at the same true airspeed, one in still air and one with today's wind; one-minute ticks along each line show how far each covers per minute, and a circle shows how far ahead the pilot can see</title>
+    <defs>
+      <marker id="glt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="270" rx="10" fill="var(--color-surface-2)"/>
+    <!-- clock -->
+    <text x="20" y="30" font-size="16" font-weight="700" fill="var(--color-fg)" class="num" x-text="'+' + mmss(el) + ' min'"></text>
+    <!-- wind -->
+    <g x-show="wind !== 0">
+      <line y1="24" y2="24" stroke="var(--color-info)" stroke-width="2.5" marker-end="url(#glt-arrow)" :x1="wind < 0 ? 610 : 520" :x2="wind < 0 ? 530 : 600"/>
+      <text x="565" y="46" font-size="12" text-anchor="middle" fill="var(--color-info)" x-text="'wind: ' + windText"></text>
+    </g>
+    <!-- still-air lane -->
+    <text x="70" y="70" font-size="13" fill="var(--color-fg-muted)" x-text="'Still air: TAS ' + tas + ' kt, ' + fmt(tas / 60, 2) + ' NM a minute'"></text>
+    <line x1="70" y1="90" x2="570" y2="90" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" :d="stillTicks"/>
+    <g :transform="'translate(' + X(ghost) + ' 90)'"><g transform="scale(0.3)" opacity="0.6"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+
+    <!-- today's lane, with the wind -->
+    <circle fill="var(--color-brand)" fill-opacity="0.08" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" cy="180" :cx="X(pos)" :r="visNm * k"/>
+    <text x="70" y="150" font-size="13" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="'Today: GS ' + gs + ' kt, ' + fmt(gs / 60, 2) + ' NM a minute'"></text>
+    <line x1="70" y1="180" x2="570" y2="180" stroke="var(--color-brand)" stroke-width="2"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.25" :d="todayTicks"/>
+    <!-- Jandakot and the destination -->
+    <circle cx="70" cy="180" r="5" fill="var(--color-fg)"/><circle cx="70" cy="90" r="5" fill="var(--color-fg-muted)"/>
+    <text x="70" y="222" font-size="13" text-anchor="middle" fill="var(--color-fg)">Jandakot</text>
+    <g>
+      <circle cx="570" cy="90" r="7" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+      <circle cx="570" cy="180" r="9" stroke-width="2.5" :fill="inSight ? 'var(--color-ok-soft)' : 'var(--color-surface)'" :stroke="inSight ? 'var(--color-ok)' : 'var(--color-fg-muted)'"/>
+      <text x="570" y="222" font-size="13" text-anchor="middle" font-weight="600" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :fill="inSight ? 'var(--color-ok-fg)' : 'var(--color-fg)'" x-text="dist === 48 ? 'Northam' : 'Destination'"></text>
+      <text x="570" y="240" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="dist + ' NM'"></text>
+    </g>
+    <g :transform="'translate(' + X(pos) + ' 180)'"><g transform="scale(0.36)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <text x="320" y="262" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">ticks: one minute each, every fifth tick longer · dashed circle: how far you can see</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the leg'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="glt-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time along the leg">
+    <span class="widget-clock" x-text="mmss(el)"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="glt-tas">True airspeed <output for="glt-tas" x-text="tas + ' kt'"></output></label>
+      <input type="range" id="glt-tas" min="60" max="140" step="1" x-model.number="tas">
+    </div>
+    <div class="widget-control">
+      <label for="glt-wind">Wind straight along the track <output for="glt-wind" x-text="windText"></output></label>
+      <input type="range" id="glt-wind" min="-30" max="30" step="1" x-model.number="wind">
+    </div>
+    <div class="widget-control">
+      <label for="glt-dist">Leg distance <output for="glt-dist" x-text="dist + ' NM'"></output></label>
+      <input type="range" id="glt-dist" min="10" max="60" step="1" x-model.number="dist">
+    </div>
+    <div class="widget-control">
+      <label for="glt-vis">Visibility <output for="glt-vis" x-text="vis + ' km = ' + fmt(visNm, 1) + ' NM'"></output></label>
+      <input type="range" id="glt-vis" min="2" max="15" step="1" x-model.number="vis">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="wind < 0 ? 'warn' : 'ok'"><dt class="widget-label">Groundspeed = TAS ± wind</dt><dd class="widget-value" x-text="tas + (wind < 0 ? ' − ' : ' + ') + Math.abs(wind) + ' = ' + gs + ' kt'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Over the ground per minute</dt><dd class="widget-value" x-text="fmt(gs / 60, 2) + ' NM'"></dd></div>
+    <div class="widget-readout" :class="wind < 0 ? 'warn' : ''"><dt class="widget-label">Leg time = distance ÷ GS × 60</dt><dd class="widget-value"><span x-text="fmt(legMin, 1) + ' min (still air ' + fmt(stillMin, 1) + ')'"></span><span class="widget-flag warn" x-show="wind < 0 && legMin - stillMin >= 1" x-text="'+' + fmt(legMin - stillMin) + ' min'"></span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Destination in sight from</dt><dd class="widget-value" x-text="fmt(visNm, 1) + ' NM out, at ' + mmss(sightMin) + ' min'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('northam-arrival')" :aria-pressed="active === 'northam-arrival'">To Northam, 15 kt headwind</button>
+      <button type="button" @click="preset('headwind-20')" :aria-pressed="active === 'headwind-20'">105 kt, 20 kt headwind</button>
+      <button type="button" @click="preset('tailwind-20')" :aria-pressed="active === 'tailwind-20'">105 kt, 20 kt tailwind</button>
+      <button type="button" @click="preset('two-nm-a-minute')" :aria-pressed="active === 'two-nm-a-minute'">120 kt: 2 NM a minute</button>
+      <button type="button" @click="preset('visibility-8-km')" :aria-pressed="active === 'visibility-8-km'">Visibility 8 km</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The two aeroplanes have the same airspeed; the wind alone separates them. The leg is measured over the ground, so its time comes from the groundspeed, and each one-minute tick is GS ÷ 60 nautical miles long. The visibility arrives in kilometres and the distance in nautical miles: multiply by 0.54 before you compare them. Wind here blows straight along the track; at an angle only part of it counts.</p>
+  <details class="widget-try"><summary>Try it: TAS 95 kt, a 15 kt headwind, a 48 NM leg. How long, and how much longer than in still air?</summary><p>GS = 95 − 15 = 80 kt, so 48 ÷ 80 × 60 = 36 minutes, against 48 ÷ 95 × 60 ≈ 30 in still air: about 6 minutes, and 6 minutes of fuel, more. Press To Northam and play it.</p></details>
+  <details class="widget-try"><summary>Try it: visibility 8 km and a landmark 5 NM ahead. Can you see it yet?</summary><p>8 × 0.54 = 4.3 NM, less than 5, so not yet: you will see it from about 4 NM out. Press Visibility 8 km and watch the town turn green only when the dashed circle reaches it.</p></details>
+</div>

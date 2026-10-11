@@ -1,0 +1,186 @@
+<div class="widget" x-data="timeline({
+  loop: false,
+  from: '7300', to: '3500', order: 'ltr', mode: 'ALT', ident: false,
+  _R: { '7500': 'unlawful interference', '7600': 'radio failure', '7700': 'emergency' },
+  // a code is four digits, each 0 to 7
+  clean(s) { return (String(s).replace(/[^0-7]/g, '') + '0000').slice(0, 4) },
+  get A() { return this.clean(this.from) },
+  get B() { return this.clean(this.to) },
+  // every click of a digit knob is transmitted: one digit at a time, one step at a time, no wrapping
+  get seq() {
+    const d = this.A.split('').map(Number), goal = this.B.split('').map(Number), out = [this.A];
+    const idx = this.order === 'ltr' ? [0, 1, 2, 3] : [3, 2, 1, 0];
+    idx.forEach((i) => { while (d[i] !== goal[i]) { d[i] += d[i] < goal[i] ? 1 : -1; out.push(d.join('')) } });
+    return out;
+  },
+  get n() { return this.seq.length },
+  get duration() { return Math.max(2, (this.n - 1) * 0.8) },
+  get i() { return this.n < 2 ? 0 : Math.round(this.t * (this.n - 1)) },
+  get code() { return this.seq[this.i] },
+  get steps() { return this.n < 2 ? [{ at: 0, label: this.A }] : this.seq.map((c, k) => ({ at: k / (this.n - 1), label: c })) },
+  // which digit the last click changed
+  get turning() { if (this.i === 0) return -1; const a = this.seq[this.i - 1], b = this.code; for (let k = 0; k < 4; k++) if (a[k] !== b[k]) return k; return -1 },
+  get replying() { return this.mode === 'ON' || this.mode === 'ALT' },
+  reserved(c, k) { return this._R[c] && k > 0 && k < this.n - 1 },
+  get alarm() { return this.replying && this.reserved(this.code, this.i) },
+  get passed() { return this.seq.filter((c, k) => this.reserved(c, k)) },
+  get passedSoFar() { return this.seq.slice(0, this.i + 1).filter((c, k) => this.reserved(c, k)) },
+  chipX(k) { const w = Math.min(46, 600 / Math.max(1, this.n)); return 20 + k * w },
+  get chipW() { return Math.min(46, 600 / Math.max(1, this.n)) - 4 },
+  // the chips are written out to 16; longer sequences show their first 16
+  chip(k) { return k < this.n ? this.seq[k] : '' },
+  chipFill(k) { return this.reserved(this.seq[k], k) ? 'var(--color-bad-soft)' : k === this.i ? 'var(--color-brand-soft)' : 'var(--color-surface)' },
+  chipEdge(k) { return this.reserved(this.seq[k], k) ? 'var(--color-bad)' : k === this.i ? 'var(--color-brand)' : 'var(--color-line-strong)' },
+  chipInk(k) { return this.reserved(this.seq[k], k) ? 'var(--color-bad-fg)' : k <= this.i ? 'var(--color-fg)' : 'var(--color-fg-faint)' },
+  digit(k) { return this.code[k] },
+  get radarText() {
+    return { OFF: 'Nothing: the transponder is off', STBY: 'Nothing: warm but silent (on the ground until you enter the runway)',
+             ON: 'Your code only', ALT: 'Your code and pressure altitude (normal in flight, Mode C/S)' }[this.mode];
+  },
+  get caption() {
+    if (!this.replying) return 'In ' + this.mode + ' the transponder sends no reply, so nothing reaches the radar. In ON or ALT, every intermediate code is transmitted as you dial.';
+    if (this.n < 2) return this.code + ' and ALT before entering the runway, unless a different code is assigned: the code identifies you and ALT adds your pressure altitude. Press IDENT only when ATC asks you to squawk ident.';
+    if (this.alarm) return this.code + ' is on the controller’s screen right now: the ' + this._R[this.code] + ' code. Each intermediate code is transmitted as you dial, so this order of digits trips an alarm.';
+    if (this.i < this.n - 1 && this.code[0] === '7' && this.A[0] !== '7') return 'Dialling: ' + this.code + ' is being transmitted. Turning the first digit up through 7 first briefly shows ' + this.code + ', which is harmless; but a code change that steps the second digit through 5, 6 or 7 while the first is 7 passes 7500, 7600 or 7700 and trips an alarm on the controller’s screen.';
+    if (this.i < this.n - 1) return 'Dialling: ' + this.code + ' is being transmitted. ' + (this.passedSoFar.length ? 'Already passed through ' + this.passedSoFar.join(' and ') + '.' : 'No emergency code so far.');
+    if (this.passed.length) return 'You reached ' + this.B + ', but on the way you transmitted ' + this.passed.join(' and ') + '. Change the digits in another order: here, the first digit first.';
+    if (this.A === '7300' && this.B === '3500') return 'Safe: change the 7 to a 3 first and the steps are 3300, 3400 and 3500, none of them an emergency code (the first digit’s own clicks, 6300 to 4300, are harmless too).';
+    return 'You reached ' + this.B + ' without passing through 7500, 7600 or 7700.';
+  },
+  pressIdent() { this.ident = true; clearTimeout(this._idt); this._idt = setTimeout(() => { this.ident = false }, 4000) },
+  edited() { this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'first-digit-first': { from: '7300', to: '3500', order: 'ltr', mode: 'ALT', t: 1 },
+    'second-digit-first': { from: '7300', to: '3500', order: 'rtl', mode: 'ALT', t: 0.34 },
+    '1200-to-7234': { from: '1200', to: '7234', order: 'ltr', mode: 'ALT', t: 0.462 },
+    'vfr-1200-alt': { from: '1200', to: '1200', order: 'ltr', mode: 'ALT', t: 0 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="tcc-title" class="widget-stage">
+    <title id="tcc-title">A transponder face with four code digits, the mode selector OFF, STBY, ON and ALT, and an IDENT button. Below it, every code transmitted while you turn the digits, one click at a time, with 7500, 7600 and 7700 marked in red, and a radar screen that shows your return and raises an alarm when an emergency code goes out</title>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-surface-2)"/>
+    <!-- the face -->
+    <rect x="20" y="16" width="600" height="100" rx="12" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <text x="36" y="34" font-size="11" font-weight="700" fill="var(--color-fg-muted)">XPDR</text>
+    <g>
+      <rect x="40" y="40" width="52" height="64" rx="8" fill="var(--color-surface-2)" stroke-width="2" :stroke="turning === 0 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="66" y="86" font-size="38" font-weight="700" text-anchor="middle" class="num" :fill="alarm ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="digit(0)"></text>
+      <rect x="100" y="40" width="52" height="64" rx="8" fill="var(--color-surface-2)" stroke-width="2" :stroke="turning === 1 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="126" y="86" font-size="38" font-weight="700" text-anchor="middle" class="num" :fill="alarm ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="digit(1)"></text>
+      <rect x="160" y="40" width="52" height="64" rx="8" fill="var(--color-surface-2)" stroke-width="2" :stroke="turning === 2 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="186" y="86" font-size="38" font-weight="700" text-anchor="middle" class="num" :fill="alarm ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="digit(2)"></text>
+      <rect x="220" y="40" width="52" height="64" rx="8" fill="var(--color-surface-2)" stroke-width="2" :stroke="turning === 3 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="246" y="86" font-size="38" font-weight="700" text-anchor="middle" class="num" :fill="alarm ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="digit(3)"></text>
+    </g>
+    <text x="156" y="34" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">each digit 0 to 7</text>
+    <!-- mode selector -->
+    <text x="420" y="34" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">mode</text>
+    <g font-size="13" font-weight="700" text-anchor="middle">
+      <g @click="mode = 'OFF'; active = null" style="cursor: pointer"><rect x="300" y="52" width="54" height="30" rx="6" :fill="mode === 'OFF' ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="mode === 'OFF' ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/><text x="327" y="72" :fill="mode === 'OFF' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">OFF</text></g>
+      <g @click="mode = 'STBY'; active = null" style="cursor: pointer"><rect x="360" y="52" width="54" height="30" rx="6" :fill="mode === 'STBY' ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="mode === 'STBY' ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/><text x="387" y="72" :fill="mode === 'STBY' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">STBY</text></g>
+      <g @click="mode = 'ON'; active = null" style="cursor: pointer"><rect x="420" y="52" width="54" height="30" rx="6" :fill="mode === 'ON' ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="mode === 'ON' ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/><text x="447" y="72" :fill="mode === 'ON' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">ON</text></g>
+      <g @click="mode = 'ALT'; active = null" style="cursor: pointer"><rect x="480" y="52" width="54" height="30" rx="6" :fill="mode === 'ALT' ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="mode === 'ALT' ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="1.25"/><text x="507" y="72" :fill="mode === 'ALT' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">ALT</text></g>
+    </g>
+    <text x="417" y="102" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">interrogated on 1,030 MHz, replies on 1,090 MHz</text>
+    <g @click="pressIdent()" style="cursor: pointer">
+      <circle cx="576" cy="66" r="25" stroke-width="1.5" :fill="ident ? 'var(--color-warn)' : 'var(--color-surface-2)'" :stroke="ident ? 'var(--color-warn)' : 'var(--color-fg-muted)'"/>
+      <text x="576" y="70" font-size="11" font-weight="700" text-anchor="middle" :fill="ident ? 'var(--color-surface)' : 'var(--color-fg-muted)'">IDENT</text>
+    </g>
+    <!-- every code transmitted on the way (first 16 written out) -->
+    <text x="20" y="140" font-size="12" font-weight="600" fill="var(--color-fg-muted)" x-text="replying ? 'Each code is transmitted as you dial:' : 'Codes you dial (silent in ' + mode + '):'"></text>
+    <g font-size="12" font-weight="700" text-anchor="middle" class="num">
+      <g x-show="n > 0"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(0)" :width="chipW" :fill="chipFill(0)" :stroke="chipEdge(0)"/><text y="166.5" :x="chipX(0) + chipW / 2" :fill="chipInk(0)" x-text="chip(0)"></text></g>
+      <g x-show="n > 1"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(1)" :width="chipW" :fill="chipFill(1)" :stroke="chipEdge(1)"/><text y="166.5" :x="chipX(1) + chipW / 2" :fill="chipInk(1)" x-text="chip(1)"></text></g>
+      <g x-show="n > 2"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(2)" :width="chipW" :fill="chipFill(2)" :stroke="chipEdge(2)"/><text y="166.5" :x="chipX(2) + chipW / 2" :fill="chipInk(2)" x-text="chip(2)"></text></g>
+      <g x-show="n > 3"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(3)" :width="chipW" :fill="chipFill(3)" :stroke="chipEdge(3)"/><text y="166.5" :x="chipX(3) + chipW / 2" :fill="chipInk(3)" x-text="chip(3)"></text></g>
+      <g x-show="n > 4"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(4)" :width="chipW" :fill="chipFill(4)" :stroke="chipEdge(4)"/><text y="166.5" :x="chipX(4) + chipW / 2" :fill="chipInk(4)" x-text="chip(4)"></text></g>
+      <g x-show="n > 5"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(5)" :width="chipW" :fill="chipFill(5)" :stroke="chipEdge(5)"/><text y="166.5" :x="chipX(5) + chipW / 2" :fill="chipInk(5)" x-text="chip(5)"></text></g>
+      <g x-show="n > 6"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(6)" :width="chipW" :fill="chipFill(6)" :stroke="chipEdge(6)"/><text y="166.5" :x="chipX(6) + chipW / 2" :fill="chipInk(6)" x-text="chip(6)"></text></g>
+      <g x-show="n > 7"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(7)" :width="chipW" :fill="chipFill(7)" :stroke="chipEdge(7)"/><text y="166.5" :x="chipX(7) + chipW / 2" :fill="chipInk(7)" x-text="chip(7)"></text></g>
+      <g x-show="n > 8"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(8)" :width="chipW" :fill="chipFill(8)" :stroke="chipEdge(8)"/><text y="166.5" :x="chipX(8) + chipW / 2" :fill="chipInk(8)" x-text="chip(8)"></text></g>
+      <g x-show="n > 9"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(9)" :width="chipW" :fill="chipFill(9)" :stroke="chipEdge(9)"/><text y="166.5" :x="chipX(9) + chipW / 2" :fill="chipInk(9)" x-text="chip(9)"></text></g>
+      <g x-show="n > 10"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(10)" :width="chipW" :fill="chipFill(10)" :stroke="chipEdge(10)"/><text y="166.5" :x="chipX(10) + chipW / 2" :fill="chipInk(10)" x-text="chip(10)"></text></g>
+      <g x-show="n > 11"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(11)" :width="chipW" :fill="chipFill(11)" :stroke="chipEdge(11)"/><text y="166.5" :x="chipX(11) + chipW / 2" :fill="chipInk(11)" x-text="chip(11)"></text></g>
+      <g x-show="n > 12"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(12)" :width="chipW" :fill="chipFill(12)" :stroke="chipEdge(12)"/><text y="166.5" :x="chipX(12) + chipW / 2" :fill="chipInk(12)" x-text="chip(12)"></text></g>
+      <g x-show="n > 13"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(13)" :width="chipW" :fill="chipFill(13)" :stroke="chipEdge(13)"/><text y="166.5" :x="chipX(13) + chipW / 2" :fill="chipInk(13)" x-text="chip(13)"></text></g>
+      <g x-show="n > 14"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(14)" :width="chipW" :fill="chipFill(14)" :stroke="chipEdge(14)"/><text y="166.5" :x="chipX(14) + chipW / 2" :fill="chipInk(14)" x-text="chip(14)"></text></g>
+      <g x-show="n > 15"><rect y="148" height="28" rx="6" stroke-width="1.25" :x="chipX(15)" :width="chipW" :fill="chipFill(15)" :stroke="chipEdge(15)"/><text y="166.5" :x="chipX(15) + chipW / 2" :fill="chipInk(15)" x-text="chip(15)"></text></g>
+    </g>
+    <!-- what radar sees -->
+    <text x="20" y="208" font-size="12" font-weight="600" fill="var(--color-fg-muted)">Radar sees</text>
+    <text x="20" y="230" font-size="14" font-weight="700" :fill="replying ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="mode === 'ALT' ? 'Code and altitude' : mode === 'ON' ? 'Code only' : 'Nothing'"></text>
+    <text x="20" y="252" font-size="12" fill="var(--color-fg-muted)" x-text="mode === 'STBY' ? 'warm but silent' : mode === 'ALT' ? 'the normal setting in flight' : mode === 'ON' ? 'no altitude' : 'switched off'"></text>
+    <text x="20" y="276" font-size="12" fill="var(--color-warn-fg)" x-show="ident">IDENT: your return stands out for a few seconds</text>
+    <text x="20" y="276" font-size="12" fill="var(--color-fg-faint)" x-show="!ident">IDENT only when ATC asks: “squawk ident”</text>
+    <rect x="360" y="190" width="260" height="98" rx="10" fill="var(--color-surface)" stroke-width="1.5" :stroke="alarm ? 'var(--color-bad)' : 'var(--color-line-strong)'"/>
+    <circle cx="410" cy="239" r="36" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <circle cx="410" cy="239" r="18" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <g x-show="replying">
+      <circle cx="424" cy="226" r="12" fill="var(--color-warn)" fill-opacity="0.3" x-show="ident"/>
+      <rect x="419" y="221" width="10" height="10" :fill="alarm ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+      <text x="462" y="226" font-size="18" font-weight="700" class="num" :fill="alarm ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="code"></text>
+      <text x="462" y="246" font-size="12" :fill="alarm ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="alarm ? (_R[code] || '') : mode === 'ALT' ? 'with altitude' : 'no altitude'"></text>
+      <text x="462" y="270" font-size="13" font-weight="700" fill="var(--color-bad-fg)" x-show="alarm">ALARM</text>
+    </g>
+    <text x="462" y="244" font-size="12" fill="var(--color-fg-faint)" x-show="!replying">no reply</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Turn the knobs'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="tcc-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Turning the digit knobs">
+    <span class="widget-clock" x-text="code"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, k) in steps" :key="k + s.label">
+      <button type="button" @click="goStep(k)" :aria-pressed="step === k" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tcc-from">Squawking now <output x-text="A"></output></label>
+      <input type="text" id="tcc-from" class="input num" inputmode="numeric" maxlength="4" x-model="from" @input="edited()">
+    </div>
+    <div class="widget-control">
+      <label for="tcc-to">Cleared to squawk <output x-text="B"></output></label>
+      <input type="text" id="tcc-to" class="input num" inputmode="numeric" maxlength="4" x-model="to" @input="edited()">
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">Change the digits</span>
+      <div class="widget-steps">
+        <button type="button" @click="order = 'ltr'; edited()" :aria-pressed="order === 'ltr'">First digit first</button>
+        <button type="button" @click="order = 'rtl'; edited()" :aria-pressed="order === 'rtl'">Last digit first</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">Mode</span>
+      <div class="widget-steps">
+        <button type="button" @click="mode = 'OFF'; active = null" :aria-pressed="mode === 'OFF'">OFF</button>
+        <button type="button" @click="mode = 'STBY'; active = null" :aria-pressed="mode === 'STBY'">STBY</button>
+        <button type="button" @click="mode = 'ON'; active = null" :aria-pressed="mode === 'ON'">ON</button>
+        <button type="button" @click="mode = 'ALT'; active = null" :aria-pressed="mode === 'ALT'">ALT</button>
+        <button type="button" @click="pressIdent()" :aria-pressed="ident">IDENT</button>
+      </div>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="alarm ? 'bad' : ''"><dt class="widget-label">Transmitting now</dt><dd class="widget-value"><span x-text="replying ? code : 'nothing'"></span><span class="widget-flag bad" x-show="alarm" x-text="_R[code] || ''"></span></dd></div>
+    <div class="widget-readout" :class="passed.length && replying ? 'bad' : 'ok'"><dt class="widget-label">Emergency codes on the way</dt><dd class="widget-value" x-text="passed.length ? passed.join(', ') + (replying ? '' : ' (silent)') : 'None'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Radar sees</dt><dd class="widget-value text-sm" x-text="radarText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('first-digit-first')" :aria-pressed="active === 'first-digit-first'">7300 → 3500, first digit first</button>
+      <button type="button" @click="preset('second-digit-first')" :aria-pressed="active === 'second-digit-first'">7300 → 3500, second digit first</button>
+      <button type="button" @click="preset('1200-to-7234')" :aria-pressed="active === '1200-to-7234'">1200 → 7234</button>
+      <button type="button" @click="preset('vfr-1200-alt')" :aria-pressed="active === 'vfr-1200-alt'">1200 ALT</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every click of a digit knob is transmitted, so the order you turn them matters: 7300 to 3500 by the second digit first steps through 7400 and 7500, the unlawful interference code, while the 7 is still set. Change the 7 first and nothing alarming goes out. Remember the three as a set: 7500 unlawful interference, 7600 radio failure, 7700 emergency.</p>
+  <details class="widget-try"><summary>Try it: you are squawking 7300 and are cleared to squawk 3500. Which digit do you change first, and why?</summary><p>The first digit. Each intermediate code is transmitted as you dial. Change the second digit first and the code steps through 7400 and 7500, the unlawful interference code, while the 7 is still set. Change the 7 to a 3 first (6300, 5300, 4300, 3300) and then the second digit (3400, 3500): none of them an emergency code.</p></details>
+</div>

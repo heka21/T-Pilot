@@ -1,0 +1,174 @@
+<div class="widget" x-data="timeline({
+  duration: 8,
+  loop: false,
+  temp: -5,
+  large: true,
+  moist: true,
+  get supercooled() { return this.moist && this.temp <= 0 },
+  get kind() { return !this.moist ? 'none-dry' : this.temp > 0 ? 'none-warm' : this.large ? 'clear' : 'rime' },
+  get build() { return this.supercooled ? this.eased(0.05, 1) : 0 },
+  // the leading edge: an elliptical nose centred on (250, 160) with straight surfaces running aft
+  get surface() {
+    const pts = [];
+    for (let x = 340; x > 250; x -= 15) pts.push({ x: x, y: 94 + (x - 250) * 0.026, nx: 0, ny: -1, a: (340 - x) / 90 });
+    for (let d = 90; d <= 270; d += 7.5) {
+      const r = d * Math.PI / 180, c = Math.cos(r), s = Math.sin(r), nx = c * 66, ny = -s * 80, n = Math.hypot(nx, ny);
+      pts.push({ x: 250 + 80 * c, y: 160 - 66 * s, nx: nx / n, ny: ny / n, a: 1, nose: Math.max(0, -c) });
+    }
+    for (let x = 265; x <= 340; x += 15) pts.push({ x: x, y: 226 - (x - 250) * 0.03, nx: 0, ny: 1, a: (340 - x) / 90 });
+    return pts;
+  },
+  get iceD() {
+    if (this.build <= 0.01) return '';
+    const clear = this.kind === 'clear';
+    const out = this.surface.map((p, i) => {
+      const w = clear ? (p.nose === undefined ? 0.75 * p.a : 0.75 + 0.25 * p.nose) * 20 : (p.nose === undefined ? 0 : Math.pow(p.nose, 2.2) * 30 * (1 + 0.28 * Math.sin(i * 2.7)));
+      return [p.x + p.nx * w * this.build, p.y + p.ny * w * this.build];
+    });
+    const back = this.surface.slice().reverse().map((p) => [p.x, p.y]);
+    return this.path(out.concat(back)) + ' Z';
+  },
+  dropX(k) { return 18 + ((this.t * 5 + k * 0.23) % 1) * 140 },
+  dropY(k) { return [128, 172, 150, 196, 112, 182][k] },
+  tx(T) { return 60 + (5 - T) / 25 * 540 },
+  get typeText() {
+    return { 'none-dry': 'No structural ice', 'none-warm': 'No structural ice', clear: 'Clear ice', rime: 'Rime ice' }[this.kind];
+  },
+  get why() {
+    if (this.kind === 'none-dry') return 'it needs visible moisture: cloud or rain';
+    if (this.kind === 'none-warm') return 'above 0 °C the water just runs off';
+    return this.large ? 'large drops freeze slowly and run back' : 'small drops freeze the moment they hit';
+  },
+  get character() {
+    if (this.kind === 'clear') return 'Hard, heavy, spreads back over the wing: the most dangerous';
+    if (this.kind === 'rime') return 'White, brittle, builds forward on the leading edge';
+    return 'None';
+  },
+  get typical() { return this.large ? 'Cu and Cb, freezing rain: 0 to −10 °C' : 'Stratiform cloud: about −10 to −20 °C' },
+  get inBand() { return this.large ? this.temp <= 0 && this.temp >= -10 : this.temp <= -10 && this.temp >= -20 },
+  get caption() {
+    if (this.kind === 'none-dry') return 'Clear air, so nothing strikes the airframe: structural icing needs visible moisture, cloud or rain, at or below 0 °C. (Carburettor ice is a different story: it forms in clear air.)';
+    if (this.kind === 'none-warm') return 'The drops are above freezing, so they wet the wing and blow away. Watch the freezing level in the GAF: climb above it in cloud and this changes.';
+    if (this.t < 0.05) return 'Supercooled drops: still liquid below 0 °C because tiny droplets need something to freeze onto. The wing is that something.';
+    return this.large
+      ? 'Large supercooled drops freeze slowly: the water runs back over the wing before it sets into a hard, clear, heavy sheet that changes the wing\'s shape.'
+      : 'Small supercooled drops freeze instantly on impact, trapping air: white, brittle rime building forward into a rough shape on the leading edge.';
+  },
+  steps: [{ at: 0, label: 'Into the cloud' }, { at: 0.35, label: 'Ice building' }, { at: 1, label: 'After a few minutes' }],
+  presets: {
+    'clear-ice-in-cumulus': { temp: -5, large: true, moist: true, t: 1 },
+    'freezing-rain': { temp: -2, large: true, moist: true, t: 1 },
+    'rime-in-stratus': { temp: -15, large: false, moist: true, t: 1 },
+    'above-freezing': { temp: 3, large: true, moist: true, t: 1 },
+    'clear-air-no-ice': { temp: -10, large: false, moist: false, t: 1 },
+    'fly-into-cumulus': { temp: -5, large: true, moist: true, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="sit-title" class="widget-stage">
+    <title id="sit-title">Close-up of a wing's leading edge flying into cloud from the left, with supercooled drops striking it and ice building: clear ice spreading back over the surfaces from large drops, or rough white rime building forward from small drops. A temperature scale below marks the lesson's ranges for each type</title>
+    <defs>
+      <marker id="sit-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-surface-2)"/>
+    <!-- cloud around the wing when in visible moisture -->
+    <rect x="0" y="70" width="640" height="176" rx="20" fill="var(--color-fg-faint)" fill-opacity="0.10" x-show="moist"/>
+    <text x="16" y="94" font-size="12" fill="var(--color-fg-muted)" x-text="moist ? (large ? 'large supercooled drops' : 'small cloud droplets') : 'clear air'"></text>
+    <!-- drops moving towards the wing -->
+    <g fill="var(--color-sky-fg)" x-show="moist">
+      <circle :cx="dropX(0)" :cy="dropY(0)" :r="large ? 5 : 2.5"/>
+      <circle :cx="dropX(1)" :cy="dropY(1)" :r="large ? 5 : 2.5"/>
+      <circle :cx="dropX(2)" :cy="dropY(2)" :r="large ? 5 : 2.5"/>
+      <circle :cx="dropX(3)" :cy="dropY(3)" :r="large ? 5 : 2.5"/>
+      <circle :cx="dropX(4)" :cy="dropY(4)" :r="large ? 5 : 2.5"/>
+      <circle :cx="dropX(5)" :cy="dropY(5)" :r="large ? 5 : 2.5"/>
+    </g>
+    <line x1="30" y1="226" x2="110" y2="226" stroke="var(--color-fg-muted)" stroke-width="1.5" marker-end="url(#sit-arrow)"/>
+    <text x="30" y="242" font-size="11" fill="var(--color-fg-faint)">relative airflow</text>
+    <!-- the wing -->
+    <path d="M640 104 L250 94 A80 66 0 0 0 250 226 L640 214 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="520" y="166" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">wing</text>
+    <!-- the ice -->
+    <path :d="iceD" :fill="kind === 'clear' ? 'var(--color-info)' : 'var(--color-fg-faint)'" :fill-opacity="kind === 'clear' ? 0.35 : 0.45"
+      :stroke="kind === 'clear' ? 'var(--color-info)' : 'var(--color-brand)'" stroke-width="1.75" stroke-linejoin="round" x-show="build > 0.01"/>
+    <!-- run-back for clear ice -->
+    <g x-show="kind === 'clear' && build > 0.2" stroke="var(--color-info)" stroke-width="1.5" fill="none" marker-end="url(#sit-arrow)">
+      <line x1="350" y1="84" x2="420" y2="86"/>
+      <line x1="340" y1="236" x2="410" y2="234"/>
+    </g>
+    <text x="430" y="80" font-size="12" fill="var(--color-info)" x-show="kind === 'clear' && build > 0.2" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">water runs back, then freezes</text>
+    <text x="150" y="64" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" x-show="kind === 'rime' && build > 0.2">builds forward</text>
+    <!-- headline -->
+    <text x="632" y="28" font-size="17" text-anchor="end" font-weight="700" :fill="kind === 'clear' ? 'var(--color-bad)' : kind === 'rime' ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-text="typeText"></text>
+    <text x="632" y="48" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="why"></text>
+
+    <!-- temperature scale -->
+    <rect :x="tx(5)" y="268" :width="tx(0) - tx(5)" height="14" fill="var(--color-ok-soft)"/>
+    <rect :x="tx(0)" y="268" :width="tx(-10) - tx(0)" height="14" fill="var(--color-bad-soft)"/>
+    <rect :x="tx(-10)" y="268" :width="tx(-20) - tx(-10)" height="14" fill="var(--color-warn-soft)"/>
+    <rect :x="tx(5)" y="268" :width="tx(-20) - tx(5)" height="14" fill="none" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text :x="tx(5)" y="313">+5</text><text :x="tx(0)" y="313">0</text><text :x="tx(-10)" y="313">−10</text><text :x="tx(-20)" y="313">−20 °C</text>
+    </g>
+    <text :x="(tx(0) + tx(-10)) / 2" y="262" font-size="11" text-anchor="middle" fill="var(--color-bad)">clear: large drops, Cu, Cb, freezing rain</text>
+    <text :x="(tx(-10) + tx(-20)) / 2" y="262" font-size="11" text-anchor="middle" fill="var(--color-warn-fg)">rime: small drops, stratiform</text>
+    <text :x="(tx(5) + tx(0)) / 2" y="262" font-size="11" text-anchor="middle" fill="var(--color-ok-fg)">no ice</text>
+    <path :d="'M' + tx(temp) + ' 284 l-6 10 h12 Z'" fill="var(--color-brand)"/>
+    <line :x1="tx(temp)" :x2="tx(temp)" y1="266" y2="284" stroke="var(--color-brand)" stroke-width="2.5"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly into the cloud'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="sit-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time in the cloud">
+    <span class="widget-clock" x-text="t < 0.05 ? 'entering' : 'in cloud'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="sit-temp">Airframe temperature <output for="sit-temp" class="num" x-text="sign(temp) + ' °C'"></output></label>
+      <input type="range" id="sit-temp" min="-20" max="5" step="1" x-model.number="temp" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="sit-large" class="cursor-pointer"><span>Large drops (Cu, Cb, freezing rain); unticked: small droplets</span>
+        <input type="checkbox" id="sit-large" x-model="large" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="sit-moist" class="cursor-pointer"><span>Visible moisture (in cloud or rain)</span>
+        <input type="checkbox" id="sit-moist" x-model="moist" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="kind === 'clear' ? 'bad' : kind === 'rime' ? 'warn' : 'ok'">
+      <dt class="widget-label">Ice that builds</dt>
+      <dd class="widget-value"><span x-text="typeText"></span><span class="widget-flag bad" x-show="kind === 'clear'">most dangerous</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Character</dt><dd class="widget-value" x-text="character"></dd></div>
+    <div class="widget-readout" :class="supercooled && !inBand ? 'warn' : ''">
+      <dt class="widget-label">Typical for these drops</dt>
+      <dd class="widget-value"><span x-text="typical"></span><span class="widget-flag warn" x-show="supercooled && !inBand">outside the usual range</span></dd>
+    </div>
+    <div class="widget-readout" :class="supercooled ? 'bad' : 'ok'"><dt class="widget-label">Effect on the aeroplane</dt><dd class="widget-value" x-text="supercooled ? 'Weight and drag up, lift destroyed, stall speed raised' : 'None from structural ice'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('fly-into-cumulus')" :aria-pressed="active === 'fly-into-cumulus'">Fly into a cumulus</button>
+      <button type="button" @click="preset('clear-ice-in-cumulus')" :aria-pressed="active === 'clear-ice-in-cumulus'">Clear ice in Cu</button>
+      <button type="button" @click="preset('freezing-rain')" :aria-pressed="active === 'freezing-rain'">Freezing rain</button>
+      <button type="button" @click="preset('rime-in-stratus')" :aria-pressed="active === 'rime-in-stratus'">Rime in layer cloud</button>
+      <button type="button" @click="preset('above-freezing')" :aria-pressed="active === 'above-freezing'">Above freezing</button>
+      <button type="button" @click="preset('clear-air-no-ice')" :aria-pressed="active === 'clear-air-no-ice'">Clear air</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Structural ice needs two things together: visible moisture and an airframe at or below 0 °C. The drop size decides the type: large drops run back and freeze into hard, heavy clear ice (typically 0 to −10 °C in Cu, Cb and freezing rain); small drops freeze on impact into white rime on the leading edge (about −10 to −20 °C in layer cloud). Ice shapes and build-up speed are illustrative.</p>
+  <details class="widget-try"><summary>Try it: why is clear ice more dangerous than rime?</summary><p>Press Clear ice in Cu and watch the shape: the water runs back before it freezes, so the ice coats the wing well aft of the leading edge in a hard, heavy sheet that is hard to see and changes the wing's shape. Rime stays on the leading edge and is white and brittle.</p></details>
+  <details class="widget-try"><summary>Try it: a clear, humid morning at 18 °C. Can ice form anywhere on the aeroplane?</summary><p>Not structural ice: untick visible moisture or set the temperature above 0 and nothing builds. But carburettor ice can, inside the engine, from about −10 to +30 °C in humid air, worst at low power.</p></details>
+</div>

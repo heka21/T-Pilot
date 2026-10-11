@@ -1,0 +1,138 @@
+<div class="widget" x-data="widget({
+  qnh: 1013, alt: 9500, climbing: true,
+  // PFRA 2.6: transition altitude 10,000 ft (on QNH), transition level FL110 (on 1013); about 30 ft per hPa.
+  // A flight level's true altitude: FL x 100 minus (1013 - QNH) x 30, so it sinks on a low-QNH day.
+  flAlt(fl) { return fl * 100 - (1013 - this.qnh) * 30 },
+  get fl110() { return this.flAlt(110) },
+  get gap() { return this.fl110 - 10000 },
+  // the picture: 9,000 ft at y 300, 13,000 ft at y 30
+  Y(ft) { return 300 - (ft - 9000) * 270 / 4000 },
+  // pressure altitude: what the altimeter shows with 1013 set
+  get pa() { return this.alt + (1013 - this.qnh) * 30 },
+  // which band the aeroplane is in, by its own frame of reference
+  get below() { return this.alt < 10000 },
+  get above() { return this.pa >= 11000 },
+  get inLayer() { return !this.below && !this.above },
+  // climbing: QNH until 10,000 ft, 1013 from there; descending: 1013 until FL110, QNH below it
+  get on1013() { return this.climbing ? this.alt >= 10000 : this.pa >= 11000 },
+  get setting() { return this.on1013 ? '1013' : String(this.qnh) },
+  get reads() { return this.on1013 ? this.pa : this.alt },
+  get readsText() { return this.on1013 ? 'FL' + String(Math.round(this.pa / 100)).padStart(3, '0') + ' (' + this.fmt(this.pa) + ' ft on 1013)' : this.fmt(this.alt) + ' ft on QNH ' + this.qnh },
+  // the lowest usable flight level: the first level that sits at least 1,000 ft above the 10,000 ft transition
+  // altitude on today's QNH (this reproduces the AIP ENR 1.7 bands: FL110 from 1013, FL115 from 997, FL120 from 980,
+  // FL125 from 963; verify there)
+  get lowest() { for (const fl of [110, 115, 120, 125]) { if (this.flAlt(fl) >= 11000) return 'FL' + fl } return 'FL130' },
+  get layerLabelY() { return (this.Y(10000) + this.Y(this.fl110)) / 2 + 4 },
+  get caption() {
+    if (this.inLayer) return 'You are inside the transition layer, between 10,000 ft on QNH and FL110 on 1013. Pass through it, climbing or descending, but never cruise in it: one aircraft here may be on QNH and another on 1013, and their altimeters disagree by the difference.';
+    if (this.below && this.climbing) return 'Below the transition altitude you fly on QNH, so the altimeter shows altitude above the sea, and the steps, terrain and minimum heights all line up with it. Climbing, you change to 1013 as you pass 10,000 ft.';
+    if (this.below) return 'Descending below FL110 you set the area or local QNH, so by now the altimeter reads altitude: the truth about the terrain is what matters low down.';
+    if (this.qnh < 1013) return 'With QNH ' + this.qnh + ' every flight level sits ' + this.fmt((1013 - this.qnh) * 30) + ' ft lower than its number: FL110 is down at about ' + this.fmt(this.fl110) + ' ft, so the layer has shrunk to ' + this.fmt(this.gap) + ' ft. That is why a low QNH raises the lowest usable level: today the first level at least 1,000 ft above 10,000 ft is ' + this.lowest + ' (confirm it in the AIP ENR 1.7 table).';
+    return 'Above the transition level everyone sets 1013, so every altimeter is wrong by the same amount and vertical separation still works. ' + (this.climbing ? 'Climbing, you set 1013 passing 10,000 ft.' : 'Descending, you will set QNH as you pass FL110.');
+  },
+  presets: {
+    'qnh-1013-layer-1000-ft': { qnh: 1013, alt: 11000, climbing: false },
+    'qnh-1003-fl110-at-10700': { qnh: 1003, alt: 10700, climbing: false },
+    'climbing-through-10000': { qnh: 1013, alt: 10000, climbing: true },
+    'descending-through-fl110': { qnh: 1013, alt: 10990, climbing: false },
+    'cruising-in-the-layer': { qnh: 1013, alt: 10500, climbing: true },
+    'high-qnh-1023': { qnh: 1023, alt: 11300, climbing: false },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="tlq-title" class="widget-stage">
+    <title id="tlq-title">A height scale from 9,000 to 13,000 ft. The transition altitude, 10,000 ft on QNH, is a fixed line; the flight levels FL110, FL115 and FL120 are dashed lines that sink as the QNH falls. The transition layer between 10,000 ft and FL110 is shaded, and an aeroplane on the scale shows which subscale setting to use, climbing or descending</title>
+    <defs>
+      <marker id="tlq-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="330" fill="var(--color-surface-2)" rx="10"/>
+    <!-- height scale (true altitude) -->
+    <g font-size="12" class="num" fill="var(--color-fg-faint)" text-anchor="end">
+      <text x="62" :y="Y(9000) + 4">9,000</text><text x="62" :y="Y(10000) + 4">10,000</text><text x="62" :y="Y(11000) + 4">11,000</text>
+      <text x="62" :y="Y(12000) + 4">12,000</text><text x="62" :y="Y(13000) + 4">13,000</text>
+    </g>
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="70" x2="580" :y1="Y(9000)" :y2="Y(9000)"/><line x1="70" x2="580" :y1="Y(11000)" :y2="Y(11000)" stroke-dasharray="2 4"/>
+      <line x1="70" x2="580" :y1="Y(12000)" :y2="Y(12000)" stroke-dasharray="2 4"/><line x1="70" x2="580" :y1="Y(13000)" :y2="Y(13000)" stroke-dasharray="2 4"/>
+    </g>
+    <line x1="70" y1="30" x2="70" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="16" y="18" font-size="12" fill="var(--color-fg-muted)">altitude above mean sea level, ft</text>
+    <!-- the transition layer -->
+    <rect x="70" width="510" fill="var(--color-brand)" fill-opacity="0.16" :y="Y(fl110)" :height="Math.max(0, Y(10000) - Y(fl110))"/>
+    <text x="82" font-size="13" font-weight="600" fill="var(--color-brand-fg)" :y="layerLabelY" :opacity="gap >= 260 ? 1 : 0"
+      paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="'transition layer ' + fmt(gap) + ' ft'"></text>
+    <!-- transition altitude (fixed) -->
+    <line x1="70" x2="580" stroke="var(--color-fg)" stroke-width="2" :y1="Y(10000)" :y2="Y(10000)"/>
+    <text x="82" font-size="12" font-weight="600" fill="var(--color-fg)" :y="Y(10000) + 16">transition altitude 10,000 ft (QNH)</text>
+    <!-- flight levels: pressure levels that move with the QNH -->
+    <line x1="70" x2="580" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="7 4" :y1="Y(fl110)" :y2="Y(fl110)"/>
+    <line x1="70" x2="580" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="7 4" :y1="Y(flAlt(115))" :y2="Y(flAlt(115))"/>
+    <line x1="70" x2="580" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="7 4" :y1="Y(flAlt(120))" :y2="Y(flAlt(120))"/>
+    <g font-size="12" class="num">
+      <text x="588" font-weight="700" fill="var(--color-brand-fg)" :y="Y(fl110) + 4">FL110</text>
+      <text x="588" fill="var(--color-info-fg)" :y="Y(flAlt(115)) + 4">FL115</text>
+      <text x="588" fill="var(--color-info-fg)" :y="Y(flAlt(120)) + 4">FL120</text>
+    </g>
+    <text x="82" font-size="12" class="num" fill="var(--color-brand-fg)" :y="Y(fl110) - 6"
+      paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="'FL110 is at about ' + fmt(fl110) + ' ft today'"></text>
+    <!-- the aeroplane and its altimeter -->
+    <g :transform="'translate(500 ' + Y(alt) + ')'">
+      <line x1="-60" y1="0" x2="60" y2="0" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="2 3"/>
+      <g transform="translate(0 0)">
+        <!-- tools/diagrams/plane.py: side, scale 0.5, no gear, colour fg, fill surface -->
+        <g transform="translate(0 0) rotate(0) scale(0.5)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      </g>
+      <line x1="34" x2="34" stroke-width="2" :stroke="inLayer ? 'var(--color-warn)' : 'var(--color-fg-muted)'" marker-end="url(#tlq-arrow)" :y1="climbing ? 10 : -10" :y2="climbing ? -14 : 14"/>
+    </g>
+    <g :transform="'translate(330 ' + clamp(Y(alt) - 14, 34, 278) + ')'">
+      <rect x="0" y="0" width="100" height="28" rx="6" fill="var(--color-surface)" stroke-width="1.5" :stroke="inLayer ? 'var(--color-warn)' : 'var(--color-line-strong)'"/>
+      <text x="50" y="18" font-size="13" font-weight="700" text-anchor="middle" class="num" :fill="on1013 ? 'var(--color-info-fg)' : 'var(--color-fg)'" x-text="on1013 ? 'on 1013' : 'on QNH ' + qnh"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tlq-qnh">Area QNH <output for="tlq-qnh" x-text="qnh + ' hPa'"></output></label>
+      <input type="range" id="tlq-qnh" min="980" max="1035" step="1" x-model.number="qnh">
+    </div>
+    <div class="widget-control">
+      <label for="tlq-alt">Your altitude (true, above the sea) <output for="tlq-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="tlq-alt" min="9000" max="12800" step="10" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="tlq-climb" class="cursor-pointer"><span>Climbing (untick for descending)</span>
+        <input type="checkbox" id="tlq-climb" x-model="climbing" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="inLayer ? 'warn' : 'ok'">
+      <dt class="widget-label">Subscale to set</dt>
+      <dd class="widget-value"><span x-text="on1013 ? '1013 (standard)' : 'QNH ' + qnh"></span><span class="widget-flag warn" x-show="inLayer">in the layer</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Altimeter shows</dt>
+      <dd class="widget-value num" x-text="readsText"></dd>
+    </div>
+    <div class="widget-readout" :class="gap < 1000 ? 'warn' : 'ok'">
+      <dt class="widget-label">FL110 today</dt>
+      <dd class="widget-value num" x-text="'about ' + fmt(fl110) + ' ft, ' + fmt(gap) + ' ft above 10,000'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Lowest usable level</dt>
+      <dd class="widget-value" x-text="lowest + (qnh >= 1013 ? ' (QNH 1013 or above)' : ' (first level at least 1,000 ft above 10,000 ft; confirm in the AIP ENR 1.7 table)')"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('qnh-1013-layer-1000-ft')" :aria-pressed="active === 'qnh-1013-layer-1000-ft'">QNH 1013</button>
+      <button type="button" @click="preset('qnh-1003-fl110-at-10700')" :aria-pressed="active === 'qnh-1003-fl110-at-10700'">QNH 1003</button>
+      <button type="button" @click="preset('climbing-through-10000')" :aria-pressed="active === 'climbing-through-10000'">Climbing through 10,000</button>
+      <button type="button" @click="preset('descending-through-fl110')" :aria-pressed="active === 'descending-through-fl110'">Descending through FL110</button>
+      <button type="button" @click="preset('cruising-in-the-layer')" :aria-pressed="active === 'cruising-in-the-layer'">In the layer</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The transition altitude is fixed at 10,000 ft on QNH, but a flight level is a pressure level: it sinks about 30 ft for every hectopascal the QNH is below 1013. So on a low-QNH day FL110 creeps down towards 10,000 ft and the layer between them thins, which is why the AIP raises the lowest usable level when the QNH is below 1013: FL115, FL120 or FL125, the first level that still sits at least 1,000 ft above 10,000 ft (the QNH bands are in the AIP ENR 1.7 table; verify the figures there). Climbing, change to 1013 at 10,000 ft; descending, change to QNH at FL110; never cruise in between.</p>
+  <details class="widget-try"><summary>Try it: the area QNH is 1003. How high is FL110, and how thick is the layer?</summary><p>Choose QNH 1003: $11{,}000 - (1013 - 1003) \times 30 = 10{,}700$ ft, so the layer is only 700 ft thick instead of 1,000 ft. That shrinking gap is what the AIP table guards against: FL115 (about 11,200 ft today) is the lowest usable level.</p></details>
+  <details class="widget-try"><summary>Try it: descending from FL120 on a 1013 day, when do you change the subscale?</summary><p>Untick Climbing and slide down: the setting stays 1013 until you pass FL110, then becomes the area or local QNH. Climbing, the change comes earlier in the picture, at 10,000 ft.</p></details>
+</div>

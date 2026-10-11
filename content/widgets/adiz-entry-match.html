@@ -1,0 +1,125 @@
+<div class="widget" x-data="widget({
+  off: 0, late: 0, told: false,
+  // PFRA 2.8: the ADIZ tolerances on track and time are in AIP ENR 2.2 and the lesson gives no figures, so none are
+  // drawn: off and late are measured in 'tolerances' (1 = at the edge of the window), and the picture is schematic.
+  get inTrack() { return Math.abs(this.off) <= 1 },
+  get inTime() { return Math.abs(this.late) <= 1 },
+  get onPlan() { return this.inTrack && this.inTime },
+  get matched() { return this.onPlan || this.told },
+  // where the plan says you will be (moved when you tell ATS of the deviation)
+  get planOff() { return this.told ? this.off : 0 },
+  get planLate() { return this.told ? this.late : 0 },
+  yc(o) { return 116 + o * 26 },
+  xt(l) { return 208 + l * 44 },
+  word(v, kind) {
+    const a = Math.abs(v);
+    if (a < 0.05) return kind === 'track' ? 'on the planned point' : 'on the planned time';
+    const side = kind === 'track' ? (v < 0 ? 'left of the planned point' : 'right of the planned point') : (v < 0 ? 'early' : 'late');
+    return (a <= 1 ? 'inside tolerance, ' : 'outside tolerance, ') + side;
+  },
+  get caption() {
+    if (this.onPlan && !this.told) return 'You cross the boundary inside the track and time tolerances of your flight notification, and report at the entry point: the radar return is where and when defence expected it, so you are identified.';
+    if (this.told) return 'You told ATS about the deviation before the boundary, so defence now expects you at the revised point and time: the return matches the plan again. Telling ATS is the whole fix.';
+    return 'Outside the ' + (!this.inTrack && !this.inTime ? 'track and time tolerances' : !this.inTrack ? 'track tolerance' : 'time tolerance') + ' and unreported, the return matches nothing in the flight plans: you may be treated as an unidentified aircraft, and an unidentified aircraft may be intercepted.';
+  },
+  presets: {
+    'on-plan': { off: 0, late: 0, told: false },
+    'cloud-deviation-unreported': { off: 2.2, late: 0, told: false },
+    'deviation-reported': { off: 2.2, late: 0, told: true },
+    'late-headwind-unreported': { off: 0, late: 2.4, told: false },
+    'late-headwind-reported': { off: 0, late: 2.4, told: true },
+  },
+})">
+  <svg viewBox="0 0 640 314" role="img" aria-labelledby="adz-title" class="widget-stage">
+    <title id="adz-title">A plan view of your track meeting the boundary of an Air Defence Identification Zone, with the planned entry point and a track tolerance window on the boundary; below it a time line with the planned entry time and its tolerance window; on the right a radar screen on which your return is either matched to your flight plan or shown as unidentified, and the list of ADIZ requirements. The tolerances are schematic: the figures are in AIP ENR 2.2</title>
+    <defs>
+      <marker id="adz-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="314" fill="var(--color-surface-2)" rx="10"/>
+    <!-- map -->
+    <rect x="12" y="12" width="390" height="196" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="260" y="12" width="142" height="196" fill="var(--color-warn)" fill-opacity="0.12"/>
+    <line x1="260" y1="12" x2="260" y2="208" stroke="var(--color-warn)" stroke-width="2" stroke-dasharray="7 4"/>
+    <text x="330" y="32" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-warn-fg)">ADIZ</text>
+    <text x="330" y="48" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">on top of Class G</text>
+    <text x="24" y="32" font-size="12" fill="var(--color-fg-muted)">Class G</text>
+    <!-- planned track and entry point with the track tolerance window -->
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :d="'M30 116 L150 116 L240 ' + yc(planOff) + ' L400 ' + yc(planOff)"/>
+    <rect x="252" width="16" rx="4" :y="yc(planOff) - 26" height="52" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.5"/>
+    <circle cx="260" r="5" fill="var(--color-ok)" :cy="yc(planOff)"/>
+    <text x="272" font-size="11" font-weight="700" fill="var(--color-ok-fg)" :y="yc(planOff) - 44" x-text="told ? 'revised entry point' : 'planned entry point'"></text>
+    <text x="274" font-size="11" fill="var(--color-fg-muted)" :y="yc(planOff) - 29">track tolerance</text>
+    <text x="274" font-size="11" fill="var(--color-fg-muted)" :y="yc(planOff) - 15">(AIP ENR 2.2)</text>
+    <!-- your actual track -->
+    <path fill="none" stroke-width="2.5" stroke-linecap="round" marker-end="url(#adz-arrow)" :stroke="matched ? 'var(--color-brand)' : 'var(--color-bad)'"
+      :d="'M30 116 L150 116 L240 ' + yc(off) + ' L300 ' + yc(off)"/>
+    <g transform="translate(100 116)">
+      <!-- tools/diagrams/plane.py: top, scale 0.4, colour brand, fill surface -->
+      <g transform="translate(0 0) rotate(0) scale(0.4)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="150" y="196" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" :opacity="Math.abs(off) > 1 ? 1 : 0" x-text="told ? 'deviation reported to ATS' : 'off track: cloud in the way'"></text>
+    <!-- time line -->
+    <text x="16" y="230" font-size="12" font-weight="600" fill="var(--color-fg-muted)">Time at the entry point</text>
+    <line x1="40" y1="262" x2="380" y2="262" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect y="252" width="88" height="20" rx="4" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.5" :x="xt(planLate) - 44"/>
+    <line y1="248" y2="276" stroke="var(--color-ok)" stroke-width="2" :x1="xt(planLate)" :x2="xt(planLate)"/>
+    <text font-size="11" text-anchor="middle" fill="var(--color-ok-fg)" y="290" :x="xt(planLate)" x-text="told ? 'revised time' : 'planned time'"></text>
+    <circle cy="262" r="6" :cx="xt(late)" :fill="matched ? 'var(--color-brand)' : 'var(--color-bad)'"/>
+    <text font-size="11" text-anchor="middle" y="246" :x="clamp(xt(late), 60, 360)" :fill="matched ? 'var(--color-brand-fg)' : 'var(--color-bad-fg)'" font-weight="700">you</text>
+    <text x="40" y="290" font-size="11" fill="var(--color-fg-faint)">early</text>
+    <text x="380" y="290" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">late</text>
+    <!-- radar -->
+    <rect x="414" y="12" width="214" height="196" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <circle cx="521" cy="104" r="76" fill="var(--color-ok)" fill-opacity="0.06" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <circle cx="521" cy="104" r="50" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <circle cx="521" cy="104" r="24" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="521" y1="104" x2="575" y2="50" stroke="var(--color-ok)" stroke-width="1.25" stroke-opacity="0.6"/>
+    <rect x="508" y="98" width="10" height="10" :fill="matched ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+    <line x1="518" y1="98" x2="530" y2="86" stroke-width="1" :stroke="matched ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+    <text x="532" y="84" font-size="12" font-weight="700" class="num" :fill="matched ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="matched ? 'your callsign' : 'UNKNOWN'"></text>
+    <text x="521" y="196" font-size="13" font-weight="700" text-anchor="middle" :fill="matched ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="matched ? 'identified: matched to plan' : 'may be intercepted'"></text>
+    <!-- requirements -->
+    <g font-size="11" fill="var(--color-fg)">
+      <text x="414" y="228" font-size="12" font-weight="700">The ADIZ requirements</text>
+      <text x="414" y="244">✓ Flight plan: entry point and time</text>
+      <text x="414" y="258">✓ Radio, and a listening watch</text>
+      <text x="414" y="272">✓ Position report at the entry point</text>
+      <text x="414" y="286">✓ Transponder: assigned code, altitude</text>
+      <text x="414" y="300" :font-weight="onPlan ? 400 : 700" :fill="onPlan ? 'var(--color-fg)' : told ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="(onPlan || told ? '✓' : '✗') + ' Deviations: tell ATS at once'"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="adz-off">Where you cross the boundary <output for="adz-off" x-text="word(off, 'track')"></output></label>
+      <input type="range" id="adz-off" min="-2.5" max="2.5" step="0.1" x-model.number="off">
+    </div>
+    <div class="widget-control">
+      <label for="adz-late">When you reach it <output for="adz-late" x-text="word(late, 'time')"></output></label>
+      <input type="range" id="adz-late" min="-3" max="3" step="0.1" x-model.number="late">
+    </div>
+    <div class="widget-control">
+      <label for="adz-told" class="cursor-pointer"><span>Advised ATS of the deviation before the boundary</span>
+        <input type="checkbox" id="adz-told" x-model="told" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="inTrack || told ? 'ok' : 'bad'"><dt class="widget-label">Track</dt><dd class="widget-value" x-text="told && !inTrack ? 'revised and reported' : inTrack ? 'within tolerance' : 'outside tolerance'"></dd></div>
+    <div class="widget-readout" :class="inTime || told ? 'ok' : 'bad'"><dt class="widget-label">Time</dt><dd class="widget-value" x-text="told && !inTime ? 'revised and reported' : inTime ? 'within tolerance' : 'outside tolerance'"></dd></div>
+    <div class="widget-readout" :class="matched ? 'ok' : 'bad'"><dt class="widget-label">Defence sees</dt><dd class="widget-value"><span x-text="matched ? 'The aircraft in the plan' : 'An unidentified aircraft'"></span><span class="widget-flag bad" x-show="!matched">may be intercepted</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('on-plan')" :aria-pressed="active === 'on-plan'">On plan</button>
+      <button type="button" @click="preset('cloud-deviation-unreported')" :aria-pressed="active === 'cloud-deviation-unreported'">Cloud: off track</button>
+      <button type="button" @click="preset('deviation-reported')" :aria-pressed="active === 'deviation-reported'">Off track, reported</button>
+      <button type="button" @click="preset('late-headwind-unreported')" :aria-pressed="active === 'late-headwind-unreported'">Headwind: late</button>
+      <button type="button" @click="preset('late-headwind-reported')" :aria-pressed="active === 'late-headwind-reported'">Late, reported</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> An ADIZ asks one question of every aircraft: is the one we see the one we were told about? Inside the track and time tolerances of your flight notification you are matched; outside them, unreported, you may be treated as unidentified and intercepted. The cure is always the same: tell ATS about any deviation as soon as possible, before the boundary. The ADIZ sits on top of the airspace class, so the Class G rules still apply. The windows are schematic: the tolerance figures, the notification lead time and the boundaries are in AIP ENR 2.2.</p>
+  <details class="widget-try"><summary>Try it: a cloud bank forces you well off your planned track just before the boundary. What do you do?</summary><p>Choose Cloud: off track, then tick the box: tell ATS as soon as possible. An unreported deviation looks exactly like an aircraft that is not the one in the plan.</p></details>
+  <details class="widget-try"><summary>Try it: a headwind will make you reach the entry point well after your notified time. What is the risk, and the fix?</summary><p>Choose Headwind: late. Outside the time tolerance you may be treated as unidentified, and an unidentified aircraft may be intercepted. Call ATS before the boundary with your revised entry time.</p></details>
+</div>

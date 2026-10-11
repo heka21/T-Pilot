@@ -1,0 +1,159 @@
+<div class="widget" x-data="timeline({
+  way: 'down', duration: 14, loop: false,
+  // a balanced 30° right turn at 90 kt TAS, 500 ft, in a 25 kt westerly (the lesson's Lancelin example)
+  tas: 90, wind: 25, bank: 30,
+  get v() { return this.tas * 0.5144 },
+  get w() { return this.wind * 0.5144 },
+  get r() { return this.v * this.v / (9.81 * Math.tan(this.bank * Math.PI / 180)) },
+  get omega() { return this.v / this.r },
+  get T() { return Math.PI / this.omega },
+  get h0() { return this.way === 'down' ? 270 : 90 },
+  hdgAt(tau) { return this.h0 + this.omega * tau * 180 / Math.PI },
+  // position over the ground in metres (x east, y south): the air circle round (0, 0), carried east by the wind
+  posAt(tau) { const a = (this.hdgAt(tau) - 90) * Math.PI / 180; return { x: this.r * Math.sin(a) + this.w * tau, y: -this.r * Math.cos(a) } },
+  get tau() { return this.t * this.T },
+  get hdg() { return this.hdgAt(this.tau) },
+  get gv() { const a = this.hdg * Math.PI / 180; return { x: this.v * Math.sin(a) + this.w, y: -this.v * Math.cos(a) } },
+  get gs() { return Math.hypot(this.gv.x, this.gv.y) / 0.5144 },
+  get trk() { return (Math.atan2(this.gv.x, -this.gv.y) * 180 / Math.PI + 360) % 360 },
+  get drift() { let d = this.trk - ((this.hdg % 360) + 360) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return d },
+  // right turn, so a track to the right of the nose is a drift towards the inside of the turn
+  get look() { return Math.abs(this.drift) < 3 ? 'none' : this.drift > 0 ? 'slip' : 'skid' },
+  // map: 2.6 m per px
+  get ox() { return this.way === 'down' ? 150 : 82 }, oy: 172,
+  X(m) { return this.ox + m / 2.6 }, Y(m) { return this.oy + m / 2.6 },
+  get here() { const p = this.posAt(this.tau); return { x: this.X(p.x), y: this.Y(p.y) } },
+  trackPath(t1) { const pts = []; for (let i = 0; i <= 48; i++) { const p = this.posAt(this.T * t1 * i / 48); pts.push([this.X(p.x), this.Y(p.y)]) } return this.path(pts) },
+  get fullTrack() { return this.trackPath(1) },
+  get flown() { return this.t > 0.004 ? this.trackPath(this.t) : '' },
+  get airCircle() { return { x: this.X(this.w * this.tau), y: this.Y(0), r: this.r / 2.6 } },
+  // heading and track arrows from the aeroplane, 5 s of travel
+  get hv() { const a = this.hdg * Math.PI / 180; return { x: this.here.x + 5 * this.v * Math.sin(a) / 2.6, y: this.here.y - 5 * this.v * Math.cos(a) / 2.6 } },
+  get tv() { return { x: this.here.x + 5 * this.gv.x / 2.6, y: this.here.y + 5 * this.gv.y / 2.6 } },
+  get steps() {
+    return this.way === 'down'
+      ? [{ at: 0, label: 'Into wind' }, { at: 0.5, label: 'Crosswind: looks like a slip' }, { at: 0.97, label: 'Downwind: ground rushing' }]
+      : [{ at: 0, label: 'Downwind' }, { at: 0.5, label: 'Crosswind: looks like a skid' }, { at: 0.97, label: 'Into wind: ground slow' }];
+  },
+  get seeCap() { return this.look === 'none' ? 'No sideways drift' : 'It ' + this.seeText },
+  get seeText() { return this.look === 'slip' ? 'seems to slip inwards' : this.look === 'skid' ? 'seems to skid outwards' : 'no sideways drift' },
+  get caption() {
+    const g = this.fmt(this.gs);
+    if (this.way === 'down') {
+      if (this.t < 0.15) return 'Into a 25 kt westerly at 90 kt the ground goes by slowly, at about ' + g + ' kt. The turn is balanced: ball centred, 90 kt on the ASI.';
+      if (this.t < 0.8) return 'Through the crosswind part the wind is on the outside of the turn and drifts you inwards: over the ground the aeroplane seems to slip into the turn. The ball is still centred, because the air is doing nothing odd.';
+      return 'Downwind the ground rushes past at about ' + g + ' kt, but the ASI still reads 90 kt. Raising the nose or adding bottom rudder now would turn an illusion into a real skid at a raised stall speed.';
+    }
+    if (this.t < 0.15) return 'Downwind the ground rushes past at about ' + g + ' kt while the ASI reads 90 kt. The turn is balanced.';
+    if (this.t < 0.8) return 'Through the crosswind part the wind is on the inside of the turn and drifts you outwards: over the ground the aeroplane seems to skid. The ball stays centred.';
+    return 'Into wind the groundspeed falls to about ' + g + ' kt and the aeroplane feels slow. It is not: the ASI still reads 90 kt, so do not lower the nose towards the ground.';
+  },
+  presets: {
+    'turning-downwind-start': { way: 'down', t: 0 },
+    'apparent-slip': { way: 'down', t: 0.5 },
+    'downwind-ground-rush': { way: 'down', t: 1 },
+    'turning-into-wind-apparent-skid': { way: 'into', t: 0.5 },
+    'fly-the-downwind-turn': { way: 'down', t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="dti-title" class="widget-stage">
+    <title id="dti-title">Plan view over the coast in a strong westerly: an aeroplane flies a balanced 180 degree turn through the air while the wind carries it east, so its track over the ground is stretched; through the crosswind part it seems to slip into the turn when turning downwind, or skid out of it when turning into wind, while the airspeed and the ball do not change</title>
+    <defs>
+      <marker id="dti-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- land and sea -->
+    <rect x="0" y="0" width="400" height="340" fill="var(--color-surface-2)"/>
+    <path d="M0 0 L34 0 Q44 60 30 120 Q20 190 38 250 Q48 300 40 340 L0 340 Z" fill="var(--color-sky-soft)"/>
+    <text x="16" y="330" font-size="12" fill="var(--color-sky-fg)" transform="rotate(-90 16 330)">Indian Ocean</text>
+    <!-- wind -->
+    <g stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" marker-end="url(#dti-arrow)">
+      <line x1="6" y1="40" x2="34" y2="40"/><line x1="6" y1="110" x2="34" y2="110"/><line x1="6" y1="180" x2="34" y2="180"/>
+    </g>
+    <!-- the circle through the air, carried with the wind -->
+    <circle fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :cx="airCircle.x" :cy="airCircle.y" :r="airCircle.r"/>
+    <text font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="airCircle.x" :y="airCircle.y + 4">circle through the air</text>
+    <!-- the track over the ground -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" :d="fullTrack"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" :d="flown"/>
+    <!-- heading and track -->
+    <line stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#dti-arrow)" :x1="here.x" :y1="here.y" :x2="hv.x" :y2="hv.y"/>
+    <line stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" marker-end="url(#dti-arrow)" :x1="here.x" :y1="here.y" :x2="tv.x" :y2="tv.y"/>
+    <!-- the aeroplane (python -m tools.diagrams.plane top, heading 0, scale 0.34, color brand) -->
+    <g :transform="'translate(' + here.x.toFixed(1) + ' ' + here.y.toFixed(1) + ') rotate(' + hdg.toFixed(1) + ')'">
+      <g transform="translate(0 0) rotate(-90) scale(0.34)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- the cockpit: what the instruments say, and what the ground says -->
+    <rect x="400" y="0" width="240" height="340" fill="var(--color-surface)"/>
+    <line x1="400" y1="0" x2="400" y2="340" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="520" y="26" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">The instruments</text>
+    <g font-size="13" fill="var(--color-fg)">
+      <text x="416" y="56">Airspeed</text>
+      <text x="624" y="56" text-anchor="end" class="num" font-weight="600" fill="var(--color-ok-fg)">90 kt, steady</text>
+      <text x="416" y="82">Balance ball</text>
+    </g>
+    <path d="M440 98 Q520 122 600 98" fill="none" stroke="var(--color-line-strong)" stroke-width="12" stroke-linecap="round"/>
+    <line x1="512" y1="96" x2="512" y2="122" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <line x1="528" y1="96" x2="528" y2="122" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <circle cx="520" cy="110" r="6" fill="var(--color-fg)"/>
+    <text x="520" y="142" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)">centred: balanced</text>
+    <line x1="412" y1="160" x2="628" y2="160" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="520" y="180" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Over the ground</text>
+    <text x="520" y="196" font-size="12" text-anchor="middle" fill="var(--color-info)" font-weight="600">wind 25 kt from the west →</text>
+    <g font-size="13" fill="var(--color-fg)">
+      <text x="416" y="216">Groundspeed</text>
+      <text x="624" y="216" text-anchor="end" class="num" font-weight="600" x-text="fmt(gs) + ' kt'"></text>
+      <text x="416" y="234" fill="var(--color-fg-muted)" font-weight="600">Nose</text>
+      <text x="520" y="234" text-anchor="end" class="num" fill="var(--color-fg-muted)" font-weight="600" x-text="dir(hdg)"></text>
+      <text x="536" y="234" fill="var(--color-brand-fg)" font-weight="600">Track</text>
+      <text x="624" y="234" text-anchor="end" class="num" fill="var(--color-brand-fg)" font-weight="600" x-text="dir(trk)"></text>
+    </g>
+    <rect x="416" y="244" height="10" rx="3" fill="var(--color-line)" width="208"/>
+    <rect x="416" y="244" height="10" rx="3" fill="var(--color-brand)" :width="Math.min(208, gs / 120 * 208)"/>
+    <text x="520" y="290" font-size="15" text-anchor="middle" font-weight="600" :fill="look === 'none' ? 'var(--color-fg-muted)' : 'var(--color-warn-fg)'" x-text="seeCap"></text>
+    <text x="520" y="312" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">an illusion: the turn through</text>
+    <text x="520" y="327" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">the air is perfectly normal</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the turn'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="dti-t" min="0" max="1" step="0.002" x-model.number="t" @input="pause()" aria-label="Progress through the turn">
+    <span class="widget-clock" x-text="'heading ' + dir(hdg)"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dti-way">The turn</label>
+      <select id="dti-way" class="input" x-model="way" @change="t = 0; pause()">
+        <option value="down">From into wind to downwind</option>
+        <option value="into">From downwind to into wind</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Airspeed and ball</dt><dd class="widget-value">90 kt, ball centred</dd></div>
+    <div class="widget-readout" :class="gs > 100 ? 'warn' : ''"><dt class="widget-label">Groundspeed</dt><dd class="widget-value" x-text="fmt(gs) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="look === 'none' ? '' : 'warn'"><dt class="widget-label">Over the ground</dt><dd class="widget-value"><span x-text="seeCap + (look === 'none' ? '' : ' (drift ' + fmt(Math.abs(drift)) + '°)')"></span><span class="widget-flag warn" x-show="look !== 'none'">illusion</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('turning-downwind-start')" :aria-pressed="active === 'turning-downwind-start'">Into wind</button>
+      <button type="button" @click="preset('apparent-slip')" :aria-pressed="active === 'apparent-slip'">Apparent slip</button>
+      <button type="button" @click="preset('downwind-ground-rush')" :aria-pressed="active === 'downwind-ground-rush'">Downwind</button>
+      <button type="button" @click="preset('turning-into-wind-apparent-skid')" :aria-pressed="active === 'turning-into-wind-apparent-skid'">Apparent skid</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The aeroplane flies a perfectly ordinary circle through the air (dashed), and the whole air mass carries it east. Over the ground the track is stretched, the nose and the track part company through the crosswind part, and the groundspeed swings between 65 and 115 kt. Turning downwind it looks like a slip into the turn, turning into wind like a skid out of it, but the airspeed and the ball never change: fly the turn by the ASI and the ball, not by the rushing ground. A 30° turn at 90 kt in the lesson's 25 kt wind.</p>
+  <details class="widget-try"><summary>Try it: turning downwind at 500 ft the ground seems to rush past and slide towards the inside of the turn. Add some bottom rudder and raise the nose?</summary><p>No. Press Apparent slip: the ball is centred and the ASI reads 90 kt, so the turn is balanced. Bottom rudder would make a real skid, and raising the nose would bleed real airspeed towards a stall speed the turn has already raised: the classic low-level stall of the inside wing.</p></details>
+  <details class="widget-try"><summary>Try it: what is the groundspeed into wind and downwind, and why does the airspeed not change?</summary><p>90 − 25 = 65 kt into wind and 90 + 25 = 115 kt downwind. The aeroplane only knows the air it is flying through, and the wind moves all of that air together.</p></details>
+</div>

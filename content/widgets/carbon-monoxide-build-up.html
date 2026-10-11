@@ -1,0 +1,264 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false, det: 'electronic', smoker: false,
+  // PHFC 2.10: CO is colourless, odourless and tasteless; it binds to haemoglobin 200 to 250 times more readily than
+  // oxygen; it clears only slowly, over many hours; a heavy smoker starts with several percent of the haemoglobin
+  // already taken; symptoms build in the lesson's order; in the lesson's story the electronic detector chirps fifteen
+  // minutes after cabin heat is selected, the pilot feels fine, turns the heat off and opens the vents, and lands at
+  // the nearest suitable aerodrome. All rates and the symptom thresholds below are illustrative, not measurements.
+  // Story clock: t 0..0.75 is 0..45 minutes of flight; t 0.75..1 is the hours after landing (not to scale).
+  heatOn: 5,
+  get actAt() { return this.det === 'electronic' ? 20 : this.det === 'card' ? 32 : null },
+  get landAt() { return this.det === 'electronic' ? 34 : this.det === 'card' ? 42 : 45 },
+  _key: '', _sim: [],
+  // cabin CO (0..1) and the share of haemoglobin taken by CO (0..1), every quarter minute; 60 more rows after landing
+  get sim() {
+    const key = this.det + this.smoker;
+    if (this._key !== key) {
+      const out = []; let c = 0, h = this.smoker ? 0.05 : 0;
+      for (let i = 0; i <= 180; i++) {
+        const m = i / 4; out.push([c, h]);
+        const acted = this.actAt !== null && m >= this.actAt + 0.5;
+        const goal = m >= this.heatOn && !acted && m < this.landAt ? 1 : 0;
+        c += (goal - c) * 0.25 / (goal ? 3 : 1.5);
+        h += (0.012 * c - 0.0008 * h) * 0.25;
+      }
+      // after landing: no more CO, and it lets go only slowly (many hours)
+      for (let j = 1; j <= 60; j++) out.push([0, h * Math.exp(-j / 60 * 0.9)]);
+      this._sim = out; this._key = key;
+    }
+    return this._sim;
+  },
+  get flying() { return this.t < 0.75 },
+  get min() { return this.flying ? this.t / 0.75 * 45 : 45 },
+  idx(t) { return t < 0.75 ? Math.round(t / 0.75 * 180) : 180 + Math.round((t - 0.75) / 0.25 * 60) },
+  get row() { return this.sim[this.clamp(this.idx(this.t), 0, 240)] },
+  get cabin() { return this.min > this.landAt ? 0 : this.row[0] },
+  get hb() { return this.row[1] },
+  get landed() { return !this.flying || this.min >= this.landAt },
+  get acted() { return this.actAt !== null && this.min >= this.actAt + 0.5 },
+  get heat() { return this.min >= this.heatOn && !this.acted && !this.landed },
+  get alarm() { return this.det === 'electronic' && this.min >= this.actAt && this.min < this.actAt + 3 && !this.landed },
+  // the lesson's order of symptoms; the thresholds are illustrative
+  sym: [[0.18, 'Headache'], [0.26, 'Dizziness, tiredness'], [0.34, 'Nausea'], [0.42, 'Impaired judgement, confusion'], [0.5, 'Breathless, rapid pulse']],
+  lit(i) { return this.hb >= this.sym[i][0] },
+  get level() { let k = -1; for (let i = 0; i < 5; i++) if (this.lit(i)) k = i; return k },
+  get feel() { if (!this.flying && this.hb > 0.05) return ['Still affected', 'warn']; return this.level < 0 ? ['You feel fine', 'ok'] : [this.sym[this.level][1], this.level >= 3 ? 'bad' : 'warn'] },
+  get seats() { return Math.round(this.hb * 24) },
+  get hbText() {
+    if (this.hb < 0.01) return ['None', 'ok'];
+    if (this.hb < 0.18) return ['A few seats', 'warn'];
+    if (this.hb < 0.34) return ['A growing share', 'bad'];
+    return ['A large share', 'bad'];
+  },
+  get cabinText() {
+    if (this.landed) return ['On the ground', ''];
+    if (this.cabin < 0.03) return ['None', 'ok'];
+    if (this.acted) return ['Clearing: vents open', 'warn'];
+    return [this.cabin < 0.6 ? 'Rising' : 'High', 'bad'];
+  },
+  get detText() {
+    if (this.det === 'none') return ['None carried', ''];
+    if (this.det === 'card') return this.cabin > 0.2 || this.hb > 0.05 ? [this.acted ? 'Dark: you looked' : 'Darkening, if you look', 'warn'] : ['Clean', 'ok'];
+    return this.alarm ? ['ALARM', 'bad'] : this.acted ? ['Alarmed at ' + this.actAt + ' min', 'ok'] : ['Quiet', 'ok'];
+  },
+  get clock() { return this.flying ? this.fmt(this.min) + ' min' : 'hours later' },
+  // chart: flight minutes 0..45 across x 296..540; after landing x 556..624 (hours, not to scale); share 0..0.5 up y 172..44
+  X(i) { return i <= 180 ? 296 + i / 180 * 244 : 556 + (i - 180) / 60 * 68 },
+  Yc(c) { return 172 - c * 108 },
+  Yh(h) { return 172 - h / 0.5 * 108 },
+  seg2(fnIdx, from, to) { const pts = []; for (let i = from; i <= to; i += 2) pts.push([this.X(i), fnIdx(i)]); return this.path(pts) },
+  get nowI() { return this.clamp(this.idx(this.t), 0, 240) },
+  get cabinPath() { return this.seg2((i) => this.Yc(i / 4 > this.landAt ? 0 : this.sim[i][0]), 0, Math.min(180, this.nowI)) },
+  get hbFlight() { return this.seg2((i) => this.Yh(this.sim[i][1]), 0, Math.min(180, this.nowI)) },
+  get hbAfter() { return this.nowI > 181 ? this.seg2((i) => this.Yh(this.sim[i][1]), 181, this.nowI) : '' },
+  xm(m) { return 296 + m / 45 * 244 },
+  get steps() {
+    const s = [{ at: 0, label: 'Take-off' }, { at: this.heatOn / 60, label: 'Cabin heat on' }];
+    if (this.det === 'electronic') s.push({ at: 20 / 60, label: 'Detector chirps' });
+    if (this.det === 'card') s.push({ at: 32 / 60, label: 'You look at the card' });
+    s.push({ at: this.landAt / 60, label: this.det === 'none' ? 'Land at destination' : 'Land at nearest' }, { at: 0.86, label: 'Hours later' });
+    return s;
+  },
+  get caption() {
+    const m = this.min;
+    if (!this.flying) return 'On the ground the cabin air is clean, but the carbon monoxide lets go of the haemoglobin only slowly: many hours breathing ordinary air. Walking away from the source does not make you well, so the afternoon leg is off: see a doctor and say you suspect CO.';
+    if (m < this.heatOn) return 'A cold winter climb out of the wheatbelt with the vents shut. The heater muff around the exhaust has a crack you cannot see.';
+    if (this.alarm) return 'The electronic detector chirps fifteen minutes after you selected cabin heat. You feel fine and there is no smell. Do not wait to feel unwell: heat off, all vents open, now.';
+    if (this.det === 'card' && m >= this.actAt && m < this.actAt + 4) return 'At last you glance at the spot card and it has darkened. It was darkening all along, slowly, but a card only works when you look at it, and by now ' + (this.level >= 0 ? 'you have a ' + this.sym[0][1].toLowerCase() + (this.level >= 1 ? ' and feel dizzy and tired' : '') + '.' : 'a good share of your haemoglobin is taken.');
+    if (this.acted && !this.landed) return 'Heat off and vents open: the cabin air clears within minutes, so no more CO goes in. But what is already on the haemoglobin stays there. Land at the nearest suitable aerodrome rather than pressing on.';
+    if (this.landed) return this.det === 'none' ? 'You land at your destination with a pounding headache and slow, muddled thinking, never having suspected the heater. Every symptom looked like a long, bumpy flight.' : 'Down at the nearest suitable aerodrome. Mention the exposure to a doctor and write up the defect: the exhaust and heater muff get inspected before the aeroplane flies again.';
+    if (m >= this.heatOn && this.level < 0) return 'Exhaust gas leaks into the heating air and onto the cabin floor. Colourless, odourless, tasteless: you notice nothing, while carbon monoxide takes haemoglobin seats 200 to 250 times more readily than oxygen.';
+    if (this.level >= 3) return 'Impaired judgement: the faculty you would need to work out what is happening is the one that has gone. Nothing makes you breathless, because your carbon dioxide is normal.';
+    return 'A ' + this.sym[0][1].toLowerCase() + (this.level >= 1 ? ', then dizziness and tiredness' : '') + (this.level >= 2 ? ', then nausea' : '') + ': exactly what a long, cold, bumpy flight feels like. Nothing about them says carbon monoxide; the clue is that they started after the heater went on.';
+  },
+  presets: {
+    'electronic-detector': { det: 'electronic', smoker: false, t: 0.335 },
+    'spot-card': { det: 'card', smoker: false, t: 0.54 },
+    'no-detector': { det: 'none', smoker: false, t: 0.74 },
+    'smoker-no-detector': { det: 'none', smoker: true, t: 0.55 },
+    'hours-later': { det: 'card', smoker: false, t: 0.92 },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="cmb-title" class="widget-stage">
+    <title id="cmb-title">A light aeroplane's cabin with cabin heat on and carbon monoxide building up, a chart of the carbon monoxide in the cabin air and the share of haemoglobin it takes over time, the haemoglobin seats, and the symptoms that follow</title>
+    <defs>
+      <marker id="cmb-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- the cabin -->
+    <rect x="16" y="28" width="250" height="168" rx="10" fill="var(--color-sky-soft)" fill-opacity="0.45" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="24" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">The cabin</text>
+    <path d="M196 30 L262 104" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M170 110 L262 110 L262 122 L170 122 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <!-- pilot in the seat -->
+    <path d="M70 186 L74 120 L94 118 L96 186" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+    <circle cx="112" cy="84" r="15" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <path d="M100 100 C96 120 96 144 100 160 L140 160 L168 186" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M110 120 L150 126" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/>
+    <!-- heater outlet at the feet, and the leak -->
+    <rect x="200" y="178" width="40" height="14" rx="3" stroke-width="1.25" :fill="heat ? 'var(--color-bad-soft)' : 'var(--color-surface)'" :stroke="heat ? 'var(--color-bad)' : 'var(--color-fg-muted)'"/>
+    <text x="236" y="212" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" x-text="heat ? 'cabin heat ON' : 'cabin heat off'"></text>
+    <!-- carbon monoxide in the air: invisible to you, drawn here -->
+    <g fill="var(--color-bad)" fill-opacity="0.55">
+      <circle cx="212" cy="164" r="4" x-show="cabin > 0.04"/><circle cx="190" cy="150" r="4" x-show="cabin > 0.1"/>
+      <circle cx="226" cy="140" r="4" x-show="cabin > 0.16"/><circle cx="166" cy="168" r="4" x-show="cabin > 0.22"/>
+      <circle cx="150" cy="140" r="4" x-show="cabin > 0.3"/><circle cx="200" cy="96" r="4" x-show="cabin > 0.38"/>
+      <circle cx="130" cy="176" r="4" x-show="cabin > 0.46"/><circle cx="240" cy="160" r="4" x-show="cabin > 0.54"/>
+      <circle cx="140" cy="54" r="4" x-show="cabin > 0.62"/><circle cx="60" cy="70" r="4" x-show="cabin > 0.7"/>
+      <circle cx="170" cy="70" r="4" x-show="cabin > 0.78"/><circle cx="40" cy="120" r="4" x-show="cabin > 0.86"/>
+      <circle cx="84" cy="48" r="4" x-show="cabin > 0.92"/><circle cx="48" cy="164" r="4" x-show="cabin > 0.96"/>
+    </g>
+    <text x="24" y="212" font-size="11" fill="var(--color-bad-fg)" x-show="cabin > 0.04">red dots: CO, invisible to you</text>
+    <!-- fresh-air vent -->
+    <rect x="22" y="34" width="26" height="10" rx="2" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <line x1="35" y1="48" x2="60" y2="80" stroke="var(--color-sky-fg)" stroke-width="2.5" marker-end="url(#cmb-arrow)" x-show="acted"/>
+    <text x="54" y="44" font-size="11" fill="var(--color-sky-fg)" x-text="acted ? 'vents open' : 'vents shut'"></text>
+    <!-- the detector on the coaming -->
+    <g x-show="det === 'electronic'">
+      <rect x="208" y="94" width="34" height="16" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <circle cx="218" cy="102" r="4" :fill="alarm ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <text x="236" y="106" font-size="11" text-anchor="middle" font-weight="700" fill="var(--color-bad-fg)" x-show="alarm">!</text>
+    </g>
+    <g x-show="det === 'card'">
+      <rect x="212" y="92" width="22" height="18" rx="2" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <circle cx="223" cy="101" r="5" fill="var(--color-tarmac)" :fill-opacity="clamp(hb * 4, 0.05, 0.95)"/>
+    </g>
+
+    <!-- chart: cabin CO and the haemoglobin share -->
+    <text x="296" y="18" font-size="13" font-weight="600" fill="var(--color-fg)">Over the flight, then after landing</text>
+    <line x1="296" y1="172" x2="540" y2="172" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="296" y1="40" x2="296" y2="172" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="556" y1="172" x2="624" y2="172" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <path d="M543 166 l6 12 M549 166 l6 12" stroke="var(--color-fg-faint)" stroke-width="1.25"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="300" y="188">0 min</text><text :x="xm(15)" y="188">15</text><text :x="xm(30)" y="188">30</text><text :x="xm(45)" y="188">45</text>
+    </g>
+    <text x="590" y="188" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">many hours</text>
+    <line :x1="xm(heatOn)" :x2="xm(heatOn)" y1="41" y2="172" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text :x="xm(heatOn)" y="36" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">heat on</text>
+    <line :x1="xm(actAt || 0)" :x2="xm(actAt || 0)" y1="41" y2="172" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" x-show="acted"/>
+    <text :x="xm(actAt || 0)" y="36" font-size="11" text-anchor="middle" fill="var(--color-ok-fg)" x-show="acted">heat off, vents open</text>
+    <path fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" :d="cabinPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="hbFlight"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="hbAfter" x-show="!flying"/>
+    <circle r="5" fill="var(--color-brand)" :cx="X(nowI)" :cy="Yh(hb)"/>
+    <line x1="304" y1="210" x2="326" y2="210" stroke="var(--color-bad)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="332" y="214" font-size="12" fill="var(--color-bad-fg)">CO in the cabin air</text>
+    <line x1="460" y1="210" x2="482" y2="210" stroke="var(--color-brand)" stroke-width="2.5"/>
+    <text x="488" y="214" font-size="12" fill="var(--color-brand-fg)">haemoglobin taken</text>
+
+    <!-- haemoglobin seats: 24, oxygen (green) or carbon monoxide (red) -->
+    <text x="16" y="240" font-size="13" font-weight="600" fill="var(--color-fg)">Haemoglobin seats</text>
+    <g stroke-width="1.25">
+      <circle cx="26" cy="262" r="6" :fill="seats > 0 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 0 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="42" cy="262" r="6" :fill="seats > 1 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 1 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="58" cy="262" r="6" :fill="seats > 2 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 2 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="74" cy="262" r="6" :fill="seats > 3 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 3 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="90" cy="262" r="6" :fill="seats > 4 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 4 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="106" cy="262" r="6" :fill="seats > 5 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 5 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="122" cy="262" r="6" :fill="seats > 6 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 6 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="138" cy="262" r="6" :fill="seats > 7 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 7 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="154" cy="262" r="6" :fill="seats > 8 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 8 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="170" cy="262" r="6" :fill="seats > 9 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 9 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="186" cy="262" r="6" :fill="seats > 10 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 10 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="202" cy="262" r="6" :fill="seats > 11 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 11 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="26" cy="282" r="6" :fill="seats > 12 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 12 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="42" cy="282" r="6" :fill="seats > 13 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 13 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="58" cy="282" r="6" :fill="seats > 14 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 14 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="74" cy="282" r="6" :fill="seats > 15 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 15 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="90" cy="282" r="6" :fill="seats > 16 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 16 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="106" cy="282" r="6" :fill="seats > 17 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 17 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="122" cy="282" r="6" :fill="seats > 18 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 18 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="138" cy="282" r="6" :fill="seats > 19 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 19 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="154" cy="282" r="6" :fill="seats > 20 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 20 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="170" cy="282" r="6" :fill="seats > 21 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 21 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="186" cy="282" r="6" :fill="seats > 22 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 22 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <circle cx="202" cy="282" r="6" :fill="seats > 23 ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="seats > 23 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+    </g>
+    <g font-size="11">
+      <circle cx="30" cy="312" r="5" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25"/><text x="40" y="316" fill="var(--color-ok-fg)">oxygen</text>
+      <circle cx="100" cy="312" r="5" fill="var(--color-bad)"/><text x="110" y="316" fill="var(--color-bad-fg)">carbon monoxide</text>
+    </g>
+
+    <!-- symptom ladder, in the lesson's order -->
+    <text x="296" y="240" font-size="13" font-weight="600" fill="var(--color-fg)">What you feel, in order</text>
+    <g font-size="12">
+      <rect x="296" y="248" width="8" height="8" rx="2" :fill="lit(0) ? 'var(--color-warn)' : 'var(--color-line)'"/><text x="310" y="256" :fill="lit(0) ? 'var(--color-fg)' : 'var(--color-fg-faint)'">Headache</text>
+      <rect x="296" y="264" width="8" height="8" rx="2" :fill="lit(1) ? 'var(--color-warn)' : 'var(--color-line)'"/><text x="310" y="272" :fill="lit(1) ? 'var(--color-fg)' : 'var(--color-fg-faint)'">Dizziness, tiredness</text>
+      <rect x="296" y="280" width="8" height="8" rx="2" :fill="lit(2) ? 'var(--color-warn)' : 'var(--color-line)'"/><text x="310" y="288" :fill="lit(2) ? 'var(--color-fg)' : 'var(--color-fg-faint)'">Nausea</text>
+      <rect x="460" y="248" width="8" height="8" rx="2" :fill="lit(3) ? 'var(--color-bad)' : 'var(--color-line)'"/><text x="474" y="256" :fill="lit(3) ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">Impaired judgement</text>
+      <rect x="460" y="264" width="8" height="8" rx="2" :fill="lit(4) ? 'var(--color-bad)' : 'var(--color-line)'"/><text x="474" y="272" :fill="lit(4) ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">Breathless, fast pulse</text>
+      <rect x="460" y="280" width="8" height="8" rx="2" fill="var(--color-line)"/><text x="474" y="288" fill="var(--color-fg-faint)">Late: cherry-red skin,</text>
+      <text x="474" y="303" fill="var(--color-fg-faint)">unconsciousness</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the flight'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="cmb-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time into the flight">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cmb-det">CO detector on board</label>
+      <select id="cmb-det" class="input" x-model="det" @change="active = null">
+        <option value="electronic">Electronic, with an alarm</option>
+        <option value="card">Spot card (you have to look)</option>
+        <option value="none">None</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="cmb-smoker" class="cursor-pointer"><span>Heavy smoker (some seats taken before take-off)</span>
+        <input type="checkbox" id="cmb-smoker" x-model="smoker" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">What you smell</dt><dd class="widget-value">Nothing</dd></div>
+    <div class="widget-readout" :class="cabinText[1]"><dt class="widget-label">CO in the cabin</dt><dd class="widget-value" x-text="cabinText[0]"></dd></div>
+    <div class="widget-readout" :class="hbText[1]"><dt class="widget-label">Haemoglobin taken by CO</dt><dd class="widget-value" x-text="hbText[0]"></dd></div>
+    <div class="widget-readout" :class="feel[1]"><dt class="widget-label">How you feel</dt><dd class="widget-value text-sm" x-text="feel[0]"></dd></div>
+    <div class="widget-readout" :class="detText[1]"><dt class="widget-label">Detector</dt><dd class="widget-value"><span x-text="detText[0]"></span><span class="widget-flag bad" x-show="alarm">heat off</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('electronic-detector')" :aria-pressed="active === 'electronic-detector'">Alarm</button>
+      <button type="button" @click="preset('spot-card')" :aria-pressed="active === 'spot-card'">Spot card</button>
+      <button type="button" @click="preset('no-detector')" :aria-pressed="active === 'no-detector'">No detector</button>
+      <button type="button" @click="preset('smoker-no-detector')" :aria-pressed="active === 'smoker-no-detector'">Smoker</button>
+      <button type="button" @click="preset('hours-later')" :aria-pressed="active === 'hours-later'">Hours later</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Nothing in the cabin tells you: no smell, no breathlessness, and the first symptoms feel like an ordinary long flight. Heat off and vents open clears the cabin air in minutes, but the haemoglobin lets go of carbon monoxide only over many hours, so act on suspicion and the earlier the better. The shapes and timings here are illustrative, not measurements; the order of the symptoms and the fifteen-minute alarm are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: the detector chirps but you feel fine and smell nothing. Act now, or wait to be sure?</summary><p>Press Alarm: when the detector chirps only a few seats are taken and you feel fine. Compare Spot card and No detector: each minute of waiting takes more seats, and the judgement you would use to decide is the first thing to go. Heat off and vents open costs only some warmth.</p></details>
+  <details class="widget-try"><summary>Try it: why is the afternoon leg off even after the cabin air is clean?</summary><p>Press Hours later: there is no carbon monoxide left in the cabin, but the red seats empty only slowly. Breathing ordinary air, CO takes many hours to clear, so you are still affected on the afternoon leg.</p></details>
+</div>

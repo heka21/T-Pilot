@@ -1,0 +1,176 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false,
+  look: 'chart', flying: false, bumpy: true, vents: false, act: false,
+  // forty minutes in the right seat. Queasiness builds with the sensory conflict times the motion, scaled by the
+  // threshold factors, and fades slowly when the conflict stops (PHFC 2.8). Rates and timings are illustrative;
+  // the six stages and the remedies are the lesson's.
+  stages: ['Fine', 'Gone quiet, lost interest', 'Yawning, more saliva', 'Pale', 'Cold sweat', 'Nausea', 'Vomiting'],
+  get sim() {
+    const n = 480, dt = 40 / n, out = { q: [], fix: [] }, look = this.look, flying = this.flying, bumpy = this.bumpy, vents = this.vents, act = this.act;
+    let q = 0, fixed = false;
+    for (let k = 0; k <= n; k++) {
+      if (act && !fixed && q >= 2) fixed = true;
+      const eyesIn = fixed ? false : look === 'chart';
+      const conflict = (eyesIn ? 1 : 0.3) * (flying ? 0.5 : 1);
+      const motion = (bumpy ? 1 : 0.2) * (fixed ? 0.6 : 1);
+      const thr = fixed || vents ? 0.7 : 1.3;
+      const rec = fixed ? 0.15 : 0.06;
+      out.q.push(q); out.fix.push(fixed);
+      q = Math.min(6, Math.max(0, q + dt * (0.33 * conflict * motion * thr - rec)));
+    }
+    return out;
+  },
+  get k() { return Math.round(this.t * 480) },
+  get min() { return this.t * 40 },
+  get q() { return this.sim.q[this.k] },
+  get fixed() { return this.sim.fix[this.k] },
+  get stage() { return Math.min(6, Math.floor(this.q + 1e-9)) },
+  get eyesIn() { return this.look === 'chart' && !this.fixed },
+  get conflictOn() { return this.eyesIn && this.bumpy },
+  firstAt(s) { const q = this.sim.q; for (let k = 0; k <= 480; k++) if (q[k] >= s) return k / 480; return -1 },
+  get steps() {
+    const out = [{ at: 0, label: 'Take-off' }];
+    for (let s = 1; s <= 6; s++) { const a = this.firstAt(s); if (a > 0) out.push({ at: a, label: this.stages[s].split(',')[0] }) }
+    const f = this.sim.fix.indexOf(true);
+    if (f > 0) out.push({ at: f / 480 + 0.002, label: 'Remedies' });
+    return out.sort((a, b) => a.at - b.at);
+  },
+  // the bumps: the aeroplane bobs and pitches
+  get bob() { const a = this.bumpy && !this.fixed ? 9 : this.bumpy ? 5 : 1.5, p = this.t * 2 * Math.PI; return a * (Math.sin(p * 31) + 0.5 * Math.sin(p * 77)) },
+  get pitch() { const a = this.bumpy ? 2.5 : 0.5, p = this.t * 2 * Math.PI; return a * Math.sin(p * 23 + 1) },
+  get perf() { return this.stage === 0 ? ['Sharp', 'ok'] : this.stage <= 2 ? ['Slipping already', 'warn'] : ['Poor', 'bad'] },
+  get eyesSay() { return this.eyesIn ? 'still (the page)' : 'moving (horizon)' },
+  get earSays() { return this.bumpy ? 'bumps and rolls' : 'gentle motion' },
+  get caption() {
+    const s = this.stage;
+    if (this.fixed && this.q > 0.5) return 'Acting at the first signs: vents open, eyes outside on the horizon, head still, and the pilot flies smoothly. The eyes now see the motion the inner ear feels, the conflict shrinks and the queasiness slowly ebbs.';
+    if (this.fixed) return 'Recovered without reaching the sick bag, because someone acted at the first yawn.';
+    if (s === 0) {
+      if (!this.bumpy) return 'Early morning, before the thermals: little motion for the senses to argue about.';
+      if (!this.eyesIn) return 'Eyes outside on the horizon: the eyes see the same tilting and bobbing the inner ear feels, so the senses tell one story.';
+      return 'Head down at a chart in thermals: the eyes report a still page while the inner ear feels every bump. Two senses, two stories.';
+    }
+    if (s <= 2) return 'The first signs are quiet: going silent, losing interest, yawning. Performance is already falling, long before the sick bag. This is the time to act.';
+    if (s <= 4) return 'Pale, then a cold sweat. Concentration and motivation have gone: a pilot here has stopped looking out and stopped caring about the radio.';
+    if (s === 5) return 'Nausea. If the symptoms keep progressing, return and land.';
+    return 'Vomiting: in a single-pilot aeroplane, an incapacitation.';
+  },
+  presets: {
+    'chart-in-thermals': { look: 'chart', flying: false, bumpy: true, vents: false, act: false, t: 0.37 },
+    'eyes-on-the-horizon': { look: 'horizon', flying: false, bumpy: true, vents: false, act: false, t: 0.45 },
+    'take-the-controls': { look: 'horizon', flying: true, bumpy: true, vents: true, act: false, t: 0.6 },
+    'act-at-first-signs': { look: 'chart', flying: false, bumpy: true, vents: false, act: true, t: 0.3 },
+    'lancelin-early-start': { look: 'horizon', flying: false, bumpy: false, vents: true, act: false, t: 0.9 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="msb-title" class="widget-stage">
+    <title id="msb-title">An aeroplane bumping through thermals beside a passenger's face that changes through the six stages of motion sickness, with what the eyes and the inner ear each report</title>
+    <defs>
+      <marker id="msb-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- outside: sky, paddocks, thermals -->
+    <rect x="10" y="10" width="300" height="280" rx="10" fill="var(--color-sky-soft)"/>
+    <path d="M10 220 L310 220 L310 280 Q310 290 300 290 L20 290 Q10 290 10 280 Z" fill="var(--color-warn-soft)"/>
+    <path d="M10 250 L310 244 M60 220 L40 290 M150 220 L160 290 M240 220 L280 290" stroke="var(--color-warn)" stroke-width="1" stroke-opacity="0.5" fill="none"/>
+    <circle r="16" fill="var(--color-warn)" :cx="bumpy ? 250 : 270" :cy="bumpy ? 46 : 196"/>
+    <text x="22" y="32" font-size="13" fill="var(--color-sky-fg)" font-weight="600" x-text="bumpy ? 'Afternoon thermals' : 'Early morning, smooth air'"></text>
+    <g x-show="bumpy" fill="none" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round" marker-end="url(#msb-arrow)" stroke-opacity="0.7">
+      <path d="M50 214 q-6 -20 0 -40 t0 -40"/><path d="M140 214 q6 -22 0 -44 t0 -40"/><path d="M230 214 q-6 -20 0 -40 t0 -36"/>
+    </g>
+    <g :transform="'translate(170 ' + (130 + bob) + ') rotate(' + pitch + ')'">
+      <!-- python -m tools.diagrams.plane side, scale 1.3, no gear, colour fg -->
+      <g transform="translate(0 0) rotate(0) scale(1.3)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+
+    <!-- what the senses say -->
+    <g font-size="12">
+      <rect x="330" y="14" width="140" height="44" rx="8" fill="var(--color-surface-2)"/>
+      <text x="340" y="31" fill="var(--color-fg-muted)">Eyes say</text>
+      <text x="340" y="49" fill="var(--color-fg)" font-weight="600" x-text="eyesSay"></text>
+      <rect x="490" y="14" width="140" height="44" rx="8" fill="var(--color-surface-2)"/>
+      <text x="500" y="31" fill="var(--color-fg-muted)">Inner ear says</text>
+      <text x="500" y="49" fill="var(--color-fg)" font-weight="600" x-text="earSays"></text>
+    </g>
+    <text x="480" y="44" font-size="20" font-weight="700" text-anchor="middle" :fill="conflictOn ? 'var(--color-bad)' : 'var(--color-ok)'" x-text="conflictOn ? '≠' : '='"></text>
+    <!-- the passenger -->
+    <circle cx="480" cy="150" r="58" stroke="var(--color-fg-muted)" stroke-width="2" :fill="stage >= 3 ? 'var(--color-ok-soft)' : 'var(--color-surface)'"/>
+    <g fill="var(--color-fg)">
+      <circle r="5" cx="458" :cy="eyesIn ? 144 : 136"/><circle r="5" cx="502" :cy="eyesIn ? 144 : 136"/>
+    </g>
+    <path d="M446 124 L470 126 M490 126 L514 124" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" x-show="stage >= 1"/>
+    <path d="M462 172 Q480 182 498 172" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" x-show="stage === 0"/>
+    <path d="M464 176 L496 176" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" x-show="stage === 1 || stage === 3 || stage === 4"/>
+    <ellipse cx="480" cy="176" rx="9" ry="11" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2" x-show="stage === 2"/>
+    <path d="M462 178 q6 -6 12 0 t12 0 t12 0" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" x-show="stage >= 5"/>
+    <g fill="var(--color-info)" x-show="stage >= 4"><path d="M432 116 q-5 8 0 11 q5 -3 0 -11 Z"/><path d="M528 120 q-5 8 0 11 q5 -3 0 -11 Z"/><path d="M520 98 q-4 7 0 9 q4 -2 0 -9 Z"/></g>
+    <path x-show="stage >= 5" d="M548 104 a7 7 0 1 1 7 7 a4 4 0 1 1 -4 -4" fill="none" stroke="var(--color-ok)" stroke-width="2" stroke-linecap="round"/>
+    <!-- the chart in the lap, or the line of sight to the horizon -->
+    <g x-show="eyesIn"><rect x="452" y="214" width="56" height="26" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" transform="rotate(-6 480 227)"/><path d="M460 222 L500 218 M460 230 L494 227" stroke="var(--color-fg-faint)" stroke-width="1.25"/></g>
+    <line x1="420" y1="136" x2="316" y2="186" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" x-show="!eyesIn"/>
+    <g x-show="stage >= 6"><path d="M560 210 L600 210 L594 248 L566 248 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/><text x="580" y="234" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">bag</text></g>
+    <!-- the six stages -->
+    <g font-size="12" text-anchor="middle" class="num">
+      <rect x="330" y="262" width="46" height="24" rx="5" :fill="stage >= 1 ? 'var(--color-warn-soft)' : 'var(--color-surface-2)'" :stroke="stage === 1 ? 'var(--color-warn)' : 'none'" stroke-width="2"/><text x="353" y="279" fill="var(--color-fg)">1</text>
+    </g>
+    <g font-size="12" text-anchor="middle" class="num">
+      <rect x="380" y="262" width="46" height="24" rx="5" :fill="stage >= 2 ? 'var(--color-warn-soft)' : 'var(--color-surface-2)'" :stroke="stage === 2 ? 'var(--color-warn)' : 'none'" stroke-width="2"/><text x="403" y="279" fill="var(--color-fg)">2</text>
+      <rect x="430" y="262" width="46" height="24" rx="5" :fill="stage >= 3 ? 'var(--color-bad-soft)' : 'var(--color-surface-2)'" :stroke="stage === 3 ? 'var(--color-bad)' : 'none'" stroke-width="2"/><text x="453" y="279" fill="var(--color-fg)">3</text>
+      <rect x="480" y="262" width="46" height="24" rx="5" :fill="stage >= 4 ? 'var(--color-bad-soft)' : 'var(--color-surface-2)'" :stroke="stage === 4 ? 'var(--color-bad)' : 'none'" stroke-width="2"/><text x="503" y="279" fill="var(--color-fg)">4</text>
+      <rect x="530" y="262" width="46" height="24" rx="5" :fill="stage >= 5 ? 'var(--color-bad-soft)' : 'var(--color-surface-2)'" :stroke="stage === 5 ? 'var(--color-bad)' : 'none'" stroke-width="2"/><text x="553" y="279" fill="var(--color-fg)">5</text>
+      <rect x="580" y="262" width="46" height="24" rx="5" :fill="stage >= 6 ? 'var(--color-bad-soft)' : 'var(--color-surface-2)'" :stroke="stage === 6 ? 'var(--color-bad)' : 'none'" stroke-width="2"/><text x="603" y="279" fill="var(--color-fg)">6</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the flight'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="msb-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Minutes into the flight">
+    <span class="widget-clock" x-text="Math.floor(min) + ' min'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="msb-look">Your passenger looks at</label>
+      <select id="msb-look" class="input" x-model="look">
+        <option value="chart">a chart or phone in the lap</option>
+        <option value="horizon">the horizon outside</option>
+      </select>
+      <label for="msb-fly" class="cursor-pointer mt-2"><span>They are flying the aeroplane</span>
+        <input type="checkbox" id="msb-fly" x-model="flying" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="msb-bumpy" class="cursor-pointer"><span>Bumpy afternoon thermals (untick: smooth early morning)</span>
+        <input type="checkbox" id="msb-bumpy" x-model="bumpy" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="msb-vents" class="cursor-pointer"><span>Vents open, cool fresh air</span>
+        <input type="checkbox" id="msb-vents" x-model="vents" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="msb-act" class="cursor-pointer"><span>Act at the first signs (eyes out, vents, smooth flying)</span>
+        <input type="checkbox" id="msb-act" x-model="act" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="conflictOn ? 'bad' : 'ok'"><dt class="widget-label">Sensory conflict</dt><dd class="widget-value" x-text="conflictOn ? 'Eyes and inner ear disagree' : 'One story'"></dd></div>
+    <div class="widget-readout" :class="stage === 0 ? 'ok' : stage <= 2 ? 'warn' : 'bad'"><dt class="widget-label">Stage</dt><dd class="widget-value" x-text="stage ? stage + ': ' + stages[stage] : stages[0]"></dd></div>
+    <div class="widget-readout" :class="perf[1]"><dt class="widget-label">Attention and flying</dt><dd class="widget-value" x-text="perf[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('chart-in-thermals')" :aria-pressed="active === 'chart-in-thermals'">Chart in thermals</button>
+      <button type="button" @click="preset('eyes-on-the-horizon')" :aria-pressed="active === 'eyes-on-the-horizon'">Eyes on the horizon</button>
+      <button type="button" @click="preset('take-the-controls')" :aria-pressed="active === 'take-the-controls'">Take the controls</button>
+      <button type="button" @click="preset('act-at-first-signs')" :aria-pressed="active === 'act-at-first-signs'">Act early</button>
+      <button type="button" @click="preset('lancelin-early-start')" :aria-pressed="active === 'lancelin-early-start'">Lancelin, early start</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The cause is the eyes and the inner ear telling different stories: head down at a chart in bumpy air is the classic conflict. Eyes on the horizon and taking the controls work on the cause; cool air and smooth flying raise the threshold and cut the motion. Performance falls in the quiet first stages, long before the sick bag. The rates and timings are illustrative; the six stages and the remedies are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: your back-seat passenger is reading her phone through the thermals. What happens, and what is the fix that works on the cause?</summary><p>Press Chart in thermals and play: quiet, yawning, pale, sweating, nausea. Change the look to the horizon and play again: the eyes see the motion the inner ear feels, and she stays at the early stages at worst.</p></details>
+  <details class="widget-try"><summary>Try it: why speak up at the first yawn rather than wait?</summary><p>Press Act early: the remedies go in at stage 2 and the queasiness ebbs before it reaches the sick bag. Without them the same flight ends at stage 6.</p></details>
+</div>

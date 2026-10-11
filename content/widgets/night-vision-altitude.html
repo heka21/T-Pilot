@@ -1,0 +1,113 @@
+<div class="widget" x-data="widget({
+  alt: 0, smoker: false, oxygen: false,
+  // PHFC 2.12: night vision begins to deteriorate from about 5,000 ft cabin altitude and may be substantially reduced
+  // by 10,000 ft; carbon monoxide and smoking make it worse at any height (a smoker's night vision at sea level can be
+  // like a non-smoker's at several thousand feet); consider supplemental oxygen at lower altitudes at night.
+  // The shape of the loss and the size of the smoker's handicap (taken here as 7,000 ft) are illustrative.
+  get eff() { return this.oxygen ? 0 : this.alt + (this.smoker ? 7000 : 0) },
+  get v() { const a = this.eff; return a <= 5000 ? 1 : a <= 10000 ? 1 - 0.5 * this.ease((a - 5000) / 5000) : Math.max(0.35, 0.5 - 0.075 * (a - 10000) / 1000) },
+  // a light shows if it is brighter than the eye's threshold, which rises as night vision fades; what still shows is dimmer
+  vis(b) { return this.clamp((b - (1 - this.v) * 0.9) / 0.15, 0, 1) },
+  op(b) { return this.vis(b) * (0.3 + 0.7 * b) * (0.6 + 0.4 * this.v) },
+  // ground lights in the scene (town, runway, farmhouses): brightness 0..1, as written out below
+  get seen() { const bs = [0.95, 0.8, 0.6, 0.45, 0.35, 0.3, 0.25, 0.55, 0.7, 0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.3, 0.15, 0.25]; return bs.filter((b) => this.vis(b) > 0.3).length },
+  get state() { return this.eff < 5000 ? ['Normal', 'ok'] : this.v > 0.6 ? ['Starting to fade', 'warn'] : ['Substantially reduced', 'bad'] },
+  get caption() {
+    if (this.oxygen && this.alt > 0) return 'Supplemental oxygen puts the oxygen pressure back, and the rods get what they need: the same picture as on the ground.';
+    if (this.smoker && this.alt < 5000) return 'Still near the ground, but the cigarette\'s carbon monoxide has taken some of the haemoglobin before take-off: the dim lights are already fading, like a non-smoker\'s view several thousand feet higher.';
+    if (this.eff < 5000) return 'Below about 5,000 ft the rods around the edge of the retina have all the oxygen they need: dim town lights, stars and the runway edge lights all show.';
+    if (this.v > 0.6) return 'From about 5,000 ft the rods, among the most oxygen-hungry cells in the body, start to lose sensitivity: the faintest lights go first, and you notice nothing else.';
+    return 'By 10,000 ft night vision may be substantially reduced: dim lights look dimmer, the horizon is harder to find, and you need more light to read the chart. Thinking may still feel normal.';
+  },
+  presets: {
+    'ground-level': { alt: 0, smoker: false, oxygen: false },
+    'night-5000': { alt: 5000, smoker: false, oxygen: false },
+    'night-7500': { alt: 7500, smoker: false, oxygen: false },
+    'night-10000': { alt: 10000, smoker: false, oxygen: false },
+    'smoker-on-the-ground': { alt: 0, smoker: true, oxygen: false },
+    'albany-night-10500': { alt: 10500, smoker: true, oxygen: false },
+    'oxygen-at-10000': { alt: 10000, smoker: false, oxygen: true },
+  },
+})">
+  <svg viewBox="0 0 640 286" role="img" aria-labelledby="nva-title" class="widget-stage">
+    <title id="nva-title">The view ahead on a dark night, with a town, a runway's edge lights and stars; as cabin altitude rises above about 5,000 ft, or with smoking, the dimmest lights fade from view first</title>
+    <!-- the night view (a dark surface in both themes) -->
+    <rect x="0" y="0" width="640" height="236" rx="10" fill="var(--color-tarmac)"/>
+    <path d="M0 132 L640 128" stroke="var(--color-paint)" stroke-width="1.25" :stroke-opacity="0.1 + 0.4 * op(0.4)"/>
+    <!-- moon and stars -->
+    <path d="M574 30 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22 Z" fill="var(--color-paint)" :fill-opacity="0.2 + 0.7 * op(0.8)"/>
+    <g fill="var(--color-paint)">
+      <circle cx="250" cy="40" r="2.6" :opacity="op(0.4)"/><circle cx="140" cy="70" r="2.1" :opacity="op(0.2)"/>
+      <circle cx="220" cy="28" r="2.6" :opacity="op(0.3)"/><circle cx="300" cy="62" r="2.1" :opacity="op(0.15)"/>
+      <circle cx="380" cy="22" r="2.9" :opacity="op(0.5)"/><circle cx="450" cy="80" r="2.1" :opacity="op(0.25)"/>
+      <circle cx="510" cy="44" r="2.6" :opacity="op(0.2)"/><circle cx="96" cy="96" r="2.1" :opacity="op(0.25)"/>
+    </g>
+    <!-- a country town on the left -->
+    <g fill="var(--color-paint)">
+      <circle cx="96" cy="150" r="5.6" :opacity="op(0.95)"/><circle cx="118" cy="146" r="4.8" :opacity="op(0.8)"/>
+      <circle cx="140" cy="152" r="4.2" :opacity="op(0.6)"/><circle cx="76" cy="156" r="3.8" :opacity="op(0.45)"/>
+      <circle cx="160" cy="148" r="3.5" :opacity="op(0.35)"/><circle cx="108" cy="160" r="3.2" :opacity="op(0.3)"/>
+      <circle cx="58" cy="146" r="3.2" :opacity="op(0.25)"/>
+    </g>
+    <g fill="var(--color-paint)">
+      <circle cx="130" cy="162" r="4.2" :opacity="op(0.55)"/><circle cx="84" cy="142" r="4.5" :opacity="op(0.7)"/>
+    </g>
+    <text x="110" y="186" font-size="12" text-anchor="middle" fill="var(--color-paint)" fill-opacity="0.75">town</text>
+    <!-- runway edge lights ahead -->
+    <g fill="var(--color-paint)">
+      <circle cx="300" cy="150" r="3.5" :opacity="op(0.4)"/><circle cx="340" cy="150" r="3.5" :opacity="op(0.4)"/>
+      <circle cx="290" cy="166" r="4.2" :opacity="op(0.5)"/><circle cx="350" cy="166" r="4.2" :opacity="op(0.5)"/>
+      <circle cx="276" cy="188" r="4.8" :opacity="op(0.5)"/><circle cx="364" cy="188" r="4.8" :opacity="op(0.5)"/>
+      <circle cx="258" cy="216" r="5.4" :opacity="op(0.5)"/><circle cx="382" cy="216" r="5.4" :opacity="op(0.5)"/>
+    </g>
+    <text x="320" y="230" font-size="12" text-anchor="middle" fill="var(--color-paint)" fill-opacity="0.75">runway</text>
+    <!-- farmhouses -->
+    <g fill="var(--color-paint)">
+      <circle cx="470" cy="160" r="3.2" :opacity="op(0.2)"/><circle cx="540" cy="150" r="3.2" :opacity="op(0.3)"/>
+      <circle cx="600" cy="172" r="3.2" :opacity="op(0.15)"/><circle cx="500" cy="196" r="3.2" :opacity="op(0.25)"/>
+    </g>
+    <text x="536" y="214" font-size="12" text-anchor="middle" fill="var(--color-paint)" fill-opacity="0.75">farmhouses</text>
+    <!-- the cabin altitude -->
+    <text x="20" y="28" font-size="15" font-weight="700" fill="var(--color-paint)" class="num" x-text="fmt(alt) + ' ft'"></text>
+    <text x="20" y="46" font-size="12" fill="var(--color-paint)" fill-opacity="0.75" x-text="oxygen ? 'on oxygen' : smoker ? 'after a cigarette' : 'cabin altitude'"></text>
+    <!-- a strip: the night vision scale -->
+    <rect x="16" y="248" width="608" height="10" rx="5" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="16" y="248" height="10" rx="5" :width="608 * v" :fill="state[1] === 'ok' ? 'var(--color-ok)' : state[1] === 'warn' ? 'var(--color-warn)' : 'var(--color-bad)'"/>
+    <text x="16" y="278" font-size="12" fill="var(--color-fg-muted)">your night vision</text>
+    <text x="624" y="278" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">full</text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="nva-alt">Cabin altitude <output for="nva-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="nva-alt" min="0" max="12000" step="500" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="nva-smoker" class="cursor-pointer"><span>Had a cigarette before the flight</span>
+        <input type="checkbox" id="nva-smoker" x-model="smoker" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="nva-oxygen" class="cursor-pointer"><span>Breathing supplemental oxygen</span>
+        <input type="checkbox" id="nva-oxygen" x-model="oxygen" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="state[1]"><dt class="widget-label">Night vision</dt><dd class="widget-value"><span x-text="state[0]"></span><span class="widget-flag warn" x-show="state[1] !== 'ok' && alt < 10000">you feel fine</span></dd></div>
+    <div class="widget-readout" :class="seen < 8 ? 'bad' : seen < 21 ? 'warn' : 'ok'"><dt class="widget-label">Ground lights you can pick out</dt><dd class="widget-value" x-text="seen + ' of 21'"></dd></div>
+    <div class="widget-readout" :class="vis(0.4) < 0.6 ? 'warn' : 'ok'"><dt class="widget-label">Horizon</dt><dd class="widget-value" x-text="vis(0.4) < 0.6 ? 'Harder to find' : 'Visible'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('ground-level')" :aria-pressed="active === 'ground-level'">Ground</button>
+      <button type="button" @click="preset('night-5000')" :aria-pressed="active === 'night-5000'">5,000</button>
+      <button type="button" @click="preset('night-7500')" :aria-pressed="active === 'night-7500'">7,500</button>
+      <button type="button" @click="preset('night-10000')" :aria-pressed="active === 'night-10000'">10,000</button>
+      <button type="button" @click="preset('smoker-on-the-ground')" :aria-pressed="active === 'smoker-on-the-ground'">Smoker</button>
+      <button type="button" @click="preset('albany-night-10500')" :aria-pressed="active === 'albany-night-10500'">Albany night</button>
+      <button type="button" @click="preset('oxygen-at-10000')" :aria-pressed="active === 'oxygen-at-10000'">10,000 + O₂</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Night vision is the first casualty of altitude: it starts to fade from about 5,000 ft cabin altitude, long before you notice anything else, and may be substantially reduced by 10,000 ft. The faintest lights go first. A cigarette's carbon monoxide does the same damage before you leave the ground, and supplemental oxygen puts it back. The lesson gives only the two heights; the rate of loss and the size of the smoker's handicap here are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you are cruising home at night at 7,500 ft and feel perfectly well. Is your vision normal?</summary><p>Press 7,500: the faint farmhouse lights and the dim stars have already gone. Night vision starts to deteriorate from about 5,000 ft, well below the height at which you would notice any other effect.</p></details>
+  <details class="widget-try"><summary>Try it: what do a cigarette and 10,500 ft do together on the Albany night flight?</summary><p>Press Albany night: the smoke's carbon monoxide adds to the altitude, so your night vision is worse than either alone, and the runway lights and the horizon fade. Fly lower, skip the cigarette, or use oxygen.</p></details>
+</div>

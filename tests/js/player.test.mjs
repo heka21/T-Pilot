@@ -279,6 +279,32 @@ test("on a lesson's page, Listen and play start from the passage the reader is o
   assert.equal(audio.src, "/media/audio/RFRC/2.3.mp3?v=abc", "a spot at the very start needs no fragment");
 });
 
+test("Play from here starts from the passage on screen, shown only on the playing lesson's page", () => {
+  const { w, P, audio } = setup({ body: `<div data-miniplayer hidden><button data-player="here" hidden>here</button></div>
+    <div data-sid="RFRC 2.3"><article data-lesson-article></article></div>` });
+  const asked = [];
+  let spot = 250;
+  w.CasaFollow = { spot: (sid, t, here) => { asked.push([sid, t, here]); return spot; } };
+  w.document.dispatchEvent(new w.Event("DOMContentLoaded"));
+  const here = w.document.querySelector("[data-player='here']");
+  P.load(lesson("RFRC 2.3"), { queue: [] });
+  assert.equal(here.hidden, false, "on the lesson's own page");
+  audio.duration = 600; audio.currentTime = 100;
+  P.toggle();
+  here.click();
+  assert.deepEqual(asked.at(-1), ["RFRC 2.3", 100, true], "asks for the spot even while playing");
+  assert.equal(audio.currentTime, 250);
+  assert.equal(audio.paused, false);
+  audio.pause();
+  spot = null;
+  here.click();
+  assert.equal(audio.currentTime, 250, "no spot: plays on from where it is");
+  assert.equal(audio.paused, false);
+
+  P.load(lesson("RFRC 2.4"), { queue: [] });
+  assert.equal(here.hidden, true, "hidden for another lesson");
+});
+
 test("on a lesson's page the player is the lesson bar's flyout, opened and closed by its Listen button", () => {
   const desc = JSON.stringify(lesson("RFRC 2.3")).replace(/"/g, "&quot;");
   const { w, P, audio } = setup({ body: `<div data-miniplayer data-floater="player" hidden><button data-player="collapse" hidden>fold</button></div>
@@ -311,9 +337,10 @@ test("on a lesson's page the player is the lesson bar's flyout, opened and close
   assert.equal(bar.style.getPropertyValue("--p"), "25.00%", "the bar carries the progress for the ring");
   assert.ok(html.hasAttribute("data-player-playing"));
 
+  P.toggle();
   dock.click();
-  assert.equal(mini.hidden, false, "and a tap opens it again");
-  assert.equal(audio.paused, false, "without touching playback");
+  assert.equal(mini.hidden, false, "and, paused, a tap opens it again");
+  assert.equal(audio.paused, true, "without touching playback");
   assert.equal(audio.currentTime, 150);
   assert.equal(w.localStorage.getItem("player:collapsed"), null);
 
@@ -324,6 +351,40 @@ test("on a lesson's page the player is the lesson bar's flyout, opened and close
   assert.ok(!dock.hasAttribute("aria-expanded"));
   assert.equal(dock.title, "Listen");
   assert.ok(!html.hasAttribute("data-player-docked"));
+});
+
+test("playing with the flyout closed or the lesson bar folded, the Listen button is a pause button", async () => {
+  const desc = JSON.stringify(lesson("RFRC 2.3")).replace(/"/g, "&quot;");
+  const { w, audio } = setup({ body: `<div data-miniplayer hidden><button data-player="collapse" hidden>fold</button></div>
+    <div data-lesson-bar><button type="button" id="dock" data-listen="${desc}" data-listen-paused data-player-dock title="Listen"></button></div>` });
+  w.document.dispatchEvent(new w.Event("DOMContentLoaded"));
+  const dock = w.document.getElementById("dock"), bar = w.document.querySelector("[data-lesson-bar]"),
+        mini = w.document.querySelector("[data-miniplayer]");
+  dock.click();
+  audio.play();
+  assert.ok(!dock.hasAttribute("data-pause"), "the flyout is open: no pause button");
+  w.document.querySelector("[data-player='collapse']").click();
+  assert.ok(dock.hasAttribute("data-pause"), "closed while playing: a pause button");
+  assert.equal(dock.title, "Pause");
+  assert.equal(dock.getAttribute("aria-label"), "Pause");
+  dock.click();
+  assert.equal(audio.paused, true, "tapping it pauses");
+  assert.equal(mini.hidden, true, "and leaves the flyout closed");
+  assert.ok(!dock.hasAttribute("data-pause"));
+  assert.equal(dock.title, "Show the player");
+  dock.click();
+  assert.equal(mini.hidden, false, "paused, it opens the flyout again");
+
+  audio.play();
+  bar.setAttribute("data-collapsed", "");
+  await tick();
+  assert.ok(dock.hasAttribute("data-pause"), "the bar folded while playing: a pause button");
+  dock.click();
+  assert.equal(audio.paused, true);
+  bar.removeAttribute("data-collapsed");
+  await tick();
+  assert.ok(!dock.hasAttribute("data-pause"));
+  assert.equal(dock.title, "Hide the player");
 });
 
 test("a closed player stays a bar where there is no lesson bar, and starting a lesson opens it", () => {

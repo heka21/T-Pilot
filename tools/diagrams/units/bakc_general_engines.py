@@ -608,16 +608,16 @@ def mixture_rich_to_lean() -> Canvas:
     c = Canvas("Mixture: too rich, about right, too lean",
                "Qualitative sketch of engine power and exhaust gas temperature as the mixture is leaned from full rich. Power peaks near the correct "
                "mixture and falls on both sides. Too rich: rough running, power loss, high fuel burn, cool running, plug fouling, black smoke. "
-               "Too lean: power loss, rough running, high CHT and EGT, risk of detonation.", height=400, prefix="mrl")
+               "EGT peaks a little lean of best power and falls again as the mixture gets leaner. Too lean: power loss, rough running, high temperatures and a risk of detonation near the peak.", height=400, prefix="mrl")
     ch = Chart(c, (0, 10), (0, 10), box=(60, 60, 600, 300), xlabel="", ylabel="", xticks=[], yticks=[], grid=False)
     c.add(rect(ch.px(0), ch.top, ch.px(2.8) - ch.px(0), ch.bottom - ch.top, "warn-soft", None, fill_opacity=0.6))
     c.add(rect(ch.px(7.4), ch.top, ch.px(10) - ch.px(7.4), ch.bottom - ch.top, "bad-soft", None, fill_opacity=0.6))
     c.add(rect(ch.px(4.0), ch.top, ch.px(6.4) - ch.px(4.0), ch.bottom - ch.top, "ok-soft", None, fill_opacity=0.6))
     c.add(ch.axes())
     power = lambda m: 7.6 - 0.11 * (m - 5.0) ** 2 if m < 5 else 7.6 - 0.32 * (m - 5.0) ** 2
-    egt = lambda m: 2.0 + 6.4 / (1 + math.exp(-(m - 5.6) / 1.2))
-    c.add(ch.curve(sample(power, 0.3, 9.6, 60), "brand", 2.5, label="Power", label_at=30, label_dx=-6, label_dy=-14, label_anchor="middle"))
-    c.add(ch.curve(sample(egt, 0.3, 9.6, 60), "info", MAIN, dash="7 4", label="EGT (and CHT)", label_at=60, label_dx=-4, label_dy=42, label_anchor="end"))
+    egt = lambda m: 8.4 - (0.17 if m < 6.2 else 0.34) * (m - 6.2) ** 2   # peak EGT just lean of best power, falling lean of peak
+    c.add(ch.curve(sample(power, 0.3, 9.6, 60), "brand", 2.5, label="Power", label_at=6, label_dx=0, label_dy=-16, label_anchor="middle"))
+    c.add(ch.curve(sample(egt, 0.3, 9.6, 60), "info", MAIN, dash="7 4", label="EGT", label_at=46, label_dx=8, label_dy=-10, label_anchor="start"))
     c.add(text(ch.px(1.4), ch.top + 22, "Too rich", 14, "middle", "warn-fg", weight=700))
     c.add(text(ch.px(5.2), ch.top + 22, "About right", 14, "middle", "ok-fg", weight=700))
     c.add(text(ch.px(8.7), ch.top + 22, "Too lean", 14, "middle", "bad-fg", weight=700))
@@ -626,7 +626,7 @@ def mixture_rich_to_lean() -> Canvas:
     c.add(text(ch.px(10), ch.bottom + 18, "leaner →", 12, "end", "fg-muted"))
     c.add(text(ch.left - 10, (ch.top + ch.bottom) / 2, "relative value", 12, "middle", "fg-muted", rotate=-90))
     c.add(multiline(20, 344, ["rough, power loss, high fuel burn,", "cool running, plug fouling, black smoke"], 11, "start", "warn-fg"))
-    c.add(multiline(620, 344, ["power loss, rough running, high CHT", "and EGT, risk of detonation"], 11, "end", "bad-fg"))
+    c.add(multiline(620, 344, ["power loss, rough running; EGT peaks,", "then falls; detonation risk near peak"], 11, "end", "bad-fg"))
     c.add(text(320, 390, "Climbing makes the mixture richer: lean by EGT, or lean until rough then enrich slightly (POH).", 11, "middle", "fg-muted"))
     return c
 

@@ -1,0 +1,189 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false,
+  moisture: true, unstable: true, trigger: true,
+  // the clock: t 0..1 is the first hour of one cell. Stage lengths from PMTC 2.7 (cumulus about 15 min, mature about
+  // 15 to 30 min); a cell lasts about an hour (RMTC 2.1). The rest of the timing is illustrative.
+  get min() { return this.t * 60 },
+  get storm() { return this.moisture && this.unstable && this.trigger },
+  get stage() { return !this.storm ? 'none' : this.t < 0.25 ? 'cumulus' : this.t < 0.667 ? 'mature' : 'dissipating' },
+  cx: 170,
+  // cloud tower: half-width and top (y), base at y 206
+  get towerW() { return !this.storm ? 0 : this.t < 0.25 ? this.lerp(26, 58, this.eased(0, 0.25)) : this.t < 0.667 ? this.lerp(58, 72, this.eased(0.25, 0.4)) : this.lerp(72, 54, this.eased(0.667, 1)) },
+  get towerTop() { return !this.storm ? 206 : this.t < 0.25 ? this.lerp(170, 74, this.eased(0, 0.25)) : this.t < 0.667 ? this.lerp(74, 46, this.eased(0.25, 0.36)) : this.lerp(46, 120, this.eased(0.667, 1)) },
+  get anvil() { return !this.storm ? 0 : this.eased(0.27, 0.6) },
+  // a bumpy outline: arcs bulging outwards between points taken clockwise
+  bumpy(pts) { let d = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1); for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], r = Math.hypot(x1 - x0, y1 - y0) * 0.62; d += ' A' + r.toFixed(1) + ' ' + r.toFixed(1) + ' 0 0 1 ' + x1.toFixed(1) + ' ' + y1.toFixed(1) } return d + ' Z' },
+  get towerD() {
+    const x = this.cx, w = this.towerW, top = this.towerTop, b = 206, h = b - top;
+    return this.bumpy([[x - w, b], [x - w * 1.02, b - h * 0.35], [x - w * 0.92, b - h * 0.68], [x - w * 0.6, top + 8], [x - w * 0.1, top], [x + w * 0.45, top + 6], [x + w * 0.9, b - h * 0.7], [x + w * 1.02, b - h * 0.36], [x + w, b]]);
+  },
+  // the anvil spreads downwind (to the right) along the top of the cloud
+  get anvilD() { const x = this.cx, a = this.anvil, L = 50 + 180 * a, y = 36, th = 8 + 8 * a; return 'M' + (x - 34) + ' ' + (y + th + 6) + ' Q' + (x - 44) + ' ' + y + ' ' + (x - 10) + ' ' + y + ' L' + (x + L) + ' ' + (y - 2) + ' Q' + (x + L + 14) + ' ' + (y + 4) + ' ' + (x + L) + ' ' + (y + th) + ' Q' + (x + L * 0.6) + ' ' + (y + th + 2) + ' ' + (x + 40) + ' ' + (y + th + 10) + ' Z' },
+  // rain reaches the ground at 15 min, eases through the dissipating stage
+  get rainBottom() { return this.lerp(206, 286, this.eased(0.19, 0.25)) },
+  get rainOn() { return this.storm && this.t > 0.19 && this.t < 0.96 },
+  get rainFade() { return this.t < 0.667 ? 1 : 1 - this.seg(this.t, 0.667, 0.96) },
+  get lightning() { return this.storm && this.t > 0.27 && this.t < 0.62 && Math.floor(this.min * 1.7) % 3 !== 1 },
+  get microburst() { return this.storm && this.t >= 0.36 && this.t < 0.52 },
+  // gust front: from under the cell at about 16 min out to about 18 nm by 51 min (lesson: 15 to 20 nm ahead)
+  get gust() { return !this.storm ? -1 : this.t < 0.27 ? -1 : 18 * this.seg(this.t, 0.27, 0.85) },
+  get gustX() { return this.cx + 22 * Math.max(0, this.gust) },
+  get gustAtField() { return this.gust >= 15 },
+  steps: [
+    { at: 0, label: 'Cumulus' },
+    { at: 0.25, label: 'Rain at the ground: mature' },
+    { at: 0.36, label: 'Microburst' },
+    { at: 0.667, label: 'Dissipating' },
+    { at: 0.76, label: 'Gust front at 15 nm' },
+  ],
+  get stageText() { return { none: 'No storm', cumulus: 'Cumulus', mature: 'Mature', dissipating: 'Dissipating' }[this.stage] },
+  get motionText() { return { none: '–', cumulus: 'Updraughts throughout', mature: 'Up and down side by side', dissipating: 'Downdraughts throughout' }[this.stage] },
+  get danger() { return this.stage === 'mature' ? 'bad' : this.stage === 'none' ? 'ok' : 'warn' },
+  get fieldText() { return !this.storm ? 'Calm' : this.gustAtField ? 'Gust front: squall, wind shift' : this.gust > 0 ? 'Gust front ' + (15 - this.gust < 1 ? 'under 1' : this.fmt(15 - this.gust)) + ' nm away' : 'Calm, storm 15 nm away' },
+  get missing() { return !this.trigger ? 'trigger' : !this.moisture ? 'moisture' : !this.unstable ? 'instability' : '' },
+  get caption() {
+    if (!this.trigger) return 'Moist, unstable air with nothing to lift it: no heating, front, trough, hill or sea breeze front to give it the first push, so no storm.';
+    if (!this.moisture) return 'Heating sets off thermals, but the air is too dry to reach its dew point: a bumpy ride and no cloud, so no storm.';
+    if (!this.unstable) return 'Lifted stable air is colder than its surroundings and sinks back: at most a flat layer of cloud, never a tower.';
+    if (this.t < 0.25) return 'Cumulus stage: updraughts throughout a growing tower, strong enough to carry a light aeroplane up thousands of feet. No rain at the ground yet.';
+    if (this.microburst) return 'A microburst: an intense downdraught, less than about 4 km across, hits the ground and spreads out at over 50 kt for 5 to 15 minutes. On approach: headwind, then downdraught, then tailwind.';
+    if (this.t < 0.667) return 'Mature stage, the most dangerous: rain at the ground, updraughts and downdraughts side by side, hail, lightning, and the gust front spreading out ahead of the storm.';
+    if (this.gustAtField) return 'The storm is dying, but its gust front has run about 15 nm ahead and hits the aerodrome as a squall and a wind shift, often with dust, before any rain.';
+    return 'Dissipating stage: downdraughts throughout choke off the warm inflow, the rain eases and the anvil is left behind.';
+  },
+  presets: {
+    'cumulus-stage': { moisture: true, unstable: true, trigger: true, t: 0.15 },
+    'mature-stage': { moisture: true, unstable: true, trigger: true, t: 0.3 },
+    'microburst': { moisture: true, unstable: true, trigger: true, t: 0.42 },
+    'dissipating': { moisture: true, unstable: true, trigger: true, t: 0.7 },
+    'gust-front-at-aerodrome': { moisture: true, unstable: true, trigger: true, t: 0.78 },
+    'no-trigger': { moisture: true, unstable: true, trigger: false, t: 0.4 },
+    'no-moisture': { moisture: false, unstable: true, trigger: true, t: 0.3 },
+    'stable-air': { moisture: true, unstable: false, trigger: true, t: 0.3 },
+    'whole-life': { moisture: true, unstable: true, trigger: true, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="tss-title" class="widget-stage">
+    <title id="tss-title">Side view of one thunderstorm cell through its first hour, with a distance scale to the right: the cumulus tower growing on updraughts, the mature cumulonimbus with its anvil, rain, lightning, a downdraught and microburst and a gust front running out ahead, then the dissipating stage with downdraughts throughout. An aerodrome 15 nm away and the 10 nm stand-off are marked</title>
+    <defs>
+      <marker id="tss-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-sky-soft)" rx="10"/>
+    <!-- stand-off and distance scale -->
+    <line x1="390" y1="70" x2="390" y2="286" stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="6 4"/>
+    <text x="396" y="84" font-size="12" font-weight="600" fill="var(--color-warn-fg)">10 nm: stay outside</text>
+    <!-- anvil -->
+    <path fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round" x-show="anvil > 0.02" :fill-opacity="stage === 'dissipating' ? 0.85 : 1" :d="anvilD"/>
+    <text font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" x-show="anvil > 0.5" :x="cx + 60 + 150 * anvil" y="24" text-anchor="end">anvil, tops near 40,000 ft</text>
+    <!-- hail from the anvil into clear air -->
+    <g fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1" x-show="stage === 'mature' && anvil > 0.5">
+      <circle :cx="cx + 120" :cy="80 + (min * 37 % 60)" r="3"/><circle :cx="cx + 140" :cy="96 + (min * 53 % 60)" r="3"/><circle :cx="cx + 104" :cy="110 + (min * 29 % 50)" r="2.5"/>
+    </g>
+    <text font-size="12" fill="var(--color-fg-muted)" x-show="stage === 'mature' && anvil > 0.5" :x="cx + 152" y="92">hail</text>
+    <!-- rain shaft -->
+    <g stroke="var(--color-info)" stroke-width="1.5" stroke-linecap="round" x-show="rainOn" :stroke-opacity="0.8 * rainFade">
+      <line :x1="cx + 6" y1="210" :x2="cx" :y2="rainBottom"/><line :x1="cx + 20" y1="210" :x2="cx + 14" :y2="rainBottom"/>
+      <line :x1="cx + 34" y1="210" :x2="cx + 28" :y2="rainBottom"/><line :x1="cx + 48" y1="210" :x2="cx + 42" :y2="rainBottom" x-show="rainFade > 0.5"/>
+      <line :x1="cx + 62" y1="210" :x2="cx + 56" :y2="rainBottom" x-show="rainFade > 0.7"/>
+    </g>
+    <!-- the tower -->
+    <path fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round" x-show="storm" :d="towerD"/>
+    <!-- no instability: a flat layer at most -->
+    <path x-show="trigger && moisture && !unstable" d="M60 206 q10 -12 26 -10 q14 -10 34 -4 q18 -8 36 0 q18 -6 32 4 q16 -2 22 10 Z" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <!-- air motion inside the cell -->
+    <g stroke="var(--color-warn)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#tss-arrow)">
+      <line :x1="cx - 24" y1="250" :x2="cx - 24" :y2="Math.max(towerTop + 30, 120)" x-show="stage === 'cumulus' || stage === 'mature'"/>
+      <line :x1="cx - 4" y1="240" :x2="cx - 4" :y2="Math.max(towerTop + 22, 110)" x-show="stage === 'cumulus'"/>
+      <line :x1="cx + 16" y1="250" :x2="cx + 16" :y2="Math.max(towerTop + 30, 120)" x-show="stage === 'cumulus'"/>
+      <line :x1="cx - 50" y1="250" :x2="cx - 50" y2="150" x-show="stage === 'mature'"/>
+    </g>
+    <g stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#tss-arrow)">
+      <line :x1="cx + 30" y1="110" :x2="cx + 30" y2="196" x-show="stage === 'mature'"/>
+      <line :x1="cx - 30" y1="130" :x2="cx - 30" y2="200" x-show="stage === 'dissipating'"/>
+      <line :x1="cx" y1="120" :x2="cx" y2="200" x-show="stage === 'dissipating'"/>
+      <line :x1="cx + 30" y1="130" :x2="cx + 30" y2="200" x-show="stage === 'dissipating'"/>
+    </g>
+    <!-- dry thermals when there is no moisture -->
+    <g stroke="var(--color-warn)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#tss-arrow)" x-show="trigger && !moisture">
+      <line x1="120" y1="280" x2="120" y2="170"/><line x1="200" y1="280" x2="200" y2="150"/><line x1="280" y1="280" x2="280" y2="180"/>
+    </g>
+    <text x="200" y="140" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="trigger &amp;&amp; !moisture">dry thermals: bumps, no cloud</text>
+    <text x="155" y="180" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="trigger &amp;&amp; moisture &amp;&amp; !unstable">flat cloud: lifted air sinks back</text>
+    <!-- lightning -->
+    <path x-show="lightning" :d="'M' + (cx + 4) + ' 150 l-10 22 l9 0 l-8 24 l20 -30 l-10 0 l8 -16 Z'" fill="var(--color-warn)" stroke="var(--color-warn)" stroke-width="1" stroke-linejoin="round"/>
+    <!-- microburst -->
+    <g x-show="microburst" stroke="var(--color-bad)" stroke-width="3.5" stroke-linecap="round" fill="none" marker-end="url(#tss-arrow)">
+      <line :x1="cx + 34" y1="214" :x2="cx + 34" y2="270"/>
+      <path :d="'M' + (cx + 30) + ' 274 q-6 8 -34 8'"/><path :d="'M' + (cx + 38) + ' 274 q6 8 34 8'"/>
+    </g>
+    <text x-show="microburst" font-size="13" font-weight="600" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="cx + 50" y="226">microburst</text>
+    <!-- gust front: the cold outflow running out ahead -->
+    <g x-show="gust > 0.2">
+      <path fill="var(--color-info)" fill-opacity="0.18" stroke="var(--color-info)" stroke-width="1.5" stroke-linejoin="round" :d="'M' + (cx + 20) + ' 286 L' + (cx + 20) + ' 270 Q' + (gustX - 20) + ' 262 ' + (gustX - 4) + ' 270 Q' + (gustX + 6) + ' 278 ' + (gustX + 2) + ' 286 Z'"/>
+      <line stroke="var(--color-info)" stroke-width="2" marker-end="url(#tss-arrow)" y1="278" y2="278" :x1="Math.max(cx + 30, gustX - 50)" :x2="gustX - 12"/>
+      <text x-show="gust > 3" font-size="12" font-weight="600" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="gustX" y="254" text-anchor="middle">gust front</text>
+    </g>
+    <!-- ground, distance ticks, aerodrome at 15 nm -->
+    <rect x="0" y="286" width="640" height="34" fill="var(--color-surface)"/>
+    <line x1="0" y1="286" x2="640" y2="286" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <g stroke="var(--color-fg-faint)" stroke-width="1"><line x1="170" y1="286" x2="170" y2="292"/><line x1="280" y1="286" x2="280" y2="292"/><line x1="390" y1="286" x2="390" y2="292"/><line x1="500" y1="286" x2="500" y2="292"/><line x1="610" y1="286" x2="610" y2="292"/></g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text x="170" y="304">0</text><text x="280" y="304">5</text><text x="390" y="304">10</text><text x="610" y="304">20 nm</text></g>
+    <rect x="470" y="284" width="60" height="4" fill="var(--color-tarmac)"/>
+    <line x1="540" y1="286" x2="540" y2="262" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <path fill="var(--color-warn)" stroke="var(--color-warn)" stroke-width="1" stroke-linejoin="round" :d="gustAtField ? 'M540 263 L558 266 L558 271 L540 270 Z' : 'M539 263 L544 263 L543 277 L540 277 Z'"/>
+    <text x="500" y="304" font-size="12" text-anchor="middle" fill="var(--color-fg)" font-weight="600">aerodrome 15 nm</text>
+    <!-- clock -->
+    <text x="16" y="28" font-size="16" font-weight="600" fill="var(--color-fg)" class="num" x-text="'+' + fmt(min) + ' min'"></text>
+    <text x="16" y="46" font-size="12" fill="var(--color-fg-muted)" x-text="storm ? stageText + ' stage' : 'missing: ' + missing"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the storm'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="tss-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Minutes into the storm's life">
+    <span class="widget-clock" x-text="'+' + fmt(min) + ' min'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tss-moisture" class="cursor-pointer"><span>Moisture</span>
+        <input type="checkbox" id="tss-moisture" x-model="moisture" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="tss-unstable" class="cursor-pointer"><span>Instability</span>
+        <input type="checkbox" id="tss-unstable" x-model="unstable" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="tss-trigger" class="cursor-pointer"><span>Trigger (heating, front, trough, hills)</span>
+        <input type="checkbox" id="tss-trigger" x-model="trigger" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="danger"><dt class="widget-label">Stage</dt><dd class="widget-value"><span x-text="stageText"></span><span class="widget-flag bad" x-show="stage === 'mature'">most dangerous</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Air in the cell</dt><dd class="widget-value" x-text="motionText"></dd></div>
+    <div class="widget-readout" :class="gustAtField ? 'bad' : gust > 0 ? 'warn' : 'ok'"><dt class="widget-label">At the aerodrome 15 nm away</dt><dd class="widget-value" x-text="fieldText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cumulus-stage')" :aria-pressed="active === 'cumulus-stage'">Cumulus</button>
+      <button type="button" @click="preset('mature-stage')" :aria-pressed="active === 'mature-stage'">Mature</button>
+      <button type="button" @click="preset('microburst')" :aria-pressed="active === 'microburst'">Microburst</button>
+      <button type="button" @click="preset('dissipating')" :aria-pressed="active === 'dissipating'">Dissipating</button>
+      <button type="button" @click="preset('no-trigger')" :aria-pressed="active === 'no-trigger'">No trigger</button>
+      <button type="button" @click="preset('no-moisture')" :aria-pressed="active === 'no-moisture'">Dry air</button>
+      <button type="button" @click="preset('stable-air')" :aria-pressed="active === 'stable-air'">Stable air</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Take away any one of moisture, instability or a trigger and there is no storm. With all three, one cell lives about an hour: updraughts build the cumulus, the mature stage starts when rain reaches the ground and is the most dangerous, and the downdraughts then choke it. The hazards reach far outside the cloud: hail under the anvil, and a gust front that can run 15 to 20 nm ahead, past the 10 nm stand-off. Stage lengths follow the lessons; the rest of the timing and the distances are illustrative.</p>
+  <details class="widget-try"><summary>Try it: the storm has not reached the aerodrome 15 nm away. Is it safe to land there now?</summary><p>Play from Mature: the gust front spreads out from under the cell and reaches the aerodrome while the storm itself is still 15 nm away, as a squall and a wind shift. Land well before it arrives, or go elsewhere.</p></details>
+  <details class="widget-try"><summary>Try it: which looks more dangerous, a fresh rain shaft or the big anvil of an old storm?</summary><p>Step to Rain at the ground, then to Dissipating: the mature stage begins when rain reaches the ground and is the most dangerous, even before the anvil has spread. The old anvil drifting off a dissipating cell looks dramatic, but its updraughts have gone (keep clear of it anyway).</p></details>
+</div>

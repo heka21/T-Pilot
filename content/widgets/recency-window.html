@@ -1,0 +1,161 @@
+<div class="widget" x-data="widget({
+  // dates are day numbers from 1 Jan 2023; the lessons' examples are set in 2025 with today 3 October
+  today: 1006, fr: 229, ppl: false,
+  f1: 883, k1: 'd2', f2: 966, k2: 'd1', f3: 993, k3: 'd1',
+  M: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  dt(n) { return new Date(Date.UTC(2023, 0, 1 + n)) },
+  D(y, m, d) { return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(2023, 0, 1)) / 864e5) },
+  fd(n, yr) { const d = this.dt(n); return d.getUTCDate() + ' ' + this.M[d.getUTCMonth()] + (yr === false ? '' : ' ' + d.getUTCFullYear()) },
+  // flight review: valid to the end of the 24th month after the month it was done (RFRC 2.2)
+  get frEnd() { const d = this.dt(this.fr); return this.D(d.getUTCFullYear(), d.getUTCMonth() + 26, 0) },
+  get frDone() { return this.fr <= this.today },
+  get frOk() { return this.frDone && this.today <= this.frEnd },
+  // logbook: three flights, each with 1-3 take-offs and landings, by day or at night
+  get flights() { return [[this.f1, this.k1], [this.f2, this.k2], [this.f3, this.k3]].map(([d, k]) => ({ d: d, n: Number(k[1]), night: k[0] === 'n' })) },
+  inWin(d) { return d <= this.today && this.today - d <= 90 },
+  count(night) { return this.flights.filter((f) => this.inWin(f.d) && (!night || f.night)).reduce((a, f) => a + f.n, 0) },
+  // the last day the rule is met: 90 days after the third most recent landing
+  lapse(night) {
+    const ds = [];
+    this.flights.forEach((f) => { if (f.d <= this.today && (!night || f.night)) for (let i = 0; i < f.n; i++) ds.push(f.d) });
+    ds.sort((a, b) => b - a);
+    return ds.length >= 3 ? ds[2] + 90 : null;
+  },
+  get dayN() { return this.count(false) },
+  get nightN() { return this.count(true) },
+  get dayOk() { return this.dayN >= 3 },
+  get nightOk() { return this.ppl && this.nightN >= 3 },
+  get verdict() {
+    if (!this.frOk) return 'Dual only';
+    if (!this.dayOk) return 'Solo only';
+    return this.nightOk ? 'Passengers, day and night' : 'Passengers by day';
+  },
+  // top strip: Jul 2023 to Mar 2026; bottom strip, zoomed: May 2025 to Mar 2026
+  X1(n) { return 80 + (n - 181) / (1185 - 181) * 520 },
+  X2(n) { return 80 + (n - 851) / (1185 - 851) * 520 },
+  bar(i) { const f = this.flights[i]; return { x: this.X2(f.d) - 5, h: f.n * 20, night: f.night, future: f.d > this.today, n: f.n } },
+  get frBar() { const a = this.X1(this.fr), b = Math.min(600, this.X1(this.frEnd)); return { a: a, b: b, mid: this.clamp((a + b) / 2, 180, 500) } },
+  presets: {
+    'priya-review-expired': { today: 1006, fr: 229, ppl: false, f1: 883, k1: 'd2', f2: 966, k2: 'd1', f3: 993, k3: 'd1' },
+    'ravi-night-passengers': { today: 1006, fr: 439, ppl: true, f1: 895, k1: 'n3', f2: 972, k2: 'd2', f3: 999, k3: 'd2' },
+    'alex-two-landings': { today: 1006, fr: 580, ppl: false, f1: 862, k1: 'd1', f2: 883, k2: 'd1', f3: 964, k3: 'd2' },
+    'alex-after-circuits': { today: 1008, fr: 580, ppl: false, f1: 862, k1: 'd1', f2: 964, k2: 'd2', f3: 1007, k3: 'd2' },
+  },
+})">
+  <svg viewBox="0 0 640 272" role="img" aria-labelledby="rcw-title" class="widget-stage">
+    <title id="rcw-title">Two look-back windows ending today: on top, the flight review, valid to the end of the 24th month after it; below, zoomed in, the logbook's take-offs and landings with the 90-day window that decides whether you may carry passengers</title>
+    <rect x="0" y="0" width="640" height="272" fill="var(--color-surface-2)" rx="10"/>
+    <!-- top strip: the flight review -->
+    <text x="16" y="22" font-size="13" font-weight="600" fill="var(--color-fg)">Flight review: to act as pilot in command at all</text>
+    <rect x="80" y="34" width="520" height="24" rx="4" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect y="34" height="24" stroke-width="1.5" :x="frBar.a" :width="Math.max(0, frBar.b - frBar.a)" x-show="frDone"
+      :fill="frOk ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)'" :stroke="frOk ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+    <line y1="28" y2="62" stroke="var(--color-fg)" stroke-width="2" :x1="X1(today)" :x2="X1(today)"/>
+    <circle cy="46" r="5" fill="var(--color-brand)" :cx="X1(fr)"/>
+    <text y="51" font-size="12" text-anchor="middle" class="num" :x="frBar.mid" :fill="frOk ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-show="frDone"
+      paint-order="stroke" stroke-width="5" stroke-linejoin="round" :stroke="frOk ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)'"
+      x-text="fd(fr) + ' → valid to ' + fd(frEnd)"></text>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text y="74" :x="X1(181)">Jul 23</text><text y="74" :x="X1(365)">Jan 24</text><text y="74" :x="X1(547)">Jul 24</text>
+      <text y="74" :x="X1(731)">Jan 25</text><text y="74" :x="X1(912)">Jul 25</text><text y="74" :x="X1(1096)">Jan 26</text>
+    </g>
+
+    <!-- lower strip: take-offs and landings, the 90-day window -->
+    <text x="16" y="106" font-size="13" font-weight="600" fill="var(--color-fg)">Passengers: 3 take-offs and 3 landings in the previous 90 days</text>
+    <g font-size="12" x-show="ppl">
+      <rect x="512" y="96" width="10" height="10" fill="var(--color-brand)"/><text x="526" y="106" fill="var(--color-fg-muted)">day</text>
+      <rect x="560" y="96" width="10" height="10" fill="var(--color-info)"/><text x="574" y="106" fill="var(--color-fg-muted)">night</text>
+    </g>
+    <rect x="80" y="118" width="520" height="104" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect y="118" height="104" :x="Math.max(80, X2(today - 90))" :width="X2(today) - Math.max(80, X2(today - 90))"
+      :fill="dayOk ? 'var(--color-ok)' : 'var(--color-bad)'" fill-opacity="0.12" :stroke="dayOk ? 'var(--color-ok)' : 'var(--color-bad)'" stroke-width="1.5"/>
+    <text y="134" font-size="12" text-anchor="middle" font-weight="600" :fill="dayOk ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" :x="(Math.max(80, X2(today - 90)) + X2(today)) / 2">previous 90 days</text>
+    <!-- lapse: 90 days after the third most recent landing -->
+    <g x-show="dayOk && lapse(false) <= 1185">
+      <line y1="140" y2="222" stroke="var(--color-ok)" stroke-width="1.5" stroke-dasharray="4 3" :x1="X2(lapse(false))" :x2="X2(lapse(false))"/>
+      <text y="156" font-size="12" fill="var(--color-ok-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+        :x="X2(lapse(false)) + (X2(lapse(false)) > 480 ? -6 : 6)" :text-anchor="X2(lapse(false)) > 480 ? 'end' : 'start'" x-text="'lapses after ' + fd(lapse(false), false)"></text>
+    </g>
+    <line y1="114" y2="226" stroke="var(--color-fg)" stroke-width="2" :x1="X2(today)" :x2="X2(today)"/>
+    <!-- the three logbook entries, written out (no x-for inside svg): one bar per flight, 20 px per take-off and landing -->
+    <g x-show="flights[0].d >= 851" :opacity="bar(0).future ? 0.35 : 1">
+      <rect width="10" rx="2" :x="bar(0).x" :y="222 - bar(0).h" :height="bar(0).h" :fill="bar(0).night ? 'var(--color-info)' : 'var(--color-brand)'"/>
+      <text font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="bar(0).x + 5" :y="216 - bar(0).h" x-text="bar(0).n"></text>
+    </g>
+    <g x-show="flights[1].d >= 851" :opacity="bar(1).future ? 0.35 : 1">
+      <rect width="10" rx="2" :x="bar(1).x" :y="222 - bar(1).h" :height="bar(1).h" :fill="bar(1).night ? 'var(--color-info)' : 'var(--color-brand)'"/>
+      <text font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="bar(1).x + 5" :y="216 - bar(1).h" x-text="bar(1).n"></text>
+    </g>
+    <g x-show="flights[2].d >= 851" :opacity="bar(2).future ? 0.35 : 1">
+      <rect width="10" rx="2" :x="bar(2).x" :y="222 - bar(2).h" :height="bar(2).h" :fill="bar(2).night ? 'var(--color-info)' : 'var(--color-brand)'"/>
+      <text font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="bar(2).x + 5" :y="216 - bar(2).h" x-text="bar(2).n"></text>
+    </g>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text y="238" :x="X2(851)">May</text><text y="238" :x="X2(882)">Jun</text><text y="238" :x="X2(912)">Jul</text><text y="238" :x="X2(943)">Aug</text>
+      <text y="238" :x="X2(974)">Sep</text><text y="238" :x="X2(1004)">Oct</text><text y="238" :x="X2(1035)">Nov</text><text y="238" :x="X2(1065)">Dec</text>
+      <text y="238" :x="X2(1096)">Jan 26</text><text y="238" :x="X2(1127)">Feb</text><text y="238" :x="X2(1155)">Mar</text>
+    </g>
+    <!-- today -->
+    <text y="258" font-size="13" font-weight="700" fill="var(--color-fg)" class="num" :x="clamp(X2(today), 120, 560)" text-anchor="middle" x-text="'today ' + fd(today)"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rcw-today">Today <output for="rcw-today" x-text="fd(today)"></output></label>
+      <input type="range" id="rcw-today" min="912" max="1185" step="1" x-model.number="today">
+    </div>
+    <div class="widget-control">
+      <label for="rcw-fr">Flight review done <output for="rcw-fr" x-text="fd(fr)"></output></label>
+      <input type="range" id="rcw-fr" min="181" max="1185" step="1" x-model.number="fr">
+    </div>
+    <div class="widget-control">
+      <label for="rcw-f1">Logbook flight 1 <output for="rcw-f1" x-text="fd(f1)"></output></label>
+      <div class="flex items-center gap-2"><input type="range" id="rcw-f1" class="min-w-0 flex-1" min="851" max="1185" step="1" x-model.number="f1">
+        <select class="input w-auto" x-model="k1" aria-label="Take-offs and landings on flight 1"><option value="d1">1 by day</option><option value="d2">2 by day</option><option value="d3">3 by day</option><option value="n1" x-show="ppl" :disabled="!ppl">1 at night</option><option value="n2" x-show="ppl" :disabled="!ppl">2 at night</option><option value="n3" x-show="ppl" :disabled="!ppl">3 at night</option></select></div>
+    </div>
+    <div class="widget-control">
+      <label for="rcw-f2">Logbook flight 2 <output for="rcw-f2" x-text="fd(f2)"></output></label>
+      <div class="flex items-center gap-2"><input type="range" id="rcw-f2" class="min-w-0 flex-1" min="851" max="1185" step="1" x-model.number="f2">
+        <select class="input w-auto" x-model="k2" aria-label="Take-offs and landings on flight 2"><option value="d1">1 by day</option><option value="d2">2 by day</option><option value="d3">3 by day</option><option value="n1" x-show="ppl" :disabled="!ppl">1 at night</option><option value="n2" x-show="ppl" :disabled="!ppl">2 at night</option><option value="n3" x-show="ppl" :disabled="!ppl">3 at night</option></select></div>
+    </div>
+    <div class="widget-control">
+      <label for="rcw-f3">Logbook flight 3 <output for="rcw-f3" x-text="fd(f3)"></output></label>
+      <div class="flex items-center gap-2"><input type="range" id="rcw-f3" class="min-w-0 flex-1" min="851" max="1185" step="1" x-model.number="f3">
+        <select class="input w-auto" x-model="k3" aria-label="Take-offs and landings on flight 3"><option value="d1">1 by day</option><option value="d2">2 by day</option><option value="d3">3 by day</option><option value="n1" x-show="ppl" :disabled="!ppl">1 at night</option><option value="n2" x-show="ppl" :disabled="!ppl">2 at night</option><option value="n3" x-show="ppl" :disabled="!ppl">3 at night</option></select></div>
+    </div>
+    <div class="widget-control">
+      <label for="rcw-ppl" class="cursor-pointer"><span>PPL with a night VFR rating (PFRA 2.2)</span>
+        <input type="checkbox" id="rcw-ppl" x-model="ppl" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="frOk ? 'ok' : 'bad'">
+      <dt class="widget-label">Flight review</dt>
+      <dd class="widget-value"><span x-text="frDone ? 'to ' + fd(frEnd) : 'not done'"></span><span class="widget-flag" :class="frOk ? 'ok' : 'bad'" x-text="frOk ? 'current' : 'expired'" x-show="frDone"></span></dd>
+    </div>
+    <div class="widget-readout" :class="dayOk ? 'ok' : 'bad'">
+      <dt class="widget-label">Day passengers</dt>
+      <dd class="widget-value"><span x-text="dayN + ' of 3 in 90 days'"></span><span class="widget-flag" :class="dayOk ? 'ok' : 'bad'" x-text="dayOk ? 'current' : 'not current'"></span></dd>
+    </div>
+    <div class="widget-readout" :class="nightOk ? 'ok' : 'bad'" x-show="ppl">
+      <dt class="widget-label">Night passengers</dt>
+      <dd class="widget-value"><span x-text="nightN + ' of 3 at night'"></span><span class="widget-flag" :class="nightOk ? 'ok' : 'bad'" x-text="nightOk ? 'current' : 'not current'"></span></dd>
+    </div>
+    <div class="widget-readout" :class="!frOk ? 'bad' : !dayOk ? 'warn' : 'ok'">
+      <dt class="widget-label">As pilot in command you may fly</dt>
+      <dd class="widget-value" x-text="verdict"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('priya-review-expired')" :aria-pressed="active === 'priya-review-expired'">Priya</button>
+      <button type="button" @click="preset('ravi-night-passengers')" :aria-pressed="active === 'ravi-night-passengers'">Ravi (PPL, night)</button>
+      <button type="button" @click="preset('alex-two-landings')" :aria-pressed="active === 'alex-two-landings'">Alex</button>
+      <button type="button" @click="preset('alex-after-circuits')" :aria-pressed="active === 'alex-after-circuits'">Alex after circuits</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Two windows slide along with today, and they guard different things. The 24-month flight review decides whether you may fly as pilot in command at all; the 90-day window of 3 take-offs and 3 landings decides only whether you may take a passenger, so a lapse there is fixed by a few solo circuits. Your passenger currency runs out 90 days after your third most recent landing, however many you did before it. Figures from CASR 61.395 and 61.400 as the lessons give them; verify the current text.</p>
+  <details class="widget-try"><summary>Try it: Priya, today 3 October. What does she need, and in what order?</summary><p>Press Priya: her review of 18 August 2023 ran to 31 August 2025, so it has expired and she may fly only dual. Only the 24 August and 20 September flights are inside the 90 days: 2 of 3. A flight review with an instructor comes first, and its landings count towards the 3.</p></details>
+  <details class="widget-try"><summary>Try it: Alex has only 2 landings in the window. What do the solo circuits on Saturday 4 October buy him?</summary><p>Press Alex, then Alex after circuits: two more landings make 4 in the window, so he may take his friends on Sunday, and his passenger currency now lasts until 90 days after his third most recent landing.</p></details>
+</div>

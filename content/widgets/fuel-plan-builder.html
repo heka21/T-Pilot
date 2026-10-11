@@ -1,0 +1,182 @@
+<div class="widget" x-data="widget({
+  starts: 0, taxiPer: 2, trip: 105, cruise: 36, holdFlow: 36, hold: 30, alt: 0, cont: false, onboard: 110,
+  // the ledger in the lessons' order: taxi, trip, holding, alternate, fixed reserve (30 min at the holding flow),
+  // optional 10 percent contingency. Holding and alternate fuel at the flows POPC 2.4 and 2.5 give.
+  get taxiL() { return this.starts * this.taxiPer },
+  get tripL() { return this.trip * this.cruise / 60 },
+  get holdL() { return this.hold * this.holdFlow / 60 },
+  get altL() { return this.alt * this.cruise / 60 },
+  get resL() { return 30 * this.holdFlow / 60 },
+  get contL() { return this.cont ? 0.1 * this.tripL : 0 },
+  get total() { return this.taxiL + this.tripL + this.holdL + this.altL + this.resL + this.contL },
+  get margin() { return this.onboard - this.total },
+  get marginMin() { return this.margin / this.cruise * 60 },
+  get fits() { return this.margin >= -1e-9 },
+  holdNames: { 0: 'none', 30: 'INTER: 30 min', 60: 'TEMPO: 60 min', 90: 'INTER + TEMPO: 90 min' },
+  // bar: 0 to 200 L across x 40..600 (2.8 px per litre), in the order the fuel is burned
+  X(l) { return 40 + Math.min(l, 200) * 2.8 },
+  get segs() {
+    const parts = [
+      ['taxi', this.taxiL, 'fg-faint', 'surface-2'], ['trip', this.tripL, 'brand', 'brand-soft'],
+      ['holding', this.holdL, 'warn', 'warn-soft'], ['alternate', this.altL, 'info', 'info-soft'],
+      ['contingency', this.contL, 'ok', 'ok-soft'], ['reserve', this.resL, 'bad', 'bad-soft'] ];
+    let a = 0;
+    return parts.map(([name, l, c, soft]) => { const s = { name, l, a, b: a + l, c, soft }; a += l; return s });
+  },
+  seg(i) { return this.segs[i] },
+  segW(i) { return Math.max(0, this.X(this.seg(i).b) - this.X(this.seg(i).a)) },
+  segMid(i) { return (this.X(this.seg(i).a) + this.X(this.seg(i).b)) / 2 },
+  hm(min) { return this.hmm(min) },
+  get caption() {
+    if (!this.fits) return 'The fuel required is ' + this.fmt(-this.margin, 1) + ' L more than you have on board. Holding and reserve are not negotiable: plan an alternate within range, a fuel stop, a later arrival outside the spell, or less payload and more fuel.';
+    if (this.hold && Math.abs(this.holdL - this.resL) < 0.05) return 'Holding and the fixed reserve are the same size here, but they are two separate lines and both are in the total: the reserve is what you land with after the hold.';
+    if (this.alt) return 'A permanent deterioration needs an alternate, not holding, and the alternate fuel is flown at the cruise flow. The fixed reserve still sits on top.';
+    if (this.hold) return (this.hold === 90 ? 'The forecasts require ' : 'The forecast requires ') + this.hold + ' minutes of holding fuel. The fixed reserve is a separate 30 minutes on top that you plan never to use.';
+    return 'No holding and no alternate: the ledger is taxi, trip and the 30-minute fixed reserve.';
+  },
+  presets: {
+    'inter-fuel-plan': { starts: 0, taxiPer: 2, trip: 105, cruise: 36, holdFlow: 36, hold: 30, alt: 0, cont: false, onboard: 110 },
+    'tempo-fuel-plan': { starts: 0, taxiPer: 2, trip: 105, cruise: 36, holdFlow: 36, hold: 60, alt: 0, cont: false, onboard: 110 },
+    'cunderdin-northam': { starts: 3, taxiPer: 2, trip: 86.6, cruise: 34, holdFlow: 27, hold: 30, alt: 0, cont: false, onboard: 130 },
+    'with-contingency': { starts: 3, taxiPer: 2, trip: 86.6, cruise: 34, holdFlow: 27, hold: 30, alt: 0, cont: true, onboard: 130 },
+    'jandakot-tempo-added': { starts: 3, taxiPer: 2, trip: 86.6, cruise: 34, holdFlow: 27, hold: 90, alt: 0, cont: false, onboard: 130 },
+    'fm-alternate': { starts: 1, taxiPer: 2, trip: 110, cruise: 34, holdFlow: 27, hold: 0, alt: 24, cont: false, onboard: 160 },
+  },
+})">
+  <svg viewBox="0 0 640 318" role="img" aria-labelledby="fpb-title" class="widget-stage">
+    <title id="fpb-title">The fuel plan as a ledger: taxi, trip, holding, alternate, contingency and the fixed reserve stacked along a bar in the order the fuel would be burned, against the fuel on board, with each line of the ledger and its sum below</title>
+    <rect x="0" y="0" width="640" height="318" rx="10" fill="var(--color-surface-2)"/>
+    <!-- the bar: six segments written out -->
+    <rect x="40" y="38" width="560" height="38" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <g stroke-width="1.5" stroke-linejoin="round">
+      <rect y="38" height="38" :x="X(seg(0).a)" :width="segW(0)" :fill="'var(--color-' + seg(0).soft + ')'" :stroke="'var(--color-' + seg(0).c + ')'" x-show="seg(0).l > 0"/>
+      <rect y="38" height="38" :x="X(seg(1).a)" :width="segW(1)" :fill="'var(--color-' + seg(1).soft + ')'" :stroke="'var(--color-' + seg(1).c + ')'" x-show="seg(1).l > 0"/>
+      <rect y="38" height="38" :x="X(seg(2).a)" :width="segW(2)" :fill="'var(--color-' + seg(2).soft + ')'" :stroke="'var(--color-' + seg(2).c + ')'" x-show="seg(2).l > 0"/>
+      <rect y="38" height="38" :x="X(seg(3).a)" :width="segW(3)" :fill="'var(--color-' + seg(3).soft + ')'" :stroke="'var(--color-' + seg(3).c + ')'" x-show="seg(3).l > 0"/>
+      <rect y="38" height="38" :x="X(seg(4).a)" :width="segW(4)" :fill="'var(--color-' + seg(4).soft + ')'" :stroke="'var(--color-' + seg(4).c + ')'" x-show="seg(4).l > 0"/>
+      <rect y="38" height="38" :x="X(seg(5).a)" :width="segW(5)" :fill="'var(--color-' + seg(5).soft + ')'" :stroke="'var(--color-' + seg(5).c + ')'" x-show="seg(5).l > 0"/>
+    </g>
+    <!-- litres inside the wider segments -->
+    <g font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="3" stroke-linejoin="round">
+      <text y="62" :x="segMid(1)" x-show="segW(1) > 34" x-text="fmt(seg(1).l, 1)"></text>
+      <text y="62" :x="segMid(2)" x-show="segW(2) > 34" x-text="fmt(seg(2).l, 1)"></text>
+      <text y="62" :x="segMid(3)" x-show="segW(3) > 34" x-text="fmt(seg(3).l, 1)"></text>
+      <text y="62" :x="segMid(4)" x-show="segW(4) > 34" x-text="fmt(seg(4).l, 1)"></text>
+      <text y="62" :x="segMid(5)" x-show="segW(5) > 34" x-text="fmt(seg(5).l, 1)"></text>
+    </g>
+    <!-- shortfall beyond the fuel on board -->
+    <rect y="34" height="46" fill="var(--color-bad)" fill-opacity="0.18" x-show="!fits" :x="X(onboard)" :width="Math.max(0, X(total) - X(onboard))"/>
+    <!-- fuel on board -->
+    <line y1="30" y2="86" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" :x1="X(onboard)" :x2="X(onboard)"/>
+    <text y="24" font-size="12" font-weight="600" fill="var(--color-fg)" :x="X(onboard)" :text-anchor="X(onboard) > 470 ? 'end' : 'middle'" x-text="'on board ' + fmt(onboard) + ' L'"></text>
+    <!-- axis -->
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="40" y="100">0</text><text x="96" y="100">20</text><text x="152" y="100">40</text><text x="208" y="100">60</text>
+      <text x="264" y="100">80</text><text x="320" y="100">100</text><text x="376" y="100">120</text><text x="432" y="100">140</text>
+      <text x="488" y="100">160</text><text x="544" y="100">180</text><text x="590" y="100">200 L</text>
+    </g>
+    <!-- the ledger -->
+    <g font-size="13">
+      <line x1="40" y1="112" x2="600" y2="112" stroke="var(--color-line)" stroke-width="1"/>
+      <rect x="40" y="121" width="12" height="12" rx="2" fill="var(--color-surface)" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+      <text x="62" y="132" fill="var(--color-fg)">Taxi and run-up</text>
+      <text x="250" y="132" fill="var(--color-fg-muted)" class="num" x-text="starts ? starts + (starts > 1 ? ' starts' : ' start') + ' × ' + fmt(taxiPer, 1) + ' L' : 'not included'"></text>
+      <text x="600" y="132" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(taxiL, 1) + ' L'"></text>
+
+      <rect x="40" y="145" width="12" height="12" rx="2" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5"/>
+      <text x="62" y="156" fill="var(--color-fg)">Trip</text>
+      <text x="250" y="156" fill="var(--color-fg-muted)" class="num" x-text="fmt(trip, trip % 1 ? 1 : 0) + ' min at ' + cruise + ' L/h (cruise)'"></text>
+      <text x="600" y="156" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(tripL, 1) + ' L'"></text>
+
+      <rect x="40" y="169" width="12" height="12" rx="2" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.5"/>
+      <text x="62" y="180" fill="var(--color-fg)">Holding</text>
+      <text x="250" y="180" fill="var(--color-fg-muted)" class="num" x-text="hold ? holdNames[hold] + ' at ' + holdFlow + ' L/h' : 'none required'"></text>
+      <text x="600" y="180" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(holdL, 1) + ' L'"></text>
+
+      <rect x="40" y="193" width="12" height="12" rx="2" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.5"/>
+      <text x="62" y="204" fill="var(--color-fg)">Alternate</text>
+      <text x="250" y="204" fill="var(--color-fg-muted)" class="num" x-text="alt ? alt + ' min at ' + cruise + ' L/h (cruise)' : 'none required'"></text>
+      <text x="600" y="204" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(altL, 1) + ' L'"></text>
+
+      <rect x="40" y="217" width="12" height="12" rx="2" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.5"/>
+      <text x="62" y="228" fill="var(--color-fg)">Fixed reserve</text>
+      <text x="250" y="228" fill="var(--color-fg-muted)" class="num" x-text="'30 min at ' + holdFlow + ' L/h (never used)'"></text>
+      <text x="600" y="228" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(resL, 1) + ' L'"></text>
+
+      <rect x="40" y="241" width="12" height="12" rx="2" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.5"/>
+      <text x="62" y="252" fill="var(--color-fg)">Contingency</text>
+      <text x="250" y="252" fill="var(--color-fg-muted)" class="num" x-text="cont ? '10% of trip (optional)' : 'not carried (optional)'"></text>
+      <text x="600" y="252" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(contL, 1) + ' L'"></text>
+
+      <line x1="40" y1="264" x2="600" y2="264" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <text x="62" y="284" font-weight="700" fill="var(--color-fg)">Minimum fuel required</text>
+      <text x="250" y="284" fill="var(--color-fg-muted)" class="num" x-text="fmt(total * 0.72, 1) + ' kg at 0.72 kg/L'"></text>
+      <text x="600" y="284" text-anchor="end" font-weight="700" fill="var(--color-fg)" class="num" x-text="fmt(total, 1) + ' L'"></text>
+      <text x="62" y="306" font-weight="700" :fill="fits ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="fits ? 'Margin' : 'Short by'"></text>
+      <text x="250" y="306" fill="var(--color-fg-muted)" class="num" x-text="fits ? 'about ' + fmt(marginMin) + ' min at cruise' : 'more than you have on board'"></text>
+      <text x="600" y="306" text-anchor="end" font-weight="700" class="num" :fill="fits ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="fmt(Math.abs(margin), 1) + ' L'"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="fpb-trip">Trip time <output for="fpb-trip" x-text="fmt(trip, trip % 1 ? 1 : 0) + ' min (' + hm(trip) + ')'"></output></label>
+      <input type="range" id="fpb-trip" min="0" max="240" step="0.1" x-model.number="trip">
+    </div>
+    <div class="widget-control">
+      <label for="fpb-cruise">Cruise fuel flow <output for="fpb-cruise" x-text="cruise + ' L/h'"></output></label>
+      <input type="range" id="fpb-cruise" min="20" max="45" step="1" x-model.number="cruise">
+    </div>
+    <div class="widget-control">
+      <label for="fpb-hold">Destination TAF below the minima</label>
+      <select id="fpb-hold" class="input" x-model.number="hold">
+        <option value="0">No change group fails: no holding</option>
+        <option value="30">INTER: 30 min holding</option>
+        <option value="60">TEMPO: 60 min holding</option>
+        <option value="90">INTER at one stop, TEMPO at another: 90 min</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="fpb-hflow">Holding fuel flow (POH, or cruise if none) <output for="fpb-hflow" x-text="holdFlow + ' L/h'"></output></label>
+      <input type="range" id="fpb-hflow" min="20" max="45" step="1" x-model.number="holdFlow">
+    </div>
+    <div class="widget-control">
+      <label for="fpb-alt">Alternate, destination to alternate <output for="fpb-alt" x-text="alt ? alt + ' min' : 'none'"></output></label>
+      <input type="range" id="fpb-alt" min="0" max="60" step="1" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="fpb-starts">Engine starts × taxi allowance <output for="fpb-starts" x-text="starts + ' × ' + fmt(taxiPer, 1) + ' L'"></output></label>
+      <input type="range" id="fpb-starts" min="0" max="4" step="1" x-model.number="starts">
+    </div>
+    <div class="widget-control">
+      <label for="fpb-onboard">Fuel on board <output for="fpb-onboard" x-text="onboard + ' L'"></output></label>
+      <input type="range" id="fpb-onboard" min="40" max="200" step="1" x-model.number="onboard">
+    </div>
+    <div class="widget-control">
+      <label for="fpb-cont" class="cursor-pointer"><span>Carry 10% contingency (optional)</span>
+        <input type="checkbox" id="fpb-cont" x-model="cont" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Minimum fuel required</dt><dd class="widget-value" x-text="fmt(total, 1) + ' L (' + fmt(total * 0.72, 1) + ' kg)'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Holding + reserve</dt><dd class="widget-value" x-text="fmt(holdL, 1) + ' + ' + fmt(resL, 1) + ' L'"></dd></div>
+    <div class="widget-readout" :class="fits ? 'ok' : 'bad'">
+      <dt class="widget-label">Against fuel on board</dt>
+      <dd class="widget-value"><span x-text="fits ? fmt(margin, 1) + ' L spare' : fmt(-margin, 1) + ' L short'"></span><span class="widget-flag bad" x-show="!fits">does not fit</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('inter-fuel-plan')" :aria-pressed="active === 'inter-fuel-plan'">INTER, 110 L</button>
+      <button type="button" @click="preset('tempo-fuel-plan')" :aria-pressed="active === 'tempo-fuel-plan'">TEMPO, 110 L</button>
+      <button type="button" @click="preset('cunderdin-northam')" :aria-pressed="active === 'cunderdin-northam'">Cunderdin–Northam</button>
+      <button type="button" @click="preset('jandakot-tempo-added')" :aria-pressed="active === 'jandakot-tempo-added'">+ Jandakot TEMPO</button>
+      <button type="button" @click="preset('fm-alternate')" :aria-pressed="active === 'fm-alternate'">FM: alternate</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every line answers a different "what if", so nothing is counted twice: holding is fuel you may spend waiting out a spell (30 minutes for an INTER, 60 for a TEMPO), the alternate is fuel for when the weather never improves, and the 30-minute fixed reserve, worked at the holding flow, sits on top of both and is never spent. Keep the ledger unrounded and in one unit, then convert to kilograms at 0.72 for the loading sheet.</p>
+  <details class="widget-try"><summary>Try it: in the INTER plan with 110 L, change the INTER to a TEMPO. What does that do, and what are your options?</summary><p>Holding doubles from 18 L to 36 L, so the fuel required goes from 99 L to 117 L: 7 L more than the tanks hold. Plan an alternate within range instead of holding, a fuel stop, or an arrival outside the TEMPO.</p></details>
+  <details class="widget-try"><summary>Try it: on the Cunderdin–Northam afternoon, add the 10% contingency. Does 130 L still give a sensible margin?</summary><p>The contingency is 4.9 L (10% of the 49.1 L trip), so the minimum becomes 87.0 L. With 130 L on board that leaves about 43 L spare; the margin over the bare minimum of 82.1 L is 47.9 L.</p></details>
+</div>

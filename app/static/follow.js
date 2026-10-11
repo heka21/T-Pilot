@@ -12,8 +12,10 @@
    block at the top of the screen (player.js asks for it on Listen and on play), so the timeline is fetched as soon
    as a narrated lesson's page opens rather than when its audio first plays.
 
+   The player's "Play from here" button asks for spot(sid, t, true): the passage on screen, whatever is playing.
+
    window.CasaFollow = {enabled(), set(on), align(timeline, article), sentence(block, text) -> Range,
-                        spot(sid, t) -> seconds or null} */
+                        spot(sid, t, here) -> seconds or null} */
 (function () {
   "use strict";
 
@@ -278,8 +280,9 @@
 
   // Where to start the narration of `sid` for a reader looking at its page: the first sentence on the block at the
   // top of the screen. null (keep the place `t` it would resume from) off that page, before the timeline is in,
-  // while the reader is still at the start, or when the block being read at `t` is on screen.
-  function spot(sid, t) {
+  // while the reader is still at the start, or when the block being read at `t` is on screen. With `here` (the
+  // player's "Play from here"), always the block at the top of the screen: 0 at the start of the lesson.
+  function spot(sid, t, here) {
     if (!page || page.sid !== sid || !page.map || !page.article.isConnected) return null;
     var caps = page.timeline.captions || [], map = page.map, v = viewport();
     var line = v.top + Math.min(80, (v.bottom - v.top) * 0.15);
@@ -288,14 +291,15 @@
       return (r.width || r.height) && r.bottom > v.top && r.top < v.bottom;
     }
     var k = capIndex(caps, t || 0), now = k >= 0 && map.at[k] != null ? visible(map.blocks[map.at[k]]) : null;
-    if (now && onScreen(now)) return null;
+    if (!here && now && onScreen(now)) return null;
     // The first block not yet scrolled past the reading line (one in a closed box counts as its summary).
     var at = -1;
     for (var i = 0; i < map.blocks.length; i++) {
       var r = visible(map.blocks[i]).getBoundingClientRect();
       if ((r.width || r.height) && r.bottom > line) { at = i; break; }
     }
-    if (at <= 0) return null;
+    if (at < 0) return null;
+    if (at === 0) return here ? 0 : null;
     // Its first sentence, or the next one narrated after it.
     for (var c = 0; c < caps.length; c++) if (map.at[c] != null && map.at[c] >= at) return Math.max(0, caps[c].t - 0.2);
     return null;

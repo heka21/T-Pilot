@@ -228,7 +228,7 @@ def gust_load_vs_airspeed() -> Canvas:
     c.add(text((ch.px(VNO) + ch.px(VNE)) / 2, ch.py(3.3), "smooth", 11, "middle", "warn-fg"))
     c.add(text((ch.px(VNO) + ch.px(VNE)) / 2, ch.py(3.3) + 14, "air only", 11, "middle", "warn-fg"))
     c.add(text(ch.left + 6, ch.py(1) + 16, "level flight, 1 g", 11, "start", "fg-faint"))
-    c.add(text(620, 424, "Extra load grows in proportion to airspeed. Stall curve for VS 55 kt; VNO, VNE schematic.", 11, "end", "fg-faint"))
+    c.add(text(620, 424, "Extra load grows in proportion to airspeed. Stall curve for POPC 2.2's example VS of 55 kt; VNO, VNE schematic.", 11, "end", "fg-faint"))
     return c
 
 

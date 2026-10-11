@@ -1,0 +1,177 @@
+<div class="widget" x-data="widget({
+  bend: 'night', need: 'grave', other: false, wx: 'clear', ir: false, told: true,
+  // PFRA 2.7 mercy flights: all four conditions must hold, and none of the 'must not' cases may apply
+  get noRule() { return this.bend === 'none' },
+  get cloud() { return this.wx === 'cloud' || this.bend === 'weather' },
+  get competent() { return !this.cloud || this.ir },
+  get g1() { return this.need === 'grave' },
+  get g2() { return !this.other },
+  get g3() { return this.competent },
+  get g4() { return this.told },
+  get verdict() {
+    if (this.noRule) return 'nothing';
+    if (!this.g1 || !this.g2 || !this.g3) return 'mustnot';
+    return this.g4 ? 'may' : 'notify';
+  },
+  get vState() { return { nothing: 'ok', may: 'ok', notify: 'warn', mustnot: 'bad' }[this.verdict] },
+  get vText() { return { nothing: 'Nothing to declare: an ordinary flight', may: 'May be a mercy flight', notify: 'Not until ATS or CASA is told', mustnot: 'Must not be flown' }[this.verdict] },
+  // the balance: benefit against risk (illustrative weights)
+  get benefit() { return this.need === 'grave' ? (this.other ? 1 : 3) : 0.6 },
+  get risk() { return 1 + (this.bend === 'night' ? 0.8 : 0) + (this.bend === 'limits' ? 0.8 : 0) + (this.cloud ? (this.ir ? 0.8 : 3.4) : 0) },
+  get tilt() { return this.noRule ? 0 : this.clamp((this.risk - this.benefit) * 6, -14, 14) },
+  get night() { return this.bend === 'night' },
+  chipFill(ok) { return this.noRule ? 'var(--color-surface)' : ok ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)' },
+  chipStroke(ok) { return this.noRule ? 'var(--color-line)' : ok ? 'var(--color-ok)' : 'var(--color-bad)' },
+  chipText(ok) { return this.noRule ? 'var(--color-fg-faint)' : ok ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)' },
+  get caption() {
+    if (this.noRule) return 'The flight can be made within the normal rules, so there is nothing to declare: it is an ordinary private flight carrying a passenger. Use the urgency procedures (a PAN PAN) if you need priority.';
+    if (!this.g1) return 'The person is not in grave danger or urgent need. A mercy flight is for saving life or relieving suffering, never for convenience or a sick person who could travel tomorrow.';
+    if (!this.g2) return 'Other transport could get there in time, or waiting would do: the mercy flight provision is only for when nothing else will.';
+    if (!this.g3) return 'The risk now outweighs the benefit and the pilot is not competent for the conditions: an instrument-rated pilot and aircraft are needed for IMC, or the patient waits. Declaring changes the legal position, not the cloud.';
+    if (!this.g4) return 'Grave need, no other transport in time and an acceptable risk: this can be a mercy flight, but the declaration and the departures from the rules go to ATS (which passes them to CASA), before the flight where possible.';
+    return 'Every condition holds: grave need, no other transport in time, a risk judged acceptable, ATS told. The departure from the rules (' + { night: 'night flight by a VFR-only pilot', weather: 'flight below the VFR minima', limits: 'flight beyond the normal fuel or aircraft limits' }[this.bend] + ') now has a legal footing. The weather and the aeroplane are exactly as they were.';
+  },
+  presets: {
+    'southern-cross-daylight': { bend: 'none', need: 'grave', other: false, wx: 'clear', ir: false, told: false },
+    'wiluna-clear-night': { bend: 'night', need: 'grave', other: false, wx: 'clear', ir: false, told: true },
+    'wiluna-low-cloud': { bend: 'night', need: 'grave', other: false, wx: 'cloud', ir: false, told: true },
+    'specialist-tomorrow': { bend: 'night', need: 'notgrave', other: true, wx: 'clear', ir: false, told: false },
+    'kulin-daylight': { bend: 'none', need: 'grave', other: false, wx: 'clear', ir: false, told: false },
+  },
+})">
+  <svg viewBox="0 0 640 318" role="img" aria-labelledby="mfs-title" class="widget-stage">
+    <title id="mfs-title">On the left, the sky the flight would be flown in: day or night, clear or with low cloud and rain. On the right, a balance with the benefit to the patient on one pan and the risk of the flight on the other. Below, the test of whether any rule needs breaking, then the four mercy flight conditions as chips that turn green or red, and the verdict</title>
+    <defs>
+      <marker id="mfs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="mfs-sky"><rect x="16" y="14" width="284" height="142" rx="8"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="318" fill="var(--color-surface-2)" rx="10"/>
+    <!-- the sky: changes with the conditions, never with the declaration -->
+    <g clip-path="url(#mfs-sky)">
+      <rect x="16" y="14" width="284" height="142" fill="var(--color-surface)"/>
+      <rect x="16" y="14" width="284" height="142" fill="var(--color-sky-soft)" :fill-opacity="night ? 0.12 : 1"/>
+      <g fill="var(--color-fg-faint)" :opacity="(night && !cloud) ? 1 : 0">
+        <circle cx="40" cy="34" r="1.5"/><circle cx="96" cy="26" r="1.2"/><circle cx="150" cy="44" r="1.5"/><circle cx="200" cy="28" r="1.2"/><circle cx="62" cy="64" r="1.2"/><circle cx="182" cy="70" r="1.2"/>
+        <path d="M262 26 a13 13 0 1 0 11 20 a10 10 0 1 1 -11 -20 Z"/>
+      </g>
+      <circle cx="262" cy="40" r="12" fill="var(--color-warn)" :opacity="(!night && !cloud) ? 1 : 0"/>
+      <g :opacity="(cloud) ? 1 : 0">
+        <path d="M16 86 L16 58 q20 -14 40 -2 q22 -16 44 -2 q22 -14 44 0 q22 -14 44 0 q22 -14 44 0 q22 -14 44 0 q14 -8 24 0 L300 86 Z" fill="var(--color-fg-faint)" fill-opacity="0.55"/>
+        <g stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-linecap="round">
+          <line x1="40" y1="92" x2="34" y2="108"/><line x1="80" y1="96" x2="74" y2="112"/><line x1="122" y1="90" x2="116" y2="106"/><line x1="166" y1="96" x2="160" y2="112"/><line x1="210" y1="92" x2="204" y2="108"/><line x1="254" y1="96" x2="248" y2="112"/>
+        </g>
+      </g>
+      <path d="M16 140 L90 132 L150 138 L220 128 L300 136 L300 156 L16 156 Z" fill="var(--color-fg-faint)" fill-opacity="0.35"/>
+      <g transform="translate(150 112)">
+        <!-- tools/diagrams/plane.py: side, scale 0.45, no gear, colour fg, fill surface -->
+        <g transform="translate(0 0) rotate(0) scale(0.45)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      </g>
+    </g>
+    <rect x="16" y="14" width="284" height="142" rx="8" fill="none" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="24" y="32" font-size="12" font-weight="600" :fill="night ? 'var(--color-fg)' : 'var(--color-sky-fg)'" x-text="{ none: 'Day, within the rules', night: 'After last light', weather: 'Below the VFR minima', limits: 'Beyond normal limits' }[bend] + (cloud ? ', low cloud and rain' : night ? ', clear, moon' : '')"></text>
+    <text x="158" y="172" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">declaring does not change this picture</text>
+
+    <!-- the balance -->
+    <g transform="translate(470 104)">
+      <path d="M-14 0 L14 0 L0 -26 Z" fill="var(--color-line-strong)"/>
+      <g :transform="'translate(0 -26) rotate(' + tilt + ')'">
+        <line x1="-110" y1="0" x2="110" y2="0" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+        <circle r="4" fill="var(--color-fg)"/>
+        <g transform="translate(-110 0)">
+          <g :transform="'rotate(' + (-tilt) + ')'">
+            <line x1="-30" y1="56" x2="0" y2="0" stroke="var(--color-fg-muted)" stroke-width="1"/><line x1="30" y1="56" x2="0" y2="0" stroke="var(--color-fg-muted)" stroke-width="1"/>
+            <path d="M-34 56 L34 56 L26 66 L-26 66 Z" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.5"/>
+            <rect x="-14" width="28" rx="2" fill="var(--color-ok)" :y="56 - 6 * Math.max(1, Math.round(benefit))" :height="6 * Math.max(1, Math.round(benefit))" fill-opacity="0.8"/>
+            <text x="0" y="-8" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-ok-fg)">benefit</text>
+          </g>
+        </g>
+        <g transform="translate(110 0)">
+          <g :transform="'rotate(' + (-tilt) + ')'">
+            <line x1="-30" y1="56" x2="0" y2="0" stroke="var(--color-fg-muted)" stroke-width="1"/><line x1="30" y1="56" x2="0" y2="0" stroke="var(--color-fg-muted)" stroke-width="1"/>
+            <path d="M-34 56 L34 56 L26 66 L-26 66 Z" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.5"/>
+            <rect x="-14" width="28" rx="2" fill="var(--color-bad)" fill-opacity="0.8" :y="56 - 6 * Math.max(1, Math.round(risk))" :height="6 * Math.max(1, Math.round(risk))"/>
+            <text x="0" y="-8" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)">risk</text>
+          </g>
+        </g>
+      </g>
+    </g>
+    <text x="470" y="26" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="noRule ? 'no rule to bend: nothing to weigh' : tilt > 2 ? 'the risk outweighs the benefit' : 'benefit worth the risk'"></text>
+
+    <!-- the tests -->
+    <g font-size="12">
+      <rect x="16" y="190" width="116" height="52" rx="8" stroke-width="1.5" :fill="noRule ? 'var(--color-ok-soft)' : 'var(--color-brand-soft)'" :stroke="noRule ? 'var(--color-ok)' : 'var(--color-brand)'"/>
+      <text x="74" y="208" text-anchor="middle" font-weight="700" fill="var(--color-fg)">A rule to bend?</text>
+      <text x="74" y="226" text-anchor="middle" :fill="noRule ? 'var(--color-ok-fg)' : 'var(--color-brand-fg)'" font-weight="600" x-text="noRule ? 'no' : 'yes'"></text>
+      <rect x="140" y="190" width="116" height="52" rx="8" stroke-width="1.5" :fill="chipFill(g1)" :stroke="chipStroke(g1)"/>
+      <text x="198" y="208" text-anchor="middle" font-weight="700" :fill="chipText(g1)">1 Grave need</text>
+      <text x="198" y="226" text-anchor="middle" font-size="11" :fill="chipText(g1)">a life or suffering</text>
+      <rect x="264" y="190" width="116" height="52" rx="8" stroke-width="1.5" :fill="chipFill(g2)" :stroke="chipStroke(g2)"/>
+      <text x="322" y="208" text-anchor="middle" font-weight="700" :fill="chipText(g2)">2 Nothing else</text>
+      <text x="322" y="226" text-anchor="middle" font-size="11" :fill="chipText(g2)">none in time</text>
+      <rect x="388" y="190" width="116" height="52" rx="8" stroke-width="1.5" :fill="chipFill(g3)" :stroke="chipStroke(g3)"/>
+      <text x="446" y="208" text-anchor="middle" font-weight="700" :fill="chipText(g3)">3 Risk OK</text>
+      <text x="446" y="226" text-anchor="middle" font-size="11" :fill="chipText(g3)">pilot competent too</text>
+      <rect x="512" y="190" width="112" height="52" rx="8" stroke-width="1.5" :fill="noRule ? 'var(--color-surface)' : g4 ? 'var(--color-ok-soft)' : 'var(--color-warn-soft)'" :stroke="noRule ? 'var(--color-line)' : g4 ? 'var(--color-ok)' : 'var(--color-warn)'"/>
+      <text x="568" y="208" text-anchor="middle" font-weight="700" :fill="noRule ? 'var(--color-fg-faint)' : g4 ? 'var(--color-ok-fg)' : 'var(--color-warn-fg)'">4 ATS told</text>
+      <text x="568" y="226" text-anchor="middle" font-size="11" :fill="noRule ? 'var(--color-fg-faint)' : g4 ? 'var(--color-ok-fg)' : 'var(--color-warn-fg)'">before the flight</text>
+    </g>
+    <!-- verdict -->
+    <rect x="16" y="256" width="608" height="48" rx="10" stroke-width="2" :fill="'var(--color-' + vState + '-soft)'" :stroke="'var(--color-' + vState + ')'"/>
+    <text x="320" y="286" font-size="17" font-weight="700" text-anchor="middle" :fill="'var(--color-' + vState + '-fg)'" x-text="vText"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="mfs-bend">Rule the flight would have to break</label>
+      <select id="mfs-bend" class="input" x-model="bend">
+        <option value="none">None: it can be flown within the rules</option>
+        <option value="night">Night flight by a VFR-only pilot</option>
+        <option value="weather">Weather below the VFR minima</option>
+        <option value="limits">Beyond the normal fuel or aircraft limits</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="mfs-need">The person</label>
+      <select id="mfs-need" class="input" x-model="need">
+        <option value="grave">In grave danger or urgent need</option>
+        <option value="notgrave">Unwell, but not in grave danger</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="mfs-wx">Weather on the route</label>
+      <select id="mfs-wx" class="input" x-model="wx">
+        <option value="clear">Clear (a moon, destination lit)</option>
+        <option value="cloud">Low cloud and rain</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="mfs-other" class="cursor-pointer"><span>Other transport in time, or waiting would do</span>
+        <input type="checkbox" id="mfs-other" x-model="other" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="mfs-ir" class="cursor-pointer"><span>Instrument-rated pilot and aircraft</span>
+        <input type="checkbox" id="mfs-ir" x-model="ir" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="mfs-told" class="cursor-pointer"><span>Declared to ATS (or CASA) before departure</span>
+        <input type="checkbox" id="mfs-told" x-model="told" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="vState"><dt class="widget-label">Verdict</dt><dd class="widget-value"><span x-text="vText"></span><span class="widget-flag bad" x-show="verdict === 'mustnot'">do not fly</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Conditions met</dt><dd class="widget-value" x-text="noRule ? 'not needed' : [g1, g2, g3, g4].filter(Boolean).length + ' of 4'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('southern-cross-daylight')" :aria-pressed="active === 'southern-cross-daylight'">Southern Cross, daylight</button>
+      <button type="button" @click="preset('wiluna-clear-night')" :aria-pressed="active === 'wiluna-clear-night'">Wiluna, clear night</button>
+      <button type="button" @click="preset('wiluna-low-cloud')" :aria-pressed="active === 'wiluna-low-cloud'">Wiluna, low cloud</button>
+      <button type="button" @click="preset('specialist-tomorrow')" :aria-pressed="active === 'specialist-tomorrow'">Specialist tomorrow</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A mercy flight needs every condition at once: grave need, nothing else in time, a risk the pilot in command judges acceptable for conditions they are competent in, and ATS or CASA told. One "no" and it must not be flown; and if no rule needs breaking there is nothing to declare. Watch the sky: the declaration changes the legal position only, never the cloud. The balance's weights are illustrative; verify the mercy flight provisions in the current Part 91 and AIP ENR 1.1.</p>
+  <details class="widget-try"><summary>Try it: the Wiluna station hand again, but now a band of low cloud and rain lies across the route. Does declaring a mercy flight help?</summary><p>Choose Wiluna, low cloud: no. The risk outweighs the benefit and a VFR pilot is not competent for IMC, so it must not be flown whatever is declared. The need is for an instrument-rated crew, or for waiting.</p></details>
+  <details class="widget-try"><summary>Try it: a farmer near Southern Cross has a suspected heart attack and you can fly him to Merredin in daylight. Mercy flight?</summary><p>Choose Southern Cross: no rule needs breaking, so there is nothing to declare. It is an ordinary flight carrying a passenger, and you may use the urgency procedures for priority.</p></details>
+</div>

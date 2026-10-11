@@ -1,0 +1,284 @@
+<div class="widget" x-data="timeline({
+  duration: 16,
+  loop: false,
+  // the system's shape at five moments (map units before it moves east): W and E the far ends of the front, A and B
+  // bends on the cold and warm fronts, T the tip of the warm sector, L the low (T = L until the occlusion starts),
+  // wa / ca the warm-air and cold-air push arrows, depth 0..1 how deep the low is
+  keys: [
+    { W: [-320, 178], A: [200, 178], T: [300, 178], B: [400, 178], E: [760, 178], L: [300, 178], wa: [[352, 136], [344, 168]], ca: [[248, 226], [256, 194]], depth: 0 },
+    { W: [-320, 172], A: [230, 176], T: [300, 218], B: [370, 178], E: [760, 172], L: [300, 218], wa: [[352, 136], [344, 172]], ca: [[248, 232], [256, 200]], depth: 0.3 },
+    { W: [-320, 112], A: [190, 160], T: [300, 258], B: [430, 190], E: [760, 142], L: [300, 258], wa: [[366, 162], [368, 202]], ca: [[232, 262], [246, 224]], depth: 0.6 },
+    { W: [-320, 106], A: [225, 150], T: [330, 222], B: [450, 182], E: [760, 136], L: [285, 268], wa: [[400, 148], [404, 184]], ca: [[240, 240], [256, 204]], depth: 0.85 },
+    { W: [-320, 100], A: [270, 140], T: [370, 182], B: [470, 170], E: [760, 130], L: [260, 272], wa: [[420, 118], [424, 154]], ca: [[230, 220], [250, 186]], depth: 1 },
+  ],
+  // the aerodrome, fixed on the map while the system moves east past it
+  S: [452, 206],
+  get seg4() { const x = this.t * 4, i = Math.min(3, Math.floor(x)); return { i: i, f: this.ease(x - i) } },
+  // the system moves east as it develops
+  get sx() { return this.lerp(-20, 110, this.t) },
+  P(name) {
+    const a = this.keys[this.seg4.i][name], b = this.keys[this.seg4.i + 1][name], f = this.seg4.f;
+    return [this.lerp(a[0], b[0], f) + this.sx, this.lerp(a[1], b[1], f)];
+  },
+  arr(name) {
+    const a = this.keys[this.seg4.i][name], b = this.keys[this.seg4.i + 1][name], f = this.seg4.f, s = this.sx;
+    return { x1: this.lerp(a[0][0], b[0][0], f) + s, y1: this.lerp(a[0][1], b[0][1], f), x2: this.lerp(a[1][0], b[1][0], f) + s, y2: this.lerp(a[1][1], b[1][1], f) };
+  },
+  get g() { return { W: this.P('W'), A: this.P('A'), T: this.P('T'), B: this.P('B'), E: this.P('E'), L: this.P('L') } },
+  get depth() { const a = this.keys[this.seg4.i].depth, b = this.keys[this.seg4.i + 1].depth; return this.lerp(a, b, this.seg4.f) },
+  // fronts named (warm and cold) once the wave has formed
+  get named() { return this.eased(0.27, 0.45) },
+  get occLen() { const g = this.g; return Math.hypot(g.T[0] - g.L[0], g.T[1] - g.L[1]) },
+  get occluded() { return this.occLen > 6 },
+  pts(list) { return this.path(list) },
+  get boundaryD() { const g = this.g; return this.path([g.W, g.A, g.T, g.B, g.E]) },
+  get warmD() { const g = this.g; return this.path([g.W, g.A, g.T, g.B, g.E, [g.E[0], 40], [g.W[0], 40]]) + ' Z' },
+  get coldD() { const g = this.g; return this.path([g.T, g.A, g.W]) },
+  get warmFrontD() { const g = this.g; return this.path([g.T, g.B, g.E]) },
+  get occD() { const g = this.g; return this.path([g.L, g.T]) },
+  // front symbols along a polyline, on the right of the drawing direction (side -1), as in the synoptic diagrams
+  marks(list, kind, step, size) {
+    let d = '', carry = step * 0.7, n = 0;
+    for (let i = 1; i < list.length; i++) {
+      const ax = list[i - 1][0], ay = list[i - 1][1], bx = list[i][0], by = list[i][1], len = Math.hypot(bx - ax, by - ay);
+      if (!len) continue;
+      const tx = (bx - ax) / len, ty = (by - ay) / len, nx = -ty, ny = tx;
+      let s = carry;
+      while (s < len - 2) {
+        const x = ax + tx * s, y = ay + ty * s;
+        if (x > -20 && x < 660 && y > 30 && y < 340) {
+          const tri = kind === 'cold' || (kind === 'occluded' && n % 2 === 0);
+          if (tri) d += 'M' + (x - tx * size).toFixed(1) + ' ' + (y - ty * size).toFixed(1) + ' L' + (x + tx * size).toFixed(1) + ' ' + (y + ty * size).toFixed(1) + ' L' + (x + nx * size * 1.3).toFixed(1) + ' ' + (y + ny * size * 1.3).toFixed(1) + ' Z ';
+          else d += 'M' + (x - tx * size).toFixed(1) + ' ' + (y - ty * size).toFixed(1) + ' A' + size + ' ' + size + ' 0 0 0 ' + (x + tx * size).toFixed(1) + ' ' + (y + ty * size).toFixed(1) + ' Z ';
+        }
+        n++;
+        s += step;
+      }
+      carry = s - len;
+    }
+    return d;
+  },
+  get coldMarks() { const g = this.g; return this.marks([g.T, g.A, g.W], 'cold', 24, 6) },
+  get warmMarks() { const g = this.g; return this.marks([g.T, g.B, g.E], 'warm', 24, 6) },
+  get occMarks() { const g = this.g; return this.marks([g.L, g.T], 'occluded', 20, 6) },
+  // isobars round the low: more of them, closer together, as it deepens
+  get gap() { return this.lerp(30, 17, this.depth) },
+  ring(i) { const g = this.g; return { cx: g.L[0], cy: g.L[1] + 10, rx: 34 + i * this.gap * 1.7, ry: 20 + i * this.gap, o: this.clamp(this.depth * 4 - 0.6 - i * 1.1, 0, 1) } },
+  get circD() {
+    const g = this.g, cx = g.L[0], cy = g.L[1] + 10, rx = 34, ry = 20, a0 = 160 * Math.PI / 180, a1 = 460 * Math.PI / 180;
+    return 'M' + (cx + rx * Math.cos(a0)).toFixed(1) + ' ' + (cy + ry * Math.sin(a0)).toFixed(1) + ' A' + rx + ' ' + ry + ' 0 1 1 ' + (cx + rx * Math.cos(a1)).toFixed(1) + ' ' + (cy + ry * Math.sin(a1)).toFixed(1);
+  },
+  get lowOn() { return this.at(0.1, 0.25) },
+  // geometry for the aerodrome readout
+  near(p, list) {
+    let best = { d: 1e9, side: 0 };
+    for (let i = 1; i < list.length; i++) {
+      const a = list[i - 1], b = list[i], vx = b[0] - a[0], vy = b[1] - a[1], L2 = vx * vx + vy * vy || 1;
+      const k = this.clamp(((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / L2, 0, 1);
+      const qx = a[0] + k * vx, qy = a[1] + k * vy, d = Math.hypot(p[0] - qx, p[1] - qy);
+      if (d < best.d) best = { d: d, side: Math.sign(vx * (p[1] - a[1]) - vy * (p[0] - a[0])) };
+    }
+    return best;
+  },
+  inside(p, poly) {
+    let c = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const a = poly[i], b = poly[j];
+      if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c;
+    }
+    return c;
+  },
+  get here() {
+    const g = this.g, S = this.S;
+    const warm = this.inside(S, [g.W, g.A, g.T, g.B, g.E, [g.E[0], -999], [g.W[0], -999]]);
+    if (this.named < 0.5) return warm ? 'warmair' : 'coldair';
+    const c = this.near(S, [g.T, g.A, g.W]), w = this.near(S, [g.T, g.B, g.E]);
+    if (this.occluded) { const o = this.near(S, [g.L, g.T]); if (!warm && o.d < 40) return 'occlusion'; }
+    if (warm) return c.d < 12 ? 'coldfront' : 'sector';
+    if (c.d < 18) return 'coldfront';
+    if (w.d < c.d) return w.d < 90 ? 'warmfront' : 'ahead';
+    return 'behind';
+  },
+  get hereText() {
+    return {
+      warmair: 'Warm tropical air north of the front',
+      coldair: 'Cold polar air south of the front',
+      ahead: 'Cold air well ahead of the warm front: the first high cloud',
+      warmfront: 'Warm front: lowering layer cloud and continuous rain',
+      sector: 'Warm sector: warm, humid, stable; low St, drizzle and poor visibility, light turbulence',
+      coldfront: 'Cold front: a band of Cu and Cb, squalls and showers',
+      behind: 'Behind the cold front: clearing, showery cold air',
+      occlusion: 'Occlusion: layer cloud and rain with embedded Cb, low cloud, poor visibility and icing',
+    }[this.here];
+  },
+  get hereState() { return { warmfront: 'warn', sector: 'warn', coldfront: 'bad', occlusion: 'bad' }[this.here] || '' },
+  get nextText() {
+    return {
+      warmair: 'Wait for the wave to form',
+      coldair: 'Wait for the wave to form',
+      ahead: 'The warm front: lowering layer cloud and continuous rain',
+      warmfront: 'The warm sector (the wind backs as the front passes)',
+      sector: 'The cold front: Cb, squalls and showers (the wind backs again)',
+      coldfront: 'Clearing, showery cold air behind',
+      behind: 'The system has passed',
+      occlusion: 'Colder air behind it, and a wind that has backed',
+    }[this.here];
+  },
+  get stage() { return this.t < 0.12 ? 0 : this.t < 0.37 ? 1 : this.t < 0.62 ? 2 : this.t < 0.87 ? 3 : 4 },
+  stageNames: ['A stationary front', 'A kink, and a low at its tip', 'A wave depression', 'The occlusion begins', 'Occluded'],
+  get frontsText() {
+    return [
+      'One slow-moving front between warm and cold air',
+      'A kink in the front, the low forming at its poleward tip',
+      'Warm front ahead of the low, cold front behind, the warm sector between',
+      'The cold front catching the warm front near the low',
+      'An occluded front from the low out to the tip of the warm sector',
+    ][this.stage];
+  },
+  get lowText() {
+    return ['No low yet', 'Forming: the pressure falls at the tip', 'Deepening as it moves east: isobars tightening', 'Deep and mature', 'Mature or decaying'][this.stage];
+  },
+  steps: [{ at: 0, label: 'Stationary front' }, { at: 0.25, label: 'Kink and low' }, { at: 0.5, label: 'Wave depression' }, { at: 0.75, label: 'Occlusion begins' }, { at: 1, label: 'Occluded' }],
+  get caption() {
+    return [
+      'A long, slow-moving front: warm tropical air on the equator (north) side and cold polar air on the poleward (south) side, flowing past each other.',
+      'A small disturbance puts a kink in the front. At its poleward tip the pressure falls and a low forms; the air circulates clockwise round it, pushing warm air south on the forward (east) side and cold air north on the rear (west) side.',
+      'A wave depression: a warm front ahead of the low, a cold front behind it, and the warm sector between them. It deepens as it moves east: the isobars tighten and the winds strengthen. The wind backs at each front.',
+      'Cold fronts move faster than warm fronts: the dense cold air drives along the ground while the warm air has to climb. The cold front catches the warm front, starting near the low, and lifts the warm sector off the ground.',
+      'Occluded: the sign of a mature or decaying low. The occlusion brings layer cloud and continuous rain with embedded Cb, and only a small temperature change at the surface, because two cold air masses meet there.',
+    ][this.stage];
+  },
+  presets: {
+    'stationary-front': { t: 0 },
+    'kink-and-low': { t: 0.25 },
+    'wave-depression': { t: 0.5 },
+    'occlusion-begins': { t: 0.75 },
+    'occluded': { t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 372" role="img" aria-labelledby="wvo-title" class="widget-stage">
+    <title id="wvo-title">Plan view, north up, Southern Hemisphere: a stationary front between warm air to the north and cold air to the south develops a kink with a low at its southern tip, becomes a wave depression with a warm front, cold front and warm sector, and then occludes as the cold front catches the warm front, while the whole system moves east past an aerodrome</title>
+    <defs>
+      <marker id="wvo-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="wvo-clip"><rect x="0" y="40" width="640" height="290"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="372" fill="var(--color-surface)"/>
+    <g clip-path="url(#wvo-clip)">
+      <rect x="0" y="40" width="640" height="290" fill="var(--color-sky-soft)"/>
+      <path :d="warmD" fill="var(--color-warn-soft)"/>
+      <!-- isobars round the low -->
+      <g fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25">
+        <ellipse :cx="ring(0).cx" :cy="ring(0).cy" :rx="ring(0).rx" :ry="ring(0).ry" :stroke-opacity="ring(0).o"/>
+        <ellipse :cx="ring(1).cx" :cy="ring(1).cy" :rx="ring(1).rx" :ry="ring(1).ry" :stroke-opacity="ring(1).o"/>
+        <ellipse :cx="ring(2).cx" :cy="ring(2).cy" :rx="ring(2).rx" :ry="ring(2).ry" :stroke-opacity="ring(2).o"/>
+      </g>
+      <!-- clockwise circulation round the low -->
+      <path :d="circD" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#wvo-arrow)" :opacity="lowOn"/>
+
+      <!-- the stationary front: warm and cold air flowing past each other -->
+      <g :opacity="1 - at(0.06, 0.2)">
+        <line y1="110" y2="110" stroke="var(--color-warn)" stroke-width="2" marker-end="url(#wvo-arrow)" :x1="90 + sx" :x2="150 + sx"/>
+        <line y1="110" y2="110" stroke="var(--color-warn)" stroke-width="2" marker-end="url(#wvo-arrow)" :x1="420 + sx" :x2="480 + sx"/>
+        <line y1="250" y2="250" stroke="var(--color-sky-fg)" stroke-width="2" marker-end="url(#wvo-arrow)" :x1="210 + sx" :x2="150 + sx"/>
+        <line y1="250" y2="250" stroke="var(--color-sky-fg)" stroke-width="2" marker-end="url(#wvo-arrow)" :x1="540 + sx" :x2="480 + sx"/>
+      </g>
+      <!-- the circulation pushes warm air south ahead of the low and cold air north behind it -->
+      <g :opacity="at(0.12, 0.25)">
+        <line stroke="var(--color-warn)" stroke-width="2.5" marker-end="url(#wvo-arrow)" :x1="arr('wa').x1" :y1="arr('wa').y1" :x2="arr('wa').x2" :y2="arr('wa').y2"/>
+        <line stroke="var(--color-sky-fg)" stroke-width="2.5" marker-end="url(#wvo-arrow)" :x1="arr('ca').x1" :y1="arr('ca').y1" :x2="arr('ca').x2" :y2="arr('ca').y2"/>
+      </g>
+
+      <!-- the front: a plain line until the wave forms, then cold and warm fronts -->
+      <path :d="boundaryD" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linejoin="round" :opacity="1 - named"/>
+      <g :opacity="named">
+        <path :d="coldD" fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round"/>
+        <path :d="coldMarks" fill="var(--color-brand)"/>
+        <path :d="warmFrontD" fill="none" stroke="var(--color-bad)" stroke-width="2.5" stroke-linejoin="round"/>
+        <path :d="warmMarks" fill="var(--color-bad)"/>
+      </g>
+      <g x-show="occluded">
+        <path :d="occD" fill="none" stroke="var(--color-info)" stroke-width="2.5"/>
+        <path :d="occMarks" fill="var(--color-info)"/>
+      </g>
+
+      <!-- labels -->
+      <text font-size="20" text-anchor="middle" font-weight="700" fill="var(--color-bad)" :x="g.L[0]" :y="g.L[1] + 17" :opacity="lowOn">L</text>
+      <text font-size="13" text-anchor="middle" font-weight="700" fill="var(--color-warn-fg)" :x="(g.A[0] + g.T[0] + g.B[0]) / 3" :y="(g.A[1] + g.T[1] + g.B[1]) / 3 - 14" :opacity="named">warm sector</text>
+      <g font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :opacity="named">
+        <text text-anchor="end" fill="var(--color-brand-fg)" :x="(g.T[0] + g.A[0]) / 2 - 14" :y="(g.T[1] + g.A[1]) / 2 + 8">cold front</text>
+        <text fill="var(--color-bad)" :x="(g.T[0] + g.B[0]) / 2 + 4" :y="(g.T[1] + g.B[1]) / 2 + 30">warm front</text>
+      </g>
+      <g font-size="12" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="occLen > 40">
+        <text fill="var(--color-info)" font-weight="700" :x="(g.L[0] + g.T[0]) / 2 + 18" :y="(g.L[1] + g.T[1]) / 2 + 22">occluded front</text>
+        <text fill="var(--color-fg-muted)" :x="(g.L[0] + g.T[0]) / 2 + 18" :y="(g.L[1] + g.T[1]) / 2 + 37">warm sector lifted aloft</text>
+      </g>
+      <text x="14" y="62" font-size="13" font-weight="600" fill="var(--color-warn-fg)">warm tropical air</text>
+      <text x="626" y="320" font-size="13" text-anchor="end" font-weight="600" fill="var(--color-sky-fg)">cold polar air</text>
+
+      <!-- the aerodrome -->
+      <circle :cx="S[0]" :cy="S[1]" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2.5"/>
+      <circle :cx="S[0]" :cy="S[1]" r="2" fill="var(--color-fg)"/>
+
+      <!-- north -->
+      <line x1="618" y1="80" x2="618" y2="58" stroke="var(--color-fg-muted)" stroke-width="1.5" marker-end="url(#wvo-arrow)"/>
+      <text x="618" y="52" font-size="12" text-anchor="middle" font-weight="700" fill="var(--color-fg-muted)">N</text>
+    </g>
+    <rect x="0.5" y="40" width="639" height="290" fill="none" stroke="var(--color-line-strong)" stroke-width="1"/>
+
+    <!-- title row -->
+    <text x="14" y="27" font-size="16" font-weight="700" fill="var(--color-fg)" x-text="(stage + 1) + '. ' + stageNames[stage]"></text>
+    <text x="626" y="27" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">Southern Hemisphere, north up</text>
+
+    <!-- legend and motion -->
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <path d="M14 352 L58 352" stroke="var(--color-brand)" stroke-width="2.5"/>
+      <path d="M22 352 L32 352 L27 343.5 Z M40 352 L50 352 L45 343.5 Z" fill="var(--color-brand)"/>
+      <text x="64" y="356">cold</text>
+      <path d="M106 352 L150 352" stroke="var(--color-bad)" stroke-width="2.5"/>
+      <path d="M114 352 A5 5 0 0 1 124 352 Z M132 352 A5 5 0 0 1 142 352 Z" fill="var(--color-bad)"/>
+      <text x="156" y="356">warm</text>
+      <path d="M204 352 L248 352" stroke="var(--color-info)" stroke-width="2.5"/>
+      <path d="M212 352 L222 352 L217 343.5 Z M230 352 A5 5 0 0 1 240 352 Z" fill="var(--color-info)"/>
+      <text x="254" y="356">occluded</text>
+      <circle cx="350" cy="352" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2.5"/><circle cx="350" cy="352" r="2" fill="var(--color-fg)"/>
+      <text x="362" y="356">your aerodrome</text>
+      <line x1="470" y1="352" x2="520" y2="352" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#wvo-arrow)"/>
+      <text x="526" y="356">moving east</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the life of the low'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="wvo-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Life of the low">
+    <span class="widget-clock" x-text="['stationary', 'kink', 'wave', 'occluding', 'occluded'][stage]"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Fronts</dt><dd class="widget-value" x-text="frontsText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">The low</dt><dd class="widget-value" x-text="lowText"></dd></div>
+    <div class="widget-readout" :class="hereState"><dt class="widget-label">At your aerodrome now</dt><dd class="widget-value"><span x-text="hereText"></span><span class="widget-flag bad" x-show="here === 'occlusion'">hidden Cb</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Next at your aerodrome</dt><dd class="widget-value" x-text="nextText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('stationary-front')" :aria-pressed="active === 'stationary-front'">Stationary front</button>
+      <button type="button" @click="preset('kink-and-low')" :aria-pressed="active === 'kink-and-low'">Kink and low</button>
+      <button type="button" @click="preset('wave-depression')" :aria-pressed="active === 'wave-depression'">Wave depression</button>
+      <button type="button" @click="preset('occlusion-begins')" :aria-pressed="active === 'occlusion-begins'">Occlusion begins</button>
+      <button type="button" @click="preset('occluded')" :aria-pressed="active === 'occluded'">Occluded</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The low forms at the poleward (southern) tip of the kink and the air goes clockwise round it, so the warm air surges south ahead of the low and the cold air north behind it. As it moves east it deepens, and the faster cold front catches the warm front, starting near the low, lifting the warm sector off the ground. A place in the warm sector's path gets warm-front rain, then warm-sector low St and drizzle, then the cold front's Cb, with the wind backing at each front. The shapes and the speed of development are illustrative.</p>
+  <details class="widget-try"><summary>Try it: in what order does the weather arrive at a place on the warm-sector side of a wave depression?</summary><p>Press Wave depression, then play on and watch your aerodrome's readout: first the warm front's lowering layer cloud and continuous rain, then the warm sector's low St, drizzle and poor visibility, then (if the cold front gets there first) the band of Cb, squalls and showers, and finally clearing, showery cold air. The wind backs at each front.</p></details>
+  <details class="widget-try"><summary>Try it: why is an occlusion a poor choice for VFR flight, even though the surface temperature hardly changes?</summary><p>Press Occluded. The warm air has been lifted aloft, so two cold air masses meet at the surface (hence the small temperature change), but the occlusion still has the warm front's widespread layer cloud and rain, plus Cb embedded in it from the lifted warm sector: thunderstorms you cannot see, with low cloud, poor visibility and icing.</p></details>
+</div>

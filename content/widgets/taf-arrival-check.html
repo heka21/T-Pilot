@@ -1,0 +1,166 @@
+<div class="widget" x-data="widget({
+  sc: 0, eta: 450, ppl: false, burn: 28,
+  // the lessons' TAFs (times in UTC minutes). vis in metres, ceil = lowest BKN/OVC base in ft (null: no ceiling)
+  scenarios: [
+    { name: 'Jandakot, 3rd (RMTC 2.2)', a0: 300, eta: 450, burn: 28, groups: [
+      { kind: 'Main', from: 360, to: 600, text: '12012KT 9999 FEW030 SCT045', vis: 10000, ceil: null },
+      { kind: 'FM', from: 600, to: 900, text: '09008KT CAVOK', vis: 10000, ceil: null },
+      { kind: 'TEMPO', from: 360, to: 540, text: '4000 SHRA BKN020', vis: 4000, ceil: 2000 } ] },
+    { name: 'Jandakot, 4th (RMTC 2.2)', a0: 300, eta: 480, burn: 28, groups: [
+      { kind: 'Main', from: 360, to: 720, text: '23015G25KT 9999 SCT025', vis: 10000, ceil: null },
+      { kind: 'FM', from: 720, to: 900, text: '18008KT 9999 FEW030', vis: 10000, ceil: null },
+      { kind: 'INTER', from: 360, to: 600, text: '3000 SHRA BKN015', vis: 3000, ceil: 1500 } ] },
+    { name: 'Northam (RMTC 2.2)', a0: 180, eta: 340, burn: 28, groups: [
+      { kind: 'Main', from: 180, to: 780, text: '9999 SCT035', vis: 10000, ceil: null },
+      { kind: 'TEMPO', from: 300, to: 480, text: '3000 SHRA BKN015', vis: 3000, ceil: 1500 } ] },
+    { name: 'Geraldton, TEMPO (POPC 2.4)', a0: 120, eta: 240, burn: 28, groups: [
+      { kind: 'Main', from: 120, to: 720, text: '15012KT 9999 SCT030', vis: 10000, ceil: null },
+      { kind: 'TEMPO', from: 180, to: 360, text: '4000 SHRA BKN012', vis: 4000, ceil: 1200 } ] },
+    { name: 'Geraldton, INTER (PFRA 2.4)', a0: 120, eta: 240, burn: 32, groups: [
+      { kind: 'Main', from: 120, to: 720, text: '20015KT CAVOK', vis: 10000, ceil: null },
+      { kind: 'INTER', from: 180, to: 420, text: '3000 SHRA BKN012', vis: 3000, ceil: 1200 } ] },
+    { name: 'Esperance (PFRA 2.4)', a0: 240, eta: 390, burn: 36, groups: [
+      { kind: 'Main', from: 240, to: 840, text: '9999 SCT025', vis: 10000, ceil: null },
+      { kind: 'TEMPO', from: 420, to: 600, text: '4000 DZ BKN010', vis: 4000, ceil: 1000 } ] },
+  ],
+  get s() { return this.scenarios[this.sc] },
+  get a1() { return this.s.a0 + 600 },
+  x(min) { return 64 + this.clamp((min - this.s.a0) / 600, 0, 1) * 540 },
+  tick(i) { return this.hhmm(this.s.a0 + i * 60).slice(0, 2) },
+  // a row's bars, in order: main and FM share the top row, TEMPO/INTER/PROB the second
+  g(i) { return this.s.groups[i] || { kind: '', from: 0, to: 0, text: '', vis: 99999, ceil: null } },
+  has(i) { return i < this.s.groups.length },
+  fails(gr) { return this.ppl ? gr.vis < 8000 || (gr.ceil !== null && gr.ceil < 1500) : gr.vis < 5000 },
+  get w0() { return this.ppl ? this.eta - 30 : this.eta },
+  get w1() { return this.ppl ? this.eta + 60 : this.eta },
+  applies(gr) { return this.ppl ? gr.from < this.w1 && gr.to > this.w0 : gr.from <= this.eta && gr.to > this.eta },
+  get applying() { return this.s.groups.filter((gr) => this.applies(gr)) },
+  get failing() { return this.applying.filter((gr) => this.fails(gr)) },
+  get worst() { return this.failing.length ? this.failing.reduce((a, b) => (b.vis < a.vis ? b : a)) : this.applying[0] },
+  get holdMin() {
+    if (!this.failing.length) return 0;
+    if (this.failing.some((gr) => gr.kind === 'Main' || gr.kind === 'FM')) return -1;
+    return this.failing.some((gr) => gr.kind === 'TEMPO') ? 60 : 30;
+  },
+  get requirement() {
+    if (this.holdMin === 0) return 'Neither';
+    if (this.holdMin < 0) return 'Alternate (not temporary)';
+    return 'Alternate or ' + this.holdMin + ' min holding';
+  },
+  get holdLitres() { return this.holdMin > 0 ? Math.round(this.holdMin / 60 * this.burn) : 0 },
+  get etaText() { return this.hhmm(this.eta) + ' UTC (' + this.hhmm(this.eta + 480) + ' WST)' },
+  pick() { this.eta = this.s.eta; this.burn = this.s.burn; this.active = null },
+  presets: {
+    'jandakot-tempo': { sc: 0, eta: 450, ppl: false },
+    'jandakot-inter': { sc: 1, eta: 480, ppl: false },
+    'northam': { sc: 2, eta: 340, ppl: false },
+    'geraldton-tempo': { sc: 3, eta: 240, ppl: true, burn: 28 },
+    'geraldton-inter': { sc: 4, eta: 240, ppl: true, burn: 32 },
+    'esperance': { sc: 5, eta: 390, ppl: true, burn: 36 },
+  },
+})">
+  <svg viewBox="0 0 640 230" role="img" aria-labelledby="tac-title" class="widget-stage">
+    <title id="tac-title">A TAF laid out on a timeline in UTC: the main conditions and FM changes on the top row, TEMPO and INTER groups on the second, your ETA as a line and, for a PPL flight, the window from 30 minutes before to 60 minutes after it</title>
+    <rect x="0" y="0" width="640" height="230" fill="var(--color-surface-2)" rx="10"/>
+    <!-- arrival window (PPL) -->
+    <rect y="30" height="130" fill="var(--color-brand)" fill-opacity="0.14" x-show="ppl" :x="x(w0)" :width="x(w1) - x(w0)"/>
+    <text y="24" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" x-show="ppl" :x="(x(w0) + x(w1)) / 2">−30 … +60 min</text>
+    <!-- ETA -->
+    <line y1="36" y2="166" stroke="var(--color-brand)" stroke-width="2" :x1="x(eta)" :x2="x(eta)"/>
+    <circle cy="166" r="5" fill="var(--color-brand)" :cx="x(eta)"/>
+    <text y="160" font-size="13" font-weight="600" fill="var(--color-brand-fg)" :x="x(eta) + (x(eta) > 520 ? -8 : 8)" :text-anchor="x(eta) > 520 ? 'end' : 'start'">ETA</text>
+    <!-- row labels -->
+    <text x="56" y="72" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">TAF</text>
+    <text x="56" y="132" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">spells</text>
+    <!-- group bars: up to three groups, written out (no x-for inside svg) -->
+    <g x-show="has(0)">
+      <rect y="52" height="32" rx="6" stroke-width="1.25" :x="x(g(0).from)" :width="x(g(0).to) - x(g(0).from)"
+        :fill="fails(g(0)) ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="fails(g(0)) ? 'var(--color-bad)' : 'var(--color-ok)'"
+        :stroke-width="applies(g(0)) ? 2.5 : 1.25"/>
+      <text y="73" font-size="12" class="num" fill="var(--color-fg)" :x="x(g(0).from) + 8" x-text="g(0).text"></text>
+    </g>
+    <g x-show="has(1)">
+      <rect height="32" rx="6" :y="g(1).kind === 'FM' ? 52 : 112" :x="x(g(1).from)" :width="x(g(1).to) - x(g(1).from)"
+        :fill="fails(g(1)) ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="fails(g(1)) ? 'var(--color-bad)' : 'var(--color-ok)'"
+        :stroke-width="applies(g(1)) ? 2.5 : 1.25"/>
+      <text font-size="12" class="num" fill="var(--color-fg)" :y="g(1).kind === 'FM' ? 73 : 133" :x="x(g(1).from) + 8" x-text="g(1).kind + ' ' + g(1).text"></text>
+    </g>
+    <g x-show="has(2)">
+      <rect height="32" rx="6" :y="g(2).kind === 'FM' ? 52 : 112" :x="x(g(2).from)" :width="x(g(2).to) - x(g(2).from)"
+        :fill="fails(g(2)) ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="fails(g(2)) ? 'var(--color-bad)' : 'var(--color-ok)'"
+        :stroke-width="applies(g(2)) ? 2.5 : 1.25"/>
+      <text font-size="12" class="num" fill="var(--color-fg)" :y="g(2).kind === 'FM' ? 73 : 133" :x="x(g(2).from) + 8" x-text="g(2).kind + ' ' + g(2).text"></text>
+    </g>
+    <!-- time axis: 10 hours -->
+    <line x1="64" y1="172" x2="604" y2="172" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="64" y="190" x-text="tick(0)"></text><text x="118" y="190" x-text="tick(1)"></text><text x="172" y="190" x-text="tick(2)"></text>
+      <text x="226" y="190" x-text="tick(3)"></text><text x="280" y="190" x-text="tick(4)"></text><text x="334" y="190" x-text="tick(5)"></text>
+      <text x="388" y="190" x-text="tick(6)"></text><text x="442" y="190" x-text="tick(7)"></text><text x="496" y="190" x-text="tick(8)"></text>
+      <text x="550" y="190" x-text="tick(9)"></text><text x="604" y="190" x-text="tick(10)"></text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="64" y1="172" x2="64" y2="177"/><line x1="118" y1="172" x2="118" y2="177"/><line x1="172" y1="172" x2="172" y2="177"/>
+      <line x1="226" y1="172" x2="226" y2="177"/><line x1="280" y1="172" x2="280" y2="177"/><line x1="334" y1="172" x2="334" y2="177"/>
+      <line x1="388" y1="172" x2="388" y2="177"/><line x1="442" y1="172" x2="442" y2="177"/><line x1="496" y1="172" x2="496" y2="177"/>
+      <line x1="550" y1="172" x2="550" y2="177"/><line x1="604" y1="172" x2="604" y2="177"/>
+    </g>
+    <text x="334" y="212" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">hours UTC</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tac-sc">TAF</label>
+      <select id="tac-sc" class="input" x-model.number="sc" @change="pick()">
+        <option value="0">Jandakot, 3rd (RMTC 2.2)</option>
+        <option value="1">Jandakot, 4th (RMTC 2.2)</option>
+        <option value="2">Northam (RMTC 2.2)</option>
+        <option value="3">Geraldton, TEMPO (POPC 2.4)</option>
+        <option value="4">Geraldton, INTER (PFRA 2.4)</option>
+        <option value="5">Esperance (PFRA 2.4)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="tac-eta">Your ETA <output for="tac-eta" x-text="etaText"></output></label>
+      <input type="range" id="tac-eta" step="5" :min="s.a0" :max="s.a0 + 600" x-model.number="eta">
+    </div>
+    <div class="widget-control">
+      <label for="tac-ppl" class="cursor-pointer"><span>PPL flight: test the window and the alternate minima</span>
+        <input type="checkbox" id="tac-ppl" x-model="ppl" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="ppl">
+      <label for="tac-burn">Holding fuel flow <output for="tac-burn" x-text="burn + ' L/h'"></output></label>
+      <input type="range" id="tac-burn" min="20" max="45" step="1" x-model.number="burn">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="failing.length ? 'bad' : 'ok'">
+      <dt class="widget-label" x-text="ppl ? 'Worst in the window' : 'Plan for at ETA'"></dt>
+      <dd class="widget-value"><span x-text="worst ? (worst.kind === 'Main' ? '' : worst.kind + ' ') + worst.text : '–'"></span></dd>
+    </div>
+    <div class="widget-readout" :class="failing.length ? 'bad' : 'ok'" x-show="!ppl">
+      <dt class="widget-label">VMC visibility 5,000 m</dt>
+      <dd class="widget-value"><span x-text="failing.length ? 'Below in the spells' : 'Above'"></span><span class="widget-flag bad" x-show="failing.length">no go</span></dd>
+    </div>
+    <div class="widget-readout" :class="holdMin === 0 ? 'ok' : 'bad'" x-show="ppl">
+      <dt class="widget-label">Alternate or holding</dt>
+      <dd class="widget-value" x-text="requirement"></dd>
+    </div>
+    <div class="widget-readout" :class="holdLitres ? 'warn' : ''" x-show="ppl">
+      <dt class="widget-label">Holding fuel</dt>
+      <dd class="widget-value" x-text="holdLitres ? holdLitres + ' L (' + holdMin + ' min × ' + burn + ' L/h)' : '–'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('jandakot-tempo')" :aria-pressed="active === 'jandakot-tempo'">Jandakot 1530</button>
+      <button type="button" @click="preset('geraldton-tempo')" :aria-pressed="active === 'geraldton-tempo'">Geraldton TEMPO</button>
+      <button type="button" @click="preset('geraldton-inter')" :aria-pressed="active === 'geraldton-inter'">Geraldton INTER</button>
+      <button type="button" @click="preset('esperance')" :aria-pressed="active === 'esperance'">Esperance</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The first line of a TAF is not the forecast for your arrival: every change group that covers your time counts, and you cannot plan to arrive between spells. For a PPL flight the test runs from 30 minutes before to 60 minutes after the ETA, and how long the bad weather lasts sets the holding fuel: INTER 30 minutes, TEMPO 60, a permanent change an alternate.</p>
+  <details class="widget-try"><summary>Try it: on the Jandakot TAF of the 3rd, when is the earliest you can plan to arrive in the main conditions?</summary><p>Drag the ETA past the end of the TEMPO at 0900 UTC (1700 WST): from then the main conditions apply, and from 1000 UTC (1800 WST) CAVOK.</p></details>
+  <details class="widget-try"><summary>Try it: Esperance, ETA 0630 UTC. The TEMPO starts at 0700, after you land. Why do you still need holding fuel?</summary><p>Switch on the PPL window: it runs to 0730, so the TEMPO at 0700 is inside it. A TEMPO means 60 minutes of holding: 60 × 36 L/h = 36 L, or an alternate that meets the minima.</p></details>
+</div>

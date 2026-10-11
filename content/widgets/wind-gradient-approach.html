@@ -1,0 +1,176 @@
+<div class="widget" x-data="timeline({
+  duration: 20, loop: false,
+  w500: 25, w0: 10, sudden: false, power: false,
+  // RMTC 2.3 worked example: 70 kt on final into 25 kt at 500 ft, 10 kt at the surface, flap-down stall 48 kt.
+  // As in the lesson, inertia holds the groundspeed through the descent (worst case); positive wind is a headwind.
+  vapp: 70, vs: 48,
+  get h() { return 500 * (1 - this.t) },
+  windAt(h) { return this.sudden ? (h > 300 ? this.w500 : this.w0) : this.w0 + (this.w500 - this.w0) * Math.sqrt(Math.max(0, h) / 500) },
+  get gs() { return this.vapp - this.w500 },
+  iasAt(h) { return this.power ? this.vapp : this.gs + this.windAt(h) },
+  // the approach in 100 steps of about 0.6 s (500 ft at about 500 ft/min); each knot below 70 adds about 20 ft/min of
+  // sink, each knot above takes it away (illustrative), so the aeroplane drifts off the path
+  get track() {
+    const out = []; let dev = 0, down = -1;
+    for (let i = 0; i <= 100; i++) {
+      const h = 500 * (1 - i / 100);
+      if (i) dev += (this.vapp - this.iasAt(h)) * 0.2;
+      const ha = h - dev;
+      if (down < 0 && ha <= 0 && i < 100) down = i;
+      out.push({ h: h, ha: Math.max(0, ha), dev: dev });
+    }
+    return { pts: out, down: down };
+  },
+  get k() { return Math.min(100, Math.round(this.t * 100)) },
+  get kk() { const d = this.track.down; return d >= 0 ? Math.min(this.k, d) : this.k },
+  get now() { return this.track.pts[this.kk] },
+  get landedShort() { return this.track.down >= 0 && this.k >= this.track.down },
+  get ias() { return this.iasAt(this.h) },
+  get margin() { return this.ias - this.vs },
+  get windHere() { return this.windAt(this.h) },
+  // picture: path from (104, y of 500 ft) to the threshold at (560, 270); 0.42 px per ft
+  X(t) { return 104 + 456 * t },
+  Y(h) { return 270 - h * 0.42 },
+  get px() { return this.X(this.kk / 100) },
+  get py() { return this.Y(this.now.ha) },
+  get trail() { return this.path(this.track.pts.slice(0, this.kk + 1).map((p, i) => [this.X(i / 100), this.Y(p.ha)])) },
+  // wind profile arrows on the left (they point where the wind blows TO: left for a headwind)
+  arrowX(w) { return 70 - w * 2 },
+  get profilePath() { const pts = []; for (let h = 500; h >= 0; h -= 25) pts.push([this.arrowX(this.windAt(h)), this.Y(h)]); return this.path(pts) },
+  windText(w) { const r = Math.round(w); return r === 0 ? 'calm' : r > 0 ? r + ' kt head' : -r + ' kt tail' },
+  get iasState() { return this.margin < 10 ? 'bad' : this.margin < 15 ? 'warn' : 'ok' },
+  get pathText() {
+    const d = this.now.dev;
+    if (this.landedShort) return 'Touched down short';
+    if (Math.abs(d) < 15) return 'On the path';
+    return d > 0 ? Math.round(d) + ' ft below: sinking' : Math.round(-d) + ' ft above: floating';
+  },
+  get pathState() { return this.landedShort ? 'bad' : this.now.dev > 15 ? 'warn' : this.now.dev < -15 ? 'warn' : 'ok' },
+  steps: [
+    { at: 0, label: '500 ft' },
+    { at: 0.4, label: '300 ft' },
+    { at: 0.8, label: '100 ft' },
+    { at: 1, label: 'Threshold' },
+  ],
+  get caption() {
+    const end = this.gs + this.windAt(0), lose = end < this.vapp - 0.5, gain = end > this.vapp + 0.5;
+    if (this.power && (lose || gain)) return 'You adjust the power to hold 70 kt as the wind changes: the airspeed and the path stay where you want them. Expect to need it in the last few hundred feet.';
+    if (!lose && !gain) return 'The wind is the same all the way down, so the airspeed stays at 70 kt and the aeroplane stays on the path.';
+    if (this.t < 0.02) return 'At 500 ft: ' + this.vapp + ' kt of airspeed ' + (Math.round(this.w500) === 0 ? 'in calm air' : 'with a ' + this.windText(this.w500) + 'wind') + ' means ' + this.gs + ' kt over the ground. The aeroplane\'s inertia will try to keep that groundspeed as the wind changes.';
+    if (this.landedShort) return 'The airspeed has bled away and the aeroplane has sunk below the path with no change of attitude or power: it touches down short. This is why you carry extra speed in a strong wind and add power early.';
+    if (lose) return 'The headwind is falling away as you descend. Inertia holds the groundspeed for a moment, so the airspeed falls by the loss of headwind: lift falls, the aeroplane sinks below the path.';
+    return 'The tailwind is dying away (or the headwind growing) as you descend: the airspeed rises, the aeroplane balloons above the path and floats, and you land long.';
+  },
+  presets: {
+    'top-of-final': { w500: 25, w0: 10, sudden: false, power: false, t: 0 },
+    'worked-example': { w500: 25, w0: 10, sudden: false, power: false, t: 1 },
+    'sudden-shear': { w500: 25, w0: 10, sudden: true, power: false, t: 0.42 },
+    'add-power': { w500: 25, w0: 10, sudden: false, power: true, t: 1 },
+    'tailwind-dies': { w500: -10, w0: 0, sudden: false, power: false, t: 1 },
+    'fly-the-approach': { w500: 25, w0: 10, sudden: false, power: false, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="wga-title" class="widget-stage">
+    <title id="wga-title">Side view of a final approach from 500 ft to the runway threshold, with the wind at each height drawn on the left as arrows. As the aeroplane descends through a decreasing headwind its airspeed falls and it sinks below the intended path; with the opposite shear the airspeed rises and it floats above the path</title>
+    <defs>
+      <marker id="wga-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-sky-soft)" rx="10"/>
+    <!-- height scale -->
+    <g font-size="11" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="628" y="64">500 ft</text><text x="628" y="148">300</text><text x="628" y="232">100</text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="2 4"><line x1="76" y1="60" x2="600" y2="60"/><line x1="76" y1="144" x2="600" y2="144"/><line x1="76" y1="228" x2="600" y2="228"/></g>
+    <!-- wind profile -->
+    <text x="40" y="24" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">wind</text>
+    <line x1="70" y1="40" x2="70" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="4 3" :d="profilePath"/>
+    <g stroke="var(--color-info)" stroke-width="2" marker-end="url(#wga-arrow)">
+      <line x1="70" :x2="arrowX(windAt(500))" :y1="Y(500)" :y2="Y(500)" x-show="Math.abs(windAt(500)) >= 1"/>
+      <line x1="70" :x2="arrowX(windAt(400))" :y1="Y(400)" :y2="Y(400)" x-show="Math.abs(windAt(400)) >= 1"/>
+      <line x1="70" :x2="arrowX(windAt(300))" :y1="Y(300) + 1" :y2="Y(300) + 1" x-show="Math.abs(windAt(300)) >= 1"/>
+      <line x1="70" :x2="arrowX(windAt(200))" :y1="Y(200)" :y2="Y(200)" x-show="Math.abs(windAt(200)) >= 1"/>
+      <line x1="70" :x2="arrowX(windAt(100))" :y1="Y(100)" :y2="Y(100)" x-show="Math.abs(windAt(100)) >= 1"/>
+      <line x1="70" :x2="arrowX(windAt(10))" :y1="Y(10)" :y2="Y(10)" x-show="Math.abs(windAt(10)) >= 1"/>
+    </g>
+    <!-- the wind at the aeroplane's height -->
+    <line x1="70" stroke="var(--color-brand)" stroke-width="3" marker-end="url(#wga-arrow)" :x2="arrowX(windHere)" :y1="Y(h)" :y2="Y(h)" x-show="Math.abs(windHere) >= 1"/>
+    <line x1="74" stroke="var(--color-brand)" stroke-width="1" stroke-dasharray="3 3" :x2="px - 30" :y1="Y(h)" :y2="Y(h)" x-show="!landedShort"/>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" x="78" :y="Y(h) - 6" x-text="windText(windHere)"></text>
+    <!-- intended approach path and the runway -->
+    <line x1="104" y1="60" x2="560" y2="270" stroke="var(--color-fg-faint)" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <rect x="0" y="270" width="640" height="30" fill="var(--color-surface)"/>
+    <line x1="0" y1="270" x2="640" y2="270" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="556" y="268" width="84" height="6" fill="var(--color-tarmac)"/>
+    <g stroke="var(--color-paint)" stroke-width="1.5"><line x1="562" y1="270" x2="562" y2="273"/><line x1="567" y1="270" x2="567" y2="273"/><line x1="572" y1="270" x2="572" y2="273"/></g>
+    <text x="598" y="290" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">runway</text>
+    <!-- the actual flight path so far -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="trail"/>
+    <g x-show="landedShort">
+      <path d="M-8 -8 L8 8 M8 -8 L-8 8" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" :transform="'translate(' + px + ' 270)'"/>
+      <text font-size="13" font-weight="600" fill="var(--color-bad-fg)" text-anchor="middle" :x="Math.min(px, 500)" y="292">lands short</text>
+    </g>
+    <!-- the aeroplane, same attitude and power all the way down -->
+    <g :transform="'translate(' + px + ' ' + (py - 10) + ')'">
+      <g transform="rotate(3) scale(0.5)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- airspeed tag -->
+    <g :transform="'translate(' + Math.min(px, 520) + ' ' + Math.max(py - 50, 14) + ')'">
+      <rect x="-40" y="-14" width="80" height="22" rx="6" stroke-width="1.5" :fill="iasState === 'bad' ? 'var(--color-bad-soft)' : iasState === 'warn' ? 'var(--color-warn-soft)' : 'var(--color-ok-soft)'" :stroke="iasState === 'bad' ? 'var(--color-bad)' : iasState === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+      <text y="2" font-size="13" font-weight="600" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="'IAS ' + fmt(ias) + ' kt'"></text>
+    </g>
+    <text x="96" y="24" font-size="12" class="num" fill="var(--color-fg-muted)" x-text="'groundspeed held at ' + gs + ' kt  ·  dashed: the intended path'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the approach'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="wga-t" min="0" max="1" step="0.005" x-model.number="t" @input="pause()" aria-label="Progress down final">
+    <span class="widget-clock" x-text="fmt(h) + ' ft'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wga-w500">Wind at 500 ft <output for="wga-w500" x-text="windText(w500)"></output></label>
+      <input type="range" id="wga-w500" min="-15" max="30" step="1" x-model.number="w500">
+    </div>
+    <div class="widget-control">
+      <label for="wga-w0">Wind at the surface <output for="wga-w0" x-text="windText(w0)"></output></label>
+      <input type="range" id="wga-w0" min="-10" max="30" step="1" x-model.number="w0">
+    </div>
+    <div class="widget-control">
+      <label for="wga-sudden" class="cursor-pointer"><span>Sudden shear at 300 ft (not a gradual gradient)</span>
+        <input type="checkbox" id="wga-sudden" x-model="sudden" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="wga-power" class="cursor-pointer"><span>Add power to hold 70 kt</span>
+        <input type="checkbox" id="wga-power" x-model="power" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Wind here</dt><dd class="widget-value" x-text="windText(windHere)"></dd></div>
+    <div class="widget-readout" :class="iasState"><dt class="widget-label">Airspeed (stall 48 kt)</dt><dd class="widget-value"><span x-text="fmt(ias) + ' kt, ' + fmt(margin) + ' above'"></span><span class="widget-flag bad" x-show="iasState === 'bad'">near stall</span></dd></div>
+    <div class="widget-readout" :class="pathState"><dt class="widget-label">Approach path</dt><dd class="widget-value" x-text="pathText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('top-of-final')" :aria-pressed="active === 'top-of-final'">500 ft</button>
+      <button type="button" @click="preset('worked-example')" :aria-pressed="active === 'worked-example'">Near the ground</button>
+      <button type="button" @click="preset('sudden-shear')" :aria-pressed="active === 'sudden-shear'">Sudden shear</button>
+      <button type="button" @click="preset('add-power')" :aria-pressed="active === 'add-power'">Add power</button>
+      <button type="button" @click="preset('tailwind-dies')" :aria-pressed="active === 'tailwind-dies'">Tailwind dies</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The wing flies on airspeed, and inertia holds the groundspeed for a moment, so a loss of headwind (or a gain of tailwind) on the way down comes straight off the airspeed: lift falls and the aeroplane sinks below the path with no change of attitude or power. The opposite shear makes it balloon and float. Like the lesson's worked example, the widget holds the groundspeed all the way down; a real aeroplane partly recovers its speed in a gradual gradient, and the sink and touchdown point here are illustrative.</p>
+  <details class="widget-try"><summary>Try it: 70 kt on final, 25 kt headwind at 500 ft, 10 kt at the surface. How much margin over the 48 kt stall is left near the ground?</summary><p>Press 500 ft, then Near the ground: the groundspeed stays 45 kt, the headwind drops to 10 kt, so the airspeed is 45 + 10 = 55 kt, only 7 kt above the stall instead of 22. Turn on Add power to see why you expect to need power late on final.</p></details>
+  <details class="widget-try"><summary>Try it: what does a 10 kt tailwind that dies away near the ground do?</summary><p>Press Tailwind dies: the groundspeed is held at 80 kt, so as the tailwind goes the airspeed rises from 70 to 80 kt. The aeroplane balloons above the path and floats: a long landing, the performance-increasing case.</p></details>
+</div>

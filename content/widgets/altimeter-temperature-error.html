@@ -1,0 +1,138 @@
+<div class="widget" x-data="widget({
+  ind: 4500, dev: -10, ridge: true, peak: 3600,
+  // rule of thumb (PAKC 2.3): about 4% of the height above the QNH station per 10 degrees off ISA;
+  // the station is near sea level, so the height above it is the indicated altitude
+  get err() { return Math.round(this.ind * 0.04 * this.dev / 10) },
+  get trueAlt() { return this.ind + this.err },
+  get thought() { return this.ind - this.peak },
+  get real() { return this.trueAlt - this.peak },
+  get pct() { return this.fmt(Math.abs(this.dev) * 0.4, Math.abs(this.dev) % 5 === 0 ? 0 : 1) },
+  get oat() { return this.isaTemp(this.ind) + this.dev },
+  get clearState() { return this.real <= 0 ? 'bad' : this.real < this.thought - 0.5 ? 'warn' : 'ok' },
+  // picture: 0..11,000 ft up y 300..40; today's levels sit at (1 + 0.004 x deviation) times their ISA height
+  Y(ft) { return 300 - ft * 260 / 11000 },
+  k() { return 1 + 0.004 * this.dev },
+  lv(n) { return 'M136 ' + this.Y(n * 1000).toFixed(1) + ' L176 ' + this.Y(n * 1000 * this.k()).toFixed(1) + ' H620' },
+  get yInd() { return this.Y(this.ind) },
+  get yTrue() { return this.Y(this.trueAlt) },
+  get caption() {
+    const i = this.fmt(this.ind) + ' ft', t = this.fmt(this.trueAlt) + ' ft';
+    if (this.dev === 0) return 'On an ISA day the pressure levels sit exactly where the altimeter\'s calibration assumes, so with the correct QNH set the altimeter shows your true altitude: ' + i + '.';
+    if (this.dev < 0) return 'Cold air is denser and more compact, so the pressure falls off faster with height and the levels are squeezed together. The level your altimeter calls ' + i + ' sits physically lower, at about ' + t + ': ' + this.fmt(this.ind) + ' × 4% × ' + Math.abs(this.dev) + '/10 = ' + this.fmt(-this.err) + ' ft. From high to low, or hot to cold, look out below.' + (this.ridge && this.thought > 0 ? ' Over the range you have ' + this.fmt(this.real) + ' ft, not ' + this.fmt(this.thought) + '.' : '');
+    return 'Warm air stretches the pressure levels apart, so you are higher than indicated: about ' + t + ' (' + this.fmt(this.ind) + ' × 4% × ' + this.dev + '/10 = ' + this.fmt(this.err) + ' ft). On a hot day the error is in the safe direction.';
+  },
+  presets: {
+    'stirling-cold-morning': { ind: 4500, dev: -10, ridge: true },
+    'summer-afternoon-warm': { ind: 6500, dev: 15, ridge: false },
+    'albany-june': { ind: 7500, dev: -5, ridge: false },
+    'isa-day': { ind: 4500, dev: 0, ridge: true },
+  },
+})">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="ate-title" class="widget-stage">
+    <title id="ate-title">The ISA column of 1,000 ft pressure levels beside today's air, where cold squeezes the levels together and warmth stretches them apart; the aeroplane flies along the level its altimeter reads, so its true altitude is lower in cold air and higher in warm air, shown over a ridge with peaks of about 3,600 ft</title>
+    <defs>
+      <marker id="ate-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface)"/>
+    <rect x="176" y="30" width="452" height="270" fill="var(--color-info-soft)" :fill-opacity="dev < 0 ? 0.25 + 0.03 * -dev : 0"/>
+    <rect x="176" y="30" width="452" height="270" fill="var(--color-warn-soft)" :fill-opacity="dev > 0 ? 0.25 + 0.03 * dev : 0"/>
+    <text x="101" y="18" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">ISA</text>
+    <text x="398" y="18" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)"
+      x-text="dev === 0 ? 'today: ISA, levels where the altimeter expects' : 'today: ISA ' + sign(dev) + ' °C, levels ' + (dev < 0 ? 'squeezed together' : 'stretched apart')"></text>
+
+    <!-- pressure levels every 1,000 ft: ISA heights on the left, today's heights on the right -->
+    <g fill="none" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="66" x2="136" y1="276.4" y2="276.4"/><path :d="lv(1)"/>
+      <line x1="66" x2="136" y1="252.7" y2="252.7"/><path :d="lv(2)"/>
+      <line x1="66" x2="136" y1="229.1" y2="229.1"/><path :d="lv(3)"/>
+      <line x1="66" x2="136" y1="205.5" y2="205.5"/><path :d="lv(4)"/>
+      <line x1="66" x2="136" y1="181.8" y2="181.8"/><path :d="lv(5)"/>
+      <line x1="66" x2="136" y1="158.2" y2="158.2"/><path :d="lv(6)"/>
+      <line x1="66" x2="136" y1="134.5" y2="134.5"/><path :d="lv(7)"/>
+      <line x1="66" x2="136" y1="110.9" y2="110.9"/><path :d="lv(8)"/>
+      <line x1="66" x2="136" y1="87.3" y2="87.3"/><path :d="lv(9)"/>
+      <line x1="66" x2="136" y1="63.6" y2="63.6"/><path :d="lv(10)"/>
+    </g>
+    <g font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">
+      <text x="60" y="280.4">1,000</text><text x="60" y="256.7">2,000</text><text x="60" y="233.1">3,000</text><text x="60" y="209.5">4,000</text><text x="60" y="185.8">5,000</text><text x="60" y="162.2">6,000</text><text x="60" y="138.5">7,000</text><text x="60" y="114.9">8,000</text><text x="60" y="91.3">9,000</text><text x="60" y="67.6">10,000</text>
+    </g>
+
+    <!-- ground, the QNH station and the ridge -->
+    <rect x="0" y="300" width="640" height="60" fill="var(--color-surface-2)"/>
+    <line x1="0" y1="300" x2="640" y2="300" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <text x="60" y="318" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">sea level</text>
+    <rect x="198" y="290" width="16" height="10" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <line x1="206" y1="290" x2="206" y2="278" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <circle cx="206" cy="277" r="2.5" fill="var(--color-fg-muted)"/>
+    <text x="206" y="320" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">QNH station</text>
+    <text x="206" y="336" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">near sea level</text>
+    <g x-show="ridge">
+      <path d="M290 300 L325 264.5 L350 242.1 L380 214.9 L402 229.3 L430 235.7 L455 225.5 L480 214.9 L505 235.5 L535 264.5 L565 300 Z" fill="var(--color-line)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+      <text x="428" y="320" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">Stirling Range: peaks about 3,600 ft</text>
+      <text x="428" y="344" font-size="13" font-weight="600" text-anchor="middle"
+        :fill="clearState === 'bad' ? 'var(--color-bad-fg)' : clearState === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'"
+        x-text="real <= 0 ? 'below the peaks: ' + fmt(-real) + ' ft under them' : 'clearance ' + fmt(real) + ' ft' + (err !== 0 && thought > 0 ? ' (you think ' + fmt(thought) + ' ft)' : '')"></text>
+      <!-- clearance over the peak, from the peak to the aeroplane's true level -->
+      <line x1="480" x2="480" y1="214.9" stroke-width="2" :y2="yTrue" x-show="Math.abs(yTrue - 214.9) > 10"
+        :stroke="clearState === 'bad' ? 'var(--color-bad)' : clearState === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'" marker-start="url(#ate-arrow)" marker-end="url(#ate-arrow)"/>
+    </g>
+
+    <!-- where you think you are: the indicated altitude in ISA air -->
+    <line x1="176" x2="536" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="6 4" :y1="yInd" :y2="yInd" x-show="err !== 0"/>
+    <!-- the aeroplane's pressure level: ISA height on the left, today's height on the right -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round" :d="'M66 ' + yInd + ' H136 L176 ' + yTrue + ' H536'"/>
+    <text x="184" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="err !== 0"
+      :y="dev < 0 ? yInd - 7 : yInd + 16" x-text="'altimeter shows ' + fmt(ind) + ' ft'"></text>
+    <text x="184" font-size="13" font-weight="700" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      :y="dev < 0 ? yTrue + 17 : yTrue - 7"
+      x-text="err === 0 ? 'altimeter shows ' + fmt(ind) + ' ft = true altitude' : 'really at ' + fmt(trueAlt) + ' ft'"></text>
+    <!-- aeroplane (tools/diagrams/plane.py: side, scale 0.5, colour brand) -->
+    <g :transform="'translate(580 ' + yTrue + ')'"><g transform="translate(0 0) rotate(0) scale(0.5)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-brand)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-brand)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ate-ind">Indicated altitude (correct QNH set) <output for="ate-ind" x-text="fmt(ind) + ' ft'"></output></label>
+      <input type="range" id="ate-ind" min="0" max="10000" step="100" x-model.number="ind">
+    </div>
+    <div class="widget-control">
+      <label for="ate-dev">Temperature against ISA <output for="ate-dev" x-text="dev === 0 ? 'ISA' : 'ISA ' + sign(dev) + ' °C'"></output></label>
+      <input type="range" id="ate-dev" min="-20" max="20" step="1" x-model.number="dev">
+    </div>
+    <div class="widget-control">
+      <label for="ate-ridge" class="cursor-pointer"><span>Show the Stirling Range (peaks about 3,600 ft)</span>
+        <input type="checkbox" id="ate-ridge" x-model="ridge" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="err < 0 ? 'warn' : ''">
+      <dt class="widget-label">Error</dt>
+      <dd class="widget-value"><span x-text="err === 0 ? 'None on an ISA day' : fmt(Math.abs(err)) + ' ft ' + (err < 0 ? 'lower' : 'higher') + ' than indicated (' + pct + '% of ' + fmt(ind) + ')'"></span><span class="widget-flag warn" x-show="err < 0">look out below</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">True altitude</dt>
+      <dd class="widget-value" x-text="'about ' + fmt(trueAlt) + ' ft'"></dd>
+    </div>
+    <div class="widget-readout" x-show="ridge" :class="thought <= 0 ? 'bad' : clearState">
+      <dt class="widget-label">Clearance over the 3,600 ft peaks</dt>
+      <dd class="widget-value"><span x-text="real <= 0 ? 'None: ' + fmt(-real) + ' ft below the peaks' + (thought > 0 ? ' (you think ' + fmt(thought) + ' ft above)' : '') : fmt(real) + ' ft' + (err !== 0 ? ' (you think ' + fmt(thought) + ' ft)' : '')"></span><span class="widget-flag bad" x-show="real <= 0">below the peaks</span><span class="widget-flag warn" x-show="real > 0 && clearState === 'warn'">less than you think</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Outside air at your level</dt>
+      <dd class="widget-value" x-text="'about ' + fmt(oat) + ' °C (ISA there ' + fmt(isaTemp(ind)) + ' °C)'"></dd>
+    </div>
+  </dl>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('stirling-cold-morning')" :aria-pressed="active === 'stirling-cold-morning'">Stirling Range, cold morning</button>
+      <button type="button" @click="preset('summer-afternoon-warm')" :aria-pressed="active === 'summer-afternoon-warm'">Summer afternoon, ISA +15</button>
+      <button type="button" @click="preset('albany-june')" :aria-pressed="active === 'albany-june'">To Albany in June</button>
+      <button type="button" @click="preset('isa-day')" :aria-pressed="active === 'isa-day'">ISA day</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The altimeter is calibrated with the ISA, so even with the correct QNH it puts you on a pressure level, and cold air squeezes those levels down: you are lower than indicated. Hot to cold, look out below. The rule of thumb is about 4% of the height above the QNH station for every 10 °C off ISA (here the station is near sea level), so the error is small near the ground and grows with height; the levels are drawn to that rule.</p>
+  <details class="widget-try"><summary>Try it: a winter morning 10 °C colder than ISA, indicating 4,500 ft over the Stirling Range. How much clearance do you really have over the 3,600 ft peaks?</summary><p>Press Stirling Range, cold morning: 4,500 × 4% × 10/10 = 180 ft, and cold means lower, so you are at about 4,320 ft. The 900 ft you think you have is nearer 720 ft, with a correctly set, serviceable altimeter.</p></details>
+  <details class="widget-try"><summary>Try it: a summer afternoon 15 °C warmer than ISA, indicating 6,500 ft. Roughly what is your true altitude?</summary><p>Press Summer afternoon: 6,500 × 4% × 15/10 = 390 ft. Warm air stretches the levels apart, so you are higher than indicated, at about 6,890 ft: on a hot day the error is in the safe direction.</p></details>
+</div>

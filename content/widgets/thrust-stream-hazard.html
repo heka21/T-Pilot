@@ -1,0 +1,112 @@
+<div class="widget" x-data="widget({
+  power: 'idle', tx: 536, ty: 150,
+  // BAKC 4.5: the hazard grows with power (idle < breakaway, considerably more < take-off, greatest) and fades gradually
+  // with distance as the stream widens and slows; the push goes with the square of the stream speed. Illustrative model,
+  // calibrated to the lesson's worked example: a 20 kt stream reaching you four lengths back while it taxies, 30 kt when it
+  // applies more power, 40 kt at half the distance. Stream speed ∝ 1 / distance, spread sideways as it goes.
+  k: { idle: 80, breakaway: 120, takeoff: 300 },
+  get kk() { return this.k[this.power] },
+  // picture: the propellers at x 56 on the centreline y 150; one aircraft length = 120 px
+  sp(d) { return 26 + 22 * d },
+  vAt(x, y) { const d = Math.max(0.6, (x - 56) / 120); return this.kk / d * Math.exp(-(((y - 150) / this.sp(d)) ** 2)) },
+  get d() { return (this.tx - 56) / 120 },
+  get side() { return (this.ty - 150) / 120 },
+  get v() { return this.vAt(this.tx, this.ty) },
+  get push() { return (this.v / 20) ** 2 },
+  get level() { return this.v >= 40 ? 'bad' : this.v >= 20 ? 'warn' : this.v >= 8 ? '' : 'ok' },
+  get levelText() { return this.v >= 40 ? 'severe: can flip or swing you' : this.v >= 20 ? 'strong: hold the controls' : this.v >= 8 ? 'moderate' : 'little' },
+  contour(v0) {
+    const top = [], bot = [];
+    for (let i = 0; i <= 90; i++) {
+      const d = 0.2 + i * 0.075, a = this.kk / (v0 * Math.max(0.6, d));
+      if (a <= 1) break;
+      const hw = Math.min(this.sp(d) * Math.sqrt(Math.log(a)), 14 + d * 200), x = 56 + d * 120;
+      if (x > 660) break;
+      top.push([x, 150 - hw]); bot.unshift([x, 150 + hw]);
+    }
+    return top.length > 1 ? this.path([[56, 150 - 14]].concat(top, bot, [[56, 150 + 14]])) + ' Z' : 'M0 0';
+  },
+  get c40() { return this.contour(40) },
+  get c20() { return this.contour(20) },
+  get c8() { return this.contour(8) },
+  get caption() {
+    if (this.power === 'takeoff') return 'Take-off power: the biggest stream it will ever make, and still strong a long way back. Hold well clear, or to the side of its tail and angled so the blast cannot catch a wing.';
+    if (this.power === 'breakaway') return 'Breakaway thrust: to start moving from rest (or turn) it needs considerably more than idle, so the stream reaching you is faster, and the push goes with its speed squared.';
+    if (this.d < 2.6 && Math.abs(this.side) < 0.6) return 'Closer in, the stream has had less room to spread and slow: half the distance, about twice the speed, four times the push.';
+    return 'At idle the stream is at its smallest, but it is not zero. It widens and slows gradually with distance; drag your aeroplane to see where it is gentle.';
+  },
+  presets: {
+    'taxiing-20kt': { power: 'idle', tx: 536, ty: 150 },
+    'more-power-30kt': { power: 'breakaway', tx: 536, ty: 150 },
+    'closer-40kt': { power: 'idle', tx: 296, ty: 150 },
+    'take-off-power': { power: 'takeoff', tx: 536, ty: 150 },
+    'to-the-side': { power: 'breakaway', tx: 536, ty: 40 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="tsh-title" class="widget-stage">
+    <title id="tsh-title">Plan view of an apron behind a twin turboprop: the stream behind it, longest and strongest at take-off power, and your light aeroplane, which you can drag to any spot to see the stream speed and the push on it</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)"/>
+    <!-- distance scale in aircraft lengths from the propellers -->
+    <g stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="176" y1="16" x2="176" y2="284"/><line x1="296" y1="16" x2="296" y2="284"/><line x1="416" y1="16" x2="416" y2="284"/><line x1="536" y1="16" x2="536" y2="284"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="176" y="296">1</text><text x="296" y="296">2</text><text x="416" y="296">3</text><text x="536" y="296">4 lengths back</text>
+    </g>
+    <!-- the stream: faint where gentle, strong close behind -->
+    <path :d="c8" fill="var(--color-warn)" fill-opacity="0.12" stroke="var(--color-warn)" stroke-width="1" stroke-dasharray="4 3"/>
+    <path :d="c20" fill="var(--color-warn)" fill-opacity="0.22" stroke="var(--color-warn)" stroke-width="1.25"/>
+    <path :d="c40" fill="var(--color-bad)" fill-opacity="0.25" stroke="var(--color-bad)" stroke-width="1.5"/>
+    <!-- the turboprop, nose left, seen from above -->
+    <g stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linejoin="round">
+      <path d="M62 76 L78 76 L78 224 L62 224 Z"/>
+      <path d="M18 150 C18 143 24 140 34 140 L124 142 L140 147 L140 153 L124 158 L34 160 C24 160 18 157 18 150 Z"/>
+      <path d="M124 130 L138 128 L138 172 L124 170 Z"/>
+      <rect x="50" y="112" width="34" height="11" rx="5"/><rect x="50" y="177" width="34" height="11" rx="5"/>
+    </g>
+    <g stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"><line x1="48" y1="102" x2="48" y2="133"/><line x1="48" y1="167" x2="48" y2="198"/></g>
+    <circle cx="96" cy="146" r="4" fill="var(--color-bad)"/>
+    <text font-size="13" font-weight="700" fill="var(--color-fg)" x="16" y="26" x-text="(power === 'idle' ? 'Idle' : power === 'breakaway' ? 'Breakaway thrust' : 'Take-off power') + ' · beacon on (red dot)'"></text>
+    <!-- you: drag anywhere behind it -->
+    <g style="touch-action: none; cursor: grab" @pointerdown="drag($event, (p) => { tx = Math.round(clamp(p.x, 176, 610)); ty = Math.round(clamp(p.y, 30, 270)) })">
+      <circle r="30" fill="var(--color-brand)" fill-opacity="0.12" stroke="var(--color-brand)" stroke-width="2" :cx="tx" :cy="ty"/>
+      <!-- python -m tools.diagrams.plane top, scale 0.55, heading 270 -->
+      <g :transform="'translate(' + tx + ' ' + ty + ')'"><g transform="translate(0 0) rotate(180) scale(0.55)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    </g>
+    <text font-size="12" font-weight="700" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" class="num" :fill="level === 'bad' ? 'var(--color-bad-fg)' : level === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-fg)'" :x="tx" :y="ty > 220 ? ty - 38 : ty + 46" x-text="'you: ' + fmt(v) + ' kt'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">Power of the aircraft ahead</span>
+      <span class="widget-presets">
+        <button type="button" @click="power = 'idle'" :aria-pressed="power === 'idle'">Idle</button>
+        <button type="button" @click="power = 'breakaway'" :aria-pressed="power === 'breakaway'">Breakaway</button>
+        <button type="button" @click="power = 'takeoff'" :aria-pressed="power === 'takeoff'">Take-off</button>
+      </span>
+    </div>
+    <div class="widget-control">
+      <label for="tsh-d">Your distance behind its propellers <output for="tsh-d" x-text="fmt(d, 1) + ' lengths'"></output></label>
+      <input type="range" id="tsh-d" min="1" max="4.5" step="0.1" :value="d" @input="tx = Math.round(56 + 120 * Number($event.target.value))">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="level"><dt class="widget-label">Stream reaching you</dt><dd class="widget-value" x-text="fmt(v) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="level"><dt class="widget-label">Push vs a 20 kt stream</dt><dd class="widget-value" x-text="'× ' + fmt(push, push < 10 ? 2 : 0)"></dd></div>
+    <div class="widget-readout" :class="level"><dt class="widget-label">Hazard</dt><dd class="widget-value text-sm" x-text="levelText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('taxiing-20kt')" :aria-pressed="active === 'taxiing-20kt'">Taxiing: 20 kt</button>
+      <button type="button" @click="preset('more-power-30kt')" :aria-pressed="active === 'more-power-30kt'">More power: 30 kt</button>
+      <button type="button" @click="preset('closer-40kt')" :aria-pressed="active === 'closer-40kt'">Closer: 40 kt</button>
+      <button type="button" @click="preset('take-off-power')" :aria-pressed="active === 'take-off-power'">Take-off power</button>
+      <button type="button" @click="preset('to-the-side')" :aria-pressed="active === 'to-the-side'">To the side</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> More power, more hazard; more distance, less, but only gradually, because the stream widens and slows as it goes. The push on your aeroplane goes with the stream speed squared, so 50% faster is more than twice the push and twice as fast is four times. Off to the side of the tail the stream is far weaker. The speeds, distances and shapes are an illustrative model built on the lesson's worked example; check the current AIP for any specified distances.</p>
+  <details class="widget-try"><summary>Try it: the stream reaching you rises from 20 kt to 30 kt. How much harder does it push?</summary><p>Press Taxiing: 20 kt, then More power: 30 kt: (30 ÷ 20)² = 2.25 times. Press Closer: 40 kt: (40 ÷ 20)² = 4 times. Your tail and wings feel the push, not the speed.</p></details>
+  <details class="widget-try"><summary>Try it: where do you wait at the holding point behind it?</summary><p>Press Take-off power and drag your aeroplane: directly behind the tail the stream is strong even four lengths back. Press To the side: off the line of its tail, and as far back as the taxiway allows, the stream is a fraction of that.</p></details>
+</div>

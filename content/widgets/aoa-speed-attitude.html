@@ -1,0 +1,129 @@
+<div class="widget" x-data="widget({
+  v: 70, w: 1000, flap: false,
+  // the lift curves of lift-curve-flap (illustrative shapes, critical angle about 16° flap up), and the lesson's
+  // calibration: about 4° (CL 0.6) at 70 kt at 1,000 kg, so CL needed = 0.6 × 70² × (W / 1000) / V² in level flight
+  clUp(a) { if (a <= 12) return 0.1 * (a + 2); if (a <= 16) { const t = (a - 12) / 4; return 1.4 + 0.1 * (1 - (1 - t) ** 2) } return 1.5 - 0.055 * (a - 16) ** 1.35 },
+  clDn(a) { if (a <= 10.5) return 0.1 * (a + 6); if (a <= 14.5) { const t = (a - 10.5) / 4; return 1.65 + 0.25 * (1 - (1 - t) ** 2) } return 1.9 - 0.07 * (a - 14.5) ** 1.35 },
+  cl(a) { return this.flap ? this.clDn(a) : this.clUp(a) },
+  get crit() { return this.flap ? 14.5 : 16 },
+  get clMax() { return this.flap ? 1.9 : 1.5 },
+  k: 0.6 * 70 * 70,
+  rig: 1.5, // rigging angle: chord above the fuselage datum (illustrative)
+  clNeed(V) { return this.k * (this.w / 1000) / (V * V) },
+  aoaFor(c) { if (c > this.clMax) return null; let lo = this.flap ? -6 : -2, hi = this.crit; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (this.cl(m) < c) lo = m; else hi = m } return lo },
+  get vs() { return Math.sqrt(this.k * (this.w / 1000) / this.clMax) },
+  get vbg() { return 70 * Math.sqrt(this.w / 1000) },
+  get stalled() { return this.v < this.vs - 0.05 },
+  get aoa() { const a = this.aoaFor(this.clNeed(this.v)); return a === null ? this.crit : a },
+  get att() { return this.aoa - this.rig },
+  get attText() { const a = this.att; return Math.abs(a) < 0.25 ? 'level' : this.fmt(Math.abs(a), 1) + '° nose ' + (a > 0 ? 'up' : 'down') },
+  get aoaState() { return this.stalled ? 'bad' : this.aoa > this.crit - 3 ? 'warn' : Math.abs(this.aoa - 4) < 0.6 && !this.flap ? 'ok' : '' },
+  rad(d) { return d * Math.PI / 180 },
+  // the leading edge (side view, scale 2.4, CG at 230 170) after pitching
+  get le() { const x = 18.7, y = -19, c = Math.cos(this.rad(-this.att)), s = Math.sin(this.rad(-this.att)); return { x: 230 + x * c - y * s, y: 170 + x * s + y * c } },
+  get arcEnd() { return { x: this.le.x + 70 * Math.cos(this.rad(this.aoa)), y: this.le.y - 70 * Math.sin(this.rad(this.aoa)) } },
+  // chart: 35..130 kt across x 446..624, 0..18° up y 250..56
+  X(V) { return 446 + (V - 35) / 95 * 178 },
+  Y(a) { return 250 - a / 18 * 194 },
+  get curvePath() { const pts = []; const v0 = Math.max(35, this.vs); for (let i = 0; i <= 40; i++) { const V = v0 + (130 - v0) * i / 40; const a = this.aoaFor(this.clNeed(V)); if (a !== null) pts.push([this.X(V), this.Y(Math.max(0, a))]) } return this.path(pts) },
+  get dot() { return { x: this.X(Math.max(35, this.v)), y: this.Y(Math.max(0, this.aoa)) } },
+  get caption() {
+    if (this.stalled) return 'Below about ' + this.fmt(this.vs) + ' kt no angle of attack can make enough lift to hold level flight at this weight: the angle needed would be past the critical angle, so the wing stalls.';
+    let s = 'Level at ' + this.v + ' kt and ' + this.fmt(this.w) + ' kg the wing needs about ' + this.fmt(this.aoa, 1) + '° of angle of attack, so the attitude is ' + this.attText + '.';
+    if (!this.flap && Math.abs(this.aoa - 4) < 0.6) s += ' That is the best L/D angle: this is the best glide speed for this weight.';
+    else if (this.flap) s += ' With flap the same lift comes at a smaller angle, so the nose is lower than it would be clean.';
+    else if (this.aoa > 12) s += ' Slow and nose high: the angle is closing on the critical angle, about 16°.';
+    return s;
+  },
+  presets: {
+    'best-glide-1000kg': { v: 70, w: 1000, flap: false },
+    'best-glide-810kg': { v: 63, w: 810, flap: false },
+    'slower-90kt': { v: 90, w: 1000, flap: false },
+    'fast-110kt': { v: 110, w: 1000, flap: false },
+    'approaching-the-stall': { v: 45, w: 1000, flap: false },
+    'flap-same-speed': { v: 60, w: 1000, flap: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="asa-title" class="widget-stage">
+    <title id="asa-title">An aeroplane in level flight at the chosen airspeed: the relative airflow comes horizontally, the chord line sits at the angle of attack needed, and the nose attitude follows; beside it, the angle of attack needed against airspeed, with the best L/D angle of about 4 degrees and the critical angle of about 16 degrees</title>
+    <defs>
+      <marker id="asa-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="430" height="300" fill="var(--color-sky-soft)"/>
+    <line x1="0" y1="170" x2="430" y2="170" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="420" y="186" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">horizon</text>
+    <!-- relative airflow, horizontal in level flight -->
+    <g stroke="var(--color-sky-fg)" stroke-width="1.5" stroke-linecap="round" marker-end="url(#asa-arrow)">
+      <line x1="420" y1="56" x2="372" y2="56"/><line x1="420" y1="252" x2="372" y2="252"/>
+    </g>
+    <text x="420" y="40" font-size="12" text-anchor="end" fill="var(--color-sky-fg)">relative airflow</text>
+    <!-- the aeroplane, pitched by its attitude -->
+    <g :transform="'translate(230 170) rotate(' + (-att).toFixed(2) + ')'">
+      <!-- python -m tools.diagrams.plane side, scale 2.4, no gear -->
+      <g transform="translate(0 0) rotate(0) scale(2.4)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      <!-- chord line, set at the rigging angle to the fuselage -->
+      <line x1="-130" y1="-19" x2="120" y2="-19" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="6 4" :transform="'rotate(' + (-rig) + ' 0 -19)'"/>
+    </g>
+    <!-- angle of attack between the airflow line and the chord -->
+    <line stroke="var(--color-fg-faint)" stroke-width="1" :x1="le.x" :y1="le.y" :x2="le.x + 96" :y2="le.y"/>
+    <path fill="none" stroke-width="2" :stroke="stalled ? 'var(--color-bad)' : 'var(--color-brand)'"
+      :d="'M' + (le.x + 70).toFixed(1) + ' ' + le.y.toFixed(1) + ' A70 70 0 0 0 ' + arcEnd.x.toFixed(1) + ' ' + arcEnd.y.toFixed(1)"/>
+    <text font-size="14" font-weight="600" class="num" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :fill="stalled ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)'" :x="le.x + 80" :y="Math.min(le.y - 6, arcEnd.y + 4)" x-text="'α ' + fmt(aoa, 1) + '°'"></text>
+    <text x="16" y="28" font-size="14" font-weight="600" fill="var(--color-fg)" class="num" x-text="'attitude ' + attText"></text>
+    <text x="16" y="48" font-size="12" fill="var(--color-brand-fg)">dashed: chord line</text>
+    <text x="16" y="280" font-size="13" font-weight="600" fill="var(--color-bad-fg)" x-show="stalled">cannot hold level: stalled</text>
+    <!-- chart: angle of attack needed against airspeed -->
+    <rect x="430" y="0" width="210" height="300" fill="var(--color-surface)"/>
+    <line x1="430" y1="0" x2="430" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="535" y="24" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">angle of attack for level flight</text>
+    <line x1="446" y1="250" x2="624" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="446" y1="56" x2="446" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="446" x2="624" :y1="Y(crit)" :y2="Y(crit)" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="620" font-size="12" text-anchor="end" fill="var(--color-bad-fg)" :y="Y(crit) - 6" x-text="'critical ≈ ' + (flap ? '14.5°' : '16°') + ': stall'"></text>
+    <line x1="446" x2="624" :y1="Y(4)" :y2="Y(4)" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="620" font-size="12" text-anchor="end" fill="var(--color-ok-fg)" :y="Y(4) - 6">best L/D ≈ 4°</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="curvePath"/>
+    <circle r="6" fill="var(--color-surface)" stroke-width="3" :stroke="stalled ? 'var(--color-bad)' : 'var(--color-brand)'" :cx="dot.x" :cy="dot.y"/>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="465" y="266">45</text><text x="521" y="266">75</text><text x="577" y="266">105</text>
+    </g>
+    <text x="535" y="286" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">airspeed (kt)</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="asa-v">Airspeed (level flight) <output for="asa-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="asa-v" min="38" max="130" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="asa-w">Weight <output for="asa-w" x-text="fmt(w) + ' kg'"></output></label>
+      <input type="range" id="asa-w" min="810" max="1000" step="10" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="asa-flap" class="cursor-pointer"><span>Flap down</span>
+        <input type="checkbox" id="asa-flap" x-model="flap" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="aoaState"><dt class="widget-label">Angle of attack</dt><dd class="widget-value"><span x-text="stalled ? 'past ' + crit + '°' : fmt(aoa, 1) + '°'"></span><span class="widget-flag bad" x-show="stalled">stalled</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Nose attitude</dt><dd class="widget-value" x-text="attText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Best glide speed (4°) at this weight</dt><dd class="widget-value" x-text="'about ' + fmt(vbg) + ' kt'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label" x-text="'Stall speed (' + (flap ? '14.5' : '16') + '°) at this weight'"></dt><dd class="widget-value" x-text="'about ' + fmt(vs) + ' kt' + (flap ? ', flap down' : '')"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('best-glide-1000kg')" :aria-pressed="active === 'best-glide-1000kg'">70 kt, 1,000 kg</button>
+      <button type="button" @click="preset('best-glide-810kg')" :aria-pressed="active === 'best-glide-810kg'">63 kt, 810 kg</button>
+      <button type="button" @click="preset('slower-90kt')" :aria-pressed="active === 'slower-90kt'">90 kt</button>
+      <button type="button" @click="preset('fast-110kt')" :aria-pressed="active === 'fast-110kt'">110 kt</button>
+      <button type="button" @click="preset('approaching-the-stall')" :aria-pressed="active === 'approaching-the-stall'">Near the stall</button>
+      <button type="button" @click="preset('flap-same-speed')" :aria-pressed="active === 'flap-same-speed'">60 kt with flap</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In level flight the relative airflow is horizontal, so each airspeed needs exactly one angle of attack, and the nose attitude is that angle less the small fixed rigging angle: fast, nose low; slow, nose high. The angles belong to the wing: about 4° gives the best glide and about 16° the stall at any weight, but a lighter aeroplane reaches them at lower speeds (70 kt becomes about 63 kt at 810 kg). Flap gives the same lift at a smaller angle, so the nose sits lower. The link holds only in level flight. The lift curve and the 1.5° rigging angle are illustrative, and so are the stall speeds that fall out of them (about 44 kt clean at 1,000 kg here, lower than the 50 to 55 kt book figures RBKA 3.6 uses): take the 4° and 16° angles and the square-root weight rule from this widget, and the stall speeds from the lesson.</p>
+  <details class="widget-try"><summary>Try it: level at 90 kt and then at 110 kt, same weight. Which needs the lower nose?</summary><p>Press 90 kt, then 110 kt: the angle of attack falls from about 1.6° to about 0.4°, so the nose comes down by more than a degree. At the higher speed the wing makes its lift at a smaller angle.</p></details>
+  <details class="widget-try"><summary>Try it: solo at 810 kg, what speed gives the best glide angle?</summary><p>Press 63 kt, 810 kg: the angle of attack is back at 4°. 70 × √0.81 = 70 × 0.9 = 63 kt. The angle did not change; the speed did.</p></details>
+</div>

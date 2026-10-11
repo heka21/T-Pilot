@@ -1,0 +1,134 @@
+<div class="widget" x-data="timeline({
+  duration: 12, loop: false,
+  hillD: 1.2, hillH: 600,
+  // BAKC 4.3's opening picture: after one minute the first aeroplane is 700 ft up and 1.5 NM along (700 fpm at 90 kt
+  // over the ground), the second 650 ft up and 1 NM along (650 fpm at 60 kt); a 600 ft hill 1.2 NM from the runway.
+  // Still air; the clock runs 0 to 2 minutes.
+  rocA: 700, gsA: 90, rocB: 650, gsB: 60,
+  get min() { return 2 * this.t },
+  get gradA() { return this.rocA * 60 / this.gsA },
+  get gradB() { return this.rocB * 60 / this.gsB },
+  get tHillA() { return this.hillD / (this.gsA / 60) },
+  get tHillB() { return this.hillD / (this.gsB / 60) },
+  get hAtHillA() { return this.gradA * this.hillD },
+  get hAtHillB() { return this.gradB * this.hillD },
+  get clearA() { return this.hAtHillA - this.hillH },
+  get clearB() { return this.hAtHillB - this.hillH },
+  // an aeroplane too low at the hill is drawn on as a faded ghost (it could not really have gone that way)
+  get a() { const nm = this.gsA / 60 * this.min; return { nm, h: this.gradA * nm } },
+  get b() { const nm = this.gsB / 60 * this.min; return { nm, h: this.gradB * nm } },
+  get stuckA() { return this.clearA < 0 && this.min >= this.tHillA },
+  get stuckB() { return this.clearB < 0 && this.min >= this.tHillB },
+  // picture: 0-3 NM across x 50..610 (186.7 px per NM); 0-1,400 ft up y 262..42
+  X(nm) { return 50 + nm * 186.67 },
+  Y(ft) { return 262 - ft * 0.157 },
+  ang(grad) { return -Math.atan(grad * 0.157 / 186.67) * 180 / Math.PI },
+  get hill() { const x = this.X(this.hillD), y = this.Y(this.hillH), w = 70; return 'M' + (x - w * 1.4) + ' 262 C' + (x - w) + ' 262 ' + (x - w * 0.45) + ' ' + y + ' ' + x + ' ' + y + ' C' + (x + w * 0.45) + ' ' + y + ' ' + (x + w) + ' 262 ' + (x + w * 1.4) + ' 262 Z' },
+  trail(p, grad) { return 'M' + this.X(0) + ' ' + this.Y(0) + ' L' + this.X(p.nm).toFixed(1) + ' ' + this.Y(grad * p.nm).toFixed(1) },
+  get steps() {
+    const s = [{ at: 0, label: 'Lift-off' }];
+    if (this.tHillA <= 2) s.push({ at: this.tHillA / 2, label: 'First reaches the hill' });
+    s.push({ at: 0.5, label: 'One minute' });
+    if (this.tHillB <= 2) s.push({ at: this.tHillB / 2, label: 'Second reaches the hill' });
+    return s.sort((p, q) => p.at - q.at);
+  },
+  get caption() {
+    if (this.min < 0.05) return 'Two aeroplanes leave the same runway. The first climbs at 700 fpm and covers 90 kt over the ground; the second climbs at 650 fpm but covers only 60 kt.';
+    if (Math.abs(this.min - 1) < 0.02) return 'One minute: the first is ' + this.rocA + ' ft up and 1.5 NM along, the second ' + this.rocB + ' ft up and 1 NM along. Rate goes with time, angle with distance.';
+    if (this.stuckA && !this.stuckB && this.min < this.tHillB) return 'The first aeroplane reaches the hill first, but at only ' + this.fmt(this.hAtHillA) + ' ft: it is climbing faster per minute, yet its path over the ground is flatter.';
+    if (this.min < 1 - 0.01) return 'Every minute the first aeroplane gains more height (rate). Every mile the second gains more (angle): ' + this.fmt(this.gradB) + ' ft/NM against ' + this.fmt(this.gradA) + '.';
+    if (this.clearB >= 0 && this.min >= this.tHillB) return 'The second aeroplane crosses the hill with ' + this.fmt(this.clearB) + ' ft to spare. When the obstacle is close, height per mile (angle, Vx) is what counts, not height per minute.';
+    return 'The first aeroplane is higher at every moment; the second is higher at every distance.';
+  },
+  presets: {
+    'the-race': { hillD: 1.2, hillH: 600, t: 0, play: true },
+    'one-minute': { hillD: 1.2, hillH: 600, t: 0.5 },
+    'second-at-the-hill': { hillD: 1.2, hillH: 600, t: 0.6 },
+    'distant-hill': { hillD: 2.5, hillH: 600, t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="vvr-title" class="widget-stage">
+    <title id="vvr-title">Side view of two aeroplanes climbing from the same runway towards a hill: the first climbs faster per minute but more shallowly, the second more slowly but more steeply</title>
+    <rect x="0" y="0" width="640" height="262" fill="var(--color-sky-soft)" fill-opacity="0.6"/>
+    <!-- grid: distance and height -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="236.7" y1="42" x2="236.7" y2="262"/><line x1="423.3" y1="42" x2="423.3" y2="262"/><line x1="610" y1="42" x2="610" y2="262"/>
+      <line x1="50" y1="183.5" x2="610" y2="183.5"/><line x1="50" y1="105" x2="610" y2="105"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num">
+      <text x="236.7" y="278" text-anchor="middle">1 NM</text><text x="423.3" y="278" text-anchor="middle">2 NM</text><text x="604" y="278" text-anchor="end">3 NM</text>
+      <text x="56" y="179">500 ft</text><text x="56" y="101">1,000 ft</text>
+    </g>
+    <!-- ground, runway and the hill -->
+    <path :d="hill" fill="var(--color-ok)" fill-opacity="0.22" stroke="var(--color-ok)" stroke-width="2" stroke-linejoin="round"/>
+    <text font-size="12" text-anchor="middle" fill="var(--color-ok-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="X(hillD)" :y="254" x-text="fmt(hillH) + ' ft hill'"></text>
+    <line x1="0" y1="262" x2="640" y2="262" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="0" y="259" width="50" height="6" fill="var(--color-tarmac)"/>
+    <!-- trails -->
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" :d="trail(a, gradA)"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" :d="trail(b, gradB)"/>
+    <!-- the two aeroplanes (tools/diagrams/plane.py side view, gear up, inside a group that scales and pitches it) -->
+    <g :opacity="stuckA ? 0.4 : 1" :transform="'translate(' + X(a.nm) + ' ' + Y(a.h) + ') rotate(' + ang(gradA) + ') scale(0.32)'">
+      <path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" fill="var(--color-info)" stroke="var(--color-info)" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+    <g :opacity="stuckB ? 0.4 : 1" :transform="'translate(' + X(b.nm) + ' ' + Y(b.h) + ') rotate(' + ang(gradB) + ') scale(0.32)'">
+      <path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" fill="var(--color-brand)" stroke="var(--color-brand)" stroke-width="3" stroke-linejoin="round"/>
+    </g>
+    <g font-size="12" font-weight="700" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" class="num">
+      <text fill="var(--color-info-fg)" :text-anchor="a.nm > 2.2 ? 'end' : 'start'" :x="a.nm > 2.2 ? X(a.nm) - 10 : X(a.nm) + 14" :y="a.nm > 2.2 ? Y(a.h) + 56 : Y(a.h) + 4" x-text="'1st · ' + fmt(Math.round(a.h / 10) * 10) + ' ft'"></text>
+      <text fill="var(--color-brand-fg)" text-anchor="end" :x="X(b.nm) - 6" :y="Y(b.h) - 16" x-text="'2nd · ' + fmt(Math.round(b.h / 10) * 10) + ' ft'"></text>
+    </g>
+    <g x-show="stuckA" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" :transform="'translate(' + X(hillD) + ' ' + Y(hAtHillA) + ')'"><line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+    <g x-show="stuckB" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" :transform="'translate(' + X(hillD) + ' ' + Y(hAtHillB) + ')'"><line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g>
+    <text x="16" y="48" font-size="13" font-weight="700" fill="var(--color-bad-fg)" x-show="stuckA" x-text="'✕ 1st: ' + fmt(-clearA) + ' ft too low at the hill'"></text>
+    <text x="16" font-size="13" font-weight="700" fill="var(--color-bad-fg)" x-show="stuckB" :y="stuckA ? 66 : 48" x-text="'✕ 2nd: ' + fmt(-clearB) + ' ft too low at the hill'"></text>
+    <!-- clock -->
+    <text x="620" y="28" font-size="16" font-weight="700" text-anchor="end" fill="var(--color-fg)" class="num" x-text="'T + ' + fmt(min * 60) + ' s'"></text>
+    <text x="16" y="26" font-size="13" fill="var(--color-info-fg)" font-weight="600">1st: 700 fpm at 90 kt</text>
+    <text x="196" y="26" font-size="13" fill="var(--color-brand-fg)" font-weight="600">2nd: 650 fpm at 60 kt</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the race'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="vvr-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time since lift-off">
+    <span class="widget-clock" x-text="fmt(min * 60) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vvr-d">Hill distance from the runway <output for="vvr-d" x-text="fmt(hillD, 1) + ' NM'"></output></label>
+      <input type="range" id="vvr-d" min="0.6" max="2.8" step="0.1" x-model.number="hillD">
+    </div>
+    <div class="widget-control">
+      <label for="vvr-h">Hill height <output for="vvr-h" x-text="fmt(hillH) + ' ft'"></output></label>
+      <input type="range" id="vvr-h" min="200" max="1100" step="50" x-model.number="hillH">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Rate (per minute)</dt><dd class="widget-value">1st 700 · 2nd 650 fpm</dd></div>
+    <div class="widget-readout"><dt class="widget-label">Angle (per NM)</dt><dd class="widget-value" x-text="'1st ' + fmt(gradA) + ' · 2nd ' + fmt(gradB) + ' ft'"></dd></div>
+    <div class="widget-readout" :class="clearA < 0 ? 'bad' : clearA < 100 ? 'warn' : 'ok'"><dt class="widget-label">1st over the hill</dt><dd class="widget-value" x-text="(clearA >= 0 ? 'clears by ' : 'short by ') + fmt(Math.abs(clearA)) + ' ft'"></dd></div>
+    <div class="widget-readout" :class="clearB < 0 ? 'bad' : clearB < 100 ? 'warn' : 'ok'"><dt class="widget-label">2nd over the hill</dt><dd class="widget-value" x-text="(clearB >= 0 ? 'clears by ' : 'short by ') + fmt(Math.abs(clearB)) + ' ft'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('the-race')" :aria-pressed="active === 'the-race'">Race</button>
+      <button type="button" @click="preset('one-minute')" :aria-pressed="active === 'one-minute'">One minute</button>
+      <button type="button" @click="preset('second-at-the-hill')" :aria-pressed="active === 'second-at-the-hill'">At the hill</button>
+      <button type="button" @click="preset('distant-hill')" :aria-pressed="active === 'distant-hill'">Distant hill</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The first aeroplane is higher at every moment, so it has the better rate of climb (feet per minute, Vy). The second is higher at every distance, so it has the better angle (feet per nautical mile, Vx). A hill close to the runway is a distance problem: only the steeper climber clears it. The numbers are the lesson's example, in still air.</p>
+  <details class="widget-try"><summary>Try it: a 600 ft hill 1.2 NM from the runway. Which aeroplane clears it?</summary><p>Play the race: the first gets there after 48 s at only 560 ft (467 ft/NM × 1.2), 40 ft too low. The second takes 72 s but arrives at 780 ft (650 ft/NM × 1.2) and clears by 180 ft.</p></details>
+  <details class="widget-try"><summary>Try it: move the hill to 2.5 NM. Does the faster climber still lose?</summary><p>Press Distant hill: at 2.5 NM the first is at about 1,170 ft, well clear, and it got there sooner. Far from the runway, the problem becomes time, which is why you lower the nose to Vy once the close obstacles are behind you.</p></details>
+</div>

@@ -1,0 +1,161 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false,
+  torch: false, oneEye: false, offCentre: true,
+  // t 0..1 is the first 60 minutes after leaving a brightly lit hangar. Cones adapt in about 7 to 10 minutes, rods
+  // in about 30 (PHFC 2.7); the shapes and the sensitivity scale are illustrative.
+  get min() { return this.t * 60 },
+  cone(m) { return m < 0 ? 0 : 0.3 * (1 - Math.exp(-m / 2.4)) },
+  rod(m) { const f = this.seg(m, 5, 30); return m < 5 ? 0 : 1 - (1 - f) * (1 - f) },
+  sens(m) { return Math.max(this.cone(m), this.rod(m)) },
+  // a bright light at 25 minutes bleaches the pigment and adaptation starts again; the closed eye keeps its own
+  get glareAt() { return 25 },
+  eff(m) { return this.torch && m >= this.glareAt ? m - this.glareAt : m },
+  get bleached() { return this.torch && this.min >= this.glareAt && this.min < this.glareAt + 0.6 },
+  get S() { return this.oneEye ? this.sens(this.min) : this.sens(this.eff(this.min)) },
+  get coneS() { return this.oneEye ? this.cone(this.min) : this.cone(this.eff(this.min)) },
+  // what you can make out: each thing appears once sensitivity passes its threshold
+  see(th) { return this.clamp((this.S - th) / 0.12, 0, 1) },
+  // the faint light: the fovea has cones only, so stared at it needs cone sensitivity it can never reach
+  get faint() { return this.offCentre ? this.see(0.62) : this.clamp((this.coneS - 0.62) / 0.12, 0, 1) },
+  // chart: 0..60 min across x 370..620; sensitivity 0..1 up y 250..70
+  X(m) { return 370 + m / 60 * 250 },
+  Y(s) { return 250 - s * 180 },
+  curve(f) { const pts = []; for (let m = 0; m <= this.min + 1e-9; m += 0.5) pts.push([this.X(m), this.Y(f(m))]); pts.push([this.X(this.min), this.Y(f(this.min))]); return this.path(pts) },
+  get sPath() { return this.curve((m) => this.oneEye ? this.sens(m) : this.sens(this.eff(m))) },
+  get cPath() { return this.curve((m) => this.oneEye ? this.cone(m) : this.cone(this.eff(m))) },
+  get openPath() { return this.curve((m) => this.sens(this.eff(m))) },
+  get steps() {
+    const s = [{ at: 0, label: 'Out of the hangar' }, { at: 9 / 60, label: 'Cones done' }];
+    if (this.torch) s.push({ at: this.glareAt / 60, label: 'Torch in the eyes' });
+    s.push({ at: 30 / 60, label: 'Rods: 30 min' });
+    if (this.torch && !this.oneEye) s.push({ at: (this.glareAt + 30) / 60, label: 'Adapted again' });
+    return s;
+  },
+  get coneText() { const m = this.oneEye ? this.min : this.eff(this.min); return m < 7 ? ['Adapting', 'warn'] : ['Done (7–10 min)', 'ok'] },
+  get rodText() { const m = this.oneEye ? this.min : this.eff(this.min); return m < 6 ? ['Barely started', 'bad'] : m < 30 ? ['Adapting', 'warn'] : ['Full (about 30 min)', 'ok'] },
+  get faintText() { return this.faint > 0.5 ? ['Visible', 'ok'] : !this.offCentre && this.see(0.62) > 0.5 ? ['Gone: night blind spot', 'bad'] : ['Too faint yet', 'warn'] },
+  get caption() {
+    const m = this.min;
+    if (this.bleached || (this.torch && !this.oneEye && m >= this.glareAt && m < this.glareAt + 3)) return 'Someone points a torch at you. One glance at a bright light bleaches the pigment and the adaptation starts again from the beginning.';
+    if (this.torch && this.oneEye && m >= this.glareAt && m < this.glareAt + 3) return 'You shut one eye as the torch swings round. That eye keeps its adaptation; open it and the dark apron is back at once.';
+    const e = this.oneEye ? m : this.eff(m);
+    if (e < 2) return 'Straight out of a lit hangar: the bright light has bleached the receptors\' pigment, and you can see little more than the taxiway lights.';
+    if (e < 9) return 'The cones rebuild their pigment first, in about 7 to 10 minutes, and then stop improving. The aircraft on the apron are shapes now.';
+    if (!this.offCentre && this.see(0.62) > 0.5 && this.faint < 0.5) return 'Look straight at the faint light and it vanishes: its image lands on the fovea, which has only cones and no rods. Look 10 to 15 degrees to one side so it falls on the rods.';
+    if (e < 30) return 'The rods are far more sensitive and keep improving long after the cones have stopped. More of the night appears minute by minute.';
+    return 'About 30 minutes: the rods are fully adapted. Keep it that way: dim cockpit lighting, and close one eye if a bright light is unavoidable.';
+  },
+  presets: {
+    'out-of-the-hangar': { torch: false, oneEye: false, offCentre: true, t: 0.02 },
+    'cones-done': { torch: false, oneEye: false, offCentre: true, t: 0.16 },
+    'rods-30-minutes': { torch: false, oneEye: false, offCentre: true, t: 0.52 },
+    'stare-at-the-light': { torch: false, oneEye: false, offCentre: false, t: 0.6 },
+    'torch-in-the-eyes': { torch: true, oneEye: false, offCentre: true, t: 0.47 },
+    'one-eye-closed': { torch: true, oneEye: true, offCentre: true, t: 0.47 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="dka-title" class="widget-stage">
+    <title id="dka-title">A night apron that appears gradually as the eyes dark adapt, beside a chart of eye sensitivity against minutes: the cones level off after about 7 to 10 minutes, the rods keep improving to about 30</title>
+    <!-- the night apron -->
+    <rect x="10" y="10" width="340" height="270" rx="10" fill="var(--color-surface-2)"/>
+    <rect x="10" y="10" width="340" height="270" rx="10" fill="var(--color-bad)" :fill-opacity="bleached ? 0.35 : 0"/>
+    <text x="22" y="32" font-size="13" fill="var(--color-fg-muted)" font-weight="600">What you can make out</text>
+    <!-- stars, from bright to faint -->
+    <g fill="var(--color-fg)">
+      <circle cx="60" cy="60" r="2" :fill-opacity="see(0.2)"/><circle cx="250" cy="52" r="2" :fill-opacity="see(0.25)"/>
+      <circle cx="300" cy="96" r="1.6" :fill-opacity="see(0.45)"/><circle cx="120" cy="84" r="1.6" :fill-opacity="see(0.5)"/>
+      <circle cx="200" cy="70" r="1.4" :fill-opacity="see(0.65)"/><circle cx="90" cy="120" r="1.4" :fill-opacity="see(0.72)"/>
+      <circle cx="320" cy="140" r="1.2" :fill-opacity="see(0.8)"/><circle cx="160" cy="46" r="1.2" :fill-opacity="see(0.85)"/>
+      <circle cx="40" cy="150" r="1.2" :fill-opacity="see(0.9)"/><circle cx="276" cy="124" r="1.2" :fill-opacity="see(0.92)"/>
+      <circle cx="226" cy="108" r="1.2" :fill-opacity="see(0.95)"/><circle cx="140" cy="132" r="1.2" :fill-opacity="see(0.97)"/>
+      <path d="M300 40 a12 12 0 1 0 10 18 a9 9 0 1 1 -10 -18 Z" :fill-opacity="see(0.12)"/>
+    </g>
+    <!-- horizon and apron -->
+    <line x1="10" y1="186" x2="350" y2="186" stroke="var(--color-fg-faint)" stroke-width="1" :stroke-opacity="see(0.3)"/>
+    <!-- a parked aeroplane: python -m tools.diagrams.plane side, scale 0.9, colour fg-muted, fill surface-2 -->
+    <g transform="translate(110 213)" :opacity="see(0.22)">
+      <g transform="translate(0 0) rotate(0) scale(0.9)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg-muted)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg-muted)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- windsock on its pole -->
+    <g :opacity="see(0.45)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" fill="none">
+      <line x1="290" y1="232" x2="290" y2="166"/>
+      <path d="M290 168 L318 172 L318 180 L290 184 Z" fill="var(--color-surface)" stroke-linejoin="round"/>
+    </g>
+    <!-- taxiway edge lights: bright enough from the start -->
+    <g fill="var(--color-sky-fg)">
+      <circle cx="30" cy="262" r="3.5"/><circle cx="90" cy="262" r="3.5"/><circle cx="150" cy="262" r="3.5"/><circle cx="210" cy="262" r="3.5"/><circle cx="270" cy="262" r="3.5"/><circle cx="330" cy="262" r="3.5"/>
+      <circle cx="60" cy="240" r="2.5"/><circle cx="130" cy="240" r="2.5"/><circle cx="200" cy="240" r="2.5"/><circle cx="270" cy="240" r="2.5"/>
+    </g>
+    <!-- the faint light on the horizon, and where you are looking -->
+    <circle cx="200" cy="182" r="3" fill="var(--color-warn)" :fill-opacity="faint"/>
+    <g fill="none" stroke="var(--color-brand)" stroke-width="1.5">
+      <circle r="12" cy="182" :cx="offCentre ? 150 : 200" stroke-dasharray="3 3"/>
+      <path :d="offCentre ? 'M150 166 L150 174 M150 190 L150 198 M134 182 L142 182 M158 182 L166 182' : 'M200 166 L200 174 M200 190 L200 198 M184 182 L192 182 M208 182 L216 182'"/>
+    </g>
+    <text font-size="12" fill="var(--color-brand-fg)" text-anchor="middle" y="158" :x="offCentre ? 150 : 200" x-text="offCentre ? 'eyes here, 10–15° off' : 'staring at it'"></text>
+
+    <!-- sensitivity against time -->
+    <line x1="370" y1="250" x2="620" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="370" y1="70" x2="370" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect :x="X(7)" y="70" :width="X(10) - X(7)" height="180" fill="var(--color-info)" fill-opacity="0.1"/>
+    <line :x1="X(30)" :x2="X(30)" y1="70" y2="250" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text x="370" y="266">0</text><text :x="X(10)" y="266">10</text><text :x="X(20)" y="266">20</text><text :x="X(30)" y="266">30</text><text :x="X(40)" y="266">40</text><text :x="X(50)" y="266">50</text><text x="616" y="266">60</text></g>
+    <text x="495" y="284" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">minutes in the dark</text>
+    <text x="370" y="34" font-size="13" fill="var(--color-fg-muted)">how faint a light you can see</text>
+    <text x="370" y="52" font-size="11" fill="var(--color-fg-faint)">(sensitivity, illustrative scale)</text>
+    <text :x="X(8.5)" y="84" font-size="11" text-anchor="middle" fill="var(--color-info)">cones</text>
+    <text :x="X(30) + 4" y="84" font-size="11" fill="var(--color-fg-muted)">rods full</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :d="openPath" x-show="oneEye && torch"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="1.5" stroke-dasharray="4 3" stroke-linecap="round" :d="cPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="sPath"/>
+    <circle r="5" fill="var(--color-brand)" :cx="X(min)" :cy="Y(S)"/>
+    <line :x1="X(glareAt)" :x2="X(glareAt)" y1="70" y2="250" stroke="var(--color-bad)" stroke-width="1.25" x-show="torch && min >= glareAt"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the first hour in the dark'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="dka-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Minutes in the dark">
+    <span class="widget-clock" x-text="Math.floor(min) + ' min'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dka-off" class="cursor-pointer"><span>Look 10–15° to one side of the faint light (untick: stare at it)</span>
+        <input type="checkbox" id="dka-off" x-model="offCentre" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="dka-torch" class="cursor-pointer"><span>A torch in your eyes at 25 minutes</span>
+        <input type="checkbox" id="dka-torch" x-model="torch" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="dka-eye" class="cursor-pointer"><span>Close one eye when it comes</span>
+        <input type="checkbox" id="dka-eye" x-model="oneEye" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="coneText[1]"><dt class="widget-label">Cones</dt><dd class="widget-value" x-text="coneText[0]"></dd></div>
+    <div class="widget-readout" :class="rodText[1]"><dt class="widget-label">Rods</dt><dd class="widget-value" x-text="rodText[0]"></dd></div>
+    <div class="widget-readout" :class="faintText[1]"><dt class="widget-label">The faint light</dt><dd class="widget-value" x-text="faintText[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('out-of-the-hangar')" :aria-pressed="active === 'out-of-the-hangar'">Out of the hangar</button>
+      <button type="button" @click="preset('cones-done')" :aria-pressed="active === 'cones-done'">Cones done</button>
+      <button type="button" @click="preset('rods-30-minutes')" :aria-pressed="active === 'rods-30-minutes'">30 minutes</button>
+      <button type="button" @click="preset('stare-at-the-light')" :aria-pressed="active === 'stare-at-the-light'">Stare at it</button>
+      <button type="button" @click="preset('torch-in-the-eyes')" :aria-pressed="active === 'torch-in-the-eyes'">Torch</button>
+      <button type="button" @click="preset('one-eye-closed')" :aria-pressed="active === 'one-eye-closed'">One eye shut</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Two curves: the cones finish adapting in about 7 to 10 minutes, the far more sensitive rods take about 30, and one bright light starts the whole climb again. Because the fovea has no rods, a faint light you stare at disappears; look 10 to 15 degrees to one side. The times are the lesson's; the sensitivity scale and the curves' shapes are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you are 25 minutes into adapting when someone shines a torch at you. How long until you are fully adapted again, and how could you have avoided it?</summary><p>Tick the torch and play on: adaptation starts from the beginning and takes about another 30 minutes. Tick Close one eye: that eye keeps its adaptation, and opening it gives you the night back at once.</p></details>
+  <details class="widget-try"><summary>Try it: after 35 minutes in the dark, why does a faint farmhouse light vanish when you look straight at it?</summary><p>Press Stare at it: its image falls on the fovea, which has only cones, and the cones cannot see that faint a light. Tick Look to one side: the image moves onto the rods and the light reappears.</p></details>
+</div>

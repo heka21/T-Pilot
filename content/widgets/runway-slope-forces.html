@@ -1,0 +1,168 @@
+<div class="widget" x-data="widget({
+  mode: 'to', s: 0,
+  // slope in percent in the direction you roll: + uphill, − downhill. The slope part of the weight is very nearly
+  // the weight × the slope as a fraction (the lesson): 2% of the weight on a 2% slope.
+  // Illustrative force budget (fractions of the weight): take-off thrust 0.30 less drag and rolling resistance 0.08
+  // leaves 0.22, chosen so that losing 2% of the weight gives the lesson's +10% (0.22 / 0.20 = 1.10). Landing:
+  // braking 0.25 plus drag and rolling resistance 0.06.
+  get to() { return this.mode === 'to' },
+  get up() { return this.s > 0 },
+  get down() { return this.s < 0 },
+  get slopeF() { return this.s / 100 },
+  get thrust() { return 0.30 },
+  get resist() { return this.to ? 0.08 : 0.06 },
+  get brake() { return 0.25 },
+  // net along the runway: take-off, accelerating; landing, decelerating
+  get netLevel() { return this.to ? this.thrust - this.resist : this.brake + this.resist },
+  get net() { return this.to ? this.netLevel - this.slopeF : this.netLevel + this.slopeF },
+  get netPct() { return 100 * this.net / this.netLevel },
+  get helps() { return this.to ? this.down : this.up },
+  get hinders() { return this.to ? this.up : this.down },
+  get longer() { return this.hinders },
+  get factor() { return 1 + 0.05 * this.s },
+  get slopeText() { return this.s === 0 ? 'level' : this.fmt(Math.abs(this.s), 1).replace('.0', '') + '% ' + (this.up ? 'up' : 'down') },
+  get slopeForceText() { return this.s === 0 ? 'none: level runway' : '≈ ' + this.fmt(Math.abs(this.s), 1).replace('.0', '') + '% of the weight, ' + (this.helps ? 'helping' : 'against') + (this.to ? ' the thrust' : ' the brakes') },
+  get distText() {
+    if (this.s === 0) return 'the book figure: no slope correction';
+    if (this.to && this.up) return 'about +' + this.fmt(5 * this.s, 1).replace('.0', '') + '% (×' + this.fmt(this.factor, 3).replace(/0$/, '') + ', rule of thumb)';
+    if (this.to) return 'shorter: the lesson gives no figure';
+    return this.up ? 'shorter: the lesson gives no figure' : 'longer, and it tends to float: no figure';
+  },
+  get distState() { return this.s === 0 ? '' : this.longer ? 'warn' : 'ok' },
+  // the lesson's farm strip: 520 m book figure, 600 m available
+  get farm() { return 520 * this.factor },
+  get spare() { return 600 - Math.round(this.farm) },
+  get farmText() {
+    if (this.down) return 'under 520 m of 600 m: no figure for the downslope';
+    if (this.s === 0) return '520 m of 600 m: 80 m spare';
+    return '520 × ' + this.fmt(this.factor, 3).replace(/0$/, '') + ' = ' + this.fmt(this.farm) + ' m of 600 m: ' + (this.spare < 0 ? this.fmt(-this.spare) + ' m short' : this.fmt(this.spare) + ' m spare');
+  },
+  get farmState() { return this.down ? 'ok' : this.spare < 0 ? 'bad' : this.spare <= 28 ? 'warn' : 'ok' },
+  get caption() {
+    if (this.s === 0) return this.to ? 'On a level runway no part of the weight acts along it: thrust less drag and rolling resistance is all that accelerates you, and it is only a modest fraction of the weight.' : 'On a level runway the brakes, drag and rolling resistance alone bring you to rest.';
+    const pc = this.fmt(Math.abs(this.s), 1).replace('.0', '') + '%';
+    if (this.to && this.up) return 'Rolling uphill, about ' + pc + ' of the weight pulls back down the slope, against the thrust. Small, but the net force accelerating you is itself small, so it takes a real share: about ' + this.fmt(100 - this.netPct) + '% less net force here, and about ' + this.fmt(5 * this.s, 1).replace('.0', '') + '% more take-off distance by the rule of thumb.';
+    if (this.to) return 'Rolling downhill, the same ' + pc + ' of the weight acts forwards and adds to the thrust: the aeroplane accelerates faster and lifts off sooner, and the ground beyond usually falls away. The lesson gives the direction, not a figure.';
+    if (this.up) return 'Landing uphill, ' + pc + ' of the weight acts back down the slope, against the motion: it adds to the brakes and the drag, so the roll is shorter. Land uphill, take off downhill.';
+    return 'Landing downhill, ' + pc + ' of the weight pushes the aeroplane along the runway, against the brakes: a longer roll. It also tends to float, because the runway falls away beneath you in the flare. Add a tailwind and you have the classic overrun.';
+  },
+  // drawing: runway pivot 330 150, slope drawn at 4° per percent (about 7× steeper than real)
+  get ang() { return 4 * this.s },
+  // arrows not to scale; the slope arrow grows with the slope
+  get slopeLen() { return 22 * Math.abs(this.s) },
+  get slopeCol() { return this.helps ? 'var(--color-ok)' : 'var(--color-bad)' },
+  get slopeFg() { return this.helps ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)' },
+  // bars: 500 px per weight from x 236
+  bw(f) { return Math.max(0, f) * 500 },
+  presets: {
+    'level': { mode: 'to', s: 0 },
+    'upslope-2-take-off': { mode: 'to', s: 2 },
+    'downslope-2-take-off': { mode: 'to', s: -2 },
+    'upslope-2-landing': { mode: 'ldg', s: 2 },
+    'downslope-2-landing': { mode: 'ldg', s: -2 },
+  },
+})">
+  <svg viewBox="0 0 640 336" role="img" aria-labelledby="rsf-title" class="widget-stage">
+    <title id="rsf-title">A Cessna 152 rolling on a sloping runway, the slope drawn exaggerated, with the forces along the runway and the part of its weight that acts down the slope; below, the force budget along the runway compared with a level runway</title>
+    <defs>
+      <marker id="rsf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="rsf-clip"><rect x="0" y="0" width="640" height="204"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="204" fill="var(--color-sky-soft)"/>
+    <g clip-path="url(#rsf-clip)">
+      <g :transform="'translate(330 150) rotate(' + (-ang) + ')'">
+        <rect x="-420" y="4" width="840" height="200" fill="var(--color-surface-2)"/>
+        <rect x="-340" y="0" width="680" height="6" fill="var(--color-tarmac)"/>
+        <line x1="-420" y1="0" x2="420" y2="0" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+        <!-- the aeroplane on the runway: mains at x 0, CG 19.5 × 1.8 above the surface -->
+        <g transform="translate(13.5 -35.1)">
+          <!-- python -m tools.diagrams.plane side, scale 1.8 -->
+          <g transform="translate(0 0) rotate(0) scale(1.8)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+        </g>
+        <!-- forces along the runway (not to scale) -->
+        <g x-show="to">
+          <line x1="72" y1="-30" x2="150" y2="-30" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#rsf-arrow)"/>
+          <text x="112" y="-40" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">thrust</text>
+        </g>
+        <line x1="-122" y1="-22" x2="-160" y2="-22" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#rsf-arrow)"/>
+        <text x="-164" y="-36" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">drag +</text>
+        <text x="-164" y="-18" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">rolling resistance</text>
+        <g x-show="!to">
+          <line x1="-4" y1="-4" x2="-70" y2="-4" stroke="var(--color-warn)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#rsf-arrow)"/>
+          <text x="-38" y="22" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-warn-fg)">braking</text>
+        </g>
+        <!-- the slope part of the weight, down the slope -->
+        <g x-show="s !== 0">
+          <line y1="-86" y2="-86" stroke-width="3" stroke-linecap="round" marker-end="url(#rsf-arrow)" :stroke="slopeCol" :x1="up ? -10 : 10" :x2="up ? -10 - slopeLen : 10 + slopeLen"/>
+          <text y="-98" font-size="13" font-weight="700" text-anchor="middle" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :fill="slopeFg" :x="up ? -10 - slopeLen / 2 : 10 + slopeLen / 2" x-text="'≈ ' + slopeText.replace(/ (up|down)/, '') + ' of weight'"></text>
+          <text y="-114" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="up ? -10 - slopeLen / 2 : 10 + slopeLen / 2">down the slope</text>
+        </g>
+      </g>
+    </g>
+    <text x="16" y="24" font-size="14" font-weight="700" fill="var(--color-fg)" x-text="(to ? 'Take-off roll' : 'Landing roll') + ', rolling →'"></text>
+    <text x="16" y="42" font-size="13" fill="var(--color-fg-muted)" class="num" x-text="'runway ' + (s === 0 ? 'level' : slopeText + 'hill')"></text>
+    <text x="624" y="24" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">slope drawn about 7× steeper</text>
+    <text x="624" y="40" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">arrows not to scale</text>
+    <!-- force budget along the runway -->
+    <rect x="0" y="204" width="640" height="132" fill="var(--color-surface)"/>
+    <line x1="0" y1="204" x2="640" y2="204" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="16" y="224" font-size="12" fill="var(--color-fg-muted)" x-text="'Forces along the runway, share of the weight (illustrative)' + (s === 0 ? '' : '; dashed: level')"></text>
+    <g font-size="12" text-anchor="end" fill="var(--color-fg)">
+      <text x="226" y="248" x-text="to ? 'thrust' : 'braking'"></text>
+      <text x="226" y="270" x-text="to ? '− drag + rolling resistance' : '+ drag + rolling resistance'"></text>
+      <text x="226" y="292" x-text="s === 0 ? 'slope part of weight' : (helps ? '+ ' : '− ') + 'slope part of weight'"></text>
+      <text x="226" y="314" font-weight="700" x-text="to ? '= net, accelerating' : '= net, stopping'"></text>
+    </g>
+    <rect x="236" y="238" height="14" rx="2" :width="bw(to ? thrust : brake)" :fill="to ? 'var(--color-surface-2)' : 'var(--color-warn-soft)'" :stroke="to ? 'var(--color-fg-muted)' : 'var(--color-warn)'" stroke-width="1"/>
+    <rect x="236" y="260" height="14" rx="2" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1" :width="bw(resist)"/>
+    <rect x="236" y="282" height="14" rx="2" stroke-width="1" :width="bw(Math.abs(slopeF))" :fill="helps ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)'" :stroke="slopeCol" x-show="s !== 0"/>
+    <rect x="236" y="304" height="14" rx="2" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" :width="bw(net)"/>
+    <rect x="236" y="302" height="18" rx="2" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" :width="bw(netLevel)" x-show="s !== 0"/>
+    <g font-size="12" class="num" fill="var(--color-fg-muted)">
+      <text y="249" :x="242 + bw(to ? thrust : brake)" x-text="(to ? 30 : 25) + '%'"></text>
+      <text y="271" :x="242 + bw(resist)" x-text="(to ? 8 : 6) + '%'"></text>
+      <text y="293" :x="242 + bw(Math.abs(slopeF))" x-text="s === 0 ? 'none' : slopeText.replace(/ (up|down)/, '')"></text>
+      <text y="315" font-weight="700" fill="var(--color-brand-fg)" :x="242 + Math.max(bw(net), bw(netLevel))" x-text="fmt(100 * net, 1).replace('.0', '') + '%'"></text>
+    </g>
+    <!-- the verdict -->
+    <rect x="470" y="214" width="158" height="112" rx="8" :fill="s === 0 ? 'var(--color-surface-2)' : longer ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'"/>
+    <text x="549" y="238" font-size="12" text-anchor="middle" fill="var(--color-fg)" x-text="to ? 'Take-off distance' : 'Landing distance'"></text>
+    <text x="549" y="266" font-size="20" font-weight="700" text-anchor="middle" :fill="s === 0 ? 'var(--color-fg)' : longer ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="s === 0 ? 'book figure' : longer ? 'LONGER' : 'SHORTER'"></text>
+    <text x="549" y="290" font-size="13" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="s === 0 ? 'no slope correction' : to && up ? 'about +' + fmt(5 * s, 1).replace('.0', '') + '%' : 'no figure in the lesson'"></text>
+    <text x="549" y="310" font-size="12" text-anchor="middle" class="num" fill="var(--color-fg-muted)" x-text="to && up ? '1 + 0.05 × ' + slopeText.replace(/ (up|down)/, '') : !to && down ? 'and it tends to float' : ''"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rsf-mode">Roll</label>
+      <select id="rsf-mode" class="input" x-model="mode" @change="active = null">
+        <option value="to">Take-off: accelerating to lift-off</option>
+        <option value="ldg">Landing: braking to a stop</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="rsf-s">Runway slope, in the direction you roll <output for="rsf-s" x-text="slopeText"></output></label>
+      <input type="range" id="rsf-s" min="-3" max="3" step="0.5" x-model.number="s" @input="active = null">
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="s === 0 ? '' : helps ? 'ok' : 'bad'"><dt class="widget-label">Slope part of the weight</dt><dd class="widget-value" x-text="slopeForceText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label" x-text="to ? 'Net accelerating force' : 'Net stopping force'"></dt><dd class="widget-value" x-text="fmt(netPct) + '% of level (illustrative)'"></dd></div>
+    <div class="widget-readout" :class="distState"><dt class="widget-label" x-text="to ? 'Take-off distance' : 'Landing distance'"></dt><dd class="widget-value" x-text="distText"></dd></div>
+    <div class="widget-readout" :class="farmState" x-show="to"><dt class="widget-label">The lesson's farm strip</dt><dd class="widget-value"><span x-text="farmText"></span><span class="widget-flag warn" x-show="farmState === 'warn'">too thin</span><span class="widget-flag bad" x-show="farmState === 'bad'">no go</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('level')" :aria-pressed="active === 'level'">Level</button>
+      <button type="button" @click="preset('upslope-2-take-off')" :aria-pressed="active === 'upslope-2-take-off'">Take-off, 2% up</button>
+      <button type="button" @click="preset('downslope-2-take-off')" :aria-pressed="active === 'downslope-2-take-off'">Take-off, 2% down</button>
+      <button type="button" @click="preset('upslope-2-landing')" :aria-pressed="active === 'upslope-2-landing'">Landing, 2% up</button>
+      <button type="button" @click="preset('downslope-2-landing')" :aria-pressed="active === 'downslope-2-landing'">Landing, 2% down</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The slope part of the weight always points down the slope, so it works opposite ways for the two rolls: uphill it fights the thrust on take-off but helps the brakes on landing; downhill it helps the take-off and fights the brakes. It is only about the slope's percentage of the weight, but the net force on a take-off roll is itself a modest fraction of the weight, so 2% takes a real share: about +10% take-off distance (the lesson's rule of thumb). The lesson gives no figure for a downhill take-off or for landing on a slope, only the direction. The force sizes in the bars are illustrative.</p>
+  <details class="widget-try"><summary>Try it: the chart says 520 m, the farm strip is 600 m and slopes 2% up the only way you can go. Is it on?</summary><p>Press Take-off, 2% up: 520 × 1.10 = 572 m, leaving 28 m, about 5% of the strip. The lesson calls that too thin to accept: wait for a cooler part of the day, reduce the weight, or use the other direction if the wind allows.</p></details>
+  <details class="widget-try"><summary>Try it: light wind, a sloping strip. Which way do you land, and which way do you take off?</summary><p>Compare Landing, 2% up with Landing, 2% down, then the two take-offs: uphill the slope adds to the stopping force, downhill it adds to the accelerating force. So land uphill and take off downhill. Once airborne the slope no longer acts on the aeroplane: its climb through the air is the same either way.</p></details>
+</div>

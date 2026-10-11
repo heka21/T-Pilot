@@ -1,0 +1,244 @@
+<div class="widget" x-data="widget({
+  src: 'taf', wdir: 280, wspd: 15, varE: -1,
+  // the lesson's invented Example Creek (POPC 2.3, ERSA): VAR 1 DEG W; 06/24 1,200 m sealed, 12/30 800 m gravel.
+  // each runway end points at its designator x 10 degrees magnetic
+  R: {
+    '06': { hdg: 60, pair: '06/24', len: 1200, surf: 'sealed' },
+    '24': { hdg: 240, pair: '06/24', len: 1200, surf: 'sealed' },
+    '12': { hdg: 120, pair: '12/30', len: 800, surf: 'gravel' },
+    '30': { hdg: 300, pair: '12/30', len: 800, surf: 'gravel' },
+  },
+  // the centre of the plan, where the runways cross
+  cx: 200, cy: 212, arm: 112,
+  get forecast() { return this.src === 'taf' },
+  // variation west, magnetic best (add); variation east, magnetic least (subtract)
+  get mag() { const m = this.forecast ? this.wdir - this.varE : this.wdir; return ((m - 1) % 360 + 360) % 360 + 1 },
+  get varText() { return this.varE === 0 ? '0° (nil)' : Math.abs(this.varE) + '° ' + (this.varE < 0 ? 'W' : 'E') },
+  get sumText() {
+    if (!this.forecast) return this.dir(this.wdir) + '°M';
+    if (this.varE === 0) return this.dir(this.wdir) + '°T ± 0° = ' + this.dir(this.mag) + '°M';
+    return this.dir(this.wdir) + '°T ' + (this.varE < 0 ? '+ ' : '− ') + Math.abs(this.varE) + (this.varE < 0 ? '°W' : '°E') + ' = ' + this.dir(this.mag) + '°M';
+  },
+  get ruleText() {
+    if (!this.forecast) return 'already magnetic: do not convert';
+    if (this.varE === 0) return 'no variation: true and magnetic agree';
+    return this.varE < 0 ? 'variation west, magnetic best' : 'variation east, magnetic least';
+  },
+  rel(id) { return ((this.mag - this.R[id].hdg + 540) % 360) - 180 },
+  off(id) { return Math.abs(this.rel(id)) },
+  head(id) { return this.wspd * Math.cos(this.rel(id) * Math.PI / 180) },
+  cross(id) { return this.wspd * Math.abs(Math.sin(this.rel(id) * Math.PI / 180)) },
+  tail(id) { return !this.calm && this.off(id) > 90 },
+  side(id) { const r = this.rel(id); return this.wspd === 0 || r === 0 || r === -180 ? '' : r > 0 ? ' from the right' : ' from the left' },
+  // smallest angle off the nose; a tie goes to the longer, sealed runway (06/24 is listed first)
+  get best() { let b = '24'; ['06', '30', '12'].forEach((id) => { if (this.off(id) < this.off(b)) b = id }); return b },
+  // the into-wind end of the other runway
+  get alt() { const ids = this.R[this.best].pair === '06/24' ? ['30', '12'] : ['24', '06']; return this.off(ids[0]) <= this.off(ids[1]) ? ids[0] : ids[1] },
+  endText(id) {
+    return this.off(id) + '° off · ' + (this.tail(id) ? 'tailwind ' : 'headwind ') + this.fmt(Math.abs(this.head(id)), 1) + ' kt · crosswind ' + this.fmt(this.cross(id), 1) + ' kt' + this.side(id);
+  },
+  lenText(id) { return this.fmt(this.R[id].len) + ' m ' + this.R[id].surf },
+  // the picture: the wind arrow (fixed length) blows from P to the centre; split it at Q on the best runway's line
+  get P() { return this.pol(this.cx, this.cy, this.arm, this.mag) },
+  get Q() { return this.pol(this.cx, this.cy, this.arm * Math.cos(this.rel(this.best) * Math.PI / 180), this.R[this.best].hdg) },
+  // the corner of the triangle: headwind P to K, parallel to the runway beside it; crosswind K to the centre
+  get K() { return { x: this.cx + this.P.x - this.Q.x, y: this.cy + this.P.y - this.Q.y } },
+  get calm() { return this.wspd === 0 },
+  get showCross() { return !this.calm && this.cross(this.best) >= 0.5 && this.off(this.best) >= 3 },
+  anchor(bearing) { const s = Math.sin(bearing * Math.PI / 180); return s > 0.35 ? 'start' : s < -0.35 ? 'end' : 'middle' },
+  // headwind label: beside the headwind arrow, on the side the wind comes from
+  get hLab() {
+    const h = this.R[this.best].hdg, out = h + (this.rel(this.best) >= 0 ? 90 : -90);
+    const p = this.pol((this.P.x + this.K.x) / 2, (this.P.y + this.K.y) / 2, 16, out);
+    return { x: p.x, y: p.y + 4 + 6 * Math.cos(out * Math.PI / 180) * -1, a: this.anchor(out) };
+  },
+  // crosswind label: off the corner K, between the threshold side and the wind side
+  get xLab() {
+    const h = this.R[this.best].hdg, b = h + (this.rel(this.best) >= 0 ? 135 : -135), p = this.pol(this.K.x, this.K.y, 16, b);
+    return { x: p.x, y: p.y + 4 - 8 * Math.cos(b * Math.PI / 180), a: this.anchor(b) };
+  },
+  // wind label just outside the arrow's tail, on two lines
+  get wLab() {
+    const sn = Math.sin(this.mag * Math.PI / 180), c = Math.cos(this.mag * Math.PI / 180);
+    if (Math.abs(sn) > 0.85) { const q = this.pol(this.cx, this.cy, this.arm - 6, this.mag); return { x: q.x, y: this.K.y < this.cy - 2 ? q.y + 22 : q.y - 28, a: 'middle' } }
+    const p = this.pol(this.cx, this.cy, this.arm + 12, this.mag);
+    const y = c > 0.35 ? p.y - 14 : c < -0.35 ? p.y + 12 : p.y - 3;
+    return { x: p.x, y: y, a: this.anchor(this.mag) };
+  },
+  get caption() {
+    const b = this.best, a = this.alt, x = this.fmt(this.cross(b), 1);
+    let s = this.forecast ? 'Forecast wind ' + this.sumText + '. ' : 'ATIS wind ' + this.dir(this.wdir) + '°M is already magnetic; converting it again would give ' + this.dir(this.wdir - this.varE) + '°M. ';
+    if (this.calm) return s + 'Calm: no runway is favoured, so length, surface and slope decide.';
+    if (this.R[b].surf === 'gravel') {
+      return s + 'Runway ' + b + ' is best aligned (' + this.off(b) + '° off, ' + x + ' kt across) but it is ' + this.lenText(b) + '; runway ' + a + ' gives ' + this.fmt(this.cross(a), 1) + ' kt across on ' + this.lenText(a) + '. ERSA gives the inputs; the POH’s demonstrated crosswind and landing chart decide.';
+    }
+    return s + 'Runway ' + b + ' is best aligned: ' + this.off(b) + '° off, ' + this.fmt(this.head(b), 1) + ' kt headwind and ' + x + ' kt crosswind' + this.side(b) + ' on ' + this.lenText(b) + '. Check ' + x + ' kt against the POH demonstrated crosswind' + (b === '24' ? ', and fly a right-hand circuit (ERSA remarks).' : '.') + (this.off(a) === this.off(b) ? ' Runway ' + a + ' is just as well aligned, but ' + this.lenText(a) + '.' : '');
+  },
+  presets: {
+    'forecast-280-15': { src: 'taf', wdir: 280, wspd: 15, varE: -1 },
+    'forecast-200-20': { src: 'taf', wdir: 200, wspd: 20, varE: -1 },
+    'atis-281-magnetic': { src: 'atis', wdir: 281, wspd: 15, varE: -1 },
+  },
+})">
+  <svg viewBox="0 0 640 400" role="img" aria-labelledby="rwc-title" class="widget-stage">
+    <title id="rwc-title">Plan of Example Creek, magnetic north up, with runways 06/24 and 12/30 crossing inside a compass rose. The wind arrow blows from the wind direction in degrees magnetic towards the centre and is split into headwind and crosswind components for the best-aligned runway end, which is highlighted; ends with a tailwind fade out. A panel shows the true-to-magnetic conversion and the best end.</title>
+    <defs>
+      <marker id="rwc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="400" rx="10" fill="var(--color-surface-2)"/>
+    <text x="16" y="24" font-size="12" font-weight="600" fill="var(--color-fg-muted)">Example Creek (invented)</text>
+    <text x="16" y="40" font-size="12" fill="var(--color-fg-faint)">plan, magnetic north up</text>
+
+    <!-- compass rose -->
+    <circle cx="200" cy="212" r="150" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1.25" stroke-linecap="round">
+      <line x1="200.0" y1="62.0" x2="200.0" y2="76.0"/><line x1="226.0" y1="64.3" x2="224.8" y2="71.2"/><line x1="251.3" y1="71.0" x2="248.9" y2="77.6"/><line x1="275.0" y1="82.1" x2="268.0" y2="94.2"/><line x1="296.4" y1="97.1" x2="291.9" y2="102.5"/><line x1="314.9" y1="115.6" x2="309.5" y2="120.1"/><line x1="329.9" y1="137.0" x2="317.8" y2="144.0"/><line x1="341.0" y1="160.7" x2="334.4" y2="163.1"/><line x1="347.7" y1="186.0" x2="340.8" y2="187.2"/><line x1="350.0" y1="212.0" x2="336.0" y2="212.0"/><line x1="347.7" y1="238.0" x2="340.8" y2="236.8"/><line x1="341.0" y1="263.3" x2="334.4" y2="260.9"/><line x1="329.9" y1="287.0" x2="317.8" y2="280.0"/><line x1="314.9" y1="308.4" x2="309.5" y2="303.9"/><line x1="296.4" y1="326.9" x2="291.9" y2="321.5"/><line x1="275.0" y1="341.9" x2="268.0" y2="329.8"/><line x1="251.3" y1="353.0" x2="248.9" y2="346.4"/><line x1="226.0" y1="359.7" x2="224.8" y2="352.8"/><line x1="200.0" y1="362.0" x2="200.0" y2="348.0"/><line x1="174.0" y1="359.7" x2="175.2" y2="352.8"/><line x1="148.7" y1="353.0" x2="151.1" y2="346.4"/><line x1="125.0" y1="341.9" x2="132.0" y2="329.8"/><line x1="103.6" y1="326.9" x2="108.1" y2="321.5"/><line x1="85.1" y1="308.4" x2="90.5" y2="303.9"/><line x1="70.1" y1="287.0" x2="82.2" y2="280.0"/><line x1="59.0" y1="263.3" x2="65.6" y2="260.9"/><line x1="52.3" y1="238.0" x2="59.2" y2="236.8"/><line x1="50.0" y1="212.0" x2="64.0" y2="212.0"/><line x1="52.3" y1="186.0" x2="59.2" y2="187.2"/><line x1="59.0" y1="160.7" x2="65.6" y2="163.1"/><line x1="70.1" y1="137.0" x2="82.2" y2="144.0"/><line x1="85.1" y1="115.6" x2="90.5" y2="120.1"/><line x1="103.6" y1="97.1" x2="108.1" y2="102.5"/><line x1="125.0" y1="82.1" x2="132.0" y2="94.2"/><line x1="148.7" y1="71.0" x2="151.1" y2="77.6"/><line x1="174.0" y1="64.3" x2="175.2" y2="71.2"/>
+    </g>
+    <g font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">
+      <text x="200" y="54">N</text><text x="366" y="217">E</text><text x="200" y="380">S</text><text x="34" y="217">W</text>
+    </g>
+    <text x="214" y="54" font-size="11" fill="var(--color-fg-faint)">(magnetic)</text>
+
+    <!-- 12/30, 800 m gravel (narrower, shorter); local x runs along the runway towards 120 -->
+    <g transform="translate(200 212) rotate(30)">
+      <rect x="-70" y="-7.5" width="140" height="15" fill="var(--color-tarmac)" :fill-opacity="R[best].pair === '12/30' ? 1 : 0.8"/>
+      <line x1="-67" y1="-7.5" x2="-67" y2="7.5" stroke="var(--color-paint)" stroke-width="1.5"/>
+      <line x1="67" y1="-7.5" x2="67" y2="7.5" stroke="var(--color-paint)" stroke-width="1.5"/>
+      <line x1="-46" y1="0" x2="46" y2="0" stroke="var(--color-paint)" stroke-width="1" stroke-dasharray="6 5"/>
+      <text transform="translate(-56 0) rotate(90)" y="4" font-size="11" font-weight="700" text-anchor="middle" class="num" fill="var(--color-paint)" :fill-opacity="tail('12') ? 0.3 : 1">12</text>
+      <text transform="translate(56 0) rotate(-90)" y="4" font-size="11" font-weight="700" text-anchor="middle" class="num" fill="var(--color-paint)" :fill-opacity="tail('30') ? 0.3 : 1">30</text>
+      <rect x="-73" y="-11" width="30" height="22" rx="3" fill="none" stroke="var(--color-brand)" stroke-width="2.5" x-show="best === '12' && !calm"/>
+      <rect x="43" y="-11" width="30" height="22" rx="3" fill="none" stroke="var(--color-brand)" stroke-width="2.5" x-show="best === '30' && !calm"/>
+      <line x1="-114" y1="0" x2="-78" y2="0" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#rwc-arrow)" x-show="best === '12' && !calm"/>
+      <line x1="114" y1="0" x2="78" y2="0" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#rwc-arrow)" x-show="best === '30' && !calm"/>
+    </g>
+    <!-- 06/24, 1,200 m sealed (longer, wider); local x runs towards 060 -->
+    <g transform="translate(200 212) rotate(-30)">
+      <rect x="-105" y="-11" width="210" height="22" fill="var(--color-tarmac)"/>
+      <line x1="-102" y1="-11" x2="-102" y2="11" stroke="var(--color-paint)" stroke-width="1.5"/>
+      <line x1="102" y1="-11" x2="102" y2="11" stroke="var(--color-paint)" stroke-width="1.5"/>
+      <line x1="-76" y1="0" x2="76" y2="0" stroke="var(--color-paint)" stroke-width="1.25" stroke-dasharray="8 6"/>
+      <text transform="translate(-89 0) rotate(90)" y="5" font-size="13" font-weight="700" text-anchor="middle" class="num" fill="var(--color-paint)" :fill-opacity="tail('06') ? 0.3 : 1">06</text>
+      <text transform="translate(89 0) rotate(-90)" y="5" font-size="13" font-weight="700" text-anchor="middle" class="num" fill="var(--color-paint)" :fill-opacity="tail('24') ? 0.3 : 1">24</text>
+      <rect x="-108" y="-15" width="35" height="30" rx="3" fill="none" stroke="var(--color-brand)" stroke-width="2.5" x-show="best === '06' && !calm"/>
+      <rect x="73" y="-15" width="35" height="30" rx="3" fill="none" stroke="var(--color-brand)" stroke-width="2.5" x-show="best === '24' && !calm"/>
+      <line x1="-146" y1="0" x2="-113" y2="0" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#rwc-arrow)" x-show="best === '06' && !calm"/>
+      <line x1="146" y1="0" x2="113" y2="0" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#rwc-arrow)" x-show="best === '24' && !calm"/>
+    </g>
+
+    <!-- the wind (blowing from P to the centre) and its components for the best end -->
+    <g x-show="!calm" stroke-linecap="round">
+      <line :x1="P.x" :y1="P.y" :x2="K.x" :y2="K.y" stroke="var(--color-surface)" stroke-width="5"/>
+      <line :x1="P.x" :y1="P.y" :x2="K.x" :y2="K.y" stroke="var(--color-brand)" stroke-width="3" marker-end="url(#rwc-arrow)"/>
+      <line :x1="K.x" :y1="K.y" :x2="cx" :y2="cy" stroke="var(--color-surface)" stroke-width="5" x-show="showCross"/>
+      <line :x1="K.x" :y1="K.y" :x2="cx" :y2="cy" stroke="var(--color-info)" stroke-width="3" marker-end="url(#rwc-arrow)" x-show="showCross"/>
+      <line :x1="P.x" :y1="P.y" :x2="cx" :y2="cy" stroke="var(--color-surface)" stroke-width="7"/>
+      <line :x1="P.x" :y1="P.y" :x2="cx" :y2="cy" stroke="var(--color-fg)" stroke-width="3" marker-end="url(#rwc-arrow)"/>
+      <circle :cx="P.x" :cy="P.y" r="4" fill="var(--color-fg)"/>
+    </g>
+    <g font-size="13" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="!calm">
+      <text fill="var(--color-fg)" :x="wLab.x" :y="wLab.y" :text-anchor="wLab.a" x-text="dir(mag) + '°M'"></text>
+      <text fill="var(--color-fg)" :x="wLab.x" :y="wLab.y + 15" :text-anchor="wLab.a" x-text="wspd + ' kt'"></text>
+      <text fill="var(--color-brand-fg)" :x="hLab.x" :y="hLab.y" :text-anchor="hLab.a" x-text="'head ' + fmt(head(best), 1)"></text>
+      <text fill="var(--color-info-fg)" :x="xLab.x" :y="xLab.y" :text-anchor="xLab.a" x-show="showCross" x-text="'cross ' + fmt(cross(best), 1)"></text>
+    </g>
+    <text x="200" y="217" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="calm">calm</text>
+
+    <!-- panel: convert once -->
+    <rect x="392" y="16" width="232" height="96" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="404" y="38" font-size="12" font-weight="600" fill="var(--color-fg-muted)" x-text="forecast ? 'Forecast TAF/GAF: degrees true' : 'ATIS / tower: degrees magnetic'"></text>
+    <text x="404" y="68" font-size="15" font-weight="700" class="num" fill="var(--color-fg)" x-text="sumText"></text>
+    <text x="404" y="96" font-size="12" :fill="forecast ? 'var(--color-fg-muted)' : 'var(--color-warn-fg)'" x-text="ruleText"></text>
+
+    <!-- panel: the best end -->
+    <rect x="392" y="124" width="232" height="132" rx="8" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5"/>
+    <text x="404" y="146" font-size="12" font-weight="600" fill="var(--color-brand-fg)" x-text="calm ? 'Calm: no runway favoured' : 'Best aligned (smallest angle)'"></text>
+    <g x-show="!calm">
+    <text x="404" y="178" font-size="24" font-weight="700" class="num" fill="var(--color-brand-fg)" x-text="'RWY ' + best"></text>
+    <text x="612" y="178" font-size="15" font-weight="700" text-anchor="end" class="num" fill="var(--color-brand-fg)" x-text="off(best) + '° off'"></text>
+    <g font-size="13" class="num" fill="var(--color-fg)">
+      <text x="404" y="202" x-text="'headwind ' + fmt(head(best), 1) + ' kt'"></text>
+      <text x="404" y="222" x-text="'crosswind ' + fmt(cross(best), 1) + ' kt' + side(best).replace(' from the', '')"></text>
+      <text x="404" y="244" font-weight="700" :fill="R[best].surf === 'gravel' ? 'var(--color-warn-fg)' : 'var(--color-fg)'" x-text="lenText(best)"></text>
+    </g>
+    </g>
+    <g x-show="calm" font-size="13" fill="var(--color-fg)">
+      <text x="404" y="178">Length and surface decide:</text>
+      <text x="404" y="200" class="num">06/24: 1,200 m sealed</text>
+      <text x="404" y="222" class="num">12/30: 800 m gravel</text>
+    </g>
+
+    <!-- panel: into wind on the other runway -->
+    <rect x="392" y="268" width="232" height="104" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="404" y="290" font-size="12" font-weight="600" fill="var(--color-fg-muted)" x-text="calm ? 'No wind to compare' : 'Into wind on the other runway'"></text>
+    <g font-size="13" class="num" fill="var(--color-fg)" x-show="!calm">
+      <text x="404" y="314" font-weight="700" x-text="'RWY ' + alt + ', ' + off(alt) + '° off'"></text>
+      <text x="404" y="336" x-text="'head ' + fmt(head(alt), 1) + ' · cross ' + fmt(cross(alt), 1) + ' kt'"></text>
+      <text x="404" y="358" x-text="lenText(alt)"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rwc-src">Where the wind comes from</label>
+      <select id="rwc-src" class="input" x-model="src" @change="active = null">
+        <option value="taf">Forecast TAF/GAF (degrees true)</option>
+        <option value="atis">ATIS / tower (degrees magnetic)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="rwc-wdir">Wind direction (from) <output for="rwc-wdir" x-text="dir(wdir) + (forecast ? '°T' : '°M')"></output></label>
+      <input type="range" id="rwc-wdir" min="1" max="360" step="1" x-model.number="wdir" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="rwc-wspd">Wind speed <output for="rwc-wspd" x-text="wspd + ' kt'"></output></label>
+      <input type="range" id="rwc-wspd" min="0" max="35" step="1" x-model.number="wspd" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="rwc-var">Variation (ERSA header) <output for="rwc-var" x-text="varText + (forecast ? '' : ', not used')"></output></label>
+      <input type="range" id="rwc-var" min="-15" max="15" step="1" x-model.number="varE" @input="active = null" aria-describedby="rwc-var-hint">
+      <span id="rwc-var-hint" class="sr-only">Left is west, right is east</span>
+    </div>
+  </div>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Wind in magnetic</dt>
+      <dd class="widget-value num" x-text="dir(mag) + '°M at ' + wspd + ' kt'"></dd>
+    </div>
+    <div class="widget-readout" :class="best === '06' && !calm ? 'ok' : ''">
+      <dt class="widget-label">RWY 06 (060°M)</dt>
+      <dd class="widget-value"><span x-text="endText('06')"></span><span class="widget-flag ok" x-show="best === '06' && !calm">best</span><span class="widget-flag warn" x-show="tail('06') && !calm">tailwind</span></dd>
+    </div>
+    <div class="widget-readout" :class="best === '24' && !calm ? 'ok' : ''">
+      <dt class="widget-label">RWY 24 (240°M)</dt>
+      <dd class="widget-value"><span x-text="endText('24')"></span><span class="widget-flag ok" x-show="best === '24' && !calm">best</span><span class="widget-flag warn" x-show="tail('24') && !calm">tailwind</span></dd>
+    </div>
+    <div class="widget-readout" :class="best === '12' && !calm ? 'ok' : ''">
+      <dt class="widget-label">RWY 12 (120°M)</dt>
+      <dd class="widget-value"><span x-text="endText('12')"></span><span class="widget-flag ok" x-show="best === '12' && !calm">best</span><span class="widget-flag warn" x-show="tail('12') && !calm">tailwind</span></dd>
+    </div>
+    <div class="widget-readout" :class="best === '30' && !calm ? 'ok' : ''">
+      <dt class="widget-label">RWY 30 (300°M)</dt>
+      <dd class="widget-value"><span x-text="endText('30')"></span><span class="widget-flag ok" x-show="best === '30' && !calm">best</span><span class="widget-flag warn" x-show="tail('30') && !calm">tailwind</span></dd>
+    </div>
+    <div class="widget-readout" :class="calm ? '' : R[best].surf === 'gravel' ? 'warn' : 'ok'">
+      <dt class="widget-label">Best-aligned end</dt>
+      <dd class="widget-value"><span x-text="calm ? 'calm: none favoured' : best + ': ' + lenText(best) + ', crosswind ' + fmt(cross(best), 1) + ' kt'"></span><span class="widget-flag warn" x-show="R[best].surf === 'gravel' && !calm">check the POH</span></dd>
+    </div>
+  </dl>
+
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('forecast-280-15')" :aria-pressed="active === 'forecast-280-15'">Forecast 280/15</button>
+      <button type="button" @click="preset('forecast-200-20')" :aria-pressed="active === 'forecast-200-20'">Forecast 200/20</button>
+      <button type="button" @click="preset('atis-281-magnetic')" :aria-pressed="active === 'atis-281-magnetic'">ATIS 281/15</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+
+  <p class="widget-notice"><strong>What to notice.</strong> Forecast winds are in degrees true; ATIS and tower winds, like runway numbers, are magnetic. Convert a forecast wind once (variation west, magnetic best; variation east, magnetic least), never an ATIS wind, then compare the angle to each runway end: the smallest angle with a headwind is the best aligned. That is not automatically the runway you choose: length, surface and the POH's demonstrated crosswind decide. Example Creek is the lesson's invented aerodrome; the components are $V\cos\theta$ and $V\sin\theta$.</p>
+  <details class="widget-try"><summary>Try it: the forecast changes to 200 degrees true at 20 kt. Which runway end is into wind, and what are its components?</summary><p>Press Forecast 200/20. 200°T + 1°W = 201°M. Runway 24 (240°M) is 39° off: crosswind 20 × sin 39° = 12.6 kt from the left, headwind 20 × cos 39° = 15.5 kt. Runway 12 (120°M) is 81° off: 19.8 kt across and only 3.1 kt of headwind. So runway 24, with about 13 kt across it to check against the POH demonstrated crosswind, and a right-hand circuit.</p></details>
+  <details class="widget-try"><summary>Try it: from the 280/15 forecast, set the variation to 10° W and leave the source on forecast. How much does the angle to runway 24 change?</summary><p>280°T + 10°W = 290°M, so runway 24 is 290 − 240 = 50° off instead of 41°: 9 degrees more, exactly the extra variation. Its crosswind rises from 9.8 to 15 × sin 50° = 11.5 kt and the headwind falls to 15 × cos 50° = 9.6 kt, while runway 30 comes to 10° off (2.6 kt across). Forgetting to convert would leave you at 40°, 10 degrees out: with a large variation the error no longer hides.</p></details>
+</div>

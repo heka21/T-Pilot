@@ -17,6 +17,7 @@
   <script src="{{ static_url('app.js') }}"></script>
   <script src="{{ static_url('player.js') }}"></script>
   <script src="{{ static_url('follow.js') }}"></script>
+  <script src="{{ static_url('viz.js') }}"></script>
   <script defer src="/static/vendor/katex/katex.min.js"></script>
   <script defer src="/static/vendor/katex/auto-render.min.js"></script>
   <script defer src="/static/vendor/alpine.min.js"></script>
@@ -113,7 +114,8 @@
     </main>
 
     {# -------------------------------------------------------------- narration mini player (player.js fills and shows it)
-       Dragged by its grip or title (app.js floaters, "player:pos"); the X stops playback and closes it. On a lesson's
+       Dragged by its grip or title (app.js floaters, "player:pos"); the X stops playback and closes it. On the playing
+       lesson's own page "Play from here" (the crosshair) starts from the passage at the top of the screen. On a lesson's
        page player.js moves it into the lesson bar as a flyout from the Listen button; the fold button (shown only
        there) closes it back into that button. #}
     <div class="miniplayer" data-miniplayer data-floater="player" hidden role="region" aria-label="Lesson audio">
@@ -126,6 +128,7 @@
           <span class="mp-sub" data-mp-sub></span>
         </a>
         <span class="mp-time hidden sm:inline" data-mp-time></span>
+        <button type="button" class="btn-icon size-9" data-player="here" hidden aria-label="Play from the passage on screen" title="Play from here">{{ icon("locate", "size-[18px]") }}</button>
         <button type="button" class="btn-icon size-9" data-player="back" aria-label="Back 15 seconds" title="Back 15 s">{{ icon("rewind", "size-[18px]") }}</button>
         <button type="button" class="btn-icon size-9" data-player="forward" aria-label="Forward 30 seconds" title="Forward 30 s">{{ icon("forward", "size-[18px]") }}</button>
         <button type="button" class="btn-icon mp-follow size-9 max-sm:hidden" data-player="follow" aria-pressed="false" aria-label="Highlight what is being read" title="Highlight as it reads">{{ icon("highlighter", "size-[18px]") }}</button>

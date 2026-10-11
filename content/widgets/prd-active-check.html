@@ -1,0 +1,164 @@
+<div class="widget" x-data="widget({
+  type: 'R', hours: 'utc', from: 1320, to: 120, weekdays: false, notam: false, status: 'RA1', m: 570, day: 2,
+  // BAKC 5.2: P never; R only with a clearance (RA1 plan through, RA2 plan to avoid, RA3 no clearance); D permitted,
+  // know the hazard. ERSA hours: H24, specific times in UTC (WST = UTC + 8), or activated by NOTAM (no NOTAM: inactive)
+  DAYS: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  okDay(u) { return !this.weekdays || ((u % 7) + 7) % 7 < 5 },
+  // is the area on at WST minute w on WST day d?
+  activeAt(w, d) {
+    if (this.type === 'P' || this.hours === 'h24') return true;
+    if (this.hours === 'notam') return this.notam;
+    const u = w - 480, U = u < 0 ? d - 1 : d, um = (u + 1440) % 1440, f = this.from, t = this.to;
+    if (f === t) return false;
+    if (f < t) return um >= f && um < t && this.okDay(U);
+    return (um >= f && this.okDay(U)) || (um < t && this.okDay(U - 1));
+  },
+  get on() { return this.activeAt(this.m, this.day) },
+  // shaded runs across the chosen WST day, every 5 minutes
+  get runs() { let d = '', s = -1; for (let w = 0; w <= 1440; w += 5) { const a = w < 1440 && this.activeAt(w, this.day); if (a && s < 0) s = w; if (!a && s >= 0) { d += 'M' + this.X(s).toFixed(1) + ' 56 H' + this.X(w).toFixed(1) + ' V84 H' + this.X(s).toFixed(1) + ' Z '; s = -1 } } return d },
+  X(w) { return 76 + w * 524 / 1440 },
+  get typeName() { return { P: 'Prohibited', R: 'Restricted', D: 'Danger' }[this.type] },
+  get wstWin() { return this.hhmm(this.from + 480) + '–' + this.hhmm(this.to + 480) + ' WST' },
+  get crossesWst() { return (this.from + 480) % 1440 > (this.to + 480) % 1440 },
+  get hoursLine() { return this.type === 'P' ? 'at all times' : this.hours === 'h24' ? 'H24: always' : this.hours === 'notam' ? 'by NOTAM' : this.hhmm(this.from) + '–' + this.hhmm(this.to) + ' UTC' },
+  get wstLine() { return this.type === 'P' || this.hours !== 'utc' ? '' : '= ' + this.wstWin },
+  get notamLine() { return this.hours === 'notam' && this.type !== 'P' ? (this.notam ? 'NOTAM found: active' : 'no NOTAM: inactive') : 'check for changes' },
+  get verdict() {
+    if (this.type === 'P') return { s: 'bad', a: 'Never enter', b: 'at any time, for any reason' };
+    if (!this.on) return { s: 'ok', a: 'Not active', b: 'ordinary airspace for now' };
+    if (this.type === 'D') return { s: 'warn', a: 'Entry permitted', b: 'know the hazard; avoid if practicable' };
+    return { RA1: { s: 'warn', a: 'Plan through', b: 'clearance normally available: get it first' }, RA2: { s: 'bad', a: 'Plan to avoid', b: 'a tactical clearance is not assured' }, RA3: { s: 'bad', a: 'Plan around', b: 'no clearance will be available' } }[this.status];
+  },
+  hx(k) { return this.X(k * 240) },
+  presets: {
+    'area-2200-0200-utc': { type: 'R', hours: 'utc', from: 1320, to: 120, weekdays: false, notam: false, status: 'RA1', m: 570, day: 2 },
+    'weekday-area-1530': { type: 'R', hours: 'utc', from: 0, to: 480, weekdays: true, notam: false, status: 'RA1', m: 930, day: 2 },
+    'weekday-area-after-1600': { type: 'R', hours: 'utc', from: 0, to: 480, weekdays: true, notam: false, status: 'RA1', m: 975, day: 2 },
+    'overnight-1400-2200-utc': { type: 'R', hours: 'utc', from: 840, to: 1320, weekdays: false, notam: false, status: 'RA1', m: 300, day: 2 },
+    'r155-h24-ra3': { type: 'R', hours: 'h24', notam: false, status: 'RA3', m: 600, day: 2 },
+    'by-notam-none-found': { type: 'R', hours: 'notam', notam: false, status: 'RA1', m: 600, day: 2 },
+    'example-creek-trip': { type: 'R', hours: 'utc', from: 0, to: 480, weekdays: true, notam: false, status: 'RA2', m: 660, day: 2 },
+    'danger-area': { type: 'D', hours: 'h24', notam: false, m: 600, day: 2 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="pac-title" class="widget-stage">
+    <title id="pac-title">A Perth day as a strip with WST hours above and UTC hours below, the area's active hours shaded and your time marked, and under it the four-step check: chart, ERSA PRD, NOTAM, then the decision</title>
+    <defs>
+      <marker id="pac-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- the day -->
+    <text x="20" y="74" font-size="13" font-weight="700" fill="var(--color-brand-fg)">WST</text>
+    <text x="20" y="100" font-size="12" fill="var(--color-fg-muted)">UTC</text>
+    <text x="20" y="34" font-size="12" font-weight="600" fill="var(--color-fg)" x-text="DAYS[day]"></text>
+    <rect x="76" y="56" width="524" height="28" rx="4" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path fill="var(--color-bad)" fill-opacity="0.3" stroke="var(--color-bad)" stroke-width="1.25" :d="runs"/>
+    <g font-size="12" class="num" text-anchor="middle" fill="var(--color-fg-faint)">
+      <text y="50" :x="hx(0)">0000</text><text y="50" :x="hx(1)">0400</text><text y="50" :x="hx(2)">0800</text><text y="50" :x="hx(3)">1200</text><text y="50" :x="hx(4)">1600</text><text y="50" :x="hx(5)">2000</text><text y="50" :x="hx(6)">2400</text>
+      <text y="100" :x="hx(0)">1600</text><text y="100" :x="hx(1)">2000</text><text y="100" :x="hx(2)">0000</text><text y="100" :x="hx(3)">0400</text><text y="100" :x="hx(4)">0800</text><text y="100" :x="hx(5)">1200</text><text y="100" :x="hx(6)">1600</text>
+    </g>
+    <text x="246" y="122" font-size="12" fill="var(--color-fg-faint)">UTC date changes at 0800 WST</text>
+    <!-- your time -->
+    <line y1="50" y2="90" stroke="var(--color-brand)" stroke-width="3" :x1="X(m)" :x2="X(m)"/>
+    <text font-size="13" font-weight="700" class="num" fill="var(--color-brand-fg)" text-anchor="middle" y="36" :x="clamp(X(m), 110, 560)" x-text="'you: ' + hhmm(m) + ' WST'"></text>
+
+    <!-- the four checks -->
+    <g font-size="12">
+      <rect x="10" y="140" width="142" height="140" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1.25"/>
+      <text x="20" y="160" font-weight="700" fill="var(--color-fg-muted)">1 Chart</text>
+      <text x="20" y="196" font-size="28" font-weight="700" :fill="type === 'D' ? 'var(--color-warn-fg)' : 'var(--color-bad-fg)'" x-text="type"></text>
+      <text x="20" y="220" fill="var(--color-fg)" x-text="typeName"></text>
+      <text x="20" y="240" fill="var(--color-fg-muted)">where it is and</text>
+      <text x="20" y="256" fill="var(--color-fg-muted)">its limits</text>
+
+      <rect x="166" y="140" width="142" height="140" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1.25"/>
+      <text x="176" y="160" font-weight="700" fill="var(--color-fg-muted)">2 ERSA PRD</text>
+      <text x="176" y="186" fill="var(--color-fg)" class="num" x-text="hoursLine"></text>
+      <text x="176" y="206" fill="var(--color-brand-fg)" font-weight="700" class="num" x-text="wstLine"></text>
+      <text x="176" y="226" fill="var(--color-fg)" x-show="type !== 'P' && hours === 'utc'" x-text="weekdays ? 'Mon–Fri (UTC days)' : crossesWst ? 'overnight in Perth' : 'every day'"></text>
+      <text x="176" y="248" fill="var(--color-fg-muted)" x-show="type === 'R'" x-text="'status ' + status"></text>
+      <text x="176" y="266" fill="var(--color-fg-muted)">authority to call</text>
+
+      <rect x="322" y="140" width="142" height="140" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1.25"/>
+      <text x="332" y="160" font-weight="700" fill="var(--color-fg-muted)">3 NOTAM</text>
+      <text x="332" y="186" :fill="hours === 'notam' && type !== 'P' ? (notam ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)') : 'var(--color-fg)'" x-text="notamLine"></text>
+      <text x="332" y="240" fill="var(--color-fg-muted)">activations, changes</text>
+      <text x="332" y="256" fill="var(--color-fg-muted)">to limits or hours</text>
+
+      <rect x="478" y="140" width="152" height="140" rx="8" stroke-width="2" :fill="'var(--color-' + verdict.s + '-soft)'" :stroke="'var(--color-' + verdict.s + ')'"/>
+      <text x="488" y="160" font-weight="700" fill="var(--color-fg-muted)" x-text="'4 At ' + hhmm(m) + ' WST'"></text>
+      <text x="488" y="186" font-size="14" font-weight="700" :fill="on ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="type === 'P' ? 'ALWAYS' : on ? 'ACTIVE' : 'INACTIVE'"></text>
+      <text x="488" y="214" font-size="15" font-weight="700" :fill="'var(--color-' + verdict.s + '-fg)'" x-text="verdict.a"></text>
+    </g>
+    <g stroke="var(--color-fg-faint)" stroke-width="1.5"><path d="M152 210 h12" marker-end="url(#pac-arrow)"/><path d="M308 210 h12" marker-end="url(#pac-arrow)"/><path d="M464 210 h12" marker-end="url(#pac-arrow)"/></g>
+    <text x="488" y="240" font-size="12" fill="var(--color-fg)" x-text="verdict.b.length > 20 ? verdict.b.slice(0, verdict.b.lastIndexOf(' ', 20)) : verdict.b"></text>
+    <text x="488" y="256" font-size="12" fill="var(--color-fg)" x-text="verdict.b.length > 20 ? verdict.b.slice(verdict.b.lastIndexOf(' ', 20) + 1) : ''"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="pac-type">Area type (the letter)</label>
+      <select id="pac-type" class="input" x-model="type" @change="active = null">
+        <option value="P">P, prohibited</option><option value="R">R, restricted</option><option value="D">D, danger</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="type !== 'P'">
+      <label for="pac-hours">ERSA hours of activity</label>
+      <select id="pac-hours" class="input" x-model="hours" @change="active = null">
+        <option value="h24">H24, continuously</option><option value="utc">Specific times, in UTC</option><option value="notam">By NOTAM</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="type !== 'P' && hours === 'utc'">
+      <label for="pac-from">Active from <output for="pac-from" x-text="hhmm(from) + ' UTC = ' + hhmm(from + 480) + ' WST'"></output></label>
+      <input type="range" id="pac-from" min="0" max="1425" step="15" x-model.number="from" @input="active = null">
+    </div>
+    <div class="widget-control" x-show="type !== 'P' && hours === 'utc'">
+      <label for="pac-to">Active to <output for="pac-to" x-text="hhmm(to) + ' UTC = ' + hhmm(to + 480) + ' WST'"></output></label>
+      <input type="range" id="pac-to" min="0" max="1425" step="15" x-model.number="to" @input="active = null">
+    </div>
+    <div class="widget-control" x-show="type !== 'P' && hours === 'utc'">
+      <label for="pac-wd" class="cursor-pointer"><span>Monday to Friday only (UTC days)</span>
+        <input type="checkbox" id="pac-wd" x-model="weekdays" class="size-5 accent-[var(--color-brand)]" @change="active = null"></label>
+    </div>
+    <div class="widget-control" x-show="type !== 'P' && hours === 'notam'">
+      <label for="pac-notam" class="cursor-pointer"><span>A current NOTAM activates it</span>
+        <input type="checkbox" id="pac-notam" x-model="notam" class="size-5 accent-[var(--color-brand)]" @change="active = null"></label>
+    </div>
+    <div class="widget-control" x-show="type === 'R'">
+      <label for="pac-status">Conditional status</label>
+      <select id="pac-status" class="input" x-model="status" @change="active = null">
+        <option value="RA1">RA1</option><option value="RA2">RA2</option><option value="RA3">RA3</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="pac-m">When you pass it <output for="pac-m" x-text="DAYS[day] + ' ' + hhmm(m) + ' WST'"></output></label>
+      <input type="range" id="pac-m" min="0" max="1435" step="15" x-model.number="m" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="pac-day">Day (in Perth)</label>
+      <select id="pac-day" class="input" x-model.number="day" @change="active = null">
+        <option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="type !== 'P' && hours === 'utc' ? 'ok' : ''"><dt class="widget-label">Active hours in Perth time</dt><dd class="widget-value" x-text="type === 'P' ? 'always' : hours === 'h24' ? 'all day, every day' : hours === 'notam' ? (notam ? 'as the NOTAM says' : 'not active (no NOTAM)') : wstWin + (weekdays ? ', UTC Mon–Fri' : '')"></dd></div>
+    <div class="widget-readout" :class="on ? 'bad' : 'ok'"><dt class="widget-label" x-text="'At ' + DAYS[day] + ' ' + hhmm(m) + ' WST'"></dt><dd class="widget-value"><span x-text="type === 'P' ? 'prohibited at all times' : on ? 'active' : 'not active'"></span><span class="widget-flag" :class="on ? 'bad' : 'ok'" x-text="on ? 'active' : 'clear'"></span></dd></div>
+    <div class="widget-readout" :class="verdict.s"><dt class="widget-label">Your plan</dt><dd class="widget-value" x-text="verdict.a + ': ' + verdict.b"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('area-2200-0200-utc')" :aria-pressed="active === 'area-2200-0200-utc'">2200–0200Z at 0930</button>
+      <button type="button" @click="preset('weekday-area-1530')" :aria-pressed="active === 'weekday-area-1530'">0000–0800Z Mon–Fri, Wed 1530</button>
+      <button type="button" @click="preset('weekday-area-after-1600')" :aria-pressed="active === 'weekday-area-after-1600'">Same, after 1600</button>
+      <button type="button" @click="preset('overnight-1400-2200-utc')" :aria-pressed="active === 'overnight-1400-2200-utc'">1400–2200Z at 0500</button>
+      <button type="button" @click="preset('r155-h24-ra3')" :aria-pressed="active === 'r155-h24-ra3'">H24, RA3</button>
+      <button type="button" @click="preset('by-notam-none-found')" :aria-pressed="active === 'by-notam-none-found'">By NOTAM, none found</button>
+      <button type="button" @click="preset('example-creek-trip')" :aria-pressed="active === 'example-creek-trip'">Example Creek trip, RA2</button>
+      <button type="button" @click="preset('danger-area')" :aria-pressed="active === 'danger-area'">Danger area</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> ERSA gives the hours in UTC, so add 8 hours to see them on your watch; a UTC period that crosses midnight often sits inside one WST morning, and one that does not can run overnight in Perth. An area activated by NOTAM is inactive unless a NOTAM wakes it. Whether active means "ask", "avoid" or "never" comes from the letter and the RA status. HJ, HN and HO (daylight, night, hours of operation) work the same way without the arithmetic. The areas here are illustrations of the format, not real ones; always check the NOTAMs on the day.</p>
+  <details class="widget-try"><summary>Try it: an area is listed active 2200–0200 UTC. You will pass it at 0930 WST. Is it active?</summary><p>2200 + 8 = 3000, minus 24 is 0600 WST; 0200 + 8 = 1000 WST. Active 0600 to 1000 WST, so at 0930 it is active. Press 2200–0200Z at 0930, then drag your time past 1000 and watch it clear.</p></details>
+  <details class="widget-try"><summary>Try it: an area is listed active 1400–2200 UTC. Is it active at 0500 WST?</summary><p>1400 + 8 = 2200 WST; 2200 + 8 = 3000, which is 0600 WST the next day. Active 2200 to 0600 WST, overnight in Perth, so 0500 is inside it: active. Press 1400–2200Z at 0500.</p></details>
+</div>

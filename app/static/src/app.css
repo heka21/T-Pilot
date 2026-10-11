@@ -1,7 +1,8 @@
-/* CASA Theory design system. Source for Tailwind; build with `npm run css` (writes app/static/app.css). */
+/* T-Pilot design system. Source for Tailwind; build with `npm run css` (writes app/static/app.css). */
 @import "tailwindcss" source(none);
 @source "../../templates";
 @source "../../routers";
+@source "../../../content/widgets";
 @plugin "@tailwindcss/typography";
 @import "./equations.css";
 
@@ -662,19 +663,23 @@
   .lesson-bar[data-side="right"] > .miniplayer [data-player="collapse"] svg { rotate: 90deg; }
   .lesson-bar[data-vside="down"] .mp-panel { @apply top-12 bottom-auto; }
   /* The Listen button the player flies out of: filled while the flyout is open; once a lesson is loaded a ring round
-     it fills with the progress (--p on the bar, player.js), and it breathes while playing with the flyout closed.
-     With the bar folded, its fold button wears the ring instead. */
+     it fills with the progress (--p on the bar, player.js). While it plays with the flyout closed or the bar folded
+     the button is a pause button (data-pause, player.js) and breathes; folded, it shows above the fold button.
+     Folded and paused, the fold button wears the ring instead. */
   .lesson-bar-listen[aria-expanded="true"] { @apply bg-accent text-white hover:text-white; }
-  html[data-player-docked] .lesson-bar:not([data-collapsed]) > .lesson-bar-listen,
-  html[data-player-docked] .lesson-bar[data-collapsed] > .lesson-bar-collapse { @apply relative overflow-visible; }
-  html[data-player-docked] .lesson-bar:not([data-collapsed]) > .lesson-bar-listen::after,
-  html[data-player-docked] .lesson-bar[data-collapsed] > .lesson-bar-collapse::after {
+  .lesson-bar-listen .lesson-bar-pause,
+  .lesson-bar-listen[data-pause] .lesson-bar-headphones { display: none; }
+  .lesson-bar-listen[data-pause] .lesson-bar-pause { display: block; }
+  html[data-player-docked][data-player-playing] .lesson-bar[data-collapsed] > .lesson-bar-listen { display: inline-flex; }
+  html[data-player-docked] .lesson-bar > .lesson-bar-listen,
+  html[data-player-docked]:not([data-player-playing]) .lesson-bar[data-collapsed] > .lesson-bar-collapse { @apply relative overflow-visible; }
+  html[data-player-docked] .lesson-bar > .lesson-bar-listen::after,
+  html[data-player-docked]:not([data-player-playing]) .lesson-bar[data-collapsed] > .lesson-bar-collapse::after {
     @apply pointer-events-none absolute -inset-[3px] rounded-full content-[''];
     background: conic-gradient(var(--color-accent) var(--p, 0%), color-mix(in oklab, var(--color-accent) 22%, transparent) 0);
     mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
   }
-  html[data-player-docked][data-player-playing] .lesson-bar:has(> .miniplayer[hidden]):not([data-collapsed]) > .lesson-bar-listen,
-  html[data-player-docked][data-player-playing] .lesson-bar[data-collapsed] > .lesson-bar-collapse { animation: dock-breathe 2.4s ease-in-out infinite; }
+  html[data-player-docked] .lesson-bar > .lesson-bar-listen[data-pause] { animation: dock-breathe 2.4s ease-in-out infinite; }
   @keyframes dock-breathe {
     0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-accent) 0%, transparent); }
     50% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-accent) 22%, transparent); }
@@ -769,6 +774,17 @@
   .widget-canvas { @apply block aspect-[16/10] w-full rounded-xl bg-surface; }
   .widget-canvas canvas { @apply block h-full w-full rounded-xl touch-none; }
   .widget-fallback { @apply m-0 grid h-full place-items-center p-6 text-center text-sm text-fg-muted; }
+  /* Timeline widgets (x-data="timeline(...)", app/static/viz.js): play button, scrubber and clock under the
+     picture, then a row of step buttons for the key moments, then the caption of the current step. */
+  .widget-timeline { @apply mt-3 flex items-center gap-3; }
+  .widget-timeline input[type="range"] { @apply min-w-0 flex-1; }
+  .widget-play { @apply grid size-11 shrink-0 cursor-pointer place-items-center rounded-full bg-grad-brand text-on-brand shadow-(--shadow-card) transition-transform active:scale-95; }
+  .widget-play svg { @apply size-5; }
+  .widget-clock { @apply shrink-0 font-mono text-sm font-semibold tabular-nums text-fg; }
+  .widget-steps { @apply mt-2 flex flex-wrap gap-1.5; }
+  .widget-steps button { @apply cursor-pointer rounded-full border border-line bg-surface-2/70 px-2.5 py-1 text-xs font-medium text-fg-muted transition-colors hover:text-fg; }
+  .widget-steps button[aria-pressed="true"] { @apply border-transparent bg-grad-brand text-on-brand hover:text-on-brand; }
+  .widget-caption { @apply mt-3 min-h-[2.75em] rounded-xl bg-brand-soft/50 px-3 py-2 text-sm text-fg; }
   .note-body .widget p, .note-body .widget ul { @apply my-0; }
   .note-body .widget button { @apply no-underline; }
 

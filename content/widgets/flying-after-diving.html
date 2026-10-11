@@ -1,0 +1,124 @@
+<div class="widget" x-data="widget({
+  kind: 'no-stops', day: 6, surf: 600, dep: 5,
+  // minimum waits from PHFC 2.4 (commonly taught; check current CASA guidance)
+  kinds: {
+    'no-stops': { name: 'One dive, no decompression stops', wait: 12, n0: 1, tau: 5 },
+    'stops': { name: 'A dive with decompression stops', wait: 24, n0: 1.4, tau: 8 },
+    'multi': { name: 'Several dives over several days', wait: 24, n0: 1.5, tau: 9 },
+    'snorkel': { name: 'Snorkelling (breath-hold)', wait: 0, n0: 0, tau: 5 },
+  },
+  days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  get k() { return this.kinds[this.kind] },
+  get wait() { return this.k.wait },
+  // extra nitrogen still dissolved in the tissues: an illustrative slow decay, not a dive table
+  n(h) { return this.k.n0 * Math.exp(-h / this.k.tau) },
+  when(h) { const m = this.surf + h * 60, d = Math.floor(m / 1440); return this.days[(this.day + d) % 7] + ' ' + this.hhmm(m) },
+  get earliest() { return this.wait ? this.when(this.wait) : 'Any time' },
+  get early() { return this.dep < this.wait - 1e-6 },
+  get depText() { return this.when(this.dep) },
+  get verdict() {
+    if (this.kind === 'snorkel') return ['Fine: no nitrogen load', 'ok'];
+    if (this.early) return [this.fmt(this.wait - this.dep, (this.wait - this.dep) % 1 ? 1 : 0) + ' h too soon', 'bad'];
+    return ['After the minimum wait', 'ok'];
+  },
+  // the picture: 0..36 h after surfacing across x 60..610; nitrogen 0..1.6 up y 200..60
+  X(h) { return 60 + h / 36 * 550 },
+  Y(v) { return 200 - v / 1.6 * 140 },
+  get area() { const pts = [[this.X(0), this.Y(0)]]; for (let h = 0; h <= 36; h += 0.5) pts.push([this.X(h), this.Y(this.n(h))]); pts.push([this.X(36), this.Y(0)]); return this.path(pts) + ' Z' },
+  get line() { const pts = []; for (let h = 0; h <= 36; h += 0.5) pts.push([this.X(h), this.Y(this.n(h))]); return this.path(pts) },
+  tick(i) { return this.hhmm(this.surf + i * 6 * 60) },
+  onDrag(p) { this.dep = this.clamp(Math.round((p.x - 60) / 550 * 36 * 2) / 2, 0, 36); this.active = null },
+  // bubbles come out of solution when the pressure drops too soon: more of them the earlier you go
+  get fizz() { return this.early ? this.clamp(Math.round(8 * this.n(this.dep) / this.k.n0 + 1), 1, 8) : 0 },
+  bub(i) { const a = this.pol(this.X(this.dep), this.Y(this.n(this.dep)) - 22, 14 + (i % 3) * 7, i * 47); return a },
+  get caption() {
+    if (this.kind === 'snorkel') return 'A snorkeller breathes only surface air at sea-level pressure, so no extra nitrogen dissolves and there is no wait before flying.';
+    const w = this.wait + ' hours';
+    if (this.early) return 'Departing ' + this.depText + ', only ' + this.fmt(this.dep, this.dep % 1 ? 1 : 0) + ' h after surfacing: the tissues still hold extra nitrogen, and lowering the pressure in the climb is like opening the soft-drink bottle again. Decompression sickness can start from a cabin altitude of about 5,000 to 8,000 ft, so a low flight is no answer. Wait at least ' + w + ': ' + this.earliest + '.';
+    return 'Departing ' + this.depText + ': past the minimum of ' + w + ' for ' + this.k.name.toLowerCase() + '. The extra nitrogen has had time to leave through the blood and lungs. Repeated dives load the slower tissues, which is why several days of diving needs the longer wait.';
+  },
+  presets: {
+    'rottnest-same-afternoon': { kind: 'no-stops', day: 6, surf: 600, dep: 5 },
+    'rottnest-2200': { kind: 'no-stops', day: 6, surf: 600, dep: 12 },
+    'ningaloo-multi-day': { kind: 'multi', day: 0, surf: 900, dep: 24 },
+    'decompression-stops': { kind: 'stops', day: 6, surf: 600, dep: 22 },
+    'snorkel-no-wait': { kind: 'snorkel', day: 6, surf: 600, dep: 3 },
+  },
+})">
+  <svg viewBox="0 0 640 270" role="img" aria-labelledby="fad-title" class="widget-stage">
+    <title id="fad-title">Extra nitrogen in the tissues falling slowly over the hours after a dive, the minimum wait before flying, and the planned departure</title>
+    <!-- too soon -->
+    <rect y="50" height="150" fill="var(--color-bad)" fill-opacity="0.1" x="60" :width="X(wait) - 60" x-show="wait > 0"/>
+    <text font-size="13" fill="var(--color-bad-fg)" x-show="wait > 0" :x="X(wait) - 8" y="70" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">too soon to fly</text>
+    <!-- nitrogen -->
+    <path fill="var(--color-brand-soft)" :d="area"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="line"/>
+    <text x="70" font-size="13" fill="var(--color-brand-fg)" font-weight="600" :y="Y(k.n0) - 10" x-show="k.n0 > 0">extra nitrogen</text>
+    <text x="70" y="186" font-size="13" fill="var(--color-fg-muted)" x-show="k.n0 === 0">no extra nitrogen: surface air only</text>
+    <!-- the minimum wait -->
+    <line y1="50" y2="200" stroke="var(--color-ok)" stroke-width="2" :x1="X(wait)" :x2="X(wait)" x-show="wait > 0"/>
+    <text font-size="13" fill="var(--color-ok-fg)" font-weight="600" :x="X(wait) + 6" y="70" x-show="wait > 0" x-text="'minimum ' + wait + ' h'"></text>
+    <!-- axis -->
+    <line x1="60" y1="200" x2="610" y2="200" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="60" y="216" x-text="tick(0)"></text><text :x="X(6)" y="216" x-text="tick(1)"></text><text :x="X(12)" y="216" x-text="tick(2)"></text>
+      <text :x="X(18)" y="216" x-text="tick(3)"></text><text :x="X(24)" y="216" x-text="tick(4)"></text><text :x="X(30)" y="216" x-text="tick(5)"></text><text :x="X(36)" y="216" x-text="tick(6)"></text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1"><line :x1="X(6)" :x2="X(6)" y1="200" y2="204"/><line :x1="X(12)" :x2="X(12)" y1="200" y2="204"/><line :x1="X(18)" :x2="X(18)" y1="200" y2="204"/><line :x1="X(24)" :x2="X(24)" y1="200" y2="204"/><line :x1="X(30)" :x2="X(30)" y1="200" y2="204"/></g>
+    <text x="60" y="34" font-size="13" fill="var(--color-fg)" font-weight="600" x-text="'Surfaced ' + when(0)"></text>
+    <text x="610" y="34" font-size="12" fill="var(--color-fg-muted)" text-anchor="end">hours after the dive →</text>
+    <!-- bubbles if you go too soon -->
+    <g fill="none" stroke="var(--color-bad)" stroke-width="1.5">
+      <circle r="4" :cx="bub(0).x" :cy="bub(0).y" x-show="fizz > 0"/><circle r="3" :cx="bub(1).x" :cy="bub(1).y" x-show="fizz > 1"/>
+      <circle r="5" :cx="bub(2).x" :cy="bub(2).y" x-show="fizz > 2"/><circle r="3" :cx="bub(3).x" :cy="bub(3).y" x-show="fizz > 3"/>
+      <circle r="4" :cx="bub(4).x" :cy="bub(4).y" x-show="fizz > 4"/><circle r="3" :cx="bub(5).x" :cy="bub(5).y" x-show="fizz > 5"/>
+      <circle r="4" :cx="bub(6).x" :cy="bub(6).y" x-show="fizz > 6"/><circle r="3" :cx="bub(7).x" :cy="bub(7).y" x-show="fizz > 7"/>
+    </g>
+    <!-- the planned departure: drag it -->
+    <line y1="50" y2="200" stroke-width="2" stroke-dasharray="4 3" :stroke="early ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :x1="X(dep)" :x2="X(dep)"/>
+    <g style="cursor: ew-resize; touch-action: none" @pointerdown="drag($event, (p) => onDrag(p))">
+      <rect :x="X(dep) - 40" y="226" width="80" height="34" rx="8" fill="var(--color-surface)" :stroke="early ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="2"/>
+      <text :x="X(dep)" y="242" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">depart</text>
+      <text :x="X(dep)" y="255" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg)" class="num" x-text="depText"></text>
+    </g>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="fad-kind">The dive</label>
+      <select id="fad-kind" class="input" x-model="kind">
+        <option value="no-stops">One dive, no decompression stops</option>
+        <option value="stops">A dive with decompression stops</option>
+        <option value="multi">Several dives over several days</option>
+        <option value="snorkel">Snorkelling only</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="fad-surf">Surfaced at <output for="fad-surf" x-text="hhmm(surf)"></output></label>
+      <input type="range" id="fad-surf" min="360" max="1080" step="30" x-model.number="surf">
+    </div>
+    <div class="widget-control">
+      <label for="fad-dep">Planned departure (or drag it) <output for="fad-dep" x-text="depText"></output></label>
+      <input type="range" id="fad-dep" min="0" max="36" step="0.5" x-model.number="dep">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Minimum wait</dt><dd class="widget-value" x-text="wait ? wait + ' hours' : 'None'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Earliest departure</dt><dd class="widget-value" x-text="earliest"></dd></div>
+    <div class="widget-readout" :class="verdict[1]"><dt class="widget-label">Your plan</dt><dd class="widget-value"><span x-text="verdict[0]"></span><span class="widget-flag bad" x-show="early">bends risk</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('rottnest-same-afternoon')" :aria-pressed="active === 'rottnest-same-afternoon'">Rottnest, same afternoon</button>
+      <button type="button" @click="preset('rottnest-2200')" :aria-pressed="active === 'rottnest-2200'">Rottnest, 2200</button>
+      <button type="button" @click="preset('ningaloo-multi-day')" :aria-pressed="active === 'ningaloo-multi-day'">Ningaloo week</button>
+      <button type="button" @click="preset('decompression-stops')" :aria-pressed="active === 'decompression-stops'">Deco stops</button>
+      <button type="button" @click="preset('snorkel-no-wait')" :aria-pressed="active === 'snorkel-no-wait'">Snorkel</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The extra nitrogen dissolved in the tissues at depth leaves over many hours, and climbing lowers the pressure that holds it in solution. Wait at least 12 hours after a dive without decompression stops and at least 24 hours after one with stops or after several days of diving; snorkelling needs no wait, and the wait applies whatever height you plan to fly. The waits are the lesson's (commonly taught; check current CASA guidance); the shape of the nitrogen curve is illustrative, not a dive table.</p>
+  <details class="widget-try"><summary>Try it: you surface from a no-stop dive off Rottnest at 1000 and want to fly back to Jandakot at 1,500 ft that afternoon. When can you go?</summary><p>Press Rottnest, same afternoon: 1500 is 7 hours too soon, and a low cruise does not help. Press Rottnest, 2200: 1000 plus 12 hours is the earliest; realistically, fly the next day.</p></details>
+  <details class="widget-try"><summary>Try it: four days of diving at Ningaloo, the last dive ending at 1500 on Sunday. When is the earliest flight home?</summary><p>Press Ningaloo week: several days of diving needs at least 24 hours even though no single dive needed stops, so Monday 1500 at the earliest.</p></details>
+</div>

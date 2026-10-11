@@ -18,7 +18,8 @@ dark mode, intuitive, and a little bit fun**. Read, in this order, before writin
   hyphenated name = slug). Never edit `charts.py`, `figures.py` or `svg.py`.
 - Hand-drawn schematics in `tools/diagrams/schematics/<slug>.svg` (then `npm run sketch`), or plain hand-authored
   SVG straight into `content/diagrams/<slug>.svg` when no sketch look is wanted.
-- Widgets in `content/widgets/<slug>.html` (Alpine only; no Three.js, no `data-widget`, no scripts).
+- Widgets in `content/widgets/<slug>.html` (Alpine only, using the `widget()` or `timeline()` components from
+  `app/static/viz.js`; no Three.js, no `data-widget`, no scripts). See "Interactive widgets and timelines" below.
 - The unit's notes: insert references, convert real formulas to KaTeX (`$...$`, `$$...$$`). Never edit `minutes`
   (reading time is computed at seed time; delete the key if a note still has one).
 - Nothing under `app/`, no CSS, no templates, no tests, no `package.json`. If the toolkit lacks something you need,
@@ -38,6 +39,70 @@ dark mode, intuitive, and a little bit fun**. Read, in this order, before writin
    one insight the exam wants.")` or `widget:slug`. Reading time is computed from the note at seed time.
 6. Widgets: `node tools/widgets/smoke.mjs content/widgets/<slug>.html <input-id>=<value> …` must print the readouts
    with no WARN/ERR lines; check the numbers by hand against the note's worked example.
+
+## Interactive widgets and timelines
+
+Since the 2026-10-10 visualisation push (`tools/diagrams/VIZ-INVENTORY.md`), every new widget uses one of two
+Alpine components from `app/static/viz.js` (loaded on every page before Alpine):
+
+- `x-data="widget({ ... })"`: sliders, toggles, readouts. Exemplars: `taf-arrival-check.html` (a planning tool that
+  reproduces the lessons' worked examples) and `drag-curve-explorer.html` (a chart computed from a formula).
+- `x-data="timeline({ ... })"`: a process that plays out over time, with a clock `t` running 0 → 1 over `duration`
+  seconds, a play button, a scrubber, step buttons and a caption. Exemplar: `sea-breeze-day.html`. Use it for
+  anything the lesson describes as a sequence (a day, a storm's life, ice building, an encounter on final, SAR
+  phases). Drive the picture from getters of `t`: `this.at(a, b)` is the clock's progress through [a, b] (0..1),
+  `this.eased(a, b)` the same smoothed, `steps: [{ at, label }]` the key moments (a getter is fine), and a
+  `caption` getter the sentence for the current moment (shown in `.widget-caption`). Copy the timeline bar, step
+  buttons and caption markup from the exemplar. Use `loop: false` when the story has an end.
+
+Both give you, inside expressions and getters (as `this.x` or bare `x`): `fmt(n, dp)` (thousands separators),
+`sign`, `dir(deg)` ("060"), `clamp`, `lerp`, `seg`, `ease`, `scale`, `pol(cx, cy, r, bearing)` (compass bearing to
+{x, y}), `windTo(from)`, `isaTemp(ft)` (2 °C per 1,000 ft), `hhmm(min)`, `hmm(min)`, `utc(wstMin)` and
+`path([[x, y], ...])` (an SVG path through points), `trk(deg)` ("000" for north; `dir` gives "360"), dates as
+`"YYYY-MM-DD"` strings with `addDays`, `daysBetween` and `fmtDate(iso, year?)`, and `drag($event, (p) => { ... })`
+for dragging on an SVG (`@pointerdown`, `p` in viewBox units; add `style="touch-action: none"` to the dragged
+element and always offer a slider for the same value). Getters stay live (do not spread objects into `x-data`).
+
+**Named presets (required).** Every widget has a `presets: { name: { key: value, ... } }` object and its preset
+buttons call `preset('name')` (aria-pressed: `active === 'name'`). Name each preset after what it shows
+(`front-at-jandakot`, `va-at-mtow`, `geraldton-inter`). Watch mode will drive widgets by these names from the
+narration script, so they must exist and each must reproduce something the lesson says. A timeline preset may set
+`t` (and `play: true`). `reset()` restores the starting values automatically.
+
+**Explanations.** `.widget-caption` (a live sentence under the picture) works in plain widgets too: use a
+`caption` getter whenever the reader needs to be told why the picture changed.
+
+**Styling.** Use the `.widget-*` classes; Tailwind utilities in widget files (e.g. `size-5`, `sm:col-span-2`) work
+because `app/static/src/app.css` scans `content/widgets`, but they only exist after the lead runs `npm run css`, so
+list any new utility you use in your report.
+
+**One concept, one control.** Each slider or toggle changes one thing the exam asks about; readouts name the
+answer the exam wants, with units, and turn `ok`/`warn`/`bad` at the thresholds the lesson gives.
+
+**Numbers.** The widget computes from the lesson's formula or table, and its presets reproduce the lesson's worked
+examples exactly (the smoke test prints them; compare by hand). Regulatory figures come only from the lesson. When
+a model is illustrative (timings of a sea breeze, the shape of a curve), say so in the `.widget-notice`.
+
+**Keep what exists.** Never remove, rename or move an existing diagram or widget reference: audio scripts cue them
+and `check_content` fails on unreferenced files. Put the new widget beside the related diagram, asking a
+different question (the diagram explains, the widget lets the reader try it).
+
+**SVG inside widgets.** No `<template x-for>` or `<template x-if>` inside `<svg>` (jsdom and some browsers cannot
+clone them): write repeated elements out, and hide optional ones with `:opacity` (or `:display`) bindings rather
+than `x-show`, which can stop updating on SVG elements after a reset and a preset (seen in jsdom and the PNG
+renders). Never leave an empty `stroke-dasharray=""`: resvg then drops the text drawn after it. Labels
+that must cross a line get a halo: `paint-order="stroke" stroke="var(--color-surface)" stroke-width="4"
+stroke-linejoin="round"`. Night and darkness: fade a `--color-sky-soft` daylight tint and add stars and a moon;
+never darken with `--color-fg` (it is light in dark mode).
+
+**Checks for every widget:**
+- `node tools/widgets/smoke.mjs content/widgets/<slug>.html --presets` (add `--frames 5` for a timeline) prints
+  the readouts at the defaults, at each preset and through the clock, with no WARN/ERR/PROBLEM lines. It also
+  checks that preset keys exist and that every `preset('x')` in the markup is defined.
+- `node tools/diagrams/render.mjs --presets <slug>` writes `.renders/widget-<slug>.light/dark.png`, one per preset
+  (`@<name>`) and, for a timeline, `@0`, `@0.5` and `@1`. Look at them with the Read tool in light and dark:
+  clipped or overlapping labels, text across lines, things off the stage. Arrowheads render dark in these PNGs
+  (resvg has no `context-stroke`); in the browser they take the line colour.
 
 ## Rules that are easy to get wrong
 

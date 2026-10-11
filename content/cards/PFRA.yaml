@@ -332,7 +332,7 @@
 - id: PFRA-C031
   elements: ["PFRA 2.6.5"]
   front: "Altimeter datums, height/altitude/flight level, and the transition altitude and level?"
-  back: "QNH gives altitude (AMSL), QFE height above the aerodrome, 1013.2 a flight level (pressure altitude in hundreds of feet). Transition altitude 10,000 ft, transition level FL110: set 1013 climbing through 10,000 ft, QNH descending through FL110; no cruising in the layer. Area QNH below 1013 raises the lowest usable level to FL115 or FL120 (AIP ENR 1.7)."
+  back: "QNH gives altitude (AMSL), QFE height above the aerodrome, 1013.2 a flight level (pressure altitude in hundreds of feet). Transition altitude 10,000 ft, transition level FL110: set 1013 climbing through 10,000 ft, QNH descending through FL110; no cruising in the layer. Area QNH below 1013 raises the lowest usable level: FL115 (QNH 997-1012), FL120 (980-996), FL125 (963-979) (AIP ENR 1.7)."
   stem: "On a climb to cruise at FL125, the pilot changes the altimeter subscale to:"
   options:
     - "1013.2 hPa when passing FL110, the transition level."

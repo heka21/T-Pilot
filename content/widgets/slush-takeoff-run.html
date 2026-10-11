@@ -1,0 +1,241 @@
+<div class="widget" x-data="timeline({
+  surface: 'dry',
+  loop: false,
+  // slush-drag-vs-thrust's curves, in units of the static thrust, against u = groundspeed / lift-off speed:
+  // thrust 1 − 0.32u; dry drag + rolling resistance 0.12 + 0.28u²; slush 0.16 + 1.15u². Wet sealed and wet grass
+  // raise only the rolling resistance (0.13 and 0.20). Lift-off 60 kt (takeoff-factor-stack). All illustrative.
+  rr: { 'dry': [0.12, 0.28], 'wet-sealed': [0.13, 0.28], 'wet-grass': [0.20, 0.28], 'slush': [0.16, 1.15] },
+  names: { 'dry': 'dry sealed', 'wet-sealed': 'wet sealed', 'wet-grass': 'wet grass', 'slush': 'slush' },
+  vlof: 60,
+  vms: 60 * 0.5144, // lift-off speed in m/s
+  acc: 3.4, // m/s² per unit of net force: about 0.3 g at brakes off (illustrative)
+  dec: 1.4, // m/s² stopping in slush with the throttle closed: poor braking (illustrative)
+  rwy: 700, // metres of runway (illustrative)
+  thr(u) { return 1 - 0.32 * u },
+  res(u, k) { const c = this.rr[k || this.surface]; return c[0] + c[1] * u * u },
+  // net = −c (u − r1)(u − r2): closed forms for time and distance on the roll
+  kq(surf) { const c = this.rr[surf], a0 = 1 - c[0], b = 0.32, d = Math.sqrt(b * b + 4 * c[1] * a0); return { c: c[1], r1: (-b - d) / (2 * c[1]), r2: (-b + d) / (2 * c[1]) } },
+  get k() { return this.kq(this.surface) },
+  r10(x) { return Math.round(x / 10) * 10 },
+  tauOf(u) { const q = this.k; return this.vms / (this.acc * q.c * (q.r2 - q.r1)) * Math.log((u - q.r1) * q.r2 / (-q.r1 * (q.r2 - u))) },
+  uOf(tau) { const q = this.k, e = Math.exp(tau * this.acc * q.c * (q.r2 - q.r1) / this.vms); return q.r1 * q.r2 * (1 - e) / (q.r2 - e * q.r1) },
+  sOf(u, surf) { const q = surf ? this.kq(surf) : this.k; return this.vms * this.vms / (this.acc * q.c * (q.r2 - q.r1)) * (q.r1 * Math.log((u - q.r1) / -q.r1) - q.r2 * Math.log((q.r2 - u) / q.r2)) },
+  get slush() { return this.k.r2 < 1 },
+  get stallKt() { return this.k.r2 * this.vlof },
+  get tauLof() { return this.slush ? Infinity : this.tauOf(1) },
+  get sLof() { return this.slush ? Infinity : this.sOf(1) },
+  get tauCatch() { return this.tauOf(0.95 * this.k.r2) },
+  get tauAb() { return this.tauCatch + 6 },
+  get uAb() { return this.uOf(this.tauAb) },
+  get sAb() { return this.sOf(this.uAb) },
+  get tauStop() { return this.tauAb + this.uAb * this.vms / this.dec },
+  get tauEnd() { return this.slush ? this.tauStop + 1.5 : this.tauLof + 6 },
+  get duration() { return this.tauEnd / 2 },
+  get tau() { return this.t * this.tauEnd },
+  get phase() { return this.slush ? (this.tau < this.tauAb ? 'roll' : 'stop') : (this.tau < this.tauLof ? 'roll' : 'air') },
+  get u() {
+    if (this.phase === 'roll') return this.uOf(this.tau);
+    if (this.phase === 'air') return 1 + 0.08 * (this.tau - this.tauLof) / 6;
+    return Math.max(0, this.uAb - this.dec * (this.tau - this.tauAb) / this.vms);
+  },
+  get kt() { return this.u * this.vlof },
+  get dist() {
+    if (this.phase === 'roll') return this.sOf(this.u);
+    if (this.phase === 'air') return this.sLof + this.vms * (this.tau - this.tauLof);
+    const va = this.uAb * this.vms, v = this.u * this.vms;
+    return this.sAb + (va * va - v * v) / (2 * this.dec);
+  },
+  get sStop() { const va = this.uAb * this.vms; return this.sAb + va * va / (2 * this.dec) },
+  get netNow() { return this.phase === 'roll' ? this.thr(this.u) - this.res(this.u) : 0 },
+  get netPct() { return 100 * this.netNow / (1 - this.rr[this.surface][0]) },
+  get catching() { return this.slush && this.phase === 'roll' && this.tau >= this.tauCatch },
+  get steps() {
+    const E = this.tauEnd;
+    if (this.slush) return [{ at: 0, label: 'Brakes off' }, { at: 0.04, label: 'Accelerating' }, { at: this.tauCatch / E, label: 'Drag catches thrust' }, { at: this.tauAb / E, label: 'Stop or abandon' }];
+    return [{ at: 0, label: 'Brakes off' }, { at: 0.04, label: 'Accelerating' }, { at: this.tauLof / E, label: 'Lift-off' }, { at: (this.tauLof + 2.5) / E, label: 'Climb away' }];
+  },
+  get caption() {
+    const n = this.names[this.surface];
+    if (this.tau < 1.2) return 'Brakes off, full power: at low speed the thrust is far bigger than the drag and rolling resistance, so the aeroplane accelerates hard.';
+    if (this.phase === 'air') return 'Airborne after about ' + this.fmt(this.r10(this.sLof)) + ' m on ' + n + ' (illustrative). Once the wheels are off, the surface no longer acts' + (this.surface === 'dry' ? ': the climb is the aeroplane\'s own.' : ': the climb is the same as from a dry runway, it just starts further along.');
+    if (this.phase === 'stop') return this.u > 0 ? 'Abandon: throttle closed, brakes on. In slush the tyres barely grip and may aquaplane, so stopping takes a long way: the decision to go should never have been made. No POH figures for slush means do not operate.' : 'Stopped after about ' + this.fmt(this.r10(this.sStop)) + ' m, never having reached 60 kt. On a longer runway the result would have been the same: the aeroplane simply cannot accelerate past about ' + this.fmt(this.stallKt) + ' kt.';
+    if (this.catching) return 'Slush drag has caught the falling thrust at about ' + this.fmt(this.stallKt) + ' kt, short of the 60 kt lift-off speed. The net force is zero, so the aeroplane rolls on at a steady speed however much runway is left.';
+    if (this.slush) return 'Slush drag grows fast with speed: the wheels push the slush aside (displacement drag) and the spray hits the aeroplane and flaps (impingement drag), while the propeller thrust falls away. The surplus shrinks just when it matters most.';
+    if (this.surface === 'wet-grass') return 'Soft wet grass makes the wheels push through the surface: rolling resistance is higher all the way, the surplus smaller, so the aeroplane accelerates more slowly and needs more runway.';
+    if (this.surface === 'wet-sealed') return 'A thin film of water adds little rolling resistance on a sealed runway: almost the same run as dry. (It is the landing and a rejected take-off that suffer, through poor braking.)';
+    return 'Thrust falls a little as the speed rises and drag grows, but on a dry runway there is always a surplus: the aeroplane keeps accelerating to the 60 kt lift-off speed.';
+  },
+  get statusText() {
+    if (this.phase === 'air') return 'airborne';
+    if (this.phase === 'stop') return this.u > 0 ? 'abandoned: stopping' : 'stopped, never airborne';
+    if (this.catching) return 'not accelerating: abandon';
+    return 'accelerating';
+  },
+  get statusState() { return this.phase === 'air' ? 'ok' : this.phase === 'stop' || this.catching ? 'bad' : '' },
+  get lofText() { return this.slush ? 'never: drag meets thrust at ' + this.fmt(this.stallKt) + ' kt' : 'about ' + this.fmt(this.r10(this.sLof)) + ' m' + (this.surface === 'dry' ? '' : ' (dry ' + this.fmt(this.r10(this.sOf(1, 'dry'))) + ' m)') },
+  get lofState() { return this.slush ? 'bad' : this.surface === 'wet-grass' ? 'warn' : 'ok' },
+  // runway scene: start x 60, 580 px for 700 m
+  RX(m) { return 60 + m / this.rwy * 580 },
+  get planeX() { return this.RX(Math.min(this.dist, 760)) + 6 },
+  get planeY() { return this.phase === 'air' ? 76.4 - (this.dist - this.sLof) / this.rwy * 580 * 0.14 : 76.4 },
+  get pitch() { return this.phase === 'air' ? 8 * this.clamp((this.tau - this.tauLof) / 1.5, 0, 1) : 0 },
+  get spray() { return this.slush && this.phase === 'roll' ? this.clamp(this.u / this.k.r2, 0, 1) : this.slush && this.u > 0 ? 0.6 * this.u / this.k.r2 : 0 },
+  // forces chart: 0..70 kt across x 60..300, force 0..1.1 up y 320..156
+  FX(kt) { return 60 + kt / 70 * 240 },
+  FY(f) { return 320 - Math.min(f, 1.1) / 1.1 * 164 },
+  curve(fn, k0, k1) { const pts = []; for (let i = 0; i <= 28; i++) { const kt = k0 + (k1 - k0) * i / 28; pts.push([this.FX(kt), this.FY(fn(kt / 60))]) } return this.path(pts) },
+  get thrustPath() { return this.curve((u) => this.thr(u), 0, 70) },
+  get dryPath() { return this.curve((u) => this.res(u, 'dry'), 0, 70) },
+  get resPath() { const top = this.slush ? Math.min(70, 60 * Math.sqrt((1.1 - this.rr.slush[0]) / this.rr.slush[1])) : 70; return this.curve((u) => this.res(u), 0, top) },
+  get resCol() { return { 'dry': 'var(--color-ok)', 'wet-sealed': 'var(--color-info)', 'wet-grass': 'var(--color-warn)', 'slush': 'var(--color-bad)' }[this.surface] },
+  get resFg() { return { 'dry': 'var(--color-ok-fg)', 'wet-sealed': 'var(--color-info-fg)', 'wet-grass': 'var(--color-warn-fg)', 'slush': 'var(--color-bad-fg)' }[this.surface] },
+  get resLabelAt() { return this.slush ? { x: this.FX(46) + 8, y: this.FY(this.res(46 / 60)) + 4 } : { x: this.FX(3), y: this.FY(this.res(0.05)) - 44 } },
+  // speed against distance: 0..700 m across x 380..620, 0..70 kt up y 320..156
+  DX(m) { return 380 + Math.min(m, this.rwy) / this.rwy * 240 },
+  DY(kt) { return 320 - kt / 70 * 164 },
+  get trace() {
+    const pts = [], T = this.phase === 'roll' ? this.tau : this.slush ? this.tauAb : this.tauLof;
+    for (let i = 0; i <= 40; i++) { const tt = T * i / 40, u = this.uOf(tt); pts.push([this.DX(this.sOf(u)), this.DY(u * 60)]) }
+    if (this.phase === 'stop') {
+      const va = this.uAb * this.vms;
+      for (let i = 1; i <= 12; i++) { const v = va * (1 - i / 12 * (1 - this.u / this.uAb)); pts.push([this.DX(this.sAb + (va * va - v * v) / (2 * this.dec)), this.DY(v / this.vms * 60)]) }
+    }
+    return this.path(pts);
+  },
+  get dryTrace() { const pts = []; for (let i = 0; i <= 30; i++) { const u = i / 30; pts.push([this.DX(this.sOf(u, 'dry')), this.DY(u * 60)]) } return this.path(pts) },
+  presets: {
+    'dry-sealed': { surface: 'dry', t: 0.75 },
+    'wet-sealed': { surface: 'wet-sealed', t: 0.75 },
+    'wet-grass': { surface: 'wet-grass', t: 0.78 },
+    'slush-stalls-acceleration': { surface: 'slush', t: 0.52 },
+  },
+})">
+  <svg viewBox="0 0 640 352" role="img" aria-labelledby="str-title" class="widget-stage">
+    <title id="str-title">A take-off run on the chosen surface: the aeroplane rolling along a 700 metre runway, the thrust and the surface drag against groundspeed, and the groundspeed built up against distance rolled</title>
+    <defs>
+      <marker id="str-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- the runway -->
+    <rect x="0" y="0" width="640" height="92" fill="var(--color-sky-soft)"/>
+    <rect x="0" y="92" width="640" height="38" fill="var(--color-surface-2)"/>
+    <rect x="60" y="92" width="580" height="12" :fill="surface === 'wet-grass' ? 'var(--color-ok-soft)' : surface === 'slush' ? 'var(--color-surface)' : 'var(--color-tarmac)'"/>
+    <line x1="0" y1="92" x2="640" y2="92" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <g stroke="var(--color-sky-fg)" stroke-width="1.5" stroke-linecap="round" :opacity="surface === 'wet-sealed' ? 1 : 0">
+      <line x1="90" y1="98" x2="120" y2="98"/><line x1="200" y1="100" x2="236" y2="100"/><line x1="330" y1="97" x2="356" y2="97"/><line x1="450" y1="100" x2="486" y2="100"/><line x1="560" y1="98" x2="590" y2="98"/>
+    </g>
+    <g stroke="var(--color-ok)" stroke-width="1.25" stroke-linecap="round" :opacity="surface === 'wet-grass' ? 1 : 0">
+      <path d="M80 92 l-2 -5 M84 92 l1 -6 M180 92 l-2 -5 M184 92 l1 -6 M290 92 l-2 -5 M294 92 l1 -6 M400 92 l-2 -5 M404 92 l1 -6 M510 92 l-2 -5 M514 92 l1 -6 M610 92 l-2 -5 M614 92 l1 -6"/>
+    </g>
+    <g fill="var(--color-fg-faint)" :opacity="slush ? 1 : 0">
+      <ellipse cx="100" cy="97" rx="9" ry="2"/><ellipse cx="170" cy="100" rx="12" ry="2"/><ellipse cx="260" cy="96" rx="8" ry="2"/><ellipse cx="350" cy="100" rx="11" ry="2"/>
+      <ellipse cx="430" cy="97" rx="9" ry="2"/><ellipse cx="520" cy="100" rx="12" ry="2"/><ellipse cx="600" cy="97" rx="8" ry="2"/>
+    </g>
+    <line x1="60" y1="86" x2="60" y2="110" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <line x1="639" y1="86" x2="639" y2="110" stroke="var(--color-bad)" stroke-width="2"/>
+    <text x="634" y="124" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num">end of runway, 700 m</text>
+    <text x="64" y="124" font-size="12" fill="var(--color-fg-muted)" x-text="names[surface]"></text>
+    <!-- slush spray behind the main wheels -->
+    <g fill="none" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round" :opacity="spray" :transform="'translate(' + (planeX - 6).toFixed(1) + ' 92)'">
+      <path d="M-4 -2 q-10 -12 -24 -10"/><path d="M-6 -1 q-14 -6 -30 -2"/><path d="M-2 -3 q-6 -16 -16 -18"/>
+    </g>
+    <g :transform="'translate(' + planeX.toFixed(1) + ' ' + planeY.toFixed(1) + ') rotate(' + (-pitch) + ')'">
+      <!-- python -m tools.diagrams.plane side, scale 0.8 -->
+      <g transform="translate(0 0) rotate(0) scale(0.8)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="16" y="24" font-size="14" font-weight="700" fill="var(--color-fg)" class="num" x-text="fmt(kt) + ' kt'"></text>
+    <text x="16" y="42" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="fmt(dist) + ' m rolled'" x-show="phase !== 'air'"></text>
+    <text x="16" y="42" font-size="12" fill="var(--color-ok-fg)" class="num" x-text="'airborne after ' + fmt(r10(sLof)) + ' m'" x-show="phase === 'air'"></text>
+    <text x="624" y="24" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">all magnitudes illustrative</text>
+    <!-- chart 1: forces against groundspeed -->
+    <rect x="0" y="130" width="640" height="222" fill="var(--color-surface)"/>
+    <line x1="0" y1="130" x2="640" y2="130" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="60" y="148" font-size="12" font-weight="600" fill="var(--color-fg)">Forces on the roll</text>
+    <line x1="60" y1="320" x2="300" y2="320" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="60" y1="156" x2="60" y2="320" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="265.7" y1="160" x2="265.7" y2="320" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="262" y="168" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">lift-off</text>
+    <path fill="none" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" :d="dryPath" x-show="surface !== 'dry'"/>
+    <path fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" :d="thrustPath"/>
+    <text x="298" y="216" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">thrust</text>
+    <text x="48" y="238" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 48 238)">force</text>
+    <path fill="none" stroke-width="2.5" stroke-linecap="round" :stroke="resCol" :d="resPath"/>
+    <text font-size="12" font-weight="700" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :fill="resFg" :x="resLabelAt.x" :y="resLabelAt.y"  x-text="slush ? 'slush drag' : 'drag + rolling resistance'"></text>
+    <!-- the net force now -->
+    <g :opacity="phase === 'roll' ? 1 : 0">
+      <line stroke="var(--color-brand)" stroke-width="5" stroke-opacity="0.5" :x1="FX(kt)" :x2="FX(kt)" :y1="FY(res(u))" :y2="FY(thr(u))"/>
+      <circle r="4.5" fill="var(--color-fg)" :cx="FX(kt)" :cy="FY(thr(u))"/>
+      <circle r="4.5" :fill="resCol" :cx="FX(kt)" :cy="FY(res(u))"/>
+      <text font-size="11" fill="var(--color-brand-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="FX(kt) + 7" :y="(FY(res(u)) + FY(thr(u))) / 2 + 4" x-show="netNow > 0.12">net</text>
+    </g>
+    <g :opacity="slush ? 1 : 0">
+      <circle r="5" fill="none" stroke="var(--color-bad)" stroke-width="2" :cx="FX(stallKt)" :cy="FY(thr(k.r2))"/>
+      <line stroke="var(--color-bad)" stroke-width="1" stroke-dasharray="4 3" :x1="FX(stallKt)" :x2="FX(stallKt)" :y1="FY(thr(k.r2)) + 6" y2="302"/>
+      <text y="314" font-size="11" font-weight="700" fill="var(--color-bad-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="FX(stallKt)" x-text="'net zero, ' + fmt(stallKt) + ' kt'"></text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="60" y="334">0</text><text x="128.6" y="334">20</text><text x="197.1" y="334">40</text><text x="265.7" y="334">60</text>
+    </g>
+    <text x="180" y="348" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">groundspeed (kt)</text>
+    <!-- chart 2: groundspeed against distance -->
+    <text x="380" y="148" font-size="12" font-weight="600" fill="var(--color-fg)">Groundspeed (kt) against distance</text>
+    <line x1="380" y1="320" x2="620" y2="320" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="380" y1="156" x2="380" y2="320" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="380" y1="179.4" x2="620" y2="179.4" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="384" y="173" font-size="11" fill="var(--color-fg-muted)">lift-off speed, 60 kt</text>
+    <line x1="620" y1="160" x2="620" y2="320" stroke="var(--color-bad)" stroke-width="1.5"/>
+    <path fill="none" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" :d="dryTrace" x-show="surface !== 'dry'"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="trace"/>
+    <circle r="5" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5" :cx="DX(phase === 'air' ? sLof : dist)" :cy="DY(phase === 'air' ? 60 : kt)"/>
+    <text font-size="11" font-weight="600" fill="var(--color-ok-fg)" text-anchor="start" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="DX(sLof) + 8" y="198" x-show="phase === 'air'">lift-off</text>
+    <text x="500" y="250" font-size="11" fill="var(--color-ok-fg)" x-show="surface !== 'dry'">dashed: dry</text>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num">
+      <text x="380" y="334" text-anchor="middle">0</text><text x="448.6" y="334" text-anchor="middle">200</text><text x="517.1" y="334" text-anchor="middle">400</text><text x="585.7" y="334" text-anchor="middle">600</text>
+      <text x="374" y="324" text-anchor="end">0</text><text x="374" y="254" text-anchor="end">30</text><text x="374" y="183" text-anchor="end">60</text>
+    </g>
+    <text x="500" y="348" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">distance rolled (m)</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the take-off run'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="str-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time into the take-off run">
+    <span class="widget-clock" x-text="fmt(tau) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="str-surface">Runway surface</label>
+      <select id="str-surface" class="input" x-model="surface" @change="active = null; pause(); t = 0">
+        <option value="dry">Dry sealed</option>
+        <option value="wet-sealed">Wet sealed</option>
+        <option value="wet-grass">Wet grass</option>
+        <option value="slush">Slush or standing water</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="statusState"><dt class="widget-label">Now</dt><dd class="widget-value"><span x-text="fmt(kt) + ' kt, ' + statusText"></span><span class="widget-flag bad" x-show="catching">stuck</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Net accelerating force</dt><dd class="widget-value" x-text="phase === 'roll' ? fmt(Math.max(0, netPct)) + '% of what it was at brakes off' : phase === 'air' ? 'surface no longer acts' : 'throttle closed'"></dd></div>
+    <div class="widget-readout" :class="lofState"><dt class="widget-label">Lift-off distance on this surface</dt><dd class="widget-value" x-text="lofText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('dry-sealed')" :aria-pressed="active === 'dry-sealed'">Dry sealed</button>
+      <button type="button" @click="preset('wet-sealed')" :aria-pressed="active === 'wet-sealed'">Wet sealed</button>
+      <button type="button" @click="preset('wet-grass')" :aria-pressed="active === 'wet-grass'">Wet grass</button>
+      <button type="button" @click="preset('slush-stalls-acceleration')" :aria-pressed="active === 'slush-stalls-acceleration'">Slush</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> What accelerates you is the gap between thrust and the surface's drag. Ordinary rolling resistance barely changes with speed, so on dry or wet bitumen the gap stays open to lift-off, and wet grass only narrows it. Slush drag grows with speed while the thrust falls, so the gap closes before lift-off speed: the aeroplane stops accelerating however much runway is left. Most light-aircraft POHs give no slush figures, and that absence means do not operate. The curves follow the lesson's diagram; every magnitude here (forces, distances, the 700 m runway) is illustrative, only the directions are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: a long runway would fix the slush problem, wouldn't it?</summary><p>Press Slush and play on: once slush drag equals thrust, at about 44 kt here, the net force is zero and the speed line goes flat. More runway only gives more distance at the same speed. The fix is not to take off from slush at all.</p></details>
+  <details class="widget-try"><summary>Try it: why does a wet sealed runway barely change the take-off but wet grass does?</summary><p>Compare Wet sealed and Wet grass with the dashed dry lines: a film of water on bitumen adds almost no rolling resistance, so lift-off comes within a few metres of the dry figure. Soft wet grass makes the wheels push through the surface all the way along, so the gap between thrust and drag is smaller and the run is noticeably longer.</p></details>
+</div>

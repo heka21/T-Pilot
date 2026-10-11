@@ -1,0 +1,196 @@
+<div class="widget" x-data="timeline({
+  duration: 50, loop: false, danger: true, responds: false, breathing: false, remote: false,
+  // PHFC 2.14: DRSABCD from the ERSA's first aid guidance. Danger (fuel, fire, a running engine, power lines; fuel and
+  // magnetos off if safe; move the casualty first if there is a fire risk), Response (talk and gently squeeze), Send for
+  // help (000, or 112 on a mobile; the ELT or PLB in a remote area), Airway (tilt the head, lift the chin, clear the
+  // mouth), Breathing (look, listen, feel; gasps are not normal breathing), CPR (30 compressions to 2 breaths, about
+  // 100 to 120 compressions a minute), Defibrillation (an AED if available). Unconscious but breathing normally, with no
+  // sign of spinal injury: the recovery position. The CPR segment runs at 110 compressions a minute, in real time.
+  get steps() {
+    const s = [{ at: 0, label: 'Danger' }, { at: 0.1, label: 'Response' }, { at: 0.2, label: 'Send for help' }];
+    if (this.responds) s.push({ at: 0.3, label: 'Treat injuries' });
+    else {
+      s.push({ at: 0.3, label: 'Airway' }, { at: 0.4, label: 'Breathing' });
+      if (this.breathing) s.push({ at: 0.5, label: 'Recovery position' });
+      else s.push({ at: 0.5, label: 'CPR 30:2' }, { at: 0.9, label: 'Defibrillation' });
+    }
+    return s;
+  },
+  // which of the seven letters is current, and whether each is needed
+  get cur() {
+    const t = this.t;
+    if (t < 0.1) return 0; if (t < 0.2) return 1; if (t < 0.3) return 2;
+    if (this.responds) return 2;
+    if (t < 0.4) return 3; if (t < 0.5) return 4;
+    if (this.breathing) return 4;
+    return t < 0.9 ? 5 : 6;
+  },
+  needed(i) { return i < 3 || (!this.responds && (i < 5 || !this.breathing)) },
+  tile(i) { return !this.needed(i) ? 'skip' : i === this.cur ? 'now' : i < this.cur ? 'done' : 'next' },
+  letters: ['D', 'R', 'S', 'A', 'B', 'C', 'D'],
+  // CPR clock: seconds into the cycle (30 compressions at 110 a minute, then 2 breaths)
+  get u() { return (this.t - 0.5) / 0.4 * 20 },
+  get inCpr() { return !this.responds && !this.breathing && this.t >= 0.5 && this.t < 0.9 },
+  get comp() { return Math.min(30, Math.floor(this.u / (60 / 110)) + 1) },
+  get breaths() { return this.u < 30 * 60 / 110 ? 0 : this.u < 30 * 60 / 110 + 1.8 ? 1 : 2 },
+  get press() { return this.inCpr && this.breaths === 0 ? Math.max(0, 1 - ((this.u % (60 / 110)) / (60 / 110)) * 3) : 0 },
+  get pose() { return this.responds ? 'sit' : this.t >= 0.5 && this.breathing ? 'side' : this.t >= 0.3 ? 'back' : 'slump' },
+  get card() {
+    const c = this.cur, t = this.t;
+    if (c === 0) return ['Danger', this.danger ? ['Fuel dripping near a hot exhaust: fire risk.', 'Fuel and mags off, if safe to reach;', 'fire risk: move the casualty away first.'] : ['Check for fuel, fire, a turning propeller', 'and live power lines before anything else.', 'A second casualty helps nobody.']];
+    if (c === 1) return ['Response', this.responds ? ['“Can you hear me?” and a gentle squeeze:', 'they answer. Conscious and breathing.'] : ['“Can you hear me?” and a gentle squeeze:', 'no answer. Unresponsive: carry on, quickly.']];
+    if (c === 2 && (t < 0.3 || !this.responds)) return ['Send for help', this.remote ? ['No coverage out here: activate the ELT', 'or your PLB now. It alerts search and', 'rescue by satellite.'] : ['Call 000 (or 112 on a mobile) now,', 'before you are busy with the casualty:', 'help takes time to arrive.']];
+    if (c === 2) return ['Treat injuries', ['Look for bleeding, burns, fractures, shock.', 'Neck or back hurt? Keep them still.', 'Reassure them and keep checking.']];
+    if (c === 3) return ['Airway', ['Tilt the head back and lift the chin;', 'clear anything you can see from the mouth.', 'Nothing else works if air cannot get in.']];
+    if (c === 4 && t < 0.5) return ['Breathing', ['Look at the chest, listen at the mouth,', 'feel for breath on your cheek.', 'Occasional gasps are not normal breathing.']];
+    if (c === 4) return ['Recovery position', ['Unconscious but breathing normally, no sign', 'of spinal injury: roll them onto their side', 'so vomit drains out; keep checking.']];
+    if (c === 5) return ['CPR', ['30 compressions to 2 breaths,', 'about 100 to 120 compressions a minute:', 'push hard and fast in the centre of the chest.']];
+    return ['Defibrillation', ['Apply an AED if one is available: it tells you', 'what to do. A paddock will not have one,', 'so keep up CPR until help arrives.']];
+  },
+  get caption() {
+    const c = this.card;
+    return c[0] + ': ' + c[1].join(' ');
+  },
+  presets: {
+    'merredin-danger': { danger: true, responds: false, breathing: false, remote: false, t: 0.05 },
+    'send-for-help-remote': { danger: true, responds: false, breathing: false, remote: true, t: 0.25 },
+    'recovery-position': { danger: false, responds: false, breathing: true, remote: false, t: 0.6 },
+    'cpr-30-2': { danger: false, responds: false, breathing: false, remote: false, t: 0.7, play: true },
+    'conscious-casualty': { danger: false, responds: true, breathing: true, remote: false, t: 0.35 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="drs-title" class="widget-stage">
+    <title id="drs-title">The DRSABCD action plan after a forced landing: seven letter tiles with the current step lit and unneeded steps greyed, the casualty beside the aeroplane, and the instruction for the current step, with a 30-compression count during CPR</title>
+    <!-- the seven tiles -->
+    <g font-size="20" font-weight="800" text-anchor="middle">
+      <rect x="24" y="12" width="70" height="48" rx="10" stroke-width="2" :fill="tile(0) === 'now' ? 'var(--color-bad)' : tile(0) === 'done' ? 'var(--color-bad-soft)' : 'var(--color-surface)'" :stroke="tile(0) === 'skip' ? 'var(--color-line)' : 'var(--color-bad)'"/>
+      <text x="59" y="44" :fill="tile(0) === 'now' ? 'var(--color-on-brand)' : 'var(--color-bad-fg)'">D</text>
+      <rect x="110" y="12" width="70" height="48" rx="10" stroke-width="2" :fill="tile(1) === 'now' ? 'var(--color-brand)' : tile(1) === 'done' ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="tile(1) === 'skip' ? 'var(--color-line)' : 'var(--color-brand)'"/>
+      <text x="145" y="44" :fill="tile(1) === 'now' ? 'var(--color-on-brand)' : 'var(--color-brand-fg)'">R</text>
+      <rect x="196" y="12" width="70" height="48" rx="10" stroke-width="2" :fill="tile(2) === 'now' ? 'var(--color-brand)' : tile(2) === 'done' ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="tile(2) === 'skip' ? 'var(--color-line)' : 'var(--color-brand)'"/>
+      <text x="231" y="44" :fill="tile(2) === 'now' ? 'var(--color-on-brand)' : 'var(--color-brand-fg)'">S</text>
+      <rect x="282" y="12" width="70" height="48" rx="10" stroke-width="2" :fill="tile(3) === 'now' ? 'var(--color-brand)' : tile(3) === 'done' ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="tile(3) === 'skip' ? 'var(--color-line)' : 'var(--color-brand)'" :stroke-dasharray="tile(3) === 'skip' ? '4 3' : 'none'"/>
+      <text x="317" y="44" :fill="tile(3) === 'skip' ? 'var(--color-fg-faint)' : tile(3) === 'now' ? 'var(--color-on-brand)' : 'var(--color-brand-fg)'">A</text>
+      <rect x="368" y="12" width="70" height="48" rx="10" stroke-width="2" :fill="tile(4) === 'now' ? 'var(--color-brand)' : tile(4) === 'done' ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="tile(4) === 'skip' ? 'var(--color-line)' : 'var(--color-brand)'" :stroke-dasharray="tile(4) === 'skip' ? '4 3' : 'none'"/>
+      <text x="403" y="44" :fill="tile(4) === 'skip' ? 'var(--color-fg-faint)' : tile(4) === 'now' ? 'var(--color-on-brand)' : 'var(--color-brand-fg)'">B</text>
+      <rect x="454" y="12" width="70" height="48" rx="10" stroke-width="2" :fill="tile(5) === 'now' ? 'var(--color-brand)' : tile(5) === 'done' ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="tile(5) === 'skip' ? 'var(--color-line)' : 'var(--color-brand)'" :stroke-dasharray="tile(5) === 'skip' ? '4 3' : 'none'"/>
+      <text x="489" y="44" :fill="tile(5) === 'skip' ? 'var(--color-fg-faint)' : tile(5) === 'now' ? 'var(--color-on-brand)' : 'var(--color-brand-fg)'">C</text>
+      <rect x="540" y="12" width="70" height="48" rx="10" stroke-width="2" :fill="tile(6) === 'now' ? 'var(--color-brand)' : tile(6) === 'done' ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="tile(6) === 'skip' ? 'var(--color-line)' : 'var(--color-brand)'" :stroke-dasharray="tile(6) === 'skip' ? '4 3' : 'none'"/>
+      <text x="575" y="44" :fill="tile(6) === 'skip' ? 'var(--color-fg-faint)' : tile(6) === 'now' ? 'var(--color-on-brand)' : 'var(--color-brand-fg)'">D</text>
+    </g>
+
+    <!-- the scene: ground, fence, the aeroplane on its nose -->
+    <rect x="16" y="80" width="270" height="196" rx="10" fill="var(--color-sky-soft)" fill-opacity="0.5"/>
+    <rect x="16" y="226" width="270" height="50" fill="var(--color-warn)" fill-opacity="0.18"/>
+    <line x1="16" y1="226" x2="286" y2="226" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round">
+      <line x1="236" y1="226" x2="236" y2="196"/><line x1="260" y1="226" x2="260" y2="196"/><line x1="284" y1="226" x2="284" y2="196"/>
+      <line x1="226" y1="204" x2="286" y2="204" stroke-width="1"/><line x1="226" y1="214" x2="286" y2="214" stroke-width="1"/>
+    </g>
+    <!-- python -m tools.diagrams.plane side, scale 0.95, pitched 25 degrees nose down -->
+    <g transform="translate(198 208) rotate(25) scale(0.95)">
+      <path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)"/>
+      <path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)"/>
+      <line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/>
+    </g>
+    <!-- leaking fuel under the cowl -->
+    <g x-show="danger && cur === 0">
+      <path d="M212 220 q-3 5 0 7 q3 -2 0 -7 Z" fill="var(--color-warn)"/>
+      <ellipse cx="208" cy="230" rx="16" ry="3" fill="var(--color-warn)" fill-opacity="0.5"/>
+      <text x="96" y="104" font-size="12" font-weight="700" fill="var(--color-bad-fg)">fuel near a hot engine</text>
+    </g>
+    <text x="96" y="104" font-size="12" font-weight="700" fill="var(--color-ok-fg)" x-show="cur > 0">fuel and mags off</text>
+    <!-- the casualty, in one of four poses -->
+    <g x-show="pose === 'slump'">
+      <circle cx="102" cy="196" r="9" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path d="M98 205 L88 226 M88 226 L70 226 M94 214 L80 222" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <g x-show="pose === 'sit'">
+      <circle cx="80" cy="194" r="9" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path d="M80 203 L80 224 L100 224 M80 210 L94 216" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+    <g x-show="pose === 'back'">
+      <circle cx="44" cy="244" r="9" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path d="M53 246 L112 246 M112 246 L128 248" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- the rescuer's hands on the chest -->
+      <path fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" x-show="inCpr" :d="'M70 ' + (212 + 6 * press) + ' L70 ' + (240 + 3 * press)"/>
+      <text x="70" y="206" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)" x-show="inCpr">push</text>
+    </g>
+    <g x-show="pose === 'side'">
+      <circle cx="44" cy="240" r="9" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path d="M53 244 L104 246 M104 246 L120 236 L130 248 M104 246 L126 252 M70 244 L74 232" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="86" y="270" font-size="11" text-anchor="middle" fill="var(--color-ok-fg)">on the side, airway clear</text>
+    </g>
+    <!-- send for help -->
+    <g x-show="cur >= 2 && !(responds && t >= 0.3)">
+      <rect x="236" y="96" width="40" height="22" rx="5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <text x="256" y="111" font-size="11" text-anchor="middle" font-weight="700" fill="var(--color-brand-fg)" x-text="remote ? 'PLB' : '000'"></text>
+    </g>
+
+    <!-- the instruction card -->
+    <rect x="302" y="80" width="322" height="196" rx="12" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="318" y="110" font-size="18" font-weight="700" fill="var(--color-fg)" x-text="card[0]"></text>
+    <g font-size="13" fill="var(--color-fg-muted)">
+      <text x="318" y="138" x-text="card[1][0] || ''"></text>
+      <text x="318" y="158" x-text="card[1][1] || ''"></text>
+      <text x="318" y="178" x-text="card[1][2] || ''"></text>
+    </g>
+    <g x-show="inCpr">
+      <text x="318" y="226" font-size="30" font-weight="800" class="num" :fill="breaths ? 'var(--color-info-fg)' : 'var(--color-brand-fg)'" x-text="breaths ? 'breath ' + breaths + ' of 2' : comp + ' of 30'"></text>
+      <rect x="318" y="244" width="290" height="12" rx="6" fill="var(--color-surface-2)"/>
+      <rect x="318" y="244" height="12" rx="6" fill="var(--color-brand)" :width="290 * Math.min(1, comp / 30)"/>
+      <text x="608" y="226" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">at 110 a minute</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the action plan'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="drs-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Through the action plan">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="drs-danger" class="cursor-pointer"><span>Fuel leaking near the hot engine</span>
+        <input type="checkbox" id="drs-danger" x-model="danger" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="drs-remote" class="cursor-pointer"><span>Remote: no mobile coverage</span>
+        <input type="checkbox" id="drs-remote" x-model="remote" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="drs-responds" class="cursor-pointer"><span>The casualty answers you</span>
+        <input type="checkbox" id="drs-responds" x-model="responds" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="drs-breathing" class="cursor-pointer"><span>Breathing normally</span>
+        <input type="checkbox" id="drs-breathing" x-model="breathing" :disabled="responds" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="cur === 0 ? 'bad' : 'ok'"><dt class="widget-label">Step</dt><dd class="widget-value" x-text="card[0]"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Help</dt><dd class="widget-value text-sm" x-text="cur < 2 ? 'not yet called' : remote ? 'ELT or PLB on' : '000 called (112 mobile)'"></dd></div>
+    <div class="widget-readout" :class="inCpr ? 'warn' : ''"><dt class="widget-label">CPR</dt><dd class="widget-value text-sm" x-text="responds || breathing ? 'not needed' : inCpr ? (breaths ? '2 breaths' : comp + ' of 30') : t >= 0.9 ? 'keep going, AED if any' : 'if not breathing normally'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('merredin-danger')" :aria-pressed="active === 'merredin-danger'">Danger first</button>
+      <button type="button" @click="preset('send-for-help-remote')" :aria-pressed="active === 'send-for-help-remote'">Remote: PLB</button>
+      <button type="button" @click="preset('recovery-position')" :aria-pressed="active === 'recovery-position'">Breathing</button>
+      <button type="button" @click="preset('cpr-30-2')" :aria-pressed="active === 'cpr-30-2'">Not breathing</button>
+      <button type="button" @click="preset('conscious-casualty')" :aria-pressed="active === 'conscious-casualty'">Answers you</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Danger always comes first, before the casualty: fuel, fire, a turning propeller, power lines. Send for help early, before you are busy. Then the casualty's answers pick the path: talking means treat their injuries; unconscious but breathing normally means the recovery position; not breathing normally means CPR, 30 compressions to 2 breaths at about 100 to 120 a minute, and an AED if there is one. The CPR count here runs in real time at 110 a minute.</p>
+  <details class="widget-try"><summary>Try it: your passenger is slumped and silent after the forced landing near Merredin. What is your very first action?</summary><p>Press Danger first: before you touch them, check for danger. Fuel near a hot exhaust is a fire risk: fuel and magnetos off if you can reach them safely, and get the casualty away first if there is a fire risk. Then response, then send for help.</p></details>
+  <details class="widget-try"><summary>Try it: unresponsive, but breathing normally and no sign of spinal injury. CPR or the recovery position?</summary><p>Press Breathing: the recovery position, on their side with the airway clear so vomit drains out. CPR is for a casualty who is unresponsive and not breathing normally; occasional gasps do not count as normal breathing.</p></details>
+</div>

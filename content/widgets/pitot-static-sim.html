@@ -1,0 +1,192 @@
+<div class="widget" x-data="widget({
+  alt: 4500, vs: 0, ias: 100,
+  pitot: false, drain: false, stat: false, altn: false,
+  // what was trapped, and where: set when a fault is switched on
+  pAlt: 4500, pIas: 100, sAlt: 4500,
+  kick: 0,
+  // ISA pressure (hPa) at a height (ft) and back; dynamic pressure (hPa) of an indicated airspeed (kt) and back
+  P(h) { return 1013.25 * Math.pow(1 - 6.8756e-6 * h, 5.2559) },
+  H(p) { return (1 - Math.pow(p / 1013.25, 1 / 5.2559)) / 6.8756e-6 },
+  q(v) { return 0.5 * 1.225 * Math.pow(v * 0.514444, 2) / 100 },
+  v(q) { return Math.sqrt(Math.max(0, q) * 200 / 1.225) / 0.514444 },
+  get live() { return this.P(this.alt) },
+  // cabin air is a little below outside static pressure (illustrative 1.5 hPa)
+  get trappedStatic() { return this.stat && !this.altn },
+  get staticSeen() { return this.altn ? this.live - 1.5 : this.stat ? this.P(this.sAlt) : this.live },
+  get trappedPitot() { return this.pitot && this.drain },
+  get pitotSeen() { return !this.pitot ? this.live + this.q(this.ias) : this.drain ? this.P(this.pAlt) + this.q(this.pIas) : this.live },
+  get asi() { return this.v(this.pitotSeen - this.staticSeen) },
+  get altInd() { return this.H(this.staticSeen) },
+  get vsiInd() { return this.trappedStatic ? 0 : this.vs + this.kick },
+  get asiErr() { return this.asi - this.ias },
+  get altErr() { return this.altInd - this.alt },
+  get asiFlag() {
+    if (Math.abs(this.asiErr) < 1) return '';
+    if (this.altn && !this.pitot) return 'slightly high';
+    if (this.asi < 1) return 'reads zero';
+    if (this.trappedPitot && this.vs === 0 && this.alt === this.pAlt) return 'stuck';
+    return this.asiErr > 0 ? 'over-reads' : 'under-reads';
+  },
+  get asiState() { return Math.abs(this.asiErr) < 1 ? 'ok' : this.altn && !this.pitot && Math.abs(this.asiErr) < 8 ? 'warn' : 'bad' },
+  get altState() { return this.trappedStatic && Math.abs(this.altErr) > 20 ? 'bad' : this.altn ? 'warn' : 'ok' },
+  get vsiState() { return this.trappedStatic && this.vs !== 0 ? 'bad' : this.kick > 0 ? 'warn' : 'ok' },
+  get doing() { return this.vs > 0 ? 'climbing' : this.vs < 0 ? 'descending' : 'level' },
+  get diagnosis() {
+    if (this.altn) return 'Alternate static: cabin air is slightly below outside pressure, so the altimeter and ASI read slightly high' + (this.pitot ? '; the pitot fault still affects the ASI.' : '.');
+    if (this.stat && this.pitot) return 'Both blocked: the altimeter is frozen, the VSI reads zero, and the ASI reads nonsense. Fly attitude and power; select the alternate static.';
+    if (this.stat) return this.vs > 0 ? 'Static vent blocked: altimeter frozen, VSI at zero, and the ASI under-reads in the climb (it subtracts too much static): you are faster than it shows.' : this.vs < 0 ? 'Static vent blocked: altimeter frozen, VSI at zero, and the ASI over-reads in the descent: you are slower than it shows.' : 'Static vent blocked: altimeter frozen and VSI at zero; the ASI is right only at the height where the vent blocked.';
+    if (this.trappedPitot) return this.vs > 0 ? 'Pitot and drain blocked: the ASI has become an altimeter and over-reads in the climb. Pull up to slow it and you head for the stall.' : this.vs < 0 ? 'Pitot and drain blocked: the ASI acts as an altimeter and under-reads in the descent.' : 'Pitot and drain blocked: in level flight the ASI is stuck at the reading when it blocked, whatever your real speed.';
+    if (this.pitot) return 'Pitot blocked, drain clear: the trapped pressure leaks out of the drain and the ASI falls to zero. Altimeter and VSI are normal.';
+    return 'All clear: every instrument reads true.';
+  },
+  trap() { if (this.pitot) { this.pAlt = this.alt; this.pIas = this.ias } this.active = null },
+  block() { if (this.stat) this.sAlt = this.alt; this.active = null },
+  // the VSI's brief climb when the alternate static is selected
+  bump() {
+    this.active = null;
+    clearInterval(this._k);
+    if (!this.altn) { this.kick = 0; return }
+    this.kick = 400;
+    this._k = setInterval(() => { this.kick = Math.round(this.kick * 0.7 / 10) * 10; if (this.kick < 20) { this.kick = 0; clearInterval(this._k) } }, 300);
+  },
+  destroy() { clearInterval(this._k) },
+  hand(cx, cy, r, b) { const p = this.pol(cx, cy, r, b), t = this.pol(cx, cy, 10, b + 180); return 'M' + t.x.toFixed(1) + ' ' + t.y.toFixed(1) + 'L' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) },
+  asiB(v) { return 30 + this.clamp(v, 0, 200) * 1.5 },
+  vsiB(v) { return 270 + this.clamp(v, -2000, 2000) / 2000 * 160 },
+  altB(h) { return ((h % 1000) + 1000) % 1000 / 1000 * 360 },
+  presets: {
+    'pitot-drain-blocked-climb': { pitot: true, drain: true, stat: false, altn: false, pAlt: 4500, pIas: 100, alt: 4800, vs: 500, ias: 100, kick: 0 },
+    'pitot-drain-blocked-level': { pitot: true, drain: true, stat: false, altn: false, pAlt: 4500, pIas: 100, alt: 4500, vs: 0, ias: 80, kick: 0 },
+    'pitot-blocked-drain-clear': { pitot: true, drain: false, stat: false, altn: false, pAlt: 4500, pIas: 100, alt: 4500, vs: 0, ias: 100, kick: 0 },
+    'static-blocked-descent': { pitot: false, drain: false, stat: true, altn: false, sAlt: 4500, alt: 4000, vs: -500, ias: 100, kick: 0 },
+    'static-blocked-climb': { pitot: false, drain: false, stat: true, altn: false, sAlt: 4500, alt: 4800, vs: 500, ias: 100, kick: 0 },
+    'alternate-static': { pitot: false, drain: false, stat: true, altn: true, sAlt: 4500, alt: 4500, vs: 0, ias: 100, kick: 0 },
+  },
+})">
+  <svg viewBox="0 0 640 392" role="img" aria-labelledby="pss-title" class="widget-stage">
+    <title id="pss-title">The pitot-static system: the pitot tube feeds only the airspeed indicator, the static vent feeds all three instruments, and the alternate static source can stand in for it. Below, the vertical speed indicator, altimeter and airspeed indicator, each with a dashed green needle showing the true value</title>
+    <defs>
+      <marker id="pss-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- fuselage side and static vent -->
+    <rect x="16" y="26" width="178" height="74" rx="12" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <text x="28" y="44" font-size="11" fill="var(--color-fg-faint)">fuselage side</text>
+    <!-- static line: vent to VSI, manifold to the altimeter and ASI -->
+    <path d="M110 73 L110 232" fill="none" stroke-width="3" stroke-linecap="round" :stroke="altn ? 'var(--color-fg-faint)' : 'var(--color-info)'" :stroke-dasharray="trappedStatic ? '7 5' : 'none'"/>
+    <path d="M110 200 L505 200 L505 238 M320 200 L320 232" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :stroke="altn ? 'var(--color-warn)' : 'var(--color-info)'" :stroke-dasharray="trappedStatic ? '7 5' : 'none'"/>
+    <path d="M110 200 L110 232" fill="none" stroke-width="3" stroke-linecap="round" :stroke="altn ? 'var(--color-warn)' : 'var(--color-info)'" :stroke-dasharray="trappedStatic ? '7 5' : 'none'"/>
+    <circle cx="110" cy="66" r="7" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2"/>
+    <circle cx="110" cy="66" r="2.5" fill="var(--color-info)"/>
+    <circle cx="110" cy="66" r="10" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="2" x-show="stat"/>
+    <text x="128" y="70" font-size="13" font-weight="600" fill="var(--color-info-fg)">static vent</text>
+    <text x="128" y="88" font-size="12" font-weight="600" fill="var(--color-bad-fg)" x-show="stat" >blocked</text>
+    <text x="412" y="194" font-size="12" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" fill="var(--color-info-fg)" x-show="trappedStatic" x-text="'static trapped at ' + fmt(sAlt) + ' ft'"></text>
+    <text x="420" y="194" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="!trappedStatic && !altn">static: all three</text>
+    <!-- alternate static valve -->
+    <path d="M243 170 L243 200" fill="none" :stroke="altn ? 'var(--color-warn)' : 'var(--color-fg-faint)'" :stroke-width="altn ? 3 : 1.25" :stroke-dasharray="altn ? 'none' : '4 3'"/>
+    <rect x="230" y="150" width="26" height="20" rx="4" stroke-width="2" :fill="altn ? 'var(--color-warn-soft)' : 'var(--color-surface)'" :stroke="altn ? 'var(--color-warn)' : 'var(--color-fg-faint)'"/>
+    <text x="264" y="165" font-size="12" :fill="altn ? 'var(--color-warn-fg)' : 'var(--color-fg-faint)'" :font-weight="altn ? 600 : 400">alternate static (cabin air)</text>
+    <!-- the aeroplane, really -->
+    <g :transform="'translate(300 74) rotate(' + (vs > 0 ? -7 : vs < 0 ? 5 : 0) + ') scale(0.85)'"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <text x="262" y="124" font-size="13" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'really ' + fmt(alt) + ' ft, ' + ias + ' kt, ' + doing"></text>
+    <!-- pitot tube under the wing -->
+    <line x1="500" y1="22" x2="500" y2="44" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M462 22 L548 22" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <text x="505" y="15" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">under the wing</text>
+    <path d="M440 51 L420 51 L420 130 L555 130 L555 238" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :stroke="pitot && !drain ? 'var(--color-fg-faint)' : 'var(--color-brand)'" :stroke-dasharray="trappedPitot ? '7 5' : 'none'"/>
+    <rect x="440" y="44" width="140" height="14" rx="3" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
+    <circle cx="560" cy="58" r="2.5" fill="var(--color-fg)"/>
+    <circle cx="560" cy="59" r="6" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="2" x-show="drain && pitot"/>
+    <ellipse cx="584" cy="51" rx="7" ry="11" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="2" x-show="pitot"/>
+    <text x="436" y="36" font-size="13" font-weight="600" text-anchor="end" fill="var(--color-brand-fg)">pitot tube</text>
+    <text x="560" y="78" font-size="11" text-anchor="middle" :fill="drain && pitot ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'" x-text="drain && pitot ? 'drain blocked' : 'drain hole'"></text>
+    <line x1="634" y1="44" x2="600" y2="44" stroke="var(--color-sky-fg)" stroke-width="2" marker-end="url(#pss-arrow)"/>
+    <line x1="634" y1="58" x2="600" y2="58" stroke="var(--color-sky-fg)" stroke-width="2" marker-end="url(#pss-arrow)"/>
+    <text x="616" y="34" font-size="11" text-anchor="middle" fill="var(--color-sky-fg)">airflow</text>
+    <text x="502" y="124" font-size="12" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      :fill="trappedPitot ? 'var(--color-brand-fg)' : pitot ? 'var(--color-fg-faint)' : 'var(--color-fg-muted)'"
+      x-text="trappedPitot ? 'pitot trapped: ' + fmt(pAlt) + ' ft, ' + pIas + ' kt' : pitot ? 'leaks out of the drain' : 'pitot: ASI only'"></text>
+    <!-- instruments -->
+    <circle cx="110" cy="292" r="66" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/><circle cx="110" cy="292" r="60" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M166.4 312.5L161.7 310.8M156.0 330.6L152.1 327.4M140.0 344.0L137.5 339.6M120.4 351.1L119.6 346.2M99.6 351.1L100.4 346.2M80.0 344.0L82.5 339.6M64.0 330.6L67.9 327.4M53.6 312.5L58.3 310.8M50.0 292.0L55.0 292.0M53.6 271.5L58.3 273.2M64.0 253.4L67.9 256.6M80.0 240.0L82.5 244.4M99.6 232.9L100.4 237.8M120.4 232.9L119.6 237.8M140.0 240.0L137.5 244.4M156.0 253.4L152.1 256.6M166.4 271.5L161.7 273.2" stroke="var(--color-fg-muted)" stroke-width="1"/><path d="M166.4 312.5L157.0 309.1M140.0 344.0L135.0 335.3M99.6 351.1L101.3 341.2M64.0 330.6L71.7 324.1M50.0 292.0L60.0 292.0M64.0 253.4L71.7 259.9M99.6 232.9L101.3 242.8M140.0 240.0L135.0 248.7M166.4 271.5L157.0 274.9" stroke="var(--color-fg)" stroke-width="2"/><text x="147.6" y="310.0" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">20</text><text x="130.0" y="331.0" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">15</text><text x="103.1" y="335.7" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">10</text><text x="79.4" y="322.0" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">5</text><text x="70.0" y="296.3" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">0</text><text x="79.4" y="270.6" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">5</text><text x="103.1" y="256.9" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">10</text><text x="130.0" y="261.7" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">15</text><text x="147.6" y="282.6" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">20</text><text x="128" y="278" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">up</text><text x="126" y="314" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">down</text><text x="110" y="270" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">ft/min</text><text x="110" y="322" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">×100</text>
+    <circle cx="320" cy="292" r="66" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/><circle cx="320" cy="292" r="60" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M320.0 232.0L320.0 237.0M327.5 232.5L326.9 237.4M334.9 233.9L333.7 238.7M342.1 236.2L340.2 240.9M348.9 239.4L346.5 243.8M355.3 243.5L352.3 247.5M361.1 248.3L357.7 251.9M366.2 253.8L362.4 256.9M370.7 259.9L366.4 262.5M374.3 266.5L369.8 268.6M377.1 273.5L372.3 275.0M378.9 280.8L374.0 281.7M379.9 288.2L374.9 288.5M379.9 295.8L374.9 295.5M378.9 303.2L374.0 302.3M377.1 310.5L372.3 309.0M374.3 317.5L369.8 315.4M370.7 324.1L366.4 321.5M366.2 330.2L362.4 327.1M361.1 335.7L357.7 332.1M355.3 340.5L352.3 336.5M348.9 344.6L346.5 340.2M342.1 347.8L340.2 343.1M334.9 350.1L333.7 345.3M327.5 351.5L326.9 346.6M320.0 352.0L320.0 347.0M312.5 351.5L313.1 346.6M305.1 350.1L306.3 345.3M297.9 347.8L299.8 343.1M291.1 344.6L293.5 340.2M284.7 340.5L287.7 336.5M278.9 335.7L282.3 332.1M273.8 330.2L277.6 327.1M269.3 324.1L273.6 321.5M265.7 317.5L270.2 315.4M262.9 310.5L267.7 309.0M261.1 303.2L266.0 302.3M260.1 295.8L265.1 295.5M260.1 288.2L265.1 288.5M261.1 280.8L266.0 281.7M262.9 273.5L267.7 275.0M265.7 266.5L270.2 268.6M269.3 259.9L273.6 262.5M273.8 253.8L277.6 256.9M278.9 248.3L282.3 251.9M284.7 243.5L287.7 247.5M291.1 239.4L293.5 243.8M297.9 236.2L299.8 240.9M305.1 233.9L306.3 238.7M312.5 232.5L313.1 237.4M320.0 232.0L320.0 237.0" stroke="var(--color-fg-muted)" stroke-width="1"/><path d="M320.0 232.0L320.0 242.0M355.3 243.5L349.4 251.5M377.1 273.5L367.6 276.5M377.1 310.5L367.6 307.5M355.3 340.5L349.4 332.5M320.0 352.0L320.0 342.0M284.7 340.5L290.6 332.5M262.9 310.5L272.4 307.5M262.9 273.5L272.4 276.5M284.7 243.5L290.6 251.5M320.0 232.0L320.0 242.0" stroke="var(--color-fg)" stroke-width="2"/><text x="320.0" y="255.7" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">0</text><text x="344.1" y="263.5" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">1</text><text x="359.0" y="284.0" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">2</text><text x="359.0" y="309.3" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">3</text><text x="344.1" y="329.8" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">4</text><text x="320.0" y="337.7" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">5</text><text x="295.9" y="329.8" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">6</text><text x="281.0" y="309.3" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">7</text><text x="281.0" y="284.0" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">8</text><text x="295.9" y="263.5" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num">9</text><text x="320" y="274" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">ft ×100</text>
+    <circle cx="530" cy="292" r="66" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/><circle cx="530" cy="292" r="60" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M560.0 240.0L557.0 245.2M572.4 249.6L568.2 253.8M582.0 262.0L576.8 265.0M588.0 276.5L582.2 278.0M590.0 292.0L584.0 292.0M588.0 307.5L582.2 306.0M582.0 322.0L576.8 319.0M572.4 334.4L568.2 330.2M560.0 344.0L557.0 338.8M545.5 350.0L544.0 344.2M530.0 352.0L530.0 346.0M514.5 350.0L516.0 344.2M500.0 344.0L503.0 338.8M487.6 334.4L491.8 330.2M478.0 322.0L483.2 319.0M472.0 307.5L477.8 306.0M470.0 292.0L476.0 292.0M472.0 276.5L477.8 278.0M478.0 262.0L483.2 265.0M487.6 249.6L491.8 253.8M500.0 240.0L503.0 245.2" stroke="var(--color-fg-muted)" stroke-width="1"/><path d="M560.0 240.0L555.0 248.7M590.0 292.0L580.0 292.0M560.0 344.0L555.0 335.3M500.0 344.0L505.0 335.3M470.0 292.0L480.0 292.0M500.0 240.0L505.0 248.7" stroke="var(--color-fg)" stroke-width="2"/><text x="550.0" y="261.7" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">0</text><text x="570.0" y="296.3" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">40</text><text x="550.0" y="331.0" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">80</text><text x="510.0" y="331.0" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">120</text><text x="490.0" y="296.3" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">160</text><text x="510.0" y="261.7" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">200</text><text x="530" y="274" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">knots</text>
+    <!-- true values, dashed green -->
+    <path :d="hand(110, 292, 50, vsiB(vs))" stroke="var(--color-ok)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" x-show="vsiState !== 'ok'"/>
+    <path :d="hand(320, 292, 52, altB(alt))" stroke="var(--color-ok)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" x-show="altState !== 'ok'"/>
+    <path :d="hand(530, 292, 52, asiB(ias))" stroke="var(--color-ok)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" x-show="asiState !== 'ok'"/>
+    <!-- what they show -->
+    <path :d="hand(110, 292, 50, vsiB(vsiInd))" stroke-width="3.5" stroke-linecap="round" :stroke="vsiState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad)'"/>
+    <path :d="hand(320, 292, 32, altInd / 10000 * 360)" stroke-width="6" stroke-linecap="round" :stroke="altState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad)'"/>
+    <path :d="hand(320, 292, 52, altB(altInd))" stroke-width="3.5" stroke-linecap="round" :stroke="altState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad)'"/>
+    <path :d="hand(530, 292, 52, asiB(asi))" stroke-width="3.5" stroke-linecap="round" :stroke="asiState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad)'"/>
+    <circle cx="110" cy="292" r="5" fill="var(--color-fg)"/><circle cx="320" cy="292" r="5" fill="var(--color-fg)"/><circle cx="530" cy="292" r="5" fill="var(--color-fg)"/>
+    <g font-size="13" font-weight="600" text-anchor="middle" class="num">
+      <text x="110" y="380" :fill="vsiState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad-fg)'" x-text="'VSI ' + sign(vsiInd) + ' ft/min'"></text>
+      <text x="320" y="380" :fill="altState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad-fg)'" x-text="'ALT ' + fmt(Math.round(altInd / 10) * 10) + ' ft'"></text>
+      <text x="530" y="380" :fill="asiState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad-fg)'" x-text="'ASI ' + fmt(asi) + ' kt'"></text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="pss-alt">Altitude, really <output for="pss-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="pss-alt" min="2000" max="7000" step="100" x-model.number="alt" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="pss-vs">Right now you are <output for="pss-vs" x-text="vs > 0 ? 'climbing 500 ft/min' : vs < 0 ? 'descending 500 ft/min' : 'level'"></output></label>
+      <input type="range" id="pss-vs" min="-500" max="500" step="500" x-model.number="vs" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="pss-ias">Airspeed, really <output for="pss-ias" x-text="ias + ' kt'"></output></label>
+      <input type="range" id="pss-ias" min="60" max="140" step="5" x-model.number="ias" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="pss-pitot" class="cursor-pointer"><span>Block the pitot tube (ice)</span>
+        <input type="checkbox" id="pss-pitot" x-model="pitot" @change="trap()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="pitot">
+      <label for="pss-drain" class="cursor-pointer"><span>Drain hole blocked too</span>
+        <input type="checkbox" id="pss-drain" x-model="drain" @change="trap()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="pss-stat" class="cursor-pointer"><span>Block the static vent</span>
+        <input type="checkbox" id="pss-stat" x-model="stat" @change="block()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="pss-altn" class="cursor-pointer"><span>Select the alternate static (cabin)</span>
+        <input type="checkbox" id="pss-altn" x-model="altn" @change="bump()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="asiState">
+      <dt class="widget-label">Airspeed indicator</dt>
+      <dd class="widget-value"><span x-text="fmt(asi) + ' kt (really ' + ias + ')'"></span><span class="widget-flag" :class="asiState" x-show="asiFlag" x-text="asiFlag"></span></dd>
+    </div>
+    <div class="widget-readout" :class="altState">
+      <dt class="widget-label">Altimeter</dt>
+      <dd class="widget-value"><span x-text="fmt(Math.round(altInd / 10) * 10) + ' ft (really ' + fmt(alt) + ')'"></span><span class="widget-flag bad" x-show="altState === 'bad'">frozen</span><span class="widget-flag warn" x-show="altState === 'warn'">slightly high</span></dd>
+    </div>
+    <div class="widget-readout" :class="vsiState">
+      <dt class="widget-label">Vertical speed indicator</dt>
+      <dd class="widget-value"><span x-text="sign(vsiInd) + ' ft/min (really ' + sign(vs) + ')'"></span><span class="widget-flag bad" x-show="vsiState === 'bad'">stuck at zero</span><span class="widget-flag warn" x-show="vsiState === 'warn'">brief climb</span></dd>
+    </div>
+    <div class="widget-readout" :class="altn && !pitot ? 'warn' : pitot || stat ? 'bad' : 'ok'">
+      <dt class="widget-label">What is going on</dt>
+      <dd class="widget-value" x-text="diagnosis"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('pitot-drain-blocked-climb')" :aria-pressed="active === 'pitot-drain-blocked-climb'">Pitot + drain, climb</button>
+      <button type="button" @click="preset('pitot-drain-blocked-level')" :aria-pressed="active === 'pitot-drain-blocked-level'">Pitot + drain, level</button>
+      <button type="button" @click="preset('pitot-blocked-drain-clear')" :aria-pressed="active === 'pitot-blocked-drain-clear'">Pitot, drain clear</button>
+      <button type="button" @click="preset('static-blocked-climb')" :aria-pressed="active === 'static-blocked-climb'">Static, climb</button>
+      <button type="button" @click="preset('static-blocked-descent')" :aria-pressed="active === 'static-blocked-descent'">Static, descent</button>
+      <button type="button" @click="preset('alternate-static')" :aria-pressed="active === 'alternate-static'">Alternate static</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every blockage traps a pressure. Pitot pressure goes only to the ASI, so a pitot fault touches nothing else; static goes to all three, so a static fault freezes the altimeter, zeroes the VSI and makes the ASI wrong whenever you leave the height where it blocked. The dashed green needles show the truth. The model is the standard atmosphere; the cabin offset for the alternate static is illustrative.</p>
+  <details class="widget-try"><summary>Try it: in a cruise climb the ASI creeps up although the attitude has not changed, and the altimeter and VSI look normal. What has failed?</summary><p>Only the ASI is wrong, so it is a pitot fault, and a rising ASI in a climb means the pitot and its drain are both blocked: press Pitot + drain, climb. Fly attitude and power, switch on pitot heat, and do not pull up to "slow it down".</p></details>
+  <details class="widget-try"><summary>Try it: with the static vent blocked you descend from 4,500 ft. What do the three instruments show?</summary><p>Press Static, descent: the altimeter stays at 4,500 ft, the VSI at zero, and the ASI over-reads, so you are slower than it shows. Select the alternate static and all three come back, reading slightly high.</p></details>
+</div>

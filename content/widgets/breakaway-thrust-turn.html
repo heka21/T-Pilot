@@ -1,0 +1,119 @@
+<div class="widget" x-data="timeline({
+  duration: 16, loop: false,
+  side: false,
+  // BAKC 4.5: the beacon comes on before the first engine turns; starting to move from rest and turning take breakaway
+  // thrust, considerably more than idle; the turn sweeps that blast across the apron; once rolling, much less thrust keeps
+  // it moving. Timings, distances and the blast lengths are illustrative (not to scale).
+  get beacon() { return this.t >= 0.06 },
+  get power() { return this.t < 0.12 ? 'off' : this.t < 0.3 ? 'idle' : this.t < 0.82 ? 'breakaway' : 'idle' },
+  // blast length in px: idle 70, breakaway 270, back to idle as it rolls
+  get blastLen() { return this.t < 0.12 ? 0 : this.t < 0.3 ? 70 * this.at(0.12, 0.18) : this.t < 0.82 ? this.lerp(70, 270, this.eased(0.3, 0.4)) : this.lerp(270, 70, this.eased(0.82, 0.9)) },
+  // the jet's track: parked nose south at (320, 64); creeps forward; turns left (towards the east) round (380, 100); rolls east
+  get pose() {
+    if (this.t < 0.3) return { x: 320, y: 64, h: 180 };
+    if (this.t < 0.45) return { x: 320, y: this.lerp(64, 100, this.eased(0.3, 0.45)), h: 180 };
+    if (this.t < 0.75) { const th = this.eased(0.45, 0.75) * Math.PI / 2; return { x: 380 - 60 * Math.cos(th), y: 100 + 60 * Math.sin(th), h: 180 - th * 180 / Math.PI } }
+    return { x: this.lerp(380, 590, this.eased(0.75, 1)), y: 160, h: 90 };
+  },
+  // the blast leaves from just behind the engines (local y 14), straight back from the nose
+  get blastStart() { const p = this.pose, a = p.h * Math.PI / 180; return { x: p.x - 14 * Math.sin(a), y: p.y + 14 * Math.cos(a) } },
+  get you() { return this.side ? { x: 96, y: 268 } : { x: 110, y: 160 } },
+  get hit() {
+    if (this.blastLen < 5) return 0;
+    const a = this.pose.h * Math.PI / 180, ux = -Math.sin(a), uy = Math.cos(a), s = this.blastStart;
+    const dx = this.you.x - s.x, dy = this.you.y - s.y, along = dx * ux + dy * uy, perp = Math.abs(dx * uy - dy * ux);
+    return along > 0 && along < this.blastLen + 20 && perp < 26 + 0.19 * along ? (this.power === 'breakaway' ? 2 : 1) : 0;
+  },
+  steps: [{ at: 0.06, label: 'Beacon on' }, { at: 0.18, label: 'Engines at idle' }, { at: 0.36, label: 'Breakaway thrust' }, { at: 0.6, label: 'Turning' }, { at: 0.74, label: 'Blast sweeps' }, { at: 0.92, label: 'Rolling at idle' }],
+  get caption() {
+    if (this.t < 0.06) return 'A jet parked in its bay, engines stopped. You are waiting on the taxiway nearby.';
+    if (this.t < 0.12) return 'The red beacon comes on before the first engine turns: engines are about to run. Assume breakaway thrust is coming.';
+    if (this.t < 0.3) return 'Engines at idle. The stream behind is the smallest it will be, but not zero, and it is pointing away from you.';
+    if (this.t < 0.45) return 'To start moving from rest it needs breakaway thrust, considerably more than idle: the blast behind it grows long and fast.';
+    if (this.t < 0.82) return this.hit ? 'Turning, still with breakaway thrust (often more on one engine): the blast sweeps sideways across the apron and right over where you are waiting.' : 'Turning with breakaway thrust: the blast sweeps sideways across the apron. Waiting well back and to the side keeps you out of it.';
+    return 'Rolling steadily, it needs much less thrust: the blast shrinks back towards idle. The stationary jet about to move was the bigger danger.';
+  },
+  presets: {
+    'beacon-on': { side: false, t: 0.08 },
+    'breakaway': { side: false, t: 0.4 },
+    'blast-sweeps': { side: false, t: 0.74 },
+    'rolling-at-idle': { side: false, t: 0.95 },
+    'wait-to-the-side': { side: true, t: 0.74 },
+    'watch-it-move': { side: false, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="btt-title" class="widget-stage">
+    <title id="btt-title">Plan view of an apron: a jet with its beacon on starts its engines, applies breakaway thrust to move out of its bay and turns onto the taxiway, sweeping its blast across the apron towards a light aeroplane waiting there</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)"/>
+    <!-- bay lead-in and taxiway -->
+    <rect x="296" y="0" width="48" height="130" fill="var(--color-tarmac)" fill-opacity="0.85"/>
+    <rect x="0" y="136" width="640" height="48" fill="var(--color-tarmac)" fill-opacity="0.85"/>
+    <path d="M320 0 L320 100 Q320 160 380 160 L640 160 M0 160 L300 160" fill="none" stroke="var(--color-warn)" stroke-width="1.5" stroke-dasharray="10 8"/>
+    <text x="350" y="26" font-size="12" fill="var(--color-fg-muted)">parking bay</text>
+    <text x="630" y="200" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">taxiway</text>
+    <!-- you -->
+    <g :transform="'translate(' + you.x + ' ' + you.y + ')'">
+      <circle r="34" :fill="hit === 2 ? 'var(--color-bad)' : hit === 1 ? 'var(--color-warn)' : 'var(--color-ok)'" fill-opacity="0.2" :stroke="hit === 2 ? 'var(--color-bad)' : hit === 1 ? 'var(--color-warn)' : 'var(--color-ok)'" stroke-width="2"/>
+      <!-- python -m tools.diagrams.plane top, scale 0.5, heading 90 -->
+      <g transform="translate(0 0) rotate(0) scale(0.5)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="you.x" :y="you.y - 40">you</text>
+    <!-- the jet and its blast, drawn nose-up and turned to its heading -->
+    <g :transform="'translate(' + pose.x + ' ' + pose.y + ') rotate(' + pose.h + ')'">
+      <g x-show="blastLen > 2">
+        <path :fill="power === 'breakaway' ? 'var(--color-bad)' : 'var(--color-warn)'" fill-opacity="0.28" :stroke="power === 'breakaway' ? 'var(--color-bad)' : 'var(--color-warn)'" stroke-width="1.25" stroke-dasharray="5 3"
+          :d="'M-30 14 L-14 14 L' + (-22 + 0.2 * blastLen) + ' ' + (14 + blastLen) + ' L' + (-22 - 0.2 * blastLen) + ' ' + (14 + blastLen) + ' Z M14 14 L30 14 L' + (22 + 0.2 * blastLen) + ' ' + (14 + blastLen) + ' L' + (22 - 0.2 * blastLen) + ' ' + (14 + blastLen) + ' Z'"/>
+      </g>
+      <g stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linejoin="round">
+        <path d="M-6 -6 L-60 22 L-60 30 L-6 14 Z M6 -6 L60 22 L60 30 L6 14 Z"/>
+        <path d="M0 -62 C6 -62 8 -54 8 -44 L7 44 L2 56 L-2 56 L-7 44 L-8 -44 C-8 -54 -6 -62 0 -62 Z"/>
+        <path d="M-2 44 L-24 54 L-24 59 L-2 55 Z M2 44 L24 54 L24 59 L2 55 Z"/>
+        <rect x="-27" y="-6" width="10" height="20" rx="4"/><rect x="17" y="-6" width="10" height="20" rx="4"/>
+      </g>
+      <circle cx="0" cy="-14" r="5" fill="var(--color-bad)" x-show="beacon" :fill-opacity="Math.sin(t * 160) > 0 ? 1 : 0.3"/>
+    </g>
+    <!-- status -->
+    <text x="16" y="26" font-size="14" font-weight="700" fill="var(--color-fg)" x-text="power === 'off' ? (beacon ? 'Beacon on, engines starting' : 'Engines off') : power === 'idle' ? 'Idle' : 'Breakaway thrust'"></text>
+    <text x="16" y="290" font-size="12" fill="var(--color-fg-faint)">Not to scale.</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="btt-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress">
+    <span class="widget-clock" x-text="power === 'breakaway' ? 'breakaway' : power"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="btt-side" class="cursor-pointer"><span>Wait well back and to the side instead</span>
+        <input type="checkbox" id="btt-side" x-model="side" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="power === 'breakaway' ? 'bad' : power === 'idle' ? 'warn' : ''"><dt class="widget-label">Jet's power</dt><dd class="widget-value" x-text="power === 'off' ? (beacon ? 'starting' : 'off') : power"></dd></div>
+    <div class="widget-readout" :class="hit === 2 ? 'bad' : hit === 1 ? 'warn' : 'ok'"><dt class="widget-label">Blast at your aeroplane</dt><dd class="widget-value"><span x-text="hit === 2 ? 'strong' : hit === 1 ? 'light' : 'none'"></span><span class="widget-flag bad" x-show="hit === 2">hold on</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('watch-it-move')" :aria-pressed="active === 'watch-it-move'">Watch</button>
+      <button type="button" @click="preset('beacon-on')" :aria-pressed="active === 'beacon-on'">Beacon on</button>
+      <button type="button" @click="preset('breakaway')" :aria-pressed="active === 'breakaway'">Breakaway</button>
+      <button type="button" @click="preset('blast-sweeps')" :aria-pressed="active === 'blast-sweeps'">Blast sweeps</button>
+      <button type="button" @click="preset('rolling-at-idle')" :aria-pressed="active === 'rolling-at-idle'">Rolling</button>
+      <button type="button" @click="preset('wait-to-the-side')" :aria-pressed="active === 'wait-to-the-side'">Wait to the side</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The dangerous moment is not the jet taxiing steadily at idle but the stationary one with its beacon on: to start moving and to turn it uses breakaway thrust, considerably more than idle, and the turn swings that blast sideways across the apron. Once it is rolling the blast shrinks again. Timings, distances and blast lengths here are illustrative and not to scale.</p>
+  <details class="widget-try"><summary>Try it: which is more dangerous to be behind, a jet taxiing at idle or a stationary one with its beacon on?</summary><p>Press Breakaway, then Rolling: the stationary jet about to move uses far more thrust than the one already rolling. The exam's trap answer is the taxiing one.</p></details>
+  <details class="widget-try"><summary>Try it: where should you have waited?</summary><p>Press Blast sweeps: on the taxiway the turning blast reaches you. Tick Wait well back and to the side: out of the line the tail sweeps through, the blast passes you by.</p></details>
+</div>

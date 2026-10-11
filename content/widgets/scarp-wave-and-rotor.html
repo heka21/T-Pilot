@@ -1,0 +1,169 @@
+<div class="widget" x-data="widget({
+  wind: 30, stable: true, angle: 0, nm: 2.3, alt: 1500,
+  // cross-section west (left) to east (right): the plain at sea level, the Scarp about 1,000 ft high at x 410-440,
+  // the plateau beyond. 0.03 px per ft vertically (heights exaggerated), 36 px per nm horizontally.
+  Y(ft) { return 286 - ft * 0.03 },
+  X(nm) { return 425 - nm * 36 },
+  lam: 130,
+  get across() { return this.wind * Math.cos(this.angle * Math.PI / 180) },
+  // PMTC 2.7: stable air, about 20 kt or more, within about 30 degrees of perpendicular
+  get wave() { return this.stable && this.wind >= 20 && this.angle <= 30 },
+  get mech() { return !this.wave && this.across >= 10 },
+  get calm() { return !this.wave && !this.mech },
+  get amp() { return this.clamp(9 + (this.wind - 20) * 0.7, 9, 20) },
+  ground(x) { return x <= 410 ? 0 : x >= 440 ? 1000 : (x - 410) / 30 * 1000 },
+  disp(h0, x) {
+    const lift = -(this.across >= 10 ? 7 : 3) * Math.exp(-(h0 - 2000) / 4000);
+    const r = lift * Math.exp(-(((x - 440) / 45) ** 2));
+    if (x >= 440) return r;
+    const d = 440 - x;
+    if (this.wave) return r + this.amp * [1, 0.95, 0.85, 0.7][[2000, 3500, 5000, 6500].indexOf(h0)] * Math.sin(2 * Math.PI * d / this.lam) * Math.exp(-d / 900);
+    const ramp = this.ease(this.seg(d, 0, 40));
+    if (this.mech) return r + Math.min(10, 5 + (this.across - 10) * 0.4) * Math.exp(-(h0 - 2000) / 1500) * Math.exp(-(((d - 35) / 45) ** 2)) * ramp;
+    return r + 3 * Math.exp(-d / 50) * ramp;
+  },
+  flow(h0) { const pts = []; for (let x = 640; x >= 64; x -= 8) pts.push([x, this.Y(h0) + this.disp(h0, x)]); return this.path(pts) },
+  crest(k) { return 440 - (k + 0.75) * this.lam },
+  get rotorOn() { return this.wave || this.mech },
+  // the aeroplane
+  get px() { return this.X(this.nm) },
+  get floor() { return this.ground(this.px) + 500 },
+  get palt() { return Math.max(this.alt, this.floor) },
+  get py() { return this.Y(this.palt) },
+  get clearance() { return this.palt - 1000 },
+  get ride() {
+    const d = 440 - this.px, a = this.palt;
+    if (this.calm) return { text: 'Smooth', s: 'ok' };
+    if (d < 0) return { text: 'Smooth, upwind of the Scarp', s: 'ok' };
+    if (this.mech) {
+      if (this.nm <= 4 && a < 2000) return this.across >= 20 ? { text: 'Rough: rotor and gusts', s: 'bad' } : { text: 'Bumpy: rotor and gusts', s: 'warn' };
+      if (a < 2000) return { text: 'Gusty, some bumps', s: 'warn' };
+      return { text: 'Smoother above 2,000 ft', s: 'ok' };
+    }
+    // wave: rotor under the first two crests at about ridge height, sink down the lee slope, smooth lift and sink above
+    for (const k of [0, 1]) if (Math.abs(this.px - this.crest(k)) < 28 && a < 2600) return { text: 'Rotor: severe turbulence', s: 'bad' };
+    if (d < 60 && a < 4000) return { text: 'Down the lee: sink beyond your climb', s: 'bad' };
+    if (a < 2000) return { text: 'Gusty, near the rotor', s: 'warn' };
+    const ph = (d / this.lam) % 1;
+    return ph < 0.25 || ph > 0.75 ? { text: 'Smooth wave sink', s: 'warn' } : { text: 'Smooth wave lift', s: 'ok' };
+  },
+  get regime() {
+    if (this.wave) return 'Lee waves and rotor';
+    if (this.mech && this.across >= 20) return this.stable ? 'Strong lee turbulence, no wave' : 'Turbulent lee, no wave (unstable)';
+    if (this.mech) return 'Mechanical turbulence in the lee';
+    return 'Smooth flow';
+  },
+  get regimeState() { return this.wave || this.across >= 20 ? 'bad' : this.mech ? 'warn' : 'ok' },
+  tick(ok) { return ok ? '✓' : '✗' },
+  presets: {
+    'light-easterly': { wind: 8, stable: true, angle: 0, nm: 3, alt: 1500 },
+    'dawn-easterly': { wind: 18, stable: true, angle: 0, nm: 3, alt: 1500 },
+    'wave-day-rotor': { wind: 30, stable: true, angle: 0, nm: 2.3, alt: 1500 },
+    'wave-lift': { wind: 30, stable: true, angle: 0, nm: 1.5, alt: 4500 },
+    'unstable-gusty': { wind: 30, stable: false, angle: 0, nm: 3, alt: 1500 },
+    'wind-along-ridge': { wind: 30, stable: true, angle: 60, nm: 3, alt: 1500 },
+    'safe-crossing': { wind: 30, stable: true, angle: 0, nm: -2, alt: 3000 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="swr-title" class="widget-stage">
+    <title id="swr-title">Cross-section west to east across the Darling Scarp with an easterly wind blowing from the plateau towards Perth. Streamlines show the air flowing over the Scarp: smooth in light wind, tumbling into rotor at the foot of the Scarp in a moderate wind, and in a strong wind across the ridge in stable air, standing lee waves with lenticular clouds at the crests and rotor beneath them. A light aeroplane marks your position, and the readouts give the ride there</title>
+    <defs>
+      <marker id="swr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-sky-soft)" rx="10"/>
+    <!-- height scale -->
+        <g font-size="11" fill="var(--color-fg-faint)" class="num"><text x="6" y="230">2,000</text><text x="6" y="170">4,000</text><text x="6" y="110">6,000 ft</text></g>
+    <!-- streamlines: air flows right to left -->
+    <g fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#swr-arrow)">
+      <path stroke="var(--color-brand)" stroke-width="2" :d="flow(2000)"/>
+      <path stroke="var(--color-brand)" :d="flow(3500)"/>
+      <path stroke="var(--color-brand)" stroke-opacity="0.75" :d="flow(5000)"/>
+      <path stroke="var(--color-brand)" stroke-opacity="0.55" :d="flow(6500)"/>
+    </g>
+    <!-- lenticulars and cap cloud in a wave -->
+    <g x-show="wave" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.25">
+      <path :d="'M' + (crest(0) - 34) + ' ' + (Y(5000) - amp * 0.85 - 6) + ' q34 -16 68 0 q-34 9 -68 0 Z'"/>
+      <path :d="'M' + (crest(0) - 28) + ' ' + (Y(6500) - amp * 0.7 - 6) + ' q28 -13 56 0 q-28 7 -56 0 Z'"/>
+      <path :d="'M' + (crest(1) - 30) + ' ' + (Y(5000) - amp * 0.8 - 6) + ' q30 -14 60 0 q-30 8 -60 0 Z'"/>
+      <path d="M422 262 q4 -14 18 -18 q10 -10 24 -4 q14 -4 22 8 q-30 2 -64 14 Z"/>
+    </g>
+    <text x-show="wave" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="crest(0)" :y="Y(6500) - amp - 18">lenticular</text>
+    <text x-show="wave" x="545" y="246" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">cap cloud</text>
+    <!-- terrain -->
+    <path d="M0 286 L404 286 C412 286 414 280 418 270 C424 258 430 257 440 256 C500 255 560 254 640 253 L640 320 L0 320 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+    <line x1="137" y1="286" x2="137" y2="294" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="137" y="308" font-size="12" text-anchor="middle" fill="var(--color-fg)" font-weight="600">Jandakot</text>
+    <text x="240" y="308" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">coastal plain: the lee</text>
+    <text x="540" y="282" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">plateau</text>
+    <text x="425" y="308" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">Darling Scarp, about 1,000 ft</text>
+    <!-- rotor: under the first crests in a wave, at the foot of the Scarp otherwise -->
+    <g x-show="wave" fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" marker-end="url(#swr-arrow)">
+      <path :d="'M' + (crest(0) + 16) + ' 244 A16 14 0 1 0 ' + (crest(0) + 7) + ' 258'"/>
+      <path :d="'M' + (crest(1) + 14) + ' 246 A14 12 0 1 0 ' + (crest(1) + 6) + ' 258'"/>
+    </g>
+    <g x-show="wave" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round">
+      <path :d="'M' + (crest(0) - 22) + ' 232 l6 -7 l6 4 l7 -8 l6 6 l8 -5 l5 7 l6 -3 l-2 8 Z'"/>
+    </g>
+    <text x-show="wave" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="crest(1)" y="234">rotor</text>
+    <g x-show="mech" fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" marker-end="url(#swr-arrow)">
+      <path d="M392 262 A13 11 0 1 0 384 274"/>
+      <path d="M346 272 q6 -8 12 0 t12 0" stroke-width="1.5" marker-end="none" x-show="across >= 15"/>
+      <path d="M300 276 q6 -8 12 0 t12 0" stroke-width="1.5" marker-end="none" x-show="across >= 20"/>
+    </g>
+    <text x-show="mech" x="385" y="250" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">rotor</text>
+    <!-- wind label -->
+    <line x1="630" y1="34" x2="580" y2="34" stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#swr-arrow)"/>
+    <text x="574" y="39" font-size="14" font-weight="600" text-anchor="end" fill="var(--color-brand-fg)" x-text="'easterly ' + wind + ' kt'"></text>
+    <text x="574" y="56" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="(stable ? 'stable' : 'unstable') + ', ' + angle + '° off square to the ridge'"></text>
+    <text x="14" y="30" font-size="12" fill="var(--color-fg-faint)">west: Perth</text>
+    <!-- the aeroplane, flying east towards the hills -->
+    <g :transform="'translate(' + px + ' ' + py + ')'">
+      <g transform="scale(0.3)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="4" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="4" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="4" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round"/></g>
+      <circle r="17" fill="none" stroke-width="2" stroke-dasharray="4 3" :stroke="ride.s === 'bad' ? 'var(--color-bad)' : ride.s === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="swr-wind">Easterly wind across the Scarp <output for="swr-wind" x-text="wind + ' kt'"></output></label>
+      <input type="range" id="swr-wind" min="0" max="40" step="1" x-model.number="wind">
+    </div>
+    <div class="widget-control">
+      <label for="swr-angle">Angle off square to the ridge <output for="swr-angle" x-text="angle + '°'"></output></label>
+      <input type="range" id="swr-angle" min="0" max="80" step="5" x-model.number="angle">
+    </div>
+    <div class="widget-control">
+      <label for="swr-stable" class="cursor-pointer"><span>Stable air</span>
+        <input type="checkbox" id="swr-stable" x-model="stable" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="swr-nm">You: distance from the Scarp <output for="swr-nm" x-text="nm < 0 ? fmt(-nm, 1) + ' nm east (upwind)' : fmt(nm, 1) + ' nm west (lee)'"></output></label>
+      <input type="range" id="swr-nm" min="-4" max="10" step="0.1" x-model.number="nm">
+    </div>
+    <div class="widget-control">
+      <label for="swr-alt">Your altitude <output for="swr-alt" x-text="fmt(palt) + ' ft'"></output></label>
+      <input type="range" id="swr-alt" min="1000" max="7500" step="100" x-model.number="alt">
+    </div>
+  </div>
+  <p class="widget-caption" x-text="'Mountain wave needs: stable air ' + tick(stable) + ' · about 20 kt or more ' + tick(wind >= 20) + ' · within about 30° of square ' + tick(angle <= 30)"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="regimeState"><dt class="widget-label">Over the Scarp</dt><dd class="widget-value" x-text="regime"></dd></div>
+    <div class="widget-readout" :class="ride.s"><dt class="widget-label">Your ride</dt><dd class="widget-value"><span x-text="ride.text"></span><span class="widget-flag bad" x-show="ride.s === 'bad'">avoid</span></dd></div>
+    <div class="widget-readout" :class="clearance >= 2000 ? 'ok' : 'warn'"><dt class="widget-label">Above the Scarp crest</dt><dd class="widget-value" x-text="(clearance >= 0 ? fmt(clearance) + ' ft' : 'below it') + (clearance >= 2000 ? ' ✓' : ' (2,000+ to cross)')"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('light-easterly')" :aria-pressed="active === 'light-easterly'">Light</button>
+      <button type="button" @click="preset('dawn-easterly')" :aria-pressed="active === 'dawn-easterly'">18 kt dawn</button>
+      <button type="button" @click="preset('wave-day-rotor')" :aria-pressed="active === 'wave-day-rotor'">Rotor</button>
+      <button type="button" @click="preset('wave-lift')" :aria-pressed="active === 'wave-lift'">Wave lift</button>
+      <button type="button" @click="preset('unstable-gusty')" :aria-pressed="active === 'unstable-gusty'">Unstable</button>
+      <button type="button" @click="preset('wind-along-ridge')" :aria-pressed="active === 'wind-along-ridge'">Along the ridge</button>
+      <button type="button" @click="preset('safe-crossing')" :aria-pressed="active === 'safe-crossing'">Safe crossing</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The rough air is on the lee side, which in an easterly is the Perth side of the Scarp. A moderate wind tumbles into rotor at the foot of the hills; a strong wind across the ridge in stable air sets up standing waves, with smooth lift and sink aloft, lenticulars at the crests and severe rotor beneath them at about ridge height. In dry air the waves can be there with no cloud at all. Wave spacing, heights and the lighter-wind thresholds are illustrative; the 20 kt, 30° and 2,000 ft figures are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: a summer dawn, an 18 kt easterly at Jandakot. Where is the climb-out rough?</summary><p>Press 18 kt dawn: the easterly pours down the Scarp and rolls into rotor at its foot, so below about 2,000 ft within a few miles of the hills the ride is bumpy. Climb above 2,000 ft or fly later, when the easterly eases.</p></details>
+  <details class="widget-try"><summary>Try it: on the wave day, what changes if the air turns unstable, or the wind swings along the ridge?</summary><p>Press Unstable, then Along the ridge: the lenticulars and wave go in both cases, because the wave needs stable air pushed square across the ridge. Low in the lee it is still rough in the unstable air, and still bumpy with the wind along the ridge.</p></details>
+</div>

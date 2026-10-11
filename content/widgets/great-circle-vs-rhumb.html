@@ -1,0 +1,137 @@
+<div class="widget" x-data="widget({
+  lat: 32, sep: 60,
+  // orthographic globe centred on 35° S 120° E: x 175, y 172, radius 140. The leg runs east along the parallel lat (° S),
+  // from A at 120 − sep/2 to B at 120 + sep/2.
+  get rd() { return Math.PI / 180 },
+  o(la, lo) {
+    const r = this.rd, a = la * r, b = (lo - 120) * r, a0 = -35 * r;
+    return { x: 175 + 140 * Math.cos(a) * Math.sin(b), y: 172 - 140 * (Math.cos(a0) * Math.sin(a) - Math.sin(a0) * Math.cos(a) * Math.cos(b)), v: Math.sin(a0) * Math.sin(a) + Math.cos(a0) * Math.cos(a) * Math.cos(b) > -0.02 };
+  },
+  line(pts) { let d = '', pen = false; pts.forEach((p) => { if (p.v) { d += (pen ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); pen = true } else pen = false }); return d },
+  get phi() { return -this.lat },
+  get lonA() { return 120 - this.sep / 2 },
+  get lonB() { return 120 + this.sep / 2 },
+  vec(la, lo) { const a = la * this.rd, b = lo * this.rd; return [Math.cos(a) * Math.cos(b), Math.cos(a) * Math.sin(b), Math.sin(a)] },
+  // central angle between A and B (degrees)
+  get c() { const p = this.phi * this.rd, s = Math.sin(p), k = Math.cos(p); return Math.acos(this.clamp(s * s + k * k * Math.cos(this.sep * this.rd), -1, 1)) / this.rd },
+  // great-circle points by slerp between the two position vectors
+  gcPt(f) {
+    const A = this.vec(this.phi, this.lonA), B = this.vec(this.phi, this.lonB), w = this.c * this.rd;
+    if (w < 1e-6) return { la: this.phi, lo: this.lonA };
+    const a = Math.sin((1 - f) * w) / Math.sin(w), b = Math.sin(f * w) / Math.sin(w);
+    const x = a * A[0] + b * B[0], y = a * A[1] + b * B[1], z = a * A[2] + b * B[2];
+    return { la: Math.atan2(z, Math.hypot(x, y)) / this.rd, lo: Math.atan2(y, x) / this.rd };
+  },
+  get gc() { const p = []; for (let k = 0; k <= 40; k++) { const q = this.gcPt(k / 40); p.push(this.o(q.la, q.lo)) } return this.line(p) },
+  get rl() { const p = []; for (let k = 0; k <= 40; k++) p.push(this.o(this.phi, this.lonA + this.sep * k / 40)); return this.line(p) },
+  get A() { return this.o(this.phi, this.lonA) },
+  get B() { return this.o(this.phi, this.lonB) },
+  get M() { const q = this.gcPt(0.5); return this.o(q.la, q.lo) },
+  get R() { return this.o(this.phi, 120) },
+  get vertexLat() { return -this.gcPt(0.5).la },
+  // initial true course from A along the great circle; arriving course at B is its mirror about 090
+  get trackA() {
+    const p = this.phi * this.rd, d = this.sep * this.rd;
+    const t = Math.atan2(Math.sin(d) * Math.cos(p), Math.cos(p) * Math.sin(p) - Math.sin(p) * Math.cos(p) * Math.cos(d)) / this.rd;
+    return (t + 360) % 360;
+  },
+  get trackB() { return (180 - this.trackA + 360) % 360 },
+  get gcNm() { return this.c * 60 },
+  get rlNm() { return this.sep * 60 * Math.cos(this.phi * this.rd) },
+  get extra() { return this.rlNm - this.gcNm },
+  get pct() { return this.gcNm > 0 ? this.extra / this.gcNm * 100 : 0 },
+  get same() { return this.lat < 0.05 },
+  get bars() { const m = Math.max(this.rlNm, 1); return { g: 250 * this.gcNm / m, r: 250 } },
+  get caption() {
+    if (this.same) return 'On the equator the parallel is itself a great circle, so the shortest path and the constant-direction path are the same line.';
+    if (this.extra < 1) return 'On a leg this short the great circle and the rhumb line almost coincide: the rhumb line is less than a tenth of a mile longer, though even here the great-circle track changes by a couple of degrees from end to end.';
+    return 'The great circle swings towards the pole, leaving A on ' + this.trk(this.trackA) + '°T and arriving on ' + this.trk(this.trackB) + '°T; the rhumb line holds 090°T the whole way but is ' + this.fmt(this.extra) + ' NM longer.';
+  },
+  presets: {
+    'along-the-equator': { lat: 0, sep: 60 },
+    'short-vfr-leg': { lat: 31.4, sep: 5.5 },
+    'mid-latitude-long-leg': { lat: 32, sep: 60 },
+    'long-leg-high-latitude': { lat: 60, sep: 90 },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="gcr-title" class="widget-stage">
+    <title id="gcr-title">Left, a globe showing two places on the same parallel joined by the great circle, which bulges towards the South Pole, and by the rhumb line along the parallel. Right, the great circle's track where it leaves, at its middle and where it arrives, and the two distances as bars</title>
+    <defs>
+      <marker id="gcr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="340" fill="var(--color-surface)" rx="10"/>
+    <circle cx="175" cy="172" r="140" fill="var(--color-sky-soft)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path d="M143.6 293.2L141.9 291.2L140.5 289.2L139.6 287.1L139.0 284.9L138.8 282.8L139.0 280.6L139.6 278.5L140.5 276.4L141.9 274.3L143.6 272.4L145.7 270.6L148.1 268.9L150.8 267.3L153.7 266.0L156.9 264.8L160.3 263.8L163.8 263.0L167.5 262.4L171.2 262.1L175.0 262.0L178.8 262.1L182.5 262.4L186.2 263.0L189.7 263.8L193.1 264.8L196.3 266.0L199.2 267.3L201.9 268.9L204.3 270.6L206.4 272.4L208.1 274.3L209.5 276.4L210.4 278.5L211.0 280.6L211.2 282.8L211.0 284.9L210.4 287.1L209.5 289.2L208.1 291.2L206.4 293.2L204.3 295.0L201.9 296.7L199.2 298.2L196.3 299.6L193.1 300.8L189.7 301.8L186.2 302.5L182.5 303.1L178.8 303.4L175.0 303.6L171.2 303.4L167.5 303.1L163.8 302.5L160.3 301.8L156.9 300.8L153.7 299.6L150.8 298.2L148.1 296.7L145.7 295.0L143.6 293.2M114.4 291.4L111.1 287.6L108.4 283.7L106.5 279.7L105.4 275.5L105.0 271.3L105.4 267.1L106.5 263.0L108.4 258.9L111.1 255.0L114.4 251.2L118.4 247.7L123.0 244.5L128.2 241.5L133.9 238.8L140.0 236.5L146.5 234.6L153.4 233.1L160.4 232.0L167.7 231.4L175.0 231.2L182.3 231.4L189.6 232.0L196.6 233.1L203.5 234.6L210.0 236.5L216.1 238.8L221.8 241.5L227.0 244.5L231.6 247.7L235.6 251.2L238.9 255.0L241.6 258.9L243.5 263.0L244.6 267.1L245.0 271.3L244.6 275.5L243.5 279.7L241.6 283.7L238.9 287.6L235.6 291.4L231.6 294.9L227.0 298.2L221.8 301.2L216.1 303.8L210.0 306.1L203.5 308.0L196.6 309.5L189.6 310.6L182.3 311.2L175.0 311.5L167.7 311.2L160.4 310.6L153.4 309.5L146.5 308.0L140.0 306.1L133.9 303.8L128.2 301.2L123.0 298.2L118.4 294.9L114.4 291.4M89.3 281.5L84.6 276.2L80.9 270.6L78.2 264.9L76.5 259.0L76.0 253.1L76.5 247.2L78.2 241.3L80.9 235.5L84.6 230.0L89.3 224.7L94.9 219.7L101.4 215.1L108.8 210.9L116.8 207.2L125.5 203.9L134.7 201.2L144.4 199.1L154.4 197.6L164.7 196.6L175.0 196.3L185.3 196.6L195.6 197.6L205.6 199.1L215.3 201.2L224.5 203.9L233.2 207.2L241.2 210.9L248.6 215.1L255.1 219.7L260.7 224.7L265.4 230.0L269.1 235.5L271.8 241.3L273.5 247.2L274.0 253.1L273.5 259.0L271.8 264.9L269.1 270.6L265.4 276.2L260.7 281.5L255.1 286.5L248.6 291.1M101.4 291.1L94.9 286.5L89.3 281.5M59.7 250.8L56.4 243.8L54.4 236.6L53.8 229.3L54.4 222.1L56.4 214.9L59.7 207.9L64.2 201.1L70.0 194.6L76.9 188.5L84.9 182.8L93.9 177.7L103.7 173.1L114.4 169.1L125.7 165.8L137.5 163.2L149.8 161.3L162.3 160.2L175.0 159.8L187.7 160.2L200.2 161.3L212.5 163.2L224.3 165.8L235.6 169.1L246.3 173.1L256.1 177.7L265.1 182.8L273.1 188.5L280.0 194.6L285.8 201.1L290.3 207.9L293.6 214.9L295.6 222.1L296.2 229.3L295.6 236.6L293.6 243.8L290.3 250.8M40.5 209.8L39.8 201.7L40.5 193.6L42.7 185.6L46.4 177.7L51.5 170.1L57.9 162.9L65.6 156.1L74.5 149.8L84.5 144.0L95.5 138.9L107.4 134.5L120.0 130.8L133.2 127.9L146.9 125.8L160.9 124.5L175.0 124.1L189.1 124.5L203.1 125.8L216.8 127.9L230.0 130.8L242.6 134.5L254.5 138.9L265.5 144.0L275.5 149.8L284.4 156.1L292.1 162.9L298.5 170.1L303.6 177.7L307.3 185.6L309.5 193.6L310.2 201.7L309.5 209.8M35.0 172.0L35.8 163.6L38.1 155.3L41.9 147.2L47.1 139.3L53.8 131.8L61.7 124.8L71.0 118.3L81.3 112.3L92.7 107.0L105.0 102.5L118.1 98.6L131.7 95.6L145.9 93.5L160.4 92.1L175.0 91.7L189.6 92.1L204.1 93.5L218.3 95.6L231.9 98.6L245.0 102.5L257.3 107.0L268.7 112.3L279.0 118.3L288.3 124.8L296.2 131.8L302.9 139.3L308.1 147.2L311.9 155.3L314.2 163.6L315.0 172.0M42.7 126.2L46.4 118.3L51.5 110.8L57.9 103.5L65.6 96.7L74.5 90.4L84.5 84.7L95.5 79.6L107.4 75.1L120.0 71.5L133.2 68.6L146.9 66.4L160.9 65.2L175.0 64.8L189.1 65.2L203.1 66.4L216.8 68.6L230.0 71.5L242.6 75.1L254.5 79.6L265.5 84.7L275.5 90.4L284.4 96.7L292.1 103.5L298.5 110.8L303.6 118.3L307.3 126.2M64.2 86.4L70.0 79.9L76.9 73.8L84.9 68.1L93.9 63.0L103.7 58.4L114.4 54.4L125.7 51.1L137.5 48.5L149.8 46.6L162.3 45.5L175.0 45.1L187.7 45.5L200.2 46.6L212.5 48.5L224.3 51.1L235.6 54.4L246.3 58.4L256.1 63.0L265.1 68.1L273.1 73.8L280.0 79.9L285.8 86.4M108.8 48.7L116.8 45.0L125.5 41.7L134.7 39.0L144.4 36.9L154.4 35.4L164.7 34.4L175.0 34.1L185.3 34.4L195.6 35.4L205.6 36.9L215.3 39.0L224.5 41.7L233.2 45.0L241.2 48.7M175.0 286.7L162.3 290.2L149.8 292.5L137.5 293.5L125.7 293.1L114.4 291.4L103.7 288.4L93.9 284.1L84.9 278.6L76.9 271.9M175.0 286.7L160.9 288.2L146.9 288.5L133.2 287.5L120.0 285.2L107.4 281.7L95.5 277.0L84.5 271.1L74.5 264.2L65.6 256.2L57.9 247.3L51.5 237.6M175.0 286.7L160.4 286.1L145.9 284.2L131.7 281.1L118.1 276.8L105.0 271.3L92.7 264.8L81.3 257.2L71.0 248.7L61.7 239.4L53.8 229.3L47.1 218.6L41.9 207.4L38.1 195.8L35.8 184.0L35.0 172.0M175.0 286.7L160.9 283.9L146.9 279.9L133.2 274.6L120.0 268.3L107.4 260.9L95.5 252.6L84.5 243.3L74.5 233.3L65.6 222.6L57.9 211.3L51.5 199.7L46.4 187.7L42.7 175.5L40.5 163.3L39.8 151.2L40.5 139.3L42.7 127.8L46.4 116.8M175.0 286.7L162.3 281.9L149.8 275.8L137.5 268.7L125.7 260.4L114.4 251.2L103.7 241.2L93.9 230.4L84.9 218.9L76.9 206.9L70.0 194.6L64.2 182.0L59.7 169.3L56.4 156.6L54.4 144.1L53.8 131.8L54.4 120.1L56.4 108.9L59.7 98.4L64.2 88.7L70.0 79.9M175.0 286.7L164.7 280.1L154.4 272.4L144.4 263.5L134.7 253.7L125.5 242.9L116.8 231.4L108.8 219.2L101.4 206.5L94.9 193.5L89.3 180.2L84.6 166.8L80.9 153.4L78.2 140.3L76.5 127.5L76.0 115.2L76.5 103.5L78.2 92.6L80.9 82.6L84.6 73.5L89.3 65.5L94.9 58.7L101.4 53.1M175.0 286.7L167.7 278.8L160.4 269.7L153.4 259.6L146.5 248.5L140.0 236.5L133.9 223.9L128.2 210.7L123.0 197.1L118.4 183.1L114.4 169.1L111.1 155.1L108.4 141.3L106.5 127.8L105.4 114.8L105.0 102.5L105.4 90.9L106.5 80.1L108.4 70.4L111.1 61.8L114.4 54.4L118.4 48.3L123.0 43.6L128.2 40.2M175.0 286.7L171.2 277.9L167.5 268.0L163.8 257.1L160.3 245.2L156.9 232.5L153.7 219.2L150.8 205.3L148.1 191.1L145.7 176.7L143.6 162.2L141.9 147.8L140.5 133.7L139.6 120.0L139.0 106.8L138.8 94.4L139.0 82.9L139.6 72.3L140.5 62.8L141.9 54.5L143.6 47.5L145.7 41.8L148.1 37.6L150.8 34.9L153.7 33.6M175.0 286.7L175.0 277.7L175.0 267.5L175.0 256.3L175.0 244.1L175.0 231.2L175.0 217.6L175.0 203.5L175.0 189.1L175.0 174.4L175.0 159.8L175.0 145.3L175.0 131.1L175.0 117.3L175.0 104.1L175.0 91.7L175.0 80.2L175.0 69.6L175.0 60.2L175.0 52.0L175.0 45.1L175.0 39.6L175.0 35.6L175.0 33.0L175.0 32.0M175.0 286.7L178.8 277.9L182.5 268.0L186.2 257.1L189.7 245.2L193.1 232.5L196.3 219.2L199.2 205.3L201.9 191.1L204.3 176.7L206.4 162.2L208.1 147.8L209.5 133.7L210.4 120.0L211.0 106.8L211.2 94.4L211.0 82.9L210.4 72.3L209.5 62.8L208.1 54.5L206.4 47.5L204.3 41.8L201.9 37.6L199.2 34.9L196.3 33.6M175.0 286.7L182.3 278.8L189.6 269.7L196.6 259.6L203.5 248.5L210.0 236.5L216.1 223.9L221.8 210.7L227.0 197.1L231.6 183.1L235.6 169.1L238.9 155.1L241.6 141.3L243.5 127.8L244.6 114.8L245.0 102.5L244.6 90.9L243.5 80.1L241.6 70.4L238.9 61.8L235.6 54.4L231.6 48.3L227.0 43.6L221.8 40.2M175.0 286.7L185.3 280.1L195.6 272.4L205.6 263.5L215.3 253.7L224.5 242.9L233.2 231.4L241.2 219.2L248.6 206.5L255.1 193.5L260.7 180.2L265.4 166.8L269.1 153.4L271.8 140.3L273.5 127.5L274.0 115.2L273.5 103.5L271.8 92.6L269.1 82.6L265.4 73.5L260.7 65.5L255.1 58.7L248.6 53.1M175.0 286.7L187.7 281.9L200.2 275.8L212.5 268.7L224.3 260.4L235.6 251.2L246.3 241.2L256.1 230.4L265.1 218.9L273.1 206.9L280.0 194.6L285.8 182.0L290.3 169.3L293.6 156.6L295.6 144.1L296.2 131.8L295.6 120.1L293.6 108.9L290.3 98.4L285.8 88.7L280.0 79.9M175.0 286.7L189.1 283.9L203.1 279.9L216.8 274.6L230.0 268.3L242.6 260.9L254.5 252.6L265.5 243.3L275.5 233.3L284.4 222.6L292.1 211.3L298.5 199.7L303.6 187.7L307.3 175.5L309.5 163.3L310.2 151.2L309.5 139.3L307.3 127.8L303.6 116.8M175.0 286.7L189.6 286.1L204.1 284.2L218.3 281.1L231.9 276.8L245.0 271.3L257.3 264.8L268.7 257.2L279.0 248.7L288.3 239.4L296.2 229.3L302.9 218.6L308.1 207.4L311.9 195.8L314.2 184.0L315.0 172.0M175.0 286.7L189.1 288.2L203.1 288.5L216.8 287.5L230.0 285.2L242.6 281.7L254.5 277.0L265.5 271.1L275.5 264.2L284.4 256.2L292.1 247.3L298.5 237.6M175.0 286.7L187.7 290.2L200.2 292.5L212.5 293.5L224.3 293.1L235.6 291.4L246.3 288.4L256.1 284.1L265.1 278.6L273.1 271.9M175.0 286.7L185.3 292.0L195.6 296.0L205.6 298.6L215.3 299.9L224.5 299.7L233.2 298.2L241.2 295.2M175.0 286.7L182.3 293.3L189.6 298.6L196.6 302.6L203.5 305.1L210.0 306.1L216.1 305.7M175.0 286.7L178.8 294.2L182.5 300.3L186.2 305.0L189.7 308.3L193.1 310.1M175.0 286.7L175.0 294.4L175.0 300.9L175.0 305.9L175.0 309.4L175.0 311.5M175.0 286.7L171.2 294.2L167.5 300.3L163.8 305.0L160.3 308.3L156.9 310.1M175.0 286.7L167.7 293.3L160.4 298.6L153.4 302.6L146.5 305.1L140.0 306.1L133.9 305.7M175.0 286.7L164.7 292.0L154.4 296.0L144.4 298.6L134.7 299.9L125.5 299.7L116.8 298.2L108.8 295.2" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <path d="M35.0 172.0L35.8 163.6L38.1 155.3L41.9 147.2L47.1 139.3L53.8 131.8L61.7 124.8L71.0 118.3L81.3 112.3L92.7 107.0L105.0 102.5L118.1 98.6L131.7 95.6L145.9 93.5L160.4 92.1L175.0 91.7L189.6 92.1L204.1 93.5L218.3 95.6L231.9 98.6L245.0 102.5L257.3 107.0L268.7 112.3L279.0 118.3L288.3 124.8L296.2 131.8L302.9 139.3L308.1 147.2L311.9 155.3L314.2 163.6L315.0 172.0" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="175" cy="286.7" r="3" fill="var(--color-fg-muted)"/>
+    <text x="175" y="304" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">South Pole</text>
+    <!-- rhumb line along the parallel, then the great circle on top -->
+    <path :d="rl" fill="none" stroke="var(--color-info)" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 4"/>
+    <path :d="gc" fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+    <circle r="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" :cx="A.x" :cy="A.y"/>
+    <circle r="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" :cx="B.x" :cy="B.y"/>
+    <text font-size="14" font-weight="700" text-anchor="end" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="A.x - 9" :y="A.y - 8">A</text>
+    <text font-size="14" font-weight="700" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="B.x + 9" :y="B.y - 8">B</text>
+    <g :display="(!same && extra >= 1) ? 'inline' : 'none'">
+      <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-info)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="R.x" :y="R.y - 10">rhumb line</text>
+      <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="M.x" :y="M.y + 20">great circle</text>
+    </g>
+    <text x="20" y="28" font-size="14" font-weight="600" fill="var(--color-fg)">An east–west leg along <tspan class="num" x-text="same ? 'the equator' : fmt(lat, 1) + '° S'"></tspan></text>
+
+    <!-- right panel: track along the great circle -->
+    <text x="360" y="58" font-size="14" font-weight="600" fill="var(--color-fg)">Great-circle track</text>
+    <g font-size="12" fill="var(--color-fg-muted)" text-anchor="middle">
+      <text x="395" y="80">leaves A</text><text x="490" y="80">middle</text><text x="585" y="80">arrives B</text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1" fill="var(--color-surface-2)">
+      <circle cx="395" cy="122" r="28"/><circle cx="490" cy="122" r="28"/><circle cx="585" cy="122" r="28"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle"><text x="395" y="106">N</text><text x="490" y="106">N</text><text x="585" y="106">N</text></g>
+    <line x1="395" y1="122" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#gcr-arrow)" :x2="pol(395, 122, 24, trackA).x" :y2="pol(395, 122, 24, trackA).y"/>
+    <line x1="490" y1="122" x2="514" y2="122" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#gcr-arrow)"/>
+    <line x1="585" y1="122" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#gcr-arrow)" :x2="pol(585, 122, 24, trackB).x" :y2="pol(585, 122, 24, trackB).y"/>
+    <g font-size="13" font-weight="600" fill="var(--color-fg)" text-anchor="middle" class="num">
+      <text x="395" y="170" x-text="trk(trackA) + '°T'"></text><text x="490" y="170">090°T</text><text x="585" y="170" x-text="trk(trackB) + '°T'"></text>
+    </g>
+    <text x="360" y="194" font-size="12" fill="var(--color-info)">Rhumb line: 090°T all the way</text>
+
+    <!-- distances -->
+    <text x="360" y="232" font-size="14" font-weight="600" fill="var(--color-fg)">Distance</text>
+    <text x="360" y="254" font-size="12" fill="var(--color-brand-fg)" font-weight="600">great circle</text>
+    <rect x="360" y="260" height="14" rx="3" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25" :width="bars.g"/>
+    <text x="610" y="254" font-size="12" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(gcNm) + ' NM'"></text>
+    <text x="360" y="296" font-size="12" fill="var(--color-info)" font-weight="600">rhumb line</text>
+    <rect x="360" y="302" height="14" rx="3" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25" :width="bars.r"/>
+    <text x="610" y="296" font-size="12" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(rlNm) + ' NM'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gcr-lat">Latitude of the leg <output for="gcr-lat" x-text="same ? '0° (equator)' : fmt(lat, 1) + '° S'"></output></label>
+      <input type="range" id="gcr-lat" min="0" max="70" step="0.1" x-model.number="lat">
+    </div>
+    <div class="widget-control">
+      <label for="gcr-sep">Difference of longitude, A to B <output for="gcr-sep" x-text="fmt(sep, 1) + '°'"></output></label>
+      <input type="range" id="gcr-sep" min="2" max="120" step="0.5" x-model.number="sep">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Great circle (shortest)</dt><dd class="widget-value" x-text="fmt(gcNm) + ' NM'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Rhumb line (constant 090°T)</dt><dd class="widget-value" x-text="fmt(rlNm) + ' NM'"></dd></div>
+    <div class="widget-readout" :class="pct >= 1 ? 'warn' : ''"><dt class="widget-label">Rhumb line is longer by</dt><dd class="widget-value" x-text="same ? 'nothing: the same line' : extra < 0.1 ? 'under 0.1 NM' : extra < 1 ? 'about ' + fmt(extra, 1) + ' NM' : fmt(extra) + ' NM (' + fmt(pct, 1) + '%)'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Great-circle track</dt><dd class="widget-value num" x-text="trk(trackA) + ' → 090 → ' + trk(trackB) + '°T'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('along-the-equator')" :aria-pressed="active === 'along-the-equator'">Along the equator</button>
+      <button type="button" @click="preset('short-vfr-leg')" :aria-pressed="active === 'short-vfr-leg'">A VFR-length leg</button>
+      <button type="button" @click="preset('mid-latitude-long-leg')" :aria-pressed="active === 'mid-latitude-long-leg'">60° of longitude at 32° S</button>
+      <button type="button" @click="preset('long-leg-high-latitude')" :aria-pressed="active === 'long-leg-high-latitude'">Long leg at 60° S</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The great circle is the shortest path, but because the meridians converge it cuts each one at a different angle, so its true track keeps changing. The rhumb line holds one track and is longer, by most on long east–west legs at high latitude, where it lies on the equator side of the great circle. On a VFR-length leg the two are almost identical, and the line you rule on a WAC is close to a great circle. Routes are illustrative, on a spherical earth with 60 NM to the degree.</p>
+  <details class="widget-try"><summary>Try it: why do you measure a long track at a meridian near its middle?</summary><p>Look at the three arrows: a straight line on the chart, like the great circle, leaves on one track and arrives on another because the meridians converge. At the middle it reads the average, which is the track you fly.</p></details>
+  <details class="widget-try"><summary>Try it: an exam option says "parallels of latitude are great circles". True?</summary><p>Only the equator is. Press Along the equator: the two lines coincide. Any other parallel's plane misses the earth's centre, so it is a small circle, and the great circle between two points on it swings towards the pole.</p></details>
+</div>

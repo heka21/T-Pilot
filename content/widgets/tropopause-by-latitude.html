@@ -1,0 +1,187 @@
+<div class="widget" x-data="widget({
+  lat: 32, summer: true,
+  // PMTC 2.1: the troposphere is about 8 km (26,000 ft) deep over the poles, about 11 km (36,000 ft) in mid-latitudes
+  // such as Perth and 16 to 18 km (52,000 to 59,000 ft) over the equator, higher in summer than in winter. It steps
+  // down at breaks where the jet streams and clear air turbulence are found. Break latitudes and the seasonal shift
+  // are illustrative.
+  // the three tropopause segments as [latitude °S, km]; their ends overlap at the breaks
+  polar: [[90, 8], [70, 8.1], [52, 8.6]],
+  mid: [[64, 10.3], [57, 11], [24, 11], [20, 11.6]],
+  trop: [[30, 15.6], [23, 16.6], [10, 17], [-6, 17]],
+  B1: 58, B2: 26,
+  get dz() { return this.summer ? 0.8 : -0.8 },
+  get zone() { return this.lat >= this.B1 ? 'polar' : this.lat >= this.B2 ? 'mid' : 'tropical' },
+  get zKm() { return { polar: 8, mid: 11, tropical: 17 }[this.zone] + this.dz },
+  get figure() { return { polar: 'about 8 km (26,000 ft)', mid: 'about 11 km (36,000 ft)', tropical: '16 to 18 km (52,000 to 59,000 ft)' }[this.zone] },
+  get nearBreak() { return Math.abs(this.lat - this.B1) <= 4 || Math.abs(this.lat - this.B2) <= 4 },
+  get place() {
+    const p = [[90, 'over the South Pole'], [43, 'over Hobart'], [35, 'off Albany'], [32, 'over Perth'], [16, 'over the Kimberley'], [12, 'over Darwin'], [0, 'over the equator']];
+    const hit = p.find((q) => Math.abs(q[0] - this.lat) <= 1);
+    return hit ? hit[1] : 'at ' + this.lat + '°S';
+  },
+  get why() {
+    return { polar: 'Weakest surface heating: the lowest lid', mid: 'Moderate heating: the mid-latitude lid', tropical: 'Strong surface heating drives convection higher' }[this.zone];
+  },
+  // picture: latitude 90°S (left) to 0° at x 580 (the stage runs on to about 5°N at 610); height 0..20 km up y 300..50
+  X(l) { return 72 + (90 - l) / 90 * 508 },
+  Y(km) { return 300 - km * 12.5 },
+  at(seg, l) { for (let i = 0; i < seg.length - 1; i++) { const a = seg[i], b = seg[i + 1]; if (l <= a[0] && l >= b[0]) return this.lerp(a[1], b[1], (a[0] - l) / (a[0] - b[0])) } return seg[seg.length - 1][1] },
+  line(seg) { return this.path(seg.map((q) => [this.X(q[0]), this.Y(q[1] + this.dz)])) },
+  get polarD() { return this.line(this.polar) },
+  get midD() { return this.line(this.mid) },
+  get tropD() { return this.line(this.trop) },
+  // the troposphere fill: under the polar line to the first break, the mid line to the second, then the tropical line
+  get tropoFill() {
+    const pts = [[this.X(90), 300]];
+    for (let l = 90; l >= this.B1; l -= 2) pts.push([this.X(l), this.Y(this.at(this.polar, l) + this.dz)]);
+    for (let l = this.B1; l >= this.B2; l -= 2) pts.push([this.X(l), this.Y(this.at(this.mid, l) + this.dz)]);
+    for (let l = this.B2; l >= -6; l -= 2) pts.push([this.X(l), this.Y(this.at(this.trop, l) + this.dz)]);
+    pts.push([this.X(-6), 300]);
+    return this.path(pts) + ' Z';
+  },
+  get jet1() { return { x: this.X(this.B1), y: this.Y(9.7 + this.dz) } },
+  get jet2() { return { x: this.X(this.B2), y: this.Y(13.6 + this.dz) } },
+  // the cumulonimbus: a tower from a base near 1.2 km to the tropopause, an anvil spreading along it, an overshooting top
+  get cb() {
+    const c = this.X(this.lat), t = this.Y(this.zKm), b = this.Y(1.2);
+    return 'M' + (c - 26) + ' ' + b + ' Q' + (c - 34) + ' ' + (b - 30) + ' ' + (c - 26) + ' ' + (b - 50) +
+      ' Q' + (c - 36) + ' ' + ((b + t) / 2 + 10) + ' ' + (c - 24) + ' ' + ((b + t) / 2 - 10) +
+      ' L' + (c - 22) + ' ' + (t + 34) + ' Q' + (c - 40) + ' ' + (t + 22) + ' ' + (c - 78) + ' ' + (t + 14) +
+      ' Q' + (c - 86) + ' ' + (t + 4) + ' ' + (c - 62) + ' ' + t + ' L' + (c - 8) + ' ' + t +
+      ' Q' + c + ' ' + (t - 12) + ' ' + (c + 8) + ' ' + t + ' L' + (c + 92) + ' ' + t +
+      ' Q' + (c + 108) + ' ' + (t + 6) + ' ' + (c + 88) + ' ' + (t + 14) + ' Q' + (c + 44) + ' ' + (t + 22) + ' ' + (c + 22) + ' ' + (t + 34) +
+      ' L' + (c + 24) + ' ' + ((b + t) / 2 - 10) + ' Q' + (c + 36) + ' ' + ((b + t) / 2 + 10) + ' ' + (c + 26) + ' ' + (b - 50) +
+      ' Q' + (c + 34) + ' ' + (b - 30) + ' ' + (c + 26) + ' ' + b + ' Z';
+  },
+  get cx() { return this.X(this.lat) },
+  // layer names sit on the side away from the storm
+  get labRight() { return this.cx < 300 },
+  get caption() {
+    let s = this.place.charAt(0).toUpperCase() + this.place.slice(1) + ' the tropopause is ' + this.figure + (this.summer ? ', a little higher in summer' : ', a little lower in winter') + (this.zone === 'polar' ? '. Any storm growing here would stop at that lid and spread sideways.' : '. A cumulonimbus here grows until it reaches that lid, then spreads sideways into its anvil.');
+    if (this.zone === 'tropical') s += ' Strong heating near the equator drives convection higher, so the lid is highest here.';
+    else if (this.zone === 'polar') s += ' Over the poles the surface heating is weakest, so the lid is lowest.';
+    else s += ' Towards the equator the lid steps up to 16 to 18 km; towards the pole it steps down to about 8 km.';
+    if (this.nearBreak) s += ' You are near a break in the tropopause, where jet streams and clear air turbulence are found.';
+    return s;
+  },
+  presets: {
+    'kimberley-wet-season': { lat: 16, summer: true },
+    'albany-winter': { lat: 35, summer: false },
+    'perth': { lat: 32, summer: true },
+    'hobart': { lat: 43, summer: true },
+    'south-pole': { lat: 90, summer: true },
+    'equator': { lat: 0, summer: true },
+  },
+})">
+  <svg viewBox="0 0 640 350" role="img" aria-labelledby="tbl-title" class="widget-stage">
+    <title id="tbl-title">A cross-section of the Southern Hemisphere from the South Pole on the left to the equator on the right. The top of the troposphere, the tropopause, steps up from about 8 km over the pole to about 11 km over Perth and Hobart and 16 to 18 km over the equator, with jet streams at the breaks. A cumulonimbus at the chosen latitude spreads its anvil along the tropopause there</title>
+    <defs>
+      <clipPath id="tbl-clip"><rect x="72" y="30" width="538" height="270"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="350" fill="var(--color-surface-2)" rx="10"/>
+    <!-- stratosphere above, troposphere below the tropopause -->
+    <rect x="72" y="30" width="538" height="270" fill="var(--color-surface)"/>
+    <g clip-path="url(#tbl-clip)">
+      <path :d="tropoFill" fill="var(--color-sky-soft)"/>
+      <!-- the tropical band: 16 to 18 km over the equator -->
+      <rect :x="X(10)" :y="Y(18)" :width="X(-6) - X(10)" height="25" fill="var(--color-brand)" fill-opacity="0.12"/>
+    </g>
+    <!-- height grid and axis -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="72" x2="610" :y1="Y(5)" :y2="Y(5)"/><line x1="72" x2="610" :y1="Y(10)" :y2="Y(10)"/><line x1="72" x2="610" :y1="Y(15)" :y2="Y(15)"/><line x1="72" x2="610" :y1="Y(20)" :y2="Y(20)"/>
+    </g>
+    <line x1="72" y1="30" x2="72" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="66" y="304">0</text><text x="66" :y="Y(5) + 4">5 km</text><text x="66" :y="Y(10) + 4">10 km</text><text x="66" :y="Y(15) + 4">15 km</text><text x="66" :y="Y(20) + 4">20 km</text>
+    </g>
+    <text x="14" y="170" font-size="12" fill="var(--color-fg-muted)" transform="rotate(-90 14 170)" text-anchor="middle">height</text>
+    <!-- layer names, on the side away from the storm -->
+    <g font-size="13" font-weight="600">
+      <text y="48" :x="labRight ? 600 : 82" :text-anchor="labRight ? 'end' : 'start'" fill="var(--color-fg-muted)">stratosphere: dry, stable</text>
+      <text y="284" :x="labRight ? 600 : 82" :text-anchor="labRight ? 'end' : 'start'" fill="var(--color-sky-fg)">troposphere: the weather</text>
+    </g>
+    <!-- the cumulonimbus, its rain and its anvil -->
+    <g clip-path="url(#tbl-clip)">
+      <g stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="4 4" stroke-linecap="round">
+        <line :x1="cx - 14" :x2="cx - 20" :y1="Y(1.2) + 4" y2="298"/><line :x1="cx" :x2="cx - 6" :y1="Y(1.2) + 4" y2="298"/><line :x1="cx + 14" :x2="cx + 8" :y1="Y(1.2) + 4" y2="298"/>
+      </g>
+      <path :d="cb" fill="var(--color-paint)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    </g>
+    <!-- the tropopause: three segments stepping down from the equator to the pole -->
+    <g fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" clip-path="url(#tbl-clip)">
+      <path :d="polarD"/><path :d="midD"/><path :d="tropD"/>
+    </g>
+    <text :x="X(84)" :y="Y(8 + dz) + 20" font-size="12" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" x-show="lat < 47">tropopause, 8 km</text>
+    <text :x="X(55)" :y="Y(11 + dz) - 8" font-size="12" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="lat < 33 || lat > 73">11 km</text>
+    <text :x="X(3)" :y="Y(18) - 7" font-size="12" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" text-anchor="middle" x-show="lat > 20">16 to 18 km</text>
+    <!-- jet streams and clear air turbulence at the breaks -->
+    <g fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.5">
+      <ellipse :cx="jet1.x" :cy="jet1.y" rx="13" ry="7"/><ellipse :cx="jet2.x" :cy="jet2.y" rx="13" ry="7"/>
+    </g>
+    <g font-size="11" font-weight="600" fill="var(--color-warn-fg)" text-anchor="middle">
+      <text :x="jet1.x" :y="jet1.y + 4">J</text><text :x="jet2.x" :y="jet2.y + 4">J</text>
+    </g>
+    <text font-size="12" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="jet2.x + 18" :y="jet2.y + 4" x-show="lat >= 25">jet stream, CAT</text>
+    <text font-size="12" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="jet1.x - 18" :y="jet1.y + 4" text-anchor="end" x-show="lat < 46 || lat >= 58">jet stream, CAT</text>
+    <!-- ground and places -->
+    <line x1="72" y1="300" x2="610" y2="300" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.25">
+      <line :x1="X(90)" :x2="X(90)" y1="300" y2="306"/><line :x1="X(43)" :x2="X(43)" y1="300" y2="306"/><line :x1="X(32)" :x2="X(32)" y1="300" y2="306"/>
+      <line :x1="X(12)" :x2="X(12)" y1="300" y2="306"/><line :x1="X(0)" :x2="X(0)" y1="300" y2="306"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg)">
+      <text :x="X(90)" y="320">South Pole</text><text :x="X(43)" y="320" text-anchor="middle">Hobart</text><text :x="X(32)" y="320" text-anchor="middle">Perth</text>
+      <text :x="X(12)" y="320" text-anchor="middle">Darwin</text><text :x="X(0)" y="320" text-anchor="middle" class="num">0°</text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num">
+      <text :x="X(90)" y="335">90°S</text><text :x="X(43)" y="335" text-anchor="middle">43°S</text><text :x="X(32)" y="335" text-anchor="middle">32°S</text>
+      <text :x="X(12)" y="335" text-anchor="middle">12°S</text><text :x="X(0)" y="335" text-anchor="middle">equator</text>
+    </g>
+    <!-- the chosen latitude -->
+    <path :d="'M' + cx + ' 302 l-6 10 h12 z'" fill="var(--color-brand)"/>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tbl-lat">Latitude <output for="tbl-lat" x-text="lat === 0 ? '0° (equator)' : lat + '°S'"></output></label>
+      <input type="range" id="tbl-lat" min="0" max="90" step="1" x-model.number="lat" style="direction: rtl">
+    </div>
+    <div class="widget-control">
+      <label for="tbl-summer" class="cursor-pointer"><span x-text="summer ? 'Season: summer (tick off for winter)' : 'Season: winter (tick for summer)'"></span>
+        <input type="checkbox" id="tbl-summer" x-model="summer" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Tropopause here</dt>
+      <dd class="widget-value" x-text="figure + (summer ? ', higher in summer' : ', lower in winter')"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">The anvil stops at</dt>
+      <dd class="widget-value">The tropopause: the top of the troposphere</dd>
+    </div>
+    <div class="widget-readout" :class="zone === 'tropical' ? 'warn' : ''">
+      <dt class="widget-label">Why this height</dt>
+      <dd class="widget-value" x-text="why"></dd>
+    </div>
+    <div class="widget-readout" :class="nearBreak ? 'warn' : ''">
+      <dt class="widget-label">Jet stream and CAT</dt>
+      <dd class="widget-value"><span x-text="nearBreak ? 'Near a tropopause break' : 'Not at a break'"></span><span class="widget-flag warn" x-show="nearBreak">CAT</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('kimberley-wet-season')" :aria-pressed="active === 'kimberley-wet-season'">Kimberley wet season</button>
+      <button type="button" @click="preset('albany-winter')" :aria-pressed="active === 'albany-winter'">Albany winter</button>
+      <button type="button" @click="preset('perth')" :aria-pressed="active === 'perth'">Perth</button>
+      <button type="button" @click="preset('hobart')" :aria-pressed="active === 'hobart'">Hobart</button>
+      <button type="button" @click="preset('south-pole')" :aria-pressed="active === 'south-pole'">South Pole</button>
+      <button type="button" @click="preset('equator')" :aria-pressed="active === 'equator'">Equator</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The tropopause is a lid, and the hotter the surface below it, the higher it sits: about 8 km (26,000 ft) over the poles, about 11 km (36,000 ft) over Perth, 16 to 18 km (52,000 to 59,000 ft) over the equator, and higher in summer than in winter. A storm grows until it reaches the lid, then spreads into its anvil. The lid steps down in breaks, where the jet streams and clear air turbulence live. The latitudes of the breaks and the size of the seasonal shift are illustrative; the lesson gives no figures for them.</p>
+  <details class="widget-try"><summary>Try it: why is the tropopause higher over Darwin than over Hobart?</summary><p>Move from Hobart to Darwin: near the equator the surface is heated far more strongly, and the vigorous convection carries warm air higher and lifts the top of the troposphere, to 16 to 18 km against about 11 km over Hobart.</p></details>
+  <details class="widget-try"><summary>Try it: which storm grows taller, one over the Kimberley in the wet season or one off Albany in winter?</summary><p>Press each preset: the Kimberley storm can climb to 16 to 18 km before the tropical tropopause, raised further by the summer heating, stops it; the winter storm off Albany is capped near 11 km, a little lower in winter.</p></details>
+</div>

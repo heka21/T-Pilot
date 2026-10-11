@@ -1,0 +1,187 @@
+<div class="widget" x-data="widget({
+  n: 4, spread: 140, a: [20, 67, 113, 160, 90, 90],
+  // A two-dimensional slice of the sky: satellites on an arc above the receiver, each at an angle a (degrees above the
+  // horizon on the right, 10 to 170). Each range is good to the same ± error, so each satellite allows a band across its
+  // line of sight; the fix can be anywhere the bands overlap. The receiver clock is left out to keep the picture simple.
+  get act() { return this.a.slice(0, this.n) },
+  SP(i) { const r = this.a[i] * Math.PI / 180; return { x: 210 + 200 * Math.cos(r), y: 268 - 200 * Math.sin(r) } },
+  spreadOut() {
+    const s = this.spread, k = this.n, out = this.a.slice();
+    for (let i = 0; i < k; i++) out[i] = Math.round(k === 1 ? 90 : 90 + s / 2 - s * i / (k - 1));
+    this.a = out; this.active = null;
+  },
+  move(i, p) {
+    let deg = Math.atan2(268 - p.y, p.x - 210) * 180 / Math.PI;
+    const out = this.a.slice(); out[i] = Math.round(this.clamp(deg, 10, 170)); this.a = out; this.active = null;
+  },
+  // the region the ranges allow. Each range is good to ± 1 (in units of the range error), but the receiver clock is
+  // unknown, so all the ranges can be wrong by the same amount: the fix can be anywhere the bands can be slid into
+  // overlap by one common shift, i.e. where (u_i − u_j) . p stays within ± 2 for every pair of satellites
+  get region() {
+    let poly = [[-14, -14], [14, -14], [14, 14], [-14, 14]];
+    const clip = (pts, nx, ny, c) => {
+      const out = [];
+      for (let k = 0; k < pts.length; k++) {
+        const P = pts[k], Q = pts[(k + 1) % pts.length];
+        const dp = nx * P[0] + ny * P[1] - c, dq = nx * Q[0] + ny * Q[1] - c;
+        if (dp <= 0) out.push(P);
+        if ((dp < 0 && dq > 0) || (dp > 0 && dq < 0)) { const f = dp / (dp - dq); out.push([P[0] + (Q[0] - P[0]) * f, P[1] + (Q[1] - P[1]) * f]) }
+      }
+      return out;
+    };
+    const u = this.act.map((deg) => { const r = deg * Math.PI / 180; return [Math.cos(r), Math.sin(r)] });
+    for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) {
+      const dx = u[i][0] - u[j][0], dy = u[i][1] - u[j][1];
+      poly = clip(poly, dx, dy, 2); poly = clip(poly, -dx, -dy, 2);
+    }
+    return poly;
+  },
+  // half the longest extent of the region, in range errors (12 or more: off the zoomed picture)
+  get reach() { return Math.max(...this.region.map((p) => Math.hypot(p[0], p[1]))) },
+  get fix() { return this.n >= 3 && this.reach < 12 },
+  // the dilution of precision for this geometry: sqrt(Q11 + Q22) with Q = (H^T H)^-1, each row of H the unit line of
+  // sight and a 1 for the receiver clock (two position unknowns and the clock in this two-dimensional picture)
+  get dop() {
+    if (this.n < 3) return Infinity;
+    let a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
+    this.act.forEach((deg) => { const r = deg * Math.PI / 180, x = Math.cos(r), y = Math.sin(r); a += x * x; b += x * y; c += x; d += y * y; e += y; f += 1 });
+    const det = a * (d * f - e * e) - b * (b * f - e * c) + c * (b * e - d * c);
+    if (Math.abs(det) < 1e-9) return Infinity;
+    return Math.sqrt(((d * f - e * e) + (a * f - c * c)) / det);
+  },
+  get width() { return Math.max(...this.act) - Math.min(...this.act) },
+  get state() { return this.dop <= 2 ? 'ok' : this.dop <= 5 ? 'warn' : 'bad' },
+  get stateText() { return this.n < 3 ? 'no fix' : this.dop <= 2 ? 'good geometry' : this.dop <= 5 ? 'fair' : 'poor geometry' },
+  // inset: centre (530, 165), 10 px per range error
+  get regionD() { const p = this.region; return p.length ? 'M' + p.map((q) => (530 + q[0] * 10).toFixed(1) + ' ' + (165 - q[1] * 10).toFixed(1)).join(' L') + ' Z' : '' },
+  band(i) {
+    const r = this.a[i] * Math.PI / 180, ux = Math.cos(r), uy = Math.sin(r), vx = -uy, vy = ux, L = 14;
+    const c = [[ux + vx * L, uy + vy * L], [ux - vx * L, uy - vy * L], [-ux - vx * L, -uy - vy * L], [-ux + vx * L, -uy + vy * L]];
+    return 'M' + c.map((q) => (530 + q[0] * 10).toFixed(1) + ' ' + (165 - q[1] * 10).toFixed(1)).join(' L') + ' Z';
+  },
+  get caption() {
+    if (this.n < 3) return 'Two ranges and an unknown receiver clock: the bands can slide together without limit, so there is no fix. This flat picture needs three satellites; the real three-dimensional fix needs four.';
+    if (this.dop > 5) return 'The satellites are bunched in one part of the sky, so sliding all the bands together (the clock error) barely changes how they overlap: the region you could be in is huge, a high DOP, even with ' + this.n + ' in view.';
+    if (this.dop <= 2) return 'Spread across the sky, the bands only overlap near one spot whatever the clock error: the region you could be in is small, a low DOP.';
+    return 'The geometry is fair: the same range errors give a fix about ' + this.fmt(this.dop, 1) + ' times the range error.';
+  },
+  presets: {
+    'spread-out': { n: 4, spread: 140, a: [20, 67, 113, 160, 90, 90] },
+    'bunched': { n: 4, spread: 30, a: [75, 85, 95, 105, 90, 90] },
+    'six-bunched': { n: 6, spread: 45, a: [68, 77, 86, 94, 103, 112] },
+    'five-spread': { n: 5, spread: 150, a: [15, 52, 90, 128, 165, 90] },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="sgd-title" class="widget-stage">
+    <title id="sgd-title">Left, an aeroplane under an arc of sky with satellites you can drag along it and their lines of sight. Right, a zoomed view at the aeroplane: each satellite's range allows a band across its line of sight, and the region where all the bands overlap, the possible fix, is small when the satellites are spread out and long and thin when they are bunched</title>
+    <rect x="0" y="0" width="640" height="320" fill="var(--color-surface)" rx="10"/>
+    <!-- sky -->
+    <path d="M10 268 A200 200 0 0 1 410 268 Z" fill="var(--color-sky-soft)" fill-opacity="0.6"/>
+    <path d="M14 268 A196 196 0 0 1 406 268" fill="none" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="10" y1="268" x2="410" y2="268" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <text x="20" y="288" font-size="12" fill="var(--color-fg-muted)">horizon</text>
+    <text x="20" y="28" font-size="12" fill="var(--color-fg-muted)">drag the satellites along the sky</text>
+      <g :display="0 < n ? 'inline' : 'none'">
+        <line x1="210" y1="258" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :x2="SP(0).x" :y2="SP(0).y"/>
+        <g style="touch-action: none; cursor: grab" :transform="'translate(' + SP(0).x + ' ' + SP(0).y + ') rotate(' + (90 - a[0]) + ')'" @pointerdown="drag($event, (p) => move(0, p))">
+          <circle r="16" fill="var(--color-info)" fill-opacity="0.12"/>
+          <rect x="-4.5" y="-5" width="9" height="10" rx="1.5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5"/>
+          <rect x="-15" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+          <rect x="6" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+        </g>
+      </g>
+      <g :display="1 < n ? 'inline' : 'none'">
+        <line x1="210" y1="258" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :x2="SP(1).x" :y2="SP(1).y"/>
+        <g style="touch-action: none; cursor: grab" :transform="'translate(' + SP(1).x + ' ' + SP(1).y + ') rotate(' + (90 - a[1]) + ')'" @pointerdown="drag($event, (p) => move(1, p))">
+          <circle r="16" fill="var(--color-info)" fill-opacity="0.12"/>
+          <rect x="-4.5" y="-5" width="9" height="10" rx="1.5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5"/>
+          <rect x="-15" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+          <rect x="6" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+        </g>
+      </g>
+      <g :display="2 < n ? 'inline' : 'none'">
+        <line x1="210" y1="258" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :x2="SP(2).x" :y2="SP(2).y"/>
+        <g style="touch-action: none; cursor: grab" :transform="'translate(' + SP(2).x + ' ' + SP(2).y + ') rotate(' + (90 - a[2]) + ')'" @pointerdown="drag($event, (p) => move(2, p))">
+          <circle r="16" fill="var(--color-info)" fill-opacity="0.12"/>
+          <rect x="-4.5" y="-5" width="9" height="10" rx="1.5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5"/>
+          <rect x="-15" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+          <rect x="6" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+        </g>
+      </g>
+      <g :display="3 < n ? 'inline' : 'none'">
+        <line x1="210" y1="258" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :x2="SP(3).x" :y2="SP(3).y"/>
+        <g style="touch-action: none; cursor: grab" :transform="'translate(' + SP(3).x + ' ' + SP(3).y + ') rotate(' + (90 - a[3]) + ')'" @pointerdown="drag($event, (p) => move(3, p))">
+          <circle r="16" fill="var(--color-info)" fill-opacity="0.12"/>
+          <rect x="-4.5" y="-5" width="9" height="10" rx="1.5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5"/>
+          <rect x="-15" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+          <rect x="6" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+        </g>
+      </g>
+      <g :display="4 < n ? 'inline' : 'none'">
+        <line x1="210" y1="258" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :x2="SP(4).x" :y2="SP(4).y"/>
+        <g style="touch-action: none; cursor: grab" :transform="'translate(' + SP(4).x + ' ' + SP(4).y + ') rotate(' + (90 - a[4]) + ')'" @pointerdown="drag($event, (p) => move(4, p))">
+          <circle r="16" fill="var(--color-info)" fill-opacity="0.12"/>
+          <rect x="-4.5" y="-5" width="9" height="10" rx="1.5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5"/>
+          <rect x="-15" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+          <rect x="6" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+        </g>
+      </g>
+      <g :display="5 < n ? 'inline' : 'none'">
+        <line x1="210" y1="258" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :x2="SP(5).x" :y2="SP(5).y"/>
+        <g style="touch-action: none; cursor: grab" :transform="'translate(' + SP(5).x + ' ' + SP(5).y + ') rotate(' + (90 - a[5]) + ')'" @pointerdown="drag($event, (p) => move(5, p))">
+          <circle r="16" fill="var(--color-info)" fill-opacity="0.12"/>
+          <rect x="-4.5" y="-5" width="9" height="10" rx="1.5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5"/>
+          <rect x="-15" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+          <rect x="6" y="-2.5" width="9" height="5" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1"/>
+        </g>
+      </g>
+    <!-- the aeroplane with its antenna on the cabin roof (plane side scale 0.3) -->
+    <g transform="translate(210 260)">
+      <g transform="translate(0 0) rotate(0) scale(0.3)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- inset: the bands and the region -->
+    <rect x="430" y="40" width="200" height="250" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="530" y="28" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Where could you be?</text>
+    <clipPath id="sgd-clip"><rect x="431" y="41" width="198" height="248" rx="8"/></clipPath>
+    <g clip-path="url(#sgd-clip)">
+      <path fill="var(--color-info)" fill-opacity="0.12" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.5" :d="band(0)" :display="0 < n ? 'inline' : 'none'"/>
+      <path fill="var(--color-info)" fill-opacity="0.12" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.5" :d="band(1)" :display="1 < n ? 'inline' : 'none'"/>
+      <path fill="var(--color-info)" fill-opacity="0.12" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.5" :d="band(2)" :display="2 < n ? 'inline' : 'none'"/>
+      <path fill="var(--color-info)" fill-opacity="0.12" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.5" :d="band(3)" :display="3 < n ? 'inline' : 'none'"/>
+      <path fill="var(--color-info)" fill-opacity="0.12" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.5" :d="band(4)" :display="4 < n ? 'inline' : 'none'"/>
+      <path fill="var(--color-info)" fill-opacity="0.12" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.5" :d="band(5)" :display="5 < n ? 'inline' : 'none'"/>
+      <path fill="var(--color-brand)" fill-opacity="0.5" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round" :d="regionD"/>
+      <circle cx="530" cy="165" r="3" fill="var(--color-fg)"/>
+    </g>
+    <text x="530" y="306" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">zoomed in at the aeroplane</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="sgd-n">Satellites in view <output for="sgd-n" x-text="n"></output></label>
+      <input type="range" id="sgd-n" min="2" max="6" step="1" x-model.number="n" @input="spreadOut()">
+    </div>
+    <div class="widget-control">
+      <label for="sgd-spread">Spread across the sky <output for="sgd-spread" x-text="spread + '°'"></output></label>
+      <input type="range" id="sgd-spread" min="10" max="160" step="5" x-model.number="spread" @input="spreadOut()">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Satellites in view</dt><dd class="widget-value" x-text="n + ', spread over ' + width + '° of sky'"></dd></div>
+    <div class="widget-readout" :class="state"><dt class="widget-label">Dilution of precision (this picture)</dt><dd class="widget-value"><span x-text="n < 3 ? '–' : dop > 99 ? 'over 99' : fmt(dop, 1)"></span><span class="widget-flag" :class="state" x-text="stateText"></span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Furthest the fix could be</dt><dd class="widget-value" x-text="n < 3 ? 'anywhere along a band' : fix ? fmt(reach, 1) + ' × the range error' : 'beyond the zoomed view'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('spread-out')" :aria-pressed="active === 'spread-out'">Spread out</button>
+      <button type="button" @click="preset('bunched')" :aria-pressed="active === 'bunched'">Bunched</button>
+      <button type="button" @click="preset('six-bunched')" :aria-pressed="active === 'six-bunched'">Six bunched</button>
+      <button type="button" @click="preset('five-spread')" :aria-pressed="active === 'five-spread'">Five spread</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each range carries a small error, and the receiver's clock error makes them all wrong by the same amount, so the fix can be anywhere the bands can be slid into overlap together. Spread across the sky, that is one small spot; bunched together, the bands slide almost as one and the region becomes huge. That is a high DOP, and six bunched satellites can do far worse than five spread out. This is a flat, two-dimensional slice of the sky (three satellites fix it; the real fix needs four), and the colour thresholds are a guide.</p>
+  <details class="widget-try"><summary>Try it: press Six bunched, then Five spread. Which gives the better fix, and why?</summary><p>Five spread. The six bunched satellites look at you from almost the same direction, so their bands cross at shallow angles and slide together with the clock error: a huge region and a high DOP. The five spread ones cross at good angles and pin the fix down. More satellites in view does not mean a better fix unless the geometry is good.</p></details>
+  <details class="widget-try"><summary>Try it: how is this like taking a fix from two landmarks?</summary><p>The same geometry as position lines: two landmarks 90° apart give a small region, two almost in line give a long thin one. Satellites spread across the sky are the landmarks 90° apart.</p></details>
+</div>

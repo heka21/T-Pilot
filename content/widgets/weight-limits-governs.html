@@ -1,0 +1,165 @@
+<div class="widget" x-data="widget({
+  ac: 0, planned: 1120, climb: 1095, useClimb: true, runway: 1185, useRunway: true, burnL: 0, useLanding: false,
+  // the lessons' aeroplanes: POPA 2.2 worked example, PAKA 3.1 illustrative aeroplane, workbook ECHO (POPA 2.4)
+  planes: [
+    { name: 'Trainer, MTOW = MLW 1,150 kg (POPA 2.2)', mtow: 1150, mlw: 1150, lo: 1000, hi: 1200 },
+    { name: 'Illustrative, MLW 1,100 kg (PAKA 3.1)', mtow: 1150, mlw: 1100, lo: 1000, hi: 1200 },
+    { name: 'ECHO, MTOW 2,950 kg, MLW 2,725 kg (POPA 2.4)', mtow: 2950, mlw: 2725, lo: 2600, hi: 3000 },
+  ],
+  get p() { return this.planes[this.ac] },
+  get burnKg() { return this.burnL * 0.72 },
+  get landingLimit() { return this.p.mlw + this.burnKg },
+  names: ['Structural MTOW', 'Climb weight limit', 'Runway-limited weight', 'Landing-limited weight'],
+  // rows written out in the picture: structural, climb, runway, landing; a limit switched off is not part of today's question
+  rowV(i) { return [this.p.mtow, this.climb, this.runway, this.landingLimit][i] },
+  rowOn(i) { return [true, this.useClimb, this.useRunway, this.useLanding][i] },
+  get govIdx() { let g = 0; for (let i = 1; i < 4; i++) if (this.rowOn(i) && this.rowV(i) < this.rowV(g) - 0.01) g = i; return g },
+  isGov(i) { return i === this.govIdx },
+  get governing() { return { k: this.names[this.govIdx], v: this.rowV(this.govIdx) } },
+  get over() { return Math.round(this.planned - this.governing.v) },
+  get landingWeight() { return this.planned - this.burnKg },
+  get landingOver() { return Math.round(this.landingWeight - this.p.mlw) },
+  // weight scale across x 250..610
+  X(w) { return 250 + (w - this.p.lo) / (this.p.hi - this.p.lo) * 360 },
+  tick(i) { return this.fmt(this.p.lo + (this.p.hi - this.p.lo) * i / 4) },
+  pick() { const p = this.p; this.planned = p.mtow - 30; this.climb = p.mtow - 55; this.runway = p.mtow + 35; this.active = null },
+  presets: {
+    'climb-limit-governs': { ac: 0, planned: 1120, climb: 1095, useClimb: true, runway: 1185, useRunway: true, burnL: 0, useLanding: false },
+    'four-limits': { ac: 1, planned: 1140, climb: 1120, useClimb: true, runway: 1180, useRunway: true, burnL: 70 / 0.72, useLanding: true },
+    'echo-landing-cap': { ac: 2, planned: 2950, climb: 2900, useClimb: false, runway: 3000, useRunway: false, burnL: 250, useLanding: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="wlg-title" class="widget-stage">
+    <title id="wlg-title">The take-off weight limits on one weight scale: structural maximum take-off weight, today's climb weight limit, the runway-limited weight and the landing-limited weight. The lowest governs, and the planned take-off weight is marked against it</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface)"/>
+    <!-- too heavy today: everything above the governing limit -->
+    <rect y="30" height="196" fill="var(--color-bad)" fill-opacity="0.1" :x="X(governing.v)" :width="Math.max(0, 610 - X(governing.v))"/>
+    <line y1="30" y2="226" stroke="var(--color-brand)" stroke-width="2" :x1="X(governing.v)" :x2="X(governing.v)"/>
+    <text y="22" font-size="12" font-weight="600" fill="var(--color-bad-fg)" :x="Math.min(604, X(governing.v) + 8)" :text-anchor="X(governing.v) > 500 ? 'end' : 'start'">too heavy today →</text>
+    <!-- rows: structural, climb, runway, landing (written out) -->
+    <g>
+      <text x="16" y="56" font-size="13" font-weight="600" fill="var(--color-fg)">Structural MTOW</text>
+      <text x="16" y="70" font-size="11" fill="var(--color-fg-faint)">airframe strength, fixed</text>
+      <line x1="250" x2="610" y1="60" y2="60" stroke="var(--color-line)" stroke-width="1"/>
+      <rect y="48" width="12" height="24" rx="3" :x="X(rowV(0)) - 6" :fill="isGov(0) ? 'var(--color-brand)' : 'var(--color-surface-2)'" :stroke="isGov(0) ? 'var(--color-brand)' : 'var(--color-fg-muted)'" stroke-width="1.5"/>
+      <text y="64" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :font-weight="isGov(0) ? 700 : 400"
+        :fill="isGov(0) ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" :x="X(rowV(0)) - 12" text-anchor="end" x-text="fmt(rowV(0))"></text>
+    </g>
+    <g :opacity="rowOn(1) ? 1 : 0.35">
+      <text x="16" y="104" font-size="13" font-weight="600" fill="var(--color-fg)">Climb weight limit</text>
+      <text x="16" y="118" font-size="11" fill="var(--color-fg-faint)" x-text="useClimb ? 'today\'s pressure height and temp' : 'not part of this question'"></text>
+      <line x1="250" x2="610" y1="108" y2="108" stroke="var(--color-line)" stroke-width="1"/>
+      <g x-show="rowOn(1)">
+        <rect y="96" width="12" height="24" rx="3" :x="X(rowV(1)) - 6" :fill="isGov(1) ? 'var(--color-brand)' : 'var(--color-surface-2)'" :stroke="isGov(1) ? 'var(--color-brand)' : 'var(--color-fg-muted)'" stroke-width="1.5"/>
+        <text y="112" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :font-weight="isGov(1) ? 700 : 400"
+          :fill="isGov(1) ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" :x="X(rowV(1)) - 12" text-anchor="end" x-text="fmt(rowV(1))"></text>
+      </g>
+    </g>
+    <g :opacity="rowOn(2) ? 1 : 0.35">
+      <text x="16" y="152" font-size="13" font-weight="600" fill="var(--color-fg)">Runway-limited weight</text>
+      <text x="16" y="166" font-size="11" fill="var(--color-fg-faint)" x-text="useRunway ? 'take-off chart, this runway' : 'not part of this question'"></text>
+      <line x1="250" x2="610" y1="156" y2="156" stroke="var(--color-line)" stroke-width="1"/>
+      <g x-show="rowOn(2)">
+        <rect y="144" width="12" height="24" rx="3" :x="X(rowV(2)) - 6" :fill="isGov(2) ? 'var(--color-brand)' : 'var(--color-surface-2)'" :stroke="isGov(2) ? 'var(--color-brand)' : 'var(--color-fg-muted)'" stroke-width="1.5"/>
+        <text y="160" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :font-weight="isGov(2) ? 700 : 400"
+          :fill="isGov(2) ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" :x="X(rowV(2)) - 12" text-anchor="end" x-text="fmt(rowV(2))"></text>
+      </g>
+    </g>
+    <g :opacity="rowOn(3) ? 1 : 0.35">
+      <text x="16" y="200" font-size="13" font-weight="600" fill="var(--color-fg)">Landing-limited weight</text>
+      <text x="16" y="214" font-size="11" fill="var(--color-fg-faint)" x-text="useLanding ? 'MLW ' + fmt(p.mlw) + ' + ' + fmt(burnKg) + ' kg fuel burn' : 'not part of this question'"></text>
+      <line x1="250" x2="610" y1="204" y2="204" stroke="var(--color-line)" stroke-width="1"/>
+      <g x-show="rowOn(3)">
+        <!-- MLW, and the fuel burn on top of it -->
+        <line y1="204" y2="204" stroke="var(--color-info)" stroke-width="3" stroke-linecap="round" :x1="X(p.mlw)" :x2="X(landingLimit)"/>
+        <circle cy="204" r="4" fill="var(--color-info)" :cx="X(p.mlw)"/>
+        <text y="224" font-size="11" class="num" fill="var(--color-info)" text-anchor="middle" :x="X(p.mlw)" x-text="'MLW'"></text>
+        <rect y="192" width="12" height="24" rx="3" :x="X(rowV(3)) - 6" :fill="isGov(3) ? 'var(--color-brand)' : 'var(--color-surface-2)'" :stroke="isGov(3) ? 'var(--color-brand)' : 'var(--color-fg-muted)'" stroke-width="1.5"/>
+        <text y="188" font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :font-weight="isGov(3) ? 700 : 400"
+          :fill="isGov(3) ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" :x="X(rowV(3))" text-anchor="middle" x-text="fmt(rowV(3))"></text>
+      </g>
+    </g>
+    <!-- planned take-off weight -->
+    <line y1="36" y2="232" stroke-width="2" stroke-dasharray="6 4" :x1="X(planned)" :x2="X(planned)" :stroke="over > 0 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+    <g :transform="'translate(' + X(planned) + ' 252)'">
+      <g transform="scale(0.34)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text y="256" font-size="13" font-weight="600" class="num" :x="X(planned) + (X(planned) > 400 ? -26 : 26)" :text-anchor="X(planned) > 400 ? 'end' : 'start'"
+      :fill="over > 0 ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="'planned ' + fmt(planned) + ' kg' + (over > 0 ? ': ' + fmt(over) + ' kg over' : '')"></text>
+    <rect y="236" height="32" width="40" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: ew-resize" :x="X(planned) - 20"
+      @pointerdown="drag($event, (pt) => { planned = Math.round(clamp(p.lo + (pt.x - 250) / 360 * (p.hi - p.lo), p.lo, p.hi) / 5) * 5; active = null })"/>
+    <!-- weight scale -->
+    <line x1="250" y1="274" x2="610" y2="274" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="250" x2="250" y1="274" y2="279"/><line x1="340" x2="340" y1="274" y2="279"/><line x1="430" x2="430" y1="274" y2="279"/><line x1="520" x2="520" y1="274" y2="279"/><line x1="610" x2="610" y1="274" y2="279"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="middle">
+      <text x="250" y="293" x-text="tick(0)"></text><text x="340" y="293" x-text="tick(1)"></text><text x="430" y="293" x-text="tick(2)"></text><text x="520" y="293" x-text="tick(3)"></text><text x="606" y="293" text-anchor="end" x-text="tick(4)"></text>
+    </g>
+    <text x="16" y="293" font-size="12" fill="var(--color-fg-muted)">take-off weight (kg)</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wlg-ac">Aeroplane</label>
+      <select id="wlg-ac" class="input" x-model.number="ac" @change="pick()">
+        <option value="0">Trainer, MTOW = MLW 1,150 kg (POPA 2.2)</option>
+        <option value="1">Illustrative, MLW 1,100 kg (PAKA 3.1)</option>
+        <option value="2">ECHO, MTOW 2,950 kg, MLW 2,725 kg (POPA 2.4)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="wlg-planned">Planned take-off weight (loading sheet) <output for="wlg-planned" x-text="fmt(planned) + ' kg'"></output></label>
+      <input type="range" id="wlg-planned" step="5" :min="p.lo" :max="p.hi" x-model.number="planned">
+    </div>
+    <div class="widget-control">
+      <label for="wlg-use-climb" class="cursor-pointer"><span>Climb weight limit from today's chart</span>
+        <input type="checkbox" id="wlg-use-climb" x-model="useClimb" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="useClimb">
+      <label for="wlg-climb">Climb weight limit (falls as the day heats up) <output for="wlg-climb" x-text="fmt(climb) + ' kg'"></output></label>
+      <input type="range" id="wlg-climb" step="5" :min="p.lo" :max="p.hi" x-model.number="climb">
+    </div>
+    <div class="widget-control">
+      <label for="wlg-use-runway" class="cursor-pointer"><span>Runway-limited weight from the take-off chart</span>
+        <input type="checkbox" id="wlg-use-runway" x-model="useRunway" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="useRunway">
+      <label for="wlg-runway">Runway-limited weight <output for="wlg-runway" x-text="fmt(runway) + ' kg'"></output></label>
+      <input type="range" id="wlg-runway" step="5" :min="p.lo" :max="p.hi" x-model.number="runway">
+    </div>
+    <div class="widget-control">
+      <label for="wlg-use-landing" class="cursor-pointer"><span>Land within the MLW after the trip's fuel burn</span>
+        <input type="checkbox" id="wlg-use-landing" x-model="useLanding" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="useLanding">
+      <label for="wlg-burn">Trip fuel burn (avgas, 0.72 kg/L) <output for="wlg-burn" x-text="fmt(burnL) + ' L = ' + fmt(burnKg) + ' kg'"></output></label>
+      <input type="range" id="wlg-burn" min="0" max="300" step="1" x-model.number="burnL">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="governing.k === 'Structural MTOW' ? 'ok' : 'warn'">
+      <dt class="widget-label">The lowest limit governs</dt>
+      <dd class="widget-value" x-text="governing.k + ', ' + fmt(governing.v) + ' kg'"></dd>
+    </div>
+    <div class="widget-readout" :class="over > 0 ? 'bad' : 'ok'">
+      <dt class="widget-label">Planned take-off weight</dt>
+      <dd class="widget-value"><span x-text="fmt(planned) + ' kg: ' + (over > 0 ? fmt(over) + ' kg too heavy, about ' + fmt(over / 0.72) + ' L of avgas' : over === 0 ? 'exactly on the limit' : fmt(-over) + ' kg under the limit')"></span><span class="widget-flag bad" x-show="over > 0">offload</span></dd>
+    </div>
+    <div class="widget-readout" :class="landingOver > 0 ? 'bad' : 'ok'" x-show="useLanding">
+      <dt class="widget-label">Landing weight after the trip</dt>
+      <dd class="widget-value" x-text="fmt(landingWeight) + ' kg against the MLW of ' + fmt(p.mlw) + ' kg' + (landingOver > 0 ? ': ' + fmt(landingOver) + ' kg over' : '')"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('climb-limit-governs')" :aria-pressed="active === 'climb-limit-governs'">Climb limit governs</button>
+      <button type="button" @click="preset('four-limits')" :aria-pressed="active === 'four-limits'">All four limits</button>
+      <button type="button" @click="preset('echo-landing-cap')" :aria-pressed="active === 'echo-landing-cap'">ECHO: landing caps take-off</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> You may take off at the lowest of the limits, never the highest. The structural MTOW and MLW never move; the climb weight limit falls as the day heats up, the runway-limited weight depends on today's runway, wind, slope and surface, and the MLW plus the trip's fuel burn caps the take-off weight when the MLW is lower. A chart that allows more than the structure does is still capped by the structure. The chart figures here are the lessons' worked examples; real ones come from the workbook charts or your POH.</p>
+  <details class="widget-try"><summary>Try it: the runway allows 1,185 kg and the structure 1,150 kg, but on a hot afternoon the climb weight limit is 1,095 kg. You planned 1,120 kg. What do you do?</summary><p>Press Climb limit governs: the lowest limit is the climb weight limit, 1,095 kg, so you are 25 kg too heavy, about 35 L of avgas at 0.72 kg/L. Offload fuel or a bag, or wait for cooler air, when the climb limit rises (POPA 2.2). Drag the climb limit up past 1,150 kg to see the structure take over.</p></details>
+  <details class="widget-try"><summary>Try it: ECHO's MTOW is 2,950 kg but its MLW is only 2,725 kg. You will burn 250 L on the trip. How heavy can you leave?</summary><p>Press ECHO: 250 L × 0.72 = 180 kg burned. Leaving at 2,950 kg you would land at 2,770 kg, 45 kg over the MLW, so the trip limit is 2,725 + 180 = 2,905 kg (POPA 2.4). Drag the fuel burn up: a longer trip burns more and lets you leave heavier, up to the MTOW.</p></details>
+</div>

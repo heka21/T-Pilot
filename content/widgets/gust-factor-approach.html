@@ -1,0 +1,121 @@
+<div class="widget" x-data="widget({
+  mean: 14, gust: 24, vnorm: 65,
+  // RMTC 2.3: gust factor = gust - mean; add half of it to the normal approach speed. A gust 10 kt or more above
+  // the mean signals turbulence.
+  get g() { return Math.max(this.gust, this.mean) },
+  get factor() { return this.g - this.mean },
+  get margin() { return this.factor / 2 },
+  get vapp() { return this.vnorm + this.margin },
+  get rough() { return this.factor >= 10 },
+  kt(v) { return this.fmt(v, v % 1 ? 1 : 0) + ' kt' },
+  // wind trace: an illustrative minute of gusts between the mean and the gust (0 = mean, 1 = the peak gust)
+  shape: [0.15, 0.35, 0.1, 0.55, 1, 0.45, 0.2, 0.05, 0.3, 0.7, 0.4, 0.12, 0.85, 1, 0.5, 0.1, 0.25, 0.6, 0.3, 0, 0.4, 0.9, 0.55, 0.2, 0.1],
+  wy(kt) { return 230 - kt * 4.2 },
+  get trace() { return this.path(this.shape.map((f, i) => [56 + i * 13.5, this.wy(this.mean + f * this.factor)])) },
+  // airspeed tape: 50 to 100 kt, 4 px per kt
+  ty(v) { return 230 - (this.clamp(v, 50, 100) - 50) * 4 },
+  get labA() { return this.ty(this.vapp) + 4 },
+  get labN() { return Math.max(this.ty(this.vnorm) + 4, this.labA + (this.margin > 0 ? 46 : 0)) },
+  get labM() { return this.labA + 22 },
+  get caption() {
+    const f = this.factor, m = this.margin;
+    if (f === 0) return 'No gusts: the wind is steady at ' + this.mean + ' kt, so there is no gust factor and you fly the normal ' + this.vnorm + ' kt approach.';
+    const base = 'Gust ' + this.g + ' − mean ' + this.mean + ' = ' + f + ' kt gust factor. Half of it, ' + this.kt(m) + ', goes on the normal ' + this.vnorm + ' kt: approach at ' + this.kt(this.vapp) + '. The extra ' + this.kt(m) + ' is there to be lost in a lull without bringing you near the stall.';
+    return this.rough ? base + ' And a gust ' + f + ' kt above the mean signals turbulence: expect a rough approach near the ground.' : base;
+  },
+  presets: {
+    'atis-250-14g24': { mean: 14, gust: 24, vnorm: 65 },
+    'taf-22012g30': { mean: 12, gust: 30, vnorm: 62 },
+    'forecast-15g27': { mean: 15, gust: 27, vnorm: 65 },
+    'northam-sock-15-25': { mean: 15, gust: 25, vnorm: 65 },
+  },
+})">
+  <svg viewBox="0 0 640 270" role="img" aria-labelledby="gfa-title" class="widget-stage">
+    <title id="gfa-title">Left: a minute of surface wind wobbling between the mean wind and the peak gust, with the gap between them bracketed as the gust factor. Right: an airspeed tape with the normal approach speed, the margin of half the gust factor added on top, and the resulting approach speed</title>
+    <defs>
+      <marker id="gfa-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="270" fill="var(--color-surface-2)" rx="10"/>
+    <!-- wind chart -->
+    <text x="56" y="24" font-size="14" font-weight="600" fill="var(--color-fg)">Wind at the aerodrome</text>
+    <text x="400" y="24" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">one minute, illustrative</text>
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="56" y1="230" x2="56" y2="41"/>
+      <line x1="56" y1="230" x2="400" y2="230"/>
+      <line x1="52" y1="188" x2="56" y2="188"/><line x1="52" y1="146" x2="56" y2="146"/><line x1="52" y1="104" x2="56" y2="104"/><line x1="52" y1="62" x2="56" y2="62"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="48" y="234">0</text><text x="48" y="192">10</text><text x="48" y="150">20</text><text x="48" y="108">30</text><text x="48" y="66">40 kt</text>
+    </g>
+    <text x="228" y="250" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">time →</text>
+    <!-- gust and mean lines -->
+    <line x1="56" x2="380" stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="4 3" :y1="wy(g)" :y2="wy(g)" x-show="factor > 0"/>
+    <line x1="56" x2="380" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="4 3" :y1="wy(mean)" :y2="wy(mean)"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" :d="trace"/>
+    <text x="64" font-size="12" font-weight="600" fill="var(--color-warn-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="wy(g) - 8" x-show="factor > 0" x-text="'gust ' + g + ' kt'"></text>
+    <text x="64" font-size="12" font-weight="600" fill="var(--color-info-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="wy(mean) + (factor > 0 ? 18 : -8)" x-text="'mean ' + mean + ' kt'"></text>
+    <!-- gust factor bracket -->
+    <g x-show="factor > 0">
+      <path fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :stroke="rough ? 'var(--color-warn)' : 'var(--color-fg-muted)'"
+        :d="'M386 ' + wy(g) + ' L392 ' + wy(g) + ' L392 ' + wy(mean) + ' L386 ' + wy(mean)"/>
+      <text x="400" font-size="12" fill="var(--color-fg-muted)" :y="(wy(g) + wy(mean)) / 2 - 3">gust factor</text>
+      <text x="400" font-size="14" font-weight="700" class="num" :fill="rough ? 'var(--color-warn-fg)' : 'var(--color-fg)'" :y="(wy(g) + wy(mean)) / 2 + 13" x-text="factor + ' kt'"></text>
+    </g>
+    <!-- airspeed tape -->
+    <text x="520" y="24" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Airspeed</text>
+    <rect x="496" y="30" width="48" height="200" rx="4" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="496" y1="190" x2="504" y2="190"/><line x1="496" y1="150" x2="504" y2="150"/><line x1="496" y1="110" x2="504" y2="110"/><line x1="496" y1="70" x2="504" y2="70"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="488" y="194">60</text><text x="488" y="154">70</text><text x="488" y="114">80</text><text x="488" y="74">90</text>
+    </g>
+    <!-- the margin, added on top of the normal approach speed -->
+    <rect x="497" width="46" fill="var(--color-brand-soft)" :y="ty(vapp)" :height="Math.max(0, ty(vnorm) - ty(vapp))"/>
+    <line x1="496" x2="544" stroke="var(--color-fg-muted)" stroke-width="2" :y1="ty(vnorm)" :y2="ty(vnorm)"/>
+    <line x1="496" x2="544" stroke="var(--color-brand)" stroke-width="2.5" :y1="ty(vapp)" :y2="ty(vapp)"/>
+    <path fill="var(--color-brand)" :d="'M544 ' + ty(vapp) + ' l10 -6 l0 12 z'"/>
+    <g font-size="12">
+      <text x="560" font-weight="700" fill="var(--color-brand-fg)" class="num" :y="labA" x-text="'fly ' + kt(vapp)"></text>
+      <text x="560" fill="var(--color-brand-fg)" class="num" :y="labM - 6" x-show="margin > 0" x-text="'+' + kt(margin)"></text>
+      <text x="560" font-size="11" fill="var(--color-fg-faint)" :y="labM + 8" x-show="margin > 0">for a lull</text>
+      <text x="560" fill="var(--color-fg-muted)" class="num" :y="labN" x-text="'normal ' + vnorm + ' kt'"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gfa-mean">Mean wind <output for="gfa-mean" x-text="mean + ' kt'"></output></label>
+      <input type="range" id="gfa-mean" min="0" max="30" step="1" x-model.number="mean">
+    </div>
+    <div class="widget-control">
+      <label for="gfa-gust">Gust <output for="gfa-gust" x-text="g + ' kt'"></output></label>
+      <input type="range" id="gfa-gust" min="0" max="40" step="1" x-model.number="gust">
+    </div>
+    <div class="widget-control">
+      <label for="gfa-vnorm">Normal approach speed <output for="gfa-vnorm" x-text="vnorm + ' kt'"></output></label>
+      <input type="range" id="gfa-vnorm" min="55" max="80" step="1" x-model.number="vnorm">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="rough ? 'warn' : ''">
+      <dt class="widget-label">Gust factor</dt>
+      <dd class="widget-value"><span x-text="factor + ' kt'"></span><span class="widget-flag warn" x-show="rough">turbulence</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Margin (half)</dt><dd class="widget-value" x-text="'+' + kt(margin)"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Approach speed</dt><dd class="widget-value" x-text="kt(vapp)"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('atis-250-14g24')" :aria-pressed="active === 'atis-250-14g24'">ATIS 14G24</button>
+      <button type="button" @click="preset('taf-22012g30')" :aria-pressed="active === 'taf-22012g30'">TAF 12G30</button>
+      <button type="button" @click="preset('forecast-15g27')" :aria-pressed="active === 'forecast-15g27'">15G27</button>
+      <button type="button" @click="preset('northam-sock-15-25')" :aria-pressed="active === 'northam-sock-15-25'">Northam sock</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The gust factor is the gap between the gust and the mean wind, and the usual rule adds half of it to the normal approach speed, so that the extra speed can be lost in a lull without bringing you near the stall; your POH or your instructor may set a limit on how much to add. A gust group 10 kt or more above the mean is also a turbulence warning in its own right. The shape of the wind trace is illustrative.</p>
+  <details class="widget-try"><summary>Try it: the TAF for your arrival gives 22012G30KT and your normal approach speed is 62 kt. What do you fly, and what else does the wind tell you?</summary><p>Gust factor 30 − 12 = 18 kt; half is 9 kt; 62 + 9 = 71 kt. A gust 18 kt above the mean is well past the 10 kt that signals turbulence: expect a rough approach and strong mechanical turbulence near the ground, check the crosswind against your limit, and decide before you leave whether this is a day to be landing there at all.</p></details>
+  <details class="widget-try"><summary>Try it: at Northam the wind sock is swinging between 15 and 25 kt. How much do you add?</summary><p>The sock is showing a mean of about 15 kt and gusts to 25 kt: a gust factor of 10 kt, so add half, 5 kt, to your normal approach speed.</p></details>
+</div>

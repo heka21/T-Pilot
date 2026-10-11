@@ -1,0 +1,156 @@
+<div class="widget" x-data="widget({
+  w: 1100, bank: 0, flap: false, power: false, frost: false, gust: false, dh: 0,
+  // the lesson's frame (RBKA 3.6): the stall IAS is the book figure (55 kt at 1,100 kg, level, power off, flap up)
+  // times the square root of (lift the wing must make) ÷ (lift it can make at the critical angle).
+  // Weight and bank are the lesson's formulas; the flap figure is lift-curve-flap's CL max 1.5 → 1.9; the power,
+  // frost and gust amounts are illustrative.
+  get n() { return 1 / Math.cos(this.bank * Math.PI / 180) },
+  get needed() { return (this.w / 1100) * this.n * (this.gust ? 1.25 : 1) * (this.power ? 0.92 : 1) },
+  get avail() { return (this.flap ? 1.9 / 1.5 : 1) * (this.frost ? 0.8 : 1) * (this.power ? 1.04 : 1) },
+  get vs() { return 55 * Math.sqrt(this.needed / this.avail) },
+  get sigma() { return Math.pow(1 - 6.8756e-6 * this.dh, 4.2559) },
+  get tas() { return this.vs / Math.sqrt(this.sigma) },
+  get change() { return this.vs - 55 },
+  get state() { return this.change > 2 ? (this.change > 12 ? 'bad' : 'warn') : this.change < -2 ? 'ok' : '' },
+  // factor rows: +1 raises the stall IAS, -1 lowers it, 0 nil; lit when that factor is in play
+  get rows() {
+    return [
+      { k: 'Power on', d: -1, on: this.power, why: 'slipstream; thrust carries weight' },
+      { k: 'Flap down', d: -1, on: this.flap, why: 'higher CL max' },
+      { k: 'Gust or shear', d: 1, on: this.gust, why: 'angle of attack jumps' },
+      { k: 'Turn (load factor)', d: 1, on: this.bank > 0, why: '× √n' },
+      { k: 'Weight', d: this.w > 1100 ? 1 : -1, on: this.w !== 1100, why: '× √(W₂/W₁)' },
+      { k: 'Frost and ice', d: 1, on: this.frost, why: 'lower CL max, early separation' },
+      { k: 'Altitude', d: 0, on: this.dh > 0, why: 'nil: ASI reads what the wing feels' },
+    ];
+  },
+  row(i) { return this.rows[i] },
+  X(v) { return 60 + (v - 30) / 70 * 540 },
+  get reason() {
+    const r = this.rows.filter((x) => x.on);
+    if (!r.length) return 'The book figure: 55 kt at 1,100 kg, level, power off, flap up. Change one thing and it moves.';
+    return 'Stall IAS ' + this.fmt(this.vs) + ' kt (' + (Math.abs(this.change) < 0.5 ? 'unchanged' : this.sign(this.change, 0) + ' kt') + '). ' + r.map((x) => x.k + ': ' + x.why).join('; ') + '.';
+  },
+  presets: {
+    'book-55kt-1100kg': { w: 1100, bank: 0, flap: false, power: false, frost: false, gust: false, dh: 0 },
+    'solo-900kg': { w: 900, bank: 0, flap: false, power: false, frost: false, gust: false, dh: 0 },
+    'turn-45': { w: 1100, bank: 45, flap: false, power: false, frost: false, gust: false, dh: 0 },
+    'turn-60': { w: 1100, bank: 60, flap: false, power: false, frost: false, gust: false, dh: 0 },
+    'flap-down': { w: 1100, bank: 0, flap: true, power: false, frost: false, gust: false, dh: 0 },
+    'power-on': { w: 1100, bank: 0, flap: false, power: true, frost: false, gust: false, dh: 0 },
+    'frost': { w: 1100, bank: 0, flap: false, power: false, frost: true, gust: false, dh: 0 },
+    'high-density-height': { w: 1100, bank: 0, flap: false, power: false, frost: false, gust: false, dh: 8000 },
+  },
+})">
+  <svg viewBox="0 0 640 310" role="img" aria-labelledby="ssf-title" class="widget-stage">
+    <title id="ssf-title">The stall indicated airspeed on a speed scale, moved from the 55 knot book figure by the factors you choose, beside bars for the lift the wing must make and the lift it can make at the critical angle, and the seven factors from the lesson lit up with their direction</title>
+    <rect x="0" y="0" width="640" height="310" fill="var(--color-surface)"/>
+    <!-- speed scale -->
+    <text x="20" y="24" font-size="13" fill="var(--color-fg-muted)">Stall speed</text>
+    <line x1="60" y1="64" x2="600" y2="64" stroke="var(--color-line-strong)" stroke-width="2"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1.25">
+      <line x1="60" y1="58" x2="60" y2="70"/><line x1="137" y1="58" x2="137" y2="70"/><line x1="214" y1="58" x2="214" y2="70"/><line x1="291" y1="58" x2="291" y2="70"/>
+      <line x1="369" y1="58" x2="369" y2="70"/><line x1="446" y1="58" x2="446" y2="70"/><line x1="523" y1="58" x2="523" y2="70"/><line x1="600" y1="58" x2="600" y2="70"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="60" y="86">30</text><text x="137" y="86">40</text><text x="214" y="86">50</text><text x="291" y="86">60</text>
+      <text x="369" y="86">70</text><text x="446" y="86">80</text><text x="523" y="86">90</text><text x="600" y="86">100 kt</text>
+    </g>
+    <!-- book figure -->
+    <path d="M253 44 l-6 -10 l12 0 z" fill="var(--color-fg-muted)"/>
+    <text x="253" y="28" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">book 55</text>
+    <!-- stall IAS now -->
+    <rect y="54" height="20" width="6" rx="2" fill="var(--color-bad)" :x="X(vs) - 3"/>
+    <text y="48" font-size="14" font-weight="600" class="num" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      :x="X(vs)" :text-anchor="vs > 88 ? 'end' : 'start'" :dx="vs > 88 ? -8 : 8" x-text="'IAS ' + fmt(vs) + ' kt'"></text>
+    <g :opacity="dh > 0 ? 1 : 0">
+      <circle r="5" cy="64" fill="var(--color-info)" :cx="X(Math.min(100, tas))"/>
+      <text y="104" font-size="12" class="num" fill="var(--color-info)" text-anchor="middle" :x="Math.min(560, X(Math.min(100, tas)))" x-text="'TAS ' + fmt(tas) + ' kt'"></text>
+    </g>
+    <!-- lift needed vs lift available -->
+    <text x="20" y="134" font-size="13" fill="var(--color-fg-muted)">Compared with the book case</text>
+    <text x="20" y="160" font-size="12" fill="var(--color-fg)">lift the wing must make</text>
+    <rect x="20" y="166" height="16" rx="3" fill="var(--color-brand)" :width="Math.min(330, needed * 150)"/>
+    <text y="179" font-size="12" class="num" fill="var(--color-fg)" :x="Math.min(330, needed * 150) + 28" x-text="fmt(needed * 100) + '%'"></text>
+    <text x="20" y="206" font-size="12" fill="var(--color-fg)">lift it can make at the critical angle</text>
+    <rect x="20" y="212" height="16" rx="3" fill="var(--color-info)" :width="Math.min(330, avail * 150)"/>
+    <text y="225" font-size="12" class="num" fill="var(--color-fg)" :x="Math.min(330, avail * 150) + 28" x-text="fmt(avail * 100) + '%'"></text>
+    <g stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 2"><line x1="170" y1="163" x2="170" y2="185"/><line x1="170" y1="209" x2="170" y2="231"/></g>
+    <text x="20" y="258" font-size="13" class="num" fill="var(--color-fg)" x-text="'55 × √(' + fmt(needed, 2) + ' ÷ ' + fmt(avail, 2) + ') = ' + fmt(vs) + ' kt'"></text>
+    <text x="20" y="282" font-size="12" fill="var(--color-fg-faint)" x-text="dh > 0 ? 'density height ' + fmt(dh) + ' ft: same IAS, higher TAS' : 'sea level'"></text>
+    <!-- the seven factors -->
+    <rect x="392" y="120" width="236" height="182" rx="8" fill="var(--color-surface-2)"/>
+    <text x="406" y="140" font-size="12" fill="var(--color-fg-muted)">Factor → stall IAS</text>
+    <g font-size="12">
+      <text x="406" y="164" :fill="row(0).on ? 'var(--color-fg)' : 'var(--color-fg-faint)'" :font-weight="row(0).on ? 600 : 400">Power on</text>
+      <text x="406" y="186" :fill="row(1).on ? 'var(--color-fg)' : 'var(--color-fg-faint)'" :font-weight="row(1).on ? 600 : 400">Flap down</text>
+      <text x="406" y="208" :fill="row(2).on ? 'var(--color-fg)' : 'var(--color-fg-faint)'" :font-weight="row(2).on ? 600 : 400">Gust or wind shear</text>
+      <text x="406" y="230" :fill="row(3).on ? 'var(--color-fg)' : 'var(--color-fg-faint)'" :font-weight="row(3).on ? 600 : 400">Manoeuvre (turn)</text>
+      <text x="406" y="252" :fill="row(4).on ? 'var(--color-fg)' : 'var(--color-fg-faint)'" :font-weight="row(4).on ? 600 : 400" x-text="w < 1100 ? 'Weight (lighter)' : 'Weight'"></text>
+      <text x="406" y="274" :fill="row(5).on ? 'var(--color-fg)' : 'var(--color-fg-faint)'" :font-weight="row(5).on ? 600 : 400">Frost and ice</text>
+      <text x="406" y="296" :fill="row(6).on ? 'var(--color-fg)' : 'var(--color-fg-faint)'" :font-weight="row(6).on ? 600 : 400">Altitude</text>
+    </g>
+    <g font-size="13" font-weight="600" text-anchor="end">
+      <text x="616" y="164" :fill="row(0).on ? 'var(--color-ok-fg)' : 'var(--color-fg-faint)'">↓ lower</text>
+      <text x="616" y="186" :fill="row(1).on ? 'var(--color-ok-fg)' : 'var(--color-fg-faint)'">↓ lower</text>
+      <text x="616" y="208" :fill="row(2).on ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">↑ higher</text>
+      <text x="616" y="230" :fill="row(3).on ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">↑ higher</text>
+      <text x="616" y="252" :fill="!row(4).on ? 'var(--color-fg-faint)' : w > 1100 ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="w < 1100 ? '↓ lower' : '↑ higher'"></text>
+      <text x="616" y="274" :fill="row(5).on ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">↑ higher</text>
+      <text x="616" y="296" :fill="row(6).on ? 'var(--color-info)' : 'var(--color-fg-faint)'">nil</text>
+    </g>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="reason"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ssf-w">Weight <output for="ssf-w" x-text="fmt(w) + ' kg'"></output></label>
+      <input type="range" id="ssf-w" min="750" max="1100" step="10" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="ssf-bank">Bank in a level turn <output for="ssf-bank" x-text="bank + '° (' + fmt(n, 2) + ' g)'"></output></label>
+      <input type="range" id="ssf-bank" min="0" max="60" step="1" x-model.number="bank">
+    </div>
+    <div class="widget-control">
+      <label for="ssf-dh">Density height <output for="ssf-dh" x-text="fmt(dh) + ' ft'"></output></label>
+      <input type="range" id="ssf-dh" min="0" max="10000" step="500" x-model.number="dh">
+    </div>
+    <div class="widget-control">
+      <label for="ssf-flap" class="cursor-pointer"><span>Flap down</span>
+        <input type="checkbox" id="ssf-flap" x-model="flap" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ssf-power" class="cursor-pointer"><span>Power on</span>
+        <input type="checkbox" id="ssf-power" x-model="power" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ssf-frost" class="cursor-pointer"><span>Frost on the wing</span>
+        <input type="checkbox" id="ssf-frost" x-model="frost" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ssf-gust" class="cursor-pointer"><span>Up-gust or wind shear</span>
+        <input type="checkbox" id="ssf-gust" x-model="gust" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="state"><dt class="widget-label">Stall IAS</dt><dd class="widget-value"><span x-text="fmt(vs) + ' kt'"></span><span class="widget-flag" :class="state" x-show="Math.abs(change) >= 0.5" x-text="sign(change, 0) + ' kt'"></span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Stall TAS</dt><dd class="widget-value" x-text="fmt(tas) + ' kt'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Load factor</dt><dd class="widget-value" x-text="fmt(n, 2) + ' g'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('book-55kt-1100kg')" :aria-pressed="active === 'book-55kt-1100kg'">Book, 55 kt</button>
+      <button type="button" @click="preset('solo-900kg')" :aria-pressed="active === 'solo-900kg'">900 kg</button>
+      <button type="button" @click="preset('turn-45')" :aria-pressed="active === 'turn-45'">45° turn</button>
+      <button type="button" @click="preset('turn-60')" :aria-pressed="active === 'turn-60'">60° turn</button>
+      <button type="button" @click="preset('flap-down')" :aria-pressed="active === 'flap-down'">Flap</button>
+      <button type="button" @click="preset('power-on')" :aria-pressed="active === 'power-on'">Power</button>
+      <button type="button" @click="preset('frost')" :aria-pressed="active === 'frost'">Frost</button>
+      <button type="button" @click="preset('high-density-height')" :aria-pressed="active === 'high-density-height'">8,000 ft</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every factor works through one of two bars: the lift the wing must make (weight, load factor from a turn or a gust, the share of weight carried by thrust) or the lift it can make at the critical angle (flap, frost, slipstream). The stall IAS moves with the square root of their ratio. Altitude moves neither: the true airspeed at the stall rises, but the ASI reads the same. Weight and bank use the lesson's formulas; the amounts for flap, power, frost and gusts are illustrative, only their directions are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: the book says 55 kt at 1,100 kg. What is the stall speed solo at 900 kg, and in a 45° turn at full weight?</summary><p>Press 900 kg: 55 × √(900 ÷ 1,100) = 55 × 0.905 ≈ 50 kt. Press 45° turn: n = 1.41, √1.41 = 1.19, 55 × 1.19 ≈ 65 kt.</p></details>
+  <details class="widget-try"><summary>Try it: which of the seven factors leaves the indicated stall speed alone?</summary><p>Altitude. Press 8,000 ft: the stall IAS stays at 55 kt while the stall TAS rises to about 62 kt, because the ASI measures the same dynamic pressure the wing feels.</p></details>
+</div>

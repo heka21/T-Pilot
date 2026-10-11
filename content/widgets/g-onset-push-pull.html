@@ -1,0 +1,220 @@
+<div class="widget" x-data="timeline({
+  duration: 16, loop: false, sc: 'sudden', strain: false,
+  // PHFC 2.9: the reflexes that speed the heart and tighten the vessels take several seconds to act, so a sudden
+  // onset is worse than a slow one; after negative g the heart has slowed and the vessels have relaxed, so positive g
+  // straight afterwards is tolerated much worse (the push-pull effect). Vision stages use the lesson's approximate
+  // bands for a relaxed person: greying may begin +2 to +3, grey-out and tunnel vision +3 to +4, black-out +4 to +5,
+  // G-LOC +5 and above; red-out by about -2 to -3 g.
+  // The reflex model is illustrative: the reflexes start about 1.5 s after the g changes and then build at about
+  // 0.3 g per second, worth up to 2 g of help at +3.5 g; after negative g they have swung the other way (up to 1 g)
+  // and must swing back at the same rate. Straining is shown as a fixed illustrative help.
+  secs: 20,
+  get s() { return this.t * this.secs },
+  gAt(sc, s) {
+    if (sc === 'slow') return s < 2 ? 1 : s < 12 ? 1 + 2.5 * this.ease((s - 2) / 10) : 3.5;
+    if (sc === 'sudden') return s < 2 ? 1 : s < 3 ? 1 + 2.5 * this.ease(s - 2) : 3.5;
+    // push-pull: a sharp pushover, then a hard pull to the same +3.5 g
+    if (s < 2) return 1;
+    if (s < 3) return 1 - 2.5 * this.ease(s - 2);
+    if (s < 7) return -1.5;
+    if (s < 8) return -1.5 + 5 * this.ease(s - 7);
+    return 3.5;
+  },
+  target(g) { return g >= 1 ? Math.min(2, 0.8 * (g - 1)) : Math.max(-1, 0.4 * (g - 1)) },
+  _key: '', _sim: [],
+  // reflex help in g, every 0.1 s, integrated once per scenario
+  get sim() {
+    if (this._key !== this.sc) {
+      const out = []; let c = 0;
+      for (let i = 0; i <= 200; i++) {
+        const g = this.gAt(this.sc, i / 10); out.push([g, c]);
+        const d = this.target(this.gAt(this.sc, Math.max(0, i / 10 - 1.5))) - c;
+        c += Math.sign(d) * Math.min(Math.abs(d), 0.03);
+      }
+      this._sim = out; this._key = this.sc;
+    }
+    return this._sim;
+  },
+  row(s) { return this.sim[this.clamp(Math.round(s * 10), 0, 200)] },
+  eyeAt(s) { const r = this.row(s); return r[0] - r[1] - (this.strain && r[0] > 1 ? 0.75 * this.seg(r[0], 1, 2) : 0) },
+  get g() { return this.row(this.s)[0] },
+  get help() { return this.row(this.s)[1] },
+  get eye() { return this.eyeAt(this.s) },
+  get stage() {
+    const e = this.eye;
+    if (e <= -2) return { t: 'Red-out: painful', c: 'bad' };
+    if (e < 0) return { t: 'Blood to the head', c: 'warn' };
+    if (e < 2) return { t: 'Normal', c: 'ok' };
+    if (e < 3) return { t: 'Heavy; greying may begin', c: 'warn' };
+    if (e < 4) return { t: 'Grey-out, tunnel vision', c: 'warn' };
+    if (e < 5) return { t: 'Black-out, still conscious', c: 'bad' };
+    return { t: 'G-LOC', c: 'bad' };
+  },
+  get reflex() {
+    const h = this.help, tg = this.target(this.g);
+    if (Math.abs(h) < 0.08 && Math.abs(tg) < 0.08) return ['At rest', '', 'reflexes at rest'];
+    if (h < -0.08) return [tg > h + 0.1 ? 'Heart slow, vessels open: catching up' : 'Slowing the heart, relaxing vessels', 'bad', 'heart slowed, vessels open'];
+    if (tg - h > 0.25) return ['Starting: seconds behind', 'warn', 'reflexes seconds behind'];
+    return ['Heart faster, vessels tight', 'ok', 'heart faster, vessels tight'];
+  },
+  get supply() {
+    const e = this.eye;
+    if (e < 0) return ['Too much: head congested', 'warn'];
+    if (e < 2) return ['Enough', 'ok'];
+    if (e < 4) return ['Falling', 'warn'];
+    return ['Failing', 'bad'];
+  },
+  get grey() { return this.seg(this.eye, 2, 4) },
+  get tunnel() { return this.seg(this.eye, 3, 4.5) },
+  get black() { return this.seg(this.eye, 4, 5) },
+  get red() { return this.seg(-this.eye, 1, 3) },
+  get tunnelPath() { const r = this.lerp(84, 14, this.tunnel); return 'M440 136 a84 84 0 1 0 168 0 a84 84 0 1 0 -168 0 Z M' + (524 - r) + ' 136 a' + r + ' ' + r + ' 0 1 1 ' + 2 * r + ' 0 a' + r + ' ' + r + ' 0 1 1 ' + (-2 * r) + ' 0 Z' },
+  // chart: 0 to 20 s across x 56..306, -2 to +6 g down y 34..242
+  X(s) { return 56 + s / 20 * 250 },
+  Y(g) { return 34 + (6 - g) * 26 },
+  line(fn, upTo) { const pts = []; for (let i = 0; i <= Math.round(upTo * 10); i++) pts.push([this.X(i / 10), this.Y(this.clamp(fn(i / 10), -2.2, 6.2))]); return this.path(pts) },
+  get gFull() { return this.line((s) => this.row(s)[0], 20) },
+  get gSoFar() { return this.line((s) => this.row(s)[0], Math.max(0.1, this.s)) },
+  get eyeSoFar() { return this.line((s) => this.eyeAt(s), Math.max(0.1, this.s)) },
+  get steps() {
+    if (this.sc === 'slow') return [{ at: 0, label: 'Level, 1 g' }, { at: 0.1, label: 'Ease in the pull' }, { at: 0.6, label: '+3.5 g, reached slowly' }];
+    if (this.sc === 'sudden') return [{ at: 0, label: 'Level, 1 g' }, { at: 0.1, label: 'Sudden pull' }, { at: 0.15, label: '+3.5 g at once' }, { at: 0.3, label: 'Reflexes catching up' }, { at: 0.5, label: 'Reflexes caught up' }];
+    return [{ at: 0, label: 'Level, 1 g' }, { at: 0.1, label: 'Sharp pushover' }, { at: 0.25, label: 'Heart slowing' }, { at: 0.35, label: 'Hard pull' }, { at: 0.4, label: '+3.5 g after −g' }, { at: 0.95, label: 'Vision back' }];
+  },
+  get caption() {
+    const s = this.s, sc = this.sc;
+    if (s < 2) return 'Straight and level at 1 g: the heart lifts blood the 30 cm to your eyes without effort. Press play.';
+    if (sc === 'slow') {
+      if (s < 12) return 'The g builds over about ten seconds, as in a spiral recovery eased out gently. The reflexes keep pace: the heart speeds up and the vessels tighten as the load grows.';
+      return 'The same +3.5 g as a sudden pull, but reached slowly: the reflexes kept up, so the pressure at eye level held and your vision stays clear' + (this.strain ? ', helped by tensing and straining.' : '.');
+    }
+    if (sc === 'sudden') {
+      if (s < 6 && (this.eye >= 2 || s < 3)) return 'A sudden pull to +3.5 g: the column of blood now weighs three and a half times as much, but the reflexes need several seconds to act. Pressure at eye level drops first: the world greys and the edges close in.' + (this.strain ? ' Tensing and straining hold some of it back.' : '');
+      if (this.eye >= 2) return 'A few seconds in, the reflexes are catching up: the heart is speeding up and the vessels tightening, and the grey is lifting, still at +3.5 g.';
+      return 'Several seconds later the reflexes have caught up: heart faster, vessels tighter, and vision returns at the same +3.5 g. A sudden onset is worse than the same g built up slowly.';
+    }
+    if (s < 7) return 'Negative g drives blood to the head. The pressure sensors in the neck read a large rise and the reflex runs in reverse: the heart slows and the vessels relax.';
+    if (s < 9 || this.eye >= 3) return 'Now a hard pull to +3.5 g with those defences pointing the wrong way: slow heart, open vessels. Blood drains from the head faster than usual and vision goes much further than the same +3.5 g from level flight: the push-pull effect.';
+    return 'Only after several seconds do the reflexes swing round and vision come back. At a higher g, or a pull held longer, this is where G-LOC arrives without warning.';
+  },
+  presets: {
+    'gradual-onset': { sc: 'slow', strain: false, t: 1 },
+    'sudden-onset': { sc: 'sudden', strain: false, t: 0.17 },
+    'sudden-reflexes-caught-up': { sc: 'sudden', strain: false, t: 0.6 },
+    'push-pull': { sc: 'push-pull', strain: false, t: 0.41 },
+    'sudden-with-straining': { sc: 'sudden', strain: true, t: 0.17 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="gpp-title" class="widget-stage">
+    <title id="gpp-title">Load factor against time for a gradual pull, a sudden pull or a pushover followed by a pull, with the load the blood supply to the eyes feels after the body's reflexes, and the pilot's view greying, narrowing or reddening</title>
+    <defs>
+      <clipPath id="gpp-view"><circle cx="524" cy="136" r="84"/></clipPath>
+      <filter id="gpp-grey"><feColorMatrix type="saturate" :values="(1 - grey).toFixed(2)"/></filter>
+    </defs>
+    <!-- the lesson's stage bands behind the chart -->
+    <rect x="56" :y="Y(6)" width="250" :height="Y(5) - Y(6)" fill="var(--color-bad)" fill-opacity="0.2"/>
+    <rect x="56" :y="Y(5)" width="250" :height="Y(4) - Y(5)" fill="var(--color-bad)" fill-opacity="0.1"/>
+    <rect x="56" :y="Y(4)" width="250" :height="Y(3) - Y(4)" fill="var(--color-warn)" fill-opacity="0.16"/>
+    <rect x="56" :y="Y(3)" width="250" :height="Y(2) - Y(3)" fill="var(--color-warn)" fill-opacity="0.07"/>
+    <rect x="56" :y="Y(-2)" width="250" :height="Y(-2.2) - Y(-2)" fill="var(--color-bad)" fill-opacity="0.12"/>
+    <g font-size="11" fill="var(--color-fg-muted)">
+      <text x="314" :y="Y(5.5) + 4">G-LOC</text>
+      <text x="314" :y="Y(4.5) + 4">black-out</text>
+      <text x="314" :y="Y(3.5) + 4">grey-out, tunnel</text>
+      <text x="314" :y="Y(2.5) + 4">greying may begin</text>
+    </g>
+    <line x1="56" x2="306" :y1="Y(0)" :y2="Y(0)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="56" x2="306" :y1="Y(1)" :y2="Y(1)" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="56" y1="34" x2="56" y2="242" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="50" :y="Y(6) + 4">+6</text><text x="50" :y="Y(4) + 4">+4</text><text x="50" :y="Y(2) + 4">+2</text>
+      <text x="50" :y="Y(0) + 4">0</text><text x="50" :y="Y(-2) + 4">−2</text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="56" y="260">0</text><text x="118.5" y="260">5</text><text x="181" y="260">10</text><text x="243.5" y="260">15</text><text x="306" y="260">20 s</text>
+    </g>
+    <text x="16" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">Load factor (g) against time</text>
+    <!-- the whole manoeuvre faint, the part flown bold -->
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :d="gFull"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="gSoFar"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" :d="eyeSoFar"/>
+    <circle r="5" fill="var(--color-brand)" :cx="X(s)" :cy="Y(g)"/>
+    <circle r="5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2" :cx="X(s)" :cy="Y(clamp(eye, -2.2, 6.2))"/>
+    <!-- key -->
+    <line x1="64" y1="280" x2="88" y2="280" stroke="var(--color-brand)" stroke-width="2.5"/>
+    <text x="94" y="284" font-size="12" fill="var(--color-brand-fg)">the aeroplane's g</text>
+    <line x1="204" y1="280" x2="228" y2="280" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="234" y="284" font-size="12" fill="var(--color-info-fg)">what your eyes' blood supply feels</text>
+
+    <!-- the pilot's view -->
+    <g clip-path="url(#gpp-view)">
+      <g filter="url(#gpp-grey)">
+        <rect x="430" y="40" width="190" height="104" fill="var(--color-sky-soft)"/>
+        <rect x="430" y="144" width="190" height="90" fill="var(--color-ok)" fill-opacity="0.35"/>
+        <path d="M430 144 L620 144" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+        <path d="M490 176 L558 176 L544 156 L504 156 Z" fill="var(--color-tarmac)"/>
+        <path d="M470 98 a12 12 0 0 1 18 -8 a15 15 0 0 1 27 2 a10 10 0 0 1 8 15 Z" fill="var(--color-surface)" stroke="var(--color-fg-faint)" stroke-width="1"/>
+        <circle cx="580" cy="78" r="10" fill="var(--color-warn)"/>
+      </g>
+      <rect x="436" y="48" width="176" height="176" fill="var(--color-tarmac)" :fill-opacity="0.35 * grey"/>
+      <path fill="var(--color-tarmac)" fill-rule="evenodd" :d="tunnelPath" x-show="tunnel > 0"/>
+      <rect x="436" y="48" width="176" height="176" fill="var(--color-tarmac)" :fill-opacity="black"/>
+      <rect x="436" y="48" width="176" height="176" fill="var(--color-bad)" :fill-opacity="0.45 * red"/>
+    </g>
+    <circle cx="524" cy="136" r="84" fill="none" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="524" y="140" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-paint)" x-show="black > 0.6">conscious, but blind</text>
+    <text x="524" y="34" font-size="16" font-weight="700" text-anchor="middle" class="num" :fill="stage.c === 'bad' ? 'var(--color-bad-fg)' : stage.c === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-fg)'" x-text="sign(g, 1) + ' g'"></text>
+        <!-- the heart and what the reflexes are doing -->
+    <path d="M448 248 c-6 -6 -12 -1 -8 5 l8 8 l8 -8 c4 -6 -2 -11 -8 -5 Z" fill="var(--color-bad)"/>
+    <text x="464" y="258" font-size="12" :fill="reflex[1] === 'bad' ? 'var(--color-bad-fg)' : reflex[1] === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" x-text="reflex[2]"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the manoeuvre'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="gpp-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time into the manoeuvre">
+    <span class="widget-clock" x-text="fmt(s, 1) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gpp-sc">How the +3.5 g arrives</label>
+      <select id="gpp-sc" class="input" x-model="sc" @change="t = 0; active = null">
+        <option value="slow">Gradually, over about 10 s</option>
+        <option value="sudden">Suddenly, in a second</option>
+        <option value="push-pull">Straight after a pushover to −1.5 g</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="gpp-strain" class="cursor-pointer"><span>Tense the legs and abdomen and strain</span>
+        <input type="checkbox" id="gpp-strain" x-model="strain" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Load factor</dt><dd class="widget-value" x-text="sign(g, 1) + ' g'"></dd></div>
+    <div class="widget-readout" :class="reflex[1]"><dt class="widget-label">Reflexes</dt><dd class="widget-value text-sm" x-text="reflex[0]"></dd></div>
+    <div class="widget-readout" :class="supply[1]"><dt class="widget-label">Blood to the eyes</dt><dd class="widget-value" x-text="supply[0]"></dd></div>
+    <div class="widget-readout" :class="stage.c"><dt class="widget-label">Vision now</dt><dd class="widget-value"><span x-text="stage.t"></span><span class="widget-flag bad" x-show="eye >= 4">ease off</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('gradual-onset')" :aria-pressed="active === 'gradual-onset'">Gradual</button>
+      <button type="button" @click="preset('sudden-onset')" :aria-pressed="active === 'sudden-onset'">Sudden</button>
+      <button type="button" @click="preset('sudden-reflexes-caught-up')" :aria-pressed="active === 'sudden-reflexes-caught-up'">Seconds later</button>
+      <button type="button" @click="preset('push-pull')" :aria-pressed="active === 'push-pull'">Push-pull</button>
+      <button type="button" @click="preset('sudden-with-straining')" :aria-pressed="active === 'sudden-with-straining'">Sudden, straining</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The aeroplane pulls the same +3.5 g every time; what changes is how much your eyes lose. The reflexes that speed the heart and tighten the vessels take several seconds, so a sudden pull greys you out where a gradual one does not, and after a pushover they point the wrong way, so the same +3.5 g goes much further: the push-pull effect. The stage bands are the lesson's approximate figures for a relaxed person; the size and timing of the reflex help and of straining are illustrative.</p>
+  <details class="widget-try"><summary>Try it: recovering from a spiral dive, why does the lesson say "ease out" rather than "pull out"?</summary><p>Compare Gradual with Sudden: the same +3.5 g reached over ten seconds leaves your vision clear, because the reflexes keep pace. Hauled in a second, the pressure at eye level falls before they act and the view greys and narrows, just as the ground is rushing up.</p></details>
+  <details class="widget-try"><summary>Try it: a down-gust lifts you against the harness, then you pull hard. Why is that worse than the pull alone?</summary><p>Choose Push-pull: during the negative g the high head pressure slows the heart and relaxes the vessels. The pull then meets defences pointing the wrong way, and the same +3.5 g that only greyed you from level flight now blacks you out. Do not follow negative g with a hard pull.</p></details>
+</div>

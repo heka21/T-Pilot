@@ -1,0 +1,137 @@
+<div class="widget" x-data="widget({
+  airac: true, today: 50, upd: 7,
+  // PFRA 2.1: the AIP is amended on the AIRAC cycle, a fixed 28-day schedule of effective dates. The four changes and
+  // the days they are ready are illustrative; only the 28 days comes from the lesson.
+  list: [
+    { name: 'frequency change', ready: 9 },
+    { name: 'new restricted area', ready: 38 },
+    { name: 'runway shortened', ready: 47 },
+    { name: 'boundary moved', ready: 95 },
+  ],
+  X(d) { return 40 + d * 4 },
+  // on the AIRAC cycle a change waits for the next effective date; otherwise it applies the day it is ready
+  eff(i) { const r = this.list[i].ready; return this.airac ? Math.ceil(r / 28) * 28 : r },
+  live(i) { return this.eff(i) <= this.today },
+  get bDay() { return Math.max(0, this.today - this.upd) },
+  get inForce() { return [0, 1, 2, 3].filter((i) => this.live(i)).length },
+  // changes that took effect after B last updated: B's charts do not show them
+  get missed() { return [0, 1, 2, 3].filter((i) => this.eff(i) > this.bDay && this.eff(i) <= this.today).map((i) => this.list[i].name) },
+  get lastAirac() { return Math.floor(this.today / 28) * 28 },
+  get nextAirac() { return Math.floor(this.today / 28) * 28 + 28 },
+  get next() { const n = [0, 1, 2, 3].map((i) => this.eff(i)).filter((d) => d > this.today).sort((a, b) => a - b); return n.length ? n[0] : null },
+  get nextText() {
+    if (this.next === null) return 'none of these four';
+    return 'day ' + this.next + ' (in ' + (this.next - this.today) + (this.next - this.today === 1 ? ' day' : ' days') + ')' + (this.airac ? ', an AIRAC date' : ', whenever it is ready');
+  },
+  get bText() { return this.missed.length ? 'Out of date: missing the ' + this.missed.join(' and the ') : 'Current: same version as A' },
+  get knowText() {
+    if (!this.airac) return 'No: a change could have landed on any day since';
+    return this.bDay < this.lastAirac ? 'Yes: an AIRAC date (day ' + this.lastAirac + ') has passed since' : 'Yes: no AIRAC date since B updated';
+  },
+  get caption() {
+    if (this.airac && this.missed.length) return 'An AIRAC date, day ' + this.lastAirac + ', has passed since B last updated, so B is a cycle behind. Every pilot and controller switched to the new information at the same, known moment; B only had to update for it.';
+    if (this.airac) return 'Changes that are ready wait for the next AIRAC date, day ' + this.nextAirac + '. Between AIRAC dates nothing in the AIP changes, so a pilot whose charts are from the current cycle knows they are current.';
+    if (this.missed.length) return 'With changes taking effect the day each is ready, the ' + this.missed.join(' and the ') + ' came in since B updated ' + this.upd + (this.upd === 1 ? ' day' : ' days') + ' ago. A and B are now flying to different versions of the same airspace, and nothing told B.';
+    return 'Changes taking effect the day each is ready: A and B happen to match today, but a change could land tomorrow, on any day, and nobody could be sure their charts were current.';
+  },
+  presets: {
+    'mid-cycle-week-old': { airac: true, today: 50, upd: 7 },
+    'random-dates-week-old': { airac: false, today: 50, upd: 7 },
+    'new-cycle-day': { airac: true, today: 56, upd: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 284" role="img" aria-labelledby="acs-title" class="widget-stage">
+    <title id="acs-title">A time line of 140 days with an AIRAC effective date every 28 days. Four changes to the AIP each become ready on some day; on the AIRAC cycle each waits, shown by an arrow, until the next AIRAC date, and without it each takes effect the day it is ready. A marker shows today and another the day pilot B last updated their charts, and two cards below say whether pilot A, updated today, and pilot B are on the same version</title>
+    <defs>
+      <marker id="acs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--color-brand)"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="284" fill="var(--color-surface-2)" rx="10"/>
+    <text x="16" y="22" font-size="13" font-weight="700" fill="var(--color-fg)" x-text="airac ? 'Changes take effect on AIRAC dates, every 28 days' : 'Changes take effect the day each one is ready'"></text>
+    <!-- B's window: changes that took effect after B last updated -->
+    <rect y="52" height="118" :x="X(bDay)" :width="X(today) - X(bDay)" :fill="missed.length ? 'var(--color-bad)' : 'var(--color-ok)'" fill-opacity="0.14"/>
+    <!-- AIRAC effective dates -->
+    <g stroke-width="1.5" :stroke="airac ? 'var(--color-brand)' : 'var(--color-line)'" stroke-dasharray="5 4">
+      <line x1="40" y1="52" x2="40" y2="170"/><line x1="152" y1="52" x2="152" y2="170"/><line x1="264" y1="52" x2="264" y2="170"/>
+      <line x1="376" y1="52" x2="376" y2="170"/><line x1="488" y1="52" x2="488" y2="170"/><line x1="600" y1="52" x2="600" y2="170"/>
+    </g>
+    <g font-size="11" font-weight="600" text-anchor="middle" :fill="airac ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">
+      <text x="40" y="46">AIRAC</text><text x="152" y="46">AIRAC</text><text x="264" y="46">AIRAC</text>
+      <text x="376" y="46">AIRAC</text><text x="488" y="46">AIRAC</text><text x="600" y="46" text-anchor="end">AIRAC</text>
+    </g>
+    <!-- the axis -->
+    <line x1="40" y1="170" x2="600" y2="170" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <g font-size="11" class="num" text-anchor="middle" fill="var(--color-fg-muted)">
+      <text x="40" y="186">day 0</text><text x="152" y="186">28</text><text x="264" y="186">56</text>
+      <text x="376" y="186">84</text><text x="488" y="186">112</text><text x="600" y="186" text-anchor="end">140</text>
+    </g>
+    <!-- B's last update and today, under the change labels -->
+    <line y1="56" y2="176" stroke="var(--color-fg-muted)" stroke-width="2" :x1="X(bDay)" :x2="X(bDay)"/>
+    <line y1="56" y2="176" stroke="var(--color-fg)" stroke-width="2.5" :x1="X(today)" :x2="X(today)"/>
+    <!-- the four changes: ready (hollow) and in effect (filled), with the wait between as an arrow -->
+    <g font-size="11" paint-order="stroke" stroke-linejoin="round">
+      <line y1="72" y2="72" stroke="var(--color-brand)" stroke-width="1.5" marker-end="url(#acs-arrow)" :x1="X(list[0].ready) + 5" :x2="X(eff(0)) - 6" :opacity="airac ? 1 : 0"/>
+      <circle cy="72" r="4.5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" :cx="X(list[0].ready)"/>
+      <circle cy="72" r="5.5" stroke-width="1.5" :cx="X(eff(0))" :fill="live(0) ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)"/>
+      <text y="76" fill="var(--color-fg)" stroke="var(--color-surface-2)" stroke-width="4" :x="X(eff(0)) + 10" x-text="list[0].name"></text>
+      <line y1="96" y2="96" stroke="var(--color-brand)" stroke-width="1.5" marker-end="url(#acs-arrow)" :x1="X(list[1].ready) + 5" :x2="X(eff(1)) - 6" :opacity="airac ? 1 : 0"/>
+      <circle cy="96" r="4.5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" :cx="X(list[1].ready)"/>
+      <circle cy="96" r="5.5" stroke-width="1.5" :cx="X(eff(1))" :fill="live(1) ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)"/>
+      <text y="100" fill="var(--color-fg)" stroke="var(--color-surface-2)" stroke-width="4" :x="X(eff(1)) + 10" x-text="list[1].name"></text>
+      <line y1="120" y2="120" stroke="var(--color-brand)" stroke-width="1.5" marker-end="url(#acs-arrow)" :x1="X(list[2].ready) + 5" :x2="X(eff(2)) - 6" :opacity="airac ? 1 : 0"/>
+      <circle cy="120" r="4.5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" :cx="X(list[2].ready)"/>
+      <circle cy="120" r="5.5" stroke-width="1.5" :cx="X(eff(2))" :fill="live(2) ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)"/>
+      <text y="124" fill="var(--color-fg)" stroke="var(--color-surface-2)" stroke-width="4" :x="X(eff(2)) + 10" x-text="list[2].name"></text>
+      <line y1="144" y2="144" stroke="var(--color-brand)" stroke-width="1.5" marker-end="url(#acs-arrow)" :x1="X(list[3].ready) + 5" :x2="X(eff(3)) - 6" :opacity="airac ? 1 : 0"/>
+      <circle cy="144" r="4.5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" :cx="X(list[3].ready)"/>
+      <circle cy="144" r="5.5" stroke-width="1.5" :cx="X(eff(3))" :fill="live(3) ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)"/>
+      <text y="148" fill="var(--color-fg)" stroke="var(--color-surface-2)" stroke-width="4" :x="X(eff(3)) + 10" x-text="list[3].name"></text>
+    </g>
+    <!-- B's last update and today -->
+    <text y="204" font-size="12" font-weight="700" fill="var(--color-fg)" text-anchor="start" :x="clamp(X(today) - 4, 40, 560)" x-text="'today, day ' + today"></text>
+    <text y="204" font-size="11" fill="var(--color-fg-muted)" text-anchor="end" :x="clamp(X(bDay) - 8, 120, 600)" :opacity="upd >= 3 ? 1 : 0">B updated</text>
+    <!-- the two pilots' charts -->
+    <g transform="translate(16 220)">
+      <rect x="0" y="0" width="296" height="52" rx="8" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.5"/>
+      <text x="12" y="20" font-size="12" font-weight="700" fill="var(--color-ok-fg)">Pilot A: charts updated today</text>
+      <text x="12" y="40" font-size="12" fill="var(--color-ok-fg)" x-text="inForce + ' of 4 changes shown'"></text>
+    </g>
+    <g transform="translate(328 220)">
+      <rect x="0" y="0" width="296" height="52" rx="8" stroke-width="1.5" :fill="missed.length ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="missed.length ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <text x="12" y="20" font-size="12" font-weight="700" :fill="missed.length ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="'Pilot B: charts ' + upd + (upd === 1 ? ' day' : ' days') + ' old'"></text>
+      <text x="12" y="40" font-size="12" :fill="missed.length ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="missed.length ? 'a different version: ' + missed.length + ' missing' : 'the same version as A'"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="acs-airac" class="cursor-pointer"><span>Amend on the AIRAC cycle (every 28 days)</span>
+        <input type="checkbox" id="acs-airac" x-model="airac" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="acs-today">Today <output for="acs-today" x-text="'day ' + today"></output></label>
+      <input type="range" id="acs-today" min="1" max="140" step="1" x-model.number="today">
+    </div>
+    <div class="widget-control">
+      <label for="acs-upd">Pilot B last updated <output for="acs-upd" x-text="upd + (upd === 1 ? ' day ago' : ' days ago')"></output></label>
+      <input type="range" id="acs-upd" min="1" max="28" step="1" x-model.number="upd">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Changes in force today</dt><dd class="widget-value num" x-text="inForce + ' of 4'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Next change takes effect</dt><dd class="widget-value" x-text="nextText"></dd></div>
+    <div class="widget-readout" :class="missed.length ? 'bad' : 'ok'"><dt class="widget-label">Pilot B's charts</dt><dd class="widget-value"><span x-text="bText"></span><span class="widget-flag bad" x-show="missed.length">wrong but looks right</span></dd></div>
+    <div class="widget-readout" :class="airac ? 'ok' : 'warn'"><dt class="widget-label">Can B tell from the date alone?</dt><dd class="widget-value" x-text="knowText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('mid-cycle-week-old')" :aria-pressed="active === 'mid-cycle-week-old'">AIRAC, mid-cycle</button>
+      <button type="button" @click="preset('random-dates-week-old')" :aria-pressed="active === 'random-dates-week-old'">Random dates, same day</button>
+      <button type="button" @click="preset('new-cycle-day')" :aria-pressed="active === 'new-cycle-day'">A new cycle starts</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> On the AIRAC cycle a change that is ready waits for the next 28-day effective date, so between AIRAC dates nothing changes: everyone switches at the same known moment, and charts from the current cycle are current. If changes took effect the day each was ready, two pilots a week apart could be flying to different versions of the same airspace without knowing it. The four changes and their days are illustrative; only the 28-day cycle is from the lesson.</p>
+  <details class="widget-try"><summary>Try it: on day 50, pilot B's charts are a week old. Are they current?</summary><p>Choose AIRAC, mid-cycle: yes. The last AIRAC date was day 28, B updated on day 43, and the restricted area and the runway change are waiting for day 56. Now choose Random dates, same day: the runway change took effect on day 47, so B's charts show a runway that is no longer there.</p></details>
+  <details class="widget-try"><summary>Try it: B updated yesterday, and today is an AIRAC date. Why is B a cycle behind?</summary><p>Choose A new cycle starts: two changes took effect this morning, day 56, together with everyone else's. B's charts from yesterday are from the old cycle, which is why you check the effective date of your AIP and ERSA, then the NOTAMs, before each flight.</p></details>
+</div>

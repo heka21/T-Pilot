@@ -1,0 +1,121 @@
+<div class="widget" x-data="widget({
+  v: 125, u: 19,
+  // BAKC 6.3: a rising gust adds angle of attack (about the gust speed ÷ your airspeed) and the lift it makes goes with
+  // V², so the extra load grows in proportion to airspeed. Stall 52 kt (VA = 52 × √3.8 ≈ 101 kt), +3.8 g limit, 5.7 g
+  // ultimate, from the lesson. Illustrative wing: CL ∝ (α + 2°) up to the 16° critical angle. VNO 125 kt and VNE 160 kt are
+  // the example speeds of the lesson's ASI diagram, and the 19 kt gust is shaped to stay just inside +3.8 g at VNO and cross it beyond.
+  vs: 52, vno: 125, vne: 160,
+  get a1() { return -2 + 18 * (this.vs / this.v) ** 2 },
+  get da() { return Math.atan(this.u / this.v) * 180 / Math.PI },
+  get a2() { return this.a1 + this.da },
+  get stalls() { return this.a2 > 16 },
+  get nMax() { return (this.v / this.vs) ** 2 },
+  get n() { return this.stalls ? this.nMax : 1 + this.da / (this.a1 + 2) },
+  get va() { return this.vs * Math.sqrt(3.8) },
+  get status() {
+    if (this.stalls) return { s: 'warn', t: 'Wing stalls for a moment', f: 'load capped' };
+    if (this.n > 5.7) return { s: 'bad', t: 'Past the ultimate load', f: 'may fail' };
+    if (this.n > 3.8) return { s: 'bad', t: 'Past the limit load', f: 'may bend' };
+    return { s: 'ok', t: 'Within the limit', f: '' };
+  },
+  get arc() { return this.v > this.vne ? 'beyond VNE' : this.v > this.vno ? 'yellow arc' : this.v > this.va + 0.5 ? 'green arc, above VA' : 'at or below VA' },
+  // picture: wing section centred at (120, 140), chord 190, leading edge on the right; the airflow triangle to its right:
+  // your airspeed from A (630, 196) back to B, the gust up from B to C, 2 px per knot
+  C: 190,
+  yt(x) { return 0.6 * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1015 * x ** 4) },
+  yc(x) { return x < 0.4 ? 0.04 / 0.16 * (0.8 * x - x * x) : 0.04 / 0.36 * (0.2 + 0.8 * x - x * x) },
+  get foil() {
+    const pts = [];
+    for (let i = 0; i <= 30; i++) { const x = (1 - Math.cos(Math.PI * i / 30)) / 2; pts.push([(0.5 - x) * this.C, -(this.yc(x) + this.yt(x)) * this.C]) }
+    for (let i = 29; i >= 0; i--) { const x = (1 - Math.cos(Math.PI * i / 30)) / 2; pts.push([(0.5 - x) * this.C, -(this.yc(x) - this.yt(x)) * this.C]) }
+    return this.path(pts.reverse()) + ' Z';
+  },
+  get B() { return { x: 630 - this.v * 2, y: 196 } },
+  get Cpt() { return { x: this.B.x, y: 196 - this.u * 2 } },
+  // load factor bar: 0 to 6 g across x 60..600
+  G(n) { return 60 + this.clamp(n, 0, 6) / 6 * 540 },
+  get caption() {
+    if (this.stalls) return 'Slow enough that the gust pushes the wing past its critical angle: it stalls for a moment, and the stall caps the load at or below the limit. That is why you slow to VB or the POH speed near VA in turbulence.';
+    if (this.n > 3.8) return 'Fast, so the same rising air adds a smaller angle, but the lift it makes goes with V²: the load jumps past the 3.8 g limit. Above VNO the design gusts are no longer covered.';
+    return 'The rising air comes at the wing from slightly below, so the angle of attack jumps for an instant and so does the lift. The faster you fly, the more load the same gust adds.';
+  },
+  presets: {
+    'same-gust-70kt': { v: 70, u: 6 },
+    'same-gust-140kt': { v: 140, u: 6 },
+    'design-gust-at-vno': { v: 125, u: 19 },
+    'yellow-arc-gust': { v: 150, u: 19 },
+    'slowed-to-va': { v: 101, u: 19 },
+    'strong-gust-at-va': { v: 101, u: 30 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="gaa-title" class="widget-stage">
+    <title id="gaa-title">A wing section meeting the relative airflow, a rising gust adding to it from below so the angle of attack jumps, and a bar showing the load factor that results against the limit and ultimate loads</title>
+    <defs>
+      <marker id="gaa-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- the wing, at its cruise angle of attack -->
+    <g :transform="'translate(120 140) rotate(' + (-a1) + ')'">
+      <path :d="foil" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="-95" y1="0" x2="125" y2="0" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    </g>
+    <!-- airflow at the wing during the gust: from ahead and below -->
+    <g stroke="var(--color-brand)" stroke-width="1.5" marker-end="url(#gaa-arrow)" stroke-linecap="round">
+      <line x1="290" :y1="110 + 65 * Math.tan(da * Math.PI / 180)" x2="225" y2="110"/>
+      <line x1="290" :y1="150 + 65 * Math.tan(da * Math.PI / 180)" x2="225" y2="150"/>
+    </g>
+    <!-- the airflow triangle: your airspeed + the gust = the airflow the wing meets -->
+    <line stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#gaa-arrow)" x1="630" y1="196" :x2="B.x + 4" y2="196"/>
+    <text font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" y="214" :x="(630 + B.x) / 2" x-text="'your airspeed ' + v + ' kt'"></text>
+    <line stroke="var(--color-warn)" stroke-width="2.5" marker-end="url(#gaa-arrow)" :x1="B.x" y1="196" :x2="Cpt.x" :y2="Cpt.y + 4" x-show="u > 1"/>
+    <text font-size="12" font-weight="700" fill="var(--color-warn-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="B.x - 12" :y="(196 + Cpt.y) / 2 + 4" x-text="'gust ' + u + ' kt up'"></text>
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#gaa-arrow)" x1="630" y1="196" :x2="Cpt.x + 4" :y2="Cpt.y + 0.5"/>
+    <text font-size="12" font-weight="700" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x="630" text-anchor="end" :y="Cpt.y - 12">airflow the wing meets</text>
+    <text x="290" y="92" font-size="12" text-anchor="end" fill="var(--color-brand-fg)">in the gust</text>
+    <text x="120" y="206" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)" x-show="stalls">stalled for a moment</text>
+    <text x="16" y="24" font-size="13" font-weight="700" fill="var(--color-fg)" x-text="'Angle of attack ' + fmt(a1, 1) + '° → ' + fmt(Math.min(a2, 99), 1) + '°'"></text>
+    <text x="16" y="42" font-size="12" fill="var(--color-fg-muted)" x-text="arc"></text>
+    <!-- load factor bar -->
+    <rect x="60" y="250" width="540" height="16" rx="4" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect :x="G(3.8)" y="250" :width="G(5.7) - G(3.8)" height="16" fill="var(--color-warn)" fill-opacity="0.25"/>
+    <rect :x="G(5.7)" y="250" :width="600 - G(5.7)" height="16" fill="var(--color-bad)" fill-opacity="0.25"/>
+    <rect x="60" y="253" height="10" rx="3" :width="G(n) - 60" :fill="status.s === 'bad' ? 'var(--color-bad)' : status.s === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    <g font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" class="num">
+      <text :x="G(1)" y="284">1 g</text><text :x="G(3.8)" y="284">3.8 limit</text><text :x="G(5.7)" y="284">5.7 ultimate</text>
+    </g>
+    <line :x1="G(1)" :x2="G(1)" y1="246" y2="270" stroke="var(--color-fg)" stroke-width="1"/>
+    <line :x1="G(3.8)" :x2="G(3.8)" y1="246" y2="270" stroke="var(--color-warn)" stroke-width="2"/>
+    <line :x1="G(5.7)" :x2="G(5.7)" y1="246" y2="270" stroke="var(--color-bad)" stroke-width="2"/>
+    <text x="56" y="263" font-size="12" text-anchor="end" fill="var(--color-fg)" font-weight="700">load</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gaa-v">Airspeed <output for="gaa-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="gaa-v" min="60" max="165" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="gaa-u">Rising gust <output for="gaa-u" x-text="u + ' kt'"></output></label>
+      <input type="range" id="gaa-u" min="0" max="35" step="1" x-model.number="u">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="status.s"><dt class="widget-label">Load factor in the gust</dt><dd class="widget-value"><span x-text="fmt(n, 2) + ' g'"></span><span class="widget-flag" :class="status.s" x-show="status.f" x-text="status.f"></span></dd></div>
+    <div class="widget-readout" :class="status.s"><dt class="widget-label">Structure</dt><dd class="widget-value text-sm" x-text="status.t"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Most the wing can make here</dt><dd class="widget-value" x-text="fmt(nMax, 1) + ' g before it stalls'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('same-gust-70kt')" :aria-pressed="active === 'same-gust-70kt'">6 kt gust at 70</button>
+      <button type="button" @click="preset('same-gust-140kt')" :aria-pressed="active === 'same-gust-140kt'">Same gust at 140</button>
+      <button type="button" @click="preset('design-gust-at-vno')" :aria-pressed="active === 'design-gust-at-vno'">At VNO</button>
+      <button type="button" @click="preset('yellow-arc-gust')" :aria-pressed="active === 'yellow-arc-gust'">Yellow arc</button>
+      <button type="button" @click="preset('slowed-to-va')" :aria-pressed="active === 'slowed-to-va'">Slowed to VA</button>
+      <button type="button" @click="preset('strong-gust-at-va')" :aria-pressed="active === 'strong-gust-at-va'">Strong gust at VA</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A rising gust tilts the airflow so it meets the wing from slightly below: the angle of attack, and the lift, jump. The extra load is in proportion to your airspeed, so the same bump at twice the speed adds twice the g. Slow, a strong gust stalls the wing for a moment instead, and the stall caps the load. The 52 kt stall, 3.8 g limit and 5.7 g ultimate are the lesson's; VNO 125 kt and VNE 160 kt are the lesson's example ASI speeds; the wing and the gust sizes are schematic. The 19 kt gust is not a certification figure: it is sized so that the load just reaches +3.8 g at VNO, as the lesson's gust diagram draws the design gust.</p>
+  <details class="widget-try"><summary>Try it: the same 6 kt gust at 70 kt and at 140 kt. How much more load at the higher speed?</summary><p>Press 6 kt gust at 70: about +0.5 g. Press Same gust at 140: about +1.0 g. Twice the speed, twice the extra load, even though the angle of attack jumps by less.</p></details>
+  <details class="widget-try"><summary>Try it: you are in the yellow arc when the air turns rough. What happens to the load, and what do you do?</summary><p>Press Yellow arc: the gust takes the wing past +3.8 g, into the band where the structure can bend permanently. Press Slowed to VA: the same gust is back inside the limit, and a stronger one (Strong gust at VA) only stalls the wing for a moment. Slow to VB or the POH turbulence speed.</p></details>
+</div>

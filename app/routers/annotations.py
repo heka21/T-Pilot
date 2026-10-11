@@ -134,5 +134,5 @@ def my_notes(request: Request, session: Session = Depends(get_session)) -> HTMLR
 
 @router.get("/my-notes/export.json")
 def export_notes(session: Session = Depends(get_session)) -> JSONResponse:
-    filename = f"casa-theory-notes-{date.today().isoformat()}.json"
+    filename = f"t-pilot-notes-{date.today().isoformat()}.json"
     return JSONResponse(svc.export_all(session), headers={"Content-Disposition": f'attachment; filename="{filename}"'})

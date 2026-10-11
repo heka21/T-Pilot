@@ -1,0 +1,173 @@
+<div class="widget" x-data="widget({
+  cls: 'G', alt: 2500, dx: 1000, base: 2000, depth: 1500, gnd: 100, vis: 8000, drag: '',
+  // the picture is to scale in both directions: 0.136 px per metre, so 0.04145 px per foot. The aeroplane is enlarged.
+  k: 0.136,
+  Y(ft) { return 270 - ft * 0.04145 },
+  ftAt(y) { return (270 - y) / 0.04145 },
+  x0: 360, cw: 1200,
+  get x1() { return this.x0 + this.cw * this.k },
+  get top() { return this.base + this.depth },
+  get px() { return this.x0 - this.dx * this.k },
+  // Class G: the lower band reaches 3,000 ft AMSL or 1,000 ft AGL, whichever is higher (RFRC 2.3)
+  get gLine() { return Math.max(3000, this.gnd + 1000) },
+  get low() { return this.cls === 'G' && this.alt <= this.gLine },
+  // minima below 10,000 ft (RFRC 2.3 table, PFRA 2.6): horizontal m, ft above cloud, ft below cloud
+  get H() { return this.low ? 0 : this.cls === 'D' ? 600 : 1500 },
+  get A() { return this.low ? 0 : 1000 },
+  get B() { return this.low ? 0 : this.cls === 'D' ? 500 : 1000 },
+  get band() { return this.cls === 'G' ? (this.low ? 'Class G, low' : 'Class G, high') : 'Class ' + this.cls },
+  get minima() { return this.low ? 'Clear of cloud, in sight of ground' : this.cls === 'D' ? '600 m; 1,000 ft above, 500 ft below' : '1,500 m; 1,000 ft above and below' },
+  // where you are relative to the cloud
+  get hGap() { return Math.max(0, this.dx) },
+  get over() { return this.alt > this.top },
+  get under() { return this.alt < this.base },
+  get vGap() { return this.over ? this.alt - this.top : this.under ? this.base - this.alt : 0 },
+  get vNeed() { return this.over ? this.A : this.B },
+  get inCloud() { return this.dx <= 0 && !this.over && !this.under },
+  get hOk() { return this.low ? !this.inCloud : this.hGap >= this.H },
+  get vOk() { return this.low ? !this.inCloud : (this.over || this.under) && this.vGap >= this.vNeed },
+  get visOk() { return this.vis >= 5000 },
+  get clearOk() { return this.hOk || this.vOk },
+  get vmc() { return this.clearOk && this.visOk },
+  get box() { return { x: this.x0 - this.H * this.k, y: this.Y(this.top + this.A), w: (this.cw + 2 * this.H) * this.k, h: this.Y(this.base - this.B) - this.Y(this.top + this.A) } },
+  get cloud() {
+    const a = this.x0, b = this.x1, w = b - a, yb = this.Y(this.base), yt = this.Y(this.top), h = yb - yt;
+    const p = [[a, yb], [a + 0.2 * w, yt + 0.42 * h], [a + 0.48 * w, yt], [a + 0.8 * w, yt + 0.3 * h], [b, yb]];
+    let d = 'M' + a + ' ' + yb;
+    for (let i = 1; i < p.length; i++) { const r = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) * 0.62; d += ' A' + r.toFixed(1) + ' ' + r.toFixed(1) + ' 0 0 1 ' + p[i][0].toFixed(1) + ' ' + p[i][1].toFixed(1) }
+    return d + ' Z';
+  },
+  move(e) {
+    if (!this.drag || !this.$refs.stage.getScreenCTM) return;
+    const svg = this.$refs.stage, pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    if (this.drag === 'plane') {
+      this.dx = this.clamp(Math.round((this.x0 - p.x) / this.k / 50) * 50, -1100, 2000);
+      this.alt = this.clamp(Math.round(this.ftAt(p.y) / 100) * 100, 500, 5800);
+    } else {
+      this.base = this.clamp(Math.round((this.ftAt(p.y) - this.depth / 2) / 100) * 100, 1000, 4500);
+    }
+    this.active = null;
+  },
+  grab(e, what) { this.drag = what; if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId) },
+  presets: {
+    'pinjarra-class-g-low': { cls: 'G', alt: 2500, dx: 1000, base: 2000, depth: 1500, gnd: 100, vis: 8000 },
+    'same-spot-class-e': { cls: 'E', alt: 2500, dx: 1000, base: 2000, depth: 1500, gnd: 100, vis: 8000 },
+    'class-c-1500m': { cls: 'C', alt: 2500, dx: 1500, base: 2000, depth: 1500, gnd: 100, vis: 8000 },
+    'class-d-600m': { cls: 'D', alt: 2500, dx: 600, base: 2000, depth: 1500, gnd: 100, vis: 8000 },
+    'class-d-500ft-below': { cls: 'D', alt: 1500, dx: -400, base: 2000, depth: 1500, gnd: 100, vis: 8000 },
+    'bunbury-above-the-tops': { cls: 'G', alt: 4500, dx: -400, base: 2500, depth: 1000, gnd: 100, vis: 8000 },
+  },
+})">
+  <svg x-ref="stage" viewBox="0 0 640 284" role="img" aria-labelledby="vmp-title" class="widget-stage"
+    @pointermove="move($event)" @pointerup="drag = ''" @pointercancel="drag = ''">
+    <title id="vmp-title">Side view drawn to scale of an aeroplane near a cumulus cloud, with the keep-out box the VMC minima for the chosen class of airspace draw around the cloud: the horizontal distance in metres and the vertical distances above and below in feet</title>
+    <defs><marker id="vmp-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="640" height="284" fill="var(--color-sky-soft)" rx="10"/>
+    <!-- altitude scale -->
+    <g font-size="12" fill="var(--color-fg-faint)" class="num">
+      <text x="8" y="20">ft AMSL</text>
+      <text x="8" y="233">1,000</text><text x="8" y="191">2,000</text><text x="8" y="150">3,000</text>
+      <text x="8" y="108">4,000</text><text x="8" y="67">5,000</text>
+    </g>
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="44" x2="52" y1="229" y2="229"/><line x1="44" x2="52" y1="187" y2="187"/><line x1="44" x2="52" y1="146" y2="146"/>
+      <line x1="44" x2="52" y1="104" y2="104"/><line x1="44" x2="52" y1="63" y2="63"/>
+    </g>
+    <!-- ground -->
+    <rect x="0" width="640" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" :y="Y(gnd)" :height="284 - Y(gnd)"/>
+    <!-- Class G: the line between the two bands -->
+    <g x-show="cls === 'G'">
+      <line x1="52" x2="640" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="6 4" :y1="Y(gLine)" :y2="Y(gLine)"/>
+      <text x="60" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :y="Y(gLine) - 6"
+        x-text="gLine > 3000 ? fmt(gLine) + ' ft: 1,000 ft AGL is higher than 3,000 ft AMSL' : '3,000 ft AMSL (higher than 1,000 ft AGL here)'"></text>
+    </g>
+    <!-- keep-out box around the cloud -->
+    <rect stroke-width="1.5" stroke-dasharray="6 4" rx="4" x-show="!low" :x="box.x" :y="box.y" :width="box.w" :height="box.h"
+      :fill="clearOk ? 'var(--color-warn)' : 'var(--color-bad)'" fill-opacity="0.12" :stroke="clearOk ? 'var(--color-warn)' : 'var(--color-bad)'"/>
+    <!-- the cloud (drag it up and down) -->
+    <path fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round" :d="cloud"
+      style="cursor: ns-resize; touch-action: none" @pointerdown.prevent="grab($event, 'cloud')"/>
+    <text font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" :x="(x0 + x1) / 2" :y="Y(base) - 8" x-text="'base ' + fmt(base)"></text>
+    <!-- dimensions of the keep-out box -->
+    <line stroke="var(--color-warn)" stroke-width="1.25" marker-start="url(#vmp-arrow)" marker-end="url(#vmp-arrow)" x-show="!low && H > 0" :x1="x0 - H * k + 2" :x2="x0 - 2" :y1="Y(base - B) + 8" :y2="Y(base - B) + 8"/>
+    <g x-show="!low" font-size="12" class="num" font-weight="600" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">
+      <text text-anchor="middle" :x="x0 - H * k / 2" :y="Y(base - B) + 24" x-text="fmt(H) + ' m'"></text>
+      <text text-anchor="middle" :x="(x0 + x1) / 2" :y="Y(top + A / 2) + 4" x-text="fmt(A) + ' ft above'"></text>
+      <text :x="x1 + 6" :y="Y(base - B / 2) + 4" x-text="fmt(B) + ' ft below'"></text>
+    </g>
+    <!-- you: drag the aeroplane -->
+    <g :transform="'translate(' + px + ' ' + Y(alt) + ')'" style="cursor: grab; touch-action: none" @pointerdown.prevent="grab($event, 'plane')">
+      <circle r="30" fill="var(--color-brand)" fill-opacity="0.001"/>
+      <g transform="translate(0 0) rotate(0) scale(0.45)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-brand)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-brand)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="12" class="num" font-weight="600" :x="px - 38 < 70 ? px + 20 : px - 38" :y="Y(alt) + 4" :text-anchor="px - 38 < 70 ? 'start' : 'end'" :fill="vmc ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'"
+      paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" x-text="fmt(alt) + ' ft'"></text>
+    <!-- verdict -->
+    <text x="628" y="24" font-size="16" font-weight="700" text-anchor="end" :fill="vmc ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="band + ': ' + (vmc ? 'VMC' : 'not VMC')"></text>
+    <text x="628" y="276" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">to scale; aeroplane enlarged. Drag the aeroplane or the cloud.</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vmp-cls">Airspace class (below 10,000 ft)</label>
+      <select id="vmp-cls" class="input" x-model="cls" @change="active = null">
+        <option value="C">Class C</option>
+        <option value="D">Class D</option>
+        <option value="E">Class E</option>
+        <option value="G">Class G</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="vmp-alt">Your altitude <output for="vmp-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="vmp-alt" min="500" max="5800" step="100" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="vmp-dx">Horizontally from the cloud <output for="vmp-dx" x-text="dx > 0 ? fmt(dx) + ' m' : 'over or under it'"></output></label>
+      <input type="range" id="vmp-dx" min="-1100" max="2000" step="50" x-model.number="dx">
+    </div>
+    <div class="widget-control">
+      <label for="vmp-base">Cloud base <output for="vmp-base" x-text="fmt(base) + ' ft, tops ' + fmt(top) + ' ft'"></output></label>
+      <input type="range" id="vmp-base" min="1000" max="4500" step="100" x-model.number="base">
+    </div>
+    <div class="widget-control" x-show="cls === 'G'">
+      <label for="vmp-gnd">Ground elevation <output for="vmp-gnd" x-text="fmt(gnd) + ' ft'"></output></label>
+      <input type="range" id="vmp-gnd" min="0" max="3000" step="100" x-model.number="gnd">
+    </div>
+    <div class="widget-control">
+      <label for="vmp-vis">Flight visibility <output for="vmp-vis" x-text="fmt(vis) + ' m'"></output></label>
+      <input type="range" id="vmp-vis" min="1000" max="10000" step="500" x-model.number="vis">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label" x-text="'Minima, ' + band"></dt><dd class="widget-value" x-text="minima"></dd></div>
+    <div class="widget-readout" :class="hOk ? 'ok' : clearOk ? '' : 'bad'">
+      <dt class="widget-label">Horizontal from cloud</dt>
+      <dd class="widget-value" x-text="inCloud ? 'in cloud' : dx > 0 ? fmt(dx) + ' m' + (low ? '' : ' (need ' + fmt(H) + ')') : 'over or under it'"></dd>
+    </div>
+    <div class="widget-readout" :class="vOk ? 'ok' : clearOk ? '' : 'bad'">
+      <dt class="widget-label">Vertical from cloud</dt>
+      <dd class="widget-value" x-text="(over ? fmt(vGap) + ' ft above' : under ? fmt(vGap) + ' ft below' : 'level with it') + (low || !(over || under) ? '' : ' (need ' + fmt(vNeed) + ')')"></dd>
+    </div>
+    <div class="widget-readout" :class="visOk ? 'ok' : 'bad'"><dt class="widget-label">Flight visibility</dt><dd class="widget-value"><span x-text="fmt(vis) + ' m (need 5,000)'"></span></dd></div>
+    <div class="widget-readout" :class="vmc ? 'ok' : 'bad'">
+      <dt class="widget-label">Verdict</dt>
+      <dd class="widget-value"><span x-text="vmc ? 'VMC' : 'Not VMC'"></span><span class="widget-flag bad" x-show="!vmc" x-text="!visOk ? 'visibility' : inCloud ? 'in cloud' : 'too close'"></span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('pinjarra-class-g-low')" :aria-pressed="active === 'pinjarra-class-g-low'">Pinjarra, Class G</button>
+      <button type="button" @click="preset('same-spot-class-e')" :aria-pressed="active === 'same-spot-class-e'">Same spot, Class E</button>
+      <button type="button" @click="preset('class-c-1500m')" :aria-pressed="active === 'class-c-1500m'">Class C 1,500 m</button>
+      <button type="button" @click="preset('class-d-600m')" :aria-pressed="active === 'class-d-600m'">Class D 600 m</button>
+      <button type="button" @click="preset('class-d-500ft-below')" :aria-pressed="active === 'class-d-500ft-below'">Class D 500 ft below</button>
+      <button type="button" @click="preset('bunbury-above-the-tops')" :aria-pressed="active === 'bunbury-above-the-tops'">Above the tops</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Below 10,000 ft the visibility is 5,000 m everywhere; what changes is the box you must keep out of around the cloud. Class C, Class E and Class G above 3,000 ft AMSL or 1,000 ft AGL (whichever is higher): 1,500 m and 1,000 ft. Class D is smaller, 600 m, 1,000 ft above and 500 ft below, because the tower keeps IFR traffic apart from the circuit. Low in Class G there is no box at all: clear of cloud and in sight of the ground or water. You need to be outside the box, so enough distance either sideways or vertically will do. Above 10,000 ft the visibility rises to 8 km. Figures from RFRC 2.3 and PFRA 2.6; confirm them against the current VFRG.</p>
+  <details class="widget-try"><summary>Try it: at 2,500 ft near Pinjarra, 1,000 m from a cloud. VMC in Class G? In Class E?</summary><p>Press Pinjarra: at or below 3,000 ft AMSL in Class G you need only to be clear of cloud, so it is VMC. Press Same spot, Class E: the box is now 1,500 m wide, and 1,000 m puts you inside it. Not VMC.</p></details>
+  <details class="widget-try"><summary>Try it: in Class D you are 500 ft under a cloud base. Legal? What if the zone were Class C?</summary><p>Press Class D 500 ft below: exactly on the minimum, so VMC. Switch the class to C and the box grows to 1,000 ft below the base: you are 500 ft inside it, and you would have to descend another 500 ft or move 1,500 m away sideways.</p></details>
+</div>

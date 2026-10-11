@@ -572,7 +572,12 @@ function mountLessonAnnotations(host) {
   }
   const ink = new InkSurface({
     host, svg,
-    policy: () => ({ tool: lesson.prefs.tool, penDraws: lesson.prefs.penDraws, drawMode: lesson.prefs.drawMode }),
+    // Ink only while the pen tools are showing; closed (or the bar folded), the Pencil scrolls and taps like a finger.
+    policy: () => {
+      const bar = document.querySelector("[data-lesson-bar]");
+      const armed = !bar || !bar.querySelector("[data-lesson-bar-toggle]") || (bar.hasAttribute("data-open") && !bar.hasAttribute("data-collapsed"));
+      return { tool: armed ? lesson.prefs.tool : "none", penDraws: lesson.prefs.penDraws, drawMode: lesson.prefs.drawMode };
+    },
     toSurface: (cx, cy) => { const r = hostRect(); return [cx - r.left, cy - r.top]; },
     unitScale: () => 1,
     encode: (pts, colour, width, hasPressure) => {
@@ -624,7 +629,7 @@ function mountLessonAnnotations(host) {
   function setBarOpen(open) {
     lessonBar.toggleAttribute("data-open", open);
     barToggle.setAttribute("aria-expanded", String(open));
-    barToggle.title = open ? "Hide the pen tools" : "Show the pen tools";
+    barToggle.title = open ? "Hide the pen tools (the Pencil scrolls again)" : "Show the pen tools (the Pencil draws while they are open)";
     try { localStorage.setItem("inkbar:open", open ? "1" : "0"); } catch (e) {}
   }
   if (barToggle) {

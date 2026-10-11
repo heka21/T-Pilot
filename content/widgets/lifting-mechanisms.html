@@ -1,0 +1,257 @@
+<div class="widget" x-data="timeline({
+  duration: 9,
+  loop: false,
+  mech: 'convection',
+  stable: false,
+  names: { convection: 'Convection', orographic: 'Orographic', frontal: 'Frontal', convergence: 'Convergence', turbulence: 'Turbulence' },
+  // the level where the rising air reaches its dew point (picture y); lower on the hills so the cap sits on the ridge
+  get base() { return this.mech === 'orographic' ? 222 : 150 },
+  // the parcel's route, ground to above the cloud base
+  get route() {
+    const s = this.stable;
+    switch (this.mech) {
+      case 'orographic': return s ? [[30, 276], [250, 276], [330, 254], [410, 222], [470, 196], [520, 214], [600, 252]]
+                                  : [[30, 276], [250, 276], [330, 254], [410, 222], [450, 196], [462, 140], [466, 80]];
+      case 'frontal': return s ? [[620, 274], [430, 274], [372, 252], [320, 200], [250, 160], [170, 136]]
+                               : [[620, 274], [430, 274], [380, 250], [340, 205], [326, 150], [322, 70]];
+      case 'convergence': return [[600, 274], [380, 274], [340, 250], [330, 200], [330, 150], [330, s ? 128 : 80]];
+      case 'turbulence': return [[60, 282], [110, 250], [150, 266], [200, 226], [250, 244], [300, 196], [350, 214], [400, 166], [440, 150], [480, s ? 136 : 96]];
+      default: return [[210, 282], [206, 240], [214, 200], [208, 160], [210, s ? 132 : 76]];
+    }
+  },
+  along(pts, f) {
+    let L = 0; const d = [];
+    for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); d.push(l); L += l; }
+    let r = this.clamp(f, 0, 1) * L;
+    for (let i = 1; i < pts.length; i++) {
+      if (r <= d[i - 1] || i === pts.length - 1) { const k = d[i - 1] ? Math.min(1, r / d[i - 1]) : 0; return { x: this.lerp(pts[i - 1][0], pts[i][0], k), y: this.lerp(pts[i - 1][1], pts[i][1], k) }; }
+      r -= d[i - 1];
+    }
+    return { x: pts[0][0], y: pts[0][1] };
+  },
+  pf(i) { return this.clamp(this.at(0, 0.62) - i * 0.12, 0, 1) },
+  pp(i) { return this.along(this.route, this.pf(i)) },
+  above(i) { return this.pp(i).y < this.base - 1 },
+  get routeD() { return this.path(this.route) },
+  // cloud growth after the parcel reaches its dew point
+  get grow() { return this.eased(0.42, 0.92) },
+  get anvil() { return this.at(0.8, 0.95) },
+  // a cumulus heap from x0 to x1 with a flat base, grown to a fraction g of its full top
+  cu(x0, x1, base, top, g) {
+    const h = Math.max(4, (base - top) * g), w = x1 - x0, y = (k) => (base - h * k).toFixed(1), x = (k) => (x0 + w * k).toFixed(1);
+    return 'M' + x0 + ' ' + base + ' C' + (x0 - 8) + ' ' + y(0.3) + ' ' + x(0.02) + ' ' + y(0.62) + ' ' + x(0.2) + ' ' + y(0.66) +
+      ' C' + x(0.18) + ' ' + y(0.98) + ' ' + x(0.52) + ' ' + y(1.08) + ' ' + x(0.6) + ' ' + y(0.86) +
+      ' C' + x(0.72) + ' ' + y(0.98) + ' ' + x(0.98) + ' ' + y(0.86) + ' ' + x(0.86) + ' ' + y(0.58) +
+      ' C' + (x1 + 10) + ' ' + y(0.5) + ' ' + (x1 + 6) + ' ' + y(0.12) + ' ' + x1 + ' ' + base + ' Z';
+  },
+  // a flat layer centred on cx, spreading sideways as it grows
+  layerD(cx, w, top, bottom, g) {
+    const half = Math.max(6, w / 2 * g), r = (bottom - top) / 2;
+    return 'M' + (cx - half + r) + ' ' + bottom + ' L' + (cx + half - r) + ' ' + bottom + ' A' + r + ' ' + r + ' 0 0 0 ' + (cx + half - r) + ' ' + top +
+      ' L' + (cx - half + r) + ' ' + top + ' A' + r + ' ' + r + ' 0 0 0 ' + (cx - half + r) + ' ' + bottom + ' Z';
+  },
+  get cloudName() {
+    const s = this.stable;
+    return {
+      convection: s ? 'Flat Sc spreading under the lid' : 'Cu with flat bases, growing to TCu and Cb',
+      orographic: s ? 'A cap of St or Sc on the hills' : 'Towering Cu over the range',
+      frontal: s ? 'Layer cloud: As and Ns' : 'A narrow band of Cu, TCu and Cb',
+      convergence: s ? 'A flat band of layer cloud' : 'A line of Cu along the front',
+      turbulence: s ? 'A flat, lumpy sheet of St or Sc' : 'Cu growing out of the mixed layer',
+    }[this.mech];
+  },
+  get weather() { return this.stable ? 'Smooth air, steady drizzle or rain, often poor visibility' : 'Bumps, showers, good visibility between them' },
+  get where() {
+    return {
+      convection: 'A summer afternoon inland',
+      orographic: 'A moist westerly meeting the Darling Scarp',
+      frontal: 'A cold front sweeping in from the west',
+      convergence: 'The sea breeze front, a few miles inland',
+      turbulence: 'A strong wind over rough ground',
+    }[this.mech];
+  },
+  get how() {
+    return {
+      convection: 'The sun heats the ground and bubbles of warm air break away as thermals.',
+      orographic: 'The wind meets the Scarp and the air is forced up the slope.',
+      frontal: 'The cold air drives under the warm air like a snowplough and lifts it up the frontal surface.',
+      convergence: 'Cool sea air and warm land air flow together at the sea breeze front, and the air can only go up.',
+      turbulence: 'A strong wind over rough ground stirs the lowest layer and carries moist surface air up in eddies.',
+    }[this.mech];
+  },
+  steps: [{ at: 0, label: 'Air lifted' }, { at: 0.42, label: 'Dew point: cloud base' }, { at: 0.7, label: 'Stability decides' }],
+  get caption() {
+    if (this.t < 0.42) return this.how + ' Rising, it expands and cools at 3 °C per 1,000 ft while it is unsaturated.';
+    if (this.t < 0.7) return 'At the condensation level the rising air reaches its dew point and cloud forms: that level is the cloud base. Inside the cloud it cools at only about 1.5 °C per 1,000 ft, because condensation releases latent heat.';
+    return this.stable
+      ? 'Stable air: lifted only as far as it is pushed, it ends up colder than its surroundings and stops, so the cloud spreads sideways in a flat sheet.'
+      : 'Unstable air: once it is warmer than its surroundings it keeps rising on its own, so the cloud grows upwards in heaps and towers.';
+  },
+  presets: {
+    'summer-thermals': { mech: 'convection', stable: false, t: 1 },
+    'scarp-cap-cloud': { mech: 'orographic', stable: true, t: 1 },
+    'scarp-towering-cu': { mech: 'orographic', stable: false, t: 1 },
+    'cold-front-cb': { mech: 'frontal', stable: false, t: 1 },
+    'sea-breeze-cu-line': { mech: 'convergence', stable: false, t: 1 },
+    'mixed-layer-stratocumulus': { mech: 'turbulence', stable: true, t: 1 },
+    'watch-a-thermal': { mech: 'convection', stable: false, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="lfm-title" class="widget-stage">
+    <title id="lfm-title">Cross-section of one of five ways air is lifted (convection, orographic, frontal, convergence or turbulence): parcels of air rise from the ground, reach their dew point at the cloud base and build either a flat layer of cloud in stable air or heaped cumulus in unstable air</title>
+    <defs>
+      <marker id="lfm-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="340" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-sky-soft)" fill-opacity="0.55"/>
+
+    <!-- ===== convection: sun, heated paddocks, thermals ===== -->
+    <g x-show="mech === 'convection'">
+      <circle cx="64" cy="54" r="18" fill="var(--color-warn)"/>
+      <path d="M64 24 v-8 M64 84 v8 M34 54 h-8 M94 54 h8 M43 33 l-6 -6 M85 75 l6 6 M43 75 l-6 6 M85 33 l6 -6" stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round"/>
+      <rect x="0" y="290" width="640" height="50" fill="var(--color-ok-soft)"/>
+      <rect x="160" y="290" width="100" height="12" fill="var(--color-bad)" fill-opacity="0.25"/>
+      <rect x="390" y="290" width="90" height="12" fill="var(--color-bad)" fill-opacity="0.18"/>
+      <line x1="0" y1="290" x2="640" y2="290" stroke="var(--color-fg-muted)" stroke-width="2"/>
+      <text x="210" y="320" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">sun-baked paddock</text>
+      <path d="M435 282 q-6 -16 0 -30 q6 -14 0 -28" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3"/>
+      <path :d="cu(150, 270, 150, stable ? 130 : 46, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+      <path :d="cu(395, 475, 150, 104, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+      <path :d="layerD(320, 380, 126, 150, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="stable && grow > 0"/>
+    </g>
+
+    <!-- ===== orographic: the wind meets the Scarp ===== -->
+    <g x-show="mech === 'orographic'">
+      <path d="M0 290 L280 290 Q360 262 420 226 Q455 204 474 198 Q500 196 530 222 Q570 252 640 262 L640 340 L0 340 Z" fill="var(--color-ok-soft)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+      <text x="474" y="250" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">Darling Scarp</text>
+      <text x="120" y="320" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">coastal plain: stays clear</text>
+      <line x1="40" y1="268" x2="100" y2="268" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#lfm-arrow)"/>
+      <line x1="140" y1="268" x2="200" y2="268" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#lfm-arrow)"/>
+      <text x="40" y="256" font-size="12" fill="var(--color-fg-muted)">moist westerly</text>
+      <path :d="'M372 ' + base + ' L392 ' + base + ' Q440 ' + (204 - 40 * grow) + ' 474 ' + (196 - 44 * grow) + ' Q510 ' + (198 - 38 * grow) + ' 540 ' + base + ' Z'" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round" x-show="stable && grow > 0"/>
+      <path :d="cu(410, 520, base, 50, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+    </g>
+
+    <!-- ===== frontal: a cold wedge lifts the warm air ===== -->
+    <g x-show="mech === 'frontal'">
+      <rect x="0" y="290" width="640" height="50" fill="var(--color-ok-soft)"/>
+      <path d="M0 290 L0 160 Q200 172 300 212 Q356 240 392 290 Z" fill="var(--color-info)" fill-opacity="0.14"/>
+      <path d="M0 160 Q200 172 300 212 Q356 240 392 290" fill="none" stroke="var(--color-info)" stroke-width="2"/>
+      <line x1="0" y1="290" x2="640" y2="290" stroke="var(--color-fg-muted)" stroke-width="2"/>
+      <text x="90" y="232" font-size="13" fill="var(--color-info)" font-weight="600">cold air</text>
+      <line x1="150" y1="262" x2="250" y2="262" stroke="var(--color-info)" stroke-width="2" marker-end="url(#lfm-arrow)"/>
+      <text x="560" y="232" font-size="13" text-anchor="middle" fill="var(--color-warn-fg)" font-weight="600">warm, moist air</text>
+      <text x="392" y="320" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">surface front</text>
+      <path :d="cu(270, 380, 150, 66, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+      <path :d="'M' + (300 - 80 * anvil) + ' 56 L' + (350 + 80 * anvil) + ' 56 L' + (345 + 60 * anvil) + ' 70 L' + (300 - 50 * anvil) + ' 70 Z'" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round" x-show="!stable && anvil > 0"/>
+      <path :d="'M' + (340 - 240 * grow) + ' ' + (150 + 0) + ' L340 150 L' + (330 - 0) + ' 126 L' + (340 - 240 * grow) + ' ' + (110) + ' Z'" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round" x-show="stable && grow > 0"/>
+    </g>
+
+    <!-- ===== convergence: the sea breeze front ===== -->
+    <g x-show="mech === 'convergence'">
+      <rect x="0" y="290" width="200" height="50" fill="var(--color-sky-soft)"/>
+      <rect x="200" y="290" width="440" height="50" fill="var(--color-ok-soft)"/>
+      <line x1="200" y1="290" x2="640" y2="290" stroke="var(--color-fg-muted)" stroke-width="2"/>
+      <text x="100" y="320" font-size="12" text-anchor="middle" fill="var(--color-sky-fg)">Indian Ocean</text>
+      <text x="460" y="320" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">coastal plain</text>
+      <line x1="150" y1="266" x2="290" y2="266" stroke="var(--color-info)" stroke-width="2" marker-end="url(#lfm-arrow)"/>
+      <text x="150" y="254" font-size="12" fill="var(--color-info)" font-weight="600">cool sea air</text>
+      <line x1="520" y1="266" x2="380" y2="266" stroke="var(--color-warn)" stroke-width="2" marker-end="url(#lfm-arrow)"/>
+      <text x="520" y="254" font-size="12" text-anchor="end" fill="var(--color-warn-fg)" font-weight="600">warm land air</text>
+      <path :d="cu(290, 372, 150, 70, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+      <path :d="cu(392, 446, 150, 112, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+      <path :d="cu(226, 274, 150, 118, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+      <path :d="layerD(330, 220, 130, 150, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="stable && grow > 0"/>
+    </g>
+
+    <!-- ===== turbulence: strong wind over rough ground ===== -->
+    <g x-show="mech === 'turbulence'">
+      <path d="M0 290 L40 286 L70 290 L110 284 L150 290 L210 286 L260 290 L320 284 L380 290 L430 286 L480 290 L540 284 L600 290 L640 288 L640 340 L0 340 Z" fill="var(--color-ok-soft)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+      <g fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25">
+        <circle cx="90" cy="276" r="9"/><circle cx="104" cy="279" r="7"/><circle cx="300" cy="275" r="10"/><circle cx="318" cy="279" r="7"/><circle cx="520" cy="276" r="9"/><circle cx="536" cy="279" r="7"/>
+      </g>
+      <g fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" marker-end="url(#lfm-arrow)">
+        <path d="M150 230 a22 18 0 1 1 30 18"/><path d="M360 200 a24 18 0 1 1 32 18"/><path d="M540 236 a22 18 0 1 1 30 18"/>
+      </g>
+      <line x1="30" y1="76" x2="150" y2="76" stroke="var(--color-fg-muted)" stroke-width="2.5" marker-end="url(#lfm-arrow)"/>
+      <line x1="200" y1="76" x2="320" y2="76" stroke="var(--color-fg-muted)" stroke-width="2.5" marker-end="url(#lfm-arrow)"/>
+      <text x="30" y="64" font-size="12" fill="var(--color-fg-muted)">strong wind</text>
+      <text x="600" y="214" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">mixed layer</text>
+      <path :d="layerD(330, 540, 128, 150, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="stable && grow > 0"/>
+      <path :d="cu(430, 530, 150, 70, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+      <path :d="cu(170, 250, 150, 100, grow)" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" x-show="!stable && grow > 0"/>
+    </g>
+
+    <!-- the stable lid -->
+    <g x-show="stable && mech !== 'frontal' && mech !== 'orographic'">
+      <line x1="0" y1="122" x2="640" y2="122" stroke="var(--color-warn)" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="632" y="114" font-size="12" text-anchor="end" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">inversion: stable lid</text>
+    </g>
+
+    <!-- condensation level -->
+    <line x1="0" x2="640" :y1="base" :y2="base" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text font-size="12" fill="var(--color-fg-muted)" :x="mech === 'orographic' || mech === 'frontal' ? 8 : 632" :text-anchor="mech === 'orographic' || mech === 'frontal' ? 'start' : 'end'" :y="mech === 'frontal' ? base - 7 : base + 17" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">condensation level = cloud base</text>
+
+    <!-- the rising air: route and three parcels -->
+    <path :d="routeD" fill="none" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round" marker-end="url(#lfm-arrow)" opacity="0.8"/>
+    <circle r="7" :cx="pp(2).x" :cy="pp(2).y" :fill="above(2) ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)" stroke-width="2" x-show="pf(2) > 0"/>
+    <circle r="7" :cx="pp(1).x" :cy="pp(1).y" :fill="above(1) ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)" stroke-width="2" x-show="pf(1) > 0"/>
+    <circle r="8" :cx="pp(0).x" :cy="pp(0).y" :fill="above(0) ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)" stroke-width="2"/>
+
+    <!-- result label -->
+    <text x="632" y="28" font-size="15" text-anchor="end" font-weight="700" fill="var(--color-fg)" x-text="names[mech] + ' lifting'"></text>
+    <text x="632" y="47" font-size="13" text-anchor="end" fill="var(--color-brand-fg)" font-weight="600" x-show="t >= 0.7" x-text="stable ? 'stable air: layer cloud' : 'unstable air: heap cloud'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Lift the air'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="lfm-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress of the lifting">
+    <span class="widget-clock" x-text="t < 0.42 ? 'rising' : t < 0.7 ? 'cloud base' : 'cloud'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">What lifts the air</span>
+      <div class="widget-presets" role="group" aria-label="Lifting mechanism">
+        <button type="button" @click="mech = 'convection'; active = null" :aria-pressed="mech === 'convection'">Convection</button>
+        <button type="button" @click="mech = 'orographic'; active = null" :aria-pressed="mech === 'orographic'">Orographic</button>
+        <button type="button" @click="mech = 'frontal'; active = null" :aria-pressed="mech === 'frontal'">Frontal</button>
+        <button type="button" @click="mech = 'convergence'; active = null" :aria-pressed="mech === 'convergence'">Convergence</button>
+        <button type="button" @click="mech = 'turbulence'; active = null" :aria-pressed="mech === 'turbulence'">Turbulence</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <label for="lfm-stable" class="cursor-pointer"><span>Stable air (unticked: unstable)</span>
+        <input type="checkbox" id="lfm-stable" x-model="stable" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Where you see it</dt><dd class="widget-value" x-text="where"></dd></div>
+    <div class="widget-readout" :class="stable ? '' : 'warn'"><dt class="widget-label">Cloud that forms</dt><dd class="widget-value" x-text="cloudName"></dd></div>
+    <div class="widget-readout" :class="stable ? '' : 'warn'"><dt class="widget-label">Flying weather</dt><dd class="widget-value" x-text="weather"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('watch-a-thermal')" :aria-pressed="active === 'watch-a-thermal'">Watch a thermal</button>
+      <button type="button" @click="preset('summer-thermals')" :aria-pressed="active === 'summer-thermals'">Summer thermals</button>
+      <button type="button" @click="preset('scarp-cap-cloud')" :aria-pressed="active === 'scarp-cap-cloud'">Scarp, stable</button>
+      <button type="button" @click="preset('scarp-towering-cu')" :aria-pressed="active === 'scarp-towering-cu'">Scarp, unstable</button>
+      <button type="button" @click="preset('cold-front-cb')" :aria-pressed="active === 'cold-front-cb'">Cold front</button>
+      <button type="button" @click="preset('sea-breeze-cu-line')" :aria-pressed="active === 'sea-breeze-cu-line'">Sea breeze front</button>
+      <button type="button" @click="preset('mixed-layer-stratocumulus')" :aria-pressed="active === 'mixed-layer-stratocumulus'">Windy, stable</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Five different pushes, one result: the air rises, cools to its dew point and makes cloud with its base at the condensation level. The lifting only starts the air moving; stability decides the shape. Stable air gives layer cloud, smooth air and steady rain; unstable air gives heap cloud, bumps and showers. Shapes and heights are illustrative.</p>
+  <details class="widget-try"><summary>Try it: the same moist westerly meets the Scarp on two days. Why a flat cap one day and towering cumulus the next?</summary><p>Choose Orographic and flip the stability box. The lifting is identical; on the stable day the air is colder than its surroundings once lifted and stops, spreading into a cap of stratus on the hills, while on the unstable day it keeps rising on its own into towering cumulus.</p></details>
+  <details class="widget-try"><summary>Try it: what marks the sea breeze front from the cockpit?</summary><p>Press Sea breeze front: the cool sea air and the warm land air meet and the air has nowhere to go but up, so a line of cumulus forms a few miles inland, right above the wind change and its shear.</p></details>
+</div>

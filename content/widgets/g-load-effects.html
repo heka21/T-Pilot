@@ -1,0 +1,163 @@
+<div class="widget" x-data="widget({
+  mode: 'pull', g: 1, bank: 45,
+  // PHFC 2.9: approximate stages for a relaxed, unprotected person (individuals vary widely): +2 to +3 g heaviness and
+  // grey-out may begin; +3 to +4 grey-out and tunnel vision; +4 to +5 black-out, still conscious; +5 to +6 and above
+  // G-LOC; about -2 to -3 g red-out, uncomfortable to painful. In a level turn n = 1 / cos(bank).
+  // How far the picture greys, narrows or darkens inside each band is illustrative.
+  get n() { return this.mode === 'turn' ? 1 / Math.cos(this.bank * Math.PI / 180) : this.g },
+  get roll() { return this.mode === 'turn' ? this.bank : 0 },
+  get stage() {
+    const n = this.n;
+    if (n <= -2) return { t: 'Red-out: painful', c: 'bad', k: 'red' };
+    if (n < 0) return { t: 'Negative g: blood to the head', c: 'warn', k: 'neg' };
+    if (n < 1.995) return { t: n < 0.9 ? 'Light in the seat' : 'Normal', c: 'ok', k: 'ok' };
+    if (n < 3) return { t: 'Heavy; grey-out may begin', c: 'warn', k: 'heavy' };
+    if (n < 4) return { t: 'Grey-out and tunnel vision', c: 'warn', k: 'grey' };
+    if (n < 5) return { t: 'Black-out, still conscious', c: 'bad', k: 'black' };
+    return { t: 'G-LOC: unconscious', c: 'bad', k: 'gloc' };
+  },
+  get grey() { return this.seg(this.n, 2, 4) },
+  get tunnel() { return this.seg(this.n, 3, 4.5) },
+  get black() { return this.seg(this.n, 4, 5) },
+  get red() { return this.seg(-this.n, 1, 3) },
+  get pool() { return this.seg(this.n, 1, 5) },
+  get feltKg() { return 80 * this.n },
+  get vsFactor() { return this.n >= 1 ? Math.sqrt(this.n) : null },
+  // g scale on the right: -3 g at y 290 up to +7 g at y 30
+  Y(v) { return 30 + (7 - v) * 26 },
+  get tunnelPath() { const r = this.lerp(104, 18, this.tunnel); return 'M196 165 a104 104 0 1 0 208 0 a104 104 0 1 0 -208 0 Z M' + (300 - r) + ' 165 a' + r + ' ' + r + ' 0 1 1 ' + 2 * r + ' 0 a' + r + ' ' + r + ' 0 1 1 ' + (-2 * r) + ' 0 Z' },
+  presets: {
+    'level-1g': { mode: 'pull', g: 1 },
+    'turn-45': { mode: 'turn', bank: 45 },
+    'turn-60': { mode: 'turn', bank: 60 },
+    'turn-70': { mode: 'turn', bank: 70 },
+    'aeroplane-limit': { mode: 'pull', g: 3.8 },
+    'black-out': { mode: 'pull', g: 4.5 },
+    'g-loc': { mode: 'pull', g: 6 },
+    'pushover': { mode: 'pull', g: -2.5 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="gle-title" class="widget-stage">
+    <title id="gle-title">A seated pilot with the column of blood from heart to eyes, the pilot's view greying, narrowing and blacking out as the load factor rises (or reddening under negative g), and a g scale with the stages</title>
+    <defs>
+      <filter id="gle-grey"><feColorMatrix type="saturate" :values="(1 - grey).toFixed(2)"/></filter>
+      <clipPath id="gle-view"><circle cx="300" cy="165" r="104"/></clipPath>
+      <marker id="gle-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+
+    <!-- the seated pilot, facing right -->
+    <path d="M44 300 L58 160 M58 248 L150 248" fill="none" stroke="var(--color-fg-muted)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M78 244 C70 210 72 176 82 150 L118 150 C124 180 122 214 114 244 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M86 236 L150 232 L156 292 L172 296" fill="none" stroke="var(--color-fg)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M86 236 L150 232 L156 292 L172 296" fill="none" stroke="var(--color-surface)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- blood pooling in the legs under positive g -->
+    <path d="M86 236 L150 232 L156 292 L172 296" fill="none" stroke="var(--color-bad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" :stroke-opacity="0.55 * pool"/>
+    <circle cx="104" cy="122" r="20" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <circle cx="104" cy="122" r="18" fill="var(--color-bad)" :fill-opacity="0.5 * red"/>
+    <circle cx="116" cy="118" r="2.5" fill="var(--color-fg)"/>
+    <!-- heart and the 30 cm column up to eye level -->
+    <path d="M100 186 c-6 -6 -12 -1 -8 5 l8 8 l8 -8 c4 -6 -2 -11 -8 -5 Z" fill="var(--color-bad)"/>
+    <line x1="100" y1="184" x2="100" y2="124" stroke="var(--color-bad)" stroke-width="5" stroke-linecap="round" :stroke-opacity="n > 0 ? 1 - 0.75 * black : 1"/>
+    <line x1="128" y1="122" x2="128" y2="190" stroke="var(--color-fg-faint)" stroke-width="1"/>
+    <text x="132" y="160" font-size="12" fill="var(--color-fg-muted)">30 cm</text>
+    <text x="16" y="24" font-size="13" font-weight="700" fill="var(--color-fg)">Blood column</text>
+    <text x="16" y="42" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="'weighs × ' + fmt(Math.abs(n), 1)"></text>
+    <!-- which way the blood is driven -->
+    <line x1="30" x2="30" stroke="var(--color-bad)" stroke-width="2.5" marker-end="url(#gle-arrow)" x-show="Math.abs(n) >= 0.2"
+      :y1="n > 0 ? 130 : 230" :y2="n > 0 ? 130 + Math.min(100, 20 * n) : 230 - Math.min(100, 30 * -n)"/>
+    <text x="16" font-size="12" fill="var(--color-bad-fg)" :y="n > 0 ? 286 : 92" x-text="n > 0 ? 'to the feet' : 'to the head'" x-show="Math.abs(n) >= 0.2"></text>
+
+    <!-- the pilot's view -->
+    <g clip-path="url(#gle-view)">
+      <g filter="url(#gle-grey)">
+        <g :transform="'rotate(' + roll + ' 300 165)'">
+          <rect x="150" y="40" width="300" height="140" fill="var(--color-sky-soft)"/>
+          <rect x="150" y="180" width="300" height="120" fill="var(--color-ok)" fill-opacity="0.35"/>
+          <path d="M150 180 L450 180" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+          <path d="M230 214 L370 214 L340 196 L262 196 Z" fill="var(--color-tarmac)"/>
+          <path d="M240 112 a14 14 0 0 1 22 -10 a18 18 0 0 1 32 2 a12 12 0 0 1 10 18 Z" fill="var(--color-surface)" stroke="var(--color-fg-faint)" stroke-width="1"/>
+          <circle cx="372" cy="84" r="12" fill="var(--color-warn)"/>
+        </g>
+      </g>
+      <rect x="190" y="55" width="220" height="220" fill="var(--color-tarmac)" :fill-opacity="0.35 * grey"/>
+      <path fill="var(--color-tarmac)" fill-rule="evenodd" :d="tunnelPath" x-show="tunnel > 0"/>
+      <rect x="190" y="55" width="220" height="220" fill="var(--color-tarmac)" :fill-opacity="black"/>
+      <rect x="190" y="55" width="220" height="220" fill="var(--color-bad)" :fill-opacity="0.45 * red"/>
+    </g>
+    <circle cx="300" cy="165" r="104" fill="none" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="300" y="28" font-size="18" font-weight="700" text-anchor="middle" class="num" :fill="stage.c === 'bad' ? 'var(--color-bad-fg)' : stage.c === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-fg)'" x-text="sign(n, 1) + ' g'"></text>
+    <text x="300" y="168" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-paint)" x-show="black > 0.6" x-text="stage.k === 'gloc' ? 'unconscious' : 'conscious, but blind'"></text>
+    <text x="300" y="296" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">what you see</text>
+
+    <!-- g scale with the stages -->
+    <rect x="446" width="24" :y="Y(7)" height="52" fill="var(--color-bad)"/>
+    <rect x="446" width="24" :y="Y(5)" height="26" fill="var(--color-bad)" fill-opacity="0.55"/>
+    <rect x="446" width="24" :y="Y(4)" height="26" fill="var(--color-warn)"/>
+    <rect x="446" width="24" :y="Y(3)" height="26" fill="var(--color-warn-soft)"/>
+    <rect x="446" width="24" :y="Y(2)" height="52" fill="var(--color-ok-soft)"/>
+    <rect x="446" width="24" :y="Y(0)" height="52" fill="var(--color-warn-soft)"/>
+    <rect x="446" width="24" :y="Y(-2)" height="26" fill="var(--color-bad-soft)"/>
+    <rect x="446" y="30" width="24" height="260" fill="none" stroke="var(--color-fg-muted)" stroke-width="1"/>
+    <g font-size="12" fill="var(--color-fg)">
+      <text x="478" :y="Y(6) + 4">G-LOC</text>
+      <text x="478" :y="Y(4.5) + 4">black-out</text>
+      <text x="478" :y="Y(3.5) + 4">grey-out, tunnel vision</text>
+      <text x="478" :y="Y(2.5) + 4">heavy, greying may start</text>
+      <text x="478" :y="Y(1) + 4">normal</text>
+      <text x="478" :y="Y(-1) + 4">blood to the head</text>
+      <text x="478" :y="Y(-2.5) + 4">red-out, painful</text>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="440" :y="Y(6) + 4">+6</text><text x="440" :y="Y(4) + 4">+4</text><text x="440" :y="Y(2) + 4">+2</text>
+      <text x="440" :y="Y(0) + 4">0</text><text x="440" :y="Y(-2) + 4">−2</text>
+    </g>
+    <path fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5" :d="'M446 ' + Y(Math.max(-3, Math.min(7, n))) + ' l12 -8 l0 16 Z'"/>
+    <line x1="442" x2="474" stroke="var(--color-brand)" stroke-width="3" :y1="Y(Math.max(-3, Math.min(7, n)))" :y2="Y(Math.max(-3, Math.min(7, n)))"/>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gle-mode">How the g arrives</label>
+      <select id="gle-mode" class="input" x-model="mode">
+        <option value="pull">Pull or push: set the load factor</option>
+        <option value="turn">Level turn: set the bank angle</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="mode === 'pull'">
+      <label for="gle-g">Load factor <output for="gle-g" x-text="sign(g, 1) + ' g'"></output></label>
+      <input type="range" id="gle-g" min="-3" max="7" step="0.1" x-model.number="g">
+    </div>
+    <div class="widget-control" x-show="mode === 'turn'">
+      <label for="gle-bank">Bank angle, level turn <output for="gle-bank" x-text="bank + '° → ' + fmt(n, 2) + ' g'"></output></label>
+      <input type="range" id="gle-bank" min="0" max="80" step="1" x-model.number="bank">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="stage.c">
+      <dt class="widget-label">Vision and consciousness</dt>
+      <dd class="widget-value" x-text="stage.t"></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">An 80 kg pilot feels like</dt><dd class="widget-value" x-text="n >= 0 ? fmt(feltKg) + ' kg' : fmt(-feltKg) + ' kg, upwards'"></dd></div>
+    <div class="widget-readout" :class="n > 1.5 ? 'warn' : ''"><dt class="widget-label">Heart lifts the blood</dt><dd class="widget-value" x-text="n > 0 ? fmt(n, 1) + ' times as hard' : 'blood pushed to the head'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Stall speed × √n</dt><dd class="widget-value" x-text="vsFactor ? '× ' + fmt(vsFactor, 2) + ' (+' + fmt((vsFactor - 1) * 100) + '%)' : '–'"></dd></div>
+    <div class="widget-readout" :class="n > 3.8 || n < -1.52 ? 'bad' : ''">
+      <dt class="widget-label">Normal category aeroplane</dt>
+      <dd class="widget-value"><span x-text="n > 3.8 || n < -1.52 ? 'past its limit' : 'within +3.8 / −1.52 g'"></span><span class="widget-flag bad" x-show="n > 3.8 || n < -1.52">overstressed</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('turn-45')" :aria-pressed="active === 'turn-45'">45° turn</button>
+      <button type="button" @click="preset('turn-60')" :aria-pressed="active === 'turn-60'">60° turn</button>
+      <button type="button" @click="preset('turn-70')" :aria-pressed="active === 'turn-70'">70° turn</button>
+      <button type="button" @click="preset('aeroplane-limit')" :aria-pressed="active === 'aeroplane-limit'">+3.8 g</button>
+      <button type="button" @click="preset('black-out')" :aria-pressed="active === 'black-out'">Black-out</button>
+      <button type="button" @click="preset('g-loc')" :aria-pressed="active === 'g-loc'">G-LOC</button>
+      <button type="button" @click="preset('pushover')" :aria-pressed="active === 'pushover'">Pushover</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Under positive g the 30 cm column of blood from heart to eyes weighs n times as much and blood pools in the legs, so the supply to the head fails. Vision goes first, in a fixed order: grey-out, tunnel vision, black-out while still conscious, then G-LOC. Grey-out is the warning to ease off. Negative g drives blood to the head instead: red-out, and it is painful by about −2 to −3 g. The g values are the lesson's approximate figures for a relaxed, unprotected person; how fast the picture fades within each band is illustrative, and a sudden onset is worse than a slow one.</p>
+  <details class="widget-try"><summary>Try it: what do you feel in a level 70° turn, and how does it compare with the aeroplane's limit?</summary><p>Press 70° turn: n = 1 ÷ cos 70° ≈ 2.9 g, so an 80 kg pilot feels about 234 kg and is in the band where heaviness and the first greying begin. Press +3.8 g: the normal category limit already sits in the grey-out and tunnel-vision band, so your eyes warn you before the airframe's limit.</p></details>
+  <details class="widget-try"><summary>Try it: why is black-out not the same as G-LOC?</summary><p>Press Black-out, then G-LOC: at black-out you cannot see but you are still conscious and can relax the pull; vision returns within seconds. Beyond it the brain's own supply fails and you are incapacitated for 15 to 30 seconds or more.</p></details>
+</div>

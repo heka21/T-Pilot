@@ -1,0 +1,267 @@
+<div class="widget" x-data="widget({
+  grade: '100LL', water: 'none', dirt: false, settled: true,
+  // every sample drained so far: 0 = taken before the fuel had settled, n = the nth sample after it settled.
+  // How many samples it takes to clear the water or dirt is illustrative; the lesson says only to keep draining until
+  // the samples are clean (two clean in a row after water), and to let the fuel settle for a few minutes first.
+  log: [],
+  get settledCount() { return this.log.filter((s) => s > 0).length },
+  drain() { this.log = this.log.concat([this.settled ? this.settledCount + 1 : 0]) },
+  fresh() { this.log = [] },
+  look(s) {
+    const w = this.water, L = { water: 0, glob: false, cloudy: false, specks: false, s: s };
+    if (s === 0) { L.cloudy = w !== 'none'; L.specks = this.dirt; }
+    else {
+      if (w === 'some') { if (s === 1) L.water = 0.3; else if (s === 2) L.glob = true; }
+      if (w === 'lots') { if (s === 1) L.water = 1; else if (s === 2) L.water = 0.35; else if (s === 3) L.glob = true; }
+      if (this.dirt && s <= 2) L.specks = true;
+    }
+    L.clean = !L.cloudy && !L.water && !L.glob && !L.specks;
+    return L;
+  },
+  get cur() { return this.log.length ? this.look(this.log[this.log.length - 1]) : null },
+  get run() { let k = 0; for (let i = this.log.length - 1; i >= 0; i--) { const L = this.look(this.log[i]); if (!L.clean || L.s === 0) break; k++; } return k },
+  get dirty() { return this.water !== 'none' || this.dirt },
+  get colour() { return { '100LL': { c: 'var(--color-brand)', o: 0.6 }, '100/130': { c: 'var(--color-ok)', o: 0.6 }, 'jet': { c: 'var(--color-warn)', o: 0.3 } }[this.grade] },
+  get gradeName() { return { '100LL': 'AVGAS 100LL', '100/130': 'AVGAS 100/130', 'jet': 'Jet A-1' }[this.grade] },
+  get verdict() {
+    const c = this.cur;
+    if (!c) return { text: 'Take a sample from the drain', stamp: '', s: '' };
+    if (this.grade === 'jet') return { text: 'Jet fuel: the tanks and lines must be drained and the system flushed', stamp: 'DO NOT FLY', s: 'bad' };
+    if (c.water >= 1) return { text: 'Keep draining: you have not reached the fuel yet', stamp: 'KEEP DRAINING', s: 'warn' };
+    if (c.cloudy) return { text: 'Wait a few minutes for the water to settle, then drain again', stamp: 'WAIT, THEN DRAIN', s: 'warn' };
+    if (!c.clean) return { text: 'Keep draining until the samples are clean', stamp: 'KEEP DRAINING', s: 'warn' };
+    if (c.s === 0) return { text: 'Looks clean, but the fuel had not settled: wait a few minutes and sample again', stamp: 'WAIT, THEN DRAIN', s: 'warn' };
+    if (this.dirty && this.run < 2) return { text: 'One clean sample after contamination: drain one more', stamp: 'DRAIN ONE MORE', s: 'warn' };
+    if (this.grade === '100/130') return { text: 'Clean green 100/130: fly, if the POH approves the grade', stamp: 'FLY', s: 'ok' };
+    return { text: this.dirty ? 'Two clean blue samples in a row: fly' : 'Clean blue 100LL: fly', stamp: 'FLY', s: 'ok' };
+  },
+  get colourText() {
+    const c = this.cur;
+    if (!c) return '–';
+    if (c.water >= 1) return 'Colourless all through: water, no fuel yet';
+    return { '100LL': 'Blue, sharp AVGAS smell', '100/130': 'Green, sharp AVGAS smell', 'jet': 'Clear to straw, oily, smells of paraffin (kerosene)' }[this.grade];
+  },
+  get contamText() {
+    const c = this.cur;
+    if (!c) return '–';
+    const out = [];
+    if (c.water >= 1) out.push('The whole tester is water');
+    else if (c.water > 0) out.push('A clear layer at the bottom: water');
+    if (c.glob) out.push('Clear globules at the bottom: water');
+    if (c.cloudy) out.push('Cloudy: suspended water');
+    if (c.specks) out.push('Specks of dirt or rust');
+    return out.length ? out.join('; ') : 'None seen';
+  },
+  // the tank: inner walls x 30 and 400, roof y 40, floor sloping from y 118 down to y 138 at the drain (x 388)
+  get remaining() {
+    const n = this.settledCount;
+    if (this.water === 'some') return [1, 0.35, 0.1, 0][Math.min(n, 3)];
+    if (this.water === 'lots') return [2.2, 1, 0.35, 0.1, 0][Math.min(n, 4)];
+    return 0;
+  },
+  get poolH() { return 16 * Math.sqrt(this.remaining / 2.2) },
+  get pool() { const h = this.poolH; return 'M400 138 L400 ' + (138 - h).toFixed(1) + ' L' + (400 - 18.5 * h).toFixed(1) + ' ' + (138 - h).toFixed(1) + ' Z' },
+  get dirtLeft() { return this.dirt && this.settledCount < 2 },
+  // the region of a round-bottomed tube (centre cx, radius r, centre of its round bottom yc) below the level y
+  cup(cx, r, yc, y) {
+    if (y <= yc) return 'M' + (cx - r) + ' ' + y + ' L' + (cx - r) + ' ' + yc + ' A' + r + ' ' + r + ' 0 0 0 ' + (cx + r) + ' ' + yc + ' L' + (cx + r) + ' ' + y + ' Z';
+    const w = Math.sqrt(Math.max(0, r * r - (y - yc) * (y - yc)));
+    return 'M' + (cx - w).toFixed(1) + ' ' + y + ' A' + r + ' ' + r + ' 0 0 0 ' + (cx + w).toFixed(1) + ' ' + y + ' Z';
+  },
+  // the big tester: cx 388, r 22, round bottom centred at y 292 (bottom 314), liquid up to y 184
+  get waterTop() { return this.cur ? 314 - this.cur.water * 130 : 314 },
+  // the last six samples, oldest on the left
+  mini(j) {
+    const i = Math.max(0, this.log.length - 6) + j, cx = 50 + 48 * j;
+    if (i >= this.log.length) return { on: false, cx: cx, n: '', fuel: '', wat: '', wy: 262, glob: false, cloudy: false, specks: false, mark: '', ms: '' };
+    const L = this.look(this.log[i]), wy = 262 - L.water * 54;
+    let mark = 'clean', ms = 'var(--color-ok-fg)';
+    if (this.grade === 'jet') { mark = 'jet'; ms = 'var(--color-bad-fg)'; }
+    else if (L.water || L.glob) { mark = 'water'; ms = 'var(--color-bad-fg)'; }
+    else if (L.cloudy) { mark = 'cloudy'; ms = 'var(--color-warn-fg)'; }
+    else if (L.specks) { mark = 'dirt'; ms = 'var(--color-warn-fg)'; }
+    else if (L.s === 0) { mark = 'early'; ms = 'var(--color-warn-fg)'; }
+    return { on: true, cx: cx, n: String(i + 1), fuel: this.cup(cx, 10, 252, 208), wat: this.cup(cx, 10, 252, wy), wy: wy, water: L.water, glob: L.glob, cloudy: L.cloudy, specks: L.specks, mark: mark, ms: ms };
+  },
+  presets: {
+    'clean-100ll': { grade: '100LL', water: 'none', dirt: false, settled: true, log: [1] },
+    'sampled-too-soon': { grade: '100LL', water: 'some', dirt: false, settled: false, log: [0] },
+    'water-after-rain-week': { grade: '100LL', water: 'some', dirt: false, settled: true, log: [1] },
+    'two-clean-in-a-row': { grade: '100LL', water: 'some', dirt: false, settled: true, log: [1, 2, 3, 4] },
+    'whole-tester-of-water': { grade: '100LL', water: 'lots', dirt: false, settled: true, log: [1] },
+    'dirt-from-a-drum': { grade: '100LL', water: 'none', dirt: true, settled: true, log: [1] },
+    'jet-fuel-in-100ll': { grade: 'jet', water: 'none', dirt: false, settled: true, log: [1] },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="fds-title" class="widget-stage">
+    <title id="fds-title">A cut-away wing tank with its drain at the low point, a clear fuel tester under the drain showing the latest sample, and a row of the samples drained so far. Water shows as a clear layer or globules at the bottom of the tester, or as cloudiness if the fuel has not settled; dirt shows as specks; the colour shows the grade.</title>
+    <!-- the tank -->
+    <path d="M30 40 L400 40 L400 138 L30 118 Z" fill="var(--color-surface-2)"/>
+    <path d="M30 72 L400 72 L400 138 L30 118 Z" :fill="colour.c" :fill-opacity="colour.o"/>
+    <line x1="30" y1="72" x2="400" y2="72" stroke-width="1.25" :stroke="colour.c"/>
+    <!-- water: settled into a pool at the drain, or still stirred up through the fuel -->
+    <g x-show="settled && remaining > 0">
+      <path fill="var(--color-sky-soft)" :d="pool"/>
+      <path fill="var(--color-sky-fg)" fill-opacity="0.22" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-dasharray="4 3" stroke-linejoin="round" :d="pool"/>
+    </g>
+    <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" stroke-width="1.25" x-show="!settled && remaining > 0">
+      <circle cx="70" cy="90" r="3"/><circle cx="120" cy="104" r="2.5"/><circle cx="160" cy="84" r="3.5"/><circle cx="210" cy="98" r="2.5"/>
+      <circle cx="262" cy="110" r="3"/><circle cx="300" cy="86" r="2.5"/><circle cx="340" cy="104" r="3.5"/><circle cx="374" cy="90" r="2.5"/>
+    </g>
+    <g fill="var(--color-fg-muted)" x-show="dirtLeft && !settled">
+      <circle cx="95" cy="96" r="1.8"/><circle cx="185" cy="108" r="1.6"/><circle cx="236" cy="86" r="1.8"/><circle cx="320" cy="98" r="1.6"/><circle cx="356" cy="116" r="1.8"/>
+    </g>
+    <g fill="var(--color-fg-muted)" x-show="dirtLeft && settled">
+      <circle cx="352" cy="131" r="1.8"/><circle cx="362" cy="133" r="1.6"/><circle cx="371" cy="132" r="1.8"/><circle cx="380" cy="134.5" r="1.6"/><circle cx="391" cy="134" r="1.8"/>
+    </g>
+    <path d="M30 40 L400 40 L400 138 L30 118 Z" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="200" y="33" width="28" height="7" rx="2" fill="var(--color-fg-muted)"/>
+    <text x="236" y="30" font-size="13" fill="var(--color-fg-muted)">placard: AVGAS</text>
+    <text x="42" y="62" font-size="13" fill="var(--color-fg-muted)" x-text="'wing tank: ' + gradeName + ' went in'"></text>
+    <text x="30" y="158" font-size="13" font-weight="600" :fill="settled ? 'var(--color-ok-fg)' : 'var(--color-warn-fg)'" x-text="settled ? 'settled for a few minutes' : 'just refuelled: water stirred up'"></text>
+    <!-- drain, probe and tester -->
+    <rect x="384" y="137" width="8" height="12" rx="2" fill="var(--color-warn)"/>
+    <text x="378" y="150" font-size="13" text-anchor="end" fill="var(--color-warn-fg)" font-weight="600">drain</text>
+    <line x1="388" y1="149" x2="388" y2="162" stroke="var(--color-fg-muted)" stroke-width="3" stroke-linecap="round"/>
+    <g x-show="cur">
+      <path :d="cup(388, 22, 292, 184)" :fill="colour.c" :fill-opacity="colour.o"/>
+      <path fill="var(--color-sky-soft)" x-show="cur && cur.water > 0" :d="cup(388, 22, 292, waterTop)"/>
+      <line x1="368" x2="408" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-dasharray="4 3" x-show="cur && cur.water > 0 && cur.water < 1" :y1="waterTop" :y2="waterTop"/>
+      <g x-show="cur && cur.cloudy">
+        <path :d="cup(388, 22, 292, 184)" fill="var(--color-line-strong)" fill-opacity="0.6"/>
+        <g fill="var(--color-sky-fg)" fill-opacity="0.7">
+          <circle cx="374" cy="198" r="1.3"/><circle cx="396" cy="210" r="1.3"/><circle cx="381" cy="226" r="1.3"/><circle cx="402" cy="240" r="1.3"/>
+          <circle cx="372" cy="252" r="1.3"/><circle cx="391" cy="262" r="1.3"/><circle cx="378" cy="280" r="1.3"/><circle cx="399" cy="290" r="1.3"/>
+          <circle cx="386" cy="304" r="1.3"/><circle cx="388" cy="236" r="1.3"/><circle cx="378" cy="190" r="1.3"/><circle cx="400" cy="222" r="1.3"/>
+          <circle cx="371" cy="268" r="1.3"/><circle cx="404" cy="274" r="1.3"/><circle cx="384" cy="250" r="1.3"/><circle cx="395" cy="196" r="1.3"/>
+        </g>
+      </g>
+      <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" stroke-width="1.25" x-show="cur && cur.glob">
+        <circle cx="378" cy="302" r="3"/><circle cx="391" cy="306" r="2.5"/><circle cx="399" cy="297" r="3.5"/><circle cx="386" cy="291" r="2"/>
+      </g>
+      <g fill="var(--color-fg)" x-show="cur && cur.specks && cur.s > 0">
+        <circle cx="380" cy="308" r="2.2"/><circle cx="390" cy="310" r="1.8"/><circle cx="398" cy="304" r="2.2"/><circle cx="372" cy="302" r="1.8"/><circle cx="388" cy="302" r="1.6"/>
+      </g>
+      <g fill="var(--color-fg)" x-show="cur && cur.specks && cur.s === 0">
+        <circle cx="375" cy="214" r="2.2"/><circle cx="398" cy="248" r="1.8"/><circle cx="383" cy="272" r="2.2"/><circle cx="394" cy="200" r="1.8"/>
+      </g>
+    </g>
+    <path d="M366 162 L366 292 A22 22 0 0 0 410 292 L410 162" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="360" y1="162" x2="416" y2="162" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- what you see -->
+    <text x="426" y="182" font-size="15" font-weight="600" fill="var(--color-fg)" x-text="cur ? 'sample ' + log.length : 'tester empty'"></text>
+    <text x="426" y="204" font-size="13" fill="var(--color-fg)" x-show="cur" x-text="!cur ? '' : cur.water >= 1 ? 'colourless: water' : { '100LL': 'blue: AVGAS 100LL', '100/130': 'green: AVGAS 100/130', 'jet': 'clear to straw: Jet A-1' }[grade]"></text>
+    <text x="426" y="222" font-size="13" fill="var(--color-fg-muted)" x-show="cur" x-text="!cur ? '' : cur.water >= 1 ? 'no fuel in it yet' : grade === 'jet' ? 'smells of paraffin' : 'sharp AVGAS smell'"></text>
+    <text x="426" y="250" font-size="13" font-weight="600" fill="var(--color-sky-fg)" x-show="cur && (cur.water > 0 || cur.glob || cur.cloudy)" x-text="!cur ? '' : cur.water >= 1 ? 'all water' : cur.water > 0 ? 'water layer at the bottom' : cur.glob ? 'globules of water' : 'cloudy: suspended water'"></text>
+    <text x="426" font-size="13" font-weight="600" fill="var(--color-fg-muted)" x-show="cur && cur.specks" :y="cur && (cur.water > 0 || cur.glob || cur.cloudy) ? 270 : 250">specks of dirt or rust</text>
+    <text x="426" y="204" font-size="13" fill="var(--color-fg-muted)" x-show="!cur">press Drain a sample</text>
+    <text x="426" y="312" font-size="16" font-weight="700" x-show="verdict.stamp" x-text="verdict.stamp"
+      :fill="verdict.s === 'ok' ? 'var(--color-ok-fg)' : verdict.s === 'bad' ? 'var(--color-bad-fg)' : 'var(--color-warn-fg)'"></text>
+    <!-- the samples so far (written out: no templates inside svg) -->
+    <text x="30" y="190" font-size="13" fill="var(--color-fg-muted)" x-text="log.length ? 'your samples, latest on the right' : 'no samples yet'"></text>
+    <g x-show="mini(0).on">
+      <path :d="mini(0).fuel" :fill="colour.c" :fill-opacity="colour.o"/><path fill="var(--color-sky-soft)" x-show="mini(0).water" :d="mini(0).wat"/>
+      <path :d="mini(0).fuel" fill="var(--color-line-strong)" fill-opacity="0.6" x-show="mini(0).cloudy"/>
+      <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" x-show="mini(0).glob"><circle r="2" :cx="mini(0).cx - 3" cy="256"/><circle r="1.6" :cx="mini(0).cx + 4" cy="253"/></g>
+      <g fill="var(--color-fg-muted)" x-show="mini(0).specks"><circle r="1.4" :cx="mini(0).cx - 4" cy="258"/><circle r="1.4" :cx="mini(0).cx + 3" cy="259"/></g>
+      <path :d="'M' + (mini(0).cx - 10) + ' 200 L' + (mini(0).cx - 10) + ' 252 A10 10 0 0 0 ' + (mini(0).cx + 10) + ' 252 L' + (mini(0).cx + 10) + ' 200'" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+      <text :x="mini(0).cx" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="mini(0).n"></text>
+      <text :x="mini(0).cx" y="298" font-size="12" text-anchor="middle" font-weight="600" :fill="mini(0).ms" x-text="mini(0).mark"></text>
+    </g>
+    <g x-show="mini(1).on">
+      <path :d="mini(1).fuel" :fill="colour.c" :fill-opacity="colour.o"/><path fill="var(--color-sky-soft)" x-show="mini(1).water" :d="mini(1).wat"/>
+      <path :d="mini(1).fuel" fill="var(--color-line-strong)" fill-opacity="0.6" x-show="mini(1).cloudy"/>
+      <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" x-show="mini(1).glob"><circle r="2" :cx="mini(1).cx - 3" cy="256"/><circle r="1.6" :cx="mini(1).cx + 4" cy="253"/></g>
+      <g fill="var(--color-fg-muted)" x-show="mini(1).specks"><circle r="1.4" :cx="mini(1).cx - 4" cy="258"/><circle r="1.4" :cx="mini(1).cx + 3" cy="259"/></g>
+      <path :d="'M' + (mini(1).cx - 10) + ' 200 L' + (mini(1).cx - 10) + ' 252 A10 10 0 0 0 ' + (mini(1).cx + 10) + ' 252 L' + (mini(1).cx + 10) + ' 200'" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+      <text :x="mini(1).cx" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="mini(1).n"></text>
+      <text :x="mini(1).cx" y="298" font-size="12" text-anchor="middle" font-weight="600" :fill="mini(1).ms" x-text="mini(1).mark"></text>
+    </g>
+    <g x-show="mini(2).on">
+      <path :d="mini(2).fuel" :fill="colour.c" :fill-opacity="colour.o"/><path fill="var(--color-sky-soft)" x-show="mini(2).water" :d="mini(2).wat"/>
+      <path :d="mini(2).fuel" fill="var(--color-line-strong)" fill-opacity="0.6" x-show="mini(2).cloudy"/>
+      <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" x-show="mini(2).glob"><circle r="2" :cx="mini(2).cx - 3" cy="256"/><circle r="1.6" :cx="mini(2).cx + 4" cy="253"/></g>
+      <g fill="var(--color-fg-muted)" x-show="mini(2).specks"><circle r="1.4" :cx="mini(2).cx - 4" cy="258"/><circle r="1.4" :cx="mini(2).cx + 3" cy="259"/></g>
+      <path :d="'M' + (mini(2).cx - 10) + ' 200 L' + (mini(2).cx - 10) + ' 252 A10 10 0 0 0 ' + (mini(2).cx + 10) + ' 252 L' + (mini(2).cx + 10) + ' 200'" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+      <text :x="mini(2).cx" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="mini(2).n"></text>
+      <text :x="mini(2).cx" y="298" font-size="12" text-anchor="middle" font-weight="600" :fill="mini(2).ms" x-text="mini(2).mark"></text>
+    </g>
+    <g x-show="mini(3).on">
+      <path :d="mini(3).fuel" :fill="colour.c" :fill-opacity="colour.o"/><path fill="var(--color-sky-soft)" x-show="mini(3).water" :d="mini(3).wat"/>
+      <path :d="mini(3).fuel" fill="var(--color-line-strong)" fill-opacity="0.6" x-show="mini(3).cloudy"/>
+      <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" x-show="mini(3).glob"><circle r="2" :cx="mini(3).cx - 3" cy="256"/><circle r="1.6" :cx="mini(3).cx + 4" cy="253"/></g>
+      <g fill="var(--color-fg-muted)" x-show="mini(3).specks"><circle r="1.4" :cx="mini(3).cx - 4" cy="258"/><circle r="1.4" :cx="mini(3).cx + 3" cy="259"/></g>
+      <path :d="'M' + (mini(3).cx - 10) + ' 200 L' + (mini(3).cx - 10) + ' 252 A10 10 0 0 0 ' + (mini(3).cx + 10) + ' 252 L' + (mini(3).cx + 10) + ' 200'" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+      <text :x="mini(3).cx" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="mini(3).n"></text>
+      <text :x="mini(3).cx" y="298" font-size="12" text-anchor="middle" font-weight="600" :fill="mini(3).ms" x-text="mini(3).mark"></text>
+    </g>
+    <g x-show="mini(4).on">
+      <path :d="mini(4).fuel" :fill="colour.c" :fill-opacity="colour.o"/><path fill="var(--color-sky-soft)" x-show="mini(4).water" :d="mini(4).wat"/>
+      <path :d="mini(4).fuel" fill="var(--color-line-strong)" fill-opacity="0.6" x-show="mini(4).cloudy"/>
+      <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" x-show="mini(4).glob"><circle r="2" :cx="mini(4).cx - 3" cy="256"/><circle r="1.6" :cx="mini(4).cx + 4" cy="253"/></g>
+      <g fill="var(--color-fg-muted)" x-show="mini(4).specks"><circle r="1.4" :cx="mini(4).cx - 4" cy="258"/><circle r="1.4" :cx="mini(4).cx + 3" cy="259"/></g>
+      <path :d="'M' + (mini(4).cx - 10) + ' 200 L' + (mini(4).cx - 10) + ' 252 A10 10 0 0 0 ' + (mini(4).cx + 10) + ' 252 L' + (mini(4).cx + 10) + ' 200'" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+      <text :x="mini(4).cx" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="mini(4).n"></text>
+      <text :x="mini(4).cx" y="298" font-size="12" text-anchor="middle" font-weight="600" :fill="mini(4).ms" x-text="mini(4).mark"></text>
+    </g>
+    <g x-show="mini(5).on">
+      <path :d="mini(5).fuel" :fill="colour.c" :fill-opacity="colour.o"/><path fill="var(--color-sky-soft)" x-show="mini(5).water" :d="mini(5).wat"/>
+      <path :d="mini(5).fuel" fill="var(--color-line-strong)" fill-opacity="0.6" x-show="mini(5).cloudy"/>
+      <g fill="var(--color-surface)" stroke="var(--color-sky-fg)" x-show="mini(5).glob"><circle r="2" :cx="mini(5).cx - 3" cy="256"/><circle r="1.6" :cx="mini(5).cx + 4" cy="253"/></g>
+      <g fill="var(--color-fg-muted)" x-show="mini(5).specks"><circle r="1.4" :cx="mini(5).cx - 4" cy="258"/><circle r="1.4" :cx="mini(5).cx + 3" cy="259"/></g>
+      <path :d="'M' + (mini(5).cx - 10) + ' 200 L' + (mini(5).cx - 10) + ' 252 A10 10 0 0 0 ' + (mini(5).cx + 10) + ' 252 L' + (mini(5).cx + 10) + ' 200'" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+      <text :x="mini(5).cx" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="mini(5).n"></text>
+      <text :x="mini(5).cx" y="298" font-size="12" text-anchor="middle" font-weight="600" :fill="mini(5).ms" x-text="mini(5).mark"></text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span id="fds-grade-l">Fuel that went into the tank</span>
+      <div class="widget-presets" role="group" aria-labelledby="fds-grade-l">
+        <button type="button" @click="grade = '100LL'; fresh()" :aria-pressed="grade === '100LL'">100LL</button>
+        <button type="button" @click="grade = '100/130'; fresh()" :aria-pressed="grade === '100/130'">100/130</button>
+        <button type="button" @click="grade = 'jet'; fresh()" :aria-pressed="grade === 'jet'">Jet A-1</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <label for="fds-water">Water in the tank</label>
+      <select id="fds-water" class="input" x-model="water" @change="fresh()">
+        <option value="none">None</option>
+        <option value="some">Some: a week of cold nights or rain</option>
+        <option value="lots">A lot: more than a tester full</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="fds-dirt" class="cursor-pointer"><span>Dirt or rust in the tank</span>
+        <input type="checkbox" id="fds-dirt" x-model="dirt" @change="fresh()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="fds-settled" class="cursor-pointer"><span>Waited a few minutes for the fuel to settle</span>
+        <input type="checkbox" id="fds-settled" x-model="settled" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <button type="button" class="btn-primary" @click="drain()">Drain a sample</button>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="!cur ? '' : grade === 'jet' || cur.water >= 1 ? 'bad' : 'ok'"><dt class="widget-label">Colour and smell</dt><dd class="widget-value" x-text="colourText"></dd></div>
+    <div class="widget-readout" :class="!cur ? '' : contamText === 'None seen' ? 'ok' : 'warn'"><dt class="widget-label">Water and sediment</dt><dd class="widget-value" x-text="contamText"></dd></div>
+    <div class="widget-readout" :class="verdict.s"><dt class="widget-label">Verdict</dt><dd class="widget-value"><span x-text="verdict.text"></span><span class="widget-flag bad" x-show="verdict.s === 'bad'">do not start</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('clean-100ll')" :aria-pressed="active === 'clean-100ll'">Clean 100LL</button>
+      <button type="button" @click="preset('sampled-too-soon')" :aria-pressed="active === 'sampled-too-soon'">Sampled too soon</button>
+      <button type="button" @click="preset('water-after-rain-week')" :aria-pressed="active === 'water-after-rain-week'">After a wet week</button>
+      <button type="button" @click="preset('two-clean-in-a-row')" :aria-pressed="active === 'two-clean-in-a-row'">Two clean in a row</button>
+      <button type="button" @click="preset('whole-tester-of-water')" :aria-pressed="active === 'whole-tester-of-water'">All water</button>
+      <button type="button" @click="preset('dirt-from-a-drum')" :aria-pressed="active === 'dirt-from-a-drum'">Dusty drum</button>
+      <button type="button" @click="preset('jet-fuel-in-100ll')" :aria-pressed="active === 'jet-fuel-in-100ll'">Jet fuel</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Water is heavier than fuel, so once it has settled it is the first thing out of the drain: a clear layer or globules at the bottom of the tester. Sample too soon and it is still stirred through the fuel as cloudiness. Keep draining until the samples are clean, and after water, two clean in a row. A colourless sample from an AVGAS aeroplane is water or jet fuel. How many samples it takes here is illustrative; the lesson gives no figure.</p>
+  <details class="widget-try"><summary>Try it: the lesson's wet-week morning. The first tester has a clear layer under the blue fuel. What now?</summary><p>Press After a wet week, then Drain a sample until the verdict changes: the layer shrinks to globules, then the samples come out clean blue. You stop only after two clean samples in a row, and you report the cap seal.</p></details>
+  <details class="widget-try"><summary>Try it: the sample is clear all the way through. Is that clean fuel?</summary><p>Press All water: from an AVGAS aeroplane a colourless sample is water (you have not reached the fuel yet) or jet fuel. Smell it: Jet fuel smells of paraffin, so press Jet fuel to see the other case. Either way, do not fly until it is sorted out; jet fuel means drain and flush, not just drain.</p></details>
+</div>

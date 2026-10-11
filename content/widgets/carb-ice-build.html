@@ -1,0 +1,204 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false, sc: 'heat',
+  // RPM through the story. 'heat' and 'noice' are the lessons' worked examples (RBKA 2.1): cruise 2400, ice takes
+  // it to 2300, full heat drops it to 2200 with rough running, it climbs to 2350 as the ice melts and settles at 2400
+  // on cold; with no ice the heat costs about 75 RPM, which stays, and cold brings back the original.
+  // 'chase' follows the lessons' chasing-the-RPM story (BAKC 3.4); its timings and RPMs are illustrative.
+  rough(tt, a) { return a * Math.sin(tt * 900) * Math.sin(tt * 337 + 1) },
+  rpmAt(tt) {
+    const e = (a, b) => this.ease(this.seg(tt, a, b));
+    if (this.sc === 'noice') return tt < 0.4 ? 2400 : tt < 0.84 ? 2400 - 75 * e(0.4, 0.45) : 2325 + 75 * e(0.84, 0.88);
+    if (this.sc === 'heat') {
+      if (tt < 0.4) return 2400 - 100 * e(0.08, 0.4);
+      if (tt < 0.45) return 2300 - 100 * e(0.4, 0.45);
+      if (tt < 0.58) return 2200 + this.rough(tt, 16 * (1 - this.seg(tt, 0.5, 0.58)));
+      if (tt < 0.84) return 2200 + 150 * e(0.58, 0.76);
+      return 2350 + 50 * e(0.84, 0.88);
+    }
+    if (tt < 0.25) return 2400 - 100 * e(0.08, 0.25);
+    if (tt < 0.27) return 2300 + 100 * e(0.25, 0.27);
+    if (tt < 0.43) return 2400 - 100 * e(0.27, 0.43);
+    if (tt < 0.45) return 2300 + 100 * e(0.43, 0.45);
+    if (tt < 0.6) return 2400 - 100 * e(0.45, 0.6);
+    if (tt < 0.62) return 2300 + 100 * e(0.6, 0.62);
+    if (tt < 0.8) return 2400 - 150 * e(0.62, 0.8) + this.rough(tt, 18 * this.seg(tt, 0.7, 0.8));
+    return 2250 * (1 - e(0.8, 0.88));
+  },
+  get rpm() { return this.rpmAt(this.t) },
+  get stopped() { return this.rpm < 100 },
+  get heat() { return this.sc !== 'chase' && this.t >= 0.4 && this.t < 0.84 },
+  get ice() {
+    if (this.sc === 'noice') return 0;
+    if (this.sc === 'chase') return 1.5 * this.seg(this.t, 0.08, 0.88);
+    return this.t < 0.45 ? this.seg(this.t, 0.08, 0.4) : 1 - this.seg(this.t, 0.45, 0.76);
+  },
+  get melting() { return this.sc === 'heat' && this.t >= 0.45 && this.t < 0.66 },
+  get isRough() { return (this.sc === 'heat' && this.t >= 0.45 && this.t < 0.58) || (this.sc === 'chase' && this.t >= 0.7 && !this.stopped) },
+  // throttle: cruise setting, or opened in steps while chasing
+  get throttle() { if (this.sc !== 'chase') return 0; const t = this.t; return t < 0.25 ? 0 : t < 0.43 ? 1 : t < 0.6 ? 2 : 3 },
+  get butterfly() { return [48, 60, 72, 90][this.throttle] },
+  get steps() {
+    if (this.sc === 'noice') return [{ at: 0, label: 'Cruise, 2400' }, { at: 0.4, label: 'Full heat: small drop' }, { at: 0.84, label: 'Cold: back to 2400' }];
+    if (this.sc === 'chase') return [{ at: 0, label: 'Cruise' }, { at: 0.08, label: 'Ice building' }, { at: 0.25, label: 'Throttle opened' }, { at: 0.43, label: 'Opened again' }, { at: 0.6, label: 'Full throttle' }, { at: 0.86, label: 'Engine stops' }];
+    return [{ at: 0, label: 'Cruise, 2400' }, { at: 0.08, label: 'Ice building' }, { at: 0.4, label: 'Full heat: rough' }, { at: 0.58, label: 'Ice melting' }, { at: 0.84, label: 'Cold: 2400' }];
+  },
+  get caption() {
+    const t = this.t;
+    if (this.sc === 'noice') {
+      if (t < 0.4) return 'Cruise at constant throttle on a dry, clear afternoon: you think the RPM might be a little low.';
+      if (t < 0.84) return 'Full carburettor heat: hot air is less dense and makes the mixture richer, so the RPM drops about 75 and stays there, smooth. Nothing melts, so nothing rises.';
+      return 'Back to cold: the RPM returns to the same reading you started with. There was no ice; look for another cause.';
+    }
+    if (this.sc === 'chase') {
+      if (t < 0.08) return 'Cruise on a humid morning at constant throttle.';
+      if (t < 0.25) return 'Ice grows in the venturi and on the butterfly, narrowing the passage: the RPM creeps down, a few tens of RPM over several minutes.';
+      if (t < 0.6) return 'The pilot nudges the throttle forward and the RPM comes back, but the ice keeps growing behind the more open butterfly. Each nudge hides the symptom.';
+      if (t < 0.86) return 'Full throttle: nothing left to give. The ice keeps building, the RPM falls and the engine runs rough.';
+      return 'The engine stops, with too much ice and too little heat left to melt it. Any unexplained RPM loss is carburettor ice: full heat first.';
+    }
+    if (t < 0.08) return 'Cruise on a humid morning at constant throttle, 2400 RPM.';
+    if (t < 0.4) return 'Ice grows in the venturi and on the butterfly: the RPM creeps down to 2300 with the throttle untouched, and the airspeed sags.';
+    if (t < 0.45) return 'Full carburettor heat: the RPM falls further, to 2200, because hot air is less dense.';
+    if (t < 0.58) return 'The engine runs rough as melted ice goes through it as water. That means the heat is working: leave it on.';
+    if (t < 0.84) return 'With the heat still on, the RPM climbs to 2350 as the passage clears. A rise with the heat on means there was ice.';
+    return 'Back to cold: 2400, higher than the 2300 you had before the heat. The ice had been stealing power; watch for more.';
+  },
+  pick() { this.pause(); this.t = 0; this.active = null },
+  // RPM chart: t across x 300..610, RPM 2150..2450 up y 230..50; stopped drawn at y 262
+  TX(tt) { return 300 + tt * 310 },
+  RY(r) { return r < 2150 ? 262 - Math.max(0, r) / 2150 * 32 : 230 - (Math.min(r, 2450) - 2150) / 300 * 180 },
+  trace(t1) { const pts = []; for (let tt = 0; tt <= t1 + 1e-9; tt += 0.004) pts.push([this.TX(tt), this.RY(this.rpmAt(tt))]); pts.push([this.TX(t1), this.RY(this.rpmAt(t1))]); return this.path(pts) },
+  get fullTrace() { return this.trace(1) },
+  get doneTrace() { return this.trace(this.t) },
+  // carburettor: duct centre x 150, ice on the throat walls and on the butterfly
+  get iceW() { return 12 * this.ice },
+  get bfPath() { const a = this.butterfly * Math.PI / 180, r = 34; return 'M' + (150 - r * Math.cos(a)) + ' ' + (110 + r * Math.sin(a)) + ' L' + (150 + r * Math.cos(a)) + ' ' + (110 - r * Math.sin(a)) },
+  drop(i) { const ph = (this.t * 9 + i * 0.27) % 1; return { x: 132 + i * 13 - (i % 2) * 4, y: 160 - ph * 110 } },
+  presets: {
+    'ice-building': { sc: 'heat', t: 0.3 },
+    'full-heat-rough': { sc: 'heat', t: 0.5 },
+    'ice-cleared': { sc: 'heat', t: 1 },
+    'chasing-the-rpm': { sc: 'chase', t: 0.55 },
+    'engine-stops': { sc: 'chase', t: 1 },
+    'no-ice-heat-check': { sc: 'noice', t: 0.6 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="cib-title" class="widget-stage">
+    <title id="cib-title">A carburettor in cross-section with ice building in the venturi and on the throttle butterfly, beside the tachometer trace: the RPM creeping down, the effect of carburettor heat or of opening the throttle</title>
+    <defs><marker id="cib-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface)"/>
+    <!-- airflow up through the carburettor -->
+    <g stroke="var(--color-info)" stroke-linecap="round" fill="none" marker-end="url(#cib-arrow)" :stroke-opacity="stopped ? 0.2 : 0.35 + 0.65 * (rpm - 2150) / 250" :stroke-width="stopped ? 1 : 2">
+      <path d="M126 262 L134 196 L136 150"/><path d="M150 262 L150 150"/><path d="M174 262 L166 196 L164 150"/>
+      <path d="M150 92 L150 44" x-show="!stopped"/>
+    </g>
+    <!-- the duct: wide intake, venturi throat, butterfly, to the cylinders -->
+    <path d="M80 272 L80 240 Q80 220 112 180 Q120 170 112 150 L96 130 L96 30" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M220 272 L220 240 Q220 220 188 180 Q180 170 188 150 L204 130 L204 30" fill="none" stroke="var(--color-fg)" stroke-width="2.5" stroke-linejoin="round"/>
+    <!-- ice on the throat walls -->
+    <path fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-linejoin="round" x-show="ice > 0.02"
+      :d="'M108 196 Q' + (114 + iceW) + ' 178 ' + (114 + iceW * 0.9) + ' 166 Q' + (112 + iceW) + ' 154 106 144 L112 150 Q120 170 112 180 Z'"/>
+    <path fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-linejoin="round" x-show="ice > 0.02"
+      :d="'M192 196 Q' + (186 - iceW) + ' 178 ' + (186 - iceW * 0.9) + ' 166 Q' + (188 - iceW) + ' 154 194 144 L188 150 Q180 170 188 180 Z'"/>
+    <!-- fuel: float chamber and jet into the throat -->
+    <rect x="228" y="150" width="30" height="70" rx="4" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <rect x="230" y="180" width="26" height="38" rx="2" fill="var(--color-warn)" fill-opacity="0.3"/>
+    <path d="M230 210 L196 210 Q186 210 186 200 L172 172 L152 168" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <text x="243" y="238" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">fuel</text>
+    <!-- butterfly, with ice on its edges -->
+    <path fill="none" stroke="var(--color-sky-fg)" stroke-linecap="round" :stroke-width="4 + iceW * 1.1" :d="bfPath" x-show="ice > 0.02" stroke-opacity="0.55"/>
+    <path fill="none" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round" :d="bfPath"/>
+    <circle cx="150" cy="110" r="3" fill="var(--color-fg)"/>
+    <text x="210" y="106" font-size="11" fill="var(--color-fg-muted)">throttle</text>
+    <text x="210" y="119" font-size="11" fill="var(--color-fg-muted)">butterfly</text>
+    <text x="100" y="22" font-size="12" fill="var(--color-fg-muted)">to the cylinders</text>
+    <!-- melt water through the engine -->
+    <g fill="var(--color-sky-fg)" x-show="melting">
+      <circle r="2.5" :cx="drop(0).x" :cy="drop(0).y"/><circle r="2.5" :cx="drop(1).x" :cy="drop(1).y"/><circle r="2.5" :cx="drop(2).x" :cy="drop(2).y"/><circle r="2.5" :cx="drop(3).x" :cy="drop(3).y"/>
+    </g>
+    <!-- intake: filtered cold air, or hot air from the exhaust muff -->
+    <path d="M24 286 L80 286" fill="none" stroke-width="2.5" marker-end="url(#cib-arrow)" :stroke="heat ? 'var(--color-fg-faint)' : 'var(--color-info)'" :stroke-dasharray="heat ? '4 3' : '0'"/>
+    <path d="M276 286 L220 286" fill="none" stroke-width="2.5" marker-end="url(#cib-arrow)" :stroke="heat ? 'var(--color-bad)' : 'var(--color-fg-faint)'" :stroke-dasharray="heat ? '0' : '4 3'"/>
+    <text x="16" y="276" font-size="11" :fill="heat ? 'var(--color-fg-faint)' : 'var(--color-info)'">cold</text>
+    <text x="284" y="276" font-size="11" text-anchor="end" :fill="heat ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'" :font-weight="heat ? 600 : 400">hot air</text>
+    <text x="102" y="170" font-size="12" font-weight="700" text-anchor="end" fill="var(--color-sky-fg)" x-show="ice > 0.3">ice</text>
+    <!-- RPM trace -->
+    <rect y="40" height="200" fill="var(--color-warn)" fill-opacity="0.14" x-show="sc !== 'chase'" :x="TX(0.4)" :width="TX(0.84) - TX(0.4)"/>
+    <text y="56" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-warn-fg)" x-show="sc !== 'chase'" :x="(TX(0.4) + TX(0.84)) / 2">carburettor heat ON</text>
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="300" x2="610" :y1="RY(2200)" :y2="RY(2200)"/><line x1="300" x2="610" :y1="RY(2300)" :y2="RY(2300)"/><line x1="300" x2="610" :y1="RY(2400)" :y2="RY(2400)"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="294" :y="RY(2200) + 4">2200</text><text x="294" :y="RY(2300) + 4">2300</text><text x="294" :y="RY(2400) + 4">2400</text>
+      <text x="294" y="266" x-show="sc === 'chase'">0</text>
+    </g>
+    <line x1="300" y1="270" x2="610" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="455" y="288" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">time (minutes) →</text>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.25" fill="none" marker-end="url(#cib-arrow)" x-show="sc === 'chase'">
+      <path :d="'M' + TX(0.25) + ' 258 L' + TX(0.25) + ' 240'"/><path :d="'M' + TX(0.43) + ' 258 L' + TX(0.43) + ' 240'"/><path :d="'M' + TX(0.6) + ' 258 L' + TX(0.6) + ' 240'"/>
+    </g>
+    <text font-size="11" fill="var(--color-fg-muted)" text-anchor="middle" y="232" x-show="sc === 'chase'" :x="TX(0.43)">throttle opened</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 3" :d="fullTrace"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" :d="doneTrace"/>
+    <circle r="5" :cx="TX(t)" :cy="RY(rpm)" :fill="stopped || isRough ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+    <text x="610" y="28" font-size="18" font-weight="700" text-anchor="end" class="num" :fill="stopped ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="stopped ? 'engine stopped' : fmt(Math.round(rpm / 5) * 5) + ' RPM'"></text>
+    <text x="300" y="28" font-size="13" fill="var(--color-fg-muted)">tachometer</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="cib-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cib-sc">What happens</label>
+      <select id="cib-sc" class="input" x-model="sc" @change="pick()">
+        <option value="heat">Ice, and the pilot applies full carburettor heat</option>
+        <option value="chase">Ice, and the pilot chases the RPM with the throttle</option>
+        <option value="noice">No ice: full carburettor heat on a dry day</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="stopped || isRough ? 'bad' : rpm >= 2395 ? 'ok' : 'warn'">
+      <dt class="widget-label">Tachometer</dt>
+      <dd class="widget-value"><span x-text="stopped ? '0: engine stopped' : fmt(Math.round(rpm / 5) * 5) + ' RPM'"></span><span class="widget-flag bad" x-show="isRough">rough</span></dd>
+    </div>
+    <div class="widget-readout" :class="heat ? 'warn' : ''">
+      <dt class="widget-label">Carburettor heat</dt>
+      <dd class="widget-value" x-text="heat ? 'Full hot' : 'Cold'"></dd>
+    </div>
+    <div class="widget-readout" :class="throttle === 3 ? 'bad' : throttle ? 'warn' : ''">
+      <dt class="widget-label">Throttle</dt>
+      <dd class="widget-value" x-text="['Cruise setting, untouched', 'Opened a little', 'Opened again', 'Fully open: nothing left'][throttle]"></dd>
+    </div>
+    <div class="widget-readout" :class="ice > 1 ? 'bad' : ice > 0.05 ? 'warn' : 'ok'">
+      <dt class="widget-label">Ice in the carburettor</dt>
+      <dd class="widget-value" x-text="sc === 'noice' ? 'None' : stopped ? 'Blocking the passage' : melting || (heat && ice > 0.05) ? 'Melting' : ice > 0.05 ? 'Building' : t > 0.5 ? 'Cleared' : 'None yet'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('ice-building')" :aria-pressed="active === 'ice-building'">Ice building</button>
+      <button type="button" @click="preset('full-heat-rough')" :aria-pressed="active === 'full-heat-rough'">Full heat: rough</button>
+      <button type="button" @click="preset('ice-cleared')" :aria-pressed="active === 'ice-cleared'">Cleared: 2400</button>
+      <button type="button" @click="preset('chasing-the-rpm')" :aria-pressed="active === 'chasing-the-rpm'">Chasing the RPM</button>
+      <button type="button" @click="preset('no-ice-heat-check')" :aria-pressed="active === 'no-ice-heat-check'">No ice</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> With a fixed-pitch propeller, ice shows first as a slow, unexplained RPM drop. Full carburettor heat always costs RPM at first; ice is proven by what comes next: rough running, a rise with the heat still on, and a reading on cold higher than before. No ice: a small drop that stays, then back to the original. Opening the throttle instead only hides the ice until there is no throttle left. The RPMs are the lessons' worked examples; the timings are illustrative.</p>
+  <details class="widget-try"><summary>Try it: RPM normally 2400, now 2300. Full heat gives 2200 and rough running, then 2350; on cold, 2400. Was there ice?</summary><p>Play the first story: yes. The rise with the heat still on was the passage clearing, and 2400 on cold is higher than the 2300 before the heat, because the ice had been stealing power (RBKA 2.1).</p></details>
+  <details class="widget-try"><summary>Try it: why is "open the throttle to get the RPM back" the wrong answer?</summary><p>Choose the chase story: each nudge brings the RPM back while the ice keeps growing behind a more open butterfly. At full throttle there is nothing left, and the engine stops with little heat left to melt the ice (BAKC 3.4). Any unexplained RPM loss is carburettor ice: full heat, and leave it on.</p></details>
+</div>

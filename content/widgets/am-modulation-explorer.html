@@ -1,0 +1,152 @@
+<div class="widget" x-data="timeline({
+  duration: 6, loop: true, autoplay: true,
+  loud: 0.6, fm: false, two: false,
+  // picture model (illustrative): a voice of two tones, a carrier of 36 cycles across the trace; the real 118.1 MHz
+  // carrier makes tens of thousands of cycles or more for every cycle of a voice
+  _N: 36,
+  x0: 150, x1: 624,
+  voice(u) { return 0.62 * Math.sin(4 * Math.PI * u) + 0.38 * Math.sin(10 * Math.PI * u + 1) },
+  // its integral, for the frequency-modulated phase
+  voiceInt(u) { return -0.62 * Math.cos(4 * Math.PI * u) / (4 * Math.PI) - 0.38 * Math.cos(10 * Math.PI * u + 1) / (10 * Math.PI) },
+  other(u) { return Math.sin(6 * Math.PI * u + 2) },
+  trace(fn, y0, n) {
+    const pts = [];
+    for (let i = 0; i <= n; i++) { const f = i / n; pts.push([this.x0 + f * (this.x1 - this.x0), y0 - fn(f + this.t)]) }
+    return this.path(pts);
+  },
+  get m() { return 0.85 * this.loud },
+  get audioPath() { return this.trace((u) => 26 * this.loud * this.voice(u), 58, 160) },
+  get carrierPath() { return this.trace((u) => 20 * Math.sin(2 * Math.PI * this._N * u), 134, 460) },
+  // on the air: AM varies the strength, FM the frequency; a second station adds its own carrier 3 cycles higher
+  air(u) {
+    const N = this._N;
+    if (this.fm) {
+      const s1 = Math.sin(2 * Math.PI * N * (u + 0.4 * this.m * this.voiceInt(u)));
+      return this.two ? 15 * s1 + 8 * Math.sin(2 * Math.PI * (N + 3) * u + 1) : 22 * s1;
+    }
+    const a1 = (this.two ? 13 : 22) * (1 + this.m * this.voice(u)) * Math.sin(2 * Math.PI * N * u);
+    if (!this.two) return a1;
+    return a1 + 11 * (1 + this.m * this.other(u)) * Math.sin(2 * Math.PI * (N + 3) * u);
+  },
+  get airPath() { return this.trace((u) => this.air(u), 236, 520) },
+  get envUp() { return this.trace((u) => 22 * (1 + this.m * this.voice(u)), 236, 120) },
+  get envDown() { return this.trace((u) => -22 * (1 + this.m * this.voice(u)), 236, 120) },
+  // what the receiver recovers: your voice; with two AM stations, both voices and a beat squeal on top
+  heard(u) {
+    if (this.two && !this.fm) return 9 * this.voice(u) + 8 * this.other(u) + 7 * Math.sin(2 * Math.PI * 30 * u) * Math.sin(2 * Math.PI * 3 * u);
+    return 24 * this.loud * this.voice(u);
+  },
+  get heardPath() { return this.trace((u) => this.heard(u), 330, 300) },
+  get lostPath() { return this.trace((u) => 16 * this.other(u), 330, 120) },
+  get freqText() { return this.fm ? 'Varies with your voice' : '118.1 MHz, fixed' },
+  get strengthText() { return this.fm ? 'Fixed' : this.loud < 0.05 ? 'Steady: nothing to carry' : 'Follows your voice, ' + (this.loud < 0.35 ? 'gently' : this.loud < 0.75 ? 'clearly' : 'strongly') },
+  get hears() {
+    if (!this.two) return this.loud < 0.15 ? ['Your call, faint', 'warn'] : ['Your call, clearly', 'ok'];
+    return this.fm ? ['One clean call; the other is lost unheard', 'bad'] : ['A squeal or garble: both calls blocked', 'warn'];
+  },
+  get caption() {
+    if (this.two && !this.fm) return 'Two stations transmit together. In AM their carriers add up and beat against each other, so the listener hears a squeal or garble and knows a call was blocked: both may need repeating. With AM, the blocked call announces itself.';
+    if (this.two) return 'FM for contrast: the receiver locks on to the stronger signal and suppresses the weaker one, so the listener hears one clean call and never knows a second pilot also transmitted. That is why aviation voice keeps AM.';
+    if (this.fm) return 'FM for contrast: the carrier keeps a fixed strength and its frequency swings with your voice instead. Aeronautical VHF voice does not use FM.';
+    return 'The transmitter makes a steady carrier on the selected frequency and varies its strength in step with your voice: amplitude modulation. Loud speech makes the carrier stronger, quiet speech weaker, and its frequency stays fixed. The receiver demodulates it to recover your voice.';
+  },
+  presets: {
+    'quiet-voice': { loud: 0.25, fm: false, two: false },
+    'loud-voice': { loud: 1, fm: false, two: false },
+    'two-stations-am': { loud: 0.6, fm: false, two: true },
+    'fm-for-contrast': { loud: 0.6, fm: true, two: false },
+    'two-stations-fm': { loud: 0.6, fm: true, two: true },
+  },
+})">
+  <svg viewBox="0 0 640 372" role="img" aria-labelledby="ame-title" class="widget-stage">
+    <title id="ame-title">Four traces from your microphone to a listener: your voice as an audio wave, the steady radio-frequency carrier, the signal on the air (in AM the carrier's strength follows your voice, with its envelope drawn; in FM its frequency swings instead), and what the listener's receiver recovers. With a second station transmitting at the same time, AM gives a squeal while FM hides the weaker call</title>
+    <rect x="0" y="0" width="640" height="372" rx="10" fill="var(--color-surface-2)"/>
+    <defs>
+      <marker id="ame-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- row titles -->
+    <g font-size="13">
+      <text x="16" y="52" font-weight="700" fill="var(--color-fg)">Your voice</text>
+      <text x="16" y="68" font-size="12" fill="var(--color-fg-muted)">microphone audio</text>
+      <text x="16" y="128" font-weight="700" fill="var(--color-fg)">Carrier</text>
+      <text x="16" y="144" font-size="12" fill="var(--color-fg-muted)" class="num">118.1 MHz</text>
+      <text x="16" y="222" font-weight="700" fill="var(--color-brand-fg)" x-text="fm ? 'On the air: FM' : 'On the air: AM'"></text>
+      <text x="16" y="238" font-size="12" fill="var(--color-fg-muted)" x-text="two ? 'two stations at once' : 'transmitter output'"></text>
+      <text x="16" y="324" font-weight="700" fill="var(--color-fg)">Listener hears</text>
+      <text x="16" y="340" font-size="12" fill="var(--color-fg-muted)">receiver output</text>
+    </g>
+    <!-- axes -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="150" y1="58" x2="624" y2="58"/><line x1="150" y1="134" x2="624" y2="134"/><line x1="150" y1="236" x2="624" y2="236"/><line x1="150" y1="330" x2="624" y2="330"/>
+    </g>
+    <!-- 1 the voice -->
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :d="audioPath"/>
+    <!-- 2 the carrier -->
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round" :d="carrierPath"/>
+    <!-- modulate: the transmitter combines them -->
+    <g font-size="12" fill="var(--color-fg-faint)">
+      <line x1="136" y1="80" x2="136" y2="196" stroke="var(--color-fg-faint)" stroke-width="1.25" marker-end="url(#ame-arrow)"/>
+      <text x="142" y="178" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">transmitter modulates</text>
+      <line x1="136" y1="268" x2="136" y2="296" stroke="var(--color-fg-faint)" stroke-width="1.25" marker-end="url(#ame-arrow)"/>
+      <text x="142" y="288" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">receiver demodulates</text>
+    </g>
+    <!-- 3 on the air -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.5" stroke-linejoin="round" :d="airPath"/>
+    <g x-show="!fm && !two" fill="none" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="4 3">
+      <path :d="envUp"/><path :d="envDown"/>
+    </g>
+    <text x="624" y="194" font-size="12" text-anchor="end" fill="var(--color-info)" x-show="!fm && !two" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">envelope = your voice</text>
+    <text x="624" y="194" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-show="fm && !two" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">same height; the waves bunch and spread</text>
+    <text x="624" y="194" font-size="12" text-anchor="end" fill="var(--color-warn-fg)" x-show="two && !fm" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">two carriers beat against each other</text>
+    <text x="624" y="194" font-size="12" text-anchor="end" fill="var(--color-bad-fg)" x-show="two && fm" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">the receiver locks on to the stronger station</text>
+    <!-- 4 the listener -->
+    <path fill="none" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="4 3" x-show="two && fm" :d="lostPath" stroke-opacity="0.6"/>
+    <path fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :stroke="two && !fm ? 'var(--color-warn)' : 'var(--color-info)'" :d="heardPath"/>
+    <text x="624" y="364" font-size="12" text-anchor="end" fill="var(--color-warn-fg)" x-show="two && !fm">squeal: “say again”, both calls repeated</text>
+    <text x="624" y="364" font-size="12" text-anchor="end" fill="var(--color-bad-fg)" x-show="two && fm">dashed: the second call, lost without a trace</text>
+    <text x="624" y="364" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-show="!two">your voice again, recovered</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ame-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Scroll the waves">
+    <span class="widget-clock" x-text="fm ? 'FM' : 'AM'"></span>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ame-loud">How loudly you speak <output for="ame-loud" x-text="Math.round(loud * 100) + '%'"></output></label>
+      <input type="range" id="ame-loud" min="0" max="1" step="0.05" x-model.number="loud" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ame-two" class="cursor-pointer"><span>A second station presses the PTT at the same moment</span>
+        <input type="checkbox" id="ame-two" x-model="two" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ame-fm" class="cursor-pointer"><span>Compare with FM (not used for aviation voice)</span>
+        <input type="checkbox" id="ame-fm" x-model="fm" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="fm ? 'warn' : 'ok'"><dt class="widget-label">Carrier frequency</dt><dd class="widget-value" x-text="freqText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Carrier strength</dt><dd class="widget-value" x-text="strengthText"></dd></div>
+    <div class="widget-readout" :class="hears[1]"><dt class="widget-label">Listener hears</dt><dd class="widget-value"><span x-text="hears[0]"></span><span class="widget-flag bad" x-show="two && fm">hidden</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('quiet-voice')" :aria-pressed="active === 'quiet-voice'">Quiet voice</button>
+      <button type="button" @click="preset('loud-voice')" :aria-pressed="active === 'loud-voice'">Loud voice</button>
+      <button type="button" @click="preset('two-stations-am')" :aria-pressed="active === 'two-stations-am'">Two at once, AM</button>
+      <button type="button" @click="preset('fm-for-contrast')" :aria-pressed="active === 'fm-for-contrast'">FM</button>
+      <button type="button" @click="preset('two-stations-fm')" :aria-pressed="active === 'two-stations-fm'">Two at once, FM</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In AM the carrier’s strength follows your voice while its frequency stays fixed, so the outline of the radio wave is your voice. Press two transmitters at once and AM turns the clash into a squeal everyone hears; FM would quietly drop the weaker call. The picture is not to scale: a real 118.1 MHz carrier makes tens of thousands of cycles or more for each cycle of your voice.</p>
+  <details class="widget-try"><summary>Try it: what does the transmitter do to your voice, and what does the receiver do?</summary><p>The transmitter generates a carrier on the selected frequency and modulates it, varying its strength with your voice (AM). The receiver selects that frequency, amplifies it and demodulates it to recover the audio. The transmitter modulates, the receiver demodulates.</p></details>
+  <details class="widget-try"><summary>Try it: two pilots press the PTT together. Why is AM the safer choice?</summary><p>Tick the second station: with AM the listener hears a squeal or garble and knows a call was blocked, so both can be asked to repeat. Switch to FM and one call comes through clean while the other vanishes unnoticed.</p></details>
+</div>

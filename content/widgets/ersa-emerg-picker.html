@@ -1,0 +1,167 @@
+<div class="widget" x-data="widget({
+  sit: 'rf-g',
+  // PFRA 2.7 (ERSA EMERG in flight) and PFRA 2.8 (interception, unlawful interference). Codes: 7700 emergency,
+  // 7600 radio failure, 7500 unlawful interference. No other code is shown: the normal one is whatever you were assigned.
+  S: {
+    'rf-g': { name: 'Radio failure, VFR in Class G', code: '7600', call: 'none', tabs: ['rf', 'codes'],
+      freq: 'Normal calls, made blind on the frequency in use',
+      acts: ['Continue, and remain in VMC', 'Land at the nearest suitable aerodrome', 'Broadcast blind: you may still transmit', 'Squawk 7600'] },
+    'rf-c': { name: 'Radio failure in controlled airspace', code: '7600', call: 'none', tabs: ['rf', 'codes', 'lights'],
+      freq: 'Normal calls, made blind',
+      acts: ['Follow the last clearance you received', 'Fly the expected procedures', 'Watch for light signals from the tower', 'Squawk 7600'] },
+    'smoke': { name: 'Smoke, no immediate danger', code: '', call: 'PAN PAN', tabs: ['calls'],
+      nature: 'smoke from behind the panel', intent: 'land at the next aerodrome',
+      freq: 'The frequency in use, then 121.5 MHz if no answer',
+      acts: ['PAN PAN three times, frequency in use', '121.5 MHz if nobody answers', 'Fire? Upgrade to MAYDAY, squawk 7700'] },
+    'fire': { name: 'Fire: grave and imminent danger', code: '7700', call: 'MAYDAY', tabs: ['calls', 'codes'],
+      nature: 'fire', intent: '[your intentions]',
+      freq: 'The frequency in use, then 121.5 MHz if no answer',
+      acts: ['MAYDAY three times, frequency in use', '121.5 MHz if nobody answers', 'Squawk 7700'] },
+    'intercepted': { name: 'Intercepted', code: '7700', call: 'interceptor', tabs: ['intercept', 'codes'],
+      freq: '121.5 MHz to the interceptor; ATS if possible',
+      acts: ['Follow the interceptor and its signals', 'Notify ATS if possible', 'Call on 121.5 MHz: who you are, the flight', 'Squawk 7700 unless ATS says otherwise', 'ATS disagrees? Follow the interceptor'] },
+    'unlawful': { name: 'Unlawful interference', code: '7500', call: 'code', tabs: ['codes'],
+      freq: 'Say nothing that alerts the person threatening you',
+      acts: ['Squawk 7500', 'ATC confirms the code discreetly', 'Leave 7500 set: change it only if ATC asks'] },
+  },
+  get s() { return this.S[this.sit] },
+  digit(i) { return this.s.code ? this.s.code[i] : '·' },
+  tab(k) { return this.s.tabs.indexOf(k) >= 0 },
+  tabFill(k) { return this.tab(k) ? 'var(--color-brand)' : 'var(--color-surface)' },
+  tabText(k) { return this.tab(k) ? 'var(--color-surface)' : 'var(--color-fg-muted)' },
+  act(i) { return this.s.acts[i] || '' },
+  get codeMeaning() { return { '7700': 'emergency', '7600': 'radio failure', '7500': 'unlawful interference', '': 'no change: your assigned code' }[this.s.code] },
+  get caption() {
+    const c = {
+      'rf-g': 'Match the problem and the airspace first: radio failure, VFR, Class G. Nobody is controlling you, so the procedure keeps you safe and predictable: stay visual, land at the nearest suitable aerodrome, make your calls blind and squawk 7600 so any radar knows without a word.',
+      'rf-c': 'In controlled airspace ATC has cleared other traffic around the path it expects you to fly, so you keep flying it: the last clearance and the expected procedures, watching the tower for light signals. Leaving for the nearest aerodrome is the Class G procedure, not this one.',
+      'smoke': 'A problem that needs attention with no immediate danger yet is urgency: PAN PAN. The call answers, in order, who you are, what is wrong, what you will do, where to find you and how many to look for, so if it is cut short the essentials are already out.',
+      'fire': 'Grave and imminent danger needing immediate help is distress: MAYDAY clears the frequency and commits help at once, and 7700 makes your return stand out on every screen that can see you.',
+      'intercepted': 'The interceptor is beside you and can see you; ATS cannot. So you follow its signals first, try 121.5 MHz (the one frequency you both have), and squawk 7700 so the controllers can connect you with the interception.',
+      'unlawful': 'The person threatening you may hear every word on the radio, so the transponder says it for you. ATC will confirm discreetly; you leave 7500 set unless they ask you to change it.',
+    };
+    return c[this.sit];
+  },
+  presets: {
+    'radio-failure-class-g': { sit: 'rf-g' },
+    'radio-failure-controlled': { sit: 'rf-c' },
+    'smoke-pan-pan': { sit: 'smoke' },
+    'fire-mayday': { sit: 'fire' },
+    'intercepted': { sit: 'intercepted' },
+    'unlawful-interference': { sit: 'unlawful' },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="eem-title" class="widget-stage">
+    <title id="eem-title">A transponder control head showing the code to squawk, the pink ERSA EMERG page with the sections that apply to the situation highlighted, a radio call card in the ERSA order (callsign, nature, intentions, position, altitude, heading, persons on board), and the actions in order</title>
+    <rect x="0" y="0" width="640" height="330" fill="var(--color-surface-2)" rx="10"/>
+    <!-- transponder -->
+    <rect x="16" y="14" width="288" height="96" rx="10" fill="var(--color-tarmac)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="30" y="34" font-size="11" font-weight="700" fill="var(--color-paint)" letter-spacing="1">TRANSPONDER</text>
+    <text x="290" y="34" font-size="11" font-weight="700" text-anchor="end" fill="var(--color-paint)">ALT</text>
+    <g class="num" font-size="30" font-weight="700" text-anchor="middle">
+      <rect x="40" y="44" width="48" height="48" rx="6" fill="var(--color-surface)" stroke-width="2" :stroke="s.code ? 'var(--color-bad)' : 'var(--color-line-strong)'"/><text x="64" y="80" :fill="s.code ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'" x-text="digit(0)"></text>
+      <rect x="98" y="44" width="48" height="48" rx="6" fill="var(--color-surface)" stroke-width="2" :stroke="s.code ? 'var(--color-bad)' : 'var(--color-line-strong)'"/><text x="122" y="80" :fill="s.code ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'" x-text="digit(1)"></text>
+      <rect x="156" y="44" width="48" height="48" rx="6" fill="var(--color-surface)" stroke-width="2" :stroke="s.code ? 'var(--color-bad)' : 'var(--color-line-strong)'"/><text x="180" y="80" :fill="s.code ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'" x-text="digit(2)"></text>
+      <rect x="214" y="44" width="48" height="48" rx="6" fill="var(--color-surface)" stroke-width="2" :stroke="s.code ? 'var(--color-bad)' : 'var(--color-line-strong)'"/><text x="238" y="80" :fill="s.code ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'" x-text="digit(3)"></text>
+    </g>
+    <circle cx="282" cy="72" r="9" fill="var(--color-surface)" stroke="var(--color-paint)" stroke-width="1.25"/>
+    <text x="282" y="76" font-size="11" text-anchor="middle" font-weight="700" fill="var(--color-fg)">ID</text>
+    <text x="160" y="128" font-size="13" font-weight="600" text-anchor="middle" :fill="s.code ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="s.code ? 'squawk ' + s.code + ': ' + codeMeaning : codeMeaning"></text>
+
+    <!-- the ERSA EMERG page (pink pages) -->
+    <rect x="320" y="14" width="304" height="160" rx="8" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.25"/>
+    <text x="334" y="34" font-size="13" font-weight="700" fill="var(--color-bad-fg)">ERSA EMERG (the pink pages)</text>
+    <g font-size="12">
+      <rect x="334" y="44" width="134" height="24" rx="5" :fill="tabFill('calls')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="401" y="60" text-anchor="middle" :fill="tabText('calls')">Distress, urgency</text>
+      <rect x="476" y="44" width="134" height="24" rx="5" :fill="tabFill('codes')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="543" y="60" text-anchor="middle" :fill="tabText('codes')">Transponder codes</text>
+      <rect x="334" y="74" width="134" height="24" rx="5" :fill="tabFill('rf')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="401" y="90" text-anchor="middle" :fill="tabText('rf')">Radio failure</text>
+      <rect x="476" y="74" width="134" height="24" rx="5" :fill="tabFill('intercept')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="543" y="90" text-anchor="middle" :fill="tabText('intercept')">Interception</text>
+      <rect x="334" y="104" width="134" height="24" rx="5" :fill="tabFill('ditch')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="401" y="120" text-anchor="middle" font-size="11" :fill="tabText('ditch')">Ditching, forced landing</text>
+      <rect x="476" y="104" width="134" height="24" rx="5" :fill="tabFill('sar')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="543" y="120" text-anchor="middle" :fill="tabText('sar')">SAR, ELT, signals</text>
+      <rect x="334" y="134" width="134" height="24" rx="5" :fill="tabFill('lights')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="401" y="150" text-anchor="middle" :fill="tabText('lights')">Light signals</text>
+      <rect x="476" y="134" width="134" height="24" rx="5" :fill="tabFill('contacts')" stroke="var(--color-line-strong)" stroke-width="1"/><text x="543" y="150" text-anchor="middle" :fill="tabText('contacts')">Emergency contacts</text>
+    </g>
+
+    <!-- the call card -->
+    <rect x="16" y="142" width="288" height="176" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g :opacity="(s.call === 'MAYDAY' || s.call === 'PAN PAN') ? 1 : 0">
+      <text x="30" y="166" font-size="15" font-weight="700" :fill="s.call === 'MAYDAY' ? 'var(--color-bad-fg)' : 'var(--color-warn-fg)'" x-text="s.call + ', ' + s.call + ', ' + s.call"></text>
+      <g font-size="12">
+        <text x="30" y="190" fill="var(--color-fg-muted)">1 Callsign</text><text x="114" y="190" fill="var(--color-fg)">[your callsign]</text>
+        <text x="30" y="210" fill="var(--color-fg-muted)">2 Nature</text><text x="114" y="210" fill="var(--color-brand-fg)" x-text="s.nature || ''"></text>
+        <text x="30" y="230" fill="var(--color-fg-muted)">3 Intentions</text><text x="114" y="230" fill="var(--color-brand-fg)" x-text="s.intent || ''"></text>
+        <text x="30" y="250" fill="var(--color-fg-muted)">4 Position</text><text x="114" y="250" fill="var(--color-fg)">[where you are]</text>
+        <text x="30" y="270" fill="var(--color-fg-muted)">5 Altitude, heading</text><text x="158" y="270" fill="var(--color-fg)">[altitude], [heading]</text>
+        <text x="30" y="290" fill="var(--color-fg-muted)">6 Persons on board</text><text x="158" y="290" fill="var(--color-fg)">[number]</text>
+      </g>
+      <text x="30" y="310" font-size="11" fill="var(--color-fg-faint)">who, what, what next, where, how many</text>
+    </g>
+    <g :opacity="(s.call === 'none') ? 1 : 0">
+      <text x="30" y="166" font-size="15" font-weight="700" fill="var(--color-fg)">No reply? Keep talking</text>
+      <text x="30" y="190" font-size="12" fill="var(--color-fg-muted)">Make every normal call "blind":</text>
+      <text x="30" y="208" font-size="12" fill="var(--color-fg-muted)">the receiver may be dead while the</text>
+      <text x="30" y="226" font-size="12" fill="var(--color-fg-muted)">transmitter still works.</text>
+      <text x="30" y="256" font-size="12" font-weight="600" fill="var(--color-fg)">7600 tells radar the problem</text>
+      <text x="30" y="274" font-size="12" font-weight="600" fill="var(--color-fg)">without a word.</text>
+    </g>
+    <g :opacity="(s.call === 'interceptor') ? 1 : 0">
+      <text x="30" y="166" font-size="15" font-weight="700" fill="var(--color-fg)">121.5 MHz, to the interceptor</text>
+      <text x="30" y="192" font-size="12" fill="var(--color-fg-muted)">your identity and the nature of the flight</text>
+      <text x="30" y="222" font-size="12" font-weight="600" fill="var(--color-fg)">Signals first: rock your wings</text>
+      <text x="30" y="240" font-size="12" font-weight="600" fill="var(--color-fg)">for "understood" and follow.</text>
+      <text x="30" y="270" font-size="12" fill="var(--color-fg-muted)">The full signal table is in</text>
+      <text x="30" y="288" font-size="12" fill="var(--color-fg-muted)">AIP ENR 1.12 and ERSA EMERG.</text>
+    </g>
+    <g :opacity="(s.call === 'code') ? 1 : 0">
+      <text x="30" y="166" font-size="15" font-weight="700" fill="var(--color-bad-fg)">The code speaks for you</text>
+      <text x="30" y="192" font-size="12" fill="var(--color-fg-muted)">Someone may be listening to every</text>
+      <text x="30" y="210" font-size="12" fill="var(--color-fg-muted)">word you say on the radio.</text>
+      <text x="30" y="240" font-size="12" font-weight="600" fill="var(--color-fg)">ATC confirms discreetly;</text>
+      <text x="30" y="258" font-size="12" font-weight="600" fill="var(--color-fg)">leave 7500 set unless asked.</text>
+    </g>
+
+    <!-- actions -->
+    <text x="320" y="196" font-size="13" font-weight="700" fill="var(--color-fg)" x-text="s.name"></text>
+    <g font-size="12" fill="var(--color-fg)">
+      <text x="320" y="220" :opacity="(act(0)) ? 1 : 0"><tspan font-weight="700" fill="var(--color-brand-fg)">1 </tspan><tspan x-text="act(0)"></tspan></text>
+      <text x="320" y="240" :opacity="(act(1)) ? 1 : 0"><tspan font-weight="700" fill="var(--color-brand-fg)">2 </tspan><tspan x-text="act(1)"></tspan></text>
+      <text x="320" y="260" :opacity="(act(2)) ? 1 : 0"><tspan font-weight="700" fill="var(--color-brand-fg)">3 </tspan><tspan x-text="act(2)"></tspan></text>
+      <text x="320" y="280" :opacity="(act(3)) ? 1 : 0"><tspan font-weight="700" fill="var(--color-brand-fg)">4 </tspan><tspan x-text="act(3)"></tspan></text>
+      <text x="320" y="300" :opacity="(act(4)) ? 1 : 0"><tspan font-weight="700" fill="var(--color-brand-fg)">5 </tspan><tspan x-text="act(4)"></tspan></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="eem-sit">What has happened</label>
+      <select id="eem-sit" class="input" x-model="sit">
+        <option value="rf-g">Radio failure, VFR in Class G</option>
+        <option value="rf-c">Radio failure in controlled airspace</option>
+        <option value="smoke">Smoke behind the panel, no immediate danger</option>
+        <option value="fire">Fire</option>
+        <option value="intercepted">A military aircraft intercepts you</option>
+        <option value="unlawful">Unlawful interference on board</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="s.code ? 'bad' : ''"><dt class="widget-label">Squawk</dt><dd class="widget-value num" x-text="s.code ? s.code + ' (' + codeMeaning + ')' : 'no change'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Call</dt><dd class="widget-value" x-text="{ none: 'Broadcast blind', 'PAN PAN': 'PAN PAN (urgency)', MAYDAY: 'MAYDAY (distress)', interceptor: 'Interceptor on 121.5 MHz', code: 'None needed' }[s.call]"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Where</dt><dd class="widget-value" x-text="s.freq"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('radio-failure-class-g')" :aria-pressed="active === 'radio-failure-class-g'">Radio failure, Class G</button>
+      <button type="button" @click="preset('radio-failure-controlled')" :aria-pressed="active === 'radio-failure-controlled'">Radio failure, controlled</button>
+      <button type="button" @click="preset('smoke-pan-pan')" :aria-pressed="active === 'smoke-pan-pan'">Smoke</button>
+      <button type="button" @click="preset('fire-mayday')" :aria-pressed="active === 'fire-mayday'">Fire</button>
+      <button type="button" @click="preset('intercepted')" :aria-pressed="active === 'intercepted'">Intercepted</button>
+      <button type="button" @click="preset('unlawful-interference')" :aria-pressed="active === 'unlawful-interference'">Unlawful interference</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Identify the problem and the airspace first, then read the action: the same radio failure means "land at the nearest suitable aerodrome" in Class G but "follow the last clearance" in controlled airspace. Three codes do the talking: 7700 emergency (and when intercepted, unless ATS says otherwise), 7600 radio failure, 7500 unlawful interference. Calls go on the frequency in use first, then 121.5 MHz. ERSA's section order varies between editions: check your current one.</p>
+  <details class="widget-try"><summary>Try it: VFR at 4,500 ft between Jandakot and Bunbury, the radio goes silent. What does ERSA EMERG tell you to do?</summary><p>Choose Radio failure, Class G: continue, remain in VMC, land at the nearest suitable aerodrome, broadcast blind and squawk 7600, so any radar that sees you knows the problem without a call.</p></details>
+  <details class="widget-try"><summary>Try it: the smoke from behind the panel turns into flames. What changes?</summary><p>Choose Fire: the call is upgraded from PAN PAN to MAYDAY, and the transponder goes to 7700.</p></details>
+</div>

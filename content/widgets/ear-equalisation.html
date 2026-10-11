@@ -1,0 +1,167 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false,
+  cold: false, equalise: true,
+  N: 400,
+  // ISA pressure from the lessons' figures (PHFC 2.11), joined log-linearly
+  anchors: [[0, 1013], [5000, 843], [10000, 700]],
+  pAt(ft) { const a = this.anchors; for (let i = 1; i < a.length; i++) if (ft <= a[i][0]) { const f = (ft - a[i - 1][0]) / (a[i][0] - a[i - 1][0]); return a[i - 1][1] * Math.pow(a[i][1] / a[i - 1][1], f) } return a[a.length - 1][1] },
+  // the flight: ground, climb to 10,000 ft, cruise, descent, landed
+  altAt(t) { return t < 0.06 ? 0 : t < 0.36 ? 10000 * this.ease(this.seg(t, 0.06, 0.36)) : t < 0.5 ? 10000 : t < 0.9 ? 10000 * (1 - this.ease(this.seg(t, 0.5, 0.9))) : 0 },
+  // the middle ear: vents out when its pressure is a little above outside (more with a cold: illustrative), lets air
+  // back in only when a swallow opens the soft end, and not at all when a cold has swollen it shut
+  get sim() {
+    const n = this.N, out = { pout: [], pm: [], ev: [] };
+    let pm = 1013;
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, po = this.pAt(this.altAt(t));
+      let ev = '';
+      if (pm - po > (this.cold ? 32 : 20)) { pm = po; ev = 'vent' }
+      else if ((po - pm > 12 || (t >= 0.9 && po - pm > 0.5)) && this.equalise && !this.cold) { pm = po; ev = 'eq' }
+      out.pout.push(po); out.pm.push(pm); out.ev.push(ev);
+    }
+    return out;
+  },
+  get i() { return Math.round(this.t * this.N) },
+  get alt() { return this.altAt(this.t) },
+  get phase() { return this.t < 0.06 ? 'ground' : this.t < 0.36 ? 'climb' : this.t < 0.5 ? 'cruise' : this.t < 0.9 ? 'descent' : 'landed' },
+  get pout() { return this.sim.pout[this.i] },
+  get pm() { return this.sim.pm[this.i] },
+  get diff() { return this.pout - this.pm },
+  // the most recent tube opening, if it was within the last few samples
+  get recent() { const ev = this.sim.ev; for (let k = this.i; k >= Math.max(0, this.i - 2); k--) if (ev[k]) return ev[k]; return '' },
+  get trappedSince() { const s = this.sim, p = s.pm[this.i]; let k = this.i; while (k > 0 && Math.abs(s.pout[k] - p) > 1.5) k--; return Math.round(this.altAt(k / this.N) / 100) * 100 },
+  get ear() { return this.diff > 60 ? ['Pain: ear block', 'bad'] : this.diff > 15 ? ['Pressure building', 'warn'] : ['Comfortable', 'ok'] },
+  get tube() {
+    if (this.recent === 'vent') return ['Pushed open: air out', 'ok'];
+    if (this.recent === 'eq') return ['Opened by a swallow', 'ok'];
+    if (this.cold && this.diff > 5) return ['Swollen shut', 'bad'];
+    if (this.diff > 15) return ['Held shut', 'warn'];
+    return ['Closed (flap valve)', ''];
+  },
+  get open() { return this.recent !== '' },
+  // the eardrum bows out when the middle ear is higher, in when the outside is higher
+  get bulge() { return this.clamp(this.diff * 0.9, -16, 26) },
+  // pressure across the eardrum, on a square-root scale so a small pop still shows
+  dy(d) { return 220 + Math.sign(d) * 46 * Math.sqrt(Math.min(Math.abs(d), 320) / 320) },
+  get trace() { const s = this.sim, pts = []; for (let k = 0; k <= this.i; k += 2) pts.push([430 + k / this.N * 195, this.dy(s.pout[k] - s.pm[k])]); return pts.length > 1 ? this.path(pts) : 'M430 220' },
+  get profile() { const pts = []; for (let k = 0; k <= 100; k++) pts.push([430 + k / 100 * 195, 130 - this.altAt(k / 100) / 10000 * 80]); return this.path(pts) },
+  steps: [{ at: 0, label: 'Ground' }, { at: 0.06, label: 'Climb' }, { at: 0.36, label: 'Cruise' }, { at: 0.5, label: 'Descent' }, { at: 0.9, label: 'Landed' }],
+  get caption() {
+    const p = this.phase;
+    if (p === 'ground' && this.t < 0.5) return 'On the ground the air behind the eardrum is at the same pressure as outside: the eardrum is flat and free to vibrate.';
+    if (p === 'climb') return this.cold ? 'Even with a cold, the climb is the easy direction: the expanding middle-ear air builds up a little more and then forces its way out through the narrowed tube.' : 'Climbing, the outside pressure falls. The middle-ear air is now at the higher pressure and pushes the soft end of the eustachian tube open from inside: a puff escapes, a pop, and the pressure is equal again. You do nothing.';
+    if (p === 'cruise') return 'Level at 10,000 ft the outside pressure is about 700 hPa and the middle ear has kept up with it, a puff at a time.';
+    if (p === 'descent') {
+      if (this.cold) return 'A cold has swollen the tube and it will not open, even with a Valsalva. The outside pressure pushes the eardrum in: ear block, pain, muffled hearing, perhaps a burst eardrum. Climb back to where it was comfortable, equalise, then descend more slowly.';
+      if (!this.equalise) return 'Nobody is swallowing (a sleeping passenger): the soft end stays shut, the difference grows and the eardrum is pushed in. Left too long, the difference holds the tube so firmly shut that swallowing no longer opens it. Wake passengers before the descent.';
+      return 'Descending, the outside pressure rises and squeezes the soft end of the tube shut. Air goes back up only when you open it: swallow, yawn or a gentle Valsalva, often and a little at a time.';
+    }
+    if (this.diff > 15) return 'On the ground with the middle ear still at the pressure of ' + this.fmt(this.trappedSince) + ' ft: the eardrum stays pushed in. This is otic barotrauma, and it happens on the descent, never the climb.';
+    return 'Landed and equalised: the eardrum is flat again. The climb looked after itself; the descent needed you.';
+  },
+  presets: {
+    'climb-pop': { cold: false, equalise: true, t: 0.2 },
+    'descent-swallowing': { cold: false, equalise: true, t: 0.725 },
+    'sleeping-passenger': { cold: false, equalise: false, t: 0.8 },
+    'head-cold-block': { cold: true, equalise: true, t: 0.8 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="eeq-title" class="widget-stage">
+    <title id="eeq-title">The ear in cross-section during a climb and descent: the ear canal, the eardrum, the air-filled middle ear and the eustachian tube down to the throat, with the flight profile and the pressure across the eardrum</title>
+    <defs><marker id="eeq-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- outside air and the ear canal -->
+    <text x="16" y="24" font-size="13" fill="var(--color-fg-muted)">outside air</text>
+    <text x="16" y="42" font-size="13" class="num" fill="var(--color-fg)" font-weight="600" x-text="fmt(pout) + ' hPa'"></text>
+    <path d="M10 92 L172 108 L172 152 L10 168 Z" fill="var(--color-sky-soft)"/>
+    <path d="M10 92 L172 108 M10 168 L172 152" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <text x="86" y="136" font-size="12" text-anchor="middle" fill="var(--color-sky-fg)">ear canal</text>
+    <!-- middle ear -->
+    <rect x="178" y="72" width="132" height="112" rx="26" fill="var(--color-sky-soft)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <text x="250" y="92" font-size="12" text-anchor="middle" fill="var(--color-sky-fg)">middle ear (air)</text>
+    <text x="250" y="110" font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="fmt(pm) + ' hPa'"></text>
+    <path d="M196 132 q14 -8 26 2 q8 8 20 2 l14 10 q4 6 12 2" fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- eardrum -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round" :d="'M175 104 Q' + (175 + bulge) + ' 130 175 156'"/>
+    <text x="175" y="64" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600">eardrum</text>
+    <g stroke="var(--color-bad)" stroke-width="2" fill="none" x-show="diff > 15">
+      <line x1="128" y1="122" x2="158" y2="122" marker-end="url(#eeq-arrow)"/><line x1="128" y1="138" x2="158" y2="138" marker-end="url(#eeq-arrow)"/>
+    </g>
+    <text x="16" y="190" font-size="12" fill="var(--color-bad-fg)" x-show="diff > 15">eardrum pushed in</text>
+    <!-- eustachian tube: bony upper part, soft lower end that lies shut like a slit -->
+    <path fill="var(--color-sky-soft)" stroke="none" :d="open ? 'M239 184 L261 184 L261 268 L239 268 Z' : 'M239 184 L261 184 L261 226 Q261 250 251 268 L249 268 Q239 250 239 226 Z'"/>
+    <path d="M238 184 L238 226 M262 184 L262 226" fill="none" stroke="var(--color-fg-muted)" stroke-width="3" stroke-linecap="round"/>
+    <path fill="none" stroke-linecap="round" :stroke="cold ? 'var(--color-warn)' : 'var(--color-fg-muted)'" :stroke-width="cold ? 7 : 3"
+      :d="open ? 'M238 226 L238 266 M262 226 L262 266' : 'M238 226 Q238 250 249 266 M262 226 Q262 250 251 266'"/>
+    <!-- air through the tube -->
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#eeq-arrow)" x-show="recent === 'vent'" x1="250" y1="194" x2="250" y2="254"/>
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#eeq-arrow)" x-show="recent === 'eq'" x1="250" y1="254" x2="250" y2="194"/>
+    <text x="276" y="232" font-size="15" font-weight="700" fill="var(--color-ok-fg)" x-show="recent === 'vent'">pop!</text>
+    <text x="276" y="232" font-size="13" fill="var(--color-ok-fg)" x-show="recent === 'eq'">swallow</text>
+    <text x="226" y="206" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">eustachian tube</text>
+    <text x="226" y="222" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">(bony part)</text>
+    <text x="226" y="254" font-size="12" text-anchor="end" :fill="cold ? 'var(--color-warn-fg)' : 'var(--color-fg-faint)'" x-text="cold ? 'swollen by a cold' : 'soft end: a flap valve'"></text>
+    <!-- throat -->
+    <rect x="150" y="270" width="200" height="26" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="250" y="288" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">throat (outside pressure)</text>
+
+    <!-- flight profile -->
+    <text x="430" y="24" font-size="13" font-weight="600" fill="var(--color-fg)" class="num" x-text="fmt(Math.round(alt / 100) * 100) + ' ft'"></text>
+    <text x="625" y="24" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="phase === 'climb' ? 'climbing' : phase === 'descent' ? 'descending' : phase === 'cruise' ? 'level' : 'on the ground'"></text>
+    <line x1="430" y1="130" x2="625" y2="130" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.5" :d="profile"/>
+    <text x="436" y="46" font-size="11" fill="var(--color-fg-faint)" class="num">10,000</text>
+    <circle r="5" fill="var(--color-brand)" :cx="430 + t * 195" :cy="130 - alt / 10000 * 80"/>
+    <!-- pressure across the eardrum -->
+    <text x="430" y="160" font-size="12" fill="var(--color-fg-muted)">across the eardrum</text>
+    <rect x="430" y="168" width="195" height="52" fill="var(--color-ok)" fill-opacity="0.06"/>
+    <rect x="430" y="220" width="195" height="48" fill="var(--color-bad)" fill-opacity="0.08"/>
+    <line x1="430" y1="220" x2="625" y2="220" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="434" y="182" font-size="11" fill="var(--color-fg-faint)">pushed out</text>
+    <text x="434" y="262" font-size="11" fill="var(--color-fg-faint)">pushed in</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round" :d="trace"/>
+    <text x="430" y="288" font-size="11" fill="var(--color-fg-faint)">pressure scale compressed</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the flight'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="eeq-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time through the flight">
+    <span class="widget-clock" x-text="fmt(Math.round(alt / 100) * 100) + ' ft'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, k) in steps" :key="s.label">
+      <button type="button" @click="goStep(k)" :aria-pressed="step === k" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="eeq-cold" class="cursor-pointer"><span>Head cold (swollen eustachian tube)</span>
+        <input type="checkbox" id="eeq-cold" x-model="cold" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="eeq-eq" class="cursor-pointer"><span>Swallow, yawn or Valsalva on the descent</span>
+        <input type="checkbox" id="eeq-eq" x-model="equalise" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Outside pressure</dt><dd class="widget-value" x-text="fmt(pout) + ' hPa'"></dd></div>
+    <div class="widget-readout" :class="tube[1]"><dt class="widget-label">Eustachian tube</dt><dd class="widget-value" x-text="tube[0]"></dd></div>
+    <div class="widget-readout" :class="ear[1]"><dt class="widget-label">Your ear</dt><dd class="widget-value"><span x-text="ear[0]"></span><span class="widget-flag bad" x-show="diff > 60">climb back</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('climb-pop')" :aria-pressed="active === 'climb-pop'">Climb: pop</button>
+      <button type="button" @click="preset('descent-swallowing')" :aria-pressed="active === 'descent-swallowing'">Descent: swallow</button>
+      <button type="button" @click="preset('sleeping-passenger')" :aria-pressed="active === 'sleeping-passenger'">Asleep</button>
+      <button type="button" @click="preset('head-cold-block')" :aria-pressed="active === 'head-cold-block'">Head cold</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The tube is a one-way valve: air pushes out by itself on the climb, but on the descent it has to be let back in, by you, a little at a time. A cold that swells the tube shut turns every descent into an ear block. The pressures are the ISA values from the lessons; how big a difference pops the tube or hurts is illustrative.</p>
+  <details class="widget-try"><summary>Try it: with a head cold, is the climb or the descent the problem?</summary><p>Tick Head cold and play the flight: the climb still vents, a bigger puff at a time. On the descent the swollen tube never opens, the trace dives into "pushed in" and the ear blocks. Ears and sinuses hurt on the descent.</p></details>
+  <details class="widget-try"><summary>Try it: your passenger is asleep over the wheatbelt. Why wake them before the descent?</summary><p>Press Asleep: nobody swallows, so the tube stays shut and the difference builds all the way down. Awake and swallowing (Descent: swallow), the trace stays near the line.</p></details>
+</div>

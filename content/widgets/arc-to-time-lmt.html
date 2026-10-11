@@ -1,0 +1,140 @@
+<div class="widget" x-data="widget({
+  lon: 6958, lmt: 1095, eod: true,
+  // lon: longitude in minutes of arc east (6958 = 115° 58′ E); lmt: the graph reading in minutes after midnight, LMT
+  // strip: 112° E at x 40 to 130° E at x 600
+  X(arcMin) { return 40 + (arcMin / 60 - 112) * 560 / 18 },
+  get deg() { return Math.floor(this.lon / 60) },
+  get mins() { return this.lon % 60 },
+  get lonText() { return this.deg + '° ' + String(this.mins).padStart(2, '0') + '′ E' },
+  get place() {
+    const t = { 6882: 'Geraldton', 6940: 'Bunbury', 6958: 'Perth Airport', 7288: 'Kalgoorlie' };
+    return t[this.lon] || 'this longitude';
+  },
+  // arc to time: 15° = 1 h, 1° = 4 min, 1′ = 4 s; round to the nearest minute at the end
+  get h() { return Math.floor(this.deg / 15) },
+  get remDeg() { return this.deg - 15 * this.h },
+  get secPart() { return this.mins * 4 },
+  get exact() { const s = this.lon * 4; return { h: Math.floor(s / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 } },
+  get arc() { return Math.round(this.lon / 15) },
+  get arcText() { return Math.floor(this.arc / 60) + ' h ' + String(this.arc % 60).padStart(2, '0') + ' min' },
+  get working() {
+    return this.deg + ' ÷ 15 = ' + this.h + ' h, ' + this.remDeg + '° left × 4 = ' + this.remDeg * 4 + ' min; ' + this.mins + '′ × 4 = ' + this.secPart + ' s = '
+      + Math.floor(this.secPart / 60) + ' min ' + (this.secPart % 60) + ' s. Total ' + this.exact.h + ' h ' + String(this.exact.m).padStart(2, '0') + ' min ' + this.exact.s + ' s ≈ ' + this.arcText;
+  },
+  get utcRaw() { return this.lmt - this.arc },
+  get utcDay() { return this.utcRaw < 0 ? -1 : (this.utcRaw >= 1440 ? 1 : 0) },
+  get wstRaw() { return this.utcRaw + 480 },
+  get wstDay() { return this.wstRaw < 0 ? -1 : (this.wstRaw >= 1440 ? 1 : 0) },
+  dayText(d) { return d < 0 ? 'previous day' : (d > 0 ? 'next day' : 'same day as the reading') },
+  // shortcut: minutes of arc from the 120° E zone meridian at 4 s each (west of it, add to LMT)
+  get west() { return 7200 - this.lon },
+  get shortMin() { return Math.round(this.west * 4 / 60) },
+  get shortText() {
+    const a = Math.abs(this.west), d = Math.floor(a / 60), m = a % 60;
+    if (a === 0) return 'on the 120° E meridian: LMT = WST';
+    return d + '° ' + String(m).padStart(2, '0') + '′ ' + (this.west > 0 ? 'west' : 'east') + ' of 120° E ≈ ' + Math.abs(this.shortMin) + ' min, so ' + (this.west > 0 ? 'add' : 'subtract');
+  },
+  get onGround() { return this.wstRaw - 10 },
+  get caption() {
+    if (this.utcDay < 0) return 'Subtracting ' + this.arcText + ' takes you back past midnight, so the UTC time is on the previous day; adding 8 hours brings WST back to the day of the reading.';
+    if (this.eod) return 'At ' + this.place + ' the end of daylight is ' + this.hhmm(this.wstRaw) + ' WST, so a day VFR flight must be on the ground by ' + this.hhmm(this.onGround) + ' WST.';
+    return 'East longitude, so LMT is ahead of UTC: subtract the arc to time, write down the UTC, then add 8 hours for WST.';
+  },
+  presets: {
+    'perth-last-light': { lon: 6958, lmt: 1095, eod: true },
+    'kalgoorlie-first-light': { lon: 7288, lmt: 335, eod: false },
+    'bunbury-last-light': { lon: 6940, lmt: 1100, eod: true },
+    'geraldton-first-light': { lon: 6882, lmt: 350, eod: false },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="att-title" class="widget-stage">
+    <title id="att-title">Top, a strip of longitudes from 112 to 130 degrees east with the 120 degrees east zone meridian, four Western Australian towns and the chosen longitude under the sun. Bottom, the chain from local mean time, minus the arc to time, to UTC, plus 8 hours, to Western Standard Time</title>
+    <defs>
+      <marker id="att-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface)" rx="10"/>
+    <!-- longitude strip -->
+    <rect x="40" y="70" width="560" height="44" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1"/>
+    <path d="M40 114 v6 M71.1 114 v4 M102.2 114 v6 M133.3 114 v4 M164.4 114 v6 M195.6 114 v4 M226.7 114 v6 M257.8 114 v4 M288.9 114 v6 M320 114 v4 M351.1 114 v6 M382.2 114 v4 M413.3 114 v6 M444.4 114 v4 M475.6 114 v6 M506.7 114 v4 M537.8 114 v6 M568.9 114 v4 M600 114 v6" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="40" y="132">112°</text><text x="102.2" y="132">114°</text><text x="164.4" y="132">116°</text><text x="226.7" y="132">118°</text>
+      <text x="351.1" y="132">122°</text><text x="413.3" y="132">124°</text><text x="475.6" y="132">126°</text><text x="537.8" y="132">128°</text><text x="600" y="132">130° E</text>
+    </g>
+    <line x1="288.9" y1="62" x2="288.9" y2="122" stroke="var(--color-info)" stroke-width="2"/>
+    <text x="288.9" y="146" font-size="12" text-anchor="middle" fill="var(--color-info)" font-weight="600">120° E: WST is the sun's time here</text>
+    <!-- towns -->
+    <g fill="var(--color-fg-muted)">
+      <circle cx="124" cy="92" r="3"/><circle cx="154.1" cy="92" r="3"/><circle cx="163.4" cy="92" r="3"/><circle cx="334.5" cy="92" r="3"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-muted)">
+      <text x="120" y="86" text-anchor="end">Geraldton</text><text x="150" y="108" text-anchor="end">Bunbury</text>
+      <text x="168" y="86">Perth</text><text x="339" y="86">Kalgoorlie</text>
+    </g>
+    <!-- the gap to the zone meridian at 4 minutes a degree -->
+    <line y1="64" y2="64" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" :x1="X(lon)" x2="288.9" :display="(west !== 0) ? 'inline' : 'none'"/>
+    <!-- chosen longitude and the sun -->
+    <line y1="40" y2="114" stroke="var(--color-brand)" stroke-width="2" :x1="X(lon)" :x2="X(lon)"/>
+    <circle r="10" fill="var(--color-warn)" :cx="X(lon)" cy="30"/>
+    <text font-size="13" font-weight="600" fill="var(--color-brand-fg)" class="num" :x="X(lon) + (X(lon) > 420 ? -16 : 16)" y="34" :text-anchor="X(lon) > 420 ? 'end' : 'start'" x-text="lonText"></text>
+
+    <!-- the chain -->
+    <g>
+      <rect x="20" y="170" width="170" height="92" rx="10" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <text x="105" y="192" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">Graph reading, LMT</text>
+      <text x="105" y="226" font-size="28" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="hhmm(lmt)"></text>
+      <text x="105" y="250" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-text="place"></text>
+
+      <rect x="235" y="170" width="170" height="92" rx="10" fill="var(--color-surface-2)" stroke-width="1.25" :stroke="utcDay !== 0 ? 'var(--color-warn)' : 'var(--color-line-strong)'"/>
+      <text x="320" y="192" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">UTC</text>
+      <text x="320" y="226" font-size="28" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="hhmm(utcRaw)"></text>
+      <text x="320" y="250" font-size="12" text-anchor="middle" :fill="utcDay !== 0 ? 'var(--color-warn-fg)' : 'var(--color-fg-faint)'" x-text="dayText(utcDay)"></text>
+
+      <rect x="450" y="170" width="170" height="92" rx="10" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2"/>
+      <text x="535" y="192" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)">WST (UTC + 8)</text>
+      <text x="535" y="226" font-size="28" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" class="num" x-text="hhmm(wstRaw)"></text>
+      <text x="535" y="250" font-size="12" text-anchor="middle" :fill="wstDay !== 0 ? 'var(--color-warn-fg)' : 'var(--color-brand-fg)'" x-text="dayText(wstDay)"></text>
+
+      <line x1="192" y1="216" x2="231" y2="216" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#att-arrow)"/>
+      <line x1="407" y1="216" x2="446" y2="216" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#att-arrow)"/>
+      <text x="212" y="164" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'− ' + arcText"></text>
+      <text x="427" y="164" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num">+ 8 h</text>
+    </g>
+    <text x="620" y="286" font-size="13" font-weight="600" text-anchor="end" fill="var(--color-ok-fg)" class="num" :display="(eod) ? 'inline' : 'none'" x-text="'On the ground by ' + hhmm(onGround) + ' WST'"></text>
+    <text x="20" y="286" font-size="12" fill="var(--color-fg-faint)" class="num" x-text="'Shortcut: LMT ' + (shortMin >= 0 ? '+ ' : '− ') + Math.abs(shortMin) + ' min = ' + hhmm(lmt + shortMin) + ' WST'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="att-lon">Longitude <output for="att-lon" x-text="lonText"></output></label>
+      <input type="range" id="att-lon" min="6720" max="7740" step="1" x-model.number="lon">
+    </div>
+    <div class="widget-control">
+      <label for="att-lmt">Reading from the daylight graph <output for="att-lmt" x-text="hhmm(lmt) + ' LMT'"></output></label>
+      <input type="range" id="att-lmt" min="0" max="1435" step="5" x-model.number="lmt">
+    </div>
+    <div class="widget-control">
+      <label for="att-eod" class="cursor-pointer"><span>It is the end of daylight: apply the 10-minute rule</span>
+        <input type="checkbox" id="att-eod" x-model="eod" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Arc to time</dt><dd class="widget-value text-sm" x-text="working"></dd></div>
+    <div class="widget-readout" :class="utcDay !== 0 ? 'warn' : ''"><dt class="widget-label">UTC = LMT − arc to time</dt><dd class="widget-value"><span x-text="hhmm(lmt) + ' − ' + hhmm(arc) + ' = ' + hhmm(utcRaw) + ' UTC'"></span><span class="widget-flag warn" x-show="utcDay < 0">previous day</span></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">WST = UTC + 8</dt><dd class="widget-value" x-text="hhmm(wstRaw) + ' WST'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Cross-check from 120° E</dt><dd class="widget-value text-sm" x-text="shortText"></dd></div>
+    <div class="widget-readout ok" x-show="eod"><dt class="widget-label">Day VFR: on the ground by</dt><dd class="widget-value" x-text="hhmm(onGround) + ' WST (10 min before)'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('perth-last-light')" :aria-pressed="active === 'perth-last-light'">Perth last light</button>
+      <button type="button" @click="preset('kalgoorlie-first-light')" :aria-pressed="active === 'kalgoorlie-first-light'">Kalgoorlie first light</button>
+      <button type="button" @click="preset('bunbury-last-light')" :aria-pressed="active === 'bunbury-last-light'">Bunbury last light</button>
+      <button type="button" @click="preset('geraldton-first-light')" :aria-pressed="active === 'geraldton-first-light'">Geraldton first light</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The earth turns 15° an hour, so each degree of longitude is 4 minutes and each minute of arc 4 seconds. East of Greenwich the sun comes round earlier, so LMT is ahead of UTC: subtract the arc to time, write the UTC line down and watch midnight, then add 8 hours. WST is simply the sun's time at 120° E, which is why Perth's LMT runs about 16 minutes behind it and Kalgoorlie's about 6 ahead.</p>
+  <details class="widget-try"><summary>Try it: the end-of-daylight graph gives 1820 LMT at Bunbury (115° 40′ E). By when must a day VFR flight be on the ground?</summary><p>Arc to time 7 h 42 min 40 s ≈ 7 h 43 min. 1820 − 0743 = 1037 UTC; + 8 h = 1837 WST; on the ground by 1827 WST. Cross-check: Bunbury is 4° 20′ west of 120° E, about 17 minutes, and 1820 + 17 = 1837. Press Bunbury last light.</p></details>
+  <details class="widget-try"><summary>Try it: why does first light at Kalgoorlie fall on the previous day in UTC?</summary><p>0535 LMT − 8 h 06 min goes back past midnight: 2935 − 0806 = 2129 UTC the day before. Adding 8 hours gives 2929, which is 0529 WST, back on the day you started. Press Kalgoorlie first light.</p></details>
+</div>

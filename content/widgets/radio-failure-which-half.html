@@ -1,0 +1,111 @@
+<div class="widget" x-data="widget({
+  rx: true, tx: false, elec: false,
+  get hear() { return this.rx && !this.elec },
+  get heard() { return this.tx && !this.elec },
+  get xpdr() { return !this.elec },
+  get none() { return this.hear && this.heard },
+  get hearText() { return this.hear ? 'ATIS, traffic and ATC instructions' : 'Nothing' },
+  get heardText() { return this.heard ? 'Yes: your blind calls tell others where you are' : 'No' },
+  get radarText() { return this.xpdr ? '7600: radio failure' : 'Nothing: no code, no altitude' },
+  get listenText() { return this.hear ? 'Works: ATIS, runway, any instruction' : 'No help this time, but do it anyway' },
+  get blindText() { return this.heard ? 'Works: everyone hears your position' : 'No help this time, but do it anyway' },
+  get squawkText() { return this.xpdr ? 'Works: the controller’s screen flags you' : 'Impossible: the transponder is dead' },
+  get caption() {
+    const tail = ' From the cockpit you usually cannot tell which half has failed, so you keep listening and keep transmitting blind.';
+    if (this.elec) return 'The worst version: a flat battery takes both radios and the transponder at once. You cannot squawk 7600 and you cannot transmit, so ATC has no idea; you are a silent, unidentified aeroplane. Stay in VMC, keep out of controlled airspace unless ERSA permits it, land at the most suitable aerodrome, overfly, join from the dead side with your eyes working hard, land, and telephone.';
+    if (this.none) return 'Both halves work, so this is not a radio failure. Most apparent failures end at the checks: volume, squelch, the frequency in the active window, audio panel selections, plugs, circuit breakers, then COM 2 and the hand microphone.';
+    if (this.hear) return 'Transmitter failed, receiver working: you hear everything, but nobody hears you. You can still listen to the ATIS, the CTAF traffic and anything ATC says to you. This is the ATIS heard clearly while the tower never answers.' + tail;
+    if (this.heard) return 'Receiver failed, transmitter working: you hear nothing, but everyone hears you. Your broadcasts still let other pilots and ATC know where you are.' + tail;
+    return 'Both failed: you are a silent aircraft and must rely on the transponder code, your lookout and the published procedures.' + tail;
+  },
+  presets: {
+    'receiver-failed': { rx: false, tx: true, elec: false },
+    'transmitter-failed': { rx: true, tx: false, elec: false },
+    'both-failed': { rx: false, tx: false, elec: false },
+    'flat-battery-no-transponder': { rx: false, tx: false, elec: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="rfh-title" class="widget-stage">
+    <title id="rfh-title">Your aeroplane on the left and the tower with its ATIS on the right, with another aircraft in the circuit. Arrows show your blind call going out and the ATIS, ATC and traffic calls coming in, each crossed out when that half of the radio has failed. A radar screen shows your return tagged 7600 while the transponder still works</title>
+    <defs>
+      <marker id="rfh-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-sky-soft)"/>
+    <rect x="0" y="262" width="640" height="38" fill="var(--color-ok-soft)"/>
+    <!-- you (tools.diagrams.plane side, scale 1.3, colour brand, fill brand-soft) -->
+    <g transform="translate(120 150)"><g transform="translate(0 0) rotate(0) scale(1.3)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-brand)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-brand)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <text x="104" y="198" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)">You</text>
+    <!-- other traffic (tools.diagrams.plane side, scale 0.5, colour fg-muted, mirrored to fly left) -->
+    <g transform="translate(410 52) scale(-1 1)"><g transform="translate(0 0) rotate(0) scale(0.5)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg-muted)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg-muted)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <text x="410" y="82" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">traffic</text>
+    <!-- tower and the ATIS mast -->
+    <path d="M548 262 L554 160 L578 160 L584 262 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M538 160 L594 160 L589 132 L543 132 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M545 137 L587 137 L590 155 L542 155 Z" fill="var(--color-info-soft)" stroke="var(--color-fg-muted)" stroke-width="1"/>
+    <line x1="612" y1="262" x2="612" y2="196" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M604 204 a10 10 0 0 1 16 0 M598 196 a18 18 0 0 1 28 0" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/>
+    <text x="566" y="282" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">tower</text>
+    <text x="612" y="282" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">ATIS</text>
+    <!-- out: your blind call -->
+    <line x1="172" y1="128" x2="530" y2="128" stroke-width="2.5" stroke-linecap="round" marker-end="url(#rfh-arrow)"
+      :stroke="heard ? 'var(--color-ok)' : 'var(--color-bad)'" :stroke-dasharray="heard ? null : '6 5'" :stroke-opacity="heard ? 1 : 0.6"/>
+    <text x="350" y="111" font-size="13" font-weight="600" text-anchor="middle" :fill="heard ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'"
+      x-text="heard ? '“Transmitting blind …” heard by all' : 'Your calls go nowhere'"></text>
+    <g x-show="!heard" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round"><line x1="342" y1="120" x2="358" y2="136"/><line x1="358" y1="120" x2="342" y2="136"/></g>
+    <!-- in: ATIS and ATC, and the traffic's calls -->
+    <line x1="532" y1="172" x2="176" y2="172" stroke-width="2.5" stroke-linecap="round" marker-end="url(#rfh-arrow)"
+      :stroke="hear ? 'var(--color-info)' : 'var(--color-bad)'" :stroke-dasharray="hear ? null : '6 5'" :stroke-opacity="hear ? 1 : 0.6"/>
+    <text x="350" y="194" font-size="13" font-weight="600" text-anchor="middle" :fill="hear ? 'var(--color-info)' : 'var(--color-bad-fg)'"
+      x-text="hear ? 'ATIS and ATC instructions reach you' : 'You hear nothing'"></text>
+    <g x-show="!hear" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round"><line x1="340" y1="163" x2="360" y2="181"/><line x1="360" y1="163" x2="340" y2="181"/></g>
+    <path d="M386 64 Q 250 70 168 120" fill="none" stroke-width="1.5" stroke-linecap="round" marker-end="url(#rfh-arrow)"
+      :stroke="hear ? 'var(--color-info)' : 'var(--color-bad)'" stroke-dasharray="4 3" :stroke-opacity="hear ? 0.9 : 0.5"/>
+    <text x="250" y="58" font-size="12" text-anchor="middle" :fill="hear ? 'var(--color-info)' : 'var(--color-bad-fg)'" x-text="hear ? 'their CTAF calls' : 'their calls: unheard'"></text>
+    <!-- radar screen -->
+    <rect x="236" y="208" width="228" height="78" rx="10" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="248" y="228" font-size="12" font-weight="600" fill="var(--color-fg-muted)">ATC radar</text>
+    <circle cx="300" cy="258" r="22" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <circle cx="300" cy="258" r="11" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <g x-show="xpdr">
+      <rect x="306" y="244" width="8" height="8" fill="var(--color-warn)"/>
+      <text x="334" y="252" font-size="15" font-weight="700" class="num" fill="var(--color-warn-fg)">7600</text>
+      <text x="334" y="270" font-size="12" fill="var(--color-fg-muted)">radio failure</text>
+    </g>
+    <text x="334" y="254" font-size="12" fill="var(--color-bad-fg)" x-show="!xpdr">no return at all:</text><text x="334" y="270" font-size="12" fill="var(--color-bad-fg)" x-show="!xpdr">silent, unidentified</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rfh-rx" class="cursor-pointer"><span>Receiver working</span>
+        <input type="checkbox" id="rfh-rx" x-model="rx" :disabled="elec" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rfh-tx" class="cursor-pointer"><span>Transmitter working</span>
+        <input type="checkbox" id="rfh-tx" x-model="tx" :disabled="elec" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rfh-elec" class="cursor-pointer"><span>Flat battery: both radios and the transponder dead</span>
+        <input type="checkbox" id="rfh-elec" x-model="elec" @change="if (elec) { rx = false; tx = false }; active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="hear ? 'ok' : 'bad'"><dt class="widget-label">You hear</dt><dd class="widget-value text-sm" x-text="hearText"></dd></div>
+    <div class="widget-readout" :class="heard ? 'ok' : 'bad'"><dt class="widget-label">They hear you</dt><dd class="widget-value text-sm" x-text="heardText"></dd></div>
+    <div class="widget-readout" :class="xpdr ? 'warn' : 'bad'"><dt class="widget-label">Radar sees</dt><dd class="widget-value text-sm" x-text="radarText"></dd></div>
+    <div class="widget-readout" :class="xpdr ? 'ok' : 'bad'"><dt class="widget-label">1 Squawk 7600</dt><dd class="widget-value text-sm" x-text="squawkText"></dd></div>
+    <div class="widget-readout" :class="hear ? 'ok' : ''"><dt class="widget-label">2 Listen</dt><dd class="widget-value text-sm" x-text="listenText"></dd></div>
+    <div class="widget-readout" :class="heard ? 'ok' : ''"><dt class="widget-label">3 Transmit blind (twice)</dt><dd class="widget-value text-sm" x-text="blindText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('receiver-failed')" :aria-pressed="active === 'receiver-failed'">Receiver failed</button>
+      <button type="button" @click="preset('transmitter-failed')" :aria-pressed="active === 'transmitter-failed'">Transmitter failed</button>
+      <button type="button" @click="preset('both-failed')" :aria-pressed="active === 'both-failed'">Both failed</button>
+      <button type="button" @click="preset('flat-battery-no-transponder')" :aria-pressed="active === 'flat-battery-no-transponder'">Flat battery</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each step covers a different half: listening pays off if the receiver works, transmitting blind if the transmitter does, and 7600 tells radar either way while the transponder has power. You cannot tell which half has gone, so you do all three, then remain in VMC, land at the most suitable aerodrome and telephone ATS. A radio failure on its own is 7600, not 7700.</p>
+  <details class="widget-try"><summary>Try it: after the checks you can hear the Jandakot ATIS clearly but the tower never answers you. Which half is probably working, and does it change what you do?</summary><p>The receiver is probably working, so the transmitter (or microphone) is the suspect. You still squawk 7600 and still transmit blind, because you cannot be sure the transmitter is dead, and you listen closely because any instruction ATC gives you will reach you.</p></details>
+</div>

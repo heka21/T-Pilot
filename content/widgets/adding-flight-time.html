@@ -1,0 +1,131 @@
+<div class="widget" x-data="widget({
+  a: 945, dur: 95, back: false,
+  // BAKC 2.3: add hours to hours and minutes to minutes; 60 minutes or more, take 60 away and carry 1 hour.
+  // Backwards (latest departure for a fixed arrival): borrow 60 minutes from the hours when the minutes go negative.
+  get h1() { return Math.floor(this.a / 60) }, get m1() { return this.a % 60 },
+  get h2() { return Math.floor(this.dur / 60) }, get m2() { return this.dur % 60 },
+  get carry() { return !this.back && this.m1 + this.m2 >= 60 },
+  get borrow() { return this.back && this.m1 < this.m2 },
+  get other() { return this.back ? this.a - this.dur : this.a + this.dur },
+  get dep() { return this.back ? this.other : this.a },
+  get arr() { return this.back ? this.a : this.other },
+  // working row: forward, the sums before the carry; backwards, the start after borrowing an hour
+  get wh() { return this.back ? this.h1 - (this.borrow ? 1 : 0) : this.h1 + this.h2 },
+  get wm() { return this.back ? this.m1 + (this.borrow ? 60 : 0) : this.m1 + this.m2 },
+  get rh() { return Math.floor(((this.other % 1440) + 1440) % 1440 / 60) },
+  get rm() { return ((this.other % 60) + 60) % 60 },
+  get dayShift() { return Math.floor(this.other / 1440) },
+  p2(n) { return String(n).padStart(2, '0') },
+  // the mistake: treat the two groups as whole numbers
+  get naive() { const x = Number(this.hhmm(this.a)), y = this.h2 * 100 + this.m2; return this.back ? x - y : x + y },
+  get naiveBad() { const n = this.naive; return n < 0 || n % 100 >= 60 || n >= 2400 },
+  get naiveText() { return this.hhmm(this.a) + (this.back ? ' − ' : ' + ') + (this.h2 * 100 + this.m2) + ' = ' + this.naive },
+  zulu(w) { const u = w - 480; return { t: this.hhmm(u), d: Math.floor(u / 1440) } },
+  dayWord(d) { return d < 0 ? 'day before' : d > 0 ? 'next day' : 'same day' },
+  // the 24-hour dial: 0000 at the top, clockwise
+  B(min) { return ((min % 1440) + 1440) % 1440 / 1440 * 360 },
+  get arc() {
+    const r = 94, b0 = this.B(this.dep), s = this.dur / 1440 * 360;
+    const p = this.pol(480, 150, r, b0), q = this.pol(480, 150, r, b0 + s);
+    return 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 ' + (s > 180 ? 1 : 0) + ' 1 ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1);
+  },
+  presets: {
+    'landing-1720': { a: 945, dur: 95, back: false },
+    'kalbarri-0540': { a: 340, dur: 180, back: false },
+    'latest-departure-1720': { a: 1040, dur: 95, back: true },
+    'beat-the-works-0900': { a: 540, dur: 180, back: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="aft-title" class="widget-stage">
+    <title id="aft-title">A flight time added to a clock time in two columns, hours and minutes, with the minutes carrying at 60, and a 24-hour dial showing the flight as an arc from departure to landing</title>
+    <defs>
+      <marker id="aft-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-surface-2)"/>
+    <!-- column sum -->
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle"><text x="200" y="34">hours</text><text x="268" y="34">minutes</text></g>
+    <line x1="234" y1="44" x2="234" y2="232" stroke="var(--color-line)" stroke-width="1"/>
+    <g font-size="13" fill="var(--color-fg-muted)">
+      <text x="24" y="76" x-text="back ? 'arrive by' : 'depart'"></text>
+      <text x="24" y="114" x-text="back ? 'minus flight time' : 'plus flight time'"></text>
+      <text x="24" y="168" x-text="back ? (borrow ? 'borrow 1 hour' : 'nothing to borrow') : 'add the columns'"></text>
+      <text x="24" y="218" font-weight="700" fill="var(--color-fg)" x-text="back ? 'latest departure' : 'landing'"></text>
+    </g>
+    <g class="num" font-size="22" text-anchor="end">
+      <text x="216" y="78" fill="var(--color-fg)" x-text="p2(h1)"></text><text x="290" y="78" fill="var(--color-fg)" x-text="p2(m1)"></text>
+      <text x="174" y="116" fill="var(--color-fg-muted)" x-text="back ? '−' : '+'"></text>
+      <text x="216" y="116" fill="var(--color-fg)" x-text="h2"></text><text x="290" y="116" fill="var(--color-fg)" x-text="p2(m2)"></text>
+      <text x="216" y="170" :fill="back && borrow ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" x-text="wh"></text>
+      <text x="290" y="170" :fill="carry || borrow ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" :font-weight="carry || borrow ? 700 : 400" x-text="wm"></text>
+      <text x="216" y="220" font-weight="700" fill="var(--color-brand-fg)" font-size="26" x-text="p2(rh)"></text><text x="290" y="220" font-weight="700" fill="var(--color-brand-fg)" font-size="26" x-text="p2(rm)"></text>
+    </g>
+    <line x1="170" y1="130" x2="300" y2="130" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <line x1="170" y1="186" x2="300" y2="186" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <!-- the carry or borrow -->
+    <g x-show="carry || borrow">
+      <path fill="none" stroke="var(--color-warn)" stroke-width="2" marker-end="url(#aft-arrow)" :d="carry ? 'M272 146 C 262 136 228 136 214 148' : 'M214 148 C 228 136 262 136 272 146'"/>
+      <text x="24" y="250" font-size="13" fill="var(--color-warn-fg)" x-text="carry ? wm + ' minutes is 60 or more: take 60 away, carry 1 hour' : 'minutes too small: borrow 1 hour, 60 minutes'"></text>
+    </g>
+    <text x="306" y="220" font-size="13" fill="var(--color-fg-muted)" x-show="dayShift !== 0" x-text="dayWord(dayShift)"></text>
+    <!-- the mistake -->
+    <text x="24" y="278" font-size="13" fill="var(--color-bad-fg)" x-show="naiveBad" x-text="'Not ' + naiveText + ': that is not a time'"></text>
+    <text x="24" y="278" font-size="13" fill="var(--color-fg-faint)" x-show="!naiveBad" x-text="'(no carry, so ' + naiveText + ' works here)'"></text>
+
+    <!-- 24-hour dial -->
+    <circle cx="480" cy="150" r="110" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path d="M480 40 v8 M535 54.7 l-4 6.9 M575.3 95 l-6.9 4 M590 150 h-8 M575.3 205 l-6.9 -4 M535 245.3 l-4 -6.9 M480 260 v-8 M425 245.3 l4 -6.9 M384.7 205 l6.9 -4 M370 150 h8 M384.7 95 l6.9 4 M425 54.7 l4 6.9" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="480" y="82">0000</text><text x="552" y="154">0600</text><text x="480" y="226">1200</text><text x="408" y="154">1800</text>
+    </g>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="8" stroke-linecap="round" stroke-opacity="0.85" :d="arc"/>
+    <circle r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2.5" :cx="pol(480, 150, 94, B(dep)).x" :cy="pol(480, 150, 94, B(dep)).y"/>
+    <circle r="6" fill="var(--color-brand)" :cx="pol(480, 150, 94, B(arr)).x" :cy="pol(480, 150, 94, B(arr)).y"/>
+    <g class="num" text-anchor="middle">
+      <text x="480" y="140" font-size="13" fill="var(--color-fg-muted)" x-text="'off ' + hhmm(dep)"></text>
+      <text x="480" y="162" font-size="15" font-weight="700" fill="var(--color-brand-fg)" x-text="'on ' + hhmm(arr)"></text>
+      <text x="480" y="182" font-size="12" fill="var(--color-fg-faint)" x-text="hmm(dur) + ' flight'"></text>
+    </g>
+    <text x="480" y="284" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">24-hour clock, WST</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="aft-back" class="cursor-pointer"><span>Work backwards from a fixed arrival time</span>
+        <input type="checkbox" id="aft-back" x-model="back" class="size-5 accent-[var(--color-brand)]" @change="active = null"></label>
+    </div>
+    <div class="widget-control">
+      <label for="aft-a"><span x-text="back ? 'Arrive by' : 'Departure'"></span> <output for="aft-a" x-text="hhmm(a) + ' WST'"></output></label>
+      <input type="range" id="aft-a" min="0" max="1435" step="5" x-model.number="a" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="aft-dur">Flight time <output for="aft-dur" x-text="h2 + ' h ' + p2(m2) + ' min'"></output></label>
+      <input type="range" id="aft-dur" min="5" max="300" step="5" x-model.number="dur" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="back ? 'ok' : ''">
+      <dt class="widget-label">Departure</dt>
+      <dd class="widget-value"><span x-text="hhmm(dep) + ' WST = ' + zulu(dep).t + ' UTC'"></span><span class="widget-flag warn" x-show="zulu(dep).d < 0">UTC day before</span></dd>
+    </div>
+    <div class="widget-readout" :class="back ? '' : 'ok'">
+      <dt class="widget-label">Landing</dt>
+      <dd class="widget-value"><span x-text="hhmm(arr) + ' WST = ' + zulu(arr).t + ' UTC'"></span><span class="widget-flag warn" x-show="zulu(arr).d < 0">UTC day before</span><span class="widget-flag warn" x-show="!back && dayShift > 0">next day</span></dd>
+    </div>
+    <div class="widget-readout" :class="carry || borrow ? 'warn' : ''">
+      <dt class="widget-label">Minutes column</dt>
+      <dd class="widget-value" x-text="carry ? m1 + ' + ' + m2 + ' = ' + wm + ': carry 1 hour, write ' + p2(rm) : borrow ? m1 + ' − ' + m2 + ' is negative: borrow 60, ' + wm + ' − ' + m2 + ' = ' + rm : (back ? 'no borrow: ' : 'no carry: ') + p2(rm)"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('landing-1720')" :aria-pressed="active === 'landing-1720'">1545 + 1:35</button>
+      <button type="button" @click="preset('latest-departure-1720')" :aria-pressed="active === 'latest-departure-1720'">Arrive 1720, back 1:35</button>
+      <button type="button" @click="preset('kalbarri-0540')" :aria-pressed="active === 'kalbarri-0540'">Kalbarri: 0540 + 3:00</button>
+      <button type="button" @click="preset('beat-the-works-0900')" :aria-pressed="active === 'beat-the-works-0900'">Beat the works at 0900</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A 4-figure time looks like a number but is two numbers side by side: hours, and minutes that only run to 59. Add the columns separately and carry an hour each time the minutes reach 60; working backwards, borrow 60 minutes from the hours. Treating the group as one number gives answers like 1680 that are not times at all.</p>
+  <details class="widget-try"><summary>Try it: depart 1545, flight time 1 hour 35 minutes. When do you land?</summary><p>Minutes 45 + 35 = 80, which is 1 hour 20: write 20, carry 1. Hours 15 + 1 + 1 = 17. Landing 1720, not 1680. Press 1545 + 1:35.</p></details>
+  <details class="widget-try"><summary>Try it: the Kalbarri runway closes at 0900 WST and the flight takes 3 hours. What is the latest departure, and what is it in UTC?</summary><p>0900 − 3:00 = 0600 WST. That is before 0800, so in UTC it is the previous day: 2200 UTC. Press Beat the works at 0900; the lesson's plan departs 0540 to land at 0840 with 20 minutes in hand.</p></details>
+</div>

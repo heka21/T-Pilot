@@ -1,0 +1,149 @@
+<div class="widget" x-data="widget({
+  fm: 118, trap: false,
+  // the lesson's rule: wavelength (m) = 300 / frequency (MHz)
+  get lam() { return 300 / this.fm },
+  get quarter() { return this.lam / 4 },
+  get lf() { return Math.log10(this.fm * 1e6) },
+  setFromSlider(v) { this.fm = Number((Math.pow(10, Number(v)) / 1e6).toPrecision(3)); this.trap = false; this.active = null },
+  get freqText() { return this.fm < 1 ? this.fmt(this.fm * 1000) + ' kHz' : this.fmt(this.fm, this.fm < 10 ? 2 : this.fm < 100 ? 1 : 0) + ' MHz' },
+  len(m) { return m >= 10000 ? this.fmt(m / 1000) + ' km' : m >= 100 ? this.fmt(m) + ' m' : m >= 10 ? this.fmt(m, 1) + ' m' : m >= 0.1 ? this.fmt(m, 2) + ' m' : this.fmt(m * 100, 1) + ' cm' },
+  numStr(f) { return f >= 1000 ? this.fmt(f) : String(Number(f.toPrecision(4))) },
+  // the lesson's band table (PAKC 3.10.1 a)
+  get band() {
+    const f = this.fm;
+    if (f < 0.3) return { name: 'LF', use: 'NDBs (with MF, roughly 190 to 1,750 kHz)', path: 'Ground wave', ant: 'Loop and sense antennas: the wave is far too long for any aircraft' };
+    if (f < 3) return { name: 'MF', use: 'NDBs (with LF, roughly 190 to 1,750 kHz)', path: 'Ground wave', ant: 'Loop and sense antennas: the wave is far too long for any aircraft' };
+    if (f < 30) return { name: 'HF', use: 'Long-range voice (oceanic, remote areas; aviation HF roughly 2.8 to 22 MHz)', path: 'Sky wave', ant: 'Long wire, or a tuned coupler that makes a shorter wire act the right length' };
+    if (f < 300) return { name: 'VHF', use: 'VHF COM 118 to 137 MHz, VOR and ILS 108 to 118 MHz', path: 'Line of sight (space wave)', ant: 'Short whip or blade, a quarter-wave long' };
+    return { name: 'UHF', use: 'DME, transponder (1,030/1,090 MHz), GNSS, ILS glideslope', path: 'Line of sight', ant: 'Short stub' };
+  },
+  // drawing scale: the largest of these pixels-per-metre that fits one wave in 520 px
+  get ppm() { const L = [400, 24, 2.4, 0.24, 0.12]; for (let k = 0; k < L.length; k++) if (this.lam * L[k] <= 520) return L[k]; return 0.12 },
+  get wpx() { return this.lam * this.ppm },
+  get wavePath() {
+    const pts = [], n = 80;
+    for (let i = 0; i <= n; i++) { const f = i / n; pts.push([40 + f * this.wpx, 140 - 32 * Math.sin(2 * Math.PI * f)]) }
+    return this.path(pts);
+  },
+  get bar() { const opts = [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]; let b = opts[0]; opts.forEach((o) => { if (Math.abs(o * this.ppm - 110) < Math.abs(b * this.ppm - 110)) b = o }); return b },
+  // the Cessna 152 is 7.3 m long; the pasted silhouette is about 100.7 units from rudder to spinner
+  get pk() { return 7.3 * this.ppm / 100.7 },
+  get planeShown() { return this.ppm <= 24 && this.ppm >= 2.4 },
+  get planeTf() { return 'translate(' + (600 - 29.4 * this.pk).toFixed(1) + ' 262) scale(' + this.pk.toFixed(4) + ')' },
+  // the quarter-wave antenna stands on the cabin roof (local x -6, y -9.9) when the aeroplane is drawn
+  get roof() { return { x: 600 - 35.4 * this.pk, y: 262 - 9.9 * this.pk } },
+  get ratio() { return this.quarter / 7.3 },
+  get compare() {
+    const r = this.ratio;
+    if (r >= 10) return 'about ' + this.fmt(r) + ' times the length of a C152';
+    if (r >= 1.5) return 'about ' + this.fmt(r, 1) + ' times the length of a C152';
+    if (r >= 0.67) return 'about the length of a C152';
+    return 'a small fraction of the C152’s 7.3 m';
+  },
+  get caption() {
+    if (this.trap) return 'The trap: 300 entered as megahertz gives 300 ÷ 300 = 1 m. An NDB at 300 kHz is 0.3 MHz, so 300 ÷ 0.3 = 1,000 m. Convert kilohertz to megahertz (divide by 1,000) before you divide into 300.';
+    const b = this.band.name;
+    const head = this.freqText + ': wavelength 300 ÷ ' + this.numStr(this.fm) + ' = ' + this.len(this.lam) + ', quarter-wave ' + this.len(this.quarter) + '. ';
+    if (b === 'VHF') return head + 'VHF wavelengths are a couple of metres, so a quarter-wave whip or blade a little over half a metre long is all the COM radio needs. Its signal travels line of sight.';
+    if (b === 'UHF') return head + 'UHF waves are shorter still, which is why the transponder and DME antennas are short stubs under the fuselage. Line of sight.';
+    if (b === 'HF') return head + 'HF wavelengths are tens of metres, so the antenna must be a long wire or be electrically lengthened with a tuned coupler. HF travels by sky wave, bounced off the ionosphere.';
+    return head + 'A wave hundreds of metres long cannot be matched by any aircraft antenna, so the NDB receiver uses loop and sense antennas instead. These waves follow the ground (ground wave).';
+  },
+  presets: {
+    'com-118-mhz': { fm: 118, trap: false },
+    'com-125-mhz': { fm: 125, trap: false },
+    'ndb-300-khz': { fm: 0.3, trap: false },
+    'transponder-1090-mhz': { fm: 1090, trap: false },
+    'hf-3-mhz': { fm: 3, trap: false },
+    'khz-trap': { fm: 300, trap: true },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="wla-title" class="widget-stage">
+    <title id="wla-title">A frequency strip from LF to UHF with a marker at the chosen frequency; below it one wavelength drawn to scale, the quarter-wave antenna length beside it, and the Cessna 152 at the same scale for comparison, with a scale bar in metres</title>
+    <rect x="0" y="0" width="640" height="320" rx="10" fill="var(--color-surface-2)"/>
+    <!-- band strip, logarithmic: 190 kHz at x 40 to 3 GHz at x 600 -->
+    <g font-size="12" font-weight="700" text-anchor="middle">
+      <rect x="40" y="14" width="26.3" height="26" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <rect x="66.3" y="14" width="133.4" height="26" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <rect x="199.7" y="14" width="133.4" height="26" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <rect x="333.1" y="14" width="133.4" height="26" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <rect x="466.5" y="14" width="133.5" height="26" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <text x="53" y="32" :fill="band.name === 'LF' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">LF</text>
+      <text x="133" y="32" :fill="band.name === 'MF' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">MF</text>
+      <text x="266.4" y="32" :fill="band.name === 'HF' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">HF</text>
+      <text x="399.8" y="32" :fill="band.name === 'VHF' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">VHF</text>
+      <text x="533.2" y="32" :fill="band.name === 'UHF' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">UHF</text>
+    </g>
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="66.3" y="54">300 kHz</text><text x="199.7" y="54">3 MHz</text><text x="333.1" y="54">30 MHz</text><text x="466.5" y="54">300 MHz</text>
+    </g>
+    <path fill="var(--color-brand)" :d="'M' + (40 + (lf - 5.2788) / 4.1983 * 560).toFixed(1) + ' 12 l-6 -9 l12 0 Z'"/>
+    <!-- one wavelength to scale -->
+    <line x1="40" y1="140" :x2="40 + wpx" y2="140" stroke="var(--color-line)" stroke-width="1"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="wavePath"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1.25">
+      <line x1="40" y1="186" x2="40" y2="200"/><line :x1="40 + wpx" y1="186" :x2="40 + wpx" y2="200"/>
+      <line x1="40" y1="193" :x2="40 + wpx" y2="193"/>
+    </g>
+    <text y="214" font-size="13" font-weight="700" fill="var(--color-info)" :x="Math.max(40, 40 + wpx / 2)" :text-anchor="wpx > 140 ? 'middle' : 'start'" x-text="'one wave: ' + len(lam)"></text>
+    <!-- quarter-wave -->
+    <line x1="40" y1="238" :x2="40 + wpx / 4" y2="238" stroke="var(--color-brand)" stroke-width="5" stroke-linecap="round"/>
+    <text y="243" font-size="13" font-weight="700" fill="var(--color-brand-fg)" :x="48 + wpx / 4" x-text="'quarter-wave antenna: ' + len(quarter)"></text>
+    <text y="262" font-size="12" fill="var(--color-fg-muted)" :x="48 + wpx / 4" x-text="compare"></text>
+    <!-- the aeroplane at the same scale (tools.diagrams.plane side, scale 1, colour fg-muted, fill surface) -->
+    <g x-show="planeShown">
+      <g :transform="planeTf"><g transform="translate(0 0) rotate(0) scale(1)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg-muted)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg-muted)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+      <line stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" x-show="band.name === 'VHF'" :x1="roof.x" :y1="roof.y" :x2="roof.x" :y2="roof.y - quarter * ppm"/>
+      <text x="600" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" :y="ppm < 10 ? 290 : 306" x-text="band.name === 'VHF' ? 'C152 (7.3 m) with its COM antenna, same scale' : 'C152 (7.3 m), same scale'"></text>
+    </g>
+    <g x-show="ppm < 2.4">
+      <circle cx="590" cy="262" r="2.5" fill="var(--color-fg)"/>
+      <text x="580" y="266" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">the C152 (7.3 m) at this scale</text>
+    </g>
+    <g x-show="ppm > 24">
+      <path d="M470 200 L620 200" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+      <text x="620" y="190" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">belly of the fuselage</text>
+      <line x1="545" y1="200" x2="545" :y2="200 + quarter * ppm" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round"/>
+      <text x="555" y="226" font-size="12" fill="var(--color-brand-fg)">UHF stub</text>
+    </g>
+    <!-- scale bar -->
+    <line x1="40" y1="298" :x2="40 + bar * ppm" y2="298" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="butt"/>
+    <line x1="40" y1="292" x2="40" y2="304" stroke="var(--color-fg)" stroke-width="1.25"/><line :x1="40 + bar * ppm" y1="292" :x2="40 + bar * ppm" y2="304" stroke="var(--color-fg)" stroke-width="1.25"/>
+    <text y="302" font-size="12" class="num" fill="var(--color-fg-muted)" :x="48 + bar * ppm" x-text="(bar >= 1000 ? fmt(bar) : bar) + ' m'"></text>
+    <!-- the trap -->
+    <g x-show="trap">
+      <rect x="300" y="72" width="324" height="52" rx="8" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.25"/>
+      <text x="312" y="94" font-size="13" font-weight="700" fill="var(--color-bad-fg)">300 entered as MHz: 1 m. Wrong!</text>
+      <text x="312" y="113" font-size="12" fill="var(--color-bad-fg)">300 kHz = 0.3 MHz, so 300 ÷ 0.3 = 1,000 m</text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wla-f">Frequency <output for="wla-f" x-text="freqText"></output></label>
+      <input type="range" id="wla-f" min="5.2788" max="9.4771" step="0.001" :value="lf" @input="setFromSlider($event.target.value)">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Wavelength (300 ÷ MHz)</dt><dd class="widget-value" x-text="len(lam)"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Quarter-wave antenna</dt><dd class="widget-value" x-text="len(quarter)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Band</dt><dd class="widget-value" x-text="band.name + ' · ' + band.path"></dd></div>
+    <div class="widget-readout col-span-2"><dt class="widget-label">Aviation use</dt><dd class="widget-value text-sm" x-text="band.use"></dd></div>
+    <div class="widget-readout col-span-2 sm:col-span-1"><dt class="widget-label">Antenna</dt><dd class="widget-value text-sm" x-text="band.ant"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('com-118-mhz')" :aria-pressed="active === 'com-118-mhz'">COM 118 MHz</button>
+      <button type="button" @click="preset('com-125-mhz')" :aria-pressed="active === 'com-125-mhz'">COM 125 MHz</button>
+      <button type="button" @click="preset('ndb-300-khz')" :aria-pressed="active === 'ndb-300-khz'">NDB 300 kHz</button>
+      <button type="button" @click="preset('transponder-1090-mhz')" :aria-pressed="active === 'transponder-1090-mhz'">Transponder 1,090 MHz</button>
+      <button type="button" @click="preset('hf-3-mhz')" :aria-pressed="active === 'hf-3-mhz'">HF 3 MHz</button>
+      <button type="button" @click="preset('khz-trap')" :aria-pressed="active === 'khz-trap'">The kHz trap</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every radio wave travels at the same speed, so ten times the frequency means a tenth of the wavelength. An antenna works best at a quarter or half of the wavelength: about 60 cm for VHF COM, tens of metres for HF (a long wire or a coupler), and hopelessly long for an NDB, which is why the aircraft uses loop and sense antennas. Convert kHz to MHz before dividing into 300.</p>
+  <details class="widget-try"><summary>Try it: what is the wavelength of an NDB signal at 300 kHz?</summary><p>Convert to megahertz first: 300 kHz = 0.3 MHz. Then 300 ÷ 0.3 = 1,000 m. A wave a kilometre long cannot be matched by a short whip, which is why low-frequency transmitters need large antennas and the aircraft receiver uses loop and sense antennas instead.</p></details>
+  <details class="widget-try"><summary>Try it: why is a VHF COM antenna a short blade, while an aircraft HF antenna is a long wire or needs a coupler?</summary><p>An antenna works best at a set fraction (a quarter or half) of the wavelength. VHF wavelengths are about 2.5 m, so a quarter is about 60 cm; HF wavelengths are tens of metres, so the antenna must be long or electrically lengthened with a coupler.</p></details>
+</div>

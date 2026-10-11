@@ -1,0 +1,104 @@
+<div class="widget" x-data="widget({
+  cg: 2060,
+  // BAKC 6.4: the CG sits ahead of the wing's centre of lift, so the tail pushes down; the wing carries the weight plus that
+  // download. Forward CG: bigger download, higher stall speed, very stable, maybe not enough elevator to flare. Aft CG:
+  // smaller download, lower stall speed, less stable, light in pitch, stall and spin recovery possibly impossible.
+  // The CG limits (2,000 to 2,120 mm) are the lesson's worked example. Illustrative model: centre of lift at 2,200 mm, tail at
+  // 6,000 mm, neutral point (no stability left) at 2,190 mm, book stall speed 52 kt at the forward limit, and full up elevator
+  // just enough to flare at the forward limit.
+  fwd: 2000, aft: 2120, cp: 2200, tail: 6000, np: 2190,
+  get dl() { return (this.cp - this.cg) / (this.tail - this.cp) },
+  get lift() { return 1 + this.dl },
+  get vs() { return 52 * Math.sqrt(this.lift / (1 + (this.cp - this.fwd) / (this.tail - this.cp))) },
+  get margin() { return this.np - this.cg },
+  get stab() { return this.margin <= 0 ? 'none: unstable' : this.margin < 40 ? 'weak, twitchy' : this.margin < 110 ? 'good' : this.margin < 170 ? 'strong' : 'very strong, heavy' },
+  get stabState() { return this.margin < 40 ? 'bad' : this.margin < 70 ? 'warn' : this.margin > 190 ? 'warn' : 'ok' },
+  get flare() { return 100 + (this.fwd - this.cg) * 0.6 },
+  get flareText() { return this.flare > 100.5 ? 'not enough elevator' : this.flare > 92 ? 'only just enough' : 'plenty' },
+  get where() { return this.cg < this.fwd ? 'forward of the limit' : this.cg > this.aft ? 'aft of the limit' : 'inside the limits' },
+  get out() { return this.cg < this.fwd || this.cg > this.aft },
+  // picture: the C152 side view at scale 2.4, flying right, local CG at (400, 140) standing for 2,080 mm; 0.3 px per mm
+  // along the fuselage (exaggerated); arrows: weight 60 px, the tail download drawn 10 times larger than that scale
+  X(a) { return 400 + (2080 - a) * 0.3 },
+  get cgX() { return this.X(this.cg) },
+  get cpX() { return this.X(this.cp) },
+  get dlLen() { return this.dl * 60 * 10 },
+  get caption() {
+    if (this.cg < this.fwd) return 'Forward of the limit: the tail must push down hard, the wing carries that extra load and stalls at a higher speed, and in the flare you may run out of up elevator and land nosewheel first.';
+    if (this.cg > this.aft) return 'Aft of the limit: little download and a lower stall speed, but the CG is close to the point where stability runs out. Pitch is light and twitchy, and the elevator may not be able to unstall the wing or stop a spin.';
+    if (this.cg > this.aft - 30) return 'Near the aft limit: the download is small, so the stall speed is a little lower, but the aeroplane is noticeably less stable in pitch.';
+    if (this.cg < this.fwd + 30) return 'Near the forward limit: a big tail download, a slightly higher stall speed and more trim drag, but very stable.';
+    return 'The CG ahead of the centre of lift makes the nose want to drop; the tail holds it up by pushing down. The wing has to lift the weight and the download.';
+  },
+  presets: {
+    'forward-limit': { cg: 2000 },
+    'aft-limit': { cg: 2120 },
+    'forward-of-limit': { cg: 1960 },
+    'aft-of-limit': { cg: 2170 },
+    'four-on-board-2154': { cg: 2154 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ctd-title" class="widget-stage">
+    <title id="ctd-title">A trainer in level flight with its weight at the CG, the wing's lift and the tail's download; sliding the CG forward makes the download and the lift bigger, sliding it aft makes them smaller and the aeroplane less stable</title>
+    <defs>
+      <marker id="ctd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-sky-soft)" fill-opacity="0.6"/>
+    <!-- the aeroplane (python -m tools.diagrams.plane side, scale 2.4, no gear) -->
+    <g transform="translate(400 140)"><g transform="translate(0 0) rotate(0) scale(2.4)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <!-- CG limits along the fuselage (exaggerated) -->
+    <rect :x="X(aft)" y="224" :width="X(fwd) - X(aft)" height="8" rx="3" fill="var(--color-ok)" fill-opacity="0.5" stroke="var(--color-ok)" stroke-width="1"/>
+    <text font-size="12" fill="var(--color-ok-fg)" text-anchor="middle" :x="(X(aft) + X(fwd)) / 2" y="250">CG limits</text>
+    <!-- lift at the centre of lift: the weight's worth, plus the download's worth on top -->
+    <line stroke="var(--color-brand)" stroke-width="3" :x1="cpX" :x2="cpX" y1="118" y2="58" x-show="dlLen > 3"/>
+    <line stroke="var(--color-brand)" stroke-width="3" marker-end="url(#ctd-arrow)" :x1="cpX" :x2="cpX" y1="118" y2="58" x-show="dlLen <= 3"/>
+    <line stroke="var(--color-warn)" stroke-width="3" marker-end="url(#ctd-arrow)" :x1="cpX" :x2="cpX" y1="58" :y2="58 - dlLen" x-show="dlLen > 3"/>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="cpX - 10" y="96">lift</text>
+    <text font-size="12" fill="var(--color-warn-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="cpX - 10" :y="62 - dlLen / 2" x-show="dlLen > 18">+ the download</text>
+    <!-- weight at the CG -->
+    <line stroke="var(--color-info)" stroke-width="3" marker-end="url(#ctd-arrow)" :x1="cgX" :x2="cgX" y1="146" y2="206"/>
+    <g :transform="'translate(' + cgX + ' 140)'">
+      <circle r="7" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+      <path d="M0 -7 A7 7 0 0 1 7 0 L0 0 Z M0 7 A7 7 0 0 1 -7 0 L0 0 Z" fill="var(--color-fg)"/>
+    </g>
+    <text font-size="13" font-weight="700" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="cgX + 10" y="204">weight</text>
+    <!-- tail download -->
+    <line stroke="var(--color-warn)" stroke-width="3" marker-end="url(#ctd-arrow)" x1="251" x2="251" y1="150" :y2="150 + Math.max(2, dlLen)" x-show="dlLen > 2"/>
+    <text x="243" font-size="13" font-weight="700" text-anchor="end" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="Math.min(250, 172 + dlLen / 2)">tail download</text>
+    <text x="16" y="24" font-size="14" font-weight="700" :fill="out ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="'CG ' + fmt(cg) + ' mm: ' + where"></text>
+    <!-- stability gauge -->
+    <text x="460" y="236" font-size="12" font-weight="600" fill="var(--color-fg-muted)">pitch stability</text>
+    <rect x="460" y="244" width="160" height="12" rx="6" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="460" y="244" height="12" rx="6" :width="160 * clamp(margin / 230, 0, 1)" :fill="stabState === 'bad' ? 'var(--color-bad)' : stabState === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    <text x="16" y="290" font-size="12" fill="var(--color-fg-faint)">CG travel and the download are exaggerated; illustrative model.</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control sm:col-span-2">
+      <label for="ctd-cg">Centre of gravity, aft of the datum <output for="ctd-cg" x-text="fmt(cg) + ' mm'"></output></label>
+      <input type="range" id="ctd-cg" min="1950" max="2180" step="2" x-model.number="cg">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="dl > 0.05 ? 'warn' : ''"><dt class="widget-label">Tail download</dt><dd class="widget-value" x-text="fmt(dl * 100, 1) + '% of the weight'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Wing must lift</dt><dd class="widget-value" x-text="fmt(lift * 100, 1) + '% of the weight'"></dd></div>
+    <div class="widget-readout" :class="vs > 52.05 ? 'warn' : ''"><dt class="widget-label">Stall speed</dt><dd class="widget-value" x-text="fmt(vs, 1) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="stabState"><dt class="widget-label">Pitch stability</dt><dd class="widget-value text-sm" x-text="stab"></dd></div>
+    <div class="widget-readout" :class="flare > 100.5 ? 'bad' : flare > 92 ? 'warn' : 'ok'"><dt class="widget-label">Elevator to flare</dt><dd class="widget-value text-sm" x-text="flareText"></dd></div>
+    <div class="widget-readout" :class="cg > aft ? 'bad' : ''"><dt class="widget-label">Stall and spin recovery</dt><dd class="widget-value text-sm" x-text="cg > aft ? 'may be impossible' : 'as certified'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('forward-of-limit')" :aria-pressed="active === 'forward-of-limit'">Too far forward</button>
+      <button type="button" @click="preset('forward-limit')" :aria-pressed="active === 'forward-limit'">Forward limit</button>
+      <button type="button" @click="preset('aft-limit')" :aria-pressed="active === 'aft-limit'">Aft limit</button>
+      <button type="button" @click="preset('four-on-board-2154')" :aria-pressed="active === 'four-on-board-2154'">Four on board, 2,154</button>
+      <button type="button" @click="preset('aft-of-limit')" :aria-pressed="active === 'aft-of-limit'">Too far aft</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The tail balances the nose-down tendency of a CG ahead of the lift by pushing down, and the wing has to carry that download too. Slide the CG forward: more download, more lift needed, a slightly higher stall speed, very stable, and eventually not enough elevator to flare. Slide it aft: less download and a lower stall speed, but stability drains away, and beyond the aft limit stall and spin recovery may be impossible. The limits are the lesson's worked example; the stall speeds, stability and elevator figures are an illustrative model.</p>
+  <details class="widget-try"><summary>Try it: an aft CG lowers the stall speed. Why is that not a reason to load aft?</summary><p>Press Aft limit, then Too far aft: the stall speed drops by less than a knot, but the stability gauge collapses towards zero and recovery from a stall or spin may be impossible. The forward error is the safer one.</p></details>
+  <details class="widget-try"><summary>Try it: the lesson's four-on-board load came out at 2,154 mm. What would that aeroplane feel like?</summary><p>Press Four on board, 2,154: 34 mm behind the aft limit, light and twitchy in pitch, with recovery from a stall or spin no longer assured. It must not fly loaded like that.</p></details>
+</div>

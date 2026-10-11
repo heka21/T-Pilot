@@ -1,0 +1,189 @@
+<div class="widget" x-data="timeline({
+  duration: 20, loop: false,
+  abrupt: false,
+  // simulated seconds 0-40 (illustrative): level, pitch up at 5 s, climb at an illustrative 500 ft/min, level off
+  // at 24 s. The case follows the static pressure through the leak with a time constant of 2.5 s, so the needle
+  // settles on the true rate about 6 to 9 s after the pitch change (PAKC 2.3); an abrupt pitch change adds a brief
+  // flick the wrong way.
+  get S() { return this.t * 40 },
+  get dur() { return this.abrupt ? 0.5 : 3 },
+  pf(s) { return this.ease(this.seg(s, 5, 5 + this.dur)) - this.ease(this.seg(s, 24, 24 + this.dur)) },
+  vsT(s) { return 500 * this.pf(s) },
+  pulse(x) { return x > 0 ? (x / 0.5) * Math.exp(1 - x / 0.5) : 0 },
+  rev(s) { return this.abrupt ? -320 * this.pulse(s - 5) + 320 * this.pulse(s - 24) : 0 },
+  X(s) { return 50 + s * 7.875 },
+  Y(v) { return 284 - v * 0.1273 },
+  get sim() {
+    const N = Math.round(this.S / 0.1), k = Math.exp(-0.1 / 2.5);
+    let n = 0, h = 0;
+    const tr = [[this.X(0), this.Y(0)]], nd = [[this.X(0), this.Y(0)]], fl = [[90, 130]];
+    for (let i = 1; i <= N; i++) {
+      const s = i * 0.1, v = this.vsT(s);
+      n = v + (n - v) * k;
+      h += v * 0.1 / 60;
+      if (i % 4 === 0 || i === N) {
+        tr.push([this.X(s), this.Y(v)]);
+        nd.push([this.X(s), this.Y(n + this.rev(s))]);
+        fl.push([90 + s * 6, 130 - h * 0.5]);
+      }
+    }
+    return { n: n, h: h, tr: this.path(tr), nd: this.path(nd), fl: this.path(fl) };
+  },
+  get trueRate() { return this.vsT(this.S) },
+  get needle() { return this.sim.n + this.rev(this.S) },
+  get pitch() { return 10 * this.pf(this.S) },
+  get planeX() { return 90 + this.S * 6 },
+  get planeY() { return 130 - this.sim.h * 0.5 },
+  get reversed() { return this.abrupt && ((this.S >= 5 && this.S < 8 && this.needle < -30) || (this.S >= 24 && this.S < 27 && this.needle > 530)) },
+  get lagging() { return Math.abs(this.needle - this.trueRate) > 40 },
+  get state() { return this.reversed ? { t: 'Reverse indication', c: 'bad' } : this.lagging ? { t: 'Lagging: still catching up', c: 'warn' } : { t: 'Agrees with the true rate', c: 'ok' } },
+  get caseText() {
+    if (this.needle > 30) return 'Case higher: capsule squeezed, needle up';
+    if (this.needle < -30) return 'Case lower: capsule swells, needle down';
+    return 'Equal: needle at zero';
+  },
+  // the dial: 0 at nine o'clock, 1,000 ft/min at 150 degrees either way
+  get needleB() { return 270 + this.clamp(this.needle, -1000, 1000) / 1000 * 150 },
+  get needleTip() { return this.pol(500, 92, 54, this.needleB) },
+  get needleTail() { return this.pol(500, 92, 10, this.needleB + 180) },
+  // capsule width: squeezed in a climb, swollen in a descent
+  get cw() { return 44 - this.clamp(this.needle / 500, -1.3, 1.3) * 9 },
+  get squeeze() { return this.needle > 30 ? 1 : this.needle < -30 ? -1 : 0 },
+  steps: [
+    { at: 0, label: 'Level' },
+    { at: 0.125, label: 'Pitch up' },
+    { at: 0.16, label: 'Catching up' },
+    { at: 0.35, label: 'Steady climb' },
+    { at: 0.6, label: 'Level off' },
+    { at: 0.8, label: 'Level again' },
+  ],
+  get caption() {
+    const S = this.S;
+    if (S < 5) return 'Level flight: static pressure is steady, so the capsule and the case hold the same pressure and the needle reads zero.';
+    if (this.reversed && S < 24) return 'An abrupt pitch-up: for a moment the needle flicks the wrong way, showing a descent, before it swings round to the climb. This is the brief reverse indication.';
+    if (this.reversed) return 'An abrupt level-off: for a moment the needle swings the wrong way, showing even more climb, before it heads back to zero.';
+    if (S < 24 && this.lagging) return 'Climbing, static pressure falls. The capsule follows at once, but the case can lose air only slowly through the calibrated leak, so it is left at a higher pressure. The needle shows the trend straight away but is still catching up with the true rate.';
+    if (S < 24 || (this.trueRate > 40 && !this.lagging)) return 'Steady climb: the difference between case and capsule has settled, so the needle now shows the true rate. A faster climb would hold a bigger difference.';
+    if (this.lagging) return 'Levelling off: the true rate is dropping to zero, but air is still leaking out of the case, so for a few seconds the needle still shows a climb.';
+    return 'Level again: the case pressure has caught up through the leak, capsule and case are equal and the needle reads zero.';
+  },
+  restart() { this.active = null; this.pause(); this.t = 0; this.play() },
+  presets: {
+    'level': { abrupt: false, t: 0.05 },
+    'entering-climb': { abrupt: false, t: 0.165 },
+    'settled-climb': { abrupt: false, t: 0.45 },
+    'levelling-off': { abrupt: false, t: 0.69 },
+    'abrupt-pitch-reverse': { abrupt: true, t: 0.1375 },
+  },
+})">
+  <svg viewBox="0 0 640 372" role="img" aria-labelledby="vsl-title" class="widget-stage">
+    <title id="vsl-title">An aeroplane pitching from level flight into a climb and back, a graph of the true climb rate against the vertical speed indicator's needle, and a cutaway of the VSI: static pressure goes straight into the capsule but into the case only through a calibrated leak</title>
+    <defs>
+      <marker id="vsl-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+
+    <!-- the flight: aeroplane flies left to right -->
+    <rect x="10" y="10" width="364" height="150" rx="8" fill="var(--color-sky-soft)"/>
+    <path fill="none" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-dasharray="4 3" stroke-linecap="round" :d="sim.fl"/>
+    <g :transform="'translate(' + planeX + ' ' + planeY + ') rotate(' + (-pitch) + ')'">
+      <!-- python -m tools.diagrams.plane side, scale 0.9, colour fg, no gear -->
+      <g transform="translate(0 0) rotate(0) scale(0.9)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="22" y="30" font-size="13" font-weight="600" fill="var(--color-info)" class="num" x-text="'True rate ' + sign(Math.round(trueRate / 10) * 10) + ' ft/min'"></text>
+    <text x="22" y="48" font-size="12" fill="var(--color-fg-muted)" x-text="pitch < 0.5 ? 'Level attitude' : pitch > 9.5 ? 'Climb attitude' : 'Pitching'"></text>
+
+    <!-- the graph: true rate against the needle -->
+    <text x="50" y="186" font-size="12" fill="var(--color-brand-fg)" font-weight="600">— VSI needle</text>
+    <text x="160" y="186" font-size="12" fill="var(--color-info)">- - true rate</text>
+    <line x1="50" y1="195" x2="50" y2="335" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="50" y1="335" x2="365" y2="335" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="50" y1="284" x2="365" y2="284" stroke="var(--color-line)" stroke-width="1"/>
+    <line x1="50" y1="220.4" x2="365" y2="220.4" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="44" y="288">0</text><text x="44" y="224">+500</text>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="50" y="350">0</text><text x="128.8" y="350">10</text><text x="207.5" y="350">20</text><text x="286.3" y="350">30</text><text x="365" y="350">40</text>
+    </g>
+    <text x="207" y="366" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">simulated seconds (illustrative)</text>
+    <text x="14" y="265" font-size="12" fill="var(--color-fg-muted)" transform="rotate(-90 14 265)" text-anchor="middle">ft/min</text>
+    <line y1="195" y2="335" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="2 3" :x1="X(S)" :x2="X(S)"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" :d="sim.tr"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="sim.nd"/>
+    <circle r="4.5" fill="var(--color-brand)" :cx="X(S)" :cy="Y(needle)"/>
+
+    <!-- the VSI dial -->
+    <circle cx="500" cy="92" r="70" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2"/>
+    <path d="M548.5 120.0L555.4 124.0M522.6 146.5L524.5 151.1M485.5 146.1L483.4 153.8M453.2 127.9L449.2 131.0M444.0 92.0L436.0 92.0M453.2 56.1L449.2 53.0M485.5 37.9L483.4 30.2M522.6 37.5L524.5 32.9M548.5 64.0L555.4 60.0" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <text x="420" y="36" font-size="12" font-weight="600" fill="var(--color-fg-muted)" text-anchor="middle">UP</text>
+    <text x="420" y="97" font-size="12" font-weight="600" fill="var(--color-fg)" text-anchor="middle" class="num">0</text>
+    <text x="420" y="156" font-size="12" font-weight="600" fill="var(--color-fg-muted)" text-anchor="middle">DN</text>
+    <text x="540" y="96" font-size="11" fill="var(--color-fg-muted)" text-anchor="middle">ft/min</text>
+    <line stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round" :x1="needleTail.x" :y1="needleTail.y" :x2="needleTip.x" :y2="needleTip.y"/>
+    <g font-size="11" font-weight="600" fill="var(--color-fg)" text-anchor="middle" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text x="488.6" y="53.5">500</text><text x="535" y="74.0">1000</text><text x="488.6" y="138.5">500</text><text x="535" y="118.0">1000</text>
+    </g>
+    <circle cx="500" cy="92" r="5" fill="var(--color-brand)"/>
+    <text x="578" y="30" font-size="13" font-weight="700" fill="var(--color-fg)">VSI</text>
+
+    <!-- inside the VSI -->
+    <line x1="500" y1="162" x2="500" y2="227" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <rect x="405" y="190" width="190" height="110" rx="10" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="415" y="208" font-size="12" fill="var(--color-fg-muted)">case</text>
+    <rect y="227" height="44" rx="10" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" :x="500 - cw" :width="2 * cw"/>
+    <text x="500" y="253" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600">capsule</text>
+    <line y1="249" y2="249" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#vsl-arrow)" x-show="squeeze === 1" :x1="500 - cw - 26" :x2="500 - cw - 6"/>
+    <line y1="249" y2="249" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#vsl-arrow)" x-show="squeeze === 1" :x1="500 + cw + 26" :x2="500 + cw + 6"/>
+    <line y1="249" y2="249" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#vsl-arrow)" x-show="squeeze === -1" :x1="500 - cw - 4" :x2="500 - cw - 24"/>
+    <line y1="249" y2="249" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#vsl-arrow)" x-show="squeeze === -1" :x1="500 + cw + 4" :x2="500 + cw + 24"/>
+    <!-- static line: straight into the capsule, through the calibrated leak into the case -->
+    <path d="M405 340 H565 V300 M500 340 V271" fill="none" stroke="var(--color-fg-muted)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M557 309 L565 318 L573 309 Z M557 327 L565 318 L573 327 Z" fill="var(--color-fg)"/>
+    <line x1="548" x2="548" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#vsl-arrow)" x-show="squeeze === 1" y1="304" y2="328"/>
+    <line x1="548" x2="548" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#vsl-arrow)" x-show="squeeze === -1" y1="328" y2="304"/>
+    <text x="577" y="314" font-size="11" fill="var(--color-fg)">calibrated</text>
+    <text x="577" y="328" font-size="11" fill="var(--color-fg)">leak</text>
+    <text x="405" y="358" font-size="12" fill="var(--color-fg-muted)">static, from the vent</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the climb'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="vsl-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Simulated time">
+    <span class="widget-clock" x-text="fmt(S) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vsl-abrupt" class="cursor-pointer"><span>Abrupt pitch changes</span>
+        <input type="checkbox" id="vsl-abrupt" x-model="abrupt" @change="restart()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">True rate</dt><dd class="widget-value" x-text="sign(Math.round(trueRate / 10) * 10) + ' ft/min'"></dd></div>
+    <div class="widget-readout" :class="state.c"><dt class="widget-label">VSI shows</dt><dd class="widget-value"><span x-text="sign(Math.round(needle / 10) * 10) + ' ft/min'"></span><span class="widget-flag" :class="state.c" x-show="state.c !== 'ok'" x-text="reversed ? 'reverse' : 'lag'"></span></dd></div>
+    <div class="widget-readout" :class="state.c"><dt class="widget-label">Needle</dt><dd class="widget-value" x-text="state.t"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Case against capsule</dt><dd class="widget-value" x-text="caseText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('level')" :aria-pressed="active === 'level'">Level</button>
+      <button type="button" @click="preset('entering-climb')" :aria-pressed="active === 'entering-climb'">Entering the climb</button>
+      <button type="button" @click="preset('settled-climb')" :aria-pressed="active === 'settled-climb'">Settled climb</button>
+      <button type="button" @click="preset('levelling-off')" :aria-pressed="active === 'levelling-off'">Levelling off</button>
+      <button type="button" @click="preset('abrupt-pitch-reverse')" :aria-pressed="active === 'abrupt-pitch-reverse'">Abrupt pitch: reverse</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Static pressure reaches the capsule at once but the case only through the calibrated leak, and the needle shows the difference between them. So the VSI shows the trend straight away but takes a few seconds (about 6 to 9) to settle on the true rate, both entering and leaving a climb, and an abrupt pitch change can flick it the wrong way first. Use it to confirm a trend, not to chase the needle. The 500 ft/min climb and the size of the flick are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you raise the nose for a climb and a second later the VSI shows only about half the rate you expect. Do you raise the nose further?</summary><p>No. Press Entering the climb: the needle is still catching up because the case pressure lags behind the capsule. Hold the attitude and give it a few seconds; chasing the needle would overshoot.</p></details>
+  <details class="widget-try"><summary>Try it: why does the VSI read zero when the static vent is blocked?</summary><p>The capsule and the case are then fed from the same trapped static pressure, so nothing leaks through the calibrated leak and the two stay equal: no difference, no needle movement, whatever the aeroplane does.</p></details>
+</div>

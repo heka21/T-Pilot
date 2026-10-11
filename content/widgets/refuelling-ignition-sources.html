@@ -1,0 +1,164 @@
+<div class="widget" x-data="widget({
+  noSmoke: false, engStop: false, bonded: false, ext: false, paxOff: false, noTx: false,
+  get wrong() {
+    const w = [];
+    if (!this.noSmoke) w.push('smoking');
+    if (!this.engStop) w.push('engine');
+    if (!this.bonded) w.push('static');
+    if (!this.ext) w.push('extinguisher');
+    if (!this.paxOff) w.push('passengers');
+    if (!this.noTx) w.push('transmitting');
+    return w;
+  },
+  get met() { return 6 - this.wrong.length },
+  get clear() { return this.wrong.length === 0 },
+  get statusText() { return this.clear ? 'Fuel may flow' : 'Do not start: ' + this.wrong.length + (this.wrong.length === 1 ? ' rule' : ' rules') + ' not met' },
+  presets: {
+    'all-clear': { noSmoke: true, engStop: true, bonded: true, ext: true, paxOff: true, noTx: true },
+    'not-bonded': { noSmoke: true, engStop: true, bonded: false, ext: true, paxOff: true, noTx: true },
+    'engine-running': { noSmoke: true, engStop: false, bonded: true, ext: true, paxOff: true, noTx: true },
+    'passengers-aboard': { noSmoke: true, engStop: true, bonded: true, ext: true, paxOff: false, noTx: true },
+    'hf-transmission': { noSmoke: true, engStop: true, bonded: true, ext: true, paxOff: true, noTx: false },
+    'smoker-nearby': { noSmoke: false, engStop: true, bonded: true, ext: true, paxOff: true, noTx: true },
+  },
+})">
+  <svg viewBox="0 0 640 350" role="img" aria-labelledby="ris-title" class="widget-stage">
+    <title id="ris-title">Side view of a Cessna on the apron with a fuel bowser and its hose to the wing filler, inside a refuelling zone. Each refuelling rule that is not met shows its hazard, numbered to match the checklist: 1 a person smoking in the zone, 2 the engine running with the propeller turning and a hot exhaust, 3 a static spark at the nozzle because the aircraft and bowser are not bonded, 4 no fire extinguisher at hand, 5 passengers in the cabin, 6 radio waves from an HF transmission. When every rule is met the hose shows fuel flowing.</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-sky-soft)"/>
+    <rect x="0" y="300" width="640" height="50" fill="var(--color-surface-2)"/>
+    <line x1="0" y1="300" x2="640" y2="300" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <!-- status and the after-refuelling reminder -->
+    <rect x="160" y="12" width="320" height="36" rx="18" :fill="clear ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)'" :stroke="clear ? 'var(--color-ok)' : 'var(--color-bad)'" stroke-width="2"/>
+    <text x="320" y="36" font-size="16" font-weight="700" text-anchor="middle" :fill="clear ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="statusText"></text>
+    <text x="320" y="72" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">After refuelling: caps secured, then a fuel drain check for water and the correct fuel</text>
+    <!-- the refuelling zone -->
+    <rect x="80" y="104" width="552" height="210" rx="16" fill="var(--color-warn-soft)" fill-opacity="0.5" stroke="var(--color-warn)" stroke-width="1.5" stroke-dasharray="8 5"/>
+    <text x="92" y="124" font-size="12" font-weight="700" fill="var(--color-warn-fg)">refuelling zone</text>
+    <!-- bonding lead (3) -->
+    <g x-show="bonded">
+      <path d="M486 288 C468 312 330 312 299 290" fill="none" stroke="var(--color-ok)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="486" cy="288" r="3" fill="var(--color-ok)"/><circle cx="299" cy="290" r="3" fill="var(--color-ok)"/>
+      <text x="330" y="330" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)" font-weight="600">bonded</text>
+    </g>
+    <!-- the bowser -->
+    <rect x="482" y="228" width="112" height="50" rx="16" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="540" y="258" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">bowser</text>
+    <path d="M598 244 H616 L628 262 V284 H598 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M603 250 H614 L622 262 H603 Z" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="1"/>
+    <rect x="478" y="278" width="152" height="8" rx="2" fill="var(--color-fg)"/>
+    <circle cx="504" cy="290" r="9" fill="var(--color-fg)"/><circle cx="572" cy="290" r="9" fill="var(--color-fg)"/><circle cx="612" cy="290" r="9" fill="var(--color-fg)"/>
+    <circle cx="490" cy="238" r="6" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <!-- the aeroplane: python -m tools.diagrams.plane side, scale 2.1, x 310, y 259.05, no prop; strokes thinned for the large size -->
+    <g transform="translate(310 259.05) rotate(0) scale(2.1)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="0.7" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="0.7" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="0.55" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="0.55" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="0.55" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="0.55" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="0.55" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="0.7" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <!-- HF antenna on the tail cone; waves when transmitting (6) -->
+    <line x1="214" y1="259" x2="210" y2="244" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+    <g x-show="!noTx" fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round">
+      <path d="M203 244 A7 7 0 0 1 217 244"/><path d="M198 244 A12 12 0 0 1 222 244"/><path d="M193 244 A17 17 0 0 1 227 244"/>
+    </g>
+    <!-- passengers in the cabin (5) -->
+    <g x-show="!paxOff" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.5">
+      <circle cx="287" cy="252" r="4.2"/><circle cx="307" cy="252" r="4.2"/>
+    </g>
+    <!-- propeller: stopped, or turning with a hot exhaust (2) -->
+    <line x1="366.5" y1="239.5" x2="366.5" y2="289.5" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" x-show="engStop"/>
+    <g x-show="!engStop">
+      <ellipse cx="366.5" cy="264.5" rx="5" ry="25" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <path d="M342 250 q-3 -4 0 -8 t0 -8 M350 250 q-3 -4 0 -8 t0 -8" fill="none" stroke="var(--color-bad)" stroke-width="1.75" stroke-linecap="round"/>
+    </g>
+    <!-- hose and nozzle: fuel flows only when every rule is met -->
+    <path d="M490 238 C430 160 330 160 296 234" fill="none" :stroke="clear ? 'var(--color-brand)' : 'var(--color-fg-muted)'" :stroke-width="clear ? 4.5 : 3.5" stroke-linecap="round"/>
+    <line x1="300" y1="228" x2="294" y2="238" stroke="var(--color-fg)" stroke-width="4" stroke-linecap="round"/>
+    <text x="400" y="152" font-size="13" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" x-show="clear">fuel flowing</text>
+    <!-- static spark at the nozzle (3) -->
+    <path x-show="!bonded" d="M301 226 l6 -7 l-4 -1 l8 -9 M316 204 l3 -4 M318 211 l5 0 M309 203 l-1 -5" fill="none" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- smoker (1) -->
+    <g x-show="!noSmoke" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" fill="none">
+      <circle cx="110" cy="252" r="6"/>
+      <path d="M110 258 V282 M110 282 L104 299 M110 282 L116 299 M110 265 L102 278 M110 265 L118 262 L116 255"/>
+      <line x1="115" y1="254" x2="123" y2="252" stroke="var(--color-fg)"/>
+      <circle cx="124" cy="251.5" r="2.5" fill="var(--color-bad)" stroke="var(--color-bad)"/>
+      <path d="M125 247 q-4 -4 0 -8 t0 -8" stroke="var(--color-fg-faint)" stroke-width="1.5"/>
+    </g>
+    <!-- passengers well clear, outside the zone -->
+    <g x-show="paxOff" stroke="var(--color-ok)" stroke-width="2" stroke-linecap="round" fill="none">
+      <circle cx="28" cy="256" r="5.5"/><path d="M28 262 V283 M28 283 L23 299 M28 283 L33 299 M28 268 L21 280 M28 268 L35 280"/>
+      <circle cx="52" cy="258" r="5"/><path d="M52 263 V284 M52 284 L47 299 M52 284 L57 299 M52 269 L45 280 M52 269 L59 280"/>
+    </g>
+    <text x="10" y="338" font-size="12" fill="var(--color-ok-fg)" font-weight="600" x-show="paxOff">passengers clear</text>
+    <!-- fire extinguisher (4): there, or missing -->
+    <g x-show="ext">
+      <rect x="424" y="276" width="13" height="24" rx="4" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.5"/>
+      <path d="M428 276 V270 H436 M436 270 l5 4" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="430" y="330" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-ok-fg)">extinguisher</text>
+    </g>
+    <g x-show="!ext">
+      <rect x="424" y="276" width="13" height="24" rx="4" fill="none" stroke="var(--color-bad)" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="430.5" y="293" font-size="13" text-anchor="middle" font-weight="700" fill="var(--color-bad-fg)">?</text>
+      <text x="430" y="330" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-bad-fg)">no extinguisher</text>
+    </g>
+    <!-- numbered hazard badges, matching the checklist -->
+    <g font-size="12" font-weight="700" text-anchor="middle">
+      <g x-show="!noSmoke"><circle cx="100" cy="226" r="9" fill="var(--color-bad)"/><text x="100" y="230.5" fill="var(--color-surface)">1</text></g>
+      <g x-show="!engStop"><circle cx="390" cy="252" r="9" fill="var(--color-bad)"/><text x="390" y="256.5" fill="var(--color-surface)">2</text></g>
+      <g x-show="!bonded"><circle cx="279" cy="214" r="9" fill="var(--color-bad)"/><text x="279" y="218.5" fill="var(--color-surface)">3</text></g>
+      <g x-show="!ext"><circle cx="455" cy="266" r="9" fill="var(--color-bad)"/><text x="455" y="270.5" fill="var(--color-surface)">4</text></g>
+      <g x-show="!paxOff"><circle cx="297" cy="273" r="9" fill="var(--color-bad)"/><text x="297" y="277.5" fill="var(--color-surface)">5</text></g>
+      <g x-show="!noTx"><circle cx="210" cy="211" r="9" fill="var(--color-bad)"/><text x="210" y="215.5" fill="var(--color-surface)">6</text></g>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ris-smoke" class="cursor-pointer"><span>1. No smoking or naked flames in the zone</span>
+        <input type="checkbox" id="ris-smoke" x-model="noSmoke" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ris-eng" class="cursor-pointer"><span>2. Engines stopped</span>
+        <input type="checkbox" id="ris-eng" x-model="engStop" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ris-bond" class="cursor-pointer"><span>3. Aircraft and bowser bonded (earthed)</span>
+        <input type="checkbox" id="ris-bond" x-model="bonded" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ris-ext" class="cursor-pointer"><span>4. Fire extinguisher at hand</span>
+        <input type="checkbox" id="ris-ext" x-model="ext" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ris-pax" class="cursor-pointer"><span>5. Passengers off the aircraft (or supervised as the rules allow)</span>
+        <input type="checkbox" id="ris-pax" x-model="paxOff" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ris-tx" class="cursor-pointer"><span>6. No radar or HF transmissions</span>
+        <input type="checkbox" id="ris-tx" x-model="noTx" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <div class="widget-caption" aria-live="polite">
+    <p x-show="clear">All six rules met: no ignition source left near the vapour, and an extinguisher ready if anything goes wrong. Fuel may flow.</p>
+    <p x-show="!noSmoke"><strong>1 Smoking in the zone:</strong> a cigarette or naked flame is an ignition source right beside the fuel vapour.</p>
+    <p x-show="!engStop"><strong>2 Engine running:</strong> the hot exhaust or an ignition spark can light the vapour.</p>
+    <p x-show="!bonded"><strong>3 Not bonded:</strong> fuel flowing through the hose builds up a static charge, and without the bonding lead it equalises as a spark at the nozzle.</p>
+    <p x-show="!ext"><strong>4 No extinguisher at hand:</strong> a fire extinguisher must be ready before fuel flows.</p>
+    <p x-show="!paxOff"><strong>5 Passengers aboard:</strong> they must be off the aircraft, or supervised under the conditions the rules allow.</p>
+    <p x-show="!noTx"><strong>6 HF transmitting:</strong> radar and HF transmissions can induce currents strong enough to spark.</p>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="clear ? 'ok' : 'bad'"><dt class="widget-label">Fuel may flow?</dt><dd class="widget-value"><span x-text="clear ? 'Yes' : 'No'"></span><span class="widget-flag bad" x-show="!clear">stop</span></dd></div>
+    <div class="widget-readout" :class="clear ? 'ok' : ''"><dt class="widget-label">Rules met</dt><dd class="widget-value" x-text="met + ' of 6'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">After refuelling</dt><dd class="widget-value">Caps on, drain check</dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('all-clear')" :aria-pressed="active === 'all-clear'">All clear</button>
+      <button type="button" @click="preset('not-bonded')" :aria-pressed="active === 'not-bonded'">Not bonded</button>
+      <button type="button" @click="preset('engine-running')" :aria-pressed="active === 'engine-running'">Engine running</button>
+      <button type="button" @click="preset('passengers-aboard')" :aria-pressed="active === 'passengers-aboard'">Passengers aboard</button>
+      <button type="button" @click="preset('hf-transmission')" :aria-pressed="active === 'hf-transmission'">HF</button>
+      <button type="button" @click="preset('smoker-nearby')" :aria-pressed="active === 'smoker-nearby'">Smoker</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every rule closes one way of igniting the vapour, so a single unmet rule is enough to stop the refuel: you need all six. The one people forget is static: the fuel's own flow charges the aircraft, and only the bonding lead stops that charge jumping as a spark at the nozzle.</p>
+  <details class="widget-try"><summary>Try it: the engine is off, nobody is smoking and the extinguisher is beside the wing. Can the refueller start?</summary><p>Not yet. Choose Not bonded: with no bonding lead the flowing fuel builds a static charge that can spark at the nozzle (3). Bond the aircraft and bowser, get the passengers off (5) and stop any radar or HF transmission (6) first.</p></details>
+  <details class="widget-try"><summary>Try it: the refuel is done and everything went well. What two things before flight?</summary><p>Secure the tank caps, then make a fuel drain check for water and the correct fuel, once the fuel has settled.</p></details>
+</div>

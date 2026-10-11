@@ -63,11 +63,11 @@ def split_frontmatter(text: str) -> tuple[dict, str]:
 # at formulas, tables and examples), plus fixed time per visual, worked example and self-check question.
 WORDS_PER_MINUTE = 100
 MINUTES_PER_DIAGRAM = 2
-MINUTES_PER_WIDGET = 5
+MINUTES_PER_WIDGET = 3  # was 5 before the 2026-10 visualisation push (about 490 widget embeds); shared widgets repeat
 MINUTES_PER_EXAMPLE = 2
 MINUTES_PER_CHECK = 1
 MIN_MINUTES = 5
-_NOT_PROSE_RE = re.compile(r"!\[[^\]]*\]\([^)]*\)|^\s*(?:!!!|\?\?\?\+?)\s.*$", re.M)
+_NOT_PROSE_RE = re.compile(r"!\[[^\]]*\]\([^)\"]*(?:\"[^\"]*\")?\s*\)|^\s*(?:!!!|\?\?\?\+?)\s.*$", re.M)  # a quoted title may contain ")"
 EXAMPLE_RE = re.compile(r"^!!! example\b", re.M)
 CHECK_RE = re.compile(r"^\?\?\?\+? check\b", re.M)
 

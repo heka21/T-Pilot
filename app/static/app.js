@@ -476,8 +476,9 @@
     else placeFloater(el);
   });
   window.addEventListener("resize", placeFloaters);
-  // The mini player showing or hiding changes the room at the bottom (player.js sets html[data-player-open]).
-  new MutationObserver(placeFloaters).observe(document.documentElement, { attributes: true, attributeFilter: ["data-player-open"] });
+  // The mini player showing or hiding changes the room at the bottom (player.js sets html[data-player-open]), and
+  // playing or pausing grows or shrinks a folded lesson bar by its pause button (html[data-player-playing]).
+  new MutationObserver(placeFloaters).observe(document.documentElement, { attributes: true, attributeFilter: ["data-player-open", "data-player-playing"] });
 
   // Celebrations: an element with data-celebrate ("big" or "small") throws confetti once when it appears.
   // Skipped under reduced motion. Colours come from the theme tokens.

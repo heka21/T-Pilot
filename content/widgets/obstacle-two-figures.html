@@ -1,0 +1,113 @@
+<div class="widget" x-data="widget({
+  top: 1250, agl: 400, alt: 1500,
+  get ground() { return this.top - this.agl },
+  get clear() { return this.alt - this.top },
+  get cruise() { return this.top + 1000 },
+  get state() { return this.clear <= 0 ? 'bad' : this.clear < 1000 ? 'warn' : 'ok' },
+  // vertical scale: sea level at y 272, the top of the picture (y 40) is a round 500 ft above the highest thing
+  get hmax() { return Math.ceil((Math.max(this.alt, this.top) + 400) / 500) * 500 },
+  Y(ft) { return 272 - ft * 232 / this.hmax },
+  get ticks() { const a = []; for (let f = 0; f <= this.hmax; f += 500) a.push(f); return a },
+  get tickPath() { return this.ticks.map((f) => 'M52 ' + this.Y(f).toFixed(1) + ' h6').join(' ') },
+  tickY(i) { return this.Y(i * 500) },
+  get caption() {
+    if (this.clear <= 0) return 'Your altimeter reads ' + this.fmt(this.alt) + ' ft but the top of the mast is at ' + this.fmt(this.top) + ' ft AMSL: you would hit it. The bracketed ' + this.fmt(this.agl) + ' is not the figure to clear.';
+    return 'On QNH the altimeter reads height above sea level, so compare it with the unbracketed ' + this.fmt(this.top) + ': you pass ' + this.fmt(this.clear) + ' ft above the top. The (' + this.fmt(this.agl) + ') only says how tall the mast stands above its ' + this.fmt(this.ground) + ' ft ground.';
+  },
+  presets: {
+    'mast-1250-400': { top: 1250, agl: 400, alt: 1500 },
+    'mast-2180-520': { top: 2180, agl: 520, alt: 2680 },
+    'mast-940-380': { top: 940, agl: 380, alt: 1200 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="otf-title" class="widget-stage">
+    <title id="otf-title">Side view from sea level: ground at the obstacle's base, a mast whose top is marked with its elevation above sea level and its height above the ground, an aeroplane at its QNH altitude with the clearance over the top, and the chart symbol with its two figures</title>
+    <defs>
+      <marker id="otf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface)" rx="10"/>
+    <rect x="58" y="20" width="582" height="252" fill="var(--color-sky-soft)" fill-opacity="0.6"/>
+    <!-- height scale -->
+    <line x1="58" y1="20" x2="58" y2="272" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <path :d="tickPath" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="48" :y="tickY(0) + 4">SL</text>
+      <text x="48" :y="tickY(2) + 4" x-text="fmt(1000)"></text>
+      <text x="48" :y="tickY(4) + 4" x-text="fmt(2000)" :display="(hmax >= 2000) ? 'inline' : 'none'"></text>
+      <text x="48" :y="tickY(6) + 4" x-text="fmt(3000)" :display="(hmax >= 3000) ? 'inline' : 'none'"></text>
+      <text x="48" :y="tickY(8) + 4" x-text="fmt(4000)" :display="(hmax >= 4000) ? 'inline' : 'none'"></text>
+    </g>
+    <text x="14" y="16" font-size="11" fill="var(--color-fg-faint)">ft AMSL</text>
+    <!-- ground at the base of the mast -->
+    <rect x="58" width="582" fill="var(--color-warn-soft)" :y="Y(ground)" :height="272 - Y(ground)"/>
+    <line x1="58" x2="640" stroke="var(--color-fg-muted)" stroke-width="2" :y1="Y(ground)" :y2="Y(ground)"/>
+    <line x1="58" y1="272" x2="640" y2="272" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="634" y="266" font-size="12" text-anchor="end" fill="var(--color-info)">mean sea level</text>
+    <text x="634" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num" :y="Y(ground) + 16" :display="(272 - Y(ground) > 40) ? 'inline' : 'none'" x-text="'ground ' + fmt(ground) + ' ft AMSL'"></text>
+    <!-- the mast -->
+    <g stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round">
+      <line x1="294" x2="300" :y1="Y(ground)" :y2="Y(top)"/>
+      <line x1="306" x2="300" :y1="Y(ground)" :y2="Y(top)"/>
+      <line x1="295.5" x2="304.5" :y1="Y(ground + agl * 0.25)" :y2="Y(ground + agl * 0.25)"/>
+      <line x1="297" x2="303" :y1="Y(ground + agl * 0.55)" :y2="Y(ground + agl * 0.55)"/>
+    </g>
+    <circle cx="300" r="3.5" fill="var(--color-bad)" :cy="Y(top) - 3"/>
+    <!-- elevation of the top, from sea level -->
+    <line x1="230" y1="272" x2="230" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#otf-arrow)" :y2="Y(top) + 1"/>
+    <line x1="224" x2="300" stroke="var(--color-brand)" stroke-width="1" stroke-dasharray="4 3" :y1="Y(top)" :y2="Y(top)"/>
+    <text x="222" text-anchor="end" font-size="13" font-weight="700" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="Math.min(252, (272 + Y(ground)) / 2 - 2)" x-text="fmt(top)"></text>
+    <text x="222" text-anchor="end" font-size="12" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="Math.min(252, (272 + Y(ground)) / 2 - 2) + 15">ft AMSL: top</text>
+    <!-- height above the ground -->
+    <line x1="330" x2="330" stroke="var(--color-fg-muted)" stroke-width="1.25" :y1="Y(ground)" :y2="Y(top)"/>
+    <line x1="325" x2="335" stroke="var(--color-fg-muted)" stroke-width="1.25" :y1="Y(ground)" :y2="Y(ground)"/>
+    <line x1="325" x2="335" stroke="var(--color-fg-muted)" stroke-width="1.25" :y1="Y(top)" :y2="Y(top)"/>
+    <text x="340" font-size="13" fill="var(--color-fg-muted)" class="num" :y="(Y(ground) + Y(top)) / 2 + 5" x-text="'(' + fmt(agl) + ') above ground'"></text>
+    <!-- the aeroplane and its clearance -->
+    <line x1="300" x2="520" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :y1="Y(top)" :y2="Y(top)"/>
+    <line x1="520" x2="520" stroke-width="2" :stroke="'var(--color-' + state + ')'" :y1="Y(alt) + 8" :y2="Y(top)" :display="(Math.abs(Y(alt) - Y(top)) > 12) ? 'inline' : 'none'"/>
+    <text x="530" font-size="13" font-weight="700" class="num" :fill="'var(--color-' + state + '-fg)'" :y="(Y(alt) + Y(top)) / 2 + 9" x-text="(clear > 0 ? fmt(clear) + ' ft clear' : 'below the top')"></text>
+    <g :transform="'translate(520 ' + Y(alt) + ')'">
+      <!-- plane side scale 0.4 -->
+      <g transform="translate(0 0) rotate(0) scale(0.4)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="520" font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num" :y="Y(alt) - 14" x-text="fmt(alt) + ' ft on QNH'"></text>
+    <!-- the chart symbol -->
+    <rect x="70" y="30" width="132" height="58" rx="6" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="80" y="46" font-size="11" fill="var(--color-fg-faint)">on the chart</text>
+    <path d="M84 78 L90 58 L96 78 M86.5 70 h7" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="90" cy="56" r="1.8" fill="var(--color-fg)"/>
+    <text x="104" y="76" class="num"><tspan font-size="16" font-weight="700" fill="var(--color-brand-fg)" x-text="fmt(top)"></tspan><tspan font-size="14" fill="var(--color-fg-muted)" dx="6" x-text="'(' + fmt(agl) + ')'"></tspan></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="otf-top">Big figure: elevation of the top <output for="otf-top" x-text="fmt(top) + ' ft AMSL'"></output></label>
+      <input type="range" id="otf-top" min="500" max="3000" step="10" x-model.number="top">
+    </div>
+    <div class="widget-control">
+      <label for="otf-agl">Bracketed figure: height above the ground <output for="otf-agl" x-text="'(' + fmt(agl) + ') ft'"></output></label>
+      <input type="range" id="otf-agl" min="100" max="600" step="10" x-model.number="agl">
+    </div>
+    <div class="widget-control">
+      <label for="otf-alt">Your altimeter on QNH <output for="otf-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="otf-alt" min="500" max="4000" step="10" x-model.number="alt">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Ground at the base</dt><dd class="widget-value" x-text="fmt(top) + ' − ' + fmt(agl) + ' = ' + fmt(ground) + ' ft AMSL'"></dd></div>
+    <div class="widget-readout" :class="state"><dt class="widget-label">Clearance above the top</dt><dd class="widget-value"><span x-text="fmt(alt) + ' − ' + fmt(top) + ' = ' + (clear > 0 ? fmt(clear) + ' ft' : fmt(clear) + ' ft: below the top')"></span><span class="widget-flag" :class="state" x-show="state !== 'ok'" x-text="state === 'bad' ? 'collision' : 'under 1,000 ft'"></span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Rule-of-thumb cruise over it</dt><dd class="widget-value" x-text="fmt(top) + ' + 1,000 = ' + fmt(cruise) + ' ft'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('mast-1250-400')" :aria-pressed="active === 'mast-1250-400'">1,250 (400)</button>
+      <button type="button" @click="preset('mast-2180-520')" :aria-pressed="active === 'mast-2180-520'">2,180 (520)</button>
+      <button type="button" @click="preset('mast-940-380')" :aria-pressed="active === 'mast-940-380'">940 (380)</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The big unbracketed figure is the elevation of the top above mean sea level, the same datum your altimeter uses on QNH, so it is the one you clear. The bracketed figure is the structure's height above its own ground: it tells you how tall it looks, not how high to fly. Never add the two: the elevation already includes the structure.</p>
+  <details class="widget-try"><summary>Try it: a mast near your track reads 2,180 (520). What is the ground elevation, and what QNH altitude puts you 500 ft above its top?</summary><p>Ground 2,180 − 520 = 1,660 ft AMSL. The top is at 2,180 ft, so 500 ft above it is 2,680 ft on QNH. Press 2,180 (520).</p></details>
+  <details class="widget-try"><summary>Try it: an obstacle reads 940 (380) and you cruise at 1,200 ft on the area QNH. By how much do you clear it?</summary><p>1,200 − 940 = 260 ft. The 380 is irrelevant to the altimeter; comparing 1,200 with it would make you think you had 820 ft to spare.</p></details>
+</div>

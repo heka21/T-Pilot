@@ -1,0 +1,132 @@
+<div class="widget" x-data="widget({
+  v: 70, w: 1, power: false, wind: 0,
+  // drag as a fraction of maximum weight: parasite a·V² (no weight term) + induced c·w²/V²; calibrated so the
+  // minimum drag speed is 70 kt at maximum weight with a best L/D of 9 (RBKA 3.1, 3.4)
+  a: 1 / (9 * 2 * 4900),
+  get c() { return this.a * 70 ** 4 },
+  par(V) { return this.a * V * V },
+  ind(V) { return this.c * this.w * this.w / (V * V) },
+  tot(V) { return this.par(V) + this.ind(V) },
+  pow(V) { return this.tot(V) * V },
+  get vmd() { return 70 * Math.sqrt(this.w) },
+  get vmp() { return this.vmd / Math.pow(3, 0.25) },
+  // stall: about 45 kt at maximum weight (illustrative; the critical angle is ~4x the best L/D angle's lift)
+  get vs() { return 45 * Math.sqrt(this.w) },
+  get ld() { return this.w / this.tot(this.v) },
+  get glideNm() { return 3000 * this.ld / 6076 },
+  get bestNm() { return 3000 * 9 / 6076 },
+  get back() { return this.v < this.vmd - 0.5 },
+  // best range speed with a headwind: the speed that minimises power / groundspeed
+  get vrange() { let best = 0, bv = this.vmd; for (let V = 45; V <= 130; V += 0.5) { const r = (V - this.wind) / this.pow(V); if (r > best) { best = r; bv = V } } return bv },
+  // chart: 40-120 kt across x 70..600; drag 0..25 % of weight down y 250..30; power scaled to 0..24
+  X(V) { return 70 + (V - 40) / 80 * 530 },
+  Y(f) { return 250 - f / 0.25 * 220 },
+  YP(p) { return 250 - p / 24 * 220 },
+  curve(f, P) { const pts = []; for (let V = 40; V <= 120; V += 2) pts.push([this.X(V), P ? this.YP(f(V)) : this.Y(f(V))]); return this.path(pts) },
+  get parPath() { return this.curve((V) => this.par(V)) },
+  get indPath() { return this.curve((V) => this.ind(V)) },
+  get totPath() { return this.curve((V) => this.tot(V)) },
+  get powPath() { return this.curve((V) => this.pow(V), true) },
+  // the range line runs from (headwind speed, zero power) through the touching point; drawn from the chart's left edge
+  get tangent() { const ox = this.X(this.wind), oy = this.YP(0), tx = this.X(this.vrange), ty = this.YP(this.pow(this.vrange)); const s0 = Math.max(0, (70 - ox) / (tx - ox)); return { x0: ox + s0 * (tx - ox), y0: oy + s0 * (ty - oy), x2: ox + 1.3 * (tx - ox), y2: oy + 1.3 * (ty - oy) } },
+  get dot() { return { x: this.X(this.v), y: this.power ? this.YP(this.pow(this.v)) : this.Y(this.tot(this.v)) } },
+  presets: {
+    'best-glide': { v: 70, w: 1, power: false, wind: 0 },
+    'too-slow': { v: 56, w: 1, power: false, wind: 0 },
+    'too-fast': { v: 95, w: 1, power: false, wind: 0 },
+    'light': { v: 63, w: 0.81, power: false, wind: 0 },
+    'endurance': { v: 53, w: 1, power: true, wind: 0 },
+    'headwind-range': { v: 70, w: 1, power: true, wind: 25 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="dce-title" class="widget-stage">
+    <title id="dce-title">Drag against airspeed: parasite drag rising, induced drag falling, total drag U-shaped with its lowest point at the best lift/drag speed; or power required against airspeed with the endurance and range speeds</title>
+    <!-- stall region -->
+    <rect y="30" height="220" fill="var(--color-bad)" fill-opacity="0.08" x="70" :width="X(vs) - 70"/>
+    <text font-size="12" fill="var(--color-bad-fg)" y="46" :x="X(vs) - 6" text-anchor="end">stall</text>
+    <!-- axes -->
+    <line x1="70" y1="250" x2="600" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" y1="30" x2="70" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="70" y="268">40</text><text x="136" y="268">50</text><text x="203" y="268">60</text><text x="269" y="268">70</text>
+      <text x="335" y="268">80</text><text x="401" y="268">90</text><text x="468" y="268">100</text><text x="534" y="268">110</text><text x="600" y="268">120</text>
+    </g>
+    <text x="335" y="290" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">airspeed (kt)</text>
+    <g x-show="!power" font-size="12" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="62" y="254">0</text><text x="62" y="210">5%</text><text x="62" y="166">10%</text><text x="62" y="122">15%</text><text x="62" y="78">20%</text><text x="62" y="34">25%</text>
+    </g>
+    <g x-show="!power" stroke="var(--color-line)" stroke-width="1">
+      <line x1="70" y1="206" x2="600" y2="206"/><line x1="70" y1="162" x2="600" y2="162"/><line x1="70" y1="118" x2="600" y2="118"/><line x1="70" y1="74" x2="600" y2="74"/>
+    </g>
+    <text x="14" y="140" font-size="13" fill="var(--color-fg-muted)" transform="rotate(-90 14 140)" text-anchor="middle" x-text="power ? 'power required (shape)' : 'drag (% of weight)'"></text>
+    <!-- drag view -->
+    <g x-show="!power" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="4 3" :d="parPath"/>
+      <path stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="4 3" :d="indPath"/>
+      <path stroke="var(--color-brand)" stroke-width="2.5" :d="totPath"/>
+    </g>
+    <g x-show="!power" font-size="13">
+      <text x="596" y="174" text-anchor="end" fill="var(--color-info)">parasite ∝ V²</text>
+      <text x="440" y="214" fill="var(--color-warn-fg)">induced</text>
+      <text x="596" y="80" text-anchor="end" fill="var(--color-brand-fg)" font-weight="600">total drag</text>
+      <line stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" y1="250" :x1="X(vmd)" :x2="X(vmd)" :y2="Y(tot(vmd))"/>
+      <text font-size="12" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" fill="var(--color-fg-muted)" text-anchor="middle" y="244" :x="X(vmd)" x-text="'best L/D ' + fmt(vmd) + ' kt'"></text>
+      <text font-size="12" fill="var(--color-bad-fg)" x-show="back" :x="(X(vs) + X(vmd)) / 2" y="62" text-anchor="middle">back of the curve</text>
+    </g>
+    <!-- power view -->
+    <g x-show="power">
+      <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="powPath"/>
+      <line stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" :x1="tangent.x0" :y1="tangent.y0" :x2="tangent.x2" :y2="tangent.y2"/>
+      <circle r="5" fill="var(--color-ok)" :cx="X(vrange)" :cy="YP(pow(vrange))"/>
+      <text font-size="12" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" fill="var(--color-ok-fg)" :x="X(vrange) + 8" :y="YP(pow(vrange)) + 18" x-text="'max range ' + fmt(vrange) + ' kt'"></text>
+      <circle r="5" fill="var(--color-info)" :cx="X(vmp)" :cy="YP(pow(vmp))"/>
+      <text font-size="12" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" fill="var(--color-info)" text-anchor="middle" :x="X(vmp)" :y="YP(pow(vmp)) + 22" x-text="'max endurance ' + fmt(vmp) + ' kt'"></text>
+      <text font-size="12" fill="var(--color-fg-faint)" x-show="wind >= 40" :x="X(wind)" y="244" text-anchor="middle" x-text="wind + ' kt headwind'"></text>
+    </g>
+    <!-- you -->
+    <circle r="7" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="3" :cx="dot.x" :cy="dot.y"/>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dce-v">Airspeed <output for="dce-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="dce-v" min="45" max="120" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="dce-w">Weight <output for="dce-w" x-text="Math.round(w * 100) + '% of maximum'"></output></label>
+      <input type="range" id="dce-w" min="0.75" max="1" step="0.01" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="dce-power" class="cursor-pointer"><span>Show power required (endurance and range)</span>
+        <input type="checkbox" id="dce-power" x-model="power" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="power">
+      <label for="dce-wind">Headwind <output for="dce-wind" x-text="wind + ' kt'"></output></label>
+      <input type="range" id="dce-wind" min="0" max="40" step="1" x-model.number="wind">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="Math.abs(v - vmd) < 2 ? 'ok' : back ? 'bad' : 'warn'">
+      <dt class="widget-label">L/D at this speed</dt>
+      <dd class="widget-value"><span x-text="fmt(ld, 1) + ' : 1'"></span><span class="widget-flag bad" x-show="back && v < vmd - 3">back side</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Best L/D (best glide) speed</dt><dd class="widget-value" x-text="fmt(vmd) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="glideNm < bestNm - 0.05 ? 'warn' : 'ok'">
+      <dt class="widget-label">Glide from 3,000 ft, still air</dt>
+      <dd class="widget-value" x-text="fmt(glideNm, 1) + ' NM (best ' + fmt(bestNm, 1) + ')'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('best-glide')" :aria-pressed="active === 'best-glide'">Best glide</button>
+      <button type="button" @click="preset('too-slow')" :aria-pressed="active === 'too-slow'">Nose up</button>
+      <button type="button" @click="preset('too-fast')" :aria-pressed="active === 'too-fast'">Too fast</button>
+      <button type="button" @click="preset('light')" :aria-pressed="active === 'light'">Light</button>
+      <button type="button" @click="preset('headwind-range')" :aria-pressed="active === 'headwind-range'">Range into wind</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Total drag is least where parasite and induced drag are equal: that speed gives the best L/D and the flattest glide. Slower or faster both cost distance, and slower also puts you on the back of the curve, closer to the stall. A lighter aeroplane has the same best L/D at a lower speed. With power shown, endurance is the bottom of the curve and range is where a line from the origin (or from the headwind speed) touches it.</p>
+  <details class="widget-try"><summary>Try it: after an engine failure you raise the nose from 70 kt to 56 kt to "stretch the glide". What happens?</summary><p>Press Nose up: the L/D falls from 9 to about 8.2, so from 3,000 ft you reach about 4.0 NM instead of 4.4, and you are much closer to the stall. Raising the nose never stretches a glide.</p></details>
+  <details class="widget-try"><summary>Try it: why does the best range speed go up into a headwind?</summary><p>Press Range into wind: the line now starts at 25 kt on the speed axis, so it touches the power curve at a higher speed. Flying faster spends less time being pushed back by the wind.</p></details>
+</div>

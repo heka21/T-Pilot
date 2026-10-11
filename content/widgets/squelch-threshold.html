@@ -1,0 +1,182 @@
+<div class="widget" x-data="widget({
+  sq: 45, vol: 5, test: false, talk: true, volRef: '',
+  // illustrative strengths on a 0-100 scale: receiver hiss tops out at 24; three stations of different strength
+  hissTop: 24,
+  _st: [
+    { name: 'Distant', short: 'the distant aircraft', sub: 'aircraft, weak', lv: 34, x: 180 },
+    { name: 'Nearer', short: 'the nearer aircraft', sub: 'aircraft', lv: 58, x: 270 },
+    { name: 'Jandakot', short: 'Jandakot Ground', sub: 'Ground, strong', lv: 88, x: 360 },
+  ],
+  Y(v) { return 270 - 2 * v },
+  get eff() { return this.test ? 0 : this.sq },
+  get gateOpen() { return this.eff < this.hissTop },
+  get audible() { return this.vol > 1 },
+  get passing() { return this.talk ? this._st.filter((s) => s.lv > this.eff) : [] },
+  get lost() { return this.talk ? this._st.filter((s) => s.lv <= this.eff) : [] },
+  get hissHeard() { return this.gateOpen &amp;&amp; this.audible },
+  get heardSt() { return this.audible ? this.passing : [] },
+  get S() {
+    return this._st.map((s) => {
+      const pass = this.talk &amp;&amp; s.lv > this.eff;
+      return { ...s, pass,
+        fill: !this.talk ? 'none' : pass ? 'var(--color-ok-soft)' : 'var(--color-surface-2)',
+        stroke: !this.talk ? 'var(--color-line-strong)' : pass ? 'var(--color-ok)' : 'var(--color-fg-faint)',
+        dash: pass ? 'none' : '4 3',
+        ink: !this.talk ? 'var(--color-fg-faint)' : pass ? 'var(--color-ok-fg)' : 'var(--color-fg-faint)',
+        tag: !this.talk ? 'not talking' : pass ? 'passes' : 'muted' };
+    });
+  },
+  // what the volume was set against, decided when the volume knob moves
+  setVol() { this.volRef = this.vol <= 1 ? '' : this.gateOpen ? 'hiss' : this.passing.length ? 'station' : 'silence' },
+  get volAngle() { return -135 + this.vol * 27 },
+  get sqAngle() { return -135 + this.sq / 80 * 270 },
+  get volKnob() { return this.pol(480, 168, 18, this.volAngle) },
+  get sqKnob() { return this.pol(574, 168, 18, this.sqAngle) },
+  get waves() { return !this.audible || !(this.hissHeard || this.heardSt.length) ? 0 : this.vol <= 4 ? 1 : this.vol <= 7 ? 2 : 3 },
+  get hearing() {
+    if (!this.audible || !(this.hissHeard || this.heardSt.length)) return 'silence';
+    if (this.heardSt.length) return this.hissHeard ? 'voices + hiss' : 'voices';
+    return 'hiss';
+  },
+  get verdict() {
+    if (this.test) return ['Test: squelch fully open', 'warn'];
+    if (this.sq < this.hissTop) return ['Too loose: listening to static', 'warn'];
+    if (this.sq <= 30) return ['Just closed: right', 'ok'];
+    if (this.sq < 34) return ['Tighter than needed', 'warn'];
+    return ['Too tight: weak stations lost', 'bad'];
+  },
+  get volText() {
+    if (!this.audible) return this.vol + '/10: down';
+    return this.vol + '/10, ' + ({ hiss: 'set against hiss', station: 'set against a station', silence: 'set on silence' }[this.volRef] || 'not checked');
+  },
+  get volClass() { return !this.audible ? 'bad' : this.volRef === 'hiss' || this.volRef === 'station' ? 'ok' : 'warn' },
+  get stText() {
+    if (!this.talk) return 'Nobody transmitting';
+    if (!this.audible) return 'None: volume down';
+    return this.heardSt.length + ' of 3';
+  },
+  get caption() {
+    if (!this.audible) return (this.talk &amp;&amp; this.passing.length ? 'Stations are transmitting, but the volume is down, so you hear nothing.' : 'Silence.') + ' From the seat, nobody talking and the volume turned down sound exactly the same. Open the squelch: the hiss proves the receiver and audio path, and gives you a sound to set the volume against.';
+    if (this.gateOpen &amp;&amp; this.volRef !== 'hiss') return 'Step 1: the squelch is open and you hear the hiss. That proves the receiver, audio panel and headset all work. Now set the volume to a comfortable level against it.';
+    if (this.gateOpen) return 'Step 2 done: the volume is set against the hiss. Now close the squelch until the hiss just disappears, and no further.';
+    if (this.sq <= 30) return 'Step 3: the hiss has just gone. Every station stronger than the noise, even the distant aircraft, still opens the gate.' + (this.volRef === 'hiss' || this.volRef === 'station' ? '' : ' Did you set the volume against the hiss first?');
+    if (this.sq < 34) return 'Past the point where the hiss stopped: the weakest station barely gets through. Back the squelch off until the hiss just stops.';
+     const l = this.lost.map((s) => s.short).join(' and ');
+    return (this.sq >= 80 ? 'Turned as far as it will go: ' : 'Too tight: ') + l + (this.lost.length > 1 ? ' no longer open' : ' no longer opens') + ' the gate. A busy frequency now sounds quiet.';
+  },
+  dragSq(p) { this.sq = this.clamp(Math.round((270 - p.y) / 2), 0, 80); this.test = false; this.active = null },
+  presets: {
+    'open-for-hiss': { sq: 10, vol: 3, test: false, talk: false, volRef: '' },
+    'volume-against-hiss': { sq: 10, vol: 6, test: false, talk: false, volRef: 'hiss' },
+    'just-closed': { sq: 27, vol: 6, test: false, talk: true, volRef: 'hiss' },
+    'too-tight': { sq: 80, vol: 6, test: false, talk: true, volRef: 'hiss' },
+    'silent-volume-down': { sq: 27, vol: 0, test: false, talk: true, volRef: '' },
+  },
+})">
+  <svg viewBox="0 0 640 316" role="img" aria-labelledby="sqt-title" class="widget-stage">
+    <title id="sqt-title">Signal strength at the receiver: the hiss of the receiver's own noise along the bottom, three stations of different strength, and the squelch threshold line; only what rises above the line reaches the headset. Beside it a COM radio face with volume and squelch knobs and a speaker.</title>
+    <text x="20" y="26" font-size="15" font-weight="600" fill="var(--color-fg)">Only what rises above the squelch line reaches your headset</text>
+    <!-- axes -->
+    <line x1="60" y1="64" x2="60" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="60" y1="270" x2="400" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="30" y="167" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 30 167)">signal strength (illustrative)</text>
+    <!-- muted zone below the line -->
+    <rect x="61" width="339" fill="var(--color-line)" fill-opacity="0.35" :y="Y(eff)" :height="270 - Y(eff)"/>
+    <!-- stations -->
+      <g>
+        <rect width="50" rx="4" :x="S[0].x - 25" :y="Y(S[0].lv)" :height="270 - Y(S[0].lv)" :fill="S[0].fill" :stroke="S[0].stroke" :stroke-dasharray="S[0].dash" stroke-width="1.5"/>
+        <text font-size="12" font-weight="600" text-anchor="middle" :x="S[0].x" :y="Y(S[0].lv) - 8" :fill="S[0].ink" x-text="S[0].tag" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"></text>
+        <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)" y="290" :x="S[0].x" x-text="S[0].name"></text>
+        <text font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" y="304" :x="S[0].x" x-text="S[0].sub"></text>
+      </g>
+      <g>
+        <rect width="50" rx="4" :x="S[1].x - 25" :y="Y(S[1].lv)" :height="270 - Y(S[1].lv)" :fill="S[1].fill" :stroke="S[1].stroke" :stroke-dasharray="S[1].dash" stroke-width="1.5"/>
+        <text font-size="12" font-weight="600" text-anchor="middle" :x="S[1].x" :y="Y(S[1].lv) - 8" :fill="S[1].ink" x-text="S[1].tag" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"></text>
+        <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)" y="290" :x="S[1].x" x-text="S[1].name"></text>
+        <text font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" y="304" :x="S[1].x" x-text="S[1].sub"></text>
+      </g>
+      <g>
+        <rect width="50" rx="4" :x="S[2].x - 25" :y="Y(S[2].lv)" :height="270 - Y(S[2].lv)" :fill="S[2].fill" :stroke="S[2].stroke" :stroke-dasharray="S[2].dash" stroke-width="1.5"/>
+        <text font-size="12" font-weight="600" text-anchor="middle" :x="S[2].x" :y="Y(S[2].lv) - 8" :fill="S[2].ink" x-text="S[2].tag" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"></text>
+        <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)" y="290" :x="S[2].x" x-text="S[2].name"></text>
+        <text font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" y="304" :x="S[2].x" x-text="S[2].sub"></text>
+      </g>
+    <!-- receiver noise (hiss) -->
+    <path d="M60 270 L60 234 L70 226 L80 236 L90 222 L100 232 L110 228 L120 238 L130 224 L140 230 L150 234 L160 222 L170 236 L180 226 L190 232 L200 224 L210 238 L220 228 L230 234 L240 222 L250 230 L260 236 L270 226 L280 232 L290 224 L300 234 L310 228 L320 238 L330 222 L340 230 L350 226 L360 236 L370 232 L380 224 L390 234 L400 228 L400 270 Z" stroke-width="1.25" stroke-linejoin="round" :fill="gateOpen ? 'var(--color-warn)' : 'var(--color-fg-faint)'" :fill-opacity="gateOpen ? 0.3 : 0.15" :stroke="gateOpen ? 'var(--color-warn)' : 'var(--color-fg-faint)'"/>
+    <text x="68" y="262" font-size="12" font-weight="600" :fill="gateOpen ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">hiss</text>
+    <!-- drag anywhere on the chart to move the threshold -->
+    <rect x="60" y="56" width="356" height="216" fill="var(--color-brand)" fill-opacity="0" style="touch-action: none; cursor: ns-resize" @pointerdown="drag($event, (p) => dragSq(p))"/>
+    <line x1="60" x2="400" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" opacity="0.6" :y1="Y(sq)" :y2="Y(sq)" :display="test ? null : 'none'"/>
+    <line x1="60" x2="400" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :y1="Y(eff)" :y2="Y(eff)" style="pointer-events: none"/>
+    <circle cx="404" r="8" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2" :cy="Y(eff)" style="touch-action: none; cursor: ns-resize" @pointerdown="drag($event, (p) => dragSq(p))"/>
+    <text x="68" font-size="12" font-weight="700" fill="var(--color-brand-fg)" :y="Y(eff) - 7" x-text="test ? 'squelch test: fully open' : 'squelch'" style="pointer-events: none" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"></text>
+    <!-- the radio face -->
+    <rect x="432" y="66" width="188" height="152" rx="12" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2"/>
+    <rect x="446" y="80" width="98" height="30" rx="5" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="456" y="100" font-size="12" font-weight="700" :fill="hissHeard || heardSt.length ? 'var(--color-ok-fg)' : 'var(--color-fg-faint)'" x-text="hissHeard || heardSt.length ? 'RX ●' : 'RX'"></text>
+    <text x="534" y="100" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" x-text="test ? 'SQ OPEN' : 'SQ ' + sq"></text>
+    <g style="cursor: pointer" @click="test = !test; active = null">
+      <rect x="552" y="80" width="54" height="30" rx="6" stroke-width="1.25" :fill="test ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="test ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text x="579" y="100" font-size="12" font-weight="700" text-anchor="middle" :fill="test ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">TEST</text>
+    </g>
+    <circle cx="480" cy="168" r="26" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <line x1="480" y1="168" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" :x2="volKnob.x" :y2="volKnob.y"/>
+    <circle cx="574" cy="168" r="26" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
+    <line x1="574" y1="168" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :x2="sqKnob.x" :y2="sqKnob.y"/>
+    <text x="480" y="210" font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">VOL</text>
+    <text x="574" y="210" font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)">SQ</text>
+    <!-- speaker -->
+    <g transform="translate(0 4)">
+      <rect x="452" y="255" width="9" height="14" rx="1" fill="var(--color-fg-muted)"/>
+      <path d="M461 255 L472 246 L472 278 L461 269 Z" fill="var(--color-fg-muted)"/>
+      <g fill="none" stroke-width="2" stroke-linecap="round" :stroke="heardSt.length ? 'var(--color-ok)' : 'var(--color-warn)'" :stroke-dasharray="heardSt.length ? 'none' : '3 3'">
+        <path d="M479.1 254.9 A10 10 0 0 1 479.1 269.1" :opacity="waves >= 1 ? 1 : 0"/>
+        <path d="M484.7 249.3 A18 18 0 0 1 484.7 274.7" :opacity="waves >= 2 ? 1 : 0"/>
+        <path d="M490.4 243.6 A26 26 0 0 1 490.4 280.4" :opacity="waves >= 3 ? 1 : 0"/>
+      </g>
+      <text x="504" y="267" font-size="13" font-weight="600" :fill="hearing === 'silence' ? 'var(--color-fg-faint)' : heardSt.length ? 'var(--color-ok-fg)' : 'var(--color-warn-fg)'" x-text="'you hear: ' + hearing"></text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="sqt-sq">Squelch threshold <output for="sqt-sq" x-text="sq + (sq >= 80 ? ' (fully tight)' : '')"></output></label>
+      <input type="range" id="sqt-sq" min="0" max="80" step="1" x-model.number="sq" @input="test = false">
+    </div>
+    <div class="widget-control">
+      <label for="sqt-vol">Volume <output for="sqt-vol" x-text="vol + ' / 10'"></output></label>
+      <input type="range" id="sqt-vol" min="0" max="10" step="1" x-model.number="vol" @input="setVol()">
+    </div>
+    <div class="widget-control">
+      <label for="sqt-test" class="cursor-pointer"><span>Squelch test (opens it fully)</span>
+        <input type="checkbox" id="sqt-test" x-model="test" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="sqt-talk" class="cursor-pointer"><span>Stations transmitting</span>
+        <input type="checkbox" id="sqt-talk" x-model="talk" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Hiss heard?</dt><dd class="widget-value" x-text="hissHeard ? 'Yes' : gateOpen ? 'No: volume down' : 'No'"></dd></div>
+    <div class="widget-readout" :class="!talk ? '' : heardSt.length === 3 ? 'ok' : 'bad'">
+      <dt class="widget-label">Stations heard</dt>
+      <dd class="widget-value"><span x-text="stText"></span><span class="widget-flag bad" x-show="talk &amp;&amp; audible &amp;&amp; heardSt.length &lt; 3">weak lost</span></dd>
+    </div>
+    <div class="widget-readout" :class="volClass"><dt class="widget-label">Volume</dt><dd class="widget-value" x-text="volText"></dd></div>
+    <div class="widget-readout" :class="verdict[1]"><dt class="widget-label">Squelch</dt><dd class="widget-value" x-text="verdict[0]"></dd></div>
+  </dl>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('open-for-hiss')" :aria-pressed="active === 'open-for-hiss'">1 Open for hiss</button>
+      <button type="button" @click="preset('volume-against-hiss')" :aria-pressed="active === 'volume-against-hiss'">2 Volume</button>
+      <button type="button" @click="preset('just-closed')" :aria-pressed="active === 'just-closed'">3 Just closed</button>
+      <button type="button" @click="preset('too-tight')" :aria-pressed="active === 'too-tight'">Too tight</button>
+      <button type="button" @click="preset('silent-volume-down')" :aria-pressed="active === 'silent-volume-down'">Silent</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The squelch line belongs just above the hiss: any lower and you listen to static, any higher and the weak stations stop opening the gate, so a busy frequency sounds quiet. Open the squelch, set the volume against the hiss, then close it until the hiss just stops. The signal levels here are illustrative.</p>
+  <details class="widget-try"><summary>Try it: a busy frequency sounds strangely quiet, yet Jandakot Ground comes through clearly. What is the likely cause?</summary><p>Choose Too tight: the strong nearby station still opens the gate, but the nearer and distant aircraft do not. Open the squelch until you hear hiss, then close it until the hiss just stops.</p></details>
+  <details class="widget-try"><summary>Try it: you hear nothing at all. Why open the squelch before touching the volume?</summary><p>Choose Silent: stations are transmitting, but the volume is down, and that sounds exactly like a quiet frequency. Opening the squelch gives hiss, which proves the receiver and audio path work and gives you a sound to set the volume against.</p></details>
+</div>

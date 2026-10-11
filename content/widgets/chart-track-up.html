@@ -1,0 +1,121 @@
+<div class="widget" x-data="widget({
+  crs: 200, hold: 'north',
+  // the world around the aeroplane, relative to its track: the railway runs parallel 45 units on the LEFT of the
+  // direction of travel, a salt lake lies ahead and right, a town ahead on track
+  get T() { return this.crs * Math.PI / 180 },
+  get u() { return [Math.sin(this.T), -Math.cos(this.T)] },
+  get r() { return [Math.cos(this.T), Math.sin(this.T)] },
+  // chart group rotation: 0 north-up; track-up turns the paper so the track points up
+  get rot() { return this.hold === 'track' ? -this.crs : 0 },
+  W(a, b) { return [165 + this.u[0] * a + this.r[0] * b, 170 + this.u[1] * a + this.r[1] * b] },
+  get trackD() { const p = this.W(-112, 0), q = this.W(112, 0); return 'M' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' L' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) },
+  get railD() { const p = this.W(-112, -45), q = this.W(112, -45); return 'M' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' L' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) },
+  get ticksD() { let d = ''; for (let s = -100; s <= 100; s += 14) { const a = this.W(s, -50), b = this.W(s, -40); d += 'M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' L' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) + ' ' } return d },
+  get lake() { return this.W(40, 55) },
+  get town() { return this.W(85, 0) },
+  get railLbl() { return this.W(70, -62) },
+  get arrowD() { const p = this.W(-20, 0), q = this.W(20, 0); return 'M' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' L' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) },
+  // where the railway appears on the page as you hold it (its offset from you, turned by the paper's rotation)
+  get page() {
+    const a = this.rot * Math.PI / 180, x0 = -this.r[0] * 45, y0 = -this.r[1] * 45;
+    const x = x0 * Math.cos(a) - y0 * Math.sin(a), y = x0 * Math.sin(a) + y0 * Math.cos(a);
+    if (Math.abs(x) >= Math.abs(y)) return x > 0 ? 'right' : 'left';
+    return y > 0 ? 'bottom' : 'top';
+  },
+  get pageText() { return { right: 'towards the right of the page', left: 'towards the left of the page', top: 'towards the top of the page', bottom: 'towards the bottom of the page' }[this.page] },
+  get same() { return this.page === 'left' },
+  get caption() {
+    if (this.same && this.hold === 'track') return 'Track-up: the track line points the way you are going, so the railway is on the left of the line on the chart and on your left outside. Glance from chart to ground without turning anything in your head.';
+    if (this.same) return 'Flying roughly north, a north-up chart is close to track-up: left on the chart is left outside.';
+    return 'North-up on a ' + this.trk3 + '°M track, the railway appears ' + this.pageText + ', but it is on your left outside: every feature has to be rotated in your head before you can match it.';
+  },
+  get trk3() { return this.trk(this.crs) },
+  presets: {
+    'southbound-north-up': { crs: 200, hold: 'north' },
+    'southbound-track-up': { crs: 200, hold: 'track' },
+    'eastbound-north-up': { crs: 90, hold: 'north' },
+    'northbound': { crs: 0, hold: 'north' },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="ctu-title" class="widget-stage">
+    <title id="ctu-title">Left, the chart as you hold it, north-up or turned track-up, with the track line, a railway, a salt lake and a town. Right, the same features as they really lie around the aeroplane, nose up</title>
+    <defs>
+      <marker id="ctu-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="ctu-left"><rect x="10" y="40" width="310" height="256"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="330" fill="var(--color-surface)" rx="10"/>
+    <text x="165" y="26" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)" x-text="hold === 'track' ? 'The chart, held track-up' : 'The chart, held north-up'"></text>
+    <text x="480" y="26" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Out of the windscreen</text>
+    <line x1="322" y1="40" x2="322" y2="318" stroke="var(--color-line)" stroke-width="1"/>
+    <!-- the chart: the paper turns as a whole -->
+    <g clip-path="url(#ctu-left)">
+      <g :transform="'rotate(' + rot + ' 165 170)'">
+        <rect x="47" y="52" width="236" height="236" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+        <path d="M47 111 H283 M47 170 H283 M47 229 H283 M106 52 V288 M165 52 V288 M224 52 V288" stroke="var(--color-line)" stroke-width="1"/>
+        <!-- north arrow printed on the paper -->
+        <line x1="68" y1="96" x2="68" y2="64" stroke="var(--color-fg-muted)" stroke-width="1.5" marker-end="url(#ctu-arrow)"/>
+        <text x="68" y="110" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">N</text>
+      </g>
+      <!-- features, in world positions turned with the paper -->
+      <g :transform="'rotate(' + rot + ' 165 170)'">
+        <path :d="railD" stroke="var(--color-fg)" stroke-width="2"/>
+        <path :d="ticksD" stroke="var(--color-fg)" stroke-width="1.25"/>
+        <ellipse rx="22" ry="12" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5" :cx="lake[0]" :cy="lake[1]"/>
+        <circle r="9" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25" :cx="town[0]" :cy="town[1]"/>
+        <path :d="trackD" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+        <path :d="arrowD" stroke="var(--color-brand)" stroke-width="3" marker-end="url(#ctu-arrow)"/>
+        <circle cx="165" cy="170" r="5" fill="var(--color-brand)"/>
+        <text font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" :x="railLbl[0]" :y="railLbl[1]" :transform="'rotate(' + (crs - 90) + ' ' + railLbl[0] + ' ' + railLbl[1] + ')'">railway</text>
+      </g>
+    </g>
+    <text x="165" y="316" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="'track ' + trk3 + '°M · railway ' + pageText"></text>
+
+    <!-- the real world around the aeroplane, nose up -->
+    <rect x="335" y="52" width="290" height="236" rx="8" fill="var(--color-ok-soft)" fill-opacity="0.5"/>
+    <line x1="430" y1="56" x2="430" y2="284" stroke="var(--color-fg)" stroke-width="2"/>
+    <path d="M425 66 h10 M425 80 h10 M425 94 h10 M425 108 h10 M425 122 h10 M425 136 h10 M425 150 h10 M425 164 h10 M425 178 h10 M425 192 h10 M425 206 h10 M425 220 h10 M425 234 h10 M425 248 h10 M425 262 h10 M425 276 h10" stroke="var(--color-fg)" stroke-width="1.25"/>
+    <text x="418" y="104" font-size="12" text-anchor="end" fill="var(--color-fg)" font-weight="600">railway</text>
+    <line x1="480" y1="284" x2="480" y2="70" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <ellipse cx="535" cy="150" rx="30" ry="16" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="1.5"/>
+    <text x="535" y="182" font-size="12" text-anchor="middle" fill="var(--color-info)">salt lake</text>
+    <circle cx="480" cy="92" r="11" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25"/>
+    <text x="498" y="96" font-size="12" fill="var(--color-fg-muted)">town</text>
+    <g transform="translate(480 236)">
+      <!-- plane top scale 0.4 heading 0 -->
+      <g transform="translate(0 0) rotate(-90) scale(0.4)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="480" y="306" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">railway on your left, lake ahead right</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ctu-trk">Track <output for="ctu-trk" x-text="trk3 + '°M'"></output></label>
+      <input type="range" id="ctu-trk" min="0" max="355" step="5" x-model.number="crs">
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">Hold the chart</span>
+      <span class="widget-presets" role="group" aria-label="How you hold the chart">
+        <button type="button" @click="hold = 'north'; active = null" :aria-pressed="hold === 'north'">North-up</button>
+        <button type="button" @click="hold = 'track'; active = null" :aria-pressed="hold === 'track'">Track-up</button>
+      </span>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Railway outside</dt><dd class="widget-value">on your left</dd></div>
+    <div class="widget-readout"><dt class="widget-label">Railway on the chart as held</dt><dd class="widget-value" x-text="pageText"></dd></div>
+    <div class="widget-readout" :class="same ? 'ok' : 'warn'"><dt class="widget-label">Chart and ground</dt><dd class="widget-value"><span x-text="same ? 'same side: read map to ground' : 'mismatch'"></span><span class="widget-flag warn" x-show="!same">rotate in your head</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('southbound-north-up')" :aria-pressed="active === 'southbound-north-up'">200° north-up</button>
+      <button type="button" @click="preset('southbound-track-up')" :aria-pressed="active === 'southbound-track-up'">200° track-up</button>
+      <button type="button" @click="preset('eastbound-north-up')" :aria-pressed="active === 'eastbound-north-up'">East, north-up</button>
+      <button type="button" @click="preset('northbound')" :aria-pressed="active === 'northbound'">Northbound</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Turn the chart so the track line points the way you are going. Then every feature sits on the same side of the line as it does outside the windscreen, and you can read from map to ground without turning anything in your head. Upside-down printing on a southbound leg does not matter; the shapes do. Fold the chart to the leg and keep a thumb on the last fix.</p>
+  <details class="widget-try"><summary>Try it: you fly 200°M with the chart north-up and a railway lies to the right of your track line on the chart. Where is it outside?</summary><p>On your left. Flying roughly south, the page's right is your left. Press 200° track-up: the railway moves to the left of the line, the same side as outside.</p></details>
+  <details class="widget-try"><summary>Try it: tracking east with the chart north-up, where on the page is something that is on your left?</summary><p>Towards the top of the page: ahead is to the right of the page and left is up. Press East, north-up, then switch to track-up.</p></details>
+</div>

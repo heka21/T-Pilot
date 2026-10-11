@@ -1,0 +1,179 @@
+<div class="widget" x-data="widget({
+  v: 75, w: 100, da: 0, flap: false, thrust: false,
+  // illustrative trainer, forces as fractions of maximum weight, speeds IAS. Drag a·V² + b·W²/V² (flap adds half
+  // again to the parasite part); thrust from a fixed-pitch propeller falls with true airspeed; engine power falls about
+  // 3% per 1,000 ft of density altitude (RBKA 3.3). Calibrated so that at maximum weight at sea level Vx = 60 kt and
+  // Vy = 75 kt (BAKC 4.3's typical trainer) with a best rate of 560 fpm (RBKA 3.3's maximum-weight example).
+  a: 8.494e-6, b: 161.17, k: 4.73e-4, T0: 0.18564,
+  get wf() { return this.w / 100 },
+  sig(h) { return Math.pow(1 - 6.8756e-6 * h, 4.2559) },
+  phi(h) { return 1 - 0.03 * h / 1000 },
+  thr(V, h) { return this.phi(h) * (this.T0 - this.k * V / Math.sqrt(this.sig(h))) },
+  drag(V) { return this.a * (this.flap ? 1.5 : 1) * V * V + this.b * this.wf * this.wf / (V * V) },
+  exc(V, h) { return this.thr(V, h) - this.drag(V) },
+  rocAt(V, h) { return V / Math.sqrt(this.sig(h)) * 101.27 * this.exc(V, h) / this.wf },
+  best(f) { let bv = this.vs, bb = -1e9; for (let V = this.vs; V <= 120; V += 0.25) { const r = f(V); if (r > bb) { bb = r; bv = V } } return { v: bv, r: bb } },
+  get vs() { return 50 * Math.sqrt(this.wf) * (this.flap ? 0.889 : 1) },
+  get vx() { return this.best((V) => this.exc(V, this.da)).v },
+  get yb() { return this.best((V) => this.rocAt(V, this.da)) },
+  get vy() { return this.yb.v },
+  get rocMax() { return this.yb.r },
+  get roc() { return this.rocAt(this.v, this.da) },
+  get tas() { return this.v / Math.sqrt(this.sig(this.da)) },
+  get grad() { return this.roc * 60 / this.tas },
+  ceilingFor(target) { let lo = 0, hi = 30000; for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (this.best((V) => this.rocAt(V, m)).r > target) lo = m; else hi = m } return Math.round(lo / 100) * 100 },
+  get absCeil() { return this.ceilingFor(0) },
+  get svcCeil() { return this.ceilingFor(100) },
+  get state() { return this.rocMax < 5 ? 'bad' : this.rocMax < 100 ? 'warn' : 'ok' },
+  get speedState() { return this.v < this.vs || this.roc < 5 ? 'bad' : this.v < this.vx - 1 ? 'bad' : Math.abs(this.v - this.vy) <= 1 || Math.abs(this.v - this.vx) <= 1 ? 'ok' : 'warn' },
+  get speedNote() { return this.v < this.vs ? 'stalled' : this.roc < 5 ? 'no climb' : this.v < this.vx - 1 ? 'slower than Vx' : Math.abs(this.v - this.vy) <= 1 ? 'best rate' : Math.abs(this.v - this.vx) <= 1 ? 'best angle' : '' },
+  // charts: 0-120 kt across x 70..600; top: power (0..20) or thrust and drag (0..0.25) up y 150..30, shape only;
+  // bottom: rate of climb, 0 fpm at y 336, 1000 fpm at y 196
+  X(V) { return 70 + V / 120 * 530 },
+  PY(p) { return 150 - p / 20 * 120 },
+  TY(t) { return 150 - t / 0.25 * 120 },
+  RY(r) { return 336 - r * 0.14 },
+  avail(V) { return this.thrust ? this.TY(this.thr(V, this.da)) : this.PY(this.thr(V, this.da) * V / Math.sqrt(this.sig(this.da))) },
+  req(V) { return this.thrust ? this.TY(this.drag(V)) : this.PY(this.drag(V) * V / Math.sqrt(this.sig(this.da))) },
+  pts(f) { const p = []; for (let V = this.vs; V <= 120.01; V += 1) p.push([this.X(V), f(V)]); return p },
+  get availPath() { return this.path(this.pts((V) => this.avail(V))) },
+  get reqPath() { return this.path(this.pts((V) => this.req(V))) },
+  get gapPath() {
+    const up = [], dn = [];
+    for (let V = this.vs; V <= 120.01; V += 1) if (this.exc(V, this.da) > 0) { up.push([this.X(V), this.avail(V)]); dn.unshift([this.X(V), this.req(V)]) }
+    return up.length > 1 ? this.path(up.concat(dn)) + ' Z' : 'M0 0'
+  },
+  get rocPath() { return this.path(this.pts((V) => this.RY(this.rocAt(V, this.da)))) },
+  get gapV() { return this.thrust ? this.vx : this.vy },
+  // the line from the origin that just touches the rate curve: its slope is the best climb angle
+  get tangent() { const r = this.rocAt(this.vx, this.da); const s = Math.max(1e-6, r / this.vx); const v2 = Math.min(120, this.vx * 1.7, 1080 / s); return { x2: this.X(v2), y2: this.RY(s * v2) } },
+  // curve labels sit in the stall band at the left end of each curve, pushed apart when the curves start close together
+  get labY() { let a = this.avail(this.vs) + 4, r = this.req(this.vs) + 4; if (Math.abs(a - r) < 16) { const m = (a + r) / 2, up = a <= r; a = m + (up ? -8 : 8); r = m + (up ? 8 : -8) } return { a: Math.max(40, Math.min(146, a)), r: Math.max(40, Math.min(146, r)) } },
+  get merged() { return Math.abs(this.vy - this.vx) < 4 },
+  presets: {
+    'vx-and-vy': { v: 75, w: 100, da: 0, flap: false, thrust: false },
+    'excess-thrust-at-vx': { v: 60, w: 100, da: 0, flap: false, thrust: true },
+    'obstacle-at-vx': { v: 60, w: 100, da: 0, flap: false, thrust: false },
+    'below-vx': { v: 52, w: 100, da: 0, flap: false, thrust: false },
+    'light': { v: 73, w: 80, da: 0, flap: false, thrust: false },
+    'hot-day': { v: 72, w: 100, da: 3500, flap: false, thrust: false },
+    'take-off-flap': { v: 65, w: 100, da: 0, flap: true, thrust: false },
+    'service-ceiling': { v: 64, w: 100, da: 13850, flap: false, thrust: false },
+    'absolute-ceiling': { v: 62, w: 100, da: 16500, flap: false, thrust: false },
+  },
+})">
+  <svg viewBox="0 0 640 410" role="img" aria-labelledby="clp-title" class="widget-stage">
+    <title id="clp-title">Above, power available and power required (or thrust and drag) against airspeed with the excess shaded; below, the rate of climb that excess gives, with Vy at the top of the curve and Vx where a line from the origin touches it</title>
+    <defs>
+      <clipPath id="clp-top"><rect x="70" y="26" width="530" height="124"/></clipPath>
+      <clipPath id="clp-bot"><rect x="70" y="186" width="530" height="178"/></clipPath>
+    </defs>
+    <!-- below the stall -->
+    <rect x="70" y="26" height="338" fill="var(--color-bad)" fill-opacity="0.07" :width="X(vs) - 70"/>
+    <text x="78" y="178" font-size="12" fill="var(--color-bad-fg)">below the stall</text>
+    <!-- top chart -->
+    <line x1="70" y1="150" x2="600" y2="150" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" y1="26" x2="70" y2="150" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="16" y="88" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 16 88)" x-text="thrust ? 'force (shape)' : 'power (shape)'"></text>
+    <g clip-path="url(#clp-top)">
+      <path fill="var(--color-ok)" fill-opacity="0.18" stroke="none" :d="gapPath"/>
+      <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :d="reqPath"/>
+      <path fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :d="availPath"/>
+    </g>
+    <line stroke="var(--color-ok)" stroke-width="2.5" stroke-linecap="round" :x1="X(gapV)" :x2="X(gapV)" :y1="req(gapV)" :y2="avail(gapV)" x-show="rocMax > 0" clip-path="url(#clp-top)"/>
+    <g font-size="12" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text text-anchor="end" fill="var(--color-fg)" font-weight="600" :x="X(vs) - 6" :y="labY.a" x-text="thrust ? 'thrust available' : 'power available'"></text>
+      <text text-anchor="end" fill="var(--color-info-fg)" font-weight="600" :x="X(vs) - 6" :y="labY.r" x-text="thrust ? 'drag' : 'power required'"></text>
+      <text fill="var(--color-ok-fg)" font-weight="600" x-show="rocMax > 30" :x="X(gapV) + 8" :y="req(gapV) + 20" x-text="thrust ? 'most excess thrust' : 'most excess power'"></text>
+    </g>
+    <!-- bottom chart: rate of climb -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="70" y1="266" x2="600" y2="266"/><line x1="70" y1="196" x2="600" y2="196"/>
+    </g>
+    <line x1="70" y1="322" x2="600" y2="322" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="596" y="316" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">100 fpm: service ceiling</text>
+    <line x1="70" y1="336" x2="600" y2="336" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" y1="190" x2="70" y2="364" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="62" y="340">0</text><text x="62" y="270">500</text><text x="62" y="200">1,000</text>
+    </g>
+    <text x="16" y="276" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 16 276)">rate of climb (fpm)</text>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="70" y="382">0</text><text x="158" y="382">20</text><text x="247" y="382">40</text><text x="335" y="382">60</text>
+      <text x="423" y="382">80</text><text x="512" y="382">100</text><text x="600" y="382">120</text>
+    </g>
+    <text x="335" y="402" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">indicated airspeed (kt)</text>
+    <!-- tangent from the origin: best angle -->
+    <line x1="70" y1="336" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" :x2="tangent.x2" :y2="tangent.y2" x-show="rocMax > 0"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="rocPath" clip-path="url(#clp-bot)"/>
+    <!-- Vx and Vy -->
+    <g x-show="rocMax > -50">
+      <line stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" y2="336" :x1="X(vy)" :x2="X(vy)" :y1="RY(rocMax)"/>
+      <circle r="5" fill="var(--color-brand)" :cx="X(vy)" :cy="RY(rocMax)"/>
+      <circle r="5" fill="var(--color-ok)" :cx="X(vx)" :cy="RY(rocAt(vx, da))" x-show="!merged"/>
+      <g font-size="13" font-weight="700" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+        <text :x="X(vy) + 8" :y="RY(rocMax) - 10" fill="var(--color-brand-fg)" x-text="merged ? 'Vx = Vy ≈ ' + fmt(vy) + ' kt' : 'Vy ' + fmt(vy) + ' kt'"></text>
+        <text text-anchor="end" :x="X(vx) - 8" :y="RY(rocAt(vx, da)) - 10" fill="var(--color-ok-fg)" x-show="!merged" x-text="'Vx ' + fmt(vx) + ' kt'"></text>
+      </g>
+    </g>
+    <text x="80" y="210" font-size="12" fill="var(--color-ok-fg)" x-show="rocMax > 0 && !merged">steepest line from 0 touches at Vx</text>
+    <!-- you -->
+    <circle r="7" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="3" :cx="X(v)" :cy="RY(roc)" x-show="v >= vs"/>
+    <text x="596" y="206" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" class="num" x-text="'density altitude ' + fmt(da) + ' ft'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="clp-v">Climb speed <output for="clp-v" x-text="v + ' kt IAS'"></output></label>
+      <input type="range" id="clp-v" min="45" max="120" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="clp-w">Weight <output for="clp-w" x-text="w + '% of maximum'"></output></label>
+      <input type="range" id="clp-w" min="70" max="100" step="1" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="clp-da">Density altitude <output for="clp-da" x-text="fmt(da) + ' ft'"></output></label>
+      <input type="range" id="clp-da" min="0" max="18000" step="250" x-model.number="da">
+    </div>
+    <div class="widget-control">
+      <label for="clp-flap" class="cursor-pointer"><span>Take-off flap set (more drag)</span>
+        <input type="checkbox" id="clp-flap" x-model="flap" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="clp-thrust" class="cursor-pointer"><span>Show thrust and drag instead of power</span>
+        <input type="checkbox" id="clp-thrust" x-model="thrust" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="state">
+      <dt class="widget-label">Best rate, at Vy</dt>
+      <dd class="widget-value"><span x-text="rocMax >= 5 ? fmt(Math.round(rocMax / 10) * 10) + ' fpm' : 'none'"></span><span class="widget-flag" :class="state" x-show="state !== 'ok'" x-text="rocMax < 5 ? 'no climb left' : 'below 100 fpm'"></span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Vx (best angle) / Vy (best rate)</dt>
+      <dd class="widget-value" x-text="fmt(vx) + ' / ' + fmt(vy) + ' kt'"></dd>
+    </div>
+    <div class="widget-readout" :class="speedState">
+      <dt class="widget-label">At your speed, still air</dt>
+      <dd class="widget-value"><span x-text="v < vs ? 'stalled' : fmt(Math.round(roc / 10) * 10) + ' fpm, ' + fmt(Math.round(grad / 5) * 5) + ' ft/NM'"></span><span class="widget-flag" :class="speedState" x-show="speedNote" x-text="speedNote"></span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Absolute / service ceiling</dt>
+      <dd class="widget-value" x-text="fmt(absCeil) + ' / ' + fmt(svcCeil) + ' ft'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('vx-and-vy')" :aria-pressed="active === 'vx-and-vy'">Vy, sea level</button>
+      <button type="button" @click="preset('excess-thrust-at-vx')" :aria-pressed="active === 'excess-thrust-at-vx'">Excess thrust</button>
+      <button type="button" @click="preset('obstacle-at-vx')" :aria-pressed="active === 'obstacle-at-vx'">Vx for the trees</button>
+      <button type="button" @click="preset('below-vx')" :aria-pressed="active === 'below-vx'">Slower than Vx</button>
+      <button type="button" @click="preset('light')" :aria-pressed="active === 'light'">Light</button>
+      <button type="button" @click="preset('hot-day')" :aria-pressed="active === 'hot-day'">Hot day, 3,500 ft</button>
+      <button type="button" @click="preset('take-off-flap')" :aria-pressed="active === 'take-off-flap'">Flap set</button>
+      <button type="button" @click="preset('absolute-ceiling')" :aria-pressed="active === 'absolute-ceiling'">Absolute ceiling</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The aeroplane climbs on what is left over: the gap between what the engine and propeller give and what level flight needs. The biggest gap in thrust comes at a low speed, Vx, the best angle; multiply by speed and the biggest gap in power comes faster, Vy, the best rate. Weight, density altitude and flap all shrink the gap, so both rate and angle fall. As the air thins Vx creeps up and Vy comes down until they meet at the absolute ceiling, where no climb is left at any speed. An illustrative trainer: at maximum weight at sea level Vx is 60 kt and Vy 75 kt as in the lesson; your POH's figures govern.</p>
+  <details class="widget-try"><summary>Try it: why is Vx always slower than Vy?</summary><p>Press Vy, sea level and switch on thrust and drag: the biggest gap is at 60 kt. Switch back to power: multiplying by the speed moves the biggest gap to 75 kt. On the rate curve, Vy is the top, and the dashed line from the origin touches the curve further left, at Vx.</p></details>
+  <details class="widget-try"><summary>Try it: what happens to Vx and Vy as you climb towards the ceiling?</summary><p>Drag the density altitude up from 0: the best rate shrinks (about 450 fpm at a 3,500 ft density altitude), Vx rises a little from 60 kt and Vy falls from 75 kt. At the absolute ceiling they meet at about 62 kt and the best rate is zero; the service ceiling, 100 fpm, comes a few thousand feet earlier.</p></details>
+</div>

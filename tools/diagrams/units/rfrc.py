@@ -584,37 +584,39 @@ def passenger_briefing() -> Canvas:
 
 @chart
 def seat_belts_in_flight() -> Canvas:
-    c = Canvas("When seat belts must be worn", "Side view of a flight profile from take-off to landing. Seat belts must be worn by everyone during "
-               "take-off and landing, whenever the aircraft is below 1,000 ft above the ground, in turbulence, and whenever the pilot in "
-               "command directs. The segments of the profile where belts are required are highlighted.", height=330, prefix="sbf")
-    G, LIM = 262, 182
+    c = Canvas("When seat belts must be worn", "Side view of a flight profile from the taxi out to the taxi in. Before taxiing, taking off "
+               "and landing, the pilot in command must direct everyone to fasten their seat belts; in flight, the pilot in command directs "
+               "it whenever it is necessary for safety, for example in turbulence. The highlighted segments are where belts are on: the "
+               "taxi and take-off, a stretch of turbulence in the cruise, and the landing and taxi in.",
+               height=330, prefix="sbf")
+    G = 262
     c.add(rect(20, G, 600, 12, "surface-2", None))
     c.add(line(20, G, 620, G, "fg-muted", SECOND))
-    c.add(line(20, LIM, 620, LIM, "fg-muted", THIN, dash=DASH))
-    c.add(num(320, LIM - 8, "1,000 ft above ground", 11.5, "middle", "fg-muted", weight=600))
-    # profile: take-off at 60, climb through 1000 ft at 150, cruise, descend through 1000 ft at 500, land at 590
-    c.add(path(smooth_path([(50, G), (100, G - 30), (150, LIM)]), "brand", None, 5))
-    c.add(path(smooth_path([(150, LIM), (200, 120), (240, 100)]), "fg-faint", None, 3))
+    # profile: taxi out 24-70, take-off and lift-off to 135, cruise, turbulence, descent, landing at 585, taxi in to 616
+    c.add(line(24, G - 3, 70, G - 3, "brand", 5))
+    c.add(path(smooth_path([(70, G - 3), (90, G - 8), (112, G - 26), (135, G - 52)]), "brand", None, 5))
+    c.add(path(smooth_path([(135, G - 52), (190, 130), (240, 100)]), "fg-faint", None, 3))
     c.add(line(240, 100, 300, 100, "fg-faint", 3))
-    # turbulence segment: belts on
+    # turbulence segment: the pilot in command directs belts on
     turb = [(300 + i * 10, 100 + (6 if i % 2 else -6)) for i in range(9)]
     c.add(path(smooth_path([(300, 100)] + turb[1:-1] + [(380, 100)]), "brand", None, 5))
     c.add(line(380, 100, 430, 100, "fg-faint", 3))
-    c.add(path(smooth_path([(430, 100), (470, 120), (510, LIM)]), "fg-faint", None, 3))
-    c.add(path(smooth_path([(510, LIM), (560, G - 30), (600, G)]), "brand", None, 5))
+    c.add(path(smooth_path([(430, 100), (480, 130), (515, G - 52)]), "fg-faint", None, 3))
+    c.add(path(smooth_path([(515, G - 52), (538, G - 26), (560, G - 8), (580, G - 3)]), "brand", None, 5))
+    c.add(line(580, G - 3, 616, G - 3, "brand", 5))
     c.add(plane_side(270, 92, 0.34, "fg"))
     # labels
-    c.add(text(60, G + 34, "take-off", 13, "middle", "brand-fg", weight=700))
-    c.add(text(590, G + 34, "landing", 13, "middle", "brand-fg", weight=700))
-    c.add(text(160, LIM + 44, "below 1,000 ft", 12.5, "start", "brand-fg", weight=700))
-    c.add(text(490, LIM + 44, "below 1,000 ft", 12.5, "end", "brand-fg", weight=700))
-    c.add(text(340, 70, "turbulence", 13, "middle", "brand-fg", weight=700))
-    c.add(text(340, 140, "above 1,000 ft in smooth air:", 11.5, "middle", "fg-muted"))
-    c.add(text(340, 155, "when the pilot in command directs", 11.5, "middle", "fg-muted"))
+    c.add(text(40, G + 34, "taxi", 13, "middle", "brand-fg", weight=700))
+    c.add(text(110, G + 34, "take-off", 13, "middle", "brand-fg", weight=700))
+    c.add(text(540, G + 34, "landing", 13, "middle", "brand-fg", weight=700))
+    c.add(text(604, G + 34, "taxi", 13, "middle", "brand-fg", weight=700))
+    c.add(text(340, 64, "turbulence: the pilot in command directs", 13, "middle", "brand-fg", weight=700))
+    c.add(text(340, 160, "Smooth cruise: belts on whenever the", 12, "middle", "fg-muted"))
+    c.add(text(340, 176, "pilot in command judges it necessary", 12, "middle", "fg-muted"))
     c.add(line(26, 30, 56, 30, "brand", 5))
-    c.add(text(64, 34, "belts must be worn", 12.5, "start", "fg", weight=600))
-    c.add(line(220, 30, 250, 30, "fg-faint", 3))
-    c.add(text(258, 34, "belts on whenever the pilot in command directs", 12, "start", "fg-muted"))
+    c.add(text(64, 34, "belts on", 12.5, "start", "fg", weight=600))
+    c.add(line(160, 30, 190, 30, "fg-faint", 3))
+    c.add(text(198, 34, "belts on whenever the pilot in command directs", 12, "start", "fg-muted"))
     c.add(text(320, 318, "Seats locked before take-off and landing; the pilot in command's harness stays fastened throughout.", 12, "middle", "fg-muted"))
     return c
 
@@ -808,7 +810,7 @@ def controlled_vs_non_controlled_at_a_glance() -> Canvas:
                "with traffic information to VFR), Class C requires a transponder and radio, and an RPL holder needs the controlled "
                "airspace and controlled aerodrome endorsements. Non-controlled Class G: no clearance, pilots separate themselves by "
                "lookout and radio, flight information on request, CTAF procedures at aerodromes. Below: Class E is controlled for IFR "
-               "only, VFR needs no clearance; Class A is IFR only.", height=500, prefix="cvn")
+               "only, VFR needs no clearance but must carry a transponder and radio; Class A is IFR only.", height=500, prefix="cvn")
     LX, CW, GX = 150, 228, 392
     c.add(rect(LX, 20, CW, 52, "brand", None, rx=8))
     c.add(text(LX + CW / 2, 42, "Controlled", 16, "middle", "surface", weight=700))
@@ -834,8 +836,8 @@ def controlled_vs_non_controlled_at_a_glance() -> Canvas:
         y += h + 8
     # the two odd classes
     y += 10
-    c.add(card(20, y, 296, 84, "Class E: controlled for IFR only", ["VFR needs no clearance but must meet the", "VMC minima and should carry a transponder;",
-                                                                   "IFR flights are controlled"], "sky", 11.5, 13.5))
+    c.add(card(20, y, 296, 84, "Class E: controlled for IFR only", ["VFR needs no clearance but must meet the", "VMC minima and must carry a transponder",
+                                                                   "and radio; IFR flights are controlled"], "sky", 11.5, 13.5))
     c.add(card(324, y, 296, 84, "Class A: high level", ["IFR only; VFR not permitted", "(above FL180 along the east coast", "and in other areas)"], "info", 11.5, 13.5))
     c.add(text(320, y + 112, "Class G is the only non-controlled class.", 13, "middle", "fg", weight=600))
     return c

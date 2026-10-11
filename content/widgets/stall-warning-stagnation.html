@@ -1,0 +1,189 @@
+<div class="widget" x-data="widget({
+  aoa: 4, kind: 'reed', master: true, ice: false,
+  // Illustrative angles (the lesson gives 15 to 18 degrees for the critical angle): clean wing stalls at 16 degrees, the
+  // warning is set to trigger at 12, which in level flight is the lesson's 5 to 10 kt above the stall; ice lowers the
+  // critical angle to 11, below the warning.
+  warnAt: 12,
+  get crit() { return this.ice ? 11 : 16 },
+  get stalled() { return this.aoa >= this.crit },
+  get nearStall() { return !this.stalled && this.aoa >= this.crit - 4 },
+  get past() { return this.aoa >= this.warnAt },
+  get powered() { return this.kind === 'reed' || this.master },
+  get sounding() { return this.past && this.powered },
+  // the front of a 14 percent aerofoil, chord 900 px, leading edge at (170, 150); the stagnation point moves down and
+  // back along the lower surface as the angle of attack rises (exaggerated so it can be seen)
+  yt(x) { const t = 0.14; return 5 * t * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1015 * x ** 4) },
+  P(x, up) { return { x: 170 + 900 * x, y: 150 + (up ? -1 : 1) * 900 * this.yt(x) } },
+  xs(a) { return 0.0003 * a * a },
+  get S() { return this.P(this.xs(this.aoa), false) },
+  get V() { return this.P(this.xs(this.warnAt), false) },
+  get u() { const a = this.aoa * Math.PI / 180; return { x: Math.cos(a), y: -Math.sin(a) } },
+  // points round the surface from the stagnation point: forward along the lower surface to the nose, then aft on top
+  surf(off, xEnd) {
+    const raw = [], n = 26, xs0 = this.xs(this.aoa);
+    for (let i = 0; i <= n; i++) { const x = xs0 * (1 - i / n) ** 2; raw.push(this.P(x, false)) }
+    for (let i = 1; i <= 40; i++) { const x = xEnd * (i / 40) ** 2; raw.push(this.P(x, true)) }
+    return raw.map((p, i) => {
+      const a = raw[Math.max(0, i - 1)], b = raw[Math.min(raw.length - 1, i + 1)];
+      let nx = -(b.y - a.y), ny = b.x - a.x; const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
+      if (nx * (p.x - 330) + ny * (p.y - 150) < 0) { nx = -nx; ny = -ny }
+      return [p.x + off * nx, p.y + off * ny];
+    });
+  },
+  lowerPts(off) {
+    const pts = [], x0 = this.xs(this.aoa);
+    for (let i = 0; i <= 30; i++) { const x = x0 + (0.5 - x0) * (i / 30) ** 1.5; const p = this.P(x, false); pts.push([p.x - (i ? 0 : 0), p.y + off]) }
+    return pts;
+  },
+  get upperPath() {
+    const s = this.surf(7, this.stalled ? 0.05 : 0.5);
+    let d = this.path(s);
+    if (this.stalled) { const e = s[s.length - 1]; d += ' C' + (e[0] + 40) + ' ' + (e[1] - 20) + ' ' + (e[0] + 90) + ' ' + (e[1] - 26) + ' ' + (e[0] + 150) + ' ' + (e[1] - 30) + ' q20 -14 40 0 t40 0 t40 0' }
+    return d;
+  },
+  get nU() { const a = this.aoa * Math.PI / 180; return { x: -Math.sin(a), y: -Math.cos(a) } },
+  get outerPath() {
+    const s = this.surf(24, this.stalled ? 0.05 : 0.5).slice(32);
+    const st = { x: this.S.x - 170 * this.u.x + 26 * this.nU.x, y: this.S.y - 170 * this.u.y + 26 * this.nU.y };
+    const e0 = s[0], tx = s[1][0] - s[0][0], ty = s[1][1] - s[0][1], tl = Math.hypot(tx, ty) || 1;
+    let d = 'M' + st.x.toFixed(1) + ' ' + st.y.toFixed(1) + ' C' + (st.x + 90 * this.u.x).toFixed(1) + ' ' + (st.y + 90 * this.u.y).toFixed(1) + ' ' + (e0[0] - 50 * tx / tl).toFixed(1) + ' ' + (e0[1] - 50 * ty / tl).toFixed(1) + ' ' + this.path(s).slice(1);
+    if (this.stalled) { const e = s[s.length - 1]; d += ' C' + (e[0] + 40) + ' ' + (e[1] - 24) + ' ' + (e[0] + 90) + ' ' + (e[1] - 34) + ' ' + (e[0] + 200) + ' ' + (e[1] - 40) }
+    return d;
+  },
+  get lowerPath() { return this.path(this.lowerPts(8)) },
+  get lowerOuter() {
+    const p = this.lowerPts(26).slice(2);
+    const st = { x: this.S.x - 170 * this.u.x - 26 * this.nU.x, y: this.S.y - 170 * this.u.y - 26 * this.nU.y };
+    const e0 = p[0], tx = p[1][0] - p[0][0], ty = p[1][1] - p[0][1], tl = Math.hypot(tx, ty) || 1;
+    return 'M' + st.x.toFixed(1) + ' ' + st.y.toFixed(1) + ' C' + (st.x + 90 * this.u.x).toFixed(1) + ' ' + (st.y + 90 * this.u.y).toFixed(1) + ' ' + (e0[0] - 50 * tx / tl).toFixed(1) + ' ' + (e0[1] - 50 * ty / tl).toFixed(1) + ' ' + this.path(p).slice(1);
+  },
+  get divider() { return { x1: this.S.x - 160 * this.u.x, y1: this.S.y - 160 * this.u.y, x2: this.S.x - 6 * this.u.x, y2: this.S.y - 6 * this.u.y } },
+  // vane: a tab hinged at V, held down by the flow until the stagnation point passes below it
+  get vaneEnd() { const a = (this.past ? -70 : 55) * Math.PI / 180; return { x: this.V.x - 16 * Math.cos(a), y: this.V.y + 16 * Math.sin(a) } },
+  get suction() { return Math.min(0.45, 0.05 + this.aoa / 40) },
+  get stagText() { const d = this.aoa - this.warnAt; return this.aoa < 2 ? 'at the nose' : d < -0.25 ? 'under the leading edge, above the ' + (this.kind === 'reed' ? 'opening' : 'vane') : d <= 0.25 ? 'level with the ' + (this.kind === 'reed' ? 'opening' : 'vane') : 'below the ' + (this.kind === 'reed' ? 'opening' : 'vane') },
+  get warnText() { if (!this.past) return 'silent'; if (!this.powered) return 'silent: no electrical power'; return this.kind === 'reed' ? 'reed horn wailing' : 'horn (or light) on' },
+  get caption() {
+    if (this.stalled && !this.past) return 'Stalled with no warning: ice has lowered the critical angle to ' + this.crit + ' degrees, below the angle the warning was set for. Frost and ice off before flight.';
+    if (this.stalled) return 'Past the critical angle the flow separates from the upper surface and the wing stalls. The warning only advises: nothing stopped you pulling through it.';
+    if (this.past && !this.powered) return 'The stagnation point is below the vane and the flow has pushed it up, but with the master off the microswitch has nothing to switch: the vane type needs electrical power.';
+    if (this.past) return this.kind === 'reed' ? 'The stagnation point is below the opening, so the opening is now in the fast, low-pressure flow round the nose: suction draws air out through the reed horn. No electricity involved.' : 'The stagnation point has moved below the vane, so the air at the vane flows forward and up round the leading edge, lifting it and closing the microswitch.';
+    if (this.aoa < 2) return 'At a small angle of attack the air divides right at the nose of the aerofoil.';
+    return 'As the angle of attack rises the oncoming air meets the wing from further below, so the stagnation point moves down and back under the leading edge, and the air round the nose speeds up: stronger suction.';
+  },
+  presets: {
+    'cruise': { aoa: 4, kind: 'reed', master: true, ice: false },
+    'reed-sounds': { aoa: 14, kind: 'reed', master: true, ice: false },
+    'vane-lifts': { aoa: 14, kind: 'vane', master: true, ice: false },
+    'vane-no-power': { aoa: 14, kind: 'vane', master: false, ice: false },
+    'iced-wing': { aoa: 11.5, kind: 'reed', master: true, ice: true },
+    'past-critical': { aoa: 17, kind: 'reed', master: true, ice: false },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="sws-title" class="widget-stage">
+    <title id="sws-title">A close-up of the front of a wing with the relative airflow arriving at the chosen angle of attack: the dividing streamline ends at the stagnation point, which moves down and back under the leading edge as the angle rises, past the stall warning opening or vane</title>
+    <defs><marker id="sws-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- free-stream arrows -->
+    <g :transform="'rotate(' + (-aoa) + ' 80 210)'" stroke="var(--color-info)" stroke-width="1.5" stroke-linecap="round">
+      <line x1="20" y1="196" x2="96" y2="196" marker-end="url(#sws-arrow)"/>
+      <line x1="34" y1="222" x2="110" y2="222" marker-end="url(#sws-arrow)"/>
+      <line x1="20" y1="248" x2="96" y2="248" marker-end="url(#sws-arrow)"/>
+    </g>
+    <text x="20" y="282" font-size="12" fill="var(--color-info)" x-text="'relative airflow, ' + fmt(aoa, 1) + '° angle of attack'"></text>
+    <!-- suction over the nose -->
+    <ellipse cx="200" cy="104" rx="70" ry="26" fill="var(--color-brand)" :fill-opacity="stalled ? 0.05 : suction" transform="rotate(-18 200 104)"/>
+    <text x="236" y="70" font-size="12" font-weight="600" fill="var(--color-brand-fg)" x-show="aoa >= 6 &amp;&amp; !stalled">low pressure</text>
+    <!-- the wing -->
+    <path d="M638.0 95.8 L614.9 94.0 L592.4 92.5 L570.4 91.1 L549.1 90.0 L528.3 89.0 L508.1 88.2 L488.5 87.6 L469.5 87.2 L451.1 87.0 L433.2 87.0 L416.0 87.2 L399.3 87.5 L383.2 88.0 L367.7 88.7 L352.8 89.6 L338.5 90.6 L324.7 91.8 L311.6 93.1 L299.0 94.6 L287.0 96.2 L275.6 98.0 L264.8 99.9 L254.5 101.9 L244.9 104.1 L235.8 106.3 L227.3 108.7 L219.4 111.2 L212.1 113.7 L205.4 116.4 L199.2 119.1 L193.7 121.9 L188.7 124.8 L184.3 127.7 L180.5 130.7 L177.3 133.8 L174.7 136.9 L172.6 140.1 L171.2 143.4 L170.3 146.7 L170.0 150.0 L170.3 153.3 L171.2 156.6 L172.6 159.9 L174.7 163.1 L177.3 166.2 L180.5 169.3 L184.3 172.3 L188.7 175.2 L193.7 178.1 L199.2 180.9 L205.4 183.6 L212.1 186.3 L219.4 188.8 L227.3 191.3 L235.8 193.7 L244.9 195.9 L254.5 198.1 L264.8 200.1 L275.6 202.0 L287.0 203.8 L299.0 205.4 L311.6 206.9 L324.7 208.2 L338.5 209.4 L352.8 210.4 L367.7 211.3 L383.2 212.0 L399.3 212.5 L416.0 212.8 L433.2 213.0 L451.1 213.0 L469.5 212.8 L488.5 212.4 L508.1 211.8 L528.3 211.0 L549.1 210.0 L570.4 208.9 L592.4 207.5 L614.9 206.0 L638.0 204.2 Z" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+    <!-- ice on the leading edge -->
+    <path d="M176 128 l-8 4 l4 5 l-9 4 l5 5 l-8 5 l7 4 l-6 6 l8 3 l-3 6 l8 1" fill="none" stroke="var(--color-info)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" x-show="ice"/>
+    <text x="130" y="122" font-size="12" font-weight="600" fill="var(--color-info)" text-anchor="end" x-show="ice">ice</text>
+    <!-- streamlines -->
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="var(--color-fg-faint)" stroke-width="1.25" :d="outerPath"/>
+      <path stroke="var(--color-fg-faint)" stroke-width="1.25" :d="lowerOuter"/>
+      <path stroke-width="1.75" :stroke="stalled ? 'var(--color-bad)' : 'var(--color-brand)'" :d="upperPath"/>
+      <path stroke="var(--color-fg-muted)" stroke-width="1.75" :d="lowerPath"/>
+    </g>
+    <line stroke="var(--color-brand)" stroke-width="1.75" stroke-dasharray="5 3" :x1="divider.x1" :y1="divider.y1" :x2="divider.x2" :y2="divider.y2"/>
+    <text font-size="12" font-weight="700" fill="var(--color-bad-fg)" x="300" y="40" x-show="stalled">flow separates: stalled</text>
+    <!-- the warning device -->
+    <g x-show="kind === 'reed'">
+      <path fill="none" stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-linecap="round" :d="'M' + V.x + ' ' + (V.y - 2) + ' Q ' + (V.x + 40) + ' ' + (V.y - 10) + ' 300 160 L 420 160'"/>
+      <circle r="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" :cx="V.x" :cy="V.y"/>
+      <text x="424" y="164" font-size="12" fill="var(--color-fg-muted)">tube to the reed horn</text>
+      <g x-show="sounding" stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round">
+        <line marker-end="url(#sws-arrow)" :x1="V.x + 4" :y1="V.y + 2" :x2="V.x - 14" :y2="V.y + 10"/>
+      </g>
+    </g>
+    <g x-show="kind === 'vane'">
+      <line stroke-width="3" stroke-linecap="round" :stroke="past ? 'var(--color-warn)' : 'var(--color-fg)'" :x1="V.x" :y1="V.y" :x2="vaneEnd.x" :y2="vaneEnd.y"/>
+      <circle r="2.5" fill="var(--color-fg)" :cx="V.x" :cy="V.y"/>
+      <rect x="250" y="150" width="36" height="20" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <line x1="256" y1="164" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" x2="280" :y2="past ? 160 : 154"/>
+      <path :d="'M' + V.x + ' ' + V.y + ' L250 160'" fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="3 2"/>
+      <path d="M286 160 L420 160" fill="none" stroke-width="1.5" :stroke="master ? 'var(--color-fg-muted)' : 'var(--color-fg-faint)'" stroke-dasharray="6 3"/>
+      <text x="424" y="164" font-size="12" fill="var(--color-fg-muted)" x-text="master ? 'microswitch, master ON' : 'microswitch, master OFF'"></text>
+    </g>
+    <circle r="5.5" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2" :cx="S.x" :cy="S.y"/>
+    <line stroke="var(--color-brand)" stroke-width="1" x1="300" y1="250" :x2="S.x + 3" :y2="S.y + 5"/>
+    <text x="304" y="262" font-size="12" font-weight="600" fill="var(--color-brand-fg)">stagnation point</text>
+    <!-- horn -->
+    <g transform="translate(560 30)">
+      <path d="M-14 -6 L-6 -6 L4 -14 L4 14 L-6 6 L-14 6 Z" stroke-width="1.5" stroke-linejoin="round" :fill="sounding ? 'var(--color-warn)' : 'var(--color-surface-2)'" :stroke="sounding ? 'var(--color-warn)' : 'var(--color-fg-muted)'"/>
+      <g fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round" x-show="sounding">
+        <path d="M10 -8 Q16 0 10 8"/><path d="M16 -14 Q26 0 16 14"/>
+      </g>
+      <text x="0" y="34" font-size="12" text-anchor="middle" font-weight="600" :fill="sounding ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" x-text="sounding ? 'WARNING' : 'quiet'"></text>
+    </g>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="sws-aoa">Angle of attack <output for="sws-aoa" x-text="fmt(aoa, 1) + '°'"></output></label>
+      <input type="range" id="sws-aoa" min="0" max="20" step="0.5" x-model.number="aoa" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="sws-kind">Stall warning type</label>
+      <select id="sws-kind" class="input" x-model="kind" @change="active = null">
+        <option value="reed">Reed (pneumatic), many Cessnas</option>
+        <option value="vane">Vane (electric), many Pipers</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="sws-master" class="cursor-pointer"><span>Master switch on</span>
+        <input type="checkbox" id="sws-master" x-model="master" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="sws-ice" class="cursor-pointer"><span>Ice on the wing</span>
+        <input type="checkbox" id="sws-ice" x-model="ice" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Stagnation point</dt><dd class="widget-value" x-text="stagText"></dd></div>
+    <div class="widget-readout" :class="sounding ? 'warn' : past ? 'bad' : ''">
+      <dt class="widget-label">Stall warning</dt>
+      <dd class="widget-value"><span x-text="warnText"></span><span class="widget-flag warn" x-show="sounding">warning</span><span class="widget-flag bad" x-show="past &amp;&amp; !powered">dead</span></dd>
+    </div>
+    <div class="widget-readout" :class="stalled ? 'bad' : nearStall ? 'warn' : 'ok'">
+      <dt class="widget-label">The wing</dt>
+      <dd class="widget-value"><span x-text="stalled ? 'stalled (critical angle ' + crit + '°)' : nearStall ? 'near the stall' : 'flying'"></span><span class="widget-flag bad" x-show="stalled &amp;&amp; !sounding">no warning</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Electrical power needed</dt><dd class="widget-value" x-text="kind === 'reed' ? 'No: suction does the work' : 'Yes: master on'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cruise')" :aria-pressed="active === 'cruise'">Cruise</button>
+      <button type="button" @click="preset('reed-sounds')" :aria-pressed="active === 'reed-sounds'">Reed sounds</button>
+      <button type="button" @click="preset('vane-lifts')" :aria-pressed="active === 'vane-lifts'">Vane lifts</button>
+      <button type="button" @click="preset('vane-no-power')" :aria-pressed="active === 'vane-no-power'">Vane, master off</button>
+      <button type="button" @click="preset('iced-wing')" :aria-pressed="active === 'iced-wing'">Iced wing</button>
+      <button type="button" @click="preset('past-critical')" :aria-pressed="active === 'past-critical'">Past critical</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Both devices watch the stagnation point, not the airspeed: as the angle of attack rises it moves down and back under the leading edge. The reed is sounded by the suction once the stagnation point has moved below the opening, and needs no electricity; the vane is flipped up and closes a switch, so it needs the master on. On an iced wing the critical angle falls below the warning's setting and the wing can stall first. The angles here (warning at 12°, stall at 16°, iced 11°) and the stagnation point's travel are illustrative; the lesson gives 15 to 18° for the critical angle and a warning about 5 to 10 kt above the stall.</p>
+  <details class="widget-try"><summary>Try it: after a complete electrical failure, which type still warns you?</summary><p>Press Vane, master off: the vane lifts but nothing sounds. Switch to the reed: the suction over the leading edge draws air through the horn with no electricity at all.</p></details>
+  <details class="widget-try"><summary>Try it: why can an iced wing stall before the warning sounds?</summary><p>Press Iced wing: ice lowers the critical angle to below the angle the warning was set for, so at 11.5° the wing has stalled while the stagnation point has not yet reached the opening. Remove all ice and frost before flight.</p></details>
+</div>

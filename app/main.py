@@ -48,7 +48,7 @@ def include_routers(app: FastAPI) -> None:
 
 def create_app() -> FastAPI:
     logging.basicConfig(level=logging.INFO)
-    app = FastAPI(title="CASA Theory", lifespan=lifespan)
+    app = FastAPI(title="T-Pilot", lifespan=lifespan)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     # Narrated lessons from tools/audio/build.py; may not exist yet (check_dir=False), Range requests let players seek.
     app.mount("/media", StaticFiles(directory=media_dir(), check_dir=False), name="media")

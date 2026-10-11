@@ -40,7 +40,7 @@ def static_url(path: str) -> str:
     return f"/static/{path}?v={version}"
 
 
-templates.env.globals["app_name"] = "CASA Theory"
+templates.env.globals["app_name"] = "T-Pilot"
 templates.env.globals["static_url"] = static_url
 templates.env.globals["now"] = datetime.now
 templates.env.filters["minutes_to_hm"] = minutes_to_hm

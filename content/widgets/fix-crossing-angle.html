@@ -1,0 +1,122 @@
+<div class="widget" x-data="widget({
+  ang: 90, third: false,
+  // the aeroplane's true position at (230, 175); line 1 runs along bearing 40°, line 2 along 40° + ang.
+  // each position line carries the same error band, ±14 px either side (illustrative)
+  get w() { return 14 },
+  d(b) { const a = b * Math.PI / 180; return [Math.sin(a), -Math.cos(a)] },
+  get b1() { return 40 },
+  get b2() { return 40 + this.ang },
+  P(b, s, off) { const u = this.d(b); return [230 + u[0] * s - u[1] * (off || 0), 175 + u[1] * s + u[0] * (off || 0)] },
+  seg(b, L, off) { const p = this.P(b, -L, off), q = this.P(b, L, off); return 'M' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' L' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) },
+  band(b, L) { const a = this.P(b, -L, -this.w), c = this.P(b, L, -this.w), e = this.P(b, L, this.w), f = this.P(b, -L, this.w); return 'M' + [a, c, e, f].map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') + ' Z' },
+  // the overlap of the two bands: solve n1·x = ±w, n2·x = ±w
+  get region() {
+    const u1 = this.d(this.b1), u2 = this.d(this.b2), n1 = [-u1[1], u1[0]], n2 = [-u2[1], u2[0]];
+    const det = n1[0] * n2[1] - n1[1] * n2[0];
+    const pt = (s, t) => { const a = s * this.w, b = t * this.w; return [230 + (a * n2[1] - b * n1[1]) / det, 175 + (b * n1[0] - a * n2[0]) / det] };
+    const q = [pt(1, 1), pt(1, -1), pt(-1, -1), pt(-1, 1)];
+    return 'M' + q.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') + ' Z';
+  },
+  // length of the region (its long diagonal) compared with a 90° cut: sin 45° ÷ sin(angle / 2)
+  get stretch() { return Math.sin(Math.PI / 4) / Math.sin(this.ang * Math.PI / 360) },
+  get quality() { return this.ang >= 60 ? 'ok' : this.ang >= 30 ? 'warn' : 'bad' },
+  get qualityText() { return this.ang >= 60 ? 'good fix' : this.ang >= 30 ? 'fair' : 'poor: a long thin region' },
+  // the third line, offset a little so the three do not quite meet (the cocked hat)
+  get b3() { return 40 + this.ang / 2 + 90 },
+  inter(bA, offA, bB, offB) {
+    const uA = this.d(bA), uB = this.d(bB), pA = this.P(bA, 0, offA), pB = this.P(bB, 0, offB);
+    const det = uA[0] * -uB[1] + uB[0] * uA[1];
+    const dx = pB[0] - pA[0], dy = pB[1] - pA[1];
+    const s = (dx * -uB[1] + uB[0] * dy) / det;
+    return [pA[0] + uA[0] * s, pA[1] + uA[1] * s];
+  },
+  get hat() { const a = this.inter(this.b1, 0, this.b2, 0), b = this.inter(this.b2, 0, this.b3, 18), c = this.inter(this.b3, 18, this.b1, 0); return [a, b, c] },
+  get hatD() { return 'M' + this.hat.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L') + ' Z' },
+  get hatC() { const h = this.hat; return [(h[0][0] + h[1][0] + h[2][0]) / 3, (h[0][1] + h[1][1] + h[2][1]) / 3] },
+  get handle() { return this.P(this.b2, 150, 0) },
+  get arcD() { const r = 46, a = this.P(this.b1, r, 0), b = this.P(this.b2, r, 0); return 'M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1) },
+  get arcLbl() { return this.P(this.b1 + this.ang / 2, 64 + (90 - this.ang) * 0.8, 0) },
+  grab(p) { let b = Math.atan2(p.x - 230, -(p.y - 175)) * 180 / Math.PI - 40; b = ((b % 180) + 180) % 180; if (b > 90) b = 180 - b; this.ang = Math.round(this.clamp(b, 10, 90)); this.active = null },
+  get caption() {
+    if (this.third) return 'Three position lines rarely meet at a point: they form a small triangle, the cocked hat. Take its centre as the fix.';
+    if (this.ang >= 75) return 'Crossing near 90°, the same error in each line leaves a small, compact region: a good fix.';
+    if (this.ang <= 25) return 'At ' + this.ang + '° the lines cross so shallowly that the same small errors smear the fix ' + this.fmt(this.stretch, 1) + ' times as far along them: a long thin region, not a point.';
+    return 'As the crossing angle closes, the region of uncertainty stretches along the lines: ' + this.fmt(this.stretch, 1) + ' × as long as at 90°.';
+  },
+  presets: {
+    'crossing-90': { ang: 90, third: false },
+    'crossing-45': { ang: 45, third: false },
+    'crossing-20': { ang: 20, third: false },
+    'cocked-hat': { ang: 60, third: true },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="fxc-title" class="widget-stage">
+    <title id="fxc-title">Two position lines crossing at the aeroplane's position, each with a shaded error band; where the bands overlap is the region the fix could be in, small when the lines cross near 90 degrees and long and thin when they cross at a shallow angle. An optional third line forms a cocked hat</title>
+    <defs>
+      <clipPath id="fxc-clip"><rect x="10" y="10" width="440" height="320" rx="8"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="340" fill="var(--color-surface)" rx="10"/>
+    <rect x="10" y="10" width="440" height="320" rx="8" fill="var(--color-ok-soft)" fill-opacity="0.45"/>
+    <g clip-path="url(#fxc-clip)">
+      <path :d="band(b1, 260)" fill="var(--color-info)" fill-opacity="0.13"/>
+      <path :d="band(b2, 260)" fill="var(--color-info)" fill-opacity="0.13"/>
+      <path :d="seg(b1, 260, 0)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path :d="seg(b2, 260, 0)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path :d="region" fill="var(--color-brand)" fill-opacity="0.45" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round" :display="(!third) ? 'inline' : 'none'"/>
+      <g :display="(third) ? 'inline' : 'none'">
+        <path :d="seg(b3, 260, 18)" stroke="var(--color-fg)" stroke-width="2"/>
+        <path :d="hatD" fill="var(--color-brand)" fill-opacity="0.35" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round"/>
+        <circle r="4" fill="var(--color-brand)" :cx="hatC[0]" :cy="hatC[1]"/>
+      </g>
+      <path :d="arcD" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" :display="(!third) ? 'inline' : 'none'"/>
+      <text font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="arcLbl[0]" :y="arcLbl[1] + 5" :display="(!third) ? 'inline' : 'none'" x-text="ang + '°'"></text>
+    </g>
+    <text font-size="13" font-weight="700" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="P(b1, 175, 0)[0] + 10" :y="P(b1, 175, 0)[1] + 18">1</text>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="handle[0] + 14" :y="handle[1] + 5">2</text>
+    <text font-size="13" font-weight="700" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="P(b3, -120, 18)[0] + 10" :y="P(b3, -120, 18)[1] + 5" :display="third ? 'inline' : 'none'">3</text>
+    <!-- drag handle on line 2 -->
+    <circle r="11" fill="var(--color-brand)" fill-opacity="0.2" stroke="var(--color-brand)" stroke-width="2" style="touch-action: none; cursor: grab" :cx="handle[0]" :cy="handle[1]" @pointerdown="drag($event, (p) => grab(p))"/>
+    <!-- right panel -->
+    <text x="470" y="40" font-size="14" font-weight="600" fill="var(--color-fg)">Where could you be?</text>
+    <text x="470" y="62" font-size="12" fill="var(--color-fg-muted)">1: a railway you cross</text>
+    <text x="470" y="78" font-size="12" fill="var(--color-fg-muted)">2: a bearing from a town</text>
+    <text x="470" y="94" font-size="12" fill="var(--color-fg-muted)">(drag its end)</text>
+    <text x="470" y="120" font-size="12" fill="var(--color-fg-muted)">Same error band on each;</text>
+    <text x="470" y="136" font-size="12" fill="var(--color-fg-muted)">region length vs 90°:</text>
+    <rect x="470" y="146" width="40" height="14" rx="3" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25"/>
+    <text x="516" y="158" font-size="12" fill="var(--color-fg-muted)">90°: × 1.0</text>
+    <rect x="470" y="170" height="14" rx="3" :width="Math.min(150, 40 * stretch)" :fill="'var(--color-' + quality + '-soft)'" :stroke="'var(--color-' + quality + ')'" stroke-width="1.25"/>
+    <text x="470" y="204" font-size="14" font-weight="700" class="num" :fill="'var(--color-' + quality + '-fg)'" x-text="ang + '°: × ' + fmt(stretch, 1)"></text>
+    <text x="470" y="240" font-size="12" fill="var(--color-fg-muted)">Three lines: take the</text>
+    <text x="470" y="256" font-size="12" fill="var(--color-fg-muted)">centre of the cocked hat.</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="fxc-ang">Angle between the position lines <output for="fxc-ang" x-text="ang + '°'"></output></label>
+      <input type="range" id="fxc-ang" min="10" max="90" step="1" x-model.number="ang">
+    </div>
+    <div class="widget-control">
+      <label for="fxc-third" class="cursor-pointer"><span>Add a third position line</span>
+        <input type="checkbox" id="fxc-third" x-model="third" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Crossing angle</dt><dd class="widget-value" x-text="ang + '°'"></dd></div>
+    <div class="widget-readout" :class="quality"><dt class="widget-label">Region compared with 90°</dt><dd class="widget-value"><span x-text="'× ' + fmt(stretch, 1) + ' as long'"></span><span class="widget-flag" :class="quality" x-show="quality !== 'ok'" x-text="qualityText"></span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Fix</dt><dd class="widget-value" x-text="third ? 'centre of the cocked hat' : (ang >= 60 ? 'where the lines cross' : 'somewhere along a long thin region')"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('crossing-90')" :aria-pressed="active === 'crossing-90'">90°</button>
+      <button type="button" @click="preset('crossing-45')" :aria-pressed="active === 'crossing-45'">45°</button>
+      <button type="button" @click="preset('crossing-20')" :aria-pressed="active === 'crossing-20'">20°</button>
+      <button type="button" @click="preset('cocked-hat')" :aria-pressed="active === 'cocked-hat'">Cocked hat</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The same small error in each position line moves the fix only a little when the lines cross near 90°, and a long way along them when they cross at 20°: the region of uncertainty stretches to about four times its length at 90°. Three lines form a cocked hat; take its centre. The quickest fix of all is one unmistakable point feature. The band widths and the colour thresholds are a guide, not figures from the lesson.</p>
+  <details class="widget-try"><summary>Try it: a railway runs 5° off your track for 30 nm. What can it tell you, and what can it not?</summary><p>Lying almost along the track, it is an excellent track-error line: you see how far off you are and whether it is growing. It cannot give a groundspeed or a fix on its own: crossed with the track at 5°, any small error slides the crossing point a long way along it. Set 10° to see how long that region gets.</p></details>
+  <details class="widget-try"><summary>Try it: for a groundspeed check, why choose a road that crosses the track at right angles?</summary><p>The moment you cross it is sharp and does not move if you are a little left or right of track. Drag line 2 towards 20°: the same sideways error now slides the crossing point a long way along the track, and the groundspeed with it.</p></details>
+</div>

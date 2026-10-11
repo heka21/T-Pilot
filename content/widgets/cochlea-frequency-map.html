@@ -1,0 +1,150 @@
+<div class="widget" x-data="widget({
+  lf: 5, noise: false, age: false,
+  // pitch on a doubling scale: lf 0..6 is 125 Hz to 8,000 Hz
+  get f() { return 125 * Math.pow(2, this.lf) },
+  get fText() { const r = this.f >= 1000 ? 100 : 10; return this.fmt(Math.round(this.f / r) * r) + ' Hz' },
+  // the cochlea uncoiled: high pitches land near the entrance (x 180), low ones at the far end (x 600)
+  X(lf) { return 600 - lf / 6 * 420 },
+  get x() { return this.X(this.lf) },
+  // hair cells every 10 px; noise kills those around 4,000 Hz first, ageing those at the high end (PHFC 2.5, 2.6).
+  // The width of each damaged band is illustrative.
+  dead(cx) { const lf = (600 - cx) / 420 * 6; return (this.noise && Math.abs(lf - 5) < 0.55) || (this.age && lf > 5.4) },
+  cell(cx) { return this.dead(cx) ? 'var(--color-bad)' : this.bend(cx) > 0.3 ? 'var(--color-brand)' : 'var(--color-fg-muted)' },
+  bend(cx) { return Math.exp(-Math.pow((cx - this.x) / 30, 2)) },
+  // the travelling wave along the strip, peaking where this pitch is sensed
+  get wave() {
+    const pts = [];
+    for (let cx = 180; cx <= 600; cx += 3) { const env = Math.exp(-Math.pow((cx - this.x) / (cx < this.x ? 70 : 22), 2)); pts.push([cx, 150 - 0.8 * (26 - (cx - 168) / 438 * 14) * env * Math.sin((cx - 180) / 9)]) }
+    return this.path(pts);
+  },
+  get lost() { return this.dead(this.x) },
+  get place() { return this.lf > 4.5 ? 'Near the entrance' : this.lf > 1.5 ? 'Middle of the coil' : 'Far end of the coil' },
+  get heard() { return this.lost ? ['No: those hair cells are gone', 'bad'] : (this.noise || this.age) && this.lf > 4.2 ? ['Yes, next to a damaged band', 'warn'] : ['Yes', 'ok'] },
+  // sound in the ear canal: more waves for a higher pitch
+  get canal() { const pts = [], n = 1 + this.lf * 0.9; for (let i = 0; i <= 60; i++) { const x = 24 + i; pts.push([x, 120 - 8 * Math.sin(i / 60 * n * 2 * Math.PI)]) } return this.path(pts) },
+  get caption() {
+    if (this.lost) return 'The hair cells tuned to this pitch have died. They do not grow back, so the sound still reaches the cochlea but nothing turns it into a nerve signal: permanent, painless, noise-induced hearing loss.';
+    if (this.lf > 4.5) return 'A high pitch sets up its biggest wave right by the entrance to the cochlea, where the energy of every sound arrives first. These hair cells carry the quiet consonants (s, f, th, t, k) that tell words apart, and they are the first to die.';
+    if (this.lf > 1.5) return 'A middle pitch peaks part of the way along the coil. Each hair cell is tuned by its position to a narrow band of pitches.';
+    return 'A low pitch, like the engine drone or a vowel, runs most of the way along the coil before it peaks near the far end.';
+  },
+  presets: {
+    'low-pitch': { lf: 0.5, noise: false, age: false },
+    'consonant-at-4000': { lf: 5, noise: false, age: false },
+    'noise-damage-4000': { lf: 5, noise: true, age: false },
+    'vowel-still-heard': { lf: 2, noise: true, age: false },
+    'older-pilot': { lf: 5.8, noise: true, age: true },
+  },
+})">
+  <svg viewBox="0 0 640 270" role="img" aria-labelledby="cfm-title" class="widget-stage">
+    <title id="cfm-title">The path of sound through the ear canal, eardrum and three small bones into the cochlea, drawn uncoiled: each pitch peaks at its own place along the row of hair cells, high pitches near the entrance</title>
+    <!-- outer ear: the canal with the sound in it -->
+    <path d="M20 104 L96 104 M20 136 L96 136" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" :d="canal"/>
+    <text x="58" y="94" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">ear canal</text>
+    <!-- eardrum and the three small bones -->
+    <ellipse cx="100" cy="120" rx="4" ry="20" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <path d="M104 116 L122 108 L130 118 M130 118 L146 126 M146 126 L162 140" fill="none" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="130" cy="116" r="5" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <text x="100" y="160" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">eardrum</text>
+    <text x="134" y="88" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">3 bones</text>
+    <!-- the cochlea, uncoiled: fluid-filled, tapering -->
+    <path d="M168 124 L606 138 L606 162 L168 176 Z" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.5" stroke-linejoin="round"/>
+    <text x="388" y="112" font-size="13" text-anchor="middle" fill="var(--color-sky-fg)">cochlea, uncoiled</text>
+    <text x="176" y="112" font-size="11" fill="var(--color-fg-muted)">entrance</text>
+    <text x="604" y="112" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">far end</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" :d="wave"/>
+    <!-- the hair cells -->
+    <g stroke-linecap="round">
+      <line x1="180" x2="180" y1="200" :y2="200 - 8 - 16 * bend(180)" :stroke="cell(180)" :stroke-width="dead(180) ? 1 : 2" :stroke-dasharray="dead(180) ? '2 3' : ''"/>
+      <line x1="190" x2="190" y1="200" :y2="200 - 8 - 16 * bend(190)" :stroke="cell(190)" :stroke-width="dead(190) ? 1 : 2" :stroke-dasharray="dead(190) ? '2 3' : ''"/>
+      <line x1="200" x2="200" y1="200" :y2="200 - 8 - 16 * bend(200)" :stroke="cell(200)" :stroke-width="dead(200) ? 1 : 2" :stroke-dasharray="dead(200) ? '2 3' : ''"/>
+      <line x1="210" x2="210" y1="200" :y2="200 - 8 - 16 * bend(210)" :stroke="cell(210)" :stroke-width="dead(210) ? 1 : 2" :stroke-dasharray="dead(210) ? '2 3' : ''"/>
+      <line x1="220" x2="220" y1="200" :y2="200 - 8 - 16 * bend(220)" :stroke="cell(220)" :stroke-width="dead(220) ? 1 : 2" :stroke-dasharray="dead(220) ? '2 3' : ''"/>
+      <line x1="230" x2="230" y1="200" :y2="200 - 8 - 16 * bend(230)" :stroke="cell(230)" :stroke-width="dead(230) ? 1 : 2" :stroke-dasharray="dead(230) ? '2 3' : ''"/>
+      <line x1="240" x2="240" y1="200" :y2="200 - 8 - 16 * bend(240)" :stroke="cell(240)" :stroke-width="dead(240) ? 1 : 2" :stroke-dasharray="dead(240) ? '2 3' : ''"/>
+      <line x1="250" x2="250" y1="200" :y2="200 - 8 - 16 * bend(250)" :stroke="cell(250)" :stroke-width="dead(250) ? 1 : 2" :stroke-dasharray="dead(250) ? '2 3' : ''"/>
+      <line x1="260" x2="260" y1="200" :y2="200 - 8 - 16 * bend(260)" :stroke="cell(260)" :stroke-width="dead(260) ? 1 : 2" :stroke-dasharray="dead(260) ? '2 3' : ''"/>
+      <line x1="270" x2="270" y1="200" :y2="200 - 8 - 16 * bend(270)" :stroke="cell(270)" :stroke-width="dead(270) ? 1 : 2" :stroke-dasharray="dead(270) ? '2 3' : ''"/>
+      <line x1="280" x2="280" y1="200" :y2="200 - 8 - 16 * bend(280)" :stroke="cell(280)" :stroke-width="dead(280) ? 1 : 2" :stroke-dasharray="dead(280) ? '2 3' : ''"/>
+      <line x1="290" x2="290" y1="200" :y2="200 - 8 - 16 * bend(290)" :stroke="cell(290)" :stroke-width="dead(290) ? 1 : 2" :stroke-dasharray="dead(290) ? '2 3' : ''"/>
+      <line x1="300" x2="300" y1="200" :y2="200 - 8 - 16 * bend(300)" :stroke="cell(300)" :stroke-width="dead(300) ? 1 : 2" :stroke-dasharray="dead(300) ? '2 3' : ''"/>
+      <line x1="310" x2="310" y1="200" :y2="200 - 8 - 16 * bend(310)" :stroke="cell(310)" :stroke-width="dead(310) ? 1 : 2" :stroke-dasharray="dead(310) ? '2 3' : ''"/>
+      <line x1="320" x2="320" y1="200" :y2="200 - 8 - 16 * bend(320)" :stroke="cell(320)" :stroke-width="dead(320) ? 1 : 2" :stroke-dasharray="dead(320) ? '2 3' : ''"/>
+      <line x1="330" x2="330" y1="200" :y2="200 - 8 - 16 * bend(330)" :stroke="cell(330)" :stroke-width="dead(330) ? 1 : 2" :stroke-dasharray="dead(330) ? '2 3' : ''"/>
+      <line x1="340" x2="340" y1="200" :y2="200 - 8 - 16 * bend(340)" :stroke="cell(340)" :stroke-width="dead(340) ? 1 : 2" :stroke-dasharray="dead(340) ? '2 3' : ''"/>
+      <line x1="350" x2="350" y1="200" :y2="200 - 8 - 16 * bend(350)" :stroke="cell(350)" :stroke-width="dead(350) ? 1 : 2" :stroke-dasharray="dead(350) ? '2 3' : ''"/>
+      <line x1="360" x2="360" y1="200" :y2="200 - 8 - 16 * bend(360)" :stroke="cell(360)" :stroke-width="dead(360) ? 1 : 2" :stroke-dasharray="dead(360) ? '2 3' : ''"/>
+      <line x1="370" x2="370" y1="200" :y2="200 - 8 - 16 * bend(370)" :stroke="cell(370)" :stroke-width="dead(370) ? 1 : 2" :stroke-dasharray="dead(370) ? '2 3' : ''"/>
+      <line x1="380" x2="380" y1="200" :y2="200 - 8 - 16 * bend(380)" :stroke="cell(380)" :stroke-width="dead(380) ? 1 : 2" :stroke-dasharray="dead(380) ? '2 3' : ''"/>
+      <line x1="390" x2="390" y1="200" :y2="200 - 8 - 16 * bend(390)" :stroke="cell(390)" :stroke-width="dead(390) ? 1 : 2" :stroke-dasharray="dead(390) ? '2 3' : ''"/>
+      <line x1="400" x2="400" y1="200" :y2="200 - 8 - 16 * bend(400)" :stroke="cell(400)" :stroke-width="dead(400) ? 1 : 2" :stroke-dasharray="dead(400) ? '2 3' : ''"/>
+      <line x1="410" x2="410" y1="200" :y2="200 - 8 - 16 * bend(410)" :stroke="cell(410)" :stroke-width="dead(410) ? 1 : 2" :stroke-dasharray="dead(410) ? '2 3' : ''"/>
+      <line x1="420" x2="420" y1="200" :y2="200 - 8 - 16 * bend(420)" :stroke="cell(420)" :stroke-width="dead(420) ? 1 : 2" :stroke-dasharray="dead(420) ? '2 3' : ''"/>
+      <line x1="430" x2="430" y1="200" :y2="200 - 8 - 16 * bend(430)" :stroke="cell(430)" :stroke-width="dead(430) ? 1 : 2" :stroke-dasharray="dead(430) ? '2 3' : ''"/>
+      <line x1="440" x2="440" y1="200" :y2="200 - 8 - 16 * bend(440)" :stroke="cell(440)" :stroke-width="dead(440) ? 1 : 2" :stroke-dasharray="dead(440) ? '2 3' : ''"/>
+      <line x1="450" x2="450" y1="200" :y2="200 - 8 - 16 * bend(450)" :stroke="cell(450)" :stroke-width="dead(450) ? 1 : 2" :stroke-dasharray="dead(450) ? '2 3' : ''"/>
+      <line x1="460" x2="460" y1="200" :y2="200 - 8 - 16 * bend(460)" :stroke="cell(460)" :stroke-width="dead(460) ? 1 : 2" :stroke-dasharray="dead(460) ? '2 3' : ''"/>
+      <line x1="470" x2="470" y1="200" :y2="200 - 8 - 16 * bend(470)" :stroke="cell(470)" :stroke-width="dead(470) ? 1 : 2" :stroke-dasharray="dead(470) ? '2 3' : ''"/>
+      <line x1="480" x2="480" y1="200" :y2="200 - 8 - 16 * bend(480)" :stroke="cell(480)" :stroke-width="dead(480) ? 1 : 2" :stroke-dasharray="dead(480) ? '2 3' : ''"/>
+      <line x1="490" x2="490" y1="200" :y2="200 - 8 - 16 * bend(490)" :stroke="cell(490)" :stroke-width="dead(490) ? 1 : 2" :stroke-dasharray="dead(490) ? '2 3' : ''"/>
+      <line x1="500" x2="500" y1="200" :y2="200 - 8 - 16 * bend(500)" :stroke="cell(500)" :stroke-width="dead(500) ? 1 : 2" :stroke-dasharray="dead(500) ? '2 3' : ''"/>
+      <line x1="510" x2="510" y1="200" :y2="200 - 8 - 16 * bend(510)" :stroke="cell(510)" :stroke-width="dead(510) ? 1 : 2" :stroke-dasharray="dead(510) ? '2 3' : ''"/>
+      <line x1="520" x2="520" y1="200" :y2="200 - 8 - 16 * bend(520)" :stroke="cell(520)" :stroke-width="dead(520) ? 1 : 2" :stroke-dasharray="dead(520) ? '2 3' : ''"/>
+      <line x1="530" x2="530" y1="200" :y2="200 - 8 - 16 * bend(530)" :stroke="cell(530)" :stroke-width="dead(530) ? 1 : 2" :stroke-dasharray="dead(530) ? '2 3' : ''"/>
+      <line x1="540" x2="540" y1="200" :y2="200 - 8 - 16 * bend(540)" :stroke="cell(540)" :stroke-width="dead(540) ? 1 : 2" :stroke-dasharray="dead(540) ? '2 3' : ''"/>
+      <line x1="550" x2="550" y1="200" :y2="200 - 8 - 16 * bend(550)" :stroke="cell(550)" :stroke-width="dead(550) ? 1 : 2" :stroke-dasharray="dead(550) ? '2 3' : ''"/>
+      <line x1="560" x2="560" y1="200" :y2="200 - 8 - 16 * bend(560)" :stroke="cell(560)" :stroke-width="dead(560) ? 1 : 2" :stroke-dasharray="dead(560) ? '2 3' : ''"/>
+      <line x1="570" x2="570" y1="200" :y2="200 - 8 - 16 * bend(570)" :stroke="cell(570)" :stroke-width="dead(570) ? 1 : 2" :stroke-dasharray="dead(570) ? '2 3' : ''"/>
+      <line x1="580" x2="580" y1="200" :y2="200 - 8 - 16 * bend(580)" :stroke="cell(580)" :stroke-width="dead(580) ? 1 : 2" :stroke-dasharray="dead(580) ? '2 3' : ''"/>
+      <line x1="590" x2="590" y1="200" :y2="200 - 8 - 16 * bend(590)" :stroke="cell(590)" :stroke-width="dead(590) ? 1 : 2" :stroke-dasharray="dead(590) ? '2 3' : ''"/>
+      <line x1="600" x2="600" y1="200" :y2="200 - 8 - 16 * bend(600)" :stroke="cell(600)" :stroke-width="dead(600) ? 1 : 2" :stroke-dasharray="dead(600) ? '2 3' : ''"/>
+    </g>
+    <text x="172" y="198" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">hair cells</text>
+    <!-- pitch scale -->
+    <line x1="180" y1="210" x2="600" y2="210" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text :x="X(6)" y="224">8,000</text><text :x="X(5)" y="224">4,000</text><text :x="X(4)" y="224">2,000</text><text :x="X(3)" y="224">1,000</text><text :x="X(2)" y="224">500</text><text :x="X(1)" y="224">250</text><text :x="X(0)" y="224">125 Hz</text>
+    </g>
+    <path :d="'M' + X(6) + ' 240 L' + X(6) + ' 246 L' + X(4.2) + ' 246 L' + X(4.2) + ' 240'" fill="none" stroke="var(--color-warn)" stroke-width="1.25"/>
+    <text :x="(X(6) + X(4.2)) / 2" y="262" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)">consonants: quiet, high</text>
+    <path :d="'M' + X(3) + ' 240 L' + X(3) + ' 246 L' + X(0.5) + ' 246 L' + X(0.5) + ' 240'" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25"/>
+    <text :x="(X(3) + X(0.5)) / 2" y="262" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">vowels and engine drone: loud, low</text>
+    <!-- this pitch -->
+    <circle r="5" cy="210" fill="var(--color-brand)" :cx="x"/>
+    <text font-size="13" font-weight="600" text-anchor="middle" y="40" :x="clamp(x, 230, 560)" :fill="lost ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)'" x-text="fText + (lost ? ': not heard' : '')"></text>
+    <line :x1="x" :x2="x" y1="48" y2="98" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cfm-f">Pitch of the sound <output for="cfm-f" x-text="fText"></output></label>
+      <input type="range" id="cfm-f" min="0" max="6" step="0.1" x-model.number="lf">
+    </div>
+    <div class="widget-control">
+      <label for="cfm-noise" class="cursor-pointer"><span>Years of loud noise without protection</span>
+        <input type="checkbox" id="cfm-noise" x-model="noise" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="cfm-age" class="cursor-pointer"><span>Ageing as well (presbycusis)</span>
+        <input type="checkbox" id="cfm-age" x-model="age" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Pitch</dt><dd class="widget-value" x-text="fText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Sensed in the cochlea</dt><dd class="widget-value" x-text="place"></dd></div>
+    <div class="widget-readout" :class="heard[1]"><dt class="widget-label">Do you hear it?</dt><dd class="widget-value" x-text="heard[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('low-pitch')" :aria-pressed="active === 'low-pitch'">Low pitch</button>
+      <button type="button" @click="preset('consonant-at-4000')" :aria-pressed="active === 'consonant-at-4000'">4,000 Hz</button>
+      <button type="button" @click="preset('noise-damage-4000')" :aria-pressed="active === 'noise-damage-4000'">Noise damage</button>
+      <button type="button" @click="preset('vowel-still-heard')" :aria-pressed="active === 'vowel-still-heard'">A vowel</button>
+      <button type="button" @click="preset('older-pilot')" :aria-pressed="active === 'older-pilot'">Older pilot</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every pitch has its own place along the cochlea, high pitches near the entrance. Noise kills the hair cells there first, around 4,000 Hz, and they never grow back, so you lose the quiet, high consonants while the loud, low vowels still come through: you hear that someone spoke but not what they said. The width of each damaged band is illustrative.</p>
+  <details class="widget-try"><summary>Try it: after years of flying without a good headset, which part of a radio call goes first?</summary><p>Press Noise damage: the hair cells around 4,000 Hz are gone, where the consonants that separate "five" from "nine" live. Press A vowel: the low vowels are still heard, so the call sounds loud enough but the words blur.</p></details>
+  <details class="widget-try"><summary>Try it: why is an older pilot with noise damage worse off on the radio than either loss alone explains?</summary><p>Press Older pilot: ageing (presbycusis) takes the highest pitches as well, so the damaged band joins up with it and more of the consonant range is lost.</p></details>
+</div>

@@ -1,0 +1,119 @@
+<div class="widget" x-data="widget({
+  lat: 31.4, leg: false,
+  // orthographic globe centred on 25° S 120° E: x 165, y 168, radius 135. lat is degrees south.
+  o(la, lo) {
+    const r = Math.PI / 180, a = la * r, b = (lo - 120) * r, a0 = -25 * r;
+    return { x: 165 + 135 * Math.cos(a) * Math.sin(b), y: 168 - 135 * (Math.cos(a0) * Math.sin(a) - Math.sin(a0) * Math.cos(a) * Math.cos(b)), v: Math.sin(a0) * Math.sin(a) + Math.cos(a0) * Math.cos(a) * Math.cos(b) > 0 };
+  },
+  line(pts) { let d = '', pen = false; pts.forEach((p) => { if (p.v) { d += (pen ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1); pen = true } else pen = false }); return d },
+  get par() { const p = []; for (let lo = -60; lo <= 300; lo += 4) p.push(this.o(-this.lat, lo)); return this.line(p) },
+  get segLat() { const p = []; for (let k = 0; k <= 15; k++) p.push(this.o(-this.lat + k, 120)); return this.line(p) },
+  get segLon() { const p = []; for (let k = 0; k <= 15; k++) p.push(this.o(-this.lat, 120 + k)); return this.line(p) },
+  get dot() { return this.o(-this.lat, 120) },
+  get latEnd() { return this.o(-this.lat + 15, 120) },
+  get lonEnd() { return this.o(-this.lat, 135) },
+  get cosl() { return Math.cos(this.lat * Math.PI / 180) },
+  get latText() { return this.lat === 0 ? '0° (equator)' : this.fmt(this.lat, 1) + '° S' },
+  // the lesson's Perth Airport to Kalgoorlie leg: d.lat 69.5', d.long 330'
+  get ew() { return 330 * this.cosl },
+  get dist() { return Math.sqrt(69.5 * 69.5 + this.ew * this.ew) },
+  // leg triangle: 0.788 px per NM (330 NM = 260 px)
+  get kx() { return 350 + this.ew * 260 / 330 },
+  get caption() {
+    if (this.leg) return 'Perth to Kalgoorlie spans 330 minutes of longitude, but at about 31° S each one is only ' + this.fmt(this.cosl, 2) + ' NM, so the east–west distance is about ' + this.fmt(this.ew) + ' NM and the leg about ' + this.fmt(this.dist) + ' NM.';
+    if (this.lat < 1) return 'At the equator a minute of longitude is a nautical mile, the same as a minute of latitude. Move south and watch the parallel shrink.';
+    if (this.lat > 59 && this.lat < 61) return 'At 60° the parallel is half the length of the equator, so a minute of longitude is half a nautical mile; a minute of latitude is still one.';
+    return 'The meridians converge towards the pole, so the parallel at ' + this.latText + ' is shorter than the equator and each minute of longitude on it is ' + this.fmt(this.cosl, 2) + ' NM. A minute of latitude is still 1 NM.';
+  },
+  presets: {
+    'equator': { lat: 0, leg: false },
+    'perth': { lat: 32, leg: false },
+    'sixty-south': { lat: 60, leg: false },
+    'perth-to-kalgoorlie': { lat: 31.4, leg: true },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="lss-title" class="widget-stage">
+    <title id="lss-title">Left, a globe with its grid of meridians and parallels and the chosen parallel highlighted, with 15 degrees of latitude and 15 degrees of longitude marked from the same point. Right, one minute of latitude and one minute of longitude drawn to scale, and the Perth to Kalgoorlie leg as a right-angled triangle</title>
+    <rect x="0" y="0" width="640" height="330" fill="var(--color-surface)" rx="10"/>
+    <!-- globe -->
+    <circle cx="165" cy="168" r="135" fill="var(--color-sky-soft)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path d="M134.7 293.6L133.1 292.2L131.8 290.7L130.8 289.3L130.3 287.7L130.1 286.2L130.3 284.6L130.8 283.1L131.8 281.6L133.1 280.2L134.7 278.8L136.7 277.5L139.0 276.3L141.6 275.2L144.5 274.2L147.5 273.4L150.8 272.7L154.2 272.1L157.7 271.7L161.3 271.5L165.0 271.4L168.7 271.5L172.3 271.7L175.8 272.1L179.2 272.7L182.5 273.4L185.5 274.2L188.4 275.2L191.0 276.3L193.3 277.5L195.3 278.8L196.9 280.2L198.2 281.6L199.2 283.1L199.7 284.6L199.9 286.2L199.7 287.7L199.2 289.3L198.2 290.7L196.9 292.2L195.3 293.6L193.3 294.9L191.0 296.1L188.4 297.2L185.5 298.1L182.5 299.0L179.2 299.7L175.8 300.2L172.3 300.6L168.7 300.9L165.0 300.9L161.3 300.9L157.7 300.6L154.2 300.2L150.8 299.7L147.5 299.0L144.5 298.1L141.6 297.2L139.0 296.1L136.7 294.9L134.7 293.6M106.5 288.2L103.3 285.6L100.8 282.8L99.0 279.9L97.9 276.9L97.5 274.0L97.9 271.0L99.0 268.0L100.8 265.1L103.3 262.4L106.5 259.7L110.4 257.2L114.8 254.9L119.8 252.8L125.3 250.9L131.2 249.3L137.5 247.9L144.1 246.8L151.0 246.1L157.9 245.6L165.0 245.4L172.1 245.6L179.0 246.1L185.9 246.8L192.5 247.9L198.8 249.3L204.7 250.9L210.2 252.8L215.2 254.9L219.6 257.2L223.5 259.7L226.7 262.4L229.2 265.1L231.0 268.0L232.1 271.0L232.5 274.0L232.1 276.9L231.0 279.9L229.2 282.8L226.7 285.6L223.5 288.2L219.6 290.7L215.2 293.0L210.2 295.2M119.8 295.2L114.8 293.0L110.4 290.7L106.5 288.2M77.8 270.9L74.2 267.0L71.6 262.9L70.1 258.7L69.5 254.5L70.1 250.3L71.6 246.1L74.2 242.0L77.8 238.1L82.3 234.3L87.8 230.8L94.1 227.5L101.1 224.5L108.9 221.9L117.3 219.6L126.2 217.7L135.5 216.1L145.2 215.1L155.0 214.4L165.0 214.2L175.0 214.4L184.8 215.1L194.5 216.1L203.8 217.7L212.7 219.6L221.1 221.9L228.9 224.5L235.9 227.5L242.2 230.8L247.7 234.3L252.2 238.1L255.8 242.0L258.4 246.1L259.9 250.3L260.5 254.5L259.9 258.7L258.4 262.9L255.8 267.0L252.2 270.9M50.6 239.4L48.7 234.3L48.1 229.2L48.7 224.0L50.6 218.9L53.8 213.9L58.2 209.1L63.8 204.5L70.4 200.1L78.1 196.1L86.8 192.5L96.3 189.2L106.5 186.4L117.4 184.0L128.9 182.2L140.7 180.8L152.8 180.0L165.0 179.8L177.2 180.0L189.3 180.8L201.1 182.2L212.6 184.0L223.5 186.4L233.7 189.2L243.2 192.5L251.9 196.1L259.6 200.1L266.2 204.5L271.8 209.1L276.2 213.9L279.4 218.9L281.3 224.0L281.9 229.2L281.3 234.3L279.4 239.4M35.3 205.4L34.6 199.7L35.3 193.9L37.4 188.2L41.0 182.6L45.9 177.3L52.1 172.1L59.5 167.3L68.1 162.8L77.7 158.7L88.4 155.1L99.8 151.9L112.0 149.3L124.7 147.3L137.9 145.8L151.4 144.9L165.0 144.6L178.6 144.9L192.1 145.8L205.3 147.3L218.0 149.3L230.2 151.9L241.6 155.1L252.3 158.7L261.9 162.8L270.5 167.3L277.9 172.1L284.1 177.3L289.0 182.6L292.6 188.2L294.7 193.9L295.4 199.7L294.7 205.4M30.0 168.0L30.7 162.0L33.0 156.1L36.6 150.4L41.7 144.8L48.1 139.5L55.8 134.5L64.7 129.8L74.7 125.6L85.6 121.8L97.5 118.6L110.1 115.9L123.3 113.7L136.9 112.2L150.9 111.3L165.0 110.9L179.1 111.3L193.1 112.2L206.7 113.7L219.9 115.9L232.5 118.6L244.4 121.8L255.3 125.6L265.3 129.8L274.2 134.5L281.9 139.5L288.3 144.8L293.4 150.4L297.0 156.1L299.3 162.0L300.0 168.0M37.4 124.9L41.0 119.3L45.9 113.9L52.1 108.8L59.5 103.9L68.1 99.5L77.7 95.4L88.4 91.7L99.8 88.6L112.0 86.0L124.7 83.9L137.9 82.4L151.4 81.5L165.0 81.2L178.6 81.5L192.1 82.4L205.3 83.9L218.0 86.0L230.2 88.6L241.6 91.7L252.3 95.4L261.9 99.5L270.5 103.9L277.9 108.8L284.1 113.9L289.0 119.3L292.6 124.9M53.8 91.6L58.2 86.7L63.8 82.1L70.4 77.8L78.1 73.8L86.8 70.1L96.3 66.9L106.5 64.0L117.4 61.7L128.9 59.8L140.7 58.5L152.8 57.7L165.0 57.4L177.2 57.7L189.3 58.5L201.1 59.8L212.6 61.7L223.5 64.0L233.7 66.9L243.2 70.1L251.9 73.8L259.6 77.8L266.2 82.1L271.8 86.7L276.2 91.6M82.3 61.3L87.8 57.8L94.1 54.5L101.1 51.5L108.9 48.8L117.3 46.5L126.2 44.6L135.5 43.1L145.2 42.0L155.0 41.4L165.0 41.1L175.0 41.4L184.8 42.0L194.5 43.1L203.8 44.6L212.7 46.5L221.1 48.8L228.9 51.5L235.9 54.5L242.2 57.8L247.7 61.3M125.3 39.0L131.2 37.3L137.5 36.0L144.1 34.9L151.0 34.1L157.9 33.7L165.0 33.5L172.1 33.7L179.0 34.1L185.9 34.9L192.5 36.0L198.8 37.3L204.7 39.0M165.0 290.4L152.8 292.7L140.7 293.6L128.9 293.2L117.4 291.4L106.5 288.2L96.3 283.8L86.8 278.0M165.0 290.4L151.4 291.2L137.9 290.7L124.7 288.9L112.0 285.8L99.8 281.3L88.4 275.7L77.7 268.8L68.1 260.8L59.5 251.9L52.1 242.0M165.0 290.4L150.9 289.7L136.9 287.7L123.3 284.4L110.1 279.8L97.5 274.0L85.6 267.0L74.7 258.9L64.7 249.9L55.8 239.9L48.1 229.2L41.7 217.8L36.6 205.8L33.0 193.4L30.7 180.8L30.0 168.0M165.0 290.4L151.4 288.1L137.9 284.6L124.7 279.8L112.0 273.8L99.8 266.6L88.4 258.3L77.7 249.0L68.1 238.9L59.5 228.0L52.1 216.4L45.9 204.3L41.0 191.8L37.4 179.0L35.3 166.1L34.6 153.2L35.3 140.5L37.4 128.1L41.0 116.1L45.9 104.7M165.0 290.4L152.8 286.7L140.7 281.7L128.9 275.5L117.4 268.2L106.5 259.7L96.3 250.2L86.8 239.8L78.1 228.7L70.4 216.8L63.8 204.5L58.2 191.7L53.8 178.7L50.6 165.5L48.7 152.4L48.1 139.5L48.7 126.8L50.6 114.7L53.8 103.1L58.2 92.2L63.8 82.1L70.4 73.0L78.1 64.9M165.0 290.4L155.0 285.5L145.2 279.3L135.5 271.9L126.2 263.4L117.3 253.8L108.9 243.3L101.1 231.9L94.1 219.9L87.8 207.3L82.3 194.2L77.8 180.9L74.2 167.4L71.6 154.0L70.1 140.7L69.5 127.7L70.1 115.1L71.6 103.1L74.2 91.8L77.8 81.4L82.3 71.9L87.8 63.4L94.1 56.2L101.1 50.1L108.9 45.3M165.0 290.4L157.9 284.5L151.0 277.4L144.1 269.1L137.5 259.7L131.2 249.3L125.3 237.9L119.8 225.9L114.8 213.2L110.4 199.9L106.5 186.4L103.3 172.6L100.8 158.8L99.0 145.1L97.9 131.7L97.5 118.6L97.9 106.1L99.0 94.2L100.8 83.2L103.3 73.1L106.5 64.0L110.4 56.1L114.8 49.4L119.8 44.0L125.3 40.0L131.2 37.3M165.0 290.4L161.3 283.9L157.7 276.2L154.2 267.3L150.8 257.4L147.5 246.4L144.5 234.6L141.6 222.0L139.0 208.9L136.7 195.3L134.7 181.4L133.1 167.4L131.8 153.4L130.8 139.5L130.3 126.0L130.1 112.9L130.3 100.4L130.8 88.7L131.8 77.8L133.1 67.9L134.7 59.1L136.7 51.5L139.0 45.2L141.6 40.2L144.5 36.6L147.5 34.5M165.0 290.4L165.0 283.7L165.0 275.8L165.0 266.7L165.0 256.6L165.0 245.4L165.0 233.4L165.0 220.7L165.0 207.5L165.0 193.8L165.0 179.8L165.0 165.6L165.0 151.5L165.0 137.6L165.0 124.0L165.0 110.9L165.0 98.5L165.0 86.8L165.0 75.9L165.0 66.1L165.0 57.4L165.0 49.9L165.0 43.7L165.0 38.9L165.0 35.5L165.0 33.5M165.0 290.4L168.7 283.9L172.3 276.2L175.8 267.3L179.2 257.4L182.5 246.4L185.5 234.6L188.4 222.0L191.0 208.9L193.3 195.3L195.3 181.4L196.9 167.4L198.2 153.4L199.2 139.5L199.7 126.0L199.9 112.9L199.7 100.4L199.2 88.7L198.2 77.8L196.9 67.9L195.3 59.1L193.3 51.5L191.0 45.2L188.4 40.2L185.5 36.6L182.5 34.5M165.0 290.4L172.1 284.5L179.0 277.4L185.9 269.1L192.5 259.7L198.8 249.3L204.7 237.9L210.2 225.9L215.2 213.2L219.6 199.9L223.5 186.4L226.7 172.6L229.2 158.8L231.0 145.1L232.1 131.7L232.5 118.6L232.1 106.1L231.0 94.2L229.2 83.2L226.7 73.1L223.5 64.0L219.6 56.1L215.2 49.4L210.2 44.0L204.7 40.0L198.8 37.3M165.0 290.4L175.0 285.5L184.8 279.3L194.5 271.9L203.8 263.4L212.7 253.8L221.1 243.3L228.9 231.9L235.9 219.9L242.2 207.3L247.7 194.2L252.2 180.9L255.8 167.4L258.4 154.0L259.9 140.7L260.5 127.7L259.9 115.1L258.4 103.1L255.8 91.8L252.2 81.4L247.7 71.9L242.2 63.4L235.9 56.2L228.9 50.1L221.1 45.3M165.0 290.4L177.2 286.7L189.3 281.7L201.1 275.5L212.6 268.2L223.5 259.7L233.7 250.2L243.2 239.8L251.9 228.7L259.6 216.8L266.2 204.5L271.8 191.7L276.2 178.7L279.4 165.5L281.3 152.4L281.9 139.5L281.3 126.8L279.4 114.7L276.2 103.1L271.8 92.2L266.2 82.1L259.6 73.0L251.9 64.9M165.0 290.4L178.6 288.1L192.1 284.6L205.3 279.8L218.0 273.8L230.2 266.6L241.6 258.3L252.3 249.0L261.9 238.9L270.5 228.0L277.9 216.4L284.1 204.3L289.0 191.8L292.6 179.0L294.7 166.1L295.4 153.2L294.7 140.5L292.6 128.1L289.0 116.1L284.1 104.7M165.0 290.4L179.1 289.7L193.1 287.7L206.7 284.4L219.9 279.8L232.5 274.0L244.4 267.0L255.3 258.9L265.3 249.9L274.2 239.9L281.9 229.2L288.3 217.8L293.4 205.8L297.0 193.4L299.3 180.8L300.0 168.0M165.0 290.4L178.6 291.2L192.1 290.7L205.3 288.9L218.0 285.8L230.2 281.3L241.6 275.7L252.3 268.8L261.9 260.8L270.5 251.9L277.9 242.0M165.0 290.4L177.2 292.7L189.3 293.6L201.1 293.2L212.6 291.4L223.5 288.2L233.7 283.8L243.2 278.0M165.0 290.4L175.0 293.9L184.8 296.1L194.5 296.8L203.8 296.2L212.7 294.1M165.0 290.4L172.1 294.8L179.0 298.0L185.9 299.6L192.5 299.9M165.0 290.4L168.7 295.4L172.3 299.1L175.8 301.4L179.2 302.2M165.0 290.4L165.0 295.6L165.0 299.5L165.0 302.0L165.0 303.0M165.0 290.4L161.3 295.4L157.7 299.1L154.2 301.4L150.8 302.2M165.0 290.4L157.9 294.8L151.0 298.0L144.1 299.6L137.5 299.9M165.0 290.4L155.0 293.9L145.2 296.1L135.5 296.8L126.2 296.2L117.3 294.1" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+    <path d="M30.0 168.0L30.7 162.0L33.0 156.1L36.6 150.4L41.7 144.8L48.1 139.5L55.8 134.5L64.7 129.8L74.7 125.6L85.6 121.8L97.5 118.6L110.1 115.9L123.3 113.7L136.9 112.2L150.9 111.3L165.0 110.9L179.1 111.3L193.1 112.2L206.7 113.7L219.9 115.9L232.5 118.6L244.4 121.8L255.3 125.6L265.3 129.8L274.2 134.5L281.9 139.5L288.3 144.8L293.4 150.4L297.0 156.1L299.3 162.0L300.0 168.0" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="40" y="128" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">Equator</text>
+    <circle cx="165" cy="290.4" r="3" fill="var(--color-fg-muted)"/>
+    <text x="165" y="316" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">South Pole</text>
+    <!-- the chosen parallel -->
+    <path :d="par" fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/>
+    <!-- 15 degrees each way from the same point -->
+    <path :d="segLat" fill="none" stroke="var(--color-info)" stroke-width="5" stroke-linecap="round"/>
+    <path :d="segLon" fill="none" stroke="var(--color-brand)" stroke-width="5" stroke-linecap="round"/>
+    <circle r="4.5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" :cx="dot.x" :cy="dot.y"/>
+    <text font-size="12" text-anchor="end" fill="var(--color-info)" font-weight="600" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="(dot.x + latEnd.x) / 2 - 8" :y="(dot.y + latEnd.y) / 2 + 4">15° of latitude</text>
+    <text font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="(dot.x + lonEnd.x) / 2 + 6" :y="Math.max(dot.y, lonEnd.y) + 20">15° of longitude</text>
+    <text x="20" y="28" font-size="14" font-weight="600" fill="var(--color-fg)">Latitude <tspan class="num" x-text="latText"></tspan></text>
+
+    <!-- one minute of each, to scale -->
+    <text x="345" y="40" font-size="14" font-weight="600" fill="var(--color-fg)">One minute of arc, drawn to scale</text>
+    <text x="345" y="66" font-size="13" fill="var(--color-info)" font-weight="600">1′ of latitude, anywhere</text>
+    <rect x="345" y="74" width="260" height="16" rx="3" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25"/>
+    <text x="605" y="66" font-size="13" text-anchor="end" fill="var(--color-fg)" class="num">1 NM</text>
+    <text x="345" y="116" font-size="13" fill="var(--color-brand-fg)" font-weight="600">1′ of longitude at <tspan x-text="latText"></tspan></text>
+    <rect x="345" y="124" height="16" rx="3" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25" :width="Math.max(2, 260 * cosl)"/>
+    <text font-size="13" fill="var(--color-fg)" class="num" :x="Math.min(605, 345 + 260 * cosl + 6)" y="137" :text-anchor="cosl > 0.8 ? 'end' : 'start'" x-text="fmt(cosl, 2) + ' NM'" :display="(cosl <= 0.8) ? 'inline' : 'none'"></text>
+    <text x="605" y="116" font-size="13" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(cosl, 2) + ' NM'" :display="(cosl > 0.8) ? 'inline' : 'none'"></text>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="345" y1="146" x2="345" y2="152"/><line x1="475" y1="146" x2="475" y2="152"/><line x1="605" y1="146" x2="605" y2="152"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="345" y="165">0</text><text x="475" y="165">0.5</text><text x="605" y="165">1 NM</text>
+    </g>
+
+    <!-- the Perth to Kalgoorlie leg -->
+    <g :display="(leg) ? 'inline' : 'none'">
+      <text x="345" y="196" font-size="14" font-weight="600" fill="var(--color-fg)">Perth Airport to Kalgoorlie</text>
+      <line x1="350" y1="300" y2="300" :x2="kx" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round"/>
+      <line y1="300" y2="245" :x1="kx" :x2="kx" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="350" y1="300" y2="245" :x2="kx" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="350" y1="316" x2="610" y2="316" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="4 3"/>
+      <circle cx="350" cy="300" r="4" fill="var(--color-fg)"/>
+      <circle r="4" fill="var(--color-fg)" :cx="kx" cy="245"/>
+      <text x="350" y="290" font-size="12" fill="var(--color-fg-muted)">Perth</text>
+      <text y="237" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" :x="kx + 4">Kalgoorlie</text>
+      <text font-size="12" text-anchor="middle" fill="var(--color-fg)" class="num" :x="(350 + kx) / 2 - 10" y="262" x-text="fmt(dist) + ' NM'"></text>
+      <text font-size="12" fill="var(--color-info)" class="num" :x="kx + 8" y="278" x-text="'69.5'"></text>
+      <text font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" class="num" :x="(350 + kx) / 2" y="312" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-text="'330′ × ' + fmt(cosl, 2) + ' = ' + fmt(ew) + ' NM'"></text>
+      <text x="610" y="328" font-size="11" text-anchor="end" fill="var(--color-bad)">330′ misread as 330 NM</text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="lss-lat">Latitude <output for="lss-lat" x-text="latText"></output></label>
+      <input type="range" id="lss-lat" min="0" max="80" step="0.1" x-model.number="lat">
+    </div>
+    <div class="widget-control">
+      <label for="lss-leg" class="cursor-pointer"><span>Show the lesson's Perth to Kalgoorlie leg</span>
+        <input type="checkbox" id="lss-leg" x-model="leg" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">1′ of latitude</dt><dd class="widget-value">1 NM, everywhere</dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">1′ of longitude here</dt><dd class="widget-value" x-text="fmt(cosl, 2) + ' NM (cos ' + fmt(lat, 1) + '°)'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">330′ of longitude here</dt><dd class="widget-value" x-text="fmt(ew) + ' NM' + (cosl < 0.999 ? ', not 330' : ' (only at the equator)')"></dd></div>
+    <div class="widget-readout ok" x-show="leg"><dt class="widget-label">Leg by Pythagoras</dt><dd class="widget-value" x-text="'√(69.5² + ' + fmt(ew) + '²) ≈ ' + fmt(dist) + ' NM'"></dd></div>
+    <div class="widget-readout bad" x-show="leg"><dt class="widget-label">330′ of longitude read as NM</dt><dd class="widget-value"><span x-text="'330 NM, about ' + fmt(Math.round((330 - dist) / 10) * 10) + ' NM too far'"></span><span class="widget-flag bad">wrong scale</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('equator')" :aria-pressed="active === 'equator'">Equator</button>
+      <button type="button" @click="preset('perth')" :aria-pressed="active === 'perth'">Perth, 32° S</button>
+      <button type="button" @click="preset('sixty-south')" :aria-pressed="active === 'sixty-south'">60° S</button>
+      <button type="button" @click="preset('perth-to-kalgoorlie')" :aria-pressed="active === 'perth-to-kalgoorlie'">Perth to Kalgoorlie</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every meridian runs pole to pole, so a minute of latitude is a nautical mile wherever you measure it. The meridians close in towards the pole, so a minute of longitude shrinks with the cosine of the latitude: a nautical mile at the equator, about 0.85 NM at Perth, half a mile at 60°. Measure distance on the latitude scale, never along a parallel.</p>
+  <details class="widget-try"><summary>Try it: Perth Airport is at 31 56.5S 115 58.0E and Kalgoorlie at 30 47S 121 28E. How far apart are they?</summary><p>Difference of latitude 1° 09.5′ = 69.5 NM north. Difference of longitude 5° 30′ = 330′, but at about 31.4° S each minute is cos 31.4° ≈ 0.85 NM, so about 282 NM east. √(69.5² + 282²) ≈ 290 NM. Press Perth to Kalgoorlie to see it.</p></details>
+  <details class="widget-try"><summary>Try it: at what latitude is a minute of longitude exactly half a nautical mile?</summary><p>60°, because cos 60° = 0.5. Press 60° S: the brand bar is half the length of the minute of latitude.</p></details>
+</div>

@@ -1,0 +1,364 @@
+<div class="widget" x-data="widget({
+  alt: 9500, cls: 'D', aero: false, dist: 350, water: false, ext: false, remote: true,
+  // every rule from POPC 2.7.2 as the lesson states it (verify the current Part 91 MOS and AIP)
+  get controlled() { return this.cls !== 'G' },
+  get radio() { return this.controlled || this.aero || this.alt > 5000 },
+  get radioWhy() {
+    const p = [];
+    if (this.alt > 5000) p.push(this.fmt(this.alt) + ' > 5,000 ft');
+    if (this.controlled) p.push('Class ' + this.cls + ' controlled');
+    if (this.aero) p.push('aerodrome rule');
+    return p.join(' · ');
+  },
+  get xpdrCls() { return ['A', 'C', 'E'].includes(this.cls) },
+  get xpdr() { return this.xpdrCls || this.alt > 10000 },
+  get xpdrWhy() {
+    const p = [];
+    if (this.xpdrCls) p.push('Class ' + this.cls);
+    if (this.alt > 10000) p.push(this.fmt(this.alt) + ' > 10,000 ft');
+    return p.join(' · ');
+  },
+  get elt() { return this.dist > 50 },
+  get wet() { return this.water || this.ext },
+  get oxy() { return this.alt > 10000 },
+  get count() { return 9 + [this.radio, this.xpdr, this.elt, this.wet, this.ext, this.remote, this.oxy].filter(Boolean).length },
+  get items() {
+    const A = (w) => ({ k: 'ok', w });
+    const on = (b, w, off, offK) => (b ? { k: 'brand', w } : { k: offK || 'off', w: off });
+    return {
+      asi: A('always, for day VFR'), compass: A('always, for day VFR'), engine: A('always, for day VFR'),
+      radio: on(this.radio, this.radioWhy, 'Class G, at or below 5,000 ft'),
+      xpdr: on(this.xpdr, this.xpdrWhy, 'Class ' + this.cls + ', at or below 10,000 ft'),
+      adsb: { k: 'note', w: 'where the rules require it' },
+      charts: A('always: current editions'),
+      elt: on(this.elt, this.dist + ' nm > 50 nm from departure', this.dist + ' nm: within 50 nm of departure'),
+      firstaid: A('always'),
+      fire: { k: 'warn', w: 'above a seat count: check the MOS' },
+      jackets: on(this.wet, 'over water beyond gliding distance', 'no water beyond gliding distance'),
+      rafts: on(this.ext, 'extended over-water flight', this.wet ? 'extended? check the MOS distance' : 'no extended over-water flight', this.wet ? 'warn' : 'off'),
+      survival: on(this.remote, 'designated remote area', 'no designated remote area'),
+      oxygen: on(this.oxy, 'above 10,000 ft beyond the time limit', 'at or below 10,000 ft'),
+    };
+  },
+  R(id) {
+    const it = this.items[id], k = it.k, on = k === 'ok' || k === 'brand';
+    const c = { ok: 'ok', brand: 'brand', warn: 'warn', note: 'line-strong', off: 'line' }[k];
+    return {
+      k, on, why: it.w,
+      fill: on || k === 'warn' ? 'var(--color-' + k + '-soft)' : 'var(--color-surface)',
+      stroke: 'var(--color-' + c + ')',
+      dash: k === 'note' ? '4 3' : 'none',
+      icon: k === 'off' ? 'var(--color-line-strong)' : k === 'note' ? 'var(--color-fg-muted)' : 'var(--color-' + c + ')',
+      name: k === 'off' ? 'var(--color-fg-faint)' : 'var(--color-fg)',
+      txt: { ok: 'var(--color-ok-fg)', brand: 'var(--color-brand-fg)', warn: 'var(--color-warn-fg)', note: 'var(--color-fg-muted)', off: 'var(--color-fg-faint)' }[k],
+    };
+  },
+  // scene: distance on a square-root scale (stretched near the departure), 0-400 nm across x 90..610; height 0.016 px/ft
+  X(d) { return 90 + Math.sqrt(this.clamp(d, 0, 400) / 400) * 520 },
+  Y(a) { return 232 - a * 0.016 },
+  get xd() { return this.X(this.dist) },
+  get route() { const d = this.dist, y = this.Y(this.alt); return this.path([[this.X(0), 232], [this.X(d * 0.08), y], [this.X(d * 0.92), y], [this.X(d), 232]]) },
+  get px() { return Math.max(130, this.X(this.dist * 0.4)) },
+  get py() { return this.Y(this.alt) },
+  get altLeft() { return this.px > 250 },
+  get wb() { const a = this.X(this.dist * 0.2), b = this.X(this.dist * (this.remote ? 0.55 : 0.8)); return { a, b, w: b - a } },
+  get rb() { const a = this.X(this.dist * (this.wet ? 0.55 : 0.3)), b = this.xd; return { a, b, w: b - a } },
+  get caption() {
+    const add = [], not = [];
+    (this.radio ? add : not).push(this.radio ? 'VHF radio (' + this.radioWhy + ')' : 'VHF radio');
+    (this.xpdr ? add : not).push(this.xpdr ? 'transponder (' + this.xpdrWhy + ')' : 'transponder');
+    (this.elt ? add : not).push(this.elt ? 'ELT (' + this.dist + ' nm > 50 nm)' : 'ELT');
+    (this.wet ? add : not).push(this.wet ? 'life jackets (water beyond gliding distance)' : 'life jackets');
+    if (this.ext) add.push('life rafts and signalling equipment (extended over water)');
+    (this.remote ? add : not).push(this.remote ? 'survival equipment (remote area)' : 'survival equipment');
+    (this.oxy ? add : not).push(this.oxy ? 'oxygen (above 10,000 ft beyond the time limit)' : 'oxygen');
+    let s = add.length ? 'The scenario adds ' + add.join(', ') + '.' : 'The scenario adds nothing to the day VFR list.';
+    if (not.length) s += ' Not required: ' + not.join(', ') + '.';
+    if (this.wet && !this.ext) s += ' Rafts depend on the extended over-water distance set in the MOS: check it.';
+    return s;
+  },
+  presets: {
+    'meekatharra': { alt: 9500, cls: 'D', aero: false, dist: 350, water: false, ext: false, remote: true },
+    'meekatharra-11500': { alt: 11500, cls: 'D', aero: false, dist: 350, water: false, ext: false, remote: true },
+    'rottnest': { alt: 1500, cls: 'D', aero: false, dist: 20, water: true, ext: false, remote: false },
+    'kalbarri': { alt: 6500, cls: 'D', aero: false, dist: 280, water: true, ext: false, remote: false },
+  },
+})">
+  <svg viewBox="0 0 640 640" role="img" aria-labelledby="feb-title" class="widget-stage">
+    <title id="feb-title">A side view of the flight, from the departure aerodrome on the left out to the furthest point on the right: cruise height against lines at 5,000 and 10,000 ft, a 50 nm marker for the ELT, the ground below with any stretch of water or designated remote area; under it the equipment list in four groups, each item lit when the flight needs it, with the word in the scenario that adds it</title>
+    <rect x="0" y="0" width="640" height="640" fill="var(--color-surface-2)" rx="10"/>
+
+    <!-- height thresholds -->
+    <line x1="90" x2="620" :y1="Y(10000)" :y2="Y(10000)" stroke-width="1.25" stroke-dasharray="4 3" :stroke="alt > 10000 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+    <line x1="90" x2="620" :y1="Y(5000)" :y2="Y(5000)" stroke-width="1.25" stroke-dasharray="4 3" :stroke="alt > 5000 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+    <text x="84" font-size="12" text-anchor="end" class="num" fill="var(--color-fg-muted)" :y="Y(10000) + 4">10,000 ft</text>
+    <text x="84" font-size="12" text-anchor="end" class="num" fill="var(--color-fg-muted)" :y="Y(5000) + 4">5,000 ft</text>
+    <text x="616" font-size="12" text-anchor="end" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="Y(10000) - 7" :fill="alt > 10000 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">transponder, oxygen above</text>
+    <text x="616" font-size="12" text-anchor="end" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="Y(5000) - 7" :fill="alt > 5000 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">VHF radio above</text>
+
+    <!-- 50 nm from the departure aerodrome -->
+    <line :x1="X(50)" :x2="X(50)" y1="28" y2="250" stroke-width="1.25" stroke-dasharray="4 3" :stroke="elt ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+    <text y="22" font-size="12" text-anchor="middle" :x="X(50)" :fill="elt ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'"><tspan class="num">50 nm</tspan>: ELT beyond</text>
+    <text x="16" y="22" font-size="12" fill="var(--color-fg-muted)" x-text="'Airspace: Class ' + cls + (aero ? ' · radio aerodrome' : '')"></text>
+
+    <!-- ground: land, water, remote area -->
+    <rect x="90" y="232" width="530" height="18" fill="var(--color-line)"/>
+    <g x-show="wet && dist > 0">
+      <rect y="232" height="18" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1" :x="wb.a" :width="wb.w"/>
+      <text y="245" font-size="11" text-anchor="middle" fill="var(--color-sky-fg)" :x="(wb.a + wb.b) / 2" x-text="wb.w > 150 ? (ext ? 'extended over water' : 'water beyond glide') : 'water'"></text>
+    </g>
+    <g x-show="remote && dist > 0">
+      <rect y="232" height="18" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1" :x="rb.a" :width="rb.w"/>
+      <text y="245" font-size="11" text-anchor="middle" fill="var(--color-warn-fg)" :x="(rb.a + rb.b) / 2" x-text="rb.w > 150 ? 'designated remote area' : 'remote'"></text>
+    </g>
+    <line x1="90" y1="232" x2="620" y2="232" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+
+    <!-- distance axis (square-root scale) -->
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="90" y1="250" x2="90" y2="255"/><line :x1="X(20)" :x2="X(20)" y1="250" y2="255"/><line :x1="X(50)" :x2="X(50)" y1="250" y2="255"/>
+      <line :x1="X(100)" :x2="X(100)" y1="250" y2="255"/><line :x1="X(200)" :x2="X(200)" y1="250" y2="255"/>
+      <line :x1="X(300)" :x2="X(300)" y1="250" y2="255"/><line :x1="X(400)" :x2="X(400)" y1="250" y2="255"/>
+    </g>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="90" y="268">0</text><text y="268" :x="X(20)">20</text><text y="268" :x="X(50)">50</text><text y="268" :x="X(100)">100</text>
+      <text y="268" :x="X(200)">200</text><text y="268" :x="X(300)">300</text><text y="268" :x="X(400)">400</text>
+    </g>
+    <text x="355" y="284" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">distance from the departure aerodrome, nm (scale stretched near the start)</text>
+
+    <!-- flight profile, aerodromes, aeroplane -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round" :d="route" x-show="dist > 0"/>
+    <circle cx="90" cy="232" r="4.5" fill="var(--color-fg)"/>
+    <text x="96" y="224" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-show="xd > 230">departure</text>
+    <circle cy="232" r="4.5" fill="var(--color-brand)" :cx="xd" x-show="dist > 0"/>
+    <text y="224" font-size="12" font-weight="600" class="num" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="xd > 560 ? xd - 8 : xd + 8" :text-anchor="xd > 560 ? 'end' : 'start'" x-show="dist > 0" x-text="dist + ' nm'"></text>
+    <!-- plane: python -m tools.diagrams.plane side, scale 0.5, moved to the cruise -->
+    <g :transform="'translate(' + px + ' ' + py + ')'">
+      <g transform="translate(0 0) rotate(0) scale(0.5)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="13" font-weight="600" class="num" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="alt < 3000 ? px - 10 : altLeft ? px - 42 : px + 20" :y="alt < 3000 ? py - 14 : py + 5" :text-anchor="alt < 3000 ? 'middle' : altLeft ? 'end' : 'start'" x-text="fmt(alt) + ' ft'"></text>
+
+    <line x1="16" y1="294" x2="624" y2="294" stroke="var(--color-line)" stroke-width="1"/>
+
+    <!-- the equipment list -->
+    <text x="16" y="314" font-size="13" font-weight="700" fill="var(--color-fg-muted)">Normal: day VFR instruments</text>
+    <g>
+      <rect x="16" y="322" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('asi').fill" :stroke="R('asi').stroke" :stroke-dasharray="R('asi').dash"/>
+      <circle cx="32" cy="339" r="7" stroke-width="1.5" :fill="R('asi').on ? R('asi').stroke : 'none'" :stroke="R('asi').on ? R('asi').stroke : R('asi').icon"/>
+      <path d="M28.5 339.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('asi').on"/>
+      <line x1="29" y1="339" x2="35" y2="339" stroke-width="1.5" stroke-linecap="round" :stroke="R('asi').icon" x-show="R('asi').k === 'off'"/>
+      <text x="32" y="343" font-size="11" font-weight="700" text-anchor="middle" :fill="R('asi').icon" x-show="R('asi').k === 'warn' || R('asi').k === 'note'">?</text>
+      <text x="47" y="336" font-size="13" font-weight="600" :fill="R('asi').name">Airspeed indicator, altimeter</text>
+      <text x="47" y="350" font-size="12" :fill="R('asi').txt" x-text="R('asi').why"></text>
+    </g>
+    <g>
+      <rect x="16" y="360" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('compass').fill" :stroke="R('compass').stroke" :stroke-dasharray="R('compass').dash"/>
+      <circle cx="32" cy="377" r="7" stroke-width="1.5" :fill="R('compass').on ? R('compass').stroke : 'none'" :stroke="R('compass').on ? R('compass').stroke : R('compass').icon"/>
+      <path d="M28.5 377.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('compass').on"/>
+      <line x1="29" y1="377" x2="35" y2="377" stroke-width="1.5" stroke-linecap="round" :stroke="R('compass').icon" x-show="R('compass').k === 'off'"/>
+      <text x="32" y="381" font-size="11" font-weight="700" text-anchor="middle" :fill="R('compass').icon" x-show="R('compass').k === 'warn' || R('compass').k === 'note'">?</text>
+      <text x="47" y="374" font-size="13" font-weight="600" :fill="R('compass').name">Magnetic compass, clock (h, min, s)</text>
+      <text x="47" y="388" font-size="12" :fill="R('compass').txt" x-text="R('compass').why"></text>
+    </g>
+    <g>
+      <rect x="16" y="398" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('engine').fill" :stroke="R('engine').stroke" :stroke-dasharray="R('engine').dash"/>
+      <circle cx="32" cy="415" r="7" stroke-width="1.5" :fill="R('engine').on ? R('engine').stroke : 'none'" :stroke="R('engine').on ? R('engine').stroke : R('engine').icon"/>
+      <path d="M28.5 415.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('engine').on"/>
+      <line x1="29" y1="415" x2="35" y2="415" stroke-width="1.5" stroke-linecap="round" :stroke="R('engine').icon" x-show="R('engine').k === 'off'"/>
+      <text x="32" y="419" font-size="11" font-weight="700" text-anchor="middle" :fill="R('engine').icon" x-show="R('engine').k === 'warn' || R('engine').k === 'note'">?</text>
+      <text x="47" y="412" font-size="13" font-weight="600" :fill="R('engine').name">Engine instruments, fuel quantity</text>
+      <text x="47" y="426" font-size="12" :fill="R('engine').txt" x-text="R('engine').why"></text>
+    </g>
+    <text x="16" y="450" font-size="13" font-weight="700" fill="var(--color-fg-muted)">Communication</text>
+    <g>
+      <rect x="16" y="458" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('radio').fill" :stroke="R('radio').stroke" :stroke-dasharray="R('radio').dash"/>
+      <circle cx="32" cy="475" r="7" stroke-width="1.5" :fill="R('radio').on ? R('radio').stroke : 'none'" :stroke="R('radio').on ? R('radio').stroke : R('radio').icon"/>
+      <path d="M28.5 475.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('radio').on"/>
+      <line x1="29" y1="475" x2="35" y2="475" stroke-width="1.5" stroke-linecap="round" :stroke="R('radio').icon" x-show="R('radio').k === 'off'"/>
+      <text x="32" y="479" font-size="11" font-weight="700" text-anchor="middle" :fill="R('radio').icon" x-show="R('radio').k === 'warn' || R('radio').k === 'note'">?</text>
+      <text x="47" y="472" font-size="13" font-weight="600" :fill="R('radio').name">VHF radio</text>
+      <text x="47" y="486" font-size="12" :fill="R('radio').txt" x-text="R('radio').why"></text>
+    </g>
+    <g>
+      <rect x="16" y="496" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('xpdr').fill" :stroke="R('xpdr').stroke" :stroke-dasharray="R('xpdr').dash"/>
+      <circle cx="32" cy="513" r="7" stroke-width="1.5" :fill="R('xpdr').on ? R('xpdr').stroke : 'none'" :stroke="R('xpdr').on ? R('xpdr').stroke : R('xpdr').icon"/>
+      <path d="M28.5 513.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('xpdr').on"/>
+      <line x1="29" y1="513" x2="35" y2="513" stroke-width="1.5" stroke-linecap="round" :stroke="R('xpdr').icon" x-show="R('xpdr').k === 'off'"/>
+      <text x="32" y="517" font-size="11" font-weight="700" text-anchor="middle" :fill="R('xpdr').icon" x-show="R('xpdr').k === 'warn' || R('xpdr').k === 'note'">?</text>
+      <text x="47" y="510" font-size="13" font-weight="600" :fill="R('xpdr').name">Transponder with altitude encoding</text>
+      <text x="47" y="524" font-size="12" :fill="R('xpdr').txt" x-text="R('xpdr').why"></text>
+    </g>
+    <g>
+      <rect x="16" y="534" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('adsb').fill" :stroke="R('adsb').stroke" :stroke-dasharray="R('adsb').dash"/>
+      <circle cx="32" cy="551" r="7" stroke-width="1.5" :fill="R('adsb').on ? R('adsb').stroke : 'none'" :stroke="R('adsb').on ? R('adsb').stroke : R('adsb').icon"/>
+      <path d="M28.5 551.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('adsb').on"/>
+      <line x1="29" y1="551" x2="35" y2="551" stroke-width="1.5" stroke-linecap="round" :stroke="R('adsb').icon" x-show="R('adsb').k === 'off'"/>
+      <text x="32" y="555" font-size="11" font-weight="700" text-anchor="middle" :fill="R('adsb').icon" x-show="R('adsb').k === 'warn' || R('adsb').k === 'note'">?</text>
+      <text x="47" y="548" font-size="13" font-weight="600" :fill="R('adsb').name">ADS-B transmitter</text>
+      <text x="47" y="562" font-size="12" :fill="R('adsb').txt" x-text="R('adsb').why"></text>
+    </g>
+    <text x="16" y="586" font-size="13" font-weight="700" fill="var(--color-fg-muted)">Navigation</text>
+    <g>
+      <rect x="16" y="594" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('charts').fill" :stroke="R('charts').stroke" :stroke-dasharray="R('charts').dash"/>
+      <circle cx="32" cy="611" r="7" stroke-width="1.5" :fill="R('charts').on ? R('charts').stroke : 'none'" :stroke="R('charts').on ? R('charts').stroke : R('charts').icon"/>
+      <path d="M28.5 611.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('charts').on"/>
+      <line x1="29" y1="611" x2="35" y2="611" stroke-width="1.5" stroke-linecap="round" :stroke="R('charts').icon" x-show="R('charts').k === 'off'"/>
+      <text x="32" y="615" font-size="11" font-weight="700" text-anchor="middle" :fill="R('charts').icon" x-show="R('charts').k === 'warn' || R('charts').k === 'note'">?</text>
+      <text x="47" y="608" font-size="13" font-weight="600" :fill="R('charts').name">Charts for the whole route, ERSA</text>
+      <text x="47" y="622" font-size="12" :fill="R('charts').txt" x-text="R('charts').why"></text>
+    </g>
+    <text x="324" y="314" font-size="13" font-weight="700" fill="var(--color-fg-muted)">Emergency</text>
+    <g>
+      <rect x="324" y="322" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('elt').fill" :stroke="R('elt').stroke" :stroke-dasharray="R('elt').dash"/>
+      <circle cx="340" cy="339" r="7" stroke-width="1.5" :fill="R('elt').on ? R('elt').stroke : 'none'" :stroke="R('elt').on ? R('elt').stroke : R('elt').icon"/>
+      <path d="M336.5 339.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('elt').on"/>
+      <line x1="337" y1="339" x2="343" y2="339" stroke-width="1.5" stroke-linecap="round" :stroke="R('elt').icon" x-show="R('elt').k === 'off'"/>
+      <text x="340" y="343" font-size="11" font-weight="700" text-anchor="middle" :fill="R('elt').icon" x-show="R('elt').k === 'warn' || R('elt').k === 'note'">?</text>
+      <text x="355" y="336" font-size="13" font-weight="600" :fill="R('elt').name">ELT (locator transmitter)</text>
+      <text x="355" y="350" font-size="12" :fill="R('elt').txt" x-text="R('elt').why"></text>
+    </g>
+    <g>
+      <rect x="324" y="360" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('firstaid').fill" :stroke="R('firstaid').stroke" :stroke-dasharray="R('firstaid').dash"/>
+      <circle cx="340" cy="377" r="7" stroke-width="1.5" :fill="R('firstaid').on ? R('firstaid').stroke : 'none'" :stroke="R('firstaid').on ? R('firstaid').stroke : R('firstaid').icon"/>
+      <path d="M336.5 377.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('firstaid').on"/>
+      <line x1="337" y1="377" x2="343" y2="377" stroke-width="1.5" stroke-linecap="round" :stroke="R('firstaid').icon" x-show="R('firstaid').k === 'off'"/>
+      <text x="340" y="381" font-size="11" font-weight="700" text-anchor="middle" :fill="R('firstaid').icon" x-show="R('firstaid').k === 'warn' || R('firstaid').k === 'note'">?</text>
+      <text x="355" y="374" font-size="13" font-weight="600" :fill="R('firstaid').name">First aid kit</text>
+      <text x="355" y="388" font-size="12" :fill="R('firstaid').txt" x-text="R('firstaid').why"></text>
+    </g>
+    <g>
+      <rect x="324" y="398" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('fire').fill" :stroke="R('fire').stroke" :stroke-dasharray="R('fire').dash"/>
+      <circle cx="340" cy="415" r="7" stroke-width="1.5" :fill="R('fire').on ? R('fire').stroke : 'none'" :stroke="R('fire').on ? R('fire').stroke : R('fire').icon"/>
+      <path d="M336.5 415.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('fire').on"/>
+      <line x1="337" y1="415" x2="343" y2="415" stroke-width="1.5" stroke-linecap="round" :stroke="R('fire').icon" x-show="R('fire').k === 'off'"/>
+      <text x="340" y="419" font-size="11" font-weight="700" text-anchor="middle" :fill="R('fire').icon" x-show="R('fire').k === 'warn' || R('fire').k === 'note'">?</text>
+      <text x="355" y="412" font-size="13" font-weight="600" :fill="R('fire').name">Fire extinguisher</text>
+      <text x="355" y="426" font-size="12" :fill="R('fire').txt" x-text="R('fire').why"></text>
+    </g>
+    <g>
+      <rect x="324" y="436" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('jackets').fill" :stroke="R('jackets').stroke" :stroke-dasharray="R('jackets').dash"/>
+      <circle cx="340" cy="453" r="7" stroke-width="1.5" :fill="R('jackets').on ? R('jackets').stroke : 'none'" :stroke="R('jackets').on ? R('jackets').stroke : R('jackets').icon"/>
+      <path d="M336.5 453.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('jackets').on"/>
+      <line x1="337" y1="453" x2="343" y2="453" stroke-width="1.5" stroke-linecap="round" :stroke="R('jackets').icon" x-show="R('jackets').k === 'off'"/>
+      <text x="340" y="457" font-size="11" font-weight="700" text-anchor="middle" :fill="R('jackets').icon" x-show="R('jackets').k === 'warn' || R('jackets').k === 'note'">?</text>
+      <text x="355" y="450" font-size="13" font-weight="600" :fill="R('jackets').name">Life jackets</text>
+      <text x="355" y="464" font-size="12" :fill="R('jackets').txt" x-text="R('jackets').why"></text>
+    </g>
+    <g>
+      <rect x="324" y="474" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('rafts').fill" :stroke="R('rafts').stroke" :stroke-dasharray="R('rafts').dash"/>
+      <circle cx="340" cy="491" r="7" stroke-width="1.5" :fill="R('rafts').on ? R('rafts').stroke : 'none'" :stroke="R('rafts').on ? R('rafts').stroke : R('rafts').icon"/>
+      <path d="M336.5 491.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('rafts').on"/>
+      <line x1="337" y1="491" x2="343" y2="491" stroke-width="1.5" stroke-linecap="round" :stroke="R('rafts').icon" x-show="R('rafts').k === 'off'"/>
+      <text x="340" y="495" font-size="11" font-weight="700" text-anchor="middle" :fill="R('rafts').icon" x-show="R('rafts').k === 'warn' || R('rafts').k === 'note'">?</text>
+      <text x="355" y="488" font-size="13" font-weight="600" :fill="R('rafts').name">Life rafts, signalling equipment</text>
+      <text x="355" y="502" font-size="12" :fill="R('rafts').txt" x-text="R('rafts').why"></text>
+    </g>
+    <g>
+      <rect x="324" y="512" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('survival').fill" :stroke="R('survival').stroke" :stroke-dasharray="R('survival').dash"/>
+      <circle cx="340" cy="529" r="7" stroke-width="1.5" :fill="R('survival').on ? R('survival').stroke : 'none'" :stroke="R('survival').on ? R('survival').stroke : R('survival').icon"/>
+      <path d="M336.5 529.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('survival').on"/>
+      <line x1="337" y1="529" x2="343" y2="529" stroke-width="1.5" stroke-linecap="round" :stroke="R('survival').icon" x-show="R('survival').k === 'off'"/>
+      <text x="340" y="533" font-size="11" font-weight="700" text-anchor="middle" :fill="R('survival').icon" x-show="R('survival').k === 'warn' || R('survival').k === 'note'">?</text>
+      <text x="355" y="526" font-size="13" font-weight="600" :fill="R('survival').name">Survival equipment</text>
+      <text x="355" y="540" font-size="12" :fill="R('survival').txt" x-text="R('survival').why"></text>
+    </g>
+    <g>
+      <rect x="324" y="550" width="300" height="34" rx="7" stroke-width="1.25" :fill="R('oxygen').fill" :stroke="R('oxygen').stroke" :stroke-dasharray="R('oxygen').dash"/>
+      <circle cx="340" cy="567" r="7" stroke-width="1.5" :fill="R('oxygen').on ? R('oxygen').stroke : 'none'" :stroke="R('oxygen').on ? R('oxygen').stroke : R('oxygen').icon"/>
+      <path d="M336.5 567.2 l2.4 2.5 l4.6 -5" fill="none" stroke="var(--color-surface)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" x-show="R('oxygen').on"/>
+      <line x1="337" y1="567" x2="343" y2="567" stroke-width="1.5" stroke-linecap="round" :stroke="R('oxygen').icon" x-show="R('oxygen').k === 'off'"/>
+      <text x="340" y="571" font-size="11" font-weight="700" text-anchor="middle" :fill="R('oxygen').icon" x-show="R('oxygen').k === 'warn' || R('oxygen').k === 'note'">?</text>
+      <text x="355" y="564" font-size="13" font-weight="600" :fill="R('oxygen').name">Oxygen</text>
+      <text x="355" y="578" font-size="12" :fill="R('oxygen').txt" x-text="R('oxygen').why"></text>
+    </g>
+
+    <!-- key -->
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <rect x="324" y="598" width="12" height="12" rx="3" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25"/>
+      <text x="342" y="608">every day VFR flight</text>
+      <rect x="484" y="598" width="12" height="12" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25"/>
+      <text x="502" y="608">check the MOS</text>
+      <rect x="324" y="616" width="12" height="12" rx="3" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25"/>
+      <text x="342" y="626">added by a word in the scenario</text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="feb-alt">Cruise altitude <output for="feb-alt" class="num" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="feb-alt" min="500" max="12500" step="500" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="feb-cls">Most restrictive airspace the flight enters</label>
+      <select id="feb-cls" class="input" x-model="cls">
+        <option value="G">Class G only</option>
+        <option value="D">Class D (controlled)</option>
+        <option value="C">Class C</option>
+        <option value="E">Class E</option>
+        <option value="A">Class A</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="feb-dist">Furthest distance from the departure aerodrome <output for="feb-dist" class="num" x-text="dist + ' nm'"></output></label>
+      <input type="range" id="feb-dist" min="0" max="400" step="5" x-model.number="dist">
+    </div>
+    <div class="widget-control">
+      <label for="feb-aero" class="cursor-pointer"><span>Departure or arrival at a certified or registered aerodrome, or a CTAF where radio is required</span>
+        <input type="checkbox" id="feb-aero" x-model="aero" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="feb-water" class="cursor-pointer"><span>Over water beyond gliding distance of land</span>
+        <input type="checkbox" id="feb-water" x-model="water" @change="if (!water) ext = false" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="feb-ext" class="cursor-pointer"><span>Extended over-water flight</span>
+        <input type="checkbox" id="feb-ext" x-model="ext" @change="if (ext) water = true" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="feb-remote" class="cursor-pointer"><span>Over a designated remote area</span>
+        <input type="checkbox" id="feb-remote" x-model="remote" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok">
+      <dt class="widget-label">Items required</dt>
+      <dd class="widget-value"><span x-text="count"></span> <span class="text-xs text-fg-muted">+ fire extinguisher if the seat count requires</span></dd>
+    </div>
+    <div class="widget-readout" :class="radio ? 'ok' : ''">
+      <dt class="widget-label">VHF radio</dt>
+      <dd class="widget-value"><span x-text="radio ? 'Yes' : 'No'"></span><span class="widget-flag ok" x-show="radio">carry</span> <span class="text-xs text-fg-muted" x-text="R('radio').why"></span></dd>
+    </div>
+    <div class="widget-readout" :class="xpdr ? 'ok' : ''">
+      <dt class="widget-label">Transponder</dt>
+      <dd class="widget-value"><span x-text="xpdr ? 'Yes' : 'No'"></span><span class="widget-flag ok" x-show="xpdr">carry</span> <span class="text-xs text-fg-muted" x-text="R('xpdr').why"></span></dd>
+    </div>
+    <div class="widget-readout" :class="elt ? 'ok' : ''">
+      <dt class="widget-label">ELT</dt>
+      <dd class="widget-value"><span x-text="elt ? 'Yes' : 'No'"></span><span class="widget-flag ok" x-show="elt">carry</span> <span class="text-xs text-fg-muted" x-text="R('elt').why"></span></dd>
+    </div>
+    <div class="widget-readout" :class="remote ? 'ok' : ''">
+      <dt class="widget-label">Survival equipment</dt>
+      <dd class="widget-value"><span x-text="remote ? 'Yes' : 'No'"></span><span class="widget-flag ok" x-show="remote">carry</span> <span class="text-xs text-fg-muted" x-text="R('survival').why"></span></dd>
+    </div>
+    <div class="widget-readout" :class="wet ? 'ok' : ''">
+      <dt class="widget-label">Life jackets</dt>
+      <dd class="widget-value"><span x-text="wet ? 'Yes' : 'No'"></span><span class="widget-flag ok" x-show="wet">carry</span> <span class="text-xs text-fg-muted" x-text="R('jackets').why"></span></dd>
+    </div>
+    <div class="widget-readout" :class="oxy ? 'ok' : ''">
+      <dt class="widget-label">Oxygen</dt>
+      <dd class="widget-value"><span x-text="oxy ? 'Yes' : 'No'"></span><span class="widget-flag ok" x-show="oxy">carry</span> <span class="text-xs text-fg-muted" x-text="R('oxygen').why"></span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('meekatharra')" :aria-pressed="active === 'meekatharra'">Meekatharra 9,500 ft</button>
+      <button type="button" @click="preset('meekatharra-11500')" :aria-pressed="active === 'meekatharra-11500'">Meekatharra 11,500 ft</button>
+      <button type="button" @click="preset('rottnest')" :aria-pressed="active === 'rottnest'">Rottnest</button>
+      <button type="button" @click="preset('kalbarri')" :aria-pressed="active === 'kalbarri'">Kalbarri</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The list follows the scenario word by word: height (radio above 5,000 ft, transponder and oxygen above 10,000 ft), airspace (radio, transponder), distance (ELT beyond 50 nm), water (life jackets, rafts) and remote area (survival equipment). The ELT's trigger is distance from the departure aerodrome, not water or remoteness. The rules are the lesson's summary: verify the current lists in the Part 91 MOS and AIP, and take the fire extinguisher seat count and the extended over-water distance from the MOS.</p>
+  <details class="widget-try"><summary>Try it: Jandakot to Rottnest and back, about 20 nm each way, at 1,500 ft, part of it over open water out of gliding distance of land. Which emergency items does the scenario add, and which not?</summary><p>Press Rottnest. Life jackets, for the water beyond gliding distance. No ELT: 20 nm is within 50 nm of Jandakot. No survival equipment (no remote area) and no oxygen (1,500 ft). The first aid kit, and a fire extinguisher if the seat count requires one, go as on any flight, and the VHF radio is needed anyway because Jandakot is in controlled airspace. Whether it counts as extended over-water flight, for life rafts, depends on the distance in the MOS: check it.</p></details>
+  <details class="widget-try"><summary>Try it: you replan the Meekatharra flight at 11,500 ft to get above a cloud layer. Which items does that add, and does it remove any?</summary><p>Press Meekatharra 9,500 ft, then drag the altitude to 11,500 ft. Two rows light up: the transponder with altitude encoding (11,500 ft is above 10,000 ft) and oxygen, once your time above 10,000 ft passes the limit. Nothing goes out: the radio, ELT, survival equipment and first aid kit all stay, so the count rises from 12 to 14.</p></details>
+</div>

@@ -1,0 +1,177 @@
+<div class="widget" x-data="timeline({
+  duration: 3,
+  loop: true,
+  autoplay: true,
+  sig: 'red', air: true, night: false,
+  // the lesson's table: [in flight, on the ground]
+  _M: {
+    green:  { name: 'Steady green', col: 'ok', flash: false, meaning: ['Cleared to land', 'Cleared for take-off'],
+              doIt: ['Continue the approach and land, if you are satisfied there is no collision risk', 'Take off'] },
+    red:    { name: 'Steady red', col: 'bad', flash: false, meaning: ['Give way to other aircraft and continue circling', 'Stop'],
+              doIt: ['Go around, stay in the circuit, give way to other traffic and watch for the next signal', 'Stop and hold where you are until the next signal'] },
+    gflash: { name: 'Green flashes', col: 'ok', flash: true, meaning: ['Return for landing (a clearance to land will follow)', 'Cleared to taxi'],
+              doIt: ['Come back to the circuit to land, and wait for the steady green before you land', 'Taxi; you are not yet cleared to take off'] },
+    rflash: { name: 'Red flashes', col: 'bad', flash: true, meaning: ['Aerodrome unsafe, do not land', 'Taxi clear of the landing area in use'],
+              doIt: ['Go around: do not land here', 'Taxi off the landing area in use'] },
+    wflash: { name: 'White flashes', col: 'paint', flash: true, meaning: ['Land at this aerodrome and proceed to the apron (the clearances to land and to taxi will follow)', 'Return to your starting point on the aerodrome'],
+              doIt: ['This is where you will land: wait for the steady green before you land, then for green flashes before you taxi to the apron', 'Taxi back to where you started'] },
+    pyro:   { name: 'Red pyrotechnic', col: 'bad', flash: false, meaning: ['Notwithstanding any previous instruction, do not land for the time being', ''],
+              doIt: ['Do not land for now, whatever you were told before: go around and wait', ''] },
+  },
+  get m() { return this._M[this.sig] },
+  get col() { return 'var(--color-' + this.m.col + ')' },
+  // the lamp: steady signals stay lit, flashing ones blink once a second on the clock
+  get lit() { return this.sig !== 'pyro' && (!this.m.flash || (this.t * 3) % 1 < 0.5) },
+  get meaning() { return this.m.meaning[this.air ? 0 : 1] },
+  get doIt() { return this.m.doIt[this.air ? 0 : 1] },
+  get ack() {
+    if (this.air) return this.night ? 'Flash the landing light' : 'Rock the wings';
+    return this.night ? 'Flash your lights' : 'Move the ailerons or rudder';
+  },
+  // the aeroplane: on final (descending towards the runway) or on the ground short of it
+  get P() { return this.air ? { x: 190, y: 150 } : { x: 170, y: 256.4 } },
+  get beam() {
+    const L = { x: 512, y: 132 }, p = { x: this.P.x + 6, y: this.P.y - 2 }, dx = p.x - L.x, dy = p.y - L.y, d = Math.hypot(dx, dy), nx = -dy / d, ny = dx / d;
+    return 'M' + (L.x + nx * 3).toFixed(1) + ' ' + (L.y + ny * 3).toFixed(1) + ' L' + (p.x + nx * 18).toFixed(1) + ' ' + (p.y + ny * 18).toFixed(1) +
+      ' L' + (p.x - nx * 18).toFixed(1) + ' ' + (p.y - ny * 18).toFixed(1) + ' L' + (L.x - nx * 3).toFixed(1) + ' ' + (L.y - ny * 3).toFixed(1) + ' Z';
+  },
+  // the flare: up from the tower in an arc over the approach, burning out as it falls
+  get flare() { const f = this.t; return { x: 520 - 230 * f, y: 112 - 170 * f + 190 * f * f } },
+  get flareTrail() { const pts = []; for (let i = 0; i <= 20; i++) { const f = this.t * i / 20; pts.push([520 - 230 * f, 112 - 170 * f + 190 * f * f]) } return this.path(pts) },
+  // acknowledging: wings rock, ailerons move, or the lights flash, on the same clock
+  get rock() { return 14 * Math.sin(this.t * 4 * Math.PI) },
+  get ackLit() { return (this.t * 3 + 0.25) % 1 < 0.35 },
+  get caption() {
+    const base = 'Green is permission, red prohibition, white “go back”, and a flash is a weaker version of a steady light. ';
+    const c = {
+      green: this.air ? 'Steady green to an aircraft in flight: cleared to land.' : 'Steady green on the ground: cleared for take-off.',
+      red: this.air ? 'Steady red in flight: give way to other aircraft and continue circling. A steady green will clear you to land.' : 'Steady red on the ground: stop.',
+      gflash: this.air ? 'Green flashes in flight: return for landing, and a clearance to land will follow. Weaker than the steady green: not yet cleared to land.' : 'Green flashes on the ground: cleared to taxi, a weaker “go” than the steady green that clears you for take-off.',
+      rflash: this.air ? 'Red flashes in flight: the aerodrome is unsafe, do not land.' : 'Red flashes on the ground: taxi clear of the landing area in use.',
+      wflash: this.air ? 'White flashes in flight: land at this aerodrome and proceed to the apron. The clearances still come as lights: a steady green to land, then green flashes to taxi.' : 'White flashes on the ground: go back to your starting point on the aerodrome.',
+      pyro: 'A red pyrotechnic overrides everything: notwithstanding any previous instruction, do not land for the time being.',
+    };
+    return base + c[this.sig];
+  },
+  where() { if (!this.air && this.sig === 'pyro') this.sig = 'red'; this.active = null },
+  presets: {
+    'steady-red-on-final': { sig: 'red', air: true, night: false, t: 0, play: true },
+    'steady-green-on-final': { sig: 'green', air: true, night: false, t: 0, play: true },
+    'green-flashes-on-ground': { sig: 'gflash', air: false, night: false, t: 0, play: true },
+    'white-flashes-on-ground': { sig: 'wflash', air: false, night: false, t: 0, play: true },
+    'red-flashes-on-final': { sig: 'rflash', air: true, night: false, t: 0, play: true },
+    'red-pyrotechnic': { sig: 'pyro', air: true, night: false, t: 0.55, play: true },
+    'night-acknowledgement': { sig: 'green', air: true, night: true, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="tls-title" class="widget-stage">
+    <title id="tls-title">Side view of an aerodrome with a control tower on the right aiming a signal lamp at your aeroplane, either on final approach or on the ground short of the runway. The lamp shows the chosen signal, steady or flashing green, red or white, or a red pyrotechnic flare arcs up from the tower. An inset shows how you acknowledge: rocking the wings in flight by day, moving the ailerons or rudder on the ground by day, flashing lights at night</title>
+    <!-- sky: blue by day, stars by night -->
+    <rect x="0" y="0" width="640" height="270" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="270" fill="var(--color-sky-soft)" :fill-opacity="night ? 0 : 1"/>
+    <g fill="var(--color-fg-faint)" x-show="night">
+      <circle cx="260" cy="30" r="1.5"/><circle cx="330" cy="62" r="1.2"/><circle cx="410" cy="24" r="1.5"/><circle cx="470" cy="70" r="1.2"/>
+      <circle cx="600" cy="40" r="1.5"/><circle cx="300" cy="110" r="1.2"/><circle cx="380" cy="150" r="1.2"/><circle cx="250" cy="200" r="1.2"/>
+      <path d="M452 28 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22 Z"/>
+    </g>
+    <!-- ground, runway, and the approach path -->
+    <rect x="0" y="270" width="640" height="50" fill="var(--color-ok-soft)"/>
+    <rect x="270" y="266" width="370" height="7" fill="var(--color-tarmac)"/>
+    <text x="300" y="296" font-size="12" fill="var(--color-fg-muted)">runway</text>
+    <line x1="120" y1="122" x2="290" y2="266" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" x-show="air"/>
+    <line x1="236" y1="262" x2="236" y2="276" stroke="var(--color-paint)" stroke-width="3" x-show="!air"/>
+    <text x="236" y="296" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="!air">holding point</text>
+    <!-- control tower -->
+    <path d="M540 270 L546 152 L578 152 L584 270 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M526 152 L598 152 L592 116 L532 116 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M534 122 L590 122 L594 146 L530 146 Z" fill="var(--color-info-soft)" stroke="var(--color-fg-muted)" stroke-width="1"/>
+    <path d="M528 116 L596 116 L590 104 L534 104 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <text x="562" y="300" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">tower</text>
+    <!-- the lamp's beam and the lamp itself -->
+    <path :d="beam" :fill="col" fill-opacity="0.28" :stroke="col" stroke-opacity="0.6" stroke-width="1" x-show="lit"/>
+    <circle cx="512" cy="132" r="13" :fill="col" fill-opacity="0.3" x-show="lit"/>
+    <circle cx="512" cy="132" r="8" stroke="var(--color-fg)" stroke-width="1.5" :fill="lit ? col : 'var(--color-surface-2)'"/>
+    <!-- the red pyrotechnic flare -->
+    <g x-show="sig === 'pyro'">
+      <path fill="none" stroke="var(--color-bad)" stroke-width="1.5" stroke-opacity="0.5" stroke-dasharray="3 3" :d="flareTrail"/>
+      <circle r="12" fill="var(--color-bad)" fill-opacity="0.25" :cx="flare.x" :cy="flare.y"/>
+      <circle r="5.5" fill="var(--color-bad)" :cx="flare.x" :cy="flare.y"/>
+    </g>
+    <text x="562" y="90" font-size="15" font-weight="700" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      :fill="m.col === 'paint' ? 'var(--color-fg)' : 'var(--color-' + m.col + '-fg)'" x-text="m.name"></text>
+    <!-- your landing light at night, flashing to acknowledge -->
+    <path fill="var(--color-warn)" fill-opacity="0.35" x-show="night && ackLit" :d="'M' + (P.x + 22) + ' ' + (P.y + 2) + ' l74 14 l-6 30 Z'"/>
+    <circle r="4" fill="var(--color-warn)" x-show="night && ackLit" :cx="P.x + 22" :cy="P.y + 2"/>
+    <!-- your aeroplane (tools.diagrams.plane side, scale 0.7, colour brand, fill brand-soft) -->
+    <g :transform="'translate(' + P.x + ' ' + P.y + ')'"><g transform="translate(0 0) rotate(0) scale(0.7)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-brand)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-brand)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <text font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="P.x - 14" :y="P.y - 22">You</text>
+    <!-- inset: how you acknowledge by day, seen from behind (tools.diagrams.plane rear, scale 0.95, colour brand, fill brand-soft) -->
+    <g x-show="!night">
+      <rect x="14" y="14" width="196" height="104" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <text x="112" y="34" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" x-text="air ? 'Rock the wings' : 'Move ailerons or rudder'"></text>
+      <g :transform="'translate(112 72) rotate(' + (air ? rock : 0) + ')'"><g transform="translate(0 0) rotate(0) scale(0.95)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-brand)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-brand)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-brand)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+      <g x-show="!air" stroke="var(--color-brand)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path :d="rock > 0 ? 'M50 84 l0 -16 m-5 5 l5 -5 l5 5' : 'M50 60 l0 16 m-5 -5 l5 5 l5 -5'"/>
+        <path :d="rock > 0 ? 'M174 60 l0 16 m-5 -5 l5 5 l5 -5' : 'M174 84 l0 -16 m-5 5 l5 -5 l5 5'"/>
+      </g>
+      <text x="112" y="110" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">seen from behind</text>
+    </g>
+    <g x-show="night">
+      <rect x="14" y="14" width="196" height="44" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <text x="112" y="41" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" x-text="air ? 'Flash the landing light' : 'Flash your lights'"></text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause the lamp' : 'Run the lamp'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="tls-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Lamp clock">
+    <span class="widget-clock" x-text="lit ? 'lamp on' : sig === 'pyro' ? 'flare' : 'lamp off'"></span>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tls-sig">Signal from the tower</label>
+      <select id="tls-sig" class="input" x-model="sig" @change="active = null">
+        <option value="green">Steady green</option>
+        <option value="red">Steady red</option>
+        <option value="gflash">Green flashes</option>
+        <option value="rflash">Red flashes</option>
+        <option value="wflash">White flashes</option>
+        <option value="pyro" :disabled="!air">Red pyrotechnic (in flight)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="tls-air" class="cursor-pointer"><span>You are in flight, on final (off: on the ground)</span>
+        <input type="checkbox" id="tls-air" x-model="air" @change="where()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="tls-night" class="cursor-pointer"><span>Night</span>
+        <input type="checkbox" id="tls-night" x-model="night" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Signal</dt><dd class="widget-value" x-text="m.name + (air ? ', in flight' : ', on the ground')"></dd></div>
+    <div class="widget-readout" :class="m.col === 'ok' ? 'ok' : m.col === 'bad' ? 'bad' : 'warn'"><dt class="widget-label">Meaning</dt><dd class="widget-value" x-text="meaning"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">What you do</dt><dd class="widget-value" x-text="doIt"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Acknowledge by</dt><dd class="widget-value" x-text="ack + (night ? ' (night)' : ' (day)')"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('steady-red-on-final')" :aria-pressed="active === 'steady-red-on-final'">Steady red on final</button>
+      <button type="button" @click="preset('steady-green-on-final')" :aria-pressed="active === 'steady-green-on-final'">Steady green on final</button>
+      <button type="button" @click="preset('green-flashes-on-ground')" :aria-pressed="active === 'green-flashes-on-ground'">Green flashes, ground</button>
+      <button type="button" @click="preset('white-flashes-on-ground')" :aria-pressed="active === 'white-flashes-on-ground'">White flashes, ground</button>
+      <button type="button" @click="preset('red-flashes-on-final')" :aria-pressed="active === 'red-flashes-on-final'">Red flashes on final</button>
+      <button type="button" @click="preset('red-pyrotechnic')" :aria-pressed="active === 'red-pyrotechnic'">Red pyrotechnic</button>
+      <button type="button" @click="preset('night-acknowledgement')" :aria-pressed="active === 'night-acknowledgement'">At night</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The same light means something different in the air and on the ground, but the pattern holds: green permits, red prohibits, white sends you back, and flashes are the weaker version of the steady light (green flashes: come back and land later, or taxi; steady green: land, or take off). You reply by rocking the wings in flight or moving the ailerons or rudder on the ground by day, and by flashing your lights at night. The lamp’s flash rate here is illustrative.</p>
+  <details class="widget-try"><summary>Try it: on final you get a steady red. What does it mean, and what will clear you to land?</summary><p>Give way to other aircraft and continue circling: go around, stay in the circuit and watch the tower. A steady green clears you to land. On the ground the same steady red would mean stop.</p></details>
+  <details class="widget-try"><summary>Try it: you are taxiing and the tower shows you white flashes. Where do you go?</summary><p>Back to your starting point on the aerodrome. White means “go back”; in flight the same white flashes mean land at this aerodrome and proceed to the apron, with the steady green (land) and green flashes (taxi) still to come.</p></details>
+</div>

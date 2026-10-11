@@ -1,0 +1,151 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false, ice: true,
+  // PHFC 2.13 worked example: at 4,500 ft between York and Northam the engine runs slightly rough and the RPM drops
+  // by about 100; oil pressure and temperature normal. Detect, Estimate (still producing power; carburettor ice is
+  // likely in today's humid air), Choose (a safe landing at Northam), Identify (carb heat on, mixture check, turn
+  // towards Northam, a call on the area frequency), Do, Evaluate (after the initial worsening the roughness clears and
+  // the RPM recovers), then round the loop again. How far the RPM falls with carb heat on is not given: drawn only.
+  // With the carb-ice toggle off, the lesson's loop still holds: no improvement means it is not carb ice, so land at
+  // Northam as chosen.
+  names: ['Detect', 'Estimate', 'Choose', 'Identify', 'Do', 'Evaluate'],
+  steps: [
+    { at: 0, label: 'Cruise' }, { at: 0.08, label: 'Detect' }, { at: 0.2, label: 'Estimate' }, { at: 0.34, label: 'Choose' },
+    { at: 0.46, label: 'Identify' }, { at: 0.58, label: 'Do' }, { at: 0.76, label: 'Evaluate' }, { at: 0.92, label: 'Round again' },
+  ],
+  get k() { return this.step - 1 },
+  // RPM below cruise: 100 at detection, lower still while carb heat melts the ice, then back (if it was ice)
+  get drop() {
+    const t = this.t;
+    if (t < 0.05) return 0;
+    if (t < 0.6) return 100 * this.ease(this.at(0.05, 0.1));
+    if (!this.ice) return 100;
+    if (t < 0.7) return 100 + 80 * Math.sin(Math.PI * this.at(0.6, 0.7) * 0.5);
+    return 180 - 180 * this.ease(this.at(0.7, 0.8));
+  },
+  get rough() { const t = this.t; if (t < 0.05) return 0; if (!this.ice) return 1; if (t < 0.6) return 1; if (t < 0.7) return 1.6; return 1.6 * (1 - this.ease(this.at(0.7, 0.8))) },
+  get carbHot() { return this.t >= 0.6 },
+  get hdg() { return this.t < 0.62 ? 90 : 90 - 95 * this.ease(this.at(0.62, 0.74)) },
+  get called() { return this.t >= 0.72 },
+  get chosen() { return this.t >= 0.34 },
+  get roughPath() {
+    const a = 6 * this.rough, pts = [];
+    for (let x = 0; x <= 120; x += 4) pts.push([496 + x, 214 + a * Math.sin(x / 6 + this.t * 160)]);
+    return this.path(pts);
+  },
+  node(i) { return this.pol(130, 156, 92, i * 60) },
+  get needle() { return this.pol(554, 96, 40, 30 - this.drop * 0.3) },
+  get caption() {
+    const t = this.t;
+    if (t < 0.08) return 'Cruising at 4,500 ft between York and Northam on a humid day. Everything normal. Press play.';
+    if (t < 0.2) return 'Detect: a slight roughness and the RPM down by about 100. Oil pressure and temperature normal. Something has changed.';
+    if (t < 0.34) return 'Estimate: the engine is still producing power, so there is time, but it may get worse. In today\'s humid air carburettor ice is the likely cause.';
+    if (t < 0.46) return 'Choose: decide where you want to end up before you act: a safe landing at the nearest suitable aerodrome, Northam, with the problem diagnosed or fixed.';
+    if (t < 0.58) return 'Identify the actions that get you there: carb heat on, mixture check, turn towards Northam, a call on the area frequency.';
+    if (t < 0.76) return this.ice ? 'Do: carb heat on. The roughness gets worse and the RPM falls further at first, as the melting ice goes through the engine. Turn for Northam and make the call.' : 'Do: carb heat on, turn for Northam, make the call. This time nothing changes.';
+    if (t < 0.92) return this.ice ? 'Evaluate: after the initial worsening the roughness clears and the RPM recovers, consistent with carburettor ice. The result is itself a change to detect.' : 'Evaluate: no improvement with carb heat, so it is probably not carb ice. The engine is still running: stay with the outcome you chose and land at Northam.';
+    return this.ice ? 'Round the loop again: continue to Northam and land, or resume the flight with regular carb heat checks. DECIDE stopped you jumping from a rough engine straight to an action without choosing where you wanted to end up.' : 'Round the loop again with the new picture: Northam and a landing, keep evaluating the engine all the way, and have it looked at on the ground.';
+  },
+  presets: {
+    'detect': { ice: true, t: 0.12 },
+    'choose-northam': { ice: true, t: 0.38 },
+    'carb-heat-worsening': { ice: true, t: 0.66 },
+    'evaluate-cleared': { ice: true, t: 0.84 },
+    'evaluate-no-change': { ice: false, t: 0.84 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="dre-title" class="widget-stage">
+    <title id="dre-title">The DECIDE loop worked through a rough-running engine between York and Northam: the six steps round a circle with the current one lit, a map with the aeroplane turning towards Northam, and the tachometer, carb heat and roughness</title>
+    <defs>
+      <marker id="dre-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- the DECIDE ring -->
+    <circle cx="130" cy="156" r="92" fill="none" stroke="var(--color-line)" stroke-width="2" stroke-dasharray="6 5"/>
+    <path d="M190 86 A92 92 0 0 1 218 128" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.5" marker-end="url(#dre-arrow)"/>
+    <text x="130" y="150" font-size="16" font-weight="700" text-anchor="middle" fill="var(--color-fg)">DECIDE</text>
+    <text x="130" y="170" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="k >= 0 && k < 6 ? names[k] : (k >= 6 ? 'and again' : 'all normal')"></text>
+    <g font-size="12" text-anchor="middle" font-weight="600">
+      <circle r="30" stroke-width="2" :cx="node(0).x" :cy="node(0).y" :fill="k === 0 ? 'var(--color-brand)' : k > 0 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="k >= 0 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text :x="node(0).x" :y="node(0).y + 4" :fill="k === 0 ? 'var(--color-on-brand)' : 'var(--color-fg)'">Detect</text>
+      <circle r="30" stroke-width="2" :cx="node(1).x" :cy="node(1).y" :fill="k === 1 ? 'var(--color-brand)' : k > 1 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="k >= 1 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text :x="node(1).x" :y="node(1).y + 4" :fill="k === 1 ? 'var(--color-on-brand)' : 'var(--color-fg)'" font-size="11">Estimate</text>
+      <circle r="30" stroke-width="2" :cx="node(2).x" :cy="node(2).y" :fill="k === 2 ? 'var(--color-brand)' : k > 2 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="k >= 2 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text :x="node(2).x" :y="node(2).y + 4" :fill="k === 2 ? 'var(--color-on-brand)' : 'var(--color-fg)'">Choose</text>
+      <circle r="30" stroke-width="2" :cx="node(3).x" :cy="node(3).y" :fill="k === 3 ? 'var(--color-brand)' : k > 3 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="k >= 3 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text :x="node(3).x" :y="node(3).y + 4" :fill="k === 3 ? 'var(--color-on-brand)' : 'var(--color-fg)'" font-size="11">Identify</text>
+      <circle r="30" stroke-width="2" :cx="node(4).x" :cy="node(4).y" :fill="k === 4 ? 'var(--color-brand)' : k > 4 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="k >= 4 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text :x="node(4).x" :y="node(4).y + 4" :fill="k === 4 ? 'var(--color-on-brand)' : 'var(--color-fg)'">Do</text>
+      <circle r="30" stroke-width="2" :cx="node(5).x" :cy="node(5).y" :fill="k === 5 ? 'var(--color-brand)' : k > 5 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="k >= 5 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <text :x="node(5).x" :y="node(5).y + 4" :fill="k === 5 ? 'var(--color-on-brand)' : 'var(--color-fg)'" font-size="11">Evaluate</text>
+    </g>
+
+    <!-- the map -->
+    <rect x="284" y="20" width="190" height="166" rx="10" fill="var(--color-ok)" fill-opacity="0.08" stroke="var(--color-line)" stroke-width="1"/>
+    <circle cx="352" cy="46" r="6" stroke-width="2" :fill="chosen ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg)"/>
+    <circle cx="352" cy="46" r="13" fill="none" stroke="var(--color-ok)" stroke-width="2" x-show="chosen"/>
+    <text x="372" y="50" font-size="13" font-weight="600" fill="var(--color-fg)">Northam</text>
+    <circle cx="380" cy="168" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="396" y="172" font-size="13" fill="var(--color-fg)">York</text>
+    <line x1="380" y1="108" x2="464" y2="108" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" marker-end="url(#dre-arrow)"/>
+    <text x="464" y="128" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">planned track</text>
+    <line x1="372" y1="104" x2="356" y2="58" stroke="var(--color-ok)" stroke-width="2" stroke-dasharray="5 4" x-show="t >= 0.74"/>
+    <g :transform="'translate(372 108) rotate(' + hdg + ')'">
+      <!-- python -m tools.diagrams.plane top, scale 0.45, heading 0 (nose up) -->
+      <g transform="translate(0 0) rotate(-90) scale(0.45)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="292" y="180" font-size="11" fill="var(--color-fg-muted)" class="num">4,500 ft</text>
+    <text x="284" y="206" font-size="12" fill="var(--color-brand-fg)" x-show="called">radio: “rough engine, to Northam”</text>
+
+    <!-- engine: tachometer, roughness, carb heat -->
+    <circle cx="554" cy="96" r="50" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <path d="M514 120 A46 46 0 1 1 594 120" fill="none" stroke="var(--color-ok)" stroke-width="6" stroke-opacity="0.35"/>
+    <line x1="554" y1="96" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" :x2="needle.x" :y2="needle.y"/>
+    <circle cx="554" cy="96" r="4" fill="var(--color-fg)"/>
+    <text x="554" y="130" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)">RPM</text>
+    <text x="554" y="164" font-size="13" text-anchor="middle" font-weight="700" class="num" :fill="drop > 10 ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-text="drop < 10 ? 'cruise' : t < 0.6 || !ice ? 'about 100 down' : t < 0.7 ? 'lower still' : drop > 10 ? 'recovering' : 'cruise'"></text>
+    <text x="496" y="196" font-size="11" fill="var(--color-fg-muted)">roughness</text>
+    <path fill="none" stroke-width="2" stroke-linecap="round" :stroke="rough > 0.05 ? 'var(--color-warn)' : 'var(--color-ok)'" :d="roughPath"/>
+    <rect x="496" y="234" width="120" height="26" rx="8" stroke-width="2" :fill="carbHot ? 'var(--color-warn-soft)' : 'var(--color-surface-2)'" :stroke="carbHot ? 'var(--color-warn)' : 'var(--color-line-strong)'"/>
+    <text x="556" y="252" font-size="12" text-anchor="middle" font-weight="700" :fill="carbHot ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" x-text="carbHot ? 'CARB HEAT: HOT' : 'CARB HEAT: COLD'"></text>
+    <text x="556" y="278" font-size="11" text-anchor="middle" fill="var(--color-ok-fg)">oil pressure, temp: normal</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the loop'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="dre-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Through the decision">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dre-ice" class="cursor-pointer"><span>The cause is carburettor ice</span>
+        <input type="checkbox" id="dre-ice" x-model="ice" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="k >= 0 && k < 6 ? 'ok' : ''"><dt class="widget-label">DECIDE step</dt><dd class="widget-value" x-text="k < 0 ? '–' : k < 6 ? names[k] : 'Detect again'"></dd></div>
+    <div class="widget-readout" :class="drop > 10 ? 'warn' : 'ok'"><dt class="widget-label">Engine</dt><dd class="widget-value text-sm" x-text="drop < 10 && t > 0.05 ? 'Smooth, RPM recovered' : drop < 10 ? 'Normal' : rough > 1.2 ? 'Rougher (ice melting)' : 'Rough, RPM about 100 down'"></dd></div>
+    <div class="widget-readout" :class="chosen ? 'ok' : ''"><dt class="widget-label">Chosen outcome</dt><dd class="widget-value text-sm" x-text="chosen ? 'Land at Northam' : 'not yet chosen'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('detect')" :aria-pressed="active === 'detect'">Detect</button>
+      <button type="button" @click="preset('choose-northam')" :aria-pressed="active === 'choose-northam'">Choose</button>
+      <button type="button" @click="preset('carb-heat-worsening')" :aria-pressed="active === 'carb-heat-worsening'">Carb heat on</button>
+      <button type="button" @click="preset('evaluate-cleared')" :aria-pressed="active === 'evaluate-cleared'">It clears</button>
+      <button type="button" @click="preset('evaluate-no-change')" :aria-pressed="active === 'evaluate-no-change'">No change</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The model tells you nothing you did not know; its value is the order. Choose the outcome you want (a landing at Northam) before you pick actions, and Evaluate turns the result into the next Detect, so DECIDE is a loop, not a list. The figures are the lesson's worked example; how far the RPM dips with carb heat is drawn, not measured.</p>
+  <details class="widget-try"><summary>Try it: carb heat makes it worse at first. Was that the wrong action?</summary><p>Press Carb heat on, then It clears: the melting ice goes through the engine, so roughness and RPM get worse before they recover. Evaluate after it has had time to work, not in the first few seconds.</p></details>
+  <details class="widget-try"><summary>Try it: what if carb heat changes nothing?</summary><p>Press No change: Evaluate says it is probably not carb ice. Go round the loop with the new picture: the outcome you chose, a landing at Northam, still stands, and you keep watching the engine all the way.</p></details>
+</div>

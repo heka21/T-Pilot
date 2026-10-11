@@ -1,0 +1,363 @@
+<div class="widget" x-data="widget({
+  // the pilot
+  nav: false, ctlAd: false, ctlAs: false, hi10: false, med: 'c2', rev: 10, tol: 4,
+  // the aeroplane
+  eng: 'single', piston: true, mtow: 1100,
+  // the flight
+  time: 'day', op: 'private', dist: 15, cta: false, twr: false, high: false, pax: 1,
+  // limits from RFRC 2.2: the RPL itself, and each medical (null: no extra limit)
+  get medName() { return { c2: 'Class 2', bc2: 'Basic Class 2', rampc: 'RAMPC' }[this.med] },
+  get medPax() { return { c2: null, bc2: 5, rampc: 1 }[this.med] },
+  get medKg() { return { c2: null, bc2: 8618, rampc: 1500 }[this.med] },
+  get night() { return this.time === 'night' },
+  get paid() { return this.op === 'commercial' },
+  get plusMed() { return this.med === 'c2' ? '' : ' + ' + this.medName },
+  // the checklist, in the lesson's order; el names the fence or gate in the picture
+  get rows() {
+    const f = this.fmt, R = [];
+    // 1 aircraft (licence)
+    if (this.eng === 'multi') R.push({ k: 'Aircraft', ok: false, text: 'Multi-engine: the RPL is single-engine only, and no endorsement lifts it', src: 'licence', el: 'single' });
+    else if (this.mtow > 1500) R.push({ k: 'Aircraft', ok: false, text: 'MTOW ' + f(this.mtow) + ' kg is over 1,500 kg', src: 'licence', el: 'kg-lic' });
+    else R.push({ k: 'Aircraft', ok: true, text: 'Single-engine, MTOW ' + f(this.mtow) + ' kg, not over 1,500 kg', src: 'licence' });
+    // 2 conditions (licence; the RAMPC and Basic Class 2 say the same)
+    if (this.night) R.push({ k: 'Conditions', ok: false, text: 'Night: day VFR only', src: 'licence' + this.plusMed, el: 'day' });
+    else if (this.paid) R.push({ k: 'Conditions', ok: false, text: 'Commercial: private operations or flight training only', src: 'licence' + this.plusMed, el: 'private' });
+    else R.push({ k: 'Conditions', ok: true, text: 'Day VFR, private', src: 'licence' });
+    // 3 distance
+    if (this.dist > 25 && !this.nav) R.push({ k: 'Distance', ok: false, text: this.dist + ' nm: within 25 nm of the departure aerodrome without the navigation endorsement', src: 'licence', el: 'dist' });
+    else if (this.dist > 25) R.push({ k: 'Distance', ok: true, text: this.dist + ' nm: beyond 25 nm with the navigation endorsement', src: 'endorsement' });
+    else R.push({ k: 'Distance', ok: true, text: this.dist + ' nm: within 25 nm', src: 'licence' });
+    // 4 airspace and height
+    if (this.cta && !this.ctlAs) R.push({ k: 'Airspace', ok: false, text: 'Controlled airspace needs the controlled airspace endorsement; the aerodrome one does not cover it', src: 'licence', el: 'classg' });
+    else if (this.twr && !this.ctlAd) R.push({ k: 'Airspace', ok: false, text: 'A towered aerodrome needs the controlled aerodrome endorsement', src: 'licence', el: 'tower' });
+    else if (this.high && !this.hi10) R.push({ k: 'Airspace', ok: false, text: 'Below 10,000 ft without the flight above 10,000 ft endorsement', src: 'licence', el: 'high' });
+    else if (this.cta || this.twr || this.high) R.push({ k: 'Airspace', ok: true, text: [this.cta ? 'controlled airspace' : '', this.twr ? 'towered aerodrome' : '', this.high ? 'above 10,000 ft' : ''].filter(Boolean).join(', ') + ': endorsed', src: 'endorsement' });
+    else R.push({ k: 'Airspace', ok: true, text: 'Class G, non-controlled aerodromes, below 10,000 ft', src: 'licence' });
+    // 5 recency
+    if (this.rev > 24) R.push({ k: 'Recency', ok: false, text: 'Flight review ' + this.rev + ' months ago, over 24: not pilot in command at all', src: 'licence', el: 'rev' });
+    else if (this.pax > 0 && this.tol < 3) R.push({ k: 'Recency', ok: false, text: this.tol + ' take-offs and landings in 90 days: a passenger needs 3 and 3', src: 'licence', el: 'tol' });
+    else R.push({ k: 'Recency', ok: true, text: 'Review ' + this.rev + ' months ago' + (this.pax > 0 ? '; ' + this.tol + ' take-offs and landings in 90 days' : '; solo, so 90-day recency not needed'), src: 'licence' });
+    // 6 medical
+    const M = this.medName, m = [];
+    if (this.med !== 'c2') {
+      if (this.pax > this.medPax) m.push(['A ' + M + ' allows no more than ' + this.medPax + (this.medPax === 1 ? ' passenger' : ' passengers'), 'pax-med']);
+      if (this.med === 'rampc' && this.eng === 'multi') m.push(['A RAMPC covers single-engine aeroplanes only', 'single']);
+      if (this.mtow > this.medKg) m.push(['A ' + M + ' covers aircraft up to ' + f(this.medKg) + ' kg', 'kg-med']);
+      if (!this.piston) m.push(['A ' + M + ' covers piston aircraft only', 'piston']);
+      if (this.high) m.push(['A ' + M + ' keeps you below 10,000 ft, whatever the endorsement', 'high']);
+      if (this.night) m.push(['A ' + M + ' is day VFR only', 'day']);
+      if (this.paid) m.push(['A ' + M + ' is private operations only', 'private']);
+    }
+    if (m.length) R.push({ k: 'Medical', ok: false, text: m[0][0], src: M, el: m[0][1] });
+    else R.push({ k: 'Medical', ok: true, text: this.med === 'c2' ? 'Class 2: no extra limits' : M + ': ' + this.pax + ' of ' + this.medPax + (this.medPax === 1 ? ' passenger' : ' passengers') + ', within its limits', src: M });
+    return R;
+  },
+  // what stops the flight: an expired review first (it stops everything), then the first hard limit, then passenger recency
+  get stop() {
+    const R = this.rows;
+    if (this.rev > 24) return R[4];
+    return R.find((r) => !r.ok && r.k !== 'Recency') || R.find((r) => !r.ok) || null;
+  },
+  get stopEl() { return this.stop ? this.stop.el : '' },
+  get verdict() {
+    if (!this.stop) return 'Yes';
+    if (this.rev > 24) return 'No: dual only';
+    return this.stop.k === 'Recency' ? 'Solo circuits first' : 'No';
+  },
+  get verdictClass() { return !this.stop ? 'ok' : this.verdict === 'Solo circuits first' ? 'warn' : 'bad' },
+  get caption() {
+    const s = this.stop;
+    if (!s) return 'Yes: every fence holds.' + (this.ctlAs ? '' : ' Keep the route in Class G: without the controlled airspace endorsement, entering controlled airspace would fail.');
+    if (this.rev > 24) return 'No: the flight review is more than 24 months old, so this pilot may not fly as pilot in command at all, with or without passengers. A review with an instructor first.';
+    if (s.k === 'Recency') return 'Not with passengers yet: only ' + this.tol + ' take-offs and landings in the last 90 days. Fly solo circuits first, then take the passengers.';
+    const t = /^[A-Z][a-z]/.test(s.text) ? s.text.charAt(0).toLowerCase() + s.text.slice(1) : s.text;
+    if (s.k === 'Medical') return 'No: ' + t + '. The licence alone would allow it, but the tighter limit applies.';
+    const extra = s.k === 'Aircraft' || s.k === 'Conditions' ? ' Single-engine, day VFR, private and 1,500 kg belong to the RPL itself; no endorsement lifts them.' : '';
+    return 'No: ' + t + ' (' + s.src + ').' + extra;
+  },
+  // picture: scales and fence states
+  xk(v) { return 150 + this.clamp(v / 9000, 0, 1) * 460 },
+  xp(n) { return 150 + n / 6.5 * 460 },
+  xd(v) { return 150 + this.clamp(v / 120, 0, 1) * 460 },
+  xr(v) { return 150 + this.clamp(v / 36, 0, 1) * 460 },
+  fence(id, on) { return this.stopEl === id ? 'var(--color-brand)' : on ? 'var(--color-fg)' : 'var(--color-line-strong)' },
+  dot(n, lim, warn) { return n > lim ? (warn ? 'var(--color-warn)' : 'var(--color-bad)') : 'var(--color-ok)' },
+  // the limits with no number: [state, source]; state ok, bad or off (lifted or no limit)
+  gate(id) {
+    const med = this.med !== 'c2';
+    if (id === 'single') return this.eng === 'multi' ? ['bad', 'licence' + (this.med === 'rampc' ? ' + medical' : '')] : ['ok', 'licence' + (this.med === 'rampc' ? ' + medical' : '')];
+    if (id === 'day') return [this.night ? 'bad' : 'ok', 'licence' + (med ? ' + medical' : '')];
+    if (id === 'private') return [this.paid ? 'bad' : 'ok', 'licence' + (med ? ' + medical' : '')];
+    if (id === 'piston') return !med ? ['off', 'no limit on a Class 2'] : [this.piston ? 'ok' : 'bad', this.medName];
+    if (id === 'classg') return this.ctlAs ? ['off', 'lifted: endorsement'] : [this.cta ? 'bad' : 'ok', 'licence'];
+    if (id === 'tower') return this.ctlAd ? ['off', 'lifted: endorsement'] : [this.twr ? 'bad' : 'ok', 'licence'];
+    if (id === 'high') {
+      if (this.high && !this.hi10) return ['bad', 'licence'];
+      if (this.high && med) return ['bad', this.medName + ': not lifted'];
+      if (this.hi10 && !med) return ['off', 'lifted: endorsement'];
+      return ['ok', med ? 'licence + medical' : 'licence'];
+    }
+  },
+  gFill(id) { const s = this.gate(id)[0]; return this.stopEl === id ? 'var(--color-brand-soft)' : s === 'bad' ? 'var(--color-bad-soft)' : 'var(--color-surface)' },
+  gStroke(id) { const s = this.gate(id)[0]; return this.stopEl === id ? 'var(--color-brand)' : s === 'bad' ? 'var(--color-bad)' : s === 'ok' ? 'var(--color-ok)' : 'var(--color-line-strong)' },
+  gText(id) { const g = this.gate(id); return (g[0] === 'ok' ? '✓ ' : g[0] === 'bad' ? '✗ ' : '') + g[1] },
+  gTextFill(id) { const s = this.gate(id)[0]; return this.stopEl === id ? 'var(--color-brand-fg)' : s === 'bad' ? 'var(--color-bad-fg)' : s === 'ok' ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)' },
+  presets: {
+    'sam-to-york': { nav: true, ctlAd: true, ctlAs: false, hi10: false, med: 'c2', rev: 12, tol: 4, eng: 'single', piston: true, mtow: 1100, time: 'day', op: 'private', dist: 65, cta: false, twr: false, high: false, pax: 1 },
+    'jo-two-passengers-rampc': { nav: true, ctlAd: false, ctlAs: false, hi10: false, med: 'rampc', rev: 12, tol: 4, eng: 'single', piston: true, mtow: 1150, time: 'day', op: 'private', dist: 45, cta: false, twr: false, high: false, pax: 2 },
+    'alex-to-narrogin': { nav: true, ctlAd: false, ctlAs: false, hi10: false, med: 'bc2', rev: 14, tol: 2, eng: 'single', piston: true, mtow: 1050, time: 'day', op: 'private', dist: 80, cta: false, twr: false, high: false, pax: 2 },
+    'twin-at-night': { nav: true, ctlAd: true, ctlAs: true, hi10: true, med: 'c2', rev: 6, tol: 4, eng: 'multi', piston: true, mtow: 1800, time: 'night', op: 'private', dist: 30, cta: false, twr: false, high: false, pax: 0 },
+    'priya-review-expired': { nav: false, ctlAd: false, ctlAs: false, hi10: false, med: 'c2', rev: 26, tol: 2, eng: 'single', piston: true, mtow: 1100, time: 'day', op: 'private', dist: 15, cta: false, twr: false, high: false, pax: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 490" role="img" aria-labelledby="rmf-title" class="widget-stage">
+    <title id="rmf-title">The fences around an RPL flight. Five tracks with numbers: maximum take-off weight, passengers, distance from the departure aerodrome, months since the flight review and take-offs and landings in the last 90 days. On each, the licence limit is marked above the track and the medical limit below it, the tighter one drawn solid; the flight's value is a marker, green inside the fence and red beyond it. Below, the limits with no number (single-engine, day VFR, private, piston, Class G only, non-controlled aerodromes, below 10,000 ft) as gates that hold, fail or have been lifted by an endorsement. The fence that stops the flight is highlighted</title>
+    <rect x="0" y="0" width="640" height="490" fill="var(--color-surface-2)" rx="10"/>
+    <text x="16" y="22" font-size="12" fill="var(--color-fg-muted)"><tspan font-weight="700" fill="var(--color-fg)">Fences</tspan> · licence limit above each track, medical limit below: the tighter one applies</text>
+
+    <!-- 1 MTOW: 0 to 9,000 kg -->
+    <text x="16" y="60" font-size="13" font-weight="600" fill="var(--color-fg)">MTOW</text>
+    <text x="16" y="76" font-size="12" class="num" fill="var(--color-fg-muted)" x-text="fmt(mtow) + ' kg'"></text>
+    <rect x="150" y="60" width="460" height="8" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="150" y="60" height="8" rx="4" fill="var(--color-ok-soft)" :width="xk(1500) - 150"/>
+    <line y1="52" y2="64" stroke-width="3" stroke-linecap="round" :x1="xk(1500)" :x2="xk(1500)" :stroke="fence('kg-lic', true)"/>
+    <text y="46" font-size="12" text-anchor="middle" class="num" :x="xk(1500)" :fill="stopEl === 'kg-lic' ? 'var(--color-brand-fg)' : 'var(--color-fg)'" :font-weight="stopEl === 'kg-lic' ? 700 : 400">RPL 1,500 kg</text>
+    <g x-show="medKg">
+      <line y1="64" y2="76" stroke-linecap="round" :x1="xk(medKg || 0)" :x2="xk(medKg || 0)" :stroke="fence('kg-med', medKg <= 1500)"
+        :stroke-width="medKg <= 1500 || stopEl === 'kg-med' ? 3 : 1.5" :stroke-dasharray="medKg > 1500 && stopEl !== 'kg-med' ? '3 3' : null"/>
+      <text y="90" font-size="12" class="num" :x="xk(medKg || 0)" :text-anchor="medKg > 1500 ? 'end' : 'middle'"
+        :fill="stopEl === 'kg-med' ? 'var(--color-brand-fg)' : medKg > 1500 ? 'var(--color-fg-faint)' : 'var(--color-fg)'"
+        x-text="medKg > 1500 ? medName + ' would allow ' + fmt(medKg) + ' kg' : medName + ' ' + fmt(medKg) + ' kg'"></text>
+    </g>
+    <text x="610" y="90" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" x-show="!medKg">Class 2: no medical limit</text>
+    <circle cy="64" r="7" stroke="var(--color-surface)" stroke-width="2" :cx="xk(mtow)" :fill="mtow > 1500 || mtow > (medKg || 1e9) ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+
+    <!-- 2 passengers: seats 1 to 6 -->
+    <text x="16" y="126" font-size="13" font-weight="600" fill="var(--color-fg)">Passengers</text>
+    <text x="16" y="142" font-size="12" class="num" fill="var(--color-fg-muted)" x-text="pax"></text>
+    <rect x="150" y="126" width="460" height="8" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="150" y="126" height="8" rx="4" fill="var(--color-ok-soft)" :width="(medPax === null ? 610 : xp(medPax + 0.5)) - 150"/>
+    <text x="150" y="112" font-size="12" fill="var(--color-fg-muted)">RPL: passengers allowed, with 90-day recency</text>
+    <g x-show="medPax !== null">
+      <line y1="130" y2="142" stroke-width="3" stroke-linecap="round" :x1="xp((medPax || 0) + 0.5)" :x2="xp((medPax || 0) + 0.5)" :stroke="fence('pax-med', true)"/>
+      <text y="156" font-size="12" class="num" :x="xp((medPax || 0) + 0.5) + (medPax > 3 ? 6 : 0)" :text-anchor="medPax > 3 ? 'end' : 'middle'" :fill="stopEl === 'pax-med' ? 'var(--color-brand-fg)' : 'var(--color-fg)'" :font-weight="stopEl === 'pax-med' ? 700 : 400"
+        x-text="medName + ': no more than ' + medPax"></text>
+    </g>
+    <text x="610" y="156" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" x-show="medPax === null">Class 2: no medical limit</text>
+    <g stroke="var(--color-surface)" stroke-width="2">
+      <circle cy="130" r="7" :cx="xp(1)" :fill="pax >= 1 ? dot(1, medPax ?? 99) : 'var(--color-line)'"/>
+      <circle cy="130" r="7" :cx="xp(2)" :fill="pax >= 2 ? dot(2, medPax ?? 99) : 'var(--color-line)'"/>
+      <circle cy="130" r="7" :cx="xp(3)" :fill="pax >= 3 ? dot(3, medPax ?? 99) : 'var(--color-line)'"/>
+      <circle cy="130" r="7" :cx="xp(4)" :fill="pax >= 4 ? dot(4, medPax ?? 99) : 'var(--color-line)'"/>
+      <circle cy="130" r="7" :cx="xp(5)" :fill="pax >= 5 ? dot(5, medPax ?? 99) : 'var(--color-line)'"/>
+      <circle cy="130" r="7" :cx="xp(6)" :fill="pax >= 6 ? dot(6, medPax ?? 99) : 'var(--color-line)'"/>
+    </g>
+
+    <!-- 3 distance from the departure aerodrome: 0 to 120 nm -->
+    <text x="16" y="192" font-size="13" font-weight="600" fill="var(--color-fg)">Distance</text>
+    <text x="16" y="208" font-size="12" class="num" fill="var(--color-fg-muted)" x-text="dist + ' nm'"></text>
+    <rect x="150" y="192" width="460" height="8" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="150" y="192" height="8" rx="4" fill="var(--color-ok-soft)" :width="(nav ? 610 : xd(25)) - 150"/>
+    <line y1="184" y2="196" stroke-linecap="round" :x1="xd(25)" :x2="xd(25)" :stroke="fence('dist', !nav)" :stroke-width="nav ? 1.5 : 3" :stroke-dasharray="nav ? '3 3' : null"/>
+    <text y="178" font-size="12" class="num" :x="xd(25)" :text-anchor="nav ? 'start' : 'middle'"
+      :fill="stopEl === 'dist' ? 'var(--color-brand-fg)' : nav ? 'var(--color-fg-faint)' : 'var(--color-fg)'" :font-weight="stopEl === 'dist' ? 700 : 400"
+      x-text="nav ? '25 nm lifted: navigation endorsement' : 'RPL 25 nm'"></text>
+    <text x="610" y="222" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">no medical limit</text>
+    <circle cy="196" r="7" stroke="var(--color-surface)" stroke-width="2" :cx="xd(dist)" :fill="dist > 25 && !nav ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+
+    <!-- 4 flight review: 0 to 36 months -->
+    <text x="16" y="258" font-size="13" font-weight="600" fill="var(--color-fg)">Flight review</text>
+    <text x="16" y="274" font-size="12" class="num" fill="var(--color-fg-muted)" x-text="rev + ' months ago'"></text>
+    <rect x="150" y="258" width="460" height="8" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="150" y="258" height="8" rx="4" fill="var(--color-ok-soft)" :width="xr(24) - 150"/>
+    <line y1="250" y2="262" stroke-width="3" stroke-linecap="round" :x1="xr(24)" :x2="xr(24)" :stroke="fence('rev', true)"/>
+    <text y="244" font-size="12" text-anchor="middle" class="num" :x="xr(24)" :fill="stopEl === 'rev' ? 'var(--color-brand-fg)' : 'var(--color-fg)'" :font-weight="stopEl === 'rev' ? 700 : 400">RPL 24 months</text>
+    <text x="610" y="288" font-size="12" text-anchor="end" :fill="rev > 24 ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">beyond: not pilot in command at all</text>
+    <circle cy="262" r="7" stroke="var(--color-surface)" stroke-width="2" :cx="xr(rev)" :fill="rev > 24 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+
+    <!-- 5 take-offs and landings in the last 90 days: dots 1 to 6, 3 needed for a passenger -->
+    <g :opacity="pax > 0 ? 1 : 0.55">
+      <text x="16" y="324" font-size="13" font-weight="600" fill="var(--color-fg)">Recent landings</text>
+      <text x="16" y="340" font-size="12" class="num" fill="var(--color-fg-muted)" x-text="tol + ' in 90 days'"></text>
+      <rect x="150" y="324" width="460" height="8" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+      <rect y="324" height="8" rx="4" fill="var(--color-ok-soft)" :x="xp(2.5)" :width="610 - xp(2.5)"/>
+      <line y1="316" y2="328" stroke-width="3" stroke-linecap="round" :x1="xp(2.5)" :x2="xp(2.5)" :stroke="fence('tol', pax > 0)"/>
+      <text y="310" font-size="12" text-anchor="middle" class="num" :x="xp(2.5)" :fill="stopEl === 'tol' ? 'var(--color-brand-fg)' : 'var(--color-fg)'" :font-weight="stopEl === 'tol' ? 700 : 400">RPL: 3 take-offs and 3 landings for a passenger</text>
+      <text x="610" y="354" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" x-text="pax > 0 ? 'no medical limit' : 'solo: not needed'"></text>
+      <g stroke="var(--color-surface)" stroke-width="2">
+        <circle cy="328" r="7" :cx="xp(1)" :fill="tol >= 1 ? (tol >= 3 ? 'var(--color-ok)' : 'var(--color-warn)') : 'var(--color-line)'"/>
+        <circle cy="328" r="7" :cx="xp(2)" :fill="tol >= 2 ? (tol >= 3 ? 'var(--color-ok)' : 'var(--color-warn)') : 'var(--color-line)'"/>
+        <circle cy="328" r="7" :cx="xp(3)" :fill="tol >= 3 ? 'var(--color-ok)' : 'var(--color-line)'"/>
+        <circle cy="328" r="7" :cx="xp(4)" :fill="tol >= 4 ? 'var(--color-ok)' : 'var(--color-line)'"/>
+        <circle cy="328" r="7" :cx="xp(5)" :fill="tol >= 5 ? 'var(--color-ok)' : 'var(--color-line)'"/>
+        <circle cy="328" r="7" :cx="xp(6)" :fill="tol >= 6 ? 'var(--color-ok)' : 'var(--color-line)'"/>
+      </g>
+    </g>
+
+    <!-- the limits with no number, as gates -->
+    <text x="16" y="382" font-size="12" fill="var(--color-fg-muted)"><tspan font-weight="700" fill="var(--color-fg)">Gates</tspan> · ✓ holds · ✗ fails · dashed: lifted, or no limit</text>
+    <g>
+      <rect x="16" y="392" width="146" height="40" rx="8" :fill="gFill('single')" :stroke="gStroke('single')" :stroke-width="stopEl === 'single' ? 2.5 : 1.5" :stroke-dasharray="gate('single')[0] === 'off' ? '4 3' : null"/>
+      <text x="89" y="409" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">single-engine</text>
+      <text x="89" y="424" font-size="11" text-anchor="middle" :fill="gTextFill('single')" x-text="gText('single')"></text>
+    </g>
+    <g>
+      <rect x="170" y="392" width="146" height="40" rx="8" :fill="gFill('day')" :stroke="gStroke('day')" :stroke-width="stopEl === 'day' ? 2.5 : 1.5"/>
+      <text x="243" y="409" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">day VFR</text>
+      <text x="243" y="424" font-size="11" text-anchor="middle" :fill="gTextFill('day')" x-text="gText('day')"></text>
+    </g>
+    <g>
+      <rect x="324" y="392" width="146" height="40" rx="8" :fill="gFill('private')" :stroke="gStroke('private')" :stroke-width="stopEl === 'private' ? 2.5 : 1.5"/>
+      <text x="397" y="409" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">private</text>
+      <text x="397" y="424" font-size="11" text-anchor="middle" :fill="gTextFill('private')" x-text="gText('private')"></text>
+    </g>
+    <g>
+      <rect x="478" y="392" width="146" height="40" rx="8" :fill="gFill('piston')" :stroke="gStroke('piston')" :stroke-width="stopEl === 'piston' ? 2.5 : 1.5" :stroke-dasharray="gate('piston')[0] === 'off' ? '4 3' : null"/>
+      <text x="551" y="409" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">piston</text>
+      <text x="551" y="424" font-size="11" text-anchor="middle" :fill="gTextFill('piston')" x-text="gText('piston')"></text>
+    </g>
+    <g>
+      <rect x="16" y="440" width="196" height="40" rx="8" :fill="gFill('classg')" :stroke="gStroke('classg')" :stroke-width="stopEl === 'classg' ? 2.5 : 1.5" :stroke-dasharray="gate('classg')[0] === 'off' ? '4 3' : null"/>
+      <text x="114" y="457" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Class G only</text>
+      <text x="114" y="472" font-size="11" text-anchor="middle" :fill="gTextFill('classg')" x-text="gText('classg')"></text>
+    </g>
+    <g>
+      <rect x="222" y="440" width="196" height="40" rx="8" :fill="gFill('tower')" :stroke="gStroke('tower')" :stroke-width="stopEl === 'tower' ? 2.5 : 1.5" :stroke-dasharray="gate('tower')[0] === 'off' ? '4 3' : null"/>
+      <text x="320" y="457" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)">non-controlled aerodromes</text>
+      <text x="320" y="472" font-size="11" text-anchor="middle" :fill="gTextFill('tower')" x-text="gText('tower')"></text>
+    </g>
+    <g>
+      <rect x="428" y="440" width="196" height="40" rx="8" :fill="gFill('high')" :stroke="gStroke('high')" :stroke-width="stopEl === 'high' ? 2.5 : 1.5" :stroke-dasharray="gate('high')[0] === 'off' ? '4 3' : null"/>
+      <text x="526" y="457" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">below 10,000 ft</text>
+      <text x="526" y="472" font-size="11" text-anchor="middle" :fill="gTextFill('high')" x-text="gText('high')"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rmf-nav" class="cursor-pointer"><span>Recreational navigation endorsement</span>
+        <input type="checkbox" id="rmf-nav" x-model="nav" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-ctlad" class="cursor-pointer"><span>Controlled aerodrome endorsement</span>
+        <input type="checkbox" id="rmf-ctlad" x-model="ctlAd" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-ctlas" class="cursor-pointer"><span>Controlled airspace endorsement</span>
+        <input type="checkbox" id="rmf-ctlas" x-model="ctlAs" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-hi10" class="cursor-pointer"><span>Flight above 10,000 ft endorsement</span>
+        <input type="checkbox" id="rmf-hi10" x-model="hi10" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-med">Medical certificate</label>
+      <select id="rmf-med" class="input" x-model="med">
+        <option value="c2">Class 2 (DAME)</option>
+        <option value="bc2">Basic Class 2 (GP, commercial driver standard)</option>
+        <option value="rampc">RAMPC (GP, private driver standard)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-eng">Aeroplane</label>
+      <select id="rmf-eng" class="input" x-model="eng">
+        <option value="single">Single-engine</option>
+        <option value="multi">Multi-engine</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-mtow">MTOW (certified, not today's weight) <output for="rmf-mtow" x-text="fmt(mtow) + ' kg'"></output></label>
+      <input type="range" id="rmf-mtow" min="500" max="9000" step="50" x-model.number="mtow">
+    </div>
+    <div class="widget-control">
+      <label for="rmf-piston" class="cursor-pointer"><span>Piston engine</span>
+        <input type="checkbox" id="rmf-piston" x-model="piston" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-time">Day or night</label>
+      <select id="rmf-time" class="input" x-model="time">
+        <option value="day">Day VFR</option>
+        <option value="night">Night</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-op">Operation</label>
+      <select id="rmf-op" class="input" x-model="op">
+        <option value="private">Private (or flight training)</option>
+        <option value="commercial">Commercial (paid)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-dist">Furthest from the departure aerodrome <output for="rmf-dist" x-text="dist + ' nm'"></output></label>
+      <input type="range" id="rmf-dist" min="0" max="120" step="5" x-model.number="dist">
+    </div>
+    <div class="widget-control">
+      <label for="rmf-pax">Passengers <output for="rmf-pax" x-text="pax"></output></label>
+      <input type="range" id="rmf-pax" min="0" max="6" step="1" x-model.number="pax">
+    </div>
+    <div class="widget-control">
+      <label for="rmf-cta" class="cursor-pointer"><span>Route enters controlled airspace</span>
+        <input type="checkbox" id="rmf-cta" x-model="cta" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-twr" class="cursor-pointer"><span>Uses a towered (controlled) aerodrome</span>
+        <input type="checkbox" id="rmf-twr" x-model="twr" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-high" class="cursor-pointer"><span>Cruise above 10,000 ft</span>
+        <input type="checkbox" id="rmf-high" x-model="high" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rmf-rev">Flight review done <output for="rmf-rev" x-text="rev + ' months ago'"></output></label>
+      <input type="range" id="rmf-rev" min="0" max="36" step="1" x-model.number="rev">
+    </div>
+    <div class="widget-control">
+      <label for="rmf-tol">Take-offs and landings, last 90 days <output for="rmf-tol" x-text="tol"></output></label>
+      <input type="range" id="rmf-tol" min="0" max="6" step="1" x-model.number="tol">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="verdictClass">
+      <dt class="widget-label">May this pilot fly it?</dt>
+      <dd class="widget-value" x-text="verdict"></dd>
+    </div>
+    <div class="widget-readout" :class="rows[0].ok ? '' : 'bad'">
+      <dt class="widget-label">1 Aircraft</dt>
+      <dd class="widget-value text-sm"><span x-text="rows[0].text"></span><span class="widget-flag" :class="rows[0].ok ? 'ok' : 'bad'" x-text="rows[0].src"></span></dd>
+    </div>
+    <div class="widget-readout" :class="rows[1].ok ? '' : 'bad'">
+      <dt class="widget-label">2 Conditions</dt>
+      <dd class="widget-value text-sm"><span x-text="rows[1].text"></span><span class="widget-flag" :class="rows[1].ok ? 'ok' : 'bad'" x-text="rows[1].src"></span></dd>
+    </div>
+    <div class="widget-readout" :class="rows[2].ok ? '' : 'bad'">
+      <dt class="widget-label">3 Distance</dt>
+      <dd class="widget-value text-sm"><span x-text="rows[2].text"></span><span class="widget-flag" :class="rows[2].ok ? 'ok' : 'bad'" x-text="rows[2].src"></span></dd>
+    </div>
+    <div class="widget-readout" :class="rows[3].ok ? '' : 'bad'">
+      <dt class="widget-label">4 Airspace and height</dt>
+      <dd class="widget-value text-sm"><span x-text="rows[3].text"></span><span class="widget-flag" :class="rows[3].ok ? 'ok' : 'bad'" x-text="rows[3].src"></span></dd>
+    </div>
+    <div class="widget-readout" :class="rows[4].ok ? '' : rev > 24 ? 'bad' : 'warn'">
+      <dt class="widget-label">5 Recency</dt>
+      <dd class="widget-value text-sm"><span x-text="rows[4].text"></span><span class="widget-flag" :class="rows[4].ok ? 'ok' : rev > 24 ? 'bad' : 'warn'" x-text="rows[4].src"></span></dd>
+    </div>
+    <div class="widget-readout" :class="rows[5].ok ? '' : 'bad'">
+      <dt class="widget-label">6 Medical</dt>
+      <dd class="widget-value text-sm"><span x-text="rows[5].text"></span><span class="widget-flag" :class="rows[5].ok ? 'ok' : 'bad'" x-text="rows[5].src"></span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('sam-to-york')" :aria-pressed="active === 'sam-to-york'">Sam to York</button>
+      <button type="button" @click="preset('jo-two-passengers-rampc')" :aria-pressed="active === 'jo-two-passengers-rampc'">Jo, RAMPC</button>
+      <button type="button" @click="preset('alex-to-narrogin')" :aria-pressed="active === 'alex-to-narrogin'">Alex to Narrogin</button>
+      <button type="button" @click="preset('twin-at-night')" :aria-pressed="active === 'twin-at-night'">Twin at night</button>
+      <button type="button" @click="preset('priya-review-expired')" :aria-pressed="active === 'priya-review-expired'">Priya</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every limit is a fence, and you are bound by the tightest one, whoever set it: a Basic Class 2 would allow 8,618 kg and 5 passengers, but the RPL still stops you at 1,500 kg, and a RAMPC holder may take 1 passenger however many seats there are. Endorsements move only some fences (distance, controlled aerodromes, controlled airspace, height); single-engine, day VFR, private and 1,500 kg belong to the licence itself. Check them in the lesson's order (aircraft, conditions, distance, airspace, recency, medical) and the one you skip is the one that catches you. Limits from CASR Part 61 and Part 67 as the lesson gives them; the presets' distances and the twin's weight are illustrative.</p>
+  <details class="widget-try"><summary>Try it: Sam is flying to York with a friend. What happens if the planned route clips controlled airspace?</summary><p>Press Sam to York, then tick “Route enters controlled airspace”. The Class G gate fails: Sam holds the controlled aerodrome endorsement but not the controlled airspace one, and the aerodrome endorsement does not cover the airspace en route. Plan a route that stays in Class G and the flight is legal.</p></details>
+  <details class="widget-try"><summary>Try it: Jo has a RAMPC and wants to take a partner and their teenage son to Northam. What could Jo change to take both?</summary><p>Press Jo, RAMPC: the passenger fence stops at 1, so the second dot is red. Switch the medical to Basic Class 2 (up to 5 passengers) or Class 2 and the flight passes; the 1,500 kg fence is the licence's either way.</p></details>
+</div>

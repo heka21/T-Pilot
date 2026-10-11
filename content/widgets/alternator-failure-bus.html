@@ -1,0 +1,193 @@
+<div class="widget" x-data="timeline({
+  duration: 24, loop: false,
+  on: { radio: true, xpdr: true, tc: true, lights: true, pump: true, pitot: true, flaps: false },
+  // illustrative load units, calibrated to the lessons' 'perhaps 30 to 60 minutes' (BAKC 3.4): everything on
+  // runs a full battery flat in about 30 min, radio, transponder and turn coordinator alone in about 60
+  loads: { radio: 1, xpdr: 0.75, tc: 0.75, lights: 0.75, pump: 0.5, pitot: 1.25, flaps: 0.5 },
+  names: { radio: 'radios', xpdr: 'transponder', tc: 'turn coordinator', lights: 'lights', pump: 'electric fuel pump', pitot: 'pitot heat', flaps: 'electric flaps' },
+  keys: ['radio', 'xpdr', 'tc', 'lights', 'pump', 'pitot', 'flaps'],
+  // the clock: 0..80 minutes; the alternator fails at minute 5
+  get min() { return this.t * 80 },
+  get failed() { return this.min >= 5 },
+  get load() { return this.keys.reduce((a, k) => a + (this.on[k] ? this.loads[k] : 0), 0) },
+  // what you switch while the clock runs is remembered, so shedding load late saves less than shedding it early
+  hist: [],
+  loadOf(on) { return this.keys.reduce((a, k) => a + (on[k] ? this.loads[k] : 0), 0) },
+  chargeAt(m) {
+    if (m <= 5) return 1;
+    const ev = this.hist.length ? this.hist : [{ m: 0, load: this.load }];
+    let used = 0;
+    for (let i = 0; i < ev.length; i++) {
+      const a = Math.max(5, ev[i].m), b = Math.min(m, i + 1 < ev.length ? ev[i + 1].m : Infinity);
+      if (b > a) used += ev[i].load * (b - a);
+    }
+    return this.clamp(1 - used / 150, 0, 1);
+  },
+  get charge() { return this.chargeAt(this.min) },
+  get flat() { return this.failed && this.charge <= 0.001 },
+  get low() { return this.failed && this.charge < 0.2 && !this.flat },
+  get minsLeft() { return this.load > 0 ? this.charge * 150 / this.load : Infinity },
+  get endurance() { return this.load > 0 ? 150 / this.load : Infinity },
+  powered(k) { return this.on[k] && !this.flat },
+  // gauges: volts about 14 while charging, sinking towards battery voltage (about 12) when it stops, then falling away
+  get volts() { if (!this.failed) return 14; const c = this.charge; return c > 0.2 ? 12 + 0.5 * (c - 0.2) / 0.8 : this.lerp(9, 12, c / 0.2) },
+  get amps() { return this.failed ? (this.flat ? 0 : -this.load / 5) : 0.25 },
+  needle(cx, cy, r, f) { const a = (-60 + 120 * this.clamp(f, 0, 1)) * Math.PI / 180; return { x: cx + r * Math.sin(a), y: cy - r * Math.cos(a) } },
+  get ammNeedle() { return this.needle(86, 330, 19, 0.5 + this.amps / 2.2) },
+  get voltNeedle() { return this.needle(196, 330, 19, (this.volts - 10) / 5) },
+  rowY(i) { return 44 + i * 38 },
+  toggle_(k) { this.on[k] = !this.on[k]; this.changed() },
+  // record a change of load at the current minute (dropping anything recorded later, if you scrubbed back)
+  changed() {
+    const before = this.hist.length ? this.hist[this.hist.length - 1].load : null;
+    let h = this.hist.filter((e) => e.m <= this.min);
+    if (!h.length) h = [{ m: 0, load: before === null ? this.prevLoad : before }];
+    h.push({ m: this.min, load: this.load });
+    this.hist = h;
+    this.prevLoad = this.load;
+    this.active = null;
+  },
+  prevLoad: 5,
+  dash() { return -(this.t * 2400) },
+  get steps() {
+    const s = [{ at: 0, label: 'Normal cruise' }, { at: 5 / 80, label: 'Alternator fails' }];
+    let lowAt = null, flatAt = null;
+    for (let m = 5; m <= 80; m += 0.25) {
+      const c = this.chargeAt(m);
+      if (lowAt === null && c < 0.2) lowAt = m;
+      if (flatAt === null && c <= 0.001) { flatAt = m; break }
+    }
+    if (lowAt !== null) s.push({ at: lowAt / 80, label: 'Battery low' });
+    if (flatAt !== null) s.push({ at: flatAt / 80, label: 'Battery flat' });
+    return s;
+  },
+  get caption() {
+    if (!this.failed) return 'Normal: the belt-driven alternator feeds the bus bar, every service draws from it through its own breaker, and the alternator also recharges the battery. The ammeter shows a small charge and the voltmeter about 14 volts.';
+    if (this.flat) return 'The battery is flat: radios, transponder, lights, electric flaps and fuel pump and the turn coordinator have all gone. The engine is still running, because the magnetos were never on this system.';
+    if (this.low) return 'The battery is nearly exhausted: the voltage falls away and the radios fade. You should already be on the ground, or about to be.';
+    if (this.min < 12) return 'The alternator has stopped and the battery quietly takes over: the ammeter swings to discharge, the volts sag towards battery voltage and a warning light comes on. Check the alternator switch and field breaker, cycle it once if the POH allows, then shed load.';
+    return 'On the battery alone. Every service you leave on shortens its life, so reduce the load to essentials (switch services off in the picture) and land before it runs flat.';
+  },
+  presets: {
+    'normal-cruise': { t: 0.03, on: { radio: true, xpdr: true, tc: true, lights: true, pump: true, pitot: true, flaps: false }, hist: [], prevLoad: 5 },
+    'alternator-failed': { t: 0.11, on: { radio: true, xpdr: true, tc: true, lights: true, pump: true, pitot: true, flaps: false }, hist: [], prevLoad: 5 },
+    'everything-on-flat': { t: 0.45, on: { radio: true, xpdr: true, tc: true, lights: true, pump: true, pitot: true, flaps: false }, hist: [], prevLoad: 5 },
+    'shed-to-essentials': { t: 0.45, on: { radio: true, xpdr: true, tc: true, lights: false, pump: false, pitot: false, flaps: false }, hist: [], prevLoad: 2.5 },
+    'essentials-nearly-an-hour': { t: 0.78, on: { radio: true, xpdr: true, tc: true, lights: false, pump: false, pitot: false, flaps: false }, hist: [], prevLoad: 2.5 },
+  },
+})">
+  <svg viewBox="0 0 640 384" role="img" aria-labelledby="afb-title" class="widget-stage">
+    <title id="afb-title">Light aeroplane electrical system: the alternator and the battery feed the bus bar, which feeds each service through a breaker; ammeter and voltmeter show charge or discharge; the magnetos are separate</title>
+    <defs>
+      <marker id="afb-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- engine and belt -->
+    <rect x="16" y="28" width="86" height="52" rx="8" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <text x="59" y="59" font-size="14" text-anchor="middle" fill="var(--color-fg-muted)">engine</text>
+    <line x1="102" y1="40" x2="128" y2="40" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <line x1="102" y1="68" x2="128" y2="68" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <!-- alternator -->
+    <rect x="128" y="28" width="112" height="52" rx="8" stroke-width="2" :fill="failed ? 'var(--color-bad-soft)' : 'var(--color-brand-soft)'" :stroke="failed ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+    <text x="184" y="51" font-size="15" font-weight="600" text-anchor="middle" :fill="failed ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)'">Alternator</text>
+    <text x="184" y="70" font-size="12" text-anchor="middle" :fill="failed ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)'" x-text="failed ? 'failed: no output' : 'power in flight'"></text>
+    <!-- alternator to bus -->
+    <line x1="240" y1="54" x2="322" y2="54" stroke-width="3" :stroke="failed ? 'var(--color-line-strong)' : 'var(--color-brand)'" :stroke-dasharray="failed ? '0' : '10 8'" :stroke-dashoffset="dash()"/>
+    <text x="281" y="44" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">ALT field</text>
+    <!-- battery with its charge -->
+    <rect x="128" y="150" width="112" height="62" rx="8" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2"/>
+    <rect x="138" y="186" height="16" rx="3" fill="var(--color-line)" width="92"/>
+    <rect x="138" y="186" height="16" rx="3" :width="92 * charge" :fill="charge > 0.5 ? 'var(--color-ok)' : charge > 0.2 ? 'var(--color-warn)' : 'var(--color-bad)'"/>
+    <text x="184" y="174" font-size="15" font-weight="600" text-anchor="middle" fill="var(--color-info-fg)">Battery</text>
+    <!-- battery to bus through the master switch and the ammeter -->
+    <line x1="240" y1="181" x2="322" y2="181" stroke-width="3" :stroke="flat ? 'var(--color-line-strong)' : 'var(--color-info)'" :stroke-dasharray="flat ? '0' : '10 8'" :stroke-dashoffset="failed ? -dash() : dash()"/>
+    <circle cx="281" cy="181" r="12" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <text x="281" y="186" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">A</text>
+    <text x="281" y="216" font-size="12" text-anchor="middle" :fill="flat ? 'var(--color-fg-faint)' : failed ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="flat ? 'nothing left' : failed ? '← discharge' : 'charge →'"></text>
+    <text x="184" y="234" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-text="flat ? 'flat' : failed ? 'emergency reserve' : 'being recharged'"></text>
+    <!-- bus bar -->
+    <rect x="322" y="28" width="14" height="290" rx="3" :fill="flat ? 'var(--color-line-strong)' : 'var(--color-brand)'"/>
+    <text x="329" y="336" font-size="13" font-weight="600" text-anchor="middle" :fill="flat ? 'var(--color-fg-faint)' : 'var(--color-brand-fg)'">bus bar</text>
+    <!-- services: each through a breaker; tap to switch off or on -->
+    <g font-size="14" style="cursor: pointer">
+      <g @click="toggle_('radio')"><line x1="336" x2="420" :y1="rowY(0)" :y2="rowY(0)" stroke-width="2" :stroke="powered('radio') ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-dasharray="powered('radio') ? '10 8' : '0'" :stroke-dashoffset="dash()"/><rect x="364" width="20" height="12" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" :y="rowY(0) - 6"/><circle cx="430" r="6" :cy="rowY(0)" :fill="powered('radio') ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/><text x="444" :y="rowY(0) + 5" :fill="!on.radio ? 'var(--color-fg-faint)' : flat ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="names.radio + (!on.radio ? ' (off)' : flat ? ': lost' : low ? ': fading' : '')"></text><rect x="340" width="290" height="34" fill="var(--color-surface)" fill-opacity="0" :y="rowY(0) - 17"/></g>
+      <g @click="toggle_('xpdr')"><line x1="336" x2="420" :y1="rowY(1)" :y2="rowY(1)" stroke-width="2" :stroke="powered('xpdr') ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-dasharray="powered('xpdr') ? '10 8' : '0'" :stroke-dashoffset="dash()"/><rect x="364" width="20" height="12" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" :y="rowY(1) - 6"/><circle cx="430" r="6" :cy="rowY(1)" :fill="powered('xpdr') ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/><text x="444" :y="rowY(1) + 5" :fill="!on.xpdr ? 'var(--color-fg-faint)' : flat ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="names.xpdr + (!on.xpdr ? ' (off)' : flat ? ': lost' : '')"></text><rect x="340" width="290" height="34" fill="var(--color-surface)" fill-opacity="0" :y="rowY(1) - 17"/></g>
+      <g @click="toggle_('tc')"><line x1="336" x2="420" :y1="rowY(2)" :y2="rowY(2)" stroke-width="2" :stroke="powered('tc') ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-dasharray="powered('tc') ? '10 8' : '0'" :stroke-dashoffset="dash()"/><rect x="364" width="20" height="12" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" :y="rowY(2) - 6"/><circle cx="430" r="6" :cy="rowY(2)" :fill="powered('tc') ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/><text x="444" :y="rowY(2) + 5" :fill="!on.tc ? 'var(--color-fg-faint)' : flat ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="names.tc + (!on.tc ? ' (off)' : flat ? ': lost' : '')"></text><rect x="340" width="290" height="34" fill="var(--color-surface)" fill-opacity="0" :y="rowY(2) - 17"/></g>
+      <g @click="toggle_('lights')"><line x1="336" x2="420" :y1="rowY(3)" :y2="rowY(3)" stroke-width="2" :stroke="powered('lights') ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-dasharray="powered('lights') ? '10 8' : '0'" :stroke-dashoffset="dash()"/><rect x="364" width="20" height="12" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" :y="rowY(3) - 6"/><circle cx="430" r="6" :cy="rowY(3)" :fill="powered('lights') ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/><text x="444" :y="rowY(3) + 5" :fill="!on.lights ? 'var(--color-fg-faint)' : flat ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="names.lights + (!on.lights ? ' (off)' : flat ? ': lost' : '')"></text><rect x="340" width="290" height="34" fill="var(--color-surface)" fill-opacity="0" :y="rowY(3) - 17"/></g>
+      <g @click="toggle_('pump')"><line x1="336" x2="420" :y1="rowY(4)" :y2="rowY(4)" stroke-width="2" :stroke="powered('pump') ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-dasharray="powered('pump') ? '10 8' : '0'" :stroke-dashoffset="dash()"/><rect x="364" width="20" height="12" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" :y="rowY(4) - 6"/><circle cx="430" r="6" :cy="rowY(4)" :fill="powered('pump') ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/><text x="444" :y="rowY(4) + 5" :fill="!on.pump ? 'var(--color-fg-faint)' : flat ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="names.pump + (!on.pump ? ' (off)' : flat ? ': lost' : '')"></text><rect x="340" width="290" height="34" fill="var(--color-surface)" fill-opacity="0" :y="rowY(4) - 17"/></g>
+      <g @click="toggle_('pitot')"><line x1="336" x2="420" :y1="rowY(5)" :y2="rowY(5)" stroke-width="2" :stroke="powered('pitot') ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-dasharray="powered('pitot') ? '10 8' : '0'" :stroke-dashoffset="dash()"/><rect x="364" width="20" height="12" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" :y="rowY(5) - 6"/><circle cx="430" r="6" :cy="rowY(5)" :fill="powered('pitot') ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/><text x="444" :y="rowY(5) + 5" :fill="!on.pitot ? 'var(--color-fg-faint)' : flat ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="names.pitot + (!on.pitot ? ' (off)' : flat ? ': lost' : '')"></text><rect x="340" width="290" height="34" fill="var(--color-surface)" fill-opacity="0" :y="rowY(5) - 17"/></g>
+      <g @click="toggle_('flaps')"><line x1="336" x2="420" :y1="rowY(6)" :y2="rowY(6)" stroke-width="2" :stroke="powered('flaps') ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-dasharray="powered('flaps') ? '10 8' : '0'" :stroke-dashoffset="dash()"/><rect x="364" width="20" height="12" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" :y="rowY(6) - 6"/><circle cx="430" r="6" :cy="rowY(6)" :fill="powered('flaps') ? 'var(--color-ok)' : 'var(--color-surface)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/><text x="444" :y="rowY(6) + 5" :fill="!on.flaps ? 'var(--color-fg-faint)' : flat ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="names.flaps + (!on.flaps ? ' (off)' : flat ? ': lost' : '')"></text><rect x="340" width="290" height="34" fill="var(--color-surface)" fill-opacity="0" :y="rowY(6) - 17"/></g>
+    </g>
+    <text x="374" y="22" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">breakers</text>
+    <text x="444" y="22" font-size="11" fill="var(--color-fg-faint)">tap a service to switch it</text>
+    <!-- ammeter and voltmeter -->
+    <circle cx="86" cy="330" r="38" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <circle cx="196" cy="330" r="38" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="60" y="318">−</text><text x="86" y="304">0</text><text x="112" y="318">+</text>
+      <text x="186" y="303">12</text><text x="218" y="307">14</text>
+    </g>
+    <line x1="86" y1="330" stroke-width="2.5" stroke-linecap="round" :x2="ammNeedle.x" :y2="ammNeedle.y" :stroke="amps < -0.05 ? 'var(--color-bad)' : 'var(--color-fg)'"/>
+    <line x1="196" y1="330" stroke-width="2.5" stroke-linecap="round" :x2="voltNeedle.x" :y2="voltNeedle.y" :stroke="failed ? 'var(--color-warn)' : 'var(--color-fg)'"/>
+    <circle cx="86" cy="330" r="3.5" fill="var(--color-fg)"/><circle cx="196" cy="330" r="3.5" fill="var(--color-fg)"/>
+    <text x="86" y="352" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">ammeter</text>
+    <text x="196" y="352" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">volts</text>
+    <!-- alternator warning light -->
+    <circle cx="282" cy="266" r="9" :fill="failed && !flat ? 'var(--color-bad)' : 'var(--color-surface-2)'" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <text x="282" y="292" font-size="11" text-anchor="middle" :fill="failed && !flat ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">ALT light</text>
+    <!-- the magnetos are not on the bus -->
+    <rect x="372" y="318" width="256" height="50" rx="8" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25"/>
+    <text x="386" y="339" font-size="13" font-weight="600" fill="var(--color-ok-fg)">Magnetos: not on the bus</text>
+    <text x="386" y="358" font-size="12" fill="var(--color-ok-fg)">the engine keeps running regardless</text>
+    <text x="16" y="270" font-size="13" class="num" fill="var(--color-fg)" x-text="(failed ? 'T+' + hmm(min - 5) : 'cruise') "></text>
+    <text x="16" y="250" font-size="11" fill="var(--color-fg-faint)" x-show="failed">since the failure</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the flight'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="afb-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Minutes of flight">
+    <span class="widget-clock" x-text="failed ? 'T+' + hmm(min - 5) : 'cruise'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label>Services switched on (or tap them in the picture)</label>
+      <div class="flex flex-wrap gap-x-4 gap-y-1">
+        <label class="check"><input type="checkbox" x-model="on.radio" @change="changed()"> radios</label>
+        <label class="check"><input type="checkbox" x-model="on.xpdr" @change="changed()"> transponder</label>
+        <label class="check"><input type="checkbox" x-model="on.tc" @change="changed()"> turn coordinator</label>
+        <label class="check"><input type="checkbox" x-model="on.lights" @change="changed()"> lights</label>
+        <label class="check"><input type="checkbox" x-model="on.pump" @change="changed()"> fuel pump</label>
+        <label class="check"><input type="checkbox" x-model="on.pitot" @change="changed()"> pitot heat</label>
+        <label class="check"><input type="checkbox" x-model="on.flaps" @change="changed()"> flaps</label>
+      </div>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="failed ? (flat ? 'bad' : 'warn') : 'ok'"><dt class="widget-label">Ammeter and volts</dt><dd class="widget-value" x-text="!failed ? 'small charge, about 14 V' : flat ? 'zero: nothing left' : 'discharge, about ' + fmt(volts, 1) + ' V and falling'"></dd></div>
+    <div class="widget-readout" :class="flat ? 'bad' : low ? 'bad' : failed ? 'warn' : 'ok'"><dt class="widget-label">Battery left</dt><dd class="widget-value"><span x-text="!failed ? 'full, charging' : flat ? 'flat' : load === 0 ? 'holding: no load' : 'about ' + fmt(minsLeft) + ' min at this load'"></span><span class="widget-flag bad" x-show="low">land now</span></dd></div>
+    <div class="widget-readout" :class="endurance >= 55 ? 'ok' : 'warn'"><dt class="widget-label">A full battery would last</dt><dd class="widget-value" x-text="load === 0 ? 'a long time' : 'about ' + fmt(endurance) + ' min with these on'"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Engine</dt><dd class="widget-value">running on its magnetos</dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('normal-cruise')" :aria-pressed="active === 'normal-cruise'">Normal</button>
+      <button type="button" @click="preset('alternator-failed')" :aria-pressed="active === 'alternator-failed'">Alternator fails</button>
+      <button type="button" @click="preset('everything-on-flat')" :aria-pressed="active === 'everything-on-flat'">Everything left on</button>
+      <button type="button" @click="preset('shed-to-essentials')" :aria-pressed="active === 'shed-to-essentials'">Shed load</button>
+      <button type="button" @click="preset('essentials-nearly-an-hour')" :aria-pressed="active === 'essentials-nearly-an-hour'">Nearly an hour on essentials</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> When the alternator stops nothing goes dark at first: the battery takes over, and the only signs are the ammeter on discharge, sagging volts and a warning light. From then on the battery is a clock, and every service you leave on runs it down faster; the magnetos are not on this system, so the engine never notices. The minutes are illustrative, set to the lessons' "perhaps 30 to 60 minutes".</p>
+  <details class="widget-try"><summary>Try it: the alternator fails 40 minutes from home with everything on. What do you do?</summary><p>Press Alternator fails, then Everything left on: at this load the battery is flat in about half an hour, before you get home. Check the alternator switch and field breaker and cycle it once if the POH allows; if it stays off, press Shed load (pitot heat, lights and the fuel pump off unless you need them) and the battery lasts about twice as long. Land before it runs flat (BAKC 3.4).</p></details>
+  <details class="widget-try"><summary>Try it: the battery is flat. Will the engine stop?</summary><p>No. Play to Battery flat: radios, transponder, lights, flaps and the turn coordinator are gone, but the magnetos make their own sparks from the engine's rotation. The ASI, altimeter and VSI need no power either.</p></details>
+</div>

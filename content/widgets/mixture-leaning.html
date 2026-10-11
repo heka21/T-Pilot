@@ -1,0 +1,137 @@
+<div class="widget" x-data="widget({
+  m: 0, alt: 6500,
+  // illustrative model calibrated to the lessons' worked example (RBKA 2.1): at 6,500 ft full rich gives 2350 RPM,
+  // leaning raises it to a peak of 2400, a little further it falls to 2370 and the engine roughens.
+  // The carburettor meters fuel by volume, so the fuel/air ratio by weight rises as density falls (2.9% per 1,000 ft)
+  q0: 1.10, qbp: 1.06, qbe: 0.985, qr: 0.978, qs: 0.85, ka: 0.70088, kb: 5.5076,
+  sigma(h) { return 1 - 0.029 * h / 1000 },
+  fuel(m) { return m >= 97 ? 0 : 1 - 0.5 * m / 100 },
+  // mixture strength relative to chemically correct (1 = about 1:15 by weight)
+  q(m) { return this.q0 * this.fuel(m) / this.sigma(this.alt) },
+  pw(q) {
+    if (q < this.qs) return 0;
+    let p = q >= this.qbp ? 1 - this.ka * (q - this.qbp) ** 2 : 1 - this.kb * (this.qbp - q) ** 2;
+    if (q < this.qr) p -= 20 * (this.qr - q) ** 2;
+    return p < 0.6 ? 0 : p;
+  },
+  rpmAt(m) { const p = this.pw(this.q(m)); return p ? 2400 * Math.cbrt(p) : 0 },
+  egtAt(m) { const q = this.q(m); if (!this.pw(q)) return 0.6; return Math.max(0.6, q >= 1 ? 1 - 3 * (q - 1) ** 2 : 1 - 6 * (1 - q) ** 2) },
+  get rpm() { return this.rpmAt(this.m) },
+  get stopped() { return this.rpm === 0 },
+  get qq() { return this.q(this.m) },
+  get rough() { return !this.stopped && this.qq < this.qr },
+  get zone() {
+    const q = this.qq;
+    if (this.m >= 97) return 'Idle cut-off: no fuel, engine stops';
+    if (this.stopped) return 'Far too lean: engine stops';
+    if (q < this.qr) return 'Too lean: rough, power falling';
+    if (q < 0.995) return 'Best economy: slightly lean of correct';
+    if (q < 1.005) return 'Chemically correct, about 1:15';
+    if (q <= this.qbp + 0.02) return 'Best power: slightly rich of correct';
+    if (q <= 1.15) return 'Rich: a little spare fuel for cooling';
+    return 'Too rich: power down, fuel wasted';
+  },
+  // positions on the control travel of the landmarks, for the current altitude
+  mAt(q) { return this.clamp((1 - q * this.sigma(this.alt) / this.q0) / 0.5 * 100, 0, 97) },
+  // chart: control travel 0..100 across x 70..600; RPM 2150..2450 up y 250..50; EGT relative 0.6..1 up y 250..150
+  X(m) { return 70 + m / 100 * 530 },
+  YR(r) { return 250 - this.clamp(r - 2150, 0, 300) / 300 * 200 },
+  YE(e) { return 250 - (e - 0.6) / 0.4 * 100 },
+  get rpmPath() { const pts = []; for (let m = 0; m <= 100; m += 0.5) pts.push([this.X(m), this.YR(this.rpmAt(m) || 2150)]); return this.path(pts) },
+  get egtPath() { const pts = []; for (let m = 0; m <= 100; m += 0.5) pts.push([this.X(m), this.YE(this.egtAt(m))]); return this.path(pts) },
+  presets: {
+    'sea-level-full-rich': { m: 0, alt: 0 },
+    'full-rich-6500': { m: 0, alt: 6500 },
+    'peak-rpm-6500': { m: 43.6, alt: 6500 },
+    'past-peak-rough-6500': { m: 55.75, alt: 6500 },
+    'just-rich-of-peak-6500': { m: 41.4, alt: 6500 },
+    'descended-to-3500': { m: 41.4, alt: 3500 },
+  },
+})">
+  <svg viewBox="0 0 640 312" role="img" aria-labelledby="mxl-title" class="widget-stage">
+    <title id="mxl-title">RPM and exhaust gas temperature as the mixture control moves from full rich to idle cut-off at a fixed-pitch propeller's cruise throttle: RPM rises to a peak at best power and falls with roughness when too lean; EGT peaks near the chemically correct mixture</title>
+    <rect x="0" y="0" width="640" height="312" fill="var(--color-surface)"/>
+    <!-- zones along the control travel -->
+    <rect x="70" y="40" height="210" fill="var(--color-warn)" fill-opacity="0.07" :width="X(mAt(qbp + 0.02)) - 70"/>
+    <rect y="40" height="210" fill="var(--color-ok)" fill-opacity="0.12" :x="X(mAt(qbp + 0.02))" :width="X(mAt(qr)) - X(mAt(qbp + 0.02))"/>
+    <rect y="40" height="210" fill="var(--color-bad)" fill-opacity="0.1" :x="X(mAt(qr))" :width="600 - X(mAt(qr))"/>
+    <text y="34" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)" :x="(70 + X(mAt(qbp + 0.02))) / 2" x-show="X(mAt(qbp + 0.02)) - 70 > 70">too rich</text>
+    <text y="34" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)" font-weight="600" :x="(X(mAt(qbp + 0.02)) + X(mAt(qr))) / 2">leaned</text>
+    <text y="34" font-size="12" text-anchor="middle" fill="var(--color-bad-fg)" :x="(X(mAt(qr)) + 600) / 2">too lean: rough, then stops</text>
+    <!-- axes -->
+    <line x1="70" y1="250" x2="600" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" y1="40" x2="70" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="62" y="254">2150</text><text x="62" y="187">2250</text><text x="62" y="121">2350</text><text x="62" y="54">2450</text>
+    </g>
+    <g stroke="var(--color-line)" stroke-width="1"><line x1="70" x2="600" y1="183.3" y2="183.3"/><line x1="70" x2="600" y1="116.7" y2="116.7"/></g>
+    <text x="14" y="150" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" transform="rotate(-90 14 150)">RPM</text>
+    <!-- curves -->
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="7 4" stroke-linecap="round" stroke-linejoin="round" :d="egtPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="rpmPath"/>
+    <circle r="4" fill="var(--color-info)" :cx="X(mAt(1))" :cy="YE(1)"/>
+    <text font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="clamp(X(mAt(qbp)), 150, 520)" :y="YR(2400) - 14">best power: peak RPM 2400</text>
+    <!-- legend -->
+    <line x1="70" x2="96" y1="12" y2="12" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="102" y="16" font-size="12" fill="var(--color-fg-muted)">RPM (fixed-pitch propeller)</text>
+    <line x1="320" x2="346" y1="12" y2="12" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="7 4"/>
+    <text x="352" y="16" font-size="12" fill="var(--color-fg-muted)">EGT, relative: peaks near the 1:15 mixture</text>
+    <!-- you -->
+    <line y1="40" y2="250" stroke="var(--color-brand)" stroke-width="1.5" :x1="X(m)" :x2="X(m)"/>
+    <circle r="5" fill="var(--color-info)" :cx="X(m)" :cy="YE(egtAt(m))"/>
+    <circle r="7" fill="var(--color-surface)" stroke-width="3" :cx="X(m)" :cy="YR(rpm || 2150)" :stroke="stopped || rough ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+    <text font-size="13" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="X(m) + (m > 70 ? -12 : 12)" :y="YR(rpm || 2150) + (stopped ? -10 : 24)" :text-anchor="m > 70 ? 'end' : 'start'"
+      :fill="stopped || rough ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="stopped ? 'engine stopped' : fmt(rpm) + ' RPM' + (rough ? ', rough' : '')"></text>
+    <!-- the red knob on its travel -->
+    <line x1="70" x2="600" y1="276" y2="276" stroke="var(--color-line-strong)" stroke-width="4" stroke-linecap="round"/>
+    <line x1="584" x2="584" y1="268" y2="284" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <circle r="9" cy="276" fill="var(--color-bad)" stroke="var(--color-surface)" stroke-width="2" :cx="X(m)"/>
+    <rect x="60" y="262" width="550" height="28" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: ew-resize" @pointerdown="drag($event, (p) => { m = Math.round(clamp((p.x - 70) / 530 * 100, 0, 100) * 10) / 10; active = null })"/>
+    <text x="70" y="302" font-size="12" fill="var(--color-fg-muted)">← full rich</text>
+    <text x="600" y="302" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">idle cut-off →</text>
+    <text x="335" y="302" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="'mixture control at ' + fmt(alt) + ' ft, cruise throttle'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="mxl-m">Mixture control (red knob) <output for="mxl-m" x-text="m === 0 ? 'full rich' : m >= 97 ? 'idle cut-off' : 'pulled ' + fmt(m) + '% of its travel'"></output></label>
+      <input type="range" id="mxl-m" min="0" max="100" step="0.1" x-model.number="m">
+    </div>
+    <div class="widget-control">
+      <label for="mxl-alt">Altitude <output for="mxl-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="mxl-alt" min="0" max="10000" step="100" x-model.number="alt">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="stopped || rough ? 'bad' : rpm > 2395 ? 'ok' : 'warn'">
+      <dt class="widget-label">Tachometer</dt>
+      <dd class="widget-value"><span x-text="stopped ? '0: engine stopped' : fmt(rpm) + ' RPM'"></span><span class="widget-flag bad" x-show="rough">rough</span><span class="widget-flag ok" x-show="!rough && rpm > 2399.5">peak</span></dd>
+    </div>
+    <div class="widget-readout" :class="stopped || rough ? 'bad' : qq > 1.15 ? 'warn' : 'ok'">
+      <dt class="widget-label">Mixture</dt>
+      <dd class="widget-value" x-text="zone"></dd>
+    </div>
+    <div class="widget-readout" :class="!stopped && egtAt(m) > 0.985 ? 'warn' : ''">
+      <dt class="widget-label">EGT and cylinders</dt>
+      <dd class="widget-value" x-text="stopped ? 'cooling: no combustion' : egtAt(m) > 0.985 ? 'near peak EGT: hottest' : qq > 1 ? 'cooler: the spare fuel absorbs heat' : 'past peak EGT'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Fuel flow</dt>
+      <dd class="widget-value" x-text="fmt(fuel(m) * 100) + '% of full rich'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('sea-level-full-rich')" :aria-pressed="active === 'sea-level-full-rich'">Full rich, sea level</button>
+      <button type="button" @click="preset('full-rich-6500')" :aria-pressed="active === 'full-rich-6500'">Full rich, 6,500 ft</button>
+      <button type="button" @click="preset('peak-rpm-6500')" :aria-pressed="active === 'peak-rpm-6500'">Peak RPM</button>
+      <button type="button" @click="preset('past-peak-rough-6500')" :aria-pressed="active === 'past-peak-rough-6500'">Past the peak</button>
+      <button type="button" @click="preset('just-rich-of-peak-6500')" :aria-pressed="active === 'just-rich-of-peak-6500'">Just rich of peak</button>
+      <button type="button" @click="preset('descended-to-3500')" :aria-pressed="active === 'descended-to-3500'">Descended, not enriched</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Climbing makes the mixture richer (thinner air, same fuel), so at 6,500 ft full rich costs RPM. Lean slowly: the RPM rises to a peak at best power, slightly rich of the chemically correct 1:15; a fraction further it falls and the engine roughens. Come back to the peak and a little richer. EGT climbs as you lean and peaks near the correct mixture: rich runs cool, lean runs hot. The RPM figures are the lessons' worked example; the curve shapes between them are illustrative.</p>
+  <details class="widget-try"><summary>Try it: at 6,500 ft, full rich shows 2350 RPM. Lean by RPM, as RBKA 2.1 describes.</summary><p>Press Full rich, 6,500 ft, then drag the knob slowly right: the RPM rises to 2400 (Peak RPM), then drops to 2370 and the engine roughens (Past the peak). Enrich back to 2400 and a touch richer (Just rich of peak). The fuel flow is now noticeably lower than at full rich, and the engine runs smoothly.</p></details>
+  <details class="widget-try"><summary>Try it: you descend from 6,500 to 3,500 ft without touching the mixture. Why is the engine rough?</summary><p>Press Descended, not enriched: the denser air meets the same fuel, so the mixture you leaned for 6,500 ft is now too lean, past the peak on the lean side. Drag the knob left (enrich) until the RPM is back up and the engine smooth, or go full rich if you are joining the circuit.</p></details>
+</div>

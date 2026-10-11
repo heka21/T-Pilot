@@ -1,0 +1,152 @@
+<div class="widget" x-data="widget({
+  f: 10, night: false, sea: false,
+  // illustrative model (the lesson gives the rules, not distances): a reflecting layer 250 km up by day and 300 km at
+  // night, bending back frequencies up to a critical 8 MHz straight up by day and 2.5 MHz at night (secant law, curved earth)
+  _R: 6371,
+  get h() { return this.night ? 300 : 250 },
+  get fc() { return this.night ? 2.5 : 8 },
+  // skip distance in km: 0 when even a vertical wave comes back, null when the wave passes through into space
+  get D() {
+    const R = this._R, h = this.h;
+    if (this.f <= this.fc) return 0;
+    const cphi = this.fc / this.f, sphi = Math.sqrt(1 - cphi * cphi);
+    if (sphi > R / (R + h)) return null;
+    const beta = Math.acos(sphi * (R + h) / R), phi = Math.acos(cphi);
+    return 2 * R * (Math.PI / 2 - beta - phi);
+  },
+  get returns() { return this.D !== null },
+  get Dmax() { return 2 * this._R * Math.acos(this._R / (this._R + this.h)) },
+  get gw() { return 360 / this.f * (this.sea ? 3 : 1) },
+  get skip() { return this.returns && this.D > this.gw },
+  // picture: distance on a square-root axis, 0 km at x 40 to 4,000 km at x 600; height 0.6 px per km above the ground (y 232)
+  X(d) { return 40 + 560 * Math.sqrt(Math.min(4000, Math.max(0, d)) / 4000) },
+  get layerY() { return 232 - this.h * 0.6 },
+  get xD() { return this.X(this.returns ? this.D : 0) },
+  get xMax() { return this.X(this.Dmax) },
+  get rayPath() {
+    if (!this.returns) return 'M40 230 L' + (40 + 0.55 * (232 - this.layerY)).toFixed(1) + ' ' + this.layerY.toFixed(1) + ' L' + (40 + 0.55 * 232 * 1.02).toFixed(1) + ' 8';
+    const xe = Math.max(this.xD, 70);
+    return 'M40 230 L' + ((40 + xe) / 2).toFixed(1) + ' ' + this.layerY.toFixed(1) + ' L' + xe.toFixed(1) + ' 230';
+  },
+  get farPath() { return 'M40 230 L' + ((40 + this.xMax) / 2).toFixed(1) + ' ' + this.layerY.toFixed(1) + ' L' + this.xMax.toFixed(1) + ' 230' },
+  // the three listeners of the lesson's check
+  hears(d) { if (d <= this.gw) return 'ground'; if (this.returns && d >= this.D) return 'sky'; return '' },
+  hearText(d) { const w = this.hears(d); return w === 'ground' ? 'ground wave' : w === 'sky' ? 'sky wave' : (this.returns && d < this.D ? 'skip zone' : 'nothing') },
+  // the model's distances are illustrative: shown to two significant figures
+  r2(km) { return this.fmt(Number(km.toPrecision(2))) },
+  get gwText() { return 'About ' + this.r2(this.gw) + ' km' },
+  get skipText() { if (!this.returns) return 'No sky wave at all'; return this.skip ? this.r2(this.gw) + ' to ' + this.r2(this.D) + ' km' : 'None: the sky wave comes down close in' },
+  get skyText() { if (!this.returns) return 'Passes into space: no contact'; return this.D < 1 ? 'Comes back at every distance' : 'Comes back from about ' + this.r2(this.D) + ' km' },
+  get ruleText() { return this.returns ? 'Works: the ionosphere bends it back' : (this.night ? 'Too high for the night: go lower' : 'Too high: go lower') },
+  get caption() {
+    if (!this.returns) return 'At ' + this.f + ' MHz ' + (this.night ? 'after dark' : '') + ' the weakened ionosphere cannot bend the wave back: it goes straight through into space and nobody beyond the ground wave hears you. Choosing the wrong frequency for the time of day gives no contact: by day use higher HF frequencies; at night lower ones.';
+    if (this.skip) return 'Close in you hear the ground wave, which fades by about ' + this.r2(this.gw) + ' km. The first sky wave comes back down about ' + this.r2(this.D) + ' km out. In between lies the skip zone (dead space): too far for the ground wave, too close for the sky wave.';
+    return 'Here the sky wave comes back down before the ground wave has faded, so there is no skip zone' + (this.sea ? ', helped by the ground wave reaching further over the sea, which conducts far better than dry ground.' : '.');
+  },
+  presets: {
+    'skip-zone-check': { f: 10, night: false, sea: false },
+    'same-frequency-after-dark': { f: 10, night: true, sea: false },
+    'lower-frequency-at-night': { f: 5, night: true, sea: false },
+    'high-frequency-by-day': { f: 18, night: false, sea: false },
+    'ground-wave-over-sea': { f: 3, night: false, sea: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="hfs-title" class="widget-stage">
+    <title id="hfs-title">A cross-section from an HF transmitter on the left across thousands of kilometres, with the ionosphere as a band overhead that is lower and denser by day, higher and weaker at night. The ground wave hugs the surface and fades; the sky wave climbs to the ionosphere and comes back down far away, or passes through into space; between them lies the skip zone. Three aircraft at 30, 150 and 1,500 km show who hears the station</title>
+    <defs>
+      <marker id="hfs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- sky by day, stars and moon at night -->
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="240" rx="10" fill="var(--color-sky-soft)" :fill-opacity="night ? 0 : 1"/>
+    <g fill="var(--color-fg-faint)" x-show="night">
+      <circle cx="120" cy="24" r="1.5"/><circle cx="210" cy="40" r="1.2"/><circle cx="330" cy="18" r="1.5"/><circle cx="420" cy="34" r="1.2"/>
+      <circle cx="560" cy="22" r="1.5"/><circle cx="480" cy="110" r="1.2"/><circle cx="250" cy="120" r="1.2"/><circle cx="380" cy="150" r="1.2"/>
+      <path d="M598 18 a12 12 0 1 0 10 19 a9.5 9.5 0 1 1 -10 -19 Z"/>
+    </g>
+    <circle cx="600" cy="30" r="12" fill="var(--color-warn)" x-show="!night"/>
+    <!-- the ionosphere -->
+    <rect x="0" width="640" height="24" :y="layerY - 12" fill="var(--color-info)" :fill-opacity="night ? 0.12 : 0.28"/>
+    <text x="630" font-size="12" text-anchor="end" fill="var(--color-info)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="layerY + 4" x-text="night ? 'ionosphere at night: higher, weaker' : 'ionosphere by day: strongly ionised'"></text>
+    <!-- ground: land or sea -->
+    <path d="M0 232 L640 232 L640 290 A10 10 0 0 1 630 300 L10 300 A10 10 0 0 1 0 290 Z" fill="var(--color-ok-soft)"/>
+    <path d="M0 232 L640 232 L640 290 A10 10 0 0 1 630 300 L10 300 A10 10 0 0 1 0 290 Z" fill="var(--color-sky-fg)" fill-opacity="0.3" x-show="sea"/>
+    <line x1="0" y1="232" x2="640" y2="232" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <!-- skip zone -->
+    <rect y="226" height="12" fill="var(--color-bad)" fill-opacity="0.35" x-show="skip" :x="X(gw)" :width="Math.max(0, xD - X(gw))"/>
+    <text font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="skip" y="222" :x="(X(gw) + xD) / 2">skip zone</text>
+    <!-- sky-wave coverage on the ground -->
+    <rect y="228" height="8" fill="var(--color-brand)" fill-opacity="0.35" x-show="returns" :x="xD" :width="Math.max(0, 600 - xD)"/>
+    <!-- ground wave, fading -->
+    <g stroke="var(--color-ok)" stroke-width="5" stroke-linecap="round">
+      <line y1="230" y2="230" x1="40" :x2="40 + (X(gw) - 40) * 0.25"/>
+      <line y1="230" y2="230" stroke-opacity="0.7" :x1="40 + (X(gw) - 40) * 0.25" :x2="40 + (X(gw) - 40) * 0.5"/>
+      <line y1="230" y2="230" stroke-opacity="0.45" :x1="40 + (X(gw) - 40) * 0.5" :x2="40 + (X(gw) - 40) * 0.75"/>
+      <line y1="230" y2="230" stroke-opacity="0.25" :x1="40 + (X(gw) - 40) * 0.75" :x2="X(gw)"/>
+    </g>
+    <!-- sky wave -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" stroke-linejoin="round" x-show="returns" :d="farPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#hfs-arrow)" :d="rayPath"/>
+    <text x="150" y="20" font-size="12" font-weight="700" fill="var(--color-bad-fg)" x-show="!returns" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">passes into space: no contact</text>
+    <!-- the transmitter -->
+    <line x1="40" y1="232" x2="40" y2="200" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M32 212 L40 200 L48 212" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linejoin="round"/>
+    <text x="14" y="270" font-size="12" fill="var(--color-fg-muted)">HF station</text>
+    <!-- three listeners: 30, 150 and 1,500 km -->
+    <g text-anchor="middle" font-size="12">
+      <circle cx="88.5" cy="196" r="7" stroke-width="2" :fill="hears(30) ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)'" :stroke="hears(30) ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+      <text x="88.5" y="182" font-weight="700" :fill="hears(30) ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="hears(30) ? 'hears' : 'nothing'"></text>
+      <circle cx="148.4" cy="196" r="7" stroke-width="2" :fill="hears(150) ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)'" :stroke="hears(150) ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+      <text x="148.4" y="182" font-weight="700" :fill="hears(150) ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="hears(150) ? 'hears' : 'nothing'"></text>
+      <circle cx="383" cy="196" r="7" stroke-width="2" :fill="hears(1500) ? 'var(--color-ok-soft)' : 'var(--color-bad-soft)'" :stroke="hears(1500) ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+      <text x="383" y="182" font-weight="700" :fill="hears(1500) ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="hears(1500) ? 'hears' : 'nothing'"></text>
+    </g>
+    <!-- distance axis, square root, not to scale -->
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" class="num">
+      <line x1="88.5" y1="232" x2="88.5" y2="240" stroke="var(--color-line-strong)" stroke-width="1"/><text x="88.5" y="252">30 km</text>
+      <line x1="148.4" y1="232" x2="148.4" y2="240" stroke="var(--color-line-strong)" stroke-width="1"/><text x="148.4" y="252">150 km</text>
+      <line x1="238" y1="232" x2="238" y2="240" stroke="var(--color-line-strong)" stroke-width="1"/><text x="238" y="252">500 km</text>
+      <line x1="383" y1="232" x2="383" y2="240" stroke="var(--color-line-strong)" stroke-width="1"/><text x="383" y="252">1,500 km</text>
+      <line x1="600" y1="232" x2="600" y2="240" stroke="var(--color-line-strong)" stroke-width="1"/><text x="600" y="252">4,000 km</text>
+    </g>
+    <text x="20" y="290" font-size="11" fill="var(--color-fg-muted)">distance axis not to scale (square root); heights exaggerated</text>
+    <text x="620" y="290" font-size="12" text-anchor="end" font-weight="600" :fill="sea ? 'var(--color-sky-fg)' : 'var(--color-ok-fg)'" x-text="sea ? 'over the sea' : 'over land'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="hfs-f">HF frequency <output for="hfs-f" x-text="fmt(f, 1) + ' MHz'"></output></label>
+      <input type="range" id="hfs-f" min="2.8" max="22" step="0.1" x-model.number="f" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="hfs-night" class="cursor-pointer"><span>Night</span>
+        <input type="checkbox" id="hfs-night" x-model="night" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="hfs-sea" class="cursor-pointer"><span>Over the sea</span>
+        <input type="checkbox" id="hfs-sea" x-model="sea" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Ground wave reaches</dt><dd class="widget-value" x-text="gwText"></dd></div>
+    <div class="widget-readout" :class="skip ? 'warn' : ''"><dt class="widget-label">Skip zone</dt><dd class="widget-value text-sm" x-text="skipText"></dd></div>
+    <div class="widget-readout" :class="returns ? 'ok' : 'bad'"><dt class="widget-label">Sky wave</dt><dd class="widget-value text-sm" x-text="skyText"></dd></div>
+    <div class="widget-readout" :class="hears(30) ? 'ok' : 'bad'"><dt class="widget-label">Aircraft at 30 km</dt><dd class="widget-value text-sm" x-text="hearText(30)"></dd></div>
+    <div class="widget-readout" :class="hears(150) ? 'ok' : 'bad'"><dt class="widget-label">Aircraft at 150 km</dt><dd class="widget-value text-sm" x-text="hearText(150)"></dd></div>
+    <div class="widget-readout" :class="hears(1500) ? 'ok' : 'bad'"><dt class="widget-label">Aircraft at 1,500 km</dt><dd class="widget-value text-sm" x-text="hearText(1500)"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('skip-zone-check')" :aria-pressed="active === 'skip-zone-check'">The skip zone</button>
+      <button type="button" @click="preset('same-frequency-after-dark')" :aria-pressed="active === 'same-frequency-after-dark'">Same frequency after dark</button>
+      <button type="button" @click="preset('lower-frequency-at-night')" :aria-pressed="active === 'lower-frequency-at-night'">Lower at night</button>
+      <button type="button" @click="preset('high-frequency-by-day')" :aria-pressed="active === 'high-frequency-by-day'">High by day</button>
+      <button type="button" @click="preset('ground-wave-over-sea')" :aria-pressed="active === 'ground-wave-over-sea'">Over the sea</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The skip zone lies between where the ground wave fades and where the first sky wave comes down, so a nearer aircraft can hear nothing while a far one hears clearly. After dark the ionosphere weakens and only lower frequencies come back: by day use higher HF frequencies; at night lower ones. The heights, distances and frequencies here come from an illustrative model; the rules are the lesson’s.</p>
+  <details class="widget-try"><summary>Try it: an aircraft 150 km from an HF station hears nothing, while one 30 km away and one 1,500 km away both hear it clearly. Why?</summary><p>Press The skip zone: the aircraft at 150 km is in the skip zone, beyond the range of the fading ground wave but short of where the first sky wave returns. The near aircraft gets the ground wave, the far one the sky wave.</p></details>
+  <details class="widget-try"><summary>Try it: on the ferry flight to Kalgoorlie your afternoon HF frequency fades away after dark. What do you do?</summary><p>Press Same frequency after dark, then Lower at night: the weakened ionosphere now bends back only lower frequencies, so you change to a lower one.</p></details>
+</div>

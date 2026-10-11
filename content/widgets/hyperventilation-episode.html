@@ -1,0 +1,197 @@
+<div class="widget" x-data="timeline({
+  duration: 40, loop: false,
+  remedy: 'slow',
+  // eight minutes of an anxious moment, sampled every second. CO2 in the blood (1 = normal) relaxes towards
+  // production / ventilation; the symptom thresholds, rates and timings are illustrative (PHFC 2.3 gives only the
+  // normal 12 to 16 breaths a minute and the cure: one breath every 4 to 5 seconds).
+  th: [0.86, 0.79, 0.72, 0.64, 0.56],
+  names: ['Dizzy, light-headed', 'Tingling lips and fingers', 'Blurred, tunnel vision', 'Hands cramp: muscle spasm', 'Unconscious'],
+  short: ['dizzy', 'tingling', 'vision', 'spasm', 'unconscious'],
+  get sim() {
+    const dt = 1 / 60, n = 480, out = { c: [], rate: [], lvl: [], out: [] }, th = this.th.slice(), remedy = this.remedy;
+    let c = 1, uncon = false, fainted = false;
+    for (let k = 0; k <= n; k++) {
+      const m = k * dt;
+      let lvl = 0;
+      for (let i = 0; i < 5; i++) if (c < th[i]) lvl = i + 1;
+      if (lvl >= 5 && !fainted) { uncon = true; fainted = true }
+      if (uncon && c > 0.84) uncon = false;
+      let rate = 14, depth = 1;
+      if (fainted) { rate = uncon ? 12 : 14; depth = uncon ? 0.8 : 1 }
+      else if (m >= 1) {
+        if (remedy !== 'none' && m >= 2.5) {
+          if (remedy === 'slow') { rate = 13; depth = 14 / 13 }
+          else { rate = 20 + 2 * lvl; depth = 1.6 }
+        } else { rate = 18 + 2 * lvl; depth = 1.2 }
+      }
+      out.c.push(c); out.rate.push(rate); out.lvl.push(uncon ? 5 : Math.min(lvl, 4)); out.out.push(uncon);
+      c += dt / 1.4 * (14 / (rate * depth) - c);
+    }
+    return out;
+  },
+  get k() { return Math.round(this.t * 480) },
+  get min() { return this.t * 8 },
+  get c() { return this.sim.c[this.k] },
+  get rate() { return this.sim.rate[this.k] },
+  get lvl() { return this.sim.lvl[this.k] },
+  get uncon() { return this.sim.out[this.k] },
+  get anxious() { return this.min >= 1 && !this.sim.out.slice(0, this.k + 1).some((u) => u) && !(this.remedy === 'slow' && this.min >= 2.5) },
+  firstAt(test) { const s = this.sim; for (let k = 0; k <= 480; k++) if (test(s, k)) return k / 480; return -1 },
+  get symptomsAt() { return this.firstAt((s, k) => s.lvl[k] >= 1) },
+  get faintAt() { return this.firstAt((s, k) => s.out[k]) },
+  get clearAt() { const s = this.sim, a = this.symptomsAt; if (a < 0) return -1; for (let k = Math.round(a * 480) + 1; k <= 480; k++) if (s.lvl[k] === 0) return k / 480; return -1 },
+  get steps() {
+    const s = [{ at: 0, label: 'Calm' }, { at: 1 / 8, label: 'Anxiety' }];
+    if (this.symptomsAt >= 0) s.push({ at: this.symptomsAt, label: 'First symptoms' });
+    if (this.remedy !== 'none') s.push({ at: 2.5 / 8, label: this.remedy === 'slow' ? 'Slow it down' : 'Deep breaths' });
+    if (this.faintAt >= 0) s.push({ at: this.faintAt, label: 'Unconscious' });
+    if (this.clearAt >= 0) s.push({ at: this.clearAt, label: 'Symptoms gone' });
+    return s.sort((a, b) => a.at - b.at);
+  },
+  // the picture: minutes 0..8 across x 300..620; CO2 0.5..1.05 down y 266..130; breaths 8..32 down y 98..34
+  X(m) { return 300 + m / 8 * 320 },
+  YC(c) { return 266 - (this.clamp(c, 0.5, 1.05) - 0.5) / 0.55 * 136 },
+  YR(r) { return 98 - (r - 8) / 24 * 64 },
+  trace(key, Y) { const v = this.sim[key], pts = []; for (let k = 0; k <= this.k; k += 3) pts.push([this.X(k / 60), Y(v[k])]); pts.push([this.X(this.k / 60), Y(v[this.k])]); return this.path(pts) },
+  get cPath() { return this.trace('c', (c) => this.YC(c)) },
+  get rPath() { return this.trace('rate', (r) => this.YR(r)) },
+  get breathText() { return this.rate + ' a minute' },
+  get breathState() { return this.rate >= 12 && this.rate <= 16 ? 'ok' : this.rate > 20 ? 'bad' : 'warn' },
+  get co2() { return this.c >= 0.86 ? ['Normal', 'ok'] : this.c >= 0.72 ? ['Low', 'warn'] : ['Very low', 'bad'] },
+  get symptoms() { return this.uncon ? ['Unconscious', 'bad'] : this.lvl === 0 ? ['None', 'ok'] : [this.names[this.lvl - 1], this.lvl >= 3 ? 'bad' : 'warn'] },
+  get caption() {
+    const m = this.min;
+    if (m < 1) return 'Calm, about 14 breaths a minute: exactly enough to blow off the carbon dioxide your body makes, so the CO2 thermostat in the brainstem is satisfied.';
+    if (this.uncon) return 'Unconscious. With the pilot out of the loop the brainstem takes over, breathing drops back to normal and the CO2 climbs again. On the ground this is a harmless faint; in the circuit it may already have been fatal.';
+    if (this.faintAt >= 0 && this.t > this.faintAt) return this.lvl ? 'Coming round as the carbon dioxide builds back up. The cure worked, but only because the pilot passed out first.' : 'Recovered, after a faint. Recognising it and slowing the breathing would have got here without losing consciousness.';
+    if (m >= 2.5 && this.remedy === 'slow') return this.lvl ? 'Recognise it, then slow down: one gentle breath every 4 to 5 seconds and talk out loud (you cannot over-breathe while speaking). CO2 production carries on, less is blown off, and the level climbs back.' : 'Within a few minutes the CO2 is back to normal and the tingling and dizziness have gone. Now deal with what caused the anxiety so it does not start again.';
+    if (m >= 2.5 && this.remedy === 'deep') return 'Deep breaths to calm down: the instinct, and exactly wrong. Each one blows off more CO2, the symptoms deepen and the hands start to cramp.';
+    if (this.lvl === 0) return 'Something makes the pilot anxious: a first solo, being unsure of position, a frightened passenger. The alarm response speeds the breathing, but the body is making CO2 at the resting rate, so the level starts to fall.';
+    if (this.lvl === 1) return 'Low CO2 narrows the brain\'s blood vessels and makes haemoglobin hold on to its oxygen: dizzy and light-headed, although more oxygen than ever is coming in.';
+    if (this.lvl === 2) return 'Alkaline blood makes the nerves irritable: pins and needles around the lips and in the fingers. The symptoms are frightening, fear speeds the breathing more: the vicious circle.';
+    if (this.lvl === 3) return 'Vision blurs and tunnels, the heart races. Each new symptom adds to the anxiety, and the breathing speeds up again.';
+    return 'The hands cramp into a claw: muscle spasm, the sign that points to hyperventilation rather than hypoxia. Left alone, the next step is unconsciousness.';
+  },
+  presets: {
+    'first-solo-nerves': { remedy: 'none', t: 0.28 },
+    'slow-and-talk': { remedy: 'slow', t: 0.45 },
+    'deep-breaths': { remedy: 'deep', t: 0.375 },
+    'untreated-faint': { remedy: 'none', t: 0.5 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="hve-title" class="widget-stage">
+    <title id="hve-title">A pilot whose symptoms appear as the carbon dioxide in the blood falls, beside a chart of breathing rate and blood CO2 over eight minutes of an anxious episode</title>
+    <!-- the pilot -->
+    <g>
+      <path d="M58 160 Q60 140 92 136 L168 136 Q200 140 202 160 L212 286 L48 286 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M112 112 L112 136 M148 112 L148 136" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+      <g :transform="uncon ? 'rotate(-20 130 118)' : ''">
+      <circle cx="130" cy="76" r="38" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+      <!-- eyes: open, blurred, closed -->
+      <g x-show="!uncon" fill="var(--color-fg)"><circle cx="116" cy="70" r="4"/><circle cx="144" cy="70" r="4"/></g>
+      <g x-show="uncon" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"><path d="M110 71 L122 71 M138 71 L150 71"/></g>
+      <g x-show="lvl >= 3 && !uncon" fill="none" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="3 3"><circle cx="116" cy="70" r="9"/><circle cx="144" cy="70" r="9"/></g>
+      <!-- mouth: calm, anxious (open), out -->
+      <path x-show="!anxious && !uncon" d="M118 94 Q130 102 142 94" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/>
+      <ellipse x-show="anxious" cx="130" cy="96" rx="7" ry="5" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2"/>
+      <path x-show="uncon" d="M120 96 L140 96" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/>
+      <!-- tingling around the lips -->
+      <g x-show="lvl >= 2 && !uncon" fill="var(--color-brand)"><circle cx="112" cy="92" r="2"/><circle cx="148" cy="92" r="2"/><circle cx="118" cy="106" r="2"/><circle cx="142" cy="106" r="2"/><circle cx="130" cy="109" r="2"/></g>
+      <!-- dizzy swirl -->
+      <path x-show="lvl >= 1 && !uncon" d="M84 40 a8 8 0 1 1 8 8 a5 5 0 1 1 -5 -5 a2 2 0 1 1 2 2 M168 30 a8 8 0 1 1 8 8 a5 5 0 1 1 -5 -5 a2 2 0 1 1 2 2" fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <!-- the heart -->
+      <path d="M150 178 c-6 -10 -20 -4 -14 6 l14 14 l14 -14 c6 -10 -8 -16 -14 -6 Z" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round" :fill="anxious && lvl >= 1 ? 'var(--color-bad)' : 'var(--color-bad-soft)'"/>
+      <!-- arms and hands: open, or cramped into a claw -->
+      <path d="M66 150 Q50 200 54 236 M194 150 Q210 200 206 236" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+      <g x-show="lvl < 4 || uncon" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round">
+        <path d="M46 238 L46 256 M52 240 L52 260 M58 240 L58 259 M63 238 L64 254"/>
+        <path d="M198 238 L197 254 M203 240 L203 259 M209 240 L209 260 M214 238 L214 256"/>
+      </g>
+      <g x-show="lvl >= 4 && !uncon" fill="none" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M46 238 L44 248 L50 252 M52 240 L51 250 L57 254 M58 240 L58 250 L63 252 M63 238 L66 246 L69 248"/>
+        <path d="M198 238 L194 246 L191 248 M203 240 L203 250 L197 252 M209 240 L209 250 L203 254 M214 238 L216 248 L210 252"/>
+      </g>
+      <g x-show="lvl >= 2 && !uncon" fill="var(--color-brand)"><circle cx="40" cy="262" r="2"/><circle cx="56" cy="268" r="2"/><circle cx="68" cy="260" r="2"/><circle cx="192" cy="260" r="2"/><circle cx="204" cy="268" r="2"/><circle cx="220" cy="262" r="2"/></g>
+    </g>
+    <text x="130" y="22" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" x-show="uncon">unconscious</text>
+
+    <!-- breathing rate strip -->
+    <rect x="300" :y="YR(16)" width="320" :height="YR(12) - YR(16)" fill="var(--color-ok-soft)"/>
+    <line x1="300" y1="98" x2="620" y2="98" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="300" y="24" font-size="13" fill="var(--color-fg-muted)">breaths a minute</text>
+    <text x="616" :y="YR(14) + 4" font-size="11" text-anchor="end" fill="var(--color-ok-fg)">normal 12–16</text>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num"><text x="294" :y="YR(14) + 4">14</text><text x="294" :y="YR(30) + 4">30</text></g>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :d="rPath"/>
+    <!-- CO2 chart with the symptom bands -->
+    <rect x="300" :y="YC(th[0])" width="320" :height="YC(th[1]) - YC(th[0])" fill="var(--color-warn)" fill-opacity="0.08"/>
+    <rect x="300" :y="YC(th[1])" width="320" :height="YC(th[2]) - YC(th[1])" fill="var(--color-warn)" fill-opacity="0.16"/>
+    <rect x="300" :y="YC(th[2])" width="320" :height="YC(th[3]) - YC(th[2])" fill="var(--color-bad)" fill-opacity="0.1"/>
+    <rect x="300" :y="YC(th[3])" width="320" :height="YC(th[4]) - YC(th[3])" fill="var(--color-bad)" fill-opacity="0.18"/>
+    <rect x="300" :y="YC(th[4])" width="320" :height="266 - YC(th[4])" fill="var(--color-bad)" fill-opacity="0.28"/>
+    <g font-size="11" fill="var(--color-fg-muted)">
+      <text x="306" :y="(YC(th[0]) + YC(th[1])) / 2 + 4">dizzy</text>
+      <text x="306" :y="(YC(th[1]) + YC(th[2])) / 2 + 4">tingling</text>
+      <text x="306" :y="(YC(th[2]) + YC(th[3])) / 2 + 4">vision</text>
+      <text x="306" :y="(YC(th[3]) + YC(th[4])) / 2 + 4">spasm</text>
+      <text x="306" :y="(YC(th[4]) + 266) / 2 + 4">unconscious</text>
+    </g>
+    <line x1="300" y1="266" x2="620" y2="266" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="300" :y1="YC(1)" x2="620" :y2="YC(1)" stroke="var(--color-ok)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="294" :y="YC(1) + 4" font-size="11" text-anchor="end" fill="var(--color-ok-fg)">normal</text>
+    <text x="300" y="120" font-size="13" fill="var(--color-fg-muted)">CO2 in the blood</text>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text x="300" y="282">0</text><text x="380" y="282">2</text><text x="460" y="282">4</text><text x="540" y="282">6</text><text x="612" y="282">8 min</text></g>
+    <!-- the remedy moment -->
+    <g x-show="remedy !== 'none'">
+      <line :x1="X(2.5)" :x2="X(2.5)" y1="34" y2="266" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    </g>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="cPath"/>
+    <circle r="5" fill="var(--color-brand)" :cx="X(min)" :cy="YC(c)"/>
+    <circle r="4" fill="var(--color-info)" :cx="X(min)" :cy="YR(rate)"/>
+    <text font-size="13" font-weight="600" fill="var(--color-info)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      :x="Math.min(X(min) + 8, 560)" :y="YR(rate) - 8" x-text="rate + '/min'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the episode'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="hve-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time through the episode">
+    <span class="widget-clock" x-text="hmm(min * 60).replace(':', ' min ') + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="hve-remedy">At 2½ minutes the pilot</label>
+      <select id="hve-remedy" class="input" x-model="remedy">
+        <option value="slow">slows the breathing and talks out loud</option>
+        <option value="deep">takes deep breaths to calm down</option>
+        <option value="none">does nothing about it</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="breathState"><dt class="widget-label">Breathing</dt><dd class="widget-value" x-text="breathText"></dd></div>
+    <div class="widget-readout" :class="co2[1]"><dt class="widget-label">CO2 in the blood</dt><dd class="widget-value" x-text="co2[0]"></dd></div>
+    <div class="widget-readout" :class="symptoms[1]"><dt class="widget-label">Symptoms</dt><dd class="widget-value"><span x-text="symptoms[0]"></span><span class="widget-flag warn" x-show="anxious && lvl >= 2">vicious circle</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('first-solo-nerves')" :aria-pressed="active === 'first-solo-nerves'">First solo nerves</button>
+      <button type="button" @click="preset('slow-and-talk')" :aria-pressed="active === 'slow-and-talk'">Slow and talk</button>
+      <button type="button" @click="preset('deep-breaths')" :aria-pressed="active === 'deep-breaths'">Deep breaths</button>
+      <button type="button" @click="preset('untreated-faint')" :aria-pressed="active === 'untreated-faint'">Left alone</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The problem is too little carbon dioxide, not too much oxygen: the faster the breathing, the lower the CO2 and the deeper the symptoms, and the symptoms speed the breathing further. Slowing to one breath every 4 to 5 seconds (12 to 15 a minute) and talking aloud lets the CO2 build back; deep breaths make it worse. The rates, the CO2 scale and the timings are illustrative; the order of the symptoms and the cure are the lesson's.</p>
+  <details class="widget-try"><summary>Try it: your passenger's fingers tingle and she feels light-headed on her first flight. Why not tell her to take a few deep breaths?</summary><p>Press Deep breaths: from 2½ minutes the CO2 falls faster, the hands cramp and she may pass out. Press Slow and talk: one breath every 4 to 5 seconds and a conversation bring the CO2 back to normal within a few minutes.</p></details>
+  <details class="widget-try"><summary>Try it: what happens if nobody does anything?</summary><p>Press Left alone and play on: the symptoms deepen to spasm and unconsciousness, after which the brainstem restores normal breathing and the pilot comes round. That recovery is a harmless faint on the ground and possibly a fatal one in the circuit.</p></details>
+</div>

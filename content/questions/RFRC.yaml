@@ -396,14 +396,14 @@
 - id: RFRC-035
   kind: mcq
   elements: ["RFRC 2.4.3"]
-  stem: "Seat belts must be worn by all occupants:"
+  stem: "Under Part 91, the pilot in command must have the passengers fasten their seat belts:"
   options:
     - "Only during take-off and landing."
-    - "During take-off and landing, below 1,000 ft above ground, in turbulence, and whenever the pilot in command directs."
-    - "Only when the pilot in command is wearing one."
+    - "During taxiing, take-off and landing, and whenever the pilot in command directs, for example in turbulence."
+    - "During take-off and landing, and whenever the aircraft is below 1,000 ft above ground."
     - "At all times above 5,000 ft."
   answer: 1
-  explanation: "Those are the standard seat belt requirements; the pilot in command must have the harness fastened at all times in a control seat."
+  explanation: "Under CASR 91.570 the pilot in command must direct passengers to fasten their belts before taxiing, taking off or landing, and in flight whenever it is necessary for their safety, such as in turbulence; a fasten-seat-belt sign counts as a direction. The pilot in command's own harness stays fastened at all times. The \"below 1,000 ft\" rule came from the superseded CAO 20.16.3."
   references: ["RFRC 2.4"]
   difficulty: 1
 - id: RFRC-036

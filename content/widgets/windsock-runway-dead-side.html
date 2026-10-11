@@ -1,0 +1,217 @@
+<div class="widget" x-data="widget({
+  sc: 0, wind: 220, str: 5, rh: false,
+  scen: [
+    { name: 'Training aerodrome, runways 06/24', h0: 60, sealed: true },
+    { name: 'Country gravel strip, runways 14/32', h0: 140, sealed: false },
+  ],
+  get s() { return this.scen[this.sc] },
+  get strip() { return !this.s.sealed },
+  // the runway direction most into wind: the larger headwind share (wind FROM, runway heading)
+  hw(h) { return Math.cos((this.wind - h) * Math.PI / 180) },
+  get hA() { return this.s.h0 },
+  get hB() { return (this.s.h0 + 180) % 360 },
+  get land() { return this.hw(this.hA) >= this.hw(this.hB) ? this.hA : this.hB },
+  get across() { return Math.abs(this.hw(this.hA)) < 0.05 },
+  rwy(h) { return String(Math.round(h / 10)).padStart(2, '0') },
+  // circuit side: left of the landing direction for left-hand circuits (-1), right for right-hand (+1)
+  get side() { return this.rh ? 1 : -1 },
+  get circBrg() { return (this.land + 90 * this.side + 360) % 360 },
+  get deadBrg() { return (this.land - 90 * this.side + 360) % 360 },
+  compass(b) { return ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(b / 45) % 8] },
+  cap(w) { return w.charAt(0).toUpperCase() + w.slice(1) },
+  // the map: north up, aerodrome centre (220, 226); u along the landing direction, v to its right
+  P(u, v) { const h = this.land * Math.PI / 180; return { x: 220 + u * Math.sin(h) + v * Math.cos(h), y: 226 - u * Math.cos(h) + v * Math.sin(h) } },
+  q(u, v) { const p = this.P(u, v); return p.x.toFixed(1) + ' ' + p.y.toFixed(1) },
+  // runway half-length 80, upwind and final extend 52 beyond the ends, downwind 90 out, corner radius 20
+  get circuit() {
+    const s = this.side, L = 80, E = 132, D = 90, r = 20;
+    return 'M' + this.q(L, 0) + ' L' + this.q(E - r, 0) + ' Q' + this.q(E, 0) + ' ' + this.q(E, s * r) +
+      ' L' + this.q(E, s * (D - r)) + ' Q' + this.q(E, s * D) + ' ' + this.q(E - r, s * D) +
+      ' L' + this.q(-E + r, s * D) + ' Q' + this.q(-E, s * D) + ' ' + this.q(-E, s * (D - r)) +
+      ' L' + this.q(-E, s * r) + ' Q' + this.q(-E, 0) + ' ' + this.q(-E + r, 0) + ' L' + this.q(-L - 2, 0);
+  },
+  get dead() { const s = -this.side; return 'M' + this.q(-132, s * 16) + ' L' + this.q(132, s * 16) + ' L' + this.q(132, s * 90) + ' L' + this.q(-132, s * 90) + ' Z' },
+  chev(u0, v0, u1, v1) { const a = this.P(u0, v0), b = this.P(u1, v1); return { x1: a.x, y1: a.y, x2: b.x, y2: b.y } },
+  get cx() { return this.chev(132, this.side * 38, 132, this.side * 52) },
+  get cd() { return this.chev(37, this.side * 90, 23, this.side * 90) },
+  get cb() { return this.chev(-132, this.side * 52, -132, this.side * 38) },
+  get cu() { return this.chev(92, 0, 106, 0) },
+  // a label pushed off a point along the outward normal (nu, nv) far enough to clear it, w = text width
+  lbl(u, v, nu, nv, w) {
+    const p = this.P(u, v), h = this.land * Math.PI / 180;
+    const nx = nu * Math.sin(h) + nv * Math.cos(h), ny = -nu * Math.cos(h) + nv * Math.sin(h);
+    const k = 8 + Math.abs(nx) * w / 2 + Math.abs(ny) * 7;
+    // kept on the map (x 0..446) whatever the runway and circuit direction
+    return { x: this.clamp(p.x + nx * k, w / 2 + 6, 440 - w / 2), y: this.clamp(p.y + ny * k + 4.5, 20, 430) };
+  },
+  get lUp() { return this.lbl(102, 0, 0, this.side, 50) },
+  get lCross() { return this.lbl(132, this.side * 64, 1, 0, 66) },
+  get lDown() { return this.lbl(20, this.side * 90, 0, this.side, 66) },
+  get lBase() { return this.lbl(-132, this.side * 64, -1, 0, 32) },
+  get lFinal() { return this.lbl(-108, 0, 0, this.side, 30) },
+  get lDead() { const p = this.P(0, -this.side * 70); return { x: p.x, y: p.y + 4.5 } },
+  get planeT() { const p = this.P(-40, this.side * 90); return 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ') rotate(' + (this.land + 90) + ')' },
+  get rwyT() { return 'translate(220 226) rotate(' + (this.s.h0 - 90) + ')' },
+  // the windsock (panel, centre 541 124): it streams downwind, further out the stronger the wind (illustrative)
+  get sockLen() { return 14 + 3.6 * this.str },
+  get sockT() { return 'translate(541 124) rotate(' + (this.windTo(this.wind) - 90) + ')' },
+  band(i) {
+    const n = 5, len = this.sockLen, x0 = 4 + len * i / n, x1 = 4 + len * (i + 1) / n;
+    const w = (x) => 8 - 3.5 * (x - 4) / len;
+    return 'M' + x0.toFixed(1) + ' ' + (-w(x0)).toFixed(1) + ' L' + x1.toFixed(1) + ' ' + (-w(x1)).toFixed(1) +
+      ' L' + x1.toFixed(1) + ' ' + w(x1).toFixed(1) + ' L' + x0.toFixed(1) + ' ' + w(x0).toFixed(1) + ' Z';
+  },
+  get sockAt() { const h = this.s.h0 * Math.PI / 180; return { x: 220 - 56 * Math.sin(h) + 38 * Math.cos(h), y: 226 + 56 * Math.cos(h) + 38 * Math.sin(h) } },
+  get mapSockT() { const p = this.sockAt; return 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ') rotate(' + (this.windTo(this.wind) - 90) + ')' },
+  get mapSock() { const l = 6 + 1.2 * this.str; return 'M2 -3.5 L' + (2 + l).toFixed(1) + ' -2 L' + (2 + l).toFixed(1) + ' 2 L2 3.5 Z' },
+  get windIn() { return { a: this.pol(541, 124, 57, this.wind), b: this.pol(541, 124, 26, this.wind) } },
+  get strWord() { return this.str <= 2 ? 'light' : this.str <= 5 ? 'moderate' : this.str <= 8 ? 'fresh' : 'strong' },
+  onDrag(p) {
+    const b = (Math.atan2(p.x - 541, 124 - p.y) * 180 / Math.PI + 360) % 360;
+    this.wind = Math.round(b / 5) * 5 || 360;
+    this.active = null;
+  },
+  get caption() {
+    const lr = this.rh ? 'left' : 'right';
+    let c = this.across
+      ? 'Wind from ' + this.dir(this.wind) + '° is straight across: neither runway gives a headwind; here the picture takes ' + this.rwy(this.land) + '. '
+      : 'Wind from ' + this.dir(this.wind) + '°: runway ' + this.rwy(this.land) + ' is the most into wind, so you land on ' + this.dir(this.land) + '°. ';
+    c += this.rh ? 'Right-hand circuits are published, so every turn is to the right: ' : 'Standard left-hand circuit, every turn to the left: ';
+    c += 'the circuit lies ' + this.compass(this.circBrg) + ' of the runway and the dead side ' + this.compass(this.deadBrg) + ', to the ' + lr + ' looking along the landing direction.';
+    if (this.strip) c += ' Two white crosses by the windsock: gliding in progress, so look for gliders, tugs and winch cables before you join.';
+    return c;
+  },
+  presets: {
+    'runway-24-left-hand': { sc: 0, wind: 240, str: 6, rh: false },
+    'runway-06-worked-example': { sc: 0, wind: 60, str: 6, rh: false },
+    'right-hand-circuit': { sc: 0, wind: 240, str: 6, rh: true },
+    'strip-32-gliding': { sc: 1, wind: 300, str: 4, rh: false },
+  },
+})">
+  <svg viewBox="0 0 640 440" role="img" aria-labelledby="wrs-title" class="widget-stage">
+    <title id="wrs-title">Plan view, north up, of an aerodrome and its circuit, with the windsock and signal area enlarged on the right. The windsock streams away from where the wind comes from; the runway direction most into wind is the one in use. The left-hand circuit, upwind, crosswind, downwind, base and final with every turn to the left, is drawn on the left of the landing direction, and the dead side, the other side of the runway, is shaded. With right-hand circuits the pattern and the dead side swap sides. At the gravel strip two white crosses in the signal area mean gliding in progress.</title>
+    <defs>
+      <marker id="wrs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="440" fill="var(--color-surface-2)"/>
+    <!-- north arrow -->
+    <line x1="26" y1="64" x2="26" y2="34" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#wrs-arrow)"/>
+    <text x="26" y="24" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">N</text>
+    <!-- dead side -->
+    <path :d="dead" fill="var(--color-info)" fill-opacity="0.16"/>
+    <!-- the aerodrome: grass, the runway (sealed with white markings, or gravel with cones and gables) -->
+    <g :transform="rwyT">
+      <rect x="-104" y="-48" width="208" height="96" rx="12" fill="var(--color-ok-soft)" stroke="var(--color-line)" stroke-width="1"/>
+      <rect x="-80" y="-11" width="160" height="22" rx="1" fill="var(--color-tarmac)" :fill-opacity="strip ? 0.6 : 1"/>
+      <g x-show="!strip" stroke="var(--color-paint)" fill="none">
+        <path d="M-44 0 H44" stroke-width="1.5" stroke-dasharray="8 6"/>
+        <path d="M-78 -8 H-68 M-78 -4 H-68 M-78 4 H-68 M-78 8 H-68 M68 -8 H78 M68 -4 H78 M68 4 H78 M68 8 H78" stroke-width="2"/>
+      </g>
+      <g x-show="strip" fill="var(--color-paint)" stroke="var(--color-fg)" stroke-width="0.8">
+        <circle cx="-78" cy="-11" r="2.5"/><circle cx="-47" cy="-11" r="2.5"/><circle cx="-16" cy="-11" r="2.5"/><circle cx="16" cy="-11" r="2.5"/><circle cx="47" cy="-11" r="2.5"/><circle cx="78" cy="-11" r="2.5"/>
+        <circle cx="-78" cy="11" r="2.5"/><circle cx="-47" cy="11" r="2.5"/><circle cx="-16" cy="11" r="2.5"/><circle cx="16" cy="11" r="2.5"/><circle cx="47" cy="11" r="2.5"/><circle cx="78" cy="11" r="2.5"/>
+        <path d="M-84 -29 L-80 -34 L-76 -29 Z M-44 -29 L-40 -34 L-36 -29 Z M-4 -29 L0 -34 L4 -29 Z M36 -29 L40 -34 L44 -29 Z M76 -29 L80 -34 L84 -29 Z"/>
+        <path d="M-84 29 L-80 34 L-76 29 Z M-44 29 L-40 34 L-36 29 Z M-4 29 L0 34 L4 29 Z M36 29 L40 34 L44 29 Z M76 29 L80 34 L84 29 Z"/>
+      </g>
+      <!-- sealed: numbers painted at the thresholds; the gravel strip takes no paint, so there they are map labels -->
+      <g font-size="12" font-weight="700" text-anchor="middle" class="num" :fill="strip ? 'var(--color-fg)' : 'var(--color-paint)'"
+        :stroke="strip ? 'var(--color-surface)' : 'none'" stroke-width="3" paint-order="stroke" stroke-linejoin="round">
+        <text transform="translate(-56 0) rotate(90)" y="4.5" x-text="rwy(hA)"></text>
+        <text transform="translate(56 0) rotate(-90)" y="4.5" x-text="rwy(hB)"></text>
+      </g>
+    </g>
+    <!-- the windsock on the field -->
+    <circle r="2.5" fill="var(--color-fg)" :cx="sockAt.x" :cy="sockAt.y"/>
+    <path :transform="mapSockT" :d="mapSock" fill="var(--color-warn)" stroke="var(--color-warn)" stroke-width="1" stroke-linejoin="round"/>
+    <!-- the circuit, built from the landing direction -->
+    <path :d="circuit" fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#wrs-arrow)"/>
+    <g stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#wrs-arrow)">
+      <line :x1="cu.x1" :y1="cu.y1" :x2="cu.x2" :y2="cu.y2"/>
+      <line :x1="cx.x1" :y1="cx.y1" :x2="cx.x2" :y2="cx.y2"/>
+      <line :x1="cd.x1" :y1="cd.y1" :x2="cd.x2" :y2="cd.y2"/>
+      <line :x1="cb.x1" :y1="cb.y1" :x2="cb.x2" :y2="cb.y2"/>
+    </g>
+    <!-- an aeroplane on downwind (python -m tools.diagrams.plane top, scale 0.28) -->
+    <g :transform="planeT">
+      <g transform="translate(0 0) rotate(0) scale(0.28)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- leg names -->
+    <g font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text :x="lUp.x" :y="lUp.y">upwind</text>
+      <text :x="lCross.x" :y="lCross.y">crosswind</text>
+      <text :x="lDown.x" :y="lDown.y">downwind</text>
+      <text :x="lBase.x" :y="lBase.y">base</text>
+      <text :x="lFinal.x" :y="lFinal.y">final</text>
+    </g>
+    <text font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="lDead.x" :y="lDead.y">dead side</text>
+
+    <!-- panel: the windsock and the signal area, enlarged -->
+    <rect x="452" y="8" width="180" height="424" rx="10" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="541" y="32" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)">Windsock</text>
+    <circle cx="541" cy="124" r="58" fill="var(--color-ok-soft)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">
+      <text x="541" y="58">N</text><text x="612" y="128">E</text><text x="541" y="198">S</text><text x="470" y="128">W</text>
+    </g>
+    <g :transform="sockT" stroke="var(--color-warn)" stroke-width="1" stroke-linejoin="round">
+      <path :d="band(0)" fill="var(--color-warn)"/>
+      <path :d="band(1)" fill="var(--color-warn-soft)"/>
+      <path :d="band(2)" fill="var(--color-warn)"/>
+      <path :d="band(3)" fill="var(--color-warn-soft)"/>
+      <path :d="band(4)" fill="var(--color-warn)"/>
+    </g>
+    <circle cx="541" cy="124" r="3.5" fill="var(--color-fg)"/>
+    <line stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#wrs-arrow)" :x1="windIn.a.x" :y1="windIn.a.y" :x2="windIn.b.x" :y2="windIn.b.y"/>
+    <circle cx="541" cy="124" r="72" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: grab" @pointerdown="drag($event, (p) => onDrag(p))"/>
+    <text x="541" y="222" font-size="13" text-anchor="middle" fill="var(--color-info-fg)" font-weight="600" class="num" x-text="'wind from ' + dir(wind) + '°'"></text>
+    <text x="541" y="239" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">drag to turn the wind</text>
+    <text x="541" y="270" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)">Signal area</text>
+    <rect x="491" y="282" width="100" height="100" rx="2" fill="var(--color-ok-soft)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <g x-show="strip">
+      <g transform="translate(518 332) rotate(45)"><rect x="-17" y="-3.5" width="34" height="7" fill="var(--color-paint)" stroke="var(--color-fg)" stroke-width="1"/><rect x="-3.5" y="-17" width="7" height="34" fill="var(--color-paint)" stroke="var(--color-fg)" stroke-width="1"/><rect x="-16" y="-2.5" width="32" height="5" fill="var(--color-paint)"/></g>
+      <g transform="translate(564 332) rotate(45)"><rect x="-17" y="-3.5" width="34" height="7" fill="var(--color-paint)" stroke="var(--color-fg)" stroke-width="1"/><rect x="-3.5" y="-17" width="7" height="34" fill="var(--color-paint)" stroke="var(--color-fg)" stroke-width="1"/><rect x="-16" y="-2.5" width="32" height="5" fill="var(--color-paint)"/></g>
+      <text x="541" y="404" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-warn-fg)">gliding in progress</text>
+    </g>
+    <text x="541" y="336" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-show="!strip">no signals</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wrs-sc">Aerodrome</label>
+      <select id="wrs-sc" class="input" x-model.number="sc" @change="active = null">
+        <option value="0">Training aerodrome, runways 06/24</option>
+        <option value="1">Country gravel strip, runways 14/32</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="wrs-wind">Wind from <output for="wrs-wind" class="num" x-text="dir(wind) + '°'"></output></label>
+      <input type="range" id="wrs-wind" min="5" max="360" step="5" x-model.number="wind">
+    </div>
+    <div class="widget-control">
+      <label for="wrs-str">Wind strength (rough, illustrative) <output for="wrs-str" x-text="strWord"></output></label>
+      <input type="range" id="wrs-str" min="1" max="10" step="1" x-model.number="str">
+    </div>
+    <div class="widget-control">
+      <label for="wrs-rh" class="cursor-pointer"><span>Right-hand circuits published (ERSA)</span>
+        <input type="checkbox" id="wrs-rh" x-model="rh" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="across ? 'warn' : ''"><dt class="widget-label">Runway in use</dt><dd class="widget-value"><span class="num" x-text="rwy(land) + ' (landing ' + dir(land) + '°)'"></span><span class="widget-flag warn" x-show="across">straight across</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Circuit</dt><dd class="widget-value" x-text="(rh ? 'Right-hand' : 'Left-hand') + ', ' + compass(circBrg) + ' of the runway'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Dead side</dt><dd class="widget-value" x-text="cap(compass(deadBrg)) + ', ' + (rh ? 'left' : 'right') + ' of the runway looking along ' + dir(land) + '°'"></dd></div>
+    <div class="widget-readout" :class="strip ? 'warn' : ''"><dt class="widget-label">Signal area</dt><dd class="widget-value"><span x-text="strip ? 'Two white crosses: gliding in progress' : 'Nothing displayed'"></span><span class="widget-flag warn" x-show="strip">gliders</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('runway-24-left-hand')" :aria-pressed="active === 'runway-24-left-hand'">Runway 24</button>
+      <button type="button" @click="preset('runway-06-worked-example')" :aria-pressed="active === 'runway-06-worked-example'">Runway 06</button>
+      <button type="button" @click="preset('right-hand-circuit')" :aria-pressed="active === 'right-hand-circuit'">Right-hand circuit</button>
+      <button type="button" @click="preset('strip-32-gliding')" :aria-pressed="active === 'strip-32-gliding'">Strip 32, gliding</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The windsock streams away from where the wind comes from, so you land towards the wind, from the sock's tail towards its mouth, on the runway most into wind. Build the circuit from that landing direction, every turn to the left unless ERSA publishes right-hand circuits, and the dead side is always the other side of the runway. The sock's length is only a rough guide to strength; the map's distances are illustrative and magnetic variation is ignored.</p>
+  <details class="widget-try"><summary>Try it: at the training aerodrome the sock streams out towards the north-east. Which runway, and where is the dead side?</summary><p>A sock streaming north-east means wind from the south-west, about 225°: runway 24 is the most into wind. Left-hand circuits put the pattern on the left of 240, the south-east, so the dead side is the north-west, to the right of the runway looking along 240.</p></details>
+  <details class="widget-try"><summary>Try it: the same strip on runway 32, but suppose ERSA showed right-hand circuits. Where would you descend in an overhead join?</summary><p>Right-hand turns put the circuit on the right of 320, the north-east, so the dead side moves to the south-west, on the left of the runway looking along 320. You would descend there, then cross the upwind end to join crosswind.</p></details>
+</div>

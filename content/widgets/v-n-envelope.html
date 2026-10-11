@@ -1,0 +1,169 @@
+<div class="widget" x-data="widget({
+  v: 101, n: 3.8, w: 100, cat: 'normal',
+  // BAKC 6.3 / RBKA 3.8: stall speed 52 kt at maximum weight, n max = (V / Vs)^2, VA = Vs √n limit, Vs ∝ √weight.
+  // Limits from the lessons' table; ultimate = 1.5 × limit. VNO, VNE and the negative stall curve are schematic
+  // positions (as in the lessons' V-n diagram); the design gust line is shaped so it crosses +3.8 g just past VNO.
+  vno: 128, vne: 160,
+  get wf() { return this.w / 100 },
+  get nl() { return this.cat === 'utility' ? 4.4 : 3.8 },
+  get nn() { return this.cat === 'utility' ? -1.76 : -1.52 },
+  get nu() { return this.nl * 1.5 },
+  get vs() { return 52 * Math.sqrt(this.wf) },
+  get vsn() { return 64 * Math.sqrt(this.wf) },
+  // as the lessons work it: VA at maximum weight (52 × √3.8 ≈ 101 kt, as a POH would publish it), then × √(weight ratio)
+  get vaMax() { return Math.round(52 * Math.sqrt(this.nl)) },
+  get va() { return this.vaMax * Math.sqrt(this.wf) },
+  get vneg() { return this.vsn * Math.sqrt(-this.nn) },
+  get kg() { return 2.8 / 135 / this.wf },
+  get nmax() { return (this.v / this.vs) ** 2 },
+  get nmin() { return -((this.v / this.vsn) ** 2) },
+  get gust() { return this.kg * this.v },
+  get gustAngle() { return -Math.atan(this.kg * (270 / 9.5) / (530 / 180)) * 180 / Math.PI },
+  get status() {
+    if (this.v > this.vne) return { s: 'bad', t: 'Beyond VNE', f: 'flutter, failure' };
+    if (Math.abs(this.v - this.va) < 1.5 && Math.abs(this.n - this.nl) < 0.1) return { s: 'warn', t: 'At VA: stall meets limit', f: 'corner' };
+    if (this.n > this.nmax + 0.05 || this.n < this.nmin - 0.05) return { s: 'warn', t: 'Stalls before this', f: 'stalled' };
+    if (this.n > this.nu || this.n < this.nn * 1.5) return { s: 'bad', t: 'Past ultimate load', f: 'may fail' };
+    if (this.n > this.nl + 0.02 || this.n < this.nn - 0.02) return { s: 'bad', t: 'Past the limit load', f: 'may bend' };
+    if (this.n >= this.nl - 0.02 || this.n <= this.nn + 0.02) return { s: 'warn', t: 'At the limit load', f: 'limit' };
+    if (this.v > this.vno) return { s: 'warn', t: 'Yellow arc', f: 'smooth air only' };
+    if (this.n > 1.02 && this.n >= this.nmax - 0.05) return { s: 'ok', t: 'On the stall curve', f: '' };
+    return { s: 'ok', t: 'Inside the envelope', f: '' };
+  },
+  // chart: 0-180 kt across x 70..600; load factor 7 g at y 30 down to -2.5 g at y 300
+  X(V) { return 70 + V / 180 * 530 },
+  Y(n) { return 30 + (7 - n) * 270 / 9.5 },
+  get posCurve() { const p = []; for (let i = 0; i <= 30; i++) { const V = this.va * i / 30; p.push([this.X(V), this.Y((V / this.vs) ** 2)]) } return p },
+  get negCurve() { const p = []; for (let i = 0; i <= 30; i++) { const V = this.vneg * i / 30; p.push([this.X(V), this.Y(-((V / this.vsn) ** 2))]) } return p },
+  get envPath() { return this.path(this.posCurve.concat([[this.X(this.vne), this.Y(this.nl)], [this.X(this.vne), this.Y(this.nn)], [this.X(this.vneg), this.Y(this.nn)]], this.negCurve.slice().reverse())) + ' Z' },
+  get stallPath() { const p = []; for (let i = 0; i <= 40; i++) { const V = this.vs * Math.sqrt(7.2) * i / 40; p.push([this.X(V), this.Y((V / this.vs) ** 2)]) } return this.path(p) },
+  get negStallPath() { const p = []; for (let i = 0; i <= 30; i++) { const V = this.vsn * Math.sqrt(2.6) * i / 30; p.push([this.X(V), this.Y(-((V / this.vsn) ** 2))]) } return this.path(p) },
+  // dragging uses the shared drag() helper from viz.js, which hands over the pointer in viewBox units
+  setPoint(p) {
+    this.v = this.clamp(Math.round((p.x - 70) / 530 * 180), 0, 180);
+    this.n = this.clamp(Math.round((7 - (p.y - 30) / 270 * 9.5) * 10) / 10, -2.5, 7);
+    this.active = null;
+  },
+  presets: {
+    'va-at-max-weight': { v: 101, n: 3.8, w: 100, cat: 'normal' },
+    'steep-turn-60': { v: 100, n: 2, w: 100, cat: 'normal' },
+    'full-pull-below-va': { v: 80, n: 2.4, w: 100, cat: 'normal' },
+    'pull-above-va': { v: 120, n: 4.6, w: 100, cat: 'normal' },
+    'solo-light': { v: 101, n: 4.7, w: 80, cat: 'normal' },
+    'gust-in-yellow-arc': { v: 145, n: 4, w: 100, cat: 'normal' },
+    'utility': { v: 109, n: 4.4, w: 100, cat: 'utility' },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="vne-title" class="widget-stage" style="touch-action: none"
+    @pointerdown="drag($event, (p) => setPoint(p))">
+    <title id="vne-title">The V-n diagram: load factor against indicated airspeed, with the stall curve, the limit loads, VA where they meet, VNO, VNE and gust lines. Drag the point to test a speed and load factor.</title>
+    <!-- regions: overstress above the limit, beyond VNE, yellow arc -->
+    <rect x="70" y="30" width="530" fill="var(--color-bad)" fill-opacity="0.07" :height="Y(nl) - 30"/>
+    <rect y="30" height="270" fill="var(--color-bad)" fill-opacity="0.1" :x="X(vne)" :width="600 - X(vne)"/>
+    <path fill="var(--color-ok)" fill-opacity="0.13" stroke="none" :d="envPath"/>
+    <rect fill="var(--color-warn-soft)" :x="X(vno)" :y="Y(nl)" :width="X(vne) - X(vno)" :height="Y(nn) - Y(nl)"/>
+    <!-- axes -->
+    <line x1="70" y1="30" x2="70" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" x2="600" stroke="var(--color-fg-muted)" stroke-width="1" :y1="Y(0)" :y2="Y(0)"/>
+    <line x1="70" x2="600" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3" :y1="Y(1)" :y2="Y(1)"/>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="62" :y="Y(6) + 4">+6</text><text x="62" :y="Y(4) + 4">+4</text><text x="62" :y="Y(2) + 4">+2</text>
+      <text x="62" :y="Y(1) + 4">1</text><text x="62" :y="Y(0) + 4">0</text><text x="62" :y="Y(-2) + 4">−2</text>
+    </g>
+    <text x="16" y="165" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 16 165)">load factor n (g)</text>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="70" y="316">0</text><text x="217" y="316">50</text><text x="364" y="316">100</text><text x="512" y="316">150</text>
+    </g>
+    <text x="335" y="334" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">indicated airspeed (kt)</text>
+    <!-- gust lines from 1 g: the load grows in proportion to airspeed -->
+    <g stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="6 4">
+      <line :x1="X(0)" :y1="Y(1)" :x2="X(180)" :y2="Y(1 + kg * 180)"/>
+      <line :x1="X(0)" :y1="Y(1)" :x2="X(180)" :y2="Y(1 - kg * 180)"/>
+    </g>
+    <text font-size="12" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      :transform="'translate(' + X(14) + ' ' + (Y(1 + kg * 14) - 7) + ') rotate(' + gustAngle + ')'">design gust</text>
+    <!-- ultimate load -->
+    <line x1="70" x2="600" stroke="var(--color-bad)" stroke-width="1" stroke-dasharray="4 3" :y1="Y(nu)" :y2="Y(nu)" x-show="nu < 7"/>
+    <text x="596" font-size="12" text-anchor="end" fill="var(--color-bad-fg)" :y="Y(nu) - 6" x-show="nu < 7" x-text="'ultimate ' + fmt(nu, 1) + ' g: may fail'"></text>
+    <!-- stall curves -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" :d="stallPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" :d="negStallPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="path(posCurve)"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" :d="path(negCurve)"/>
+    <!-- limits and VNE -->
+    <line stroke="var(--color-bad)" stroke-width="2.5" :x1="X(va)" :x2="X(vne)" :y1="Y(nl)" :y2="Y(nl)"/>
+    <line stroke="var(--color-bad)" stroke-width="2.5" :x1="X(vneg)" :x2="X(vne)" :y1="Y(nn)" :y2="Y(nn)"/>
+    <line stroke="var(--color-bad)" stroke-width="2.5" :x1="X(vne)" :x2="X(vne)" :y1="Y(nl)" :y2="Y(nn)"/>
+    <line stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="4 3" :x1="X(vno)" :x2="X(vno)" :y1="Y(nl)" :y2="Y(nn)"/>
+    <g font-size="13" font-weight="700">
+      <text text-anchor="end" fill="var(--color-warn-fg)" :x="X(vno) - 4" :y="Y(nn) + 18">VNO</text>
+      <text fill="var(--color-bad-fg)" :x="X(vne) + 4" :y="Y(nn) + 18">VNE</text>
+      <text fill="var(--color-bad-fg)" x="78" :y="Y(nl) - 8" x-text="'+' + fmt(nl, 1) + ' g limit load'"></text>
+      <text fill="var(--color-bad-fg)" text-anchor="end" :x="X(vne) - 6" :y="Y(nn) - 8" x-text="fmt(nn, 2) + ' g'"></text>
+    </g>
+    <text font-size="12" fill="var(--color-brand-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="X(vs * 1.62) - 6" :y="Y(2.62)">stall curve</text>
+    <circle r="3.5" fill="var(--color-brand)" :cx="X(vs)" :cy="Y(1)"/>
+    <text font-size="12" fill="var(--color-fg-faint)" :x="X(vs) + 6" :y="Y(1) + 15" x-text="'Vs ' + fmt(vs) + ' kt'"></text>
+    <!-- VA -->
+    <circle r="5" fill="var(--color-brand)" :cx="X(va)" :cy="Y(nl)"/>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="X(va) - 8" :y="Y(nl) - 8" x-text="'VA ' + fmt(va) + ' kt'"></text>
+    <!-- the point you drag -->
+    <line stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="2 3" :x1="X(v)" :x2="X(v)" :y1="Y(0)" :y2="Y(n)"/>
+    <circle r="8" fill="var(--color-surface)" stroke-width="3" :cx="X(v)" :cy="Y(n)" style="cursor: grab"
+      :stroke="status.s === 'bad' ? 'var(--color-bad)' : status.s === 'warn' ? 'var(--color-warn)' : 'var(--color-brand)'"/>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vne-v">Airspeed <output for="vne-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="vne-v" min="0" max="180" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="vne-n">Load factor <output for="vne-n" x-text="sign(n, 1) + ' g'"></output></label>
+      <input type="range" id="vne-n" min="-2.5" max="7" step="0.1" x-model.number="n">
+    </div>
+    <div class="widget-control">
+      <label for="vne-w">Weight <output for="vne-w" x-text="w + '% of maximum'"></output></label>
+      <input type="range" id="vne-w" min="60" max="100" step="1" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="vne-cat">Category</label>
+      <select id="vne-cat" class="input" x-model="cat">
+        <option value="normal">Normal: +3.8 / −1.52 g</option>
+        <option value="utility">Utility: +4.4 / −1.76 g</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="status.s">
+      <dt class="widget-label">At this point</dt>
+      <dd class="widget-value"><span x-text="status.t"></span><span class="widget-flag" :class="status.s" x-show="status.f" x-text="status.f"></span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Most g before the stall</dt>
+      <dd class="widget-value" x-text="v < 1 ? '–' : fmt(Math.min(nmax, 99), 1) + ' g at ' + v + ' kt'"></dd>
+    </div>
+    <div class="widget-readout" :class="v > va && v <= vne ? 'warn' : ''">
+      <dt class="widget-label">VA at this weight</dt>
+      <dd class="widget-value"><span x-text="fmt(va) + ' kt (Vs ' + fmt(vs) + ')'"></span><span class="widget-flag warn" x-show="v > va && v <= vne">above VA</span></dd>
+    </div>
+    <div class="widget-readout" :class="1 + gust > nl ? 'bad' : ''">
+      <dt class="widget-label">Design gust at this speed</dt>
+      <dd class="widget-value" x-text="fmt(1 + gust, 1) + ' / ' + fmt(1 - gust, 1) + ' g'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('va-at-max-weight')" :aria-pressed="active === 'va-at-max-weight'">VA, maximum weight</button>
+      <button type="button" @click="preset('full-pull-below-va')" :aria-pressed="active === 'full-pull-below-va'">Full pull at 80 kt</button>
+      <button type="button" @click="preset('pull-above-va')" :aria-pressed="active === 'pull-above-va'">Pull at 120 kt</button>
+      <button type="button" @click="preset('solo-light')" :aria-pressed="active === 'solo-light'">Solo, 80% weight</button>
+      <button type="button" @click="preset('gust-in-yellow-arc')" :aria-pressed="active === 'gust-in-yellow-arc'">Gust in the yellow</button>
+      <button type="button" @click="preset('utility')" :aria-pressed="active === 'utility'">Utility</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Drag the point. Left of VA the stall curve sits below the limit, so however hard you pull the wing stalls first; right of VA a pull or a gust reaches the limit load before the stall. Lighter, the stall curve moves left and VA comes down with it (VA ∝ √weight), and each gust line steepens. Gust loads grow in proportion to airspeed, which is why the yellow arc is for smooth air only. The 52 kt stall speed and the limits are the lessons'; VNO, VNE, the negative stall curve and the gust line are schematic.</p>
+  <details class="widget-try"><summary>Try it: a normal category aeroplane stalls at 52 kt. Where is VA, and what does a full pull do at 80 kt and at 120 kt?</summary><p>VA = 52 × √3.8 ≈ 101 kt. At 80 kt the wing stalls at about 2.4 g ((80 ÷ 52)²), well short of the limit. At 120 kt it could make 5.3 g before stalling, so a full pull goes past +3.8 g: Pull at 120 kt shows the point in the red.</p></details>
+  <details class="widget-try"><summary>Try it: you are solo at 80% of maximum weight. Is 101 kt still a safe speed for a full control input?</summary><p>No. Press Solo: the stall speed falls to about 47 kt and VA to about 90 kt (101 × √0.8 = 101 × 0.894 ≈ 90). At 101 kt the wing can now make about 4.7 g before it stalls, past the 3.8 g limit.</p></details>
+</div>

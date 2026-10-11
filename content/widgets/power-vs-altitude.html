@@ -1,0 +1,137 @@
+<div class="widget" x-data="widget({
+  engine: 'na', setting: 75, alt: 6500, dev: 0, crit: 16000,
+  get turbo() { return this.engine === 'turbo' },
+  // density height: pressure height + 120 ft per degree from ISA (BAKC 6.2)
+  get dh() { return this.alt + 120 * this.dev },
+  // full-throttle power, % of sea-level: about 3% less per 1,000 ft of density height (PAKC 2.1);
+  // a turbocharger holds rated power to its critical altitude, then the same fall (PAKC 2.1, 2.2)
+  naAt(h) { return 100 - 3 * h / 1000 },
+  tcAt(h) { return h <= this.crit ? 100 : 100 - 3 * (h - this.crit) / 1000 },
+  fullAt(h) { return this.turbo ? this.tcAt(h) : this.naAt(h) },
+  get full() { return Math.min(100, this.fullAt(this.dh)) },
+  get got() { return Math.min(this.setting, this.full) },
+  get short() { return this.full < this.setting - 0.6 },
+  get atStop() { return !this.short && this.full < this.setting + 0.6 },
+  // full throttle height for the power setting, as a density height, and as today's pressure height
+  get fthDh() { return (this.turbo ? this.crit : 0) + (100 - this.setting) / 3 * 1000 },
+  get fthPh() { return this.fthDh - 120 * this.dev },
+  r100(v) { return Math.round(v / 100) * 100 },
+  // chart: power 40..105% across x 110..600; density height 0..20,000 ft up y 280..40
+  X(p) { return 110 + (this.clamp(p, 40, 105) - 40) / 65 * 490 },
+  Y(h) { return 280 - this.clamp(h, -1000, 20000) / 20000 * 240 },
+  get tcPath() { return this.path([[this.X(100), this.Y(0)], [this.X(100), this.Y(this.crit)], [this.X(this.tcAt(20000)), this.Y(20000)]]) },
+  get nearFth() { return this.fthOn && Math.abs(this.dh - this.fthDh) < 1100 },
+  get fthOn() { return this.fthDh <= 20000 && this.fthDh >= 0 },
+  presets: {
+    'wheatbelt-hot-afternoon': { engine: 'na', setting: 100, alt: 1150, dev: 23.3, crit: 16000 },
+    'cruise-9500-isa-plus-14': { engine: 'na', setting: 75, alt: 9500, dev: 14, crit: 16000 },
+    'fth-75-standard': { engine: 'na', setting: 75, alt: 8300, dev: 0, crit: 16000 },
+    'fth-65-hot-day': { engine: 'na', setting: 65, alt: 9900, dev: 15, crit: 16000 },
+    'kalgoorlie-75-hot': { engine: 'na', setting: 75, alt: 8500, dev: 15, crit: 16000 },
+    'turbo-holds-power': { engine: 'turbo', setting: 75, alt: 8500, dev: 15, crit: 16000 },
+  },
+})">
+  <svg viewBox="0 0 640 316" role="img" aria-labelledby="pva-title" class="widget-stage">
+    <title id="pva-title">Full-throttle power against density height: a normally aspirated engine loses about 3 percent per 1,000 ft from the ground up, a turbocharged one holds rated power to its critical altitude; the chosen power setting meets the curve at its full throttle height</title>
+    <rect x="0" y="0" width="640" height="316" fill="var(--color-surface)"/>
+    <!-- grid -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="110" x2="600" y1="220" y2="220"/><line x1="110" x2="600" y1="160" y2="160"/><line x1="110" x2="600" y1="100" y2="100"/><line x1="110" x2="600" y1="40" y2="40"/>
+      <line x1="185.4" x2="185.4" y1="40" y2="280"/><line x1="260.8" x2="260.8" y1="40" y2="280"/><line x1="336.2" x2="336.2" y1="40" y2="280"/><line x1="411.5" x2="411.5" y1="40" y2="280"/><line x1="486.9" x2="486.9" y1="40" y2="280"/><line x1="562.3" x2="562.3" y1="40" y2="280"/>
+    </g>
+    <line x1="110" y1="280" x2="600" y2="280" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="110" y1="40" x2="110" y2="280" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="102" y="284">0</text><text x="102" y="224">5,000</text><text x="102" y="164">10,000</text><text x="102" y="104">15,000</text><text x="102" y="44">20,000</text>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="middle">
+      <text x="110" y="296">40%</text><text x="185.4" y="296">50%</text><text x="260.8" y="296">60%</text><text x="336.2" y="296">70%</text><text x="411.5" y="296">80%</text><text x="486.9" y="296">90%</text><text x="562.3" y="296">100%</text>
+    </g>
+    <text x="355" y="312" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">full-throttle power (% of sea-level power)</text>
+    <text x="16" y="160" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 16 160)">density height (ft)</text>
+    <!-- the two engines -->
+    <line stroke-width="2.5" stroke-linecap="round" :x1="X(100)" :y1="Y(0)" :x2="X(40)" :y2="Y(20000)" :stroke="turbo ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+    <text x="168" y="64" font-size="13" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :fill="turbo ? 'var(--color-fg-faint)' : 'var(--color-brand-fg)'">normally aspirated: about −3% per 1,000 ft</text>
+    <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-info)" x-show="turbo" :transform="'translate(' + (X(100) + 16) + ' ' + Y(crit / 2) + ') rotate(-90)'">turbocharged: rated power</text>
+    <path fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="tcPath" :stroke="turbo ? 'var(--color-info)' : 'var(--color-fg-faint)'" x-show="turbo"/>
+    <text font-size="12" font-weight="600" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" fill="var(--color-info)" x-show="turbo" :x="X(100) - 8" :y="Y(crit) + 4" x-text="'critical altitude ' + fmt(crit) + ' ft'"></text>
+    <circle r="4" fill="var(--color-info)" x-show="turbo" :cx="X(100)" :cy="Y(crit)"/>
+    <!-- the power setting and its full throttle height -->
+    <line y1="40" y2="280" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" :x1="X(setting)" :x2="X(setting)"/>
+    <text y="32" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)" :x="Math.min(X(setting), 590)" x-text="setting + '% set'"></text>
+    <g x-show="fthOn">
+      <line stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="4 3" x1="110" :x2="X(setting)" :y1="Y(fthDh)" :y2="Y(fthDh)"/>
+      <circle r="5" fill="var(--color-warn)" :cx="X(setting)" :cy="Y(fthDh)"/>
+      <text font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" fill="var(--color-warn-fg)" :x="X(setting) < 330 ? X(setting) + 10 : X(setting) - (fthDh < 50 ? 26 : 10)" :y="X(setting) < 330 || Y(fthDh) > 250 ? Y(fthDh) - 10 : Y(fthDh) + 20" :text-anchor="X(setting) < 330 ? 'start' : 'end'"
+        x-text="(fthDh < 50 ? 'full throttle height: sea level' : 'full throttle height ≈ ' + fmt(r100(fthDh)) + ' ft') + (nearFth ? ': you are here' : '')"></text>
+    </g>
+    <!-- today: reserve or shortfall at the density height you are flying -->
+    <line stroke-width="6" stroke-linecap="round" stroke-opacity="0.45" :y1="Y(dh)" :y2="Y(dh)" :x1="X(setting)" :x2="X(full)" :stroke="short ? 'var(--color-bad)' : 'var(--color-ok)'" x-show="Math.abs(full - setting) > 0.3"/>
+    <circle r="7" fill="var(--color-surface)" stroke-width="3" :cx="X(got)" :cy="Y(dh)" :stroke="short ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+    <circle r="16" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: ns-resize" :cx="X(got)" :cy="Y(dh)"
+      @pointerdown="drag($event, (p) => { alt = Math.round(clamp((280 - p.y) / 240 * 20000 - 120 * dev, 0, 18000) / 50) * 50; active = null })"/>
+    <text font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="X(Math.min(got, full)) - 12" :y="Y(dh) + 4" text-anchor="end" x-show="!nearFth"
+      :fill="short ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="'you: ' + fmt(got) + '% at ' + fmt(dh) + ' ft'"></text>
+    <text font-size="11" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="short ? X(full) + 4 : (X(setting) + X(full)) / 2" :y="Y(dh) + (short ? -12 : 20)" :text-anchor="short ? 'start' : 'middle'" x-show="Math.abs(full - setting) > 4"
+      :fill="short ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="short ? 'short: throttle at the stop' : 'throttle in reserve'"></text>
+    
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="pva-engine">Engine</label>
+      <select id="pva-engine" class="input" x-model="engine">
+        <option value="na">Normally aspirated</option>
+        <option value="turbo">Turbocharged (turbo-normalised)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="pva-setting">Power you want <output for="pva-setting" x-text="setting + '% of sea-level power'"></output></label>
+      <input type="range" id="pva-setting" min="50" max="100" step="5" x-model.number="setting">
+    </div>
+    <div class="widget-control">
+      <label for="pva-alt">Pressure height (altimeter at 1013) <output for="pva-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="pva-alt" min="0" max="18000" step="50" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="pva-dev">Temperature against ISA <output for="pva-dev" x-text="(dev === 0 ? 'ISA' : 'ISA ' + sign(dev, Number.isInteger(dev) ? 0 : 1)) + ' °C'"></output></label>
+      <input type="range" id="pva-dev" min="-10" max="30" step="0.5" x-model.number="dev">
+    </div>
+    <div class="widget-control" x-show="turbo">
+      <label for="pva-crit">Critical altitude <output for="pva-crit" x-text="fmt(crit) + ' ft'"></output></label>
+      <input type="range" id="pva-crit" min="12000" max="20000" step="500" x-model.number="crit">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Density height</dt>
+      <dd class="widget-value" x-text="fmt(dh) + ' ft' + (dev === 0 ? ' (ISA day)' : ' = ' + fmt(alt) + ' + 120 × ' + fmt(dev, Number.isInteger(dev) ? 0 : 1))"></dd>
+    </div>
+    <div class="widget-readout" :class="full < 99.95 ? 'warn' : 'ok'">
+      <dt class="widget-label">Full throttle gives</dt>
+      <dd class="widget-value" x-text="'about ' + fmt(full) + '% of sea-level power'"></dd>
+    </div>
+    <div class="widget-readout" :class="short ? 'bad' : atStop ? 'warn' : 'ok'">
+      <dt class="widget-label" x-text="setting + '% power here?'"></dt>
+      <dd class="widget-value"><span x-text="short ? 'No: only ' + fmt(full) + '%, the throttle is wide open' : atStop ? 'Only just: the throttle is at the stop' : 'Yes, with throttle to spare'"></span><span class="widget-flag bad" x-show="short">above full throttle height</span></dd>
+    </div>
+    <div class="widget-readout" :class="dev > 0 && setting < 100 ? 'warn' : ''">
+      <dt class="widget-label" x-text="(turbo ? 'Where ' : 'Full throttle height for ') + setting + '%' + (turbo ? ' runs out' : '')"></dt>
+      <dd class="widget-value" x-text="setting === 100 && !turbo ? 'sea level (density height): full power needs a wide-open throttle' : 'about ' + fmt(r100(fthDh)) + ' ft density height' + (dev !== 0 ? ', ' + fmt(r100(fthPh)) + ' ft pressure height today' : '')"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('wheatbelt-hot-afternoon')" :aria-pressed="active === 'wheatbelt-hot-afternoon'">Wheatbelt take-off, 36°</button>
+      <button type="button" @click="preset('cruise-9500-isa-plus-14')" :aria-pressed="active === 'cruise-9500-isa-plus-14'">9,500 ft at +10°</button>
+      <button type="button" @click="preset('fth-75-standard')" :aria-pressed="active === 'fth-75-standard'">75%, standard day</button>
+      <button type="button" @click="preset('fth-65-hot-day')" :aria-pressed="active === 'fth-65-hot-day'">65%, ISA +15</button>
+      <button type="button" @click="preset('kalgoorlie-75-hot')" :aria-pressed="active === 'kalgoorlie-75-hot'">To Kalgoorlie at 8,500</button>
+      <button type="button" @click="preset('turbo-holds-power')" :aria-pressed="active === 'turbo-holds-power'">Turbocharged</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The engine answers to density height, not to the altimeter: a normally aspirated engine loses about 3% of its sea-level power per 1,000 ft from the ground up (the lessons' rule of thumb; the POH has the real figures). Each power setting has its own full throttle height, where the throttle reaches the stop: the lower the power, the higher it is, and a hot day brings it lower on the altimeter. A turbocharger holds rated power to its critical altitude (typically 12,000 to 20,000 ft) and then loses it the same way; the wing still feels the density height.</p>
+  <details class="widget-try"><summary>Try it: on a standard day, where is the full throttle height for 75% power? And for 65%?</summary><p>Press 75%, standard day: 100 − 75 = 25% to lose, 25 ÷ 3 ≈ 8,300 ft. Drag the power to 65%: 35 ÷ 3 ≈ 11,700 ft, higher, because less power needs less air. Then press 65%, ISA +15: the 15° adds 120 × 15 = 1,800 ft of density height, so the throttle hits the stop at about 9,900 ft on the altimeter (PAKC 2.1).</p></details>
+  <details class="widget-try"><summary>Try it: you plan a 75% cruise at 8,500 ft to Kalgoorlie, 15° above ISA. Will you get it?</summary><p>Press To Kalgoorlie at 8,500: the full throttle height for 75% is about 6,500 ft pressure height today, so at 8,500 ft (10,300 ft density height) full throttle gives only about 69%. Plan with the POH row for the power you will get. Switch to Turbocharged: it holds 75% there with throttle to spare.</p></details>
+</div>

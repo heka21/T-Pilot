@@ -1,0 +1,123 @@
+<div class="widget" x-data="widget({
+  elev: 650, alt: 1650, base: 3500, px: 250, rd: 900,
+  // picture: 0.06 px per ft above mean sea level at y 300
+  y(ft) { return 300 - ft * 0.06 },
+  get ridge() { return Math.max(this.rd, this.elev + 300) },
+  // terrain profile: [x, elevation]
+  get prof() { const E = this.elev, R = this.ridge; return [[0, 0], [70, 0], [110, E * 0.5], [150, E], [340, E], [390, E + (R - E) * 0.3], [470, R], [540, R - (R - E) * 0.45], [640, E + (R - E) * 0.25]] },
+  ground(x) { const p = this.prof; for (let i = 1; i < p.length; i++) if (x <= p[i][0]) return this.lerp(p[i - 1][1], p[i][1], (x - p[i - 1][0]) / (p[i][0] - p[i - 1][0])); return p[p.length - 1][1] },
+  get groundPath() { return this.path(this.prof.slice(1).map((p) => [p[0], this.y(p[1])])) + ' L640 330 L70 330 Z' },
+  get below() { return this.ground(this.px) },
+  get agl() { return this.alt - this.below },
+  get over() { return this.px >= 150 && this.px <= 340 ? 'the aerodrome' : this.px > 420 && this.px < 520 ? 'the ridge' : this.px < 150 ? 'the coast' : 'rising ground' },
+  get tafBase() { return this.base - this.elev },
+  get clear() { return this.base - this.alt },
+  get cloudPath() {
+    const yb = this.y(this.base); let d = 'M0 ' + yb + ' L640 ' + yb + ' L640 ' + (yb - 22);
+    for (let x = 640; x > 0; x -= 40) d += ' q-10 -18 -20 -8 q-10 -12 -20 8';
+    return d + ' Z';
+  },
+  presets: {
+    'circuit-at-300': { elev: 300, alt: 1300, base: 3500, px: 250, rd: 900 },
+    'over-the-ridge': { elev: 300, alt: 1300, base: 3500, px: 470, rd: 900 },
+    'inland-1200': { elev: 1200, alt: 2500, base: 3500, px: 250, rd: 900 },
+    'gaf-base-650': { elev: 650, alt: 1650, base: 3500, px: 250, rd: 900 },
+    'taf-base-1000': { elev: 1000, alt: 2000, base: 3500, px: 250, rd: 900 },
+    'inland-strip-1100': { elev: 1100, alt: 3000, base: 4100, px: 250, rd: 900 },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="hdt-title" class="widget-stage">
+    <title id="hdt-title">Side view, heights exaggerated: the sea, an aerodrome on raised ground, a ridge, an aeroplane and a cloud layer. Altitude and the GAF cloud base are measured from mean sea level; height and the TAF cloud base from the ground or the aerodrome; elevation is the aerodrome's own height above the sea</title>
+    <defs>
+      <marker id="hdt-tick-fg" viewBox="0 0 2 12" refX="1" refY="6" markerWidth="2" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L1 12" stroke="var(--color-fg)" stroke-width="2"/></marker>
+      <marker id="hdt-tick-info" viewBox="0 0 2 12" refX="1" refY="6" markerWidth="2" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L1 12" stroke="var(--color-info)" stroke-width="2"/></marker>
+      <marker id="hdt-tick-brand" viewBox="0 0 2 12" refX="1" refY="6" markerWidth="2" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L1 12" stroke="var(--color-brand)" stroke-width="2"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="330" fill="var(--color-sky-soft)" fill-opacity="0.45"/>
+    <!-- cloud layer -->
+    <path fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round" :d="cloudPath"/>
+    <line x1="0" x2="640" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="6 4" :y1="y(base)" :y2="y(base)"/>
+    <text x="8" font-size="13" font-weight="700" fill="var(--color-info-fg)" class="num" :y="y(base) - 8" x-text="'GAF ' + fmt(base) + ' ft AMSL'"></text>
+    <text x="180" font-size="13" font-weight="700" fill="var(--color-brand-fg)" class="num" :y="y(base) - 8" x-text="'TAF / METAR ' + fmt(tafBase) + ' ft above the aerodrome'"></text>
+    <!-- sea and ground -->
+    <rect x="0" y="300" width="80" height="30" fill="var(--color-sky-soft)"/>
+    <rect x="0" y="300" width="80" height="30" fill="var(--color-sky-fg)" fill-opacity="0.15"/>
+    <path fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round" :d="groundPath"/>
+    <line x1="0" y1="300" x2="640" y2="300" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-dasharray="6 4"/>
+    <text x="634" y="318" font-size="12" text-anchor="end" fill="var(--color-sky-fg)">mean sea level</text>
+    <!-- aerodrome -->
+    <rect x="200" width="110" height="5" rx="1" fill="var(--color-tarmac)" :y="y(elev) - 4"/>
+    <text x="334" font-size="12" text-anchor="end" fill="var(--color-fg)" font-weight="600" :y="y(elev) + 18" x-show="elev >= 350">aerodrome</text>
+    <!-- elevation: inside the ground -->
+    <line x1="160" x2="160" y2="300" stroke="var(--color-fg)" stroke-width="2" marker-start="url(#hdt-tick-fg)" marker-end="url(#hdt-tick-fg)" :y1="y(elev)" x-show="elev >= 150"/>
+    <text x="168" font-size="12" fill="var(--color-fg)" class="num" y="318" x-text="'elevation ' + fmt(elev) + ' ft'"></text>
+    <!-- ridge -->
+    <text x="490" font-size="12" fill="var(--color-fg-muted)" class="num" :y="y(ridge) + 26" x-text="'ridge ' + fmt(ridge) + ' ft'"></text>
+    <!-- cloud bases: from the sea (GAF) and from the aerodrome (TAF) -->
+    <line x1="36" x2="36" y1="300" stroke="var(--color-info)" stroke-width="2" marker-start="url(#hdt-tick-info)" marker-end="url(#hdt-tick-info)" :y2="y(base)"/>
+    <line x1="186" x2="186" stroke="var(--color-brand)" stroke-width="2" marker-start="url(#hdt-tick-brand)" marker-end="url(#hdt-tick-brand)" :y1="y(elev)" :y2="y(base)"/>
+    <!-- the aeroplane: altitude from the sea, height from the ground below -->
+    <line stroke="var(--color-info)" stroke-width="2" stroke-dasharray="5 3" y1="300" :x1="px - 12" :x2="px - 12" :y2="y(alt) + 10"/>
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-start="url(#hdt-tick-brand)" :x1="px + 4" :x2="px + 4" :y1="y(below)" :y2="y(alt) + 10"/>
+    <g :transform="'translate(' + px + ' ' + y(alt) + ') scale(0.5)'"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <text font-size="13" font-weight="700" fill="var(--color-info-fg)" class="num" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :x="px + 24" :y="y(alt) - 2" x-text="'altitude ' + fmt(alt) + ' ft'"></text>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :x="px + 24" :y="y(alt) + 15" x-text="'height ' + fmt(agl) + ' ft AGL'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="hdt-elev">Aerodrome elevation <output for="hdt-elev" x-text="fmt(elev) + ' ft'"></output></label>
+      <input type="range" id="hdt-elev" min="0" max="1500" step="50" x-model.number="elev" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="hdt-alt">Altimeter, QNH set <output for="hdt-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="hdt-alt" min="500" max="4000" step="50" x-model.number="alt" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="hdt-px">Fly inland <output for="hdt-px" x-text="'over ' + over"></output></label>
+      <input type="range" id="hdt-px" min="170" max="560" step="5" x-model.number="px" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="hdt-base">Cloud base in the GAF <output for="hdt-base" x-text="fmt(base) + ' ft AMSL'"></output></label>
+      <input type="range" id="hdt-base" min="1500" max="4500" step="50" x-model.number="base" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Altitude (above mean sea level)</dt>
+      <dd class="widget-value" x-text="fmt(alt) + ' ft'"></dd>
+    </div>
+    <div class="widget-readout" :class="agl > 0 ? 'ok' : 'bad'">
+      <dt class="widget-label" x-text="'Height above ' + over"></dt>
+      <dd class="widget-value" x-text="fmt(alt) + ' − ' + fmt(below) + ' = ' + fmt(agl) + ' ft AGL'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Circuit at 1,000 ft above this aerodrome</dt>
+      <dd class="widget-value" x-text="fmt(elev + 1000) + ' ft on QNH'"></dd>
+    </div>
+    <div class="widget-readout warn">
+      <dt class="widget-label">Same cloud base, two numbers</dt>
+      <dd class="widget-value" x-text="'GAF ' + fmt(base) + ' (AMSL) = TAF ' + fmt(tafBase) + ' (above the aerodrome)'"></dd>
+    </div>
+    <div class="widget-readout" :class="clear > 0 ? 'ok' : 'bad'">
+      <dt class="widget-label">Below the cloud base by</dt>
+      <dd class="widget-value"><span x-text="clear > 0 ? fmt(clear) + ' ft' : 'in or above it'"></span><span class="widget-flag bad" x-show="clear <= 0">in cloud</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('circuit-at-300')" :aria-pressed="active === 'circuit-at-300'">Circuit at a 300 ft aerodrome</button>
+      <button type="button" @click="preset('over-the-ridge')" :aria-pressed="active === 'over-the-ridge'">Over the 900 ft ridge</button>
+      <button type="button" @click="preset('inland-1200')" :aria-pressed="active === 'inland-1200'">2,500 ft over a 1,200 ft aerodrome</button>
+      <button type="button" @click="preset('gaf-base-650')" :aria-pressed="active === 'gaf-base-650'">GAF 3,500 at 650 ft</button>
+      <button type="button" @click="preset('taf-base-1000')" :aria-pressed="active === 'taf-base-1000'">TAF 2,500 at 1,000 ft</button>
+      <button type="button" @click="preset('inland-strip-1100')" :aria-pressed="active === 'inland-strip-1100'">Inland strip, 1,100 ft</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Altitude, elevation and the GAF cloud base all start at the sea; height and the TAF or METAR cloud base start at the ground or the aerodrome. Altitude = elevation + height, so fly inland at a steady altitude and your height shrinks as the ground rises, and at an elevated aerodrome the TAF gives the same cloud base as a smaller number. Heights in the picture are exaggerated.</p>
+  <details class="widget-try"><summary>Try it: the GAF gives a cloud base of 3,500 ft for an aerodrome of elevation 650 ft. What would its TAF say for the same cloud?</summary><p>3,500 − 650 = 2,850 ft above the aerodrome. Press GAF 3,500 at 650 ft: the circuit there is flown at 650 + 1,000 = 1,650 ft on QNH, about 1,850 ft below the base.</p></details>
+  <details class="widget-try"><summary>Try it: you fly the circuit at 1,300 ft on QNH at a 300 ft aerodrome, then hold that altitude over the 900 ft ridge. How high are you above it?</summary><p>1,300 − 900 = 400 ft: press Over the 900 ft ridge. The altimeter has not changed; the ground under you has risen 600 ft.</p></details>
+</div>

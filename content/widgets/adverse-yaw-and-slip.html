@@ -1,0 +1,141 @@
+<div class="widget" x-data="timeline({
+  rudder: false, duration: 14, loop: false,
+  // illustrative amounts and timings; the sequence is the lesson's (RBKA 3.2): roll right with aileron, adverse yaw
+  // left, then the slip towards the low wing yaws the nose right and, left alone, the bank and speed build
+  get ail() { return this.t >= 0.1 && this.t < 0.4 ? 1 : 0 },
+  get bank() { const b = 30 * this.eased(0.1, 0.4); return this.rudder ? b : b + 28 * this.eased(0.7, 1) },
+  get yaw() { if (this.rudder) return 0; return -8 * this.eased(0.1, 0.25) + 14 * this.eased(0.42, 0.62) + 4 * this.eased(0.75, 1) },
+  get rud() { return this.rudder ? (this.ail ? 16 : 3 * this.eased(0.4, 0.5)) : 0 },
+  get ball() { return this.rudder ? 0 : this.eased(0.1, 0.3) },
+  get slip() { return !this.rudder && this.t > 0.42 },
+  get speed() { return this.rudder ? 90 : 90 + 25 * this.eased(0.72, 1) },
+  get cosb() { return Math.cos(this.bank * Math.PI / 180) },
+  get dragL() { return this.ail ? 44 : 26 },
+  get dragR() { return this.ail ? 22 : 26 },
+  get phase() {
+    if (this.t < 0.1) return 'Wings level';
+    if (this.t < 0.4) return this.rudder ? 'Rolling in, rudder with aileron' : 'Rolling in: adverse yaw';
+    if (this.rudder) return 'Balanced turn';
+    return this.t < 0.7 ? 'Slipping towards the low wing' : 'Spiral descent starting';
+  },
+  get yawText() { const y = Math.round(this.yaw); return y === 0 ? 'on the path' : Math.abs(y) + '° ' + (y < 0 ? 'left' : 'right') + ' of the path' },
+  get steps() {
+    return this.rudder
+      ? [{ at: 0, label: 'Wings level' }, { at: 0.1, label: 'Aileron and rudder' }, { at: 0.45, label: 'Balanced turn' }]
+      : [{ at: 0, label: 'Wings level' }, { at: 0.1, label: 'Aileron right' }, { at: 0.25, label: 'Adverse yaw' }, { at: 0.5, label: 'Slip to the low wing' }, { at: 0.85, label: 'Nose drops: spiral' }];
+  },
+  get caption() {
+    if (this.t < 0.1) return 'Straight and level at 90 kt. You are about to roll right with the ailerons.';
+    if (this.rudder) {
+      if (this.t < 0.4) return 'Right aileron with right rudder: the rudder pushes the tail left and the nose right, cancelling the adverse yaw, so the nose follows the roll and the ball stays in the middle.';
+      return 'Balanced turn: yaw matches bank, the airflow meets the aeroplane from dead ahead and the ball is centred. Aileron and rudder are back near neutral.';
+    }
+    if (this.t < 0.4) return 'The left aileron goes down and the right one up. The rising left wing makes more lift and so more induced drag, which holds it back: the nose yaws LEFT, away from the roll. That is adverse aileron yaw.';
+    if (this.t < 0.7) return 'Now banked, the tilted lift lets the aeroplane slide sideways towards the lower right wing. The air comes from that side, strikes the fin and the side of the fuselage, and the aeroplane weathercocks: the nose yaws RIGHT, towards the low wing.';
+    return 'Left alone, the nose drops, the bank steepens and the speed builds: the further effects of aileron end in a spiral descent. Rudder with aileron from the start gives a balanced turn instead.';
+  },
+  presets: {
+    'adverse-yaw-roll-right': { rudder: false, t: 0.3 },
+    'slip-into-turn': { rudder: false, t: 0.6 },
+    'spiral-begins': { rudder: false, t: 1 },
+    'with-rudder-balanced': { rudder: true, t: 0.3 },
+    'roll-in-aileron-only': { rudder: false, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="ays-title" class="widget-stage">
+    <title id="ays-title">Plan view of an aeroplane rolling right with aileron alone: the down-going left aileron adds drag and the nose yaws left, away from the turn; then the aeroplane slips towards the low right wing and the fin swings the nose right. A rear view shows the bank and the balance ball</title>
+    <defs>
+      <marker id="ays-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="400" height="320" fill="var(--color-sky-soft)"/>
+    <text x="14" y="24" font-size="13" fill="var(--color-fg-muted)">From above</text>
+    <!-- the flight path, straight up the page -->
+    <line x1="200" y1="112" x2="200" y2="36" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#ays-arrow)"/>
+    <text x="210" y="46" font-size="12" fill="var(--color-brand-fg)" font-weight="600">flight path</text>
+    <!-- sideslip air onto the fin -->
+    <g x-show="slip">
+      <line x1="372" y1="236" x2="292" y2="236" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" marker-end="url(#ays-arrow)"/>
+      <line x1="372" y1="262" x2="292" y2="262" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" marker-end="url(#ays-arrow)"/>
+      <text x="390" y="222" font-size="12" text-anchor="end" fill="var(--color-info)" font-weight="600">air from the low-wing side</text>
+    </g>
+    <!-- the aeroplane: yawed by the yaw angle, span shortened by the bank -->
+    <g :transform="'translate(200 170) rotate(' + yaw.toFixed(2) + ') scale(' + cosb.toFixed(3) + ' 1)'">
+      <!-- python -m tools.diagrams.plane top, heading 0, scale 1.8 -->
+      <g transform="translate(0 0) rotate(-90) scale(1.8)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      <!-- ailerons: trailing edge of the outer wings -->
+      <rect x="-83" y="15" width="38" height="8" rx="2" :fill="ail ? 'var(--color-brand)' : 'var(--color-surface-2)'" stroke="var(--color-fg)" stroke-width="1"/>
+      <rect x="45" y="15" width="38" height="8" rx="2" :fill="ail ? 'var(--color-info)' : 'var(--color-surface-2)'" stroke="var(--color-fg)" stroke-width="1"/>
+      <!-- induced drag at each tip -->
+      <line x1="-76" y1="28" x2="-76" :y2="28 + dragL" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#ays-arrow)"/>
+      <line x1="76" y1="28" x2="76" :y2="28 + dragR" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#ays-arrow)"/>
+      <!-- rudder -->
+      <line x1="0" y1="80" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round" x-show="rudder"
+        :x2="(14 * Math.sin(rud * Math.PI / 180)).toFixed(1)" :y2="(80 + 14 * Math.cos(rud * Math.PI / 180)).toFixed(1)"/>
+    </g>
+    <!-- upright labels -->
+    <g font-size="12" font-weight="600" x-show="ail">
+      <text x="24" y="150" fill="var(--color-brand-fg)">left aileron down:</text>
+      <text x="24" y="165" fill="var(--color-brand-fg)">more lift, more drag</text>
+      <text x="376" y="150" text-anchor="end" fill="var(--color-info)">right aileron up</text>
+    </g>
+    <text x="24" y="232" font-size="12" fill="var(--color-bad-fg)">induced drag</text>
+    <text x="200" y="306" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg)" x-text="'nose ' + yawText"></text>
+    <!-- right panel: from behind, and the ball -->
+    <rect x="400" y="0" width="240" height="320" fill="var(--color-surface)"/>
+    <line x1="400" y1="0" x2="400" y2="320" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="520" y="24" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">From behind</text>
+    <line x1="430" y1="104" x2="610" y2="104" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <g :transform="'translate(520 100) rotate(' + bank.toFixed(2) + ')'">
+      <!-- python -m tools.diagrams.plane rear, scale 1.1 -->
+      <g transform="translate(0 0) rotate(0) scale(1.1)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-fg)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+    </g>
+    <text x="520" y="160" font-size="14" text-anchor="middle" class="num" font-weight="600" fill="var(--color-fg)" x-text="'bank ' + fmt(bank) + '° right'"></text>
+    <path d="M450 186 Q520 208 590 186" fill="none" stroke="var(--color-line-strong)" stroke-width="12" stroke-linecap="round"/>
+    <line x1="512" y1="184" x2="512" y2="208" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <line x1="528" y1="184" x2="528" y2="208" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <circle r="6" fill="var(--color-fg)" :cx="520 + 40 * ball" :cy="197 - 6 * ball * ball"/>
+    <text x="520" y="230" font-size="12" text-anchor="middle" :fill="ball > 0.3 ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)'" x-text="ball > 0.3 ? 'ball to the inside: slipping' : 'ball centred: balanced'"></text>
+    <text x="520" y="262" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-brand-fg)" x-text="phase"></text>
+    <text x="520" y="288" font-size="13" text-anchor="middle" class="num" :fill="speed > 95 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="'airspeed ' + fmt(speed) + ' kt' + (speed > 95 ? ', rising' : '')"></text>
+    <text x="520" y="308" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-text="rudder ? 'rudder: with the aileron' : 'rudder: none'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Roll right'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ays-t" min="0" max="1" step="0.002" x-model.number="t" @input="pause()" aria-label="Time through the roll">
+    <span class="widget-clock" x-text="fmt(t * duration) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ays-rudder" class="cursor-pointer"><span>Use rudder with the aileron</span>
+        <input type="checkbox" id="ays-rudder" x-model="rudder" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="Math.abs(yaw) > 2 ? 'warn' : 'ok'"><dt class="widget-label">Nose</dt><dd class="widget-value" x-text="yawText"></dd></div>
+    <div class="widget-readout" :class="ball > 0.3 ? 'warn' : 'ok'"><dt class="widget-label">Balance ball</dt><dd class="widget-value" x-text="ball > 0.3 ? 'to the right (inside)' : 'centred'"></dd></div>
+    <div class="widget-readout" :class="speed > 95 ? 'bad' : ''"><dt class="widget-label">Bank and airspeed</dt><dd class="widget-value"><span x-text="fmt(bank) + '°, ' + fmt(speed) + ' kt'"></span><span class="widget-flag bad" x-show="speed > 100">spiral</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('adverse-yaw-roll-right')" :aria-pressed="active === 'adverse-yaw-roll-right'">Adverse yaw</button>
+      <button type="button" @click="preset('slip-into-turn')" :aria-pressed="active === 'slip-into-turn'">Slip</button>
+      <button type="button" @click="preset('spiral-begins')" :aria-pressed="active === 'spiral-begins'">Spiral</button>
+      <button type="button" @click="preset('with-rudder-balanced')" :aria-pressed="active === 'with-rudder-balanced'">With rudder</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Aileron's further effects come in a sequence. First adverse yaw: the down-going aileron makes the rising wing produce more lift and more induced drag, so the nose swings away from the roll. Then, once banked, the aeroplane slips towards the lower wing and the fin weathercocks the nose towards it; left alone the nose drops and the bank and speed build into a spiral descent. Rudder in the same direction as the aileron keeps the nose on the path and the ball in the middle. The yaw angles, timings and speeds are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you roll left with aileron alone at low speed. Which way does the nose swing first?</summary><p>To the right, away from the roll: the right aileron goes down, so the right wing makes more lift and more induced drag and is held back. Left rudder with the left aileron cancels it. (The widget rolls right; mirror it.)</p></details>
+  <details class="widget-try"><summary>Try it: why does the nose later swing towards the lower wing?</summary><p>Press Slip: with the lift tilted the aeroplane slides sideways towards the low wing, the air arrives from that side and pushes on the big side area of the fin and rear fuselage, and like a weathervane the nose swings into it.</p></details>
+</div>

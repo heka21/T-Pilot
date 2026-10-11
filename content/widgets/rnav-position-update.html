@@ -1,0 +1,138 @@
+<div class="widget" x-data="timeline({
+  duration: 20, loop: false,
+  auto: true, jam: false, inhibit: false,
+  // t 0..1 is one hour along a straight track. The system's displayed position drifts sideways from the truth at an
+  // illustrative 6 nm an hour; updates at t 0.25 (DME/DME), 0.55 (GNSS, inside the jamming area) and 0.8 (DME/DME).
+  rate: 6,
+  get min() { return this.t * 60 },
+  ev(t0) {
+    // displayed error (nm, + left of the truth as drawn) at clock t0, and the last update
+    let off = 0, from = 0, last = null;
+    const ups = [{ at: 0.25, s: 'DME/DME' }, { at: 0.55, s: 'GNSS' }, { at: 0.8, s: 'DME/DME' }];
+    if (this.auto) ups.forEach((u) => {
+      if (u.at > t0) return;
+      if (u.s === 'GNSS' && this.jam && this.inhibit) { last = { at: u.at, s: 'GNSS', inhibited: true }; return }
+      const bad = u.s === 'GNSS' && this.jam;
+      off = bad ? -3 : 0; from = u.at; last = { at: u.at, s: u.s, bad: bad };
+    });
+    return { e: off + this.rate * (t0 - from), last: last };
+  },
+  get now() { return this.ev(this.t) },
+  get err() { return this.now.e },
+  get last() { return this.now.last },
+  get inZone() { return this.t >= 0.45 && this.t <= 0.65 },
+  // picture: track along y 170 from x 40 to 600; 14 px per nm sideways
+  X(t0) { return 40 + 560 * t0 },
+  Y(e) { return 170 - this.clamp(e, -7, 7) * 14 },
+  get trace() { const p = []; const n = Math.max(1, Math.round(this.t * 120)); for (let i = 0; i <= n; i++) { const a = this.t * i / n; p.push([this.X(a), this.Y(this.ev(a).e)]) } return this.path(p) },
+  get flashMsg() {
+    const l = this.last;
+    if (!l) return '';
+    if (this.t - l.at > 0.06) return '';
+    if (l.inhibited) return 'GNSS UPDATE INHIBITED';
+    return 'POSITION UPDATED · ' + l.s;
+  },
+  get status() { const a = Math.abs(this.err); if (this.last && this.last.bad && this.t < 0.8) return 'bad'; return a < 0.5 ? 'ok' : a < 2 ? '' : 'warn' },
+  get steps() {
+    const s = [{ at: 0, label: 'Drift builds' }];
+    if (this.auto) s.push({ at: 0.25, label: 'Update: jump back' });
+    s.push({ at: 0.45, label: 'Into the jamming area' });
+    if (this.auto) s.push({ at: 0.55, label: this.jam ? (this.inhibit ? 'Inhibited' : 'Bad update') : 'GNSS update' });
+    s.push({ at: 0.8, label: this.auto ? 'Clear of it: update' : 'Still drifting' });
+    return s;
+  },
+  get caption() {
+    if (!this.auto) return 'With no updates the displayed position keeps drifting: small errors pile up, ' + this.fmt(Math.abs(this.err), 1) + ' nm already.';
+    const l = this.last;
+    if (!l) return 'A self-contained system integrates small errors, so its displayed position slowly drifts away from where you really are.';
+    if (l.bad && this.t < 0.8) return 'The jammed GNSS fed the system a wrong position and the automatic update accepted it: the display jumped 3 nm the wrong way. Do not follow it; your map and DR still agree.';
+    if (l.inhibited && this.t < 0.8) return 'Updating inhibited: the system keeps its last good position and drifts slowly, which is far better than a sudden wrong jump.';
+    if (this.t - l.at < 0.06) return 'Update from ' + l.s + ': the displayed position jumps back to the truth, and the track, groundspeed and wind change suddenly with it.';
+    return 'Since the last update the drift is building again: ' + this.fmt(Math.abs(this.err), 1) + ' nm.';
+  },
+  presets: {
+    'drift-then-update': { auto: true, jam: false, inhibit: false, t: 0.27 },
+    'jammed-bad-update': { auto: true, jam: true, inhibit: false, t: 0.58 },
+    'inhibit-in-jamming': { auto: true, jam: true, inhibit: true, t: 0.62 },
+    'no-updating': { auto: false, jam: false, inhibit: false, t: 0.95 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="rpu-title" class="widget-stage">
+    <title id="rpu-title">Plan view of a straight track: the aeroplane's true position flying along it and the area navigation system's displayed position drifting away to one side, jumping back at each update, with a GNSS jamming area along the track</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-ok-soft)" fill-opacity="0.4" rx="10"/>
+    <!-- jamming area -->
+    <g :display="(jam) ? 'inline' : 'none'">
+      <rect x="292" y="60" width="112" height="200" fill="var(--color-bad)" fill-opacity="0.1" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="5 4"/>
+      <text x="348" y="54" font-size="12" text-anchor="middle" fill="var(--color-bad-fg)" font-weight="600">GNSS jamming (NOTAM)</text>
+    </g>
+    <!-- the track and the truth -->
+    <line x1="40" y1="170" x2="600" y2="170" stroke="var(--color-fg-muted)" stroke-width="2" stroke-dasharray="8 5"/>
+    <text x="44" y="194" font-size="12" fill="var(--color-fg-muted)">your real track</text>
+    <!-- update marks -->
+    <g :display="(auto) ? 'inline' : 'none'" stroke="var(--color-fg-faint)" stroke-width="1">
+      <line x1="180" y1="70" x2="180" y2="250"/><line x1="348" y1="70" x2="348" y2="250" :display="(!jam) ? 'inline' : 'none'"/><line x1="488" y1="70" x2="488" y2="250"/>
+    </g>
+    <!-- the displayed position's history -->
+    <path :d="trace" fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round"/>
+    <!-- the gap now -->
+    <line stroke="var(--color-warn)" stroke-width="1.5" :x1="X(t)" :x2="X(t)" y1="170" :y2="Y(err)" :display="(Math.abs(err) > 0.3) ? 'inline' : 'none'"/>
+    <text font-size="12" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :fill="status === 'bad' ? 'var(--color-bad-fg)' : 'var(--color-warn-fg)'" :x="X(t) + 10" :y="(170 + Y(err)) / 2 + 4" :display="(Math.abs(err) > 0.3) ? 'inline' : 'none'" x-text="fmt(Math.abs(err), 1) + ' nm'"></text>
+    <!-- true aeroplane (outline) and displayed position (brand dot) -->
+    <g :transform="'translate(' + X(t) + ' 170)'">
+      <!-- plane top scale 0.35 heading 90 -->
+      <g transform="translate(0 0) rotate(0) scale(0.35)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <circle r="7" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2" :cx="X(t)" :cy="Y(err)"/>
+    <text font-size="12" fill="var(--color-brand-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="X(t) - 10" :y="Y(err) + (err >= 0 ? -12 : 22)" text-anchor="end">displayed</text>
+    <!-- annunciator -->
+    <rect x="20" y="16" width="250" height="30" rx="6" fill="var(--color-surface)" stroke-width="1.5" :stroke="flashMsg ? (flashMsg.indexOf('INHIBITED') > -1 ? 'var(--color-warn)' : (last && last.bad ? 'var(--color-bad)' : 'var(--color-ok)')) : 'var(--color-line)'"/>
+    <text x="34" y="36" font-size="12" font-weight="700" class="num" :fill="flashMsg ? (last && last.bad ? 'var(--color-bad-fg)' : 'var(--color-fg)') : 'var(--color-fg-faint)'" x-text="flashMsg || (auto ? 'NAV · auto update on' : 'NAV · updating off')"></text>
+    <text x="620" y="36" font-size="13" font-weight="700" text-anchor="end" fill="var(--color-fg)" class="num" x-text="fmt(min) + ' min'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="rpu-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time along the track">
+    <span class="widget-clock" x-text="fmt(min) + ' min'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="i">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rpu-auto" class="cursor-pointer"><span>Automatic updating</span>
+        <input type="checkbox" id="rpu-auto" x-model="auto" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rpu-jam" class="cursor-pointer"><span>GNSS jammed in the NOTAM area</span>
+        <input type="checkbox" id="rpu-jam" x-model="jam" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="rpu-inh" class="cursor-pointer"><span>Inhibit GNSS updating</span>
+        <input type="checkbox" id="rpu-inh" x-model="inhibit" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="status"><dt class="widget-label">Displayed position error</dt><dd class="widget-value"><span x-text="fmt(Math.abs(err), 1) + ' nm ' + (Math.abs(err) < 0.05 ? '' : err > 0 ? 'left of the truth' : 'right of the truth')"></span><span class="widget-flag bad" x-show="status === 'bad'">wrong jump</span></dd></div>
+    <div class="widget-readout" :class="last && last.bad ? 'bad' : ''"><dt class="widget-label">Last update</dt><dd class="widget-value" x-text="!last ? 'none yet' : (last.inhibited ? 'GNSS inhibited (kept the last good position)' : last.s + (last.bad ? ': bad (jammed)' : ': good'))"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('drift-then-update')" :aria-pressed="active === 'drift-then-update'">Drift, then update</button>
+      <button type="button" @click="preset('jammed-bad-update')" :aria-pressed="active === 'jammed-bad-update'">Jammed: bad update</button>
+      <button type="button" @click="preset('inhibit-in-jamming')" :aria-pressed="active === 'inhibit-in-jamming'">Inhibit in the jamming</button>
+      <button type="button" @click="preset('no-updating')" :aria-pressed="active === 'no-updating'">No updating</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Like DR, a self-contained system's position drifts with time, and any RNAV position is only as good as its last sensor input, so it must be updated. An update shows as a jump in the displayed position and sudden changes in track, groundspeed and wind, with a sensor annunciation. Inhibit updating when the sensor is suspect: a bad update swaps a good position for a wrong one. The drift rate and timings are illustrative; the 3 nm jump is the lesson's example.</p>
+  <details class="widget-try"><summary>Try it: why might a pilot inhibit GNSS updating during a NOTAM'd jamming exercise?</summary><p>A jammed or spoofed GNSS could feed a wrong position, and an automatic update would replace a good position with it. Inhibiting keeps the last good position, which drifts only slowly. Compare Jammed: bad update with Inhibit in the jamming.</p></details>
+  <details class="widget-try"><summary>Try it: the display jumps 3 nm. Is that always a fault?</summary><p>No: a system that had drifted jumps back to the truth when it is corrected (Drift, then update). Judge every jump against an independent source, such as a visual fix.</p></details>
+</div>

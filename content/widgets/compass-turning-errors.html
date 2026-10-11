@@ -1,0 +1,166 @@
+<div class="widget" x-data="timeline({
+  duration: 16, loop: false,
+  sc: 0,
+  // turns: right at rate one (3° a second); accelerations: 90 to 110 kt, or back
+  scenarios: [
+    { kind: 'turn', h0: 90, h1: 180, name: 'Turn right onto south' },
+    { kind: 'turn', h0: 0, h1: 360, from: 270, name: 'Turn right onto north' },
+    { kind: 'turn', h0: 0, h1: 90, name: 'Turn right onto east' },
+    { kind: 'acc', h: 90, a: 1, name: 'Accelerate heading east' },
+    { kind: 'acc', h: 270, a: 1, name: 'Accelerate heading west' },
+    { kind: 'acc', h: 270, a: -1, name: 'Decelerate heading west' },
+  ],
+  get s() { return this.scenarios[this.sc] },
+  get turn() { return this.s.kind === 'turn' },
+  get start() { return this.s.from !== undefined ? this.s.from : this.s.h0 },
+  // simulated seconds: 50 for a turn (90° at 3° a second from 5 s to 35 s), 30 for a speed change
+  get S() { return this.t * (this.turn ? 50 : 30) },
+  n(x) { return ((x % 360) + 360) % 360 },
+  get H() { return this.turn ? this.n(this.start + 90 * this.seg(this.S, 5, 35)) : this.s.h },
+  get bank() { return this.turn ? this.seg(this.S, 5, 7) * (1 - this.seg(this.S, 33.5, 35)) : 0 },
+  // southern hemisphere: turning through north the card leads, through south it lags, up to about 30° at rate one,
+  // nil through east and west; after rolling out the card settles (illustrative damping)
+  turnErr(h) { return 30 * Math.cos(h * Math.PI / 180) },
+  get accel() { return this.turn ? 0 : this.seg(this.S, 5, 6.5) * (1 - this.seg(this.S, 15, 16.5)) },
+  get err() {
+    if (this.turn) {
+      if (this.S <= 35) return this.turnErr(this.H) * this.seg(this.S, 5, 7);
+      return this.turnErr(this.H) * Math.exp(-(this.S - 35) / 2.5);
+    }
+    // SAND: south on acceleration, north on deceleration, largest on east and west (10° here is illustrative)
+    return this.s.a * 10 * Math.sin(this.H * Math.PI / 180) * this.accel;
+  },
+  get C() { return this.n(this.H + this.err) },
+  get speed() { return this.turn ? 95 : this.s.a > 0 ? this.lerp(90, 110, this.seg(this.S, 5.5, 15.5)) : this.lerp(110, 90, this.seg(this.S, 5.5, 15.5)) },
+  get target() { return this.turn ? this.s.h1 : this.s.h },
+  get errAbs() { return Math.abs(this.err) },
+  get errText() {
+    if (this.errAbs < 1.5) return 'agrees';
+    if (this.turn) return this.fmt(this.errAbs) + '° ' + (this.err > 0 ? 'ahead: it leads' : 'behind: it lags');
+    return this.fmt(this.errAbs) + '° towards ' + (this.err * Math.sin(this.H * Math.PI / 180) > 0 ? 'south' : 'north');
+  },
+  get errState() { return this.errAbs < 1.5 ? 'ok' : this.errAbs < 10 ? 'warn' : 'bad' },
+  get rule() {
+    if (this.sc === 0) return 'Through south it lags: roll out early, about 30° before south shows';
+    if (this.sc === 1) return 'Through north it leads: roll out late, about 30° after north shows';
+    if (this.sc === 2) return 'Onto east or west: nil turning error, roll out as it reads';
+    return 'SAND: South on Acceleration, North on Deceleration';
+  },
+  get steps() {
+    return this.turn
+      ? [{ at: 0, label: 'Straight and level' }, { at: 0.1, label: 'Roll in' }, { at: 0.4, label: 'Mid-turn' }, { at: 0.7, label: 'Roll out' }, { at: 0.9, label: 'Settled' }]
+      : [{ at: 0, label: 'Steady' }, { at: 0.167, label: this.s.a > 0 ? 'Throttle open' : 'Throttle back' }, { at: 0.333, label: this.s.a > 0 ? 'Accelerating' : 'Decelerating' }, { at: 0.55, label: 'Steady again' }, { at: 0.833, label: 'Settled' }];
+  },
+  get caption() {
+    const S = this.S;
+    if (this.turn) {
+      if (S < 5) return 'Straight, level and unaccelerated: the only time the compass can be trusted. It agrees with the heading.';
+      if (S < 35) {
+        if (this.sc === 0) return 'Turning towards south the card turns with the aeroplane, so the reading changes too slowly: the compass lags behind the real heading.';
+        if (this.sc === 1) return 'Turning towards north the card swings against the turn, so the reading runs ahead: the compass leads the real heading.';
+        return S < 20 ? 'Leaving north the card leads by up to 30°, but the error shrinks to nil as the heading comes round to east.' : 'Approaching east the turning error fades to nil, so the compass and the heading come together.';
+      }
+      if (S < 42) {
+        if (this.sc === 0) return 'Rolled out on 180 while the compass still showed about 150: rolling out early was right. Now it catches up.';
+        if (this.sc === 1) return 'Rolled out on 360 when the compass had already passed it and showed about 030: rolling out late was right. Now it settles back.';
+        return 'Rolled out on 090 as the compass read 090: no allowance needed onto east or west.';
+      }
+      return 'Wings level and steady again: the compass reads the true magnetic heading and can be used to set the DI.';
+    }
+    if (S < 5) return 'Steady speed, straight and level: the compass agrees with the heading.';
+    if (S < 16.5) return this.s.a > 0 ? 'Accelerating heading ' + (this.s.h === 90 ? 'east' : 'west') + ': the card swings as if turning towards south, although the heading has not changed. South on Acceleration.' : 'Decelerating heading west: the card swings as if turning towards north. North on Deceleration.';
+    return 'Steady speed again: the swing dies away. Read the compass only once the speed is steady.';
+  },
+  ray(r, b) { const p = this.pol(180, 170, r, b); return 'M180 170L' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) },
+  tri(b, r, out) { const a = this.pol(180, 170, r, b), l = this.pol(180, 170, r + (out ? 12 : -12), b - 4), q = this.pol(180, 170, r + (out ? 12 : -12), b + 4); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + 'L' + l.x.toFixed(1) + ' ' + l.y.toFixed(1) + 'L' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + 'Z' },
+  seg2(b) { const p = this.pol(180, 170, 127, b), q = this.pol(180, 170, 141, b); return 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + 'L' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) },
+  get wedge() {
+    if (this.errAbs < 1) return '';
+    const a = this.err > 0 ? this.H : this.C, s = this.errAbs, p = this.pol(180, 170, 92, a), q = this.pol(180, 170, 92, a + s);
+    return 'M180 170L' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + 'A92 92 0 0 1 ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + 'Z';
+  },
+  pick() { this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'onto-south': { sc: 0, t: 0.7 },
+    'onto-north': { sc: 1, t: 0.7 },
+    'onto-east': { sc: 2, t: 0.7 },
+    'accelerate-east': { sc: 3, t: 0.333 },
+    'accelerate-west': { sc: 4, t: 0.333 },
+    'decelerate-west': { sc: 5, t: 0.333 },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="cte-title" class="widget-stage">
+    <title id="cte-title">Plan view, magnetic north up: the aeroplane's real heading in blue and where the magnetic compass says it is pointing in red, with the error between them, during a turn or a change of speed in the southern hemisphere</title>
+    <circle cx="180" cy="170" r="140" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/><circle cx="180" cy="170" r="104" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/><path d="M180.0 30.0L180.0 36.0M204.3 32.1L203.3 38.0M227.9 38.4L225.8 44.1M250.0 48.8L247.0 54.0M270.0 62.8L266.1 67.4M287.2 80.0L282.6 83.9M301.2 100.0L296.0 103.0M311.6 122.1L305.9 124.2M317.9 145.7L312.0 146.7M320.0 170.0L314.0 170.0M317.9 194.3L312.0 193.3M311.6 217.9L305.9 215.8M301.2 240.0L296.0 237.0M287.2 260.0L282.6 256.1M270.0 277.2L266.1 272.6M250.0 291.2L247.0 286.0M227.9 301.6L225.8 295.9M204.3 307.9L203.3 302.0M180.0 310.0L180.0 304.0M155.7 307.9L156.7 302.0M132.1 301.6L134.2 295.9M110.0 291.2L113.0 286.0M90.0 277.2L93.9 272.6M72.8 260.0L77.4 256.1M58.8 240.0L64.0 237.0M48.4 217.9L54.1 215.8M42.1 194.3L48.0 193.3M40.0 170.0L46.0 170.0M42.1 145.7L48.0 146.7M48.4 122.1L54.1 124.2M58.8 100.0L64.0 103.0M72.8 80.0L77.4 83.9M90.0 62.8L93.9 67.4M110.0 48.8L113.0 54.0M132.1 38.4L134.2 44.1M155.7 32.1L156.7 38.0" stroke="var(--color-fg-faint)" stroke-width="1"/><path d="M180.0 30.0L180.0 42.0M250.0 48.8L244.0 59.1M301.2 100.0L290.9 106.0M320.0 170.0L308.0 170.0M301.2 240.0L290.9 234.0M250.0 291.2L244.0 280.9M180.0 310.0L180.0 298.0M110.0 291.2L116.0 280.9M58.8 240.0L69.1 234.0M40.0 170.0L52.0 170.0M58.8 100.0L69.1 106.0M110.0 48.8L116.0 59.1" stroke="var(--color-fg-muted)" stroke-width="1.5"/><text x="180.0" y="57.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">N</text><text x="238.5" y="73.0" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">030</text><text x="281.3" y="115.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">060</text><text x="297.0" y="174.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">E</text><text x="281.3" y="232.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">120</text><text x="238.5" y="275.6" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">150</text><text x="180.0" y="291.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">S</text><text x="121.5" y="275.6" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">210</text><text x="78.7" y="232.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">240</text><text x="63.0" y="174.3" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">W</text><text x="78.7" y="115.8" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">300</text><text x="121.5" y="73.0" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">330</text>
+    <!-- the heading you are aiming for -->
+    <path stroke="var(--color-ok)" stroke-width="6" stroke-linecap="round" :d="seg2(target)"/>
+    <!-- error wedge, real heading, compass reading -->
+    <path fill="var(--color-bad)" fill-opacity="0.18" :d="wedge"/>
+    <path stroke="var(--color-bad)" stroke-width="2.5" stroke-dasharray="6 4" stroke-linecap="round" :d="ray(104, C)"/>
+    <path stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="ray(104, H)"/>
+    <path fill="var(--color-bad)" :d="tri(C, 142, true)"/>
+    <path fill="var(--color-brand)" :d="tri(H, 142, true)"/>
+    <g :transform="'translate(180 170) rotate(' + (H - 90) + ') scale(0.7)'"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <!-- right panel: bank and speed -->
+    <g :transform="'translate(500 62) rotate(' + (18 * bank) + ') scale(0.9)'"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-fg)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <text x="500" y="112" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="turn ? (bank > 0.5 ? 'rate one turn, right' : 'wings level') : fmt(speed) + ' kt' + (accel > 0.3 ? (s.a > 0 ? ', accelerating' : ', slowing') : ', steady')"></text>
+    <g class="num">
+      <text x="372" y="160" font-size="13" fill="var(--color-fg-muted)">Real heading</text>
+      <text x="628" y="160" font-size="22" font-weight="700" text-anchor="end" fill="var(--color-brand-fg)" x-text="dir(H) + '°'"></text>
+      <text x="372" y="200" font-size="13" fill="var(--color-fg-muted)">Compass shows</text>
+      <text x="628" y="200" font-size="22" font-weight="700" text-anchor="end" :fill="errState === 'ok' ? 'var(--color-fg)' : 'var(--color-bad-fg)'" x-text="dir(C) + '°'"></text>
+      <text x="372" y="236" font-size="14" font-weight="600" :fill="errState === 'ok' ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="'Compass ' + errText"></text>
+      <text x="372" y="262" font-size="13" fill="var(--color-ok-fg)" x-text="(turn ? 'Target ' : 'Holding ') + dir(target) + '° (green mark)'"></text>
+    </g>
+    <text x="372" y="300" font-size="12" fill="var(--color-fg-faint)">Southern hemisphere; sizes illustrative</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="cte-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time">
+    <span class="widget-clock" x-text="fmt(S) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cte-sc">Manoeuvre</label>
+      <select id="cte-sc" class="input" x-model.number="sc" @change="pick()">
+        <option value="0">Turn right onto south (from 090)</option>
+        <option value="1">Turn right onto north (from 270)</option>
+        <option value="2">Turn right onto east (from 360)</option>
+        <option value="3">Accelerate heading east</option>
+        <option value="4">Accelerate heading west</option>
+        <option value="5">Decelerate heading west</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Real heading</dt><dd class="widget-value" x-text="dir(H) + '°M'"></dd></div>
+    <div class="widget-readout" :class="errState"><dt class="widget-label">Compass shows</dt><dd class="widget-value"><span x-text="dir(C) + '°'"></span><span class="widget-flag" :class="errState" x-show="errState !== 'ok'" x-text="turn ? (err > 0 ? 'leads' : 'lags') : 'swings'"></span></dd></div>
+    <div class="widget-readout" :class="errState"><dt class="widget-label">Error</dt><dd class="widget-value" x-text="errText"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">The rule</dt><dd class="widget-value" x-text="rule"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('onto-south')" :aria-pressed="active === 'onto-south'">Onto south</button>
+      <button type="button" @click="preset('onto-north')" :aria-pressed="active === 'onto-north'">Onto north</button>
+      <button type="button" @click="preset('onto-east')" :aria-pressed="active === 'onto-east'">Onto east</button>
+      <button type="button" @click="preset('accelerate-east')" :aria-pressed="active === 'accelerate-east'">Accelerate east</button>
+      <button type="button" @click="preset('accelerate-west')" :aria-pressed="active === 'accelerate-west'">Accelerate west</button>
+      <button type="button" @click="preset('decelerate-west')" :aria-pressed="active === 'decelerate-west'">Decelerate west</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In the southern hemisphere the compass lags turning through south (roll out early) and leads turning through north (roll out late), by up to about 30° at rate one, with nil error through east and west. Speed changes on east and west headings swing it towards south when you accelerate and north when you slow down (SAND), with nil error heading north or south. Northern-hemisphere books give the opposite. The sizes and the settling here are illustrative.</p>
+  <details class="widget-try"><summary>Try it: in level flight heading 270 near Perth you open the throttle to climb power. What does the compass do?</summary><p>Press Accelerate west: it swings towards south, so it shows a turn to the left onto a lower heading, although the real heading has not changed. Wait for the speed to settle before reading it.</p></details>
+  <details class="widget-try"><summary>Try it: using the compass alone, you turn right from 090 onto 180. When do you roll out?</summary><p>Early, at about 150 on the compass: turning through south it lags by up to about 30°. Press Onto south and play on: once the wings are level the compass catches up to 180.</p></details>
+</div>

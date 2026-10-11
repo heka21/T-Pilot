@@ -1,0 +1,201 @@
+<div class="widget" x-data="timeline({
+  duration: 32, loop: false, end: 'land', night: false,
+  // PFRA 2.8 interception (AIP ENR 1.12, ICAO Annex 2). Plan view, north up, you fly east (left to right), so your
+  // left is up the screen. Keyframes [t, x, y, heading]; positions and timing are illustrative.
+  KY0: [[0, 60, 200, 90], [0.40, 260, 200, 90]],
+  KI0: [[0, -40, 96, 110], [0.15, 215, 140, 90], [0.40, 340, 140, 90]],
+  KYland: [[0.48, 320, 190, 70], [0.58, 390, 140, 45], [0.68, 432, 98, 45], [0.76, 452, 60, 75], [0.80, 482, 50, 90], [0.90, 548, 50, 90], [1, 586, 50, 90]],
+  KYshort: [[0.48, 320, 190, 70], [0.58, 390, 140, 45], [0.68, 432, 98, 45], [0.76, 452, 60, 75], [0.80, 482, 50, 90], [0.92, 640, 50, 90], [1, 700, 44, 80]],
+  KIland: [[0.50, 410, 112, 60], [0.58, 458, 82, 40], [0.64, 488, 54, 80], [0.66, 502, 50, 90], [0.78, 640, 50, 90], [0.84, 720, 30, 75]],
+  KYgo: [[1, 600, 200, 90]],
+  KIgo: [[0.48, 386, 118, 30], [0.54, 402, 78, 0], [0.60, 386, 38, 320], [0.68, 330, -30, 315]],
+  kf(K, t) {
+    if (t <= K[0][0]) return { x: K[0][1], y: K[0][2], h: K[0][3] };
+    for (let i = 1; i < K.length; i++) {
+      if (t <= K[i][0]) {
+        const a = K[i - 1], b = K[i], f = (t - a[0]) / (b[0] - a[0]);
+        let dh = b[3] - a[3]; if (dh > 180) dh -= 360; if (dh < -180) dh += 360;
+        return { x: a[1] + (b[1] - a[1]) * f, y: a[2] + (b[2] - a[2]) * f, h: a[3] + dh * f };
+      }
+    }
+    const z = K[K.length - 1]; return { x: z[1], y: z[2], h: z[3] };
+  },
+  get you() { return this.kf(this.KY0.concat(this.end === 'proceed' ? this.KYgo : this.end === 'short' ? this.KYshort : this.KYland), this.t) },
+  get jet() { return this.kf(this.KI0.concat(this.end === 'proceed' ? this.KIgo : this.KIland), this.t) },
+  // rocking wings (by day) or flashing navigation lights (at night) in a window
+  inW(a, b) { return this.t >= a && this.t < b },
+  rock(a, b) { return this.inW(a, b) ? 0.72 + 0.28 * Math.cos(2 * Math.PI * 3 * this.seg(this.t, a, b)) : 1 },
+  get jetRocking() { return this.inW(0.15, 0.30) },
+  get youRocking() { return this.inW(0.31, 0.40) || (this.end === 'proceed' && this.inW(0.66, 0.78)) },
+  // the wings rock by day and by night; at night the navigation lights are flashed at irregular intervals as well
+  get jetScale() { return this.rock(0.15, 0.30) },
+  get youScale() { return this.end === 'proceed' && this.t >= 0.66 ? this.rock(0.66, 0.78) : this.rock(0.31, 0.40) },
+  get blink() { return Math.cos(2 * Math.PI * 14 * this.t) > 0 ? 1 : 0.15 },
+  get jetLights() { return this.night && this.jetRocking ? this.blink : this.night ? 1 : 0 },
+  get youLights() { return this.night && this.youRocking ? this.blink : this.night ? 1 : 0 },
+  get landSignal() { return this.end !== 'proceed' && this.inW(0.64, 0.80) },
+  get breakaway() { return this.end === 'proceed' && this.inW(0.44, 0.68) },
+  get shortSignal() { return this.end === 'short' && this.inW(0.82, 0.94) },
+  get actionsOn() { return this.t >= 0.31 },
+  tf(p, s) { return 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ') rotate(' + (p.h - 90).toFixed(1) + ') scale(1 ' + s.toFixed(3) + ')' },
+  get steps() {
+    const s = [{ at: 0, label: 'Joins' }, { at: 0.15, label: 'Follow me' }, { at: 0.31, label: 'You reply' }];
+    if (this.end === 'proceed') return s.concat([{ at: 0.44, label: 'Breakaway' }, { at: 0.66, label: 'Understood' }]);
+    s.push({ at: 0.40, label: 'Slow turn' }, { at: 0.64, label: 'Land here' });
+    s.push(this.end === 'short' ? { at: 0.82, label: 'Too short' } : { at: 0.80, label: 'You land' });
+    return s;
+  },
+  get signal() {
+    if (this.t < 0.15) return { what: 'A military jet comes up from behind', mean: 'Stay calm and keep flying' };
+    if (this.t < 0.31) return { what: this.night ? 'Ahead-left, rocking its wings and flashing its navigation lights, then a slow level turn' : 'Ahead-left, rocking its wings, then a slow level turn', mean: 'Intercepted: follow me' };
+    if (this.t < 0.40) return { what: 'Waiting for your answer', mean: 'Intercepted: follow me' };
+    if (this.end === 'proceed') {
+      if (this.t < 0.68) return { what: 'An abrupt climbing turn of 90 degrees or more, without crossing ahead of you', mean: 'You may proceed' };
+      return { what: 'Gone', mean: 'You may proceed' };
+    }
+    if (this.t < 0.64) return { what: 'A slow level turn onto the heading it wants', mean: 'Follow me' };
+    if (this.t < 0.80) return { what: 'Gear down, landing lights on, low over the runway', mean: 'Land at this aerodrome' };
+    return { what: 'Watching you', mean: 'Land at this aerodrome' };
+  },
+  get reply() {
+    if (this.t < 0.15) return 'Keep a lookout; note its position';
+    if (this.t < 0.31) return 'Read the signal';
+    if (this.t < 0.40) return this.night ? 'Rock your wings, flash your navigation lights and follow' : 'Rock your wings and follow';
+    if (this.end === 'proceed') return this.t < 0.66 ? 'Hold your heading' : this.night ? 'Rock your wings and flash your navigation lights: understood' : 'Rock your wings: understood, then carry on';
+    if (this.t < 0.64) return 'Follow it, keeping the actions going';
+    if (this.t < 0.80) return 'Follow, and land if safe (fixed gear: nothing to lower)';
+    if (this.end === 'short') return 'Too short: flash your landing lights over the runway (gear up if retractable)';
+    return 'Join and land: it is safe';
+  },
+  get caption() {
+    if (this.t < 0.15) return 'An unidentified aircraft, or one heading for a prohibited area or not answering ATC, may be intercepted. The signals work without a word on the radio.';
+    if (this.t < 0.31) return 'The interceptor takes up position ahead and to your left, ' + (this.night ? 'rocks its wings and flashes its navigation lights at irregular intervals' : 'rocks its wings') + ' and turns slowly: you have been intercepted, follow me.';
+    if (this.t < 0.40) return (this.night ? 'At night the irregular flashing of the navigation lights is added to the wing rocking, and your reply adds the same: ' : 'Rocking your wings is the universal “understood”: ') + 'now follow, notify ATS if you can, call on 121.5 MHz with your identity and the nature of your flight, and squawk 7700 unless ATS says otherwise.';
+    if (this.end === 'proceed') return this.t < 0.66 ? 'An abrupt climbing breakaway that deliberately does not cross in front of you means you may proceed: it has identified you.' : 'You reply with the same “understood” and carry on.';
+    if (this.t < 0.64) return 'A gentle level turn draws you after it. If ATS tells you something different, follow the interceptor and ask ATS to clarify: ATS cannot see you, the interceptor can.';
+    if (this.t < 0.80) return 'Gear down, landing lights on and a low pass along the runway can only mean one thing: land at this aerodrome. You follow and land, but only if it is safe.';
+    if (this.end === 'short') return 'The runway is too short for you, so you say so: raise the gear if you have retractable gear and flash the landing lights while passing over the runway. The aerodrome is inadequate.';
+    return 'You join and land: “land if safe” was met. The interceptor\'s instruction never obliges you to land on a runway too short for your aeroplane.';
+  },
+  presets: {
+    'follow-me': { end: 'land', night: false, t: 0.22 },
+    'land-here': { end: 'land', night: false, t: 0.72 },
+    'you-may-proceed': { end: 'proceed', night: false, t: 0.72 },
+    'aerodrome-too-short': { end: 'short', night: false, t: 0.88 },
+    'night-follow-me': { end: 'land', night: true, t: 0.22 },
+    'whole-interception': { end: 'land', night: false, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 344" role="img" aria-labelledby="icp-title" class="widget-stage">
+    <title id="icp-title">A plan view, north up: your aeroplane flies east and a military jet takes up position ahead and to its left, signals, and then either leads it to an aerodrome and flies low along the runway with its gear down, or breaks away in a climbing turn. Below, the interceptor's signal and its meaning, your reply, and the actions an intercepted pilot takes</title>
+    <defs>
+      <clipPath id="icp-map"><rect x="0" y="0" width="640" height="246" rx="10"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="344" fill="var(--color-surface-2)" rx="10"/>
+    <g clip-path="url(#icp-map)">
+      <rect x="0" y="0" width="640" height="246" fill="var(--color-surface)"/>
+      <rect x="0" y="0" width="640" height="246" fill="var(--color-ok)" fill-opacity="0.06"/>
+      <!-- paddocks -->
+      <g fill="none" stroke="var(--color-line)" stroke-width="1">
+        <path d="M0 120 L640 108 M0 172 L640 180 M150 0 L170 246 M300 0 L290 246"/>
+      </g>
+      <!-- the aerodrome (shown when the jet leads you to it) -->
+      <g :opacity="(end !== 'proceed') ? 1 : 0">
+        <rect x="496" y="42" width="128" height="16" rx="2" fill="var(--color-tarmac)"/>
+        <path d="M506 50 L614 50" stroke="var(--color-paint)" stroke-width="1.25" stroke-dasharray="8 6"/>
+        <text x="560" y="108" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="end === 'short' ? 'a short strip' : 'the aerodrome'"></text>
+      </g>
+      <!-- the interceptor -->
+      <g :transform="tf(jet, jetScale)">
+        <path d="M24 0 L8 -4 L-4 -24 L-11 -24 L-8 -5 L-20 -4 L-26 -12 L-30 -12 L-27 0 L-30 12 L-26 12 L-20 4 L-8 5 L-11 24 L-4 24 L8 4 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="-7" cy="-23" r="3" fill="var(--color-bad)" :fill-opacity="jetLights"/>
+        <circle cx="-7" cy="23" r="3" fill="var(--color-ok)" :fill-opacity="jetLights"/>
+        <g :opacity="(landSignal) ? 1 : 0">
+          <circle cx="2" cy="-6" r="1.8" fill="var(--color-fg)"/><circle cx="2" cy="6" r="1.8" fill="var(--color-fg)"/><circle cx="16" cy="0" r="1.8" fill="var(--color-fg)"/>
+          <path d="M24 0 L60 -10 L60 10 Z" fill="var(--color-warn)" fill-opacity="0.35"/>
+        </g>
+      </g>
+      <!-- your aeroplane -->
+      <g :transform="tf(you, youScale)">
+        <!-- tools/diagrams/plane.py: top, scale 0.5, colour brand, fill surface -->
+        <g transform="translate(0 0) rotate(0) scale(0.5)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+        <circle cx="0" cy="-25" r="2.6" fill="var(--color-bad)" :fill-opacity="youLights"/>
+        <circle cx="0" cy="25" r="2.6" fill="var(--color-ok)" :fill-opacity="youLights"/>
+        <path d="M10 0 L44 -9 L44 9 Z" fill="var(--color-warn)" :fill-opacity="shortSignal ? 0.4 * blink : 0"/>
+      </g>
+      <!-- labels near the aircraft -->
+      <text font-size="12" font-weight="600" fill="var(--color-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+        :x="clamp(jet.x, 80, 540)" :y="clamp(jet.y - 32, 16, 230)" :opacity="(jetRocking || landSignal || breakaway) ? 1 : 0" x-text="jetRocking ? (night ? 'rocks wings, flashes nav lights' : 'rocks wings') : landSignal ? 'gear down, lights on' : 'climbing breakaway'"></text>
+      <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+        :x="clamp(you.x, 80, 540)" :y="clamp(you.y + 40, 30, 238)" :opacity="(youRocking || shortSignal) ? 1 : 0" x-text="shortSignal ? 'flashing landing lights' : night ? 'you: rock wings, nav lights' : 'you: rock wings'"></text>
+      <text x="16" y="20" font-size="11" fill="var(--color-fg-faint)">north up · you fly east, so your left is up the page</text>
+    </g>
+    <!-- signal and reply -->
+    <rect x="12" y="254" width="300" height="82" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="24" y="272" font-size="11" font-weight="700" fill="var(--color-fg-muted)" letter-spacing="0.5">INTERCEPTOR</text>
+    <text x="24" y="294" font-size="14" font-weight="700" fill="var(--color-fg)" x-text="signal.mean"></text>
+    <text x="24" y="314" font-size="11" fill="var(--color-fg-muted)" x-text="signal.what.length > 50 ? signal.what.slice(0, signal.what.lastIndexOf(' ', 50)) : signal.what"></text>
+    <text x="24" y="328" font-size="11" fill="var(--color-fg-muted)" x-text="signal.what.length > 50 ? signal.what.slice(signal.what.lastIndexOf(' ', 50) + 1) : ''"></text>
+    <rect x="320" y="254" width="308" height="82" rx="8" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25"/>
+    <text x="332" y="272" font-size="11" font-weight="700" fill="var(--color-brand-fg)" letter-spacing="0.5">YOU</text>
+    <text x="332" y="291" font-size="12" fill="var(--color-fg)" x-text="reply.length > 44 ? reply.slice(0, reply.lastIndexOf(' ', 44)) : reply"></text>
+    <text x="332" y="306" font-size="12" fill="var(--color-fg)" x-text="reply.length > 44 ? reply.slice(reply.lastIndexOf(' ', 44) + 1) : ''"></text>
+    <g font-size="11" font-weight="700">
+      <rect x="332" y="314" width="52" height="16" rx="8" :fill="actionsOn ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)" stroke-width="1"/>
+      <text x="358" y="326" text-anchor="middle" :fill="actionsOn ? 'var(--color-surface)' : 'var(--color-brand-fg)'">follow</text>
+      <rect x="390" y="314" width="62" height="16" rx="8" :fill="actionsOn ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)" stroke-width="1"/>
+      <text x="421" y="326" text-anchor="middle" :fill="actionsOn ? 'var(--color-surface)' : 'var(--color-brand-fg)'">tell ATS</text>
+      <rect x="458" y="314" width="72" height="16" rx="8" :fill="actionsOn ? 'var(--color-brand)' : 'var(--color-surface)'" stroke="var(--color-brand)" stroke-width="1"/>
+      <text x="494" y="326" text-anchor="middle" class="num" :fill="actionsOn ? 'var(--color-surface)' : 'var(--color-brand-fg)'">121.5 MHz</text>
+      <rect x="536" y="314" width="86" height="16" rx="8" :fill="actionsOn ? 'var(--color-bad)' : 'var(--color-surface)'" stroke="var(--color-bad)" stroke-width="1"/>
+      <text x="579" y="326" text-anchor="middle" class="num" :fill="actionsOn ? 'var(--color-surface)' : 'var(--color-bad-fg)'">squawk 7700</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the interception'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" :opacity="(!playing) ? 1 : 0"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" :opacity="(playing) ? 1 : 0"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="icp-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress of the interception">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="icp-end">How it ends</label>
+      <select id="icp-end" class="input" x-model="end">
+        <option value="land">Led to an aerodrome: land here</option>
+        <option value="proceed">Identified: you may proceed</option>
+        <option value="short">Led to a strip too short for you</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="icp-night" class="cursor-pointer"><span>At night</span>
+        <input type="checkbox" id="icp-night" x-model="night" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Interceptor means</dt><dd class="widget-value" x-text="signal.mean"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Your reply</dt><dd class="widget-value" x-text="reply"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('follow-me')" :aria-pressed="active === 'follow-me'">Follow me</button>
+      <button type="button" @click="preset('land-here')" :aria-pressed="active === 'land-here'">Land here</button>
+      <button type="button" @click="preset('you-may-proceed')" :aria-pressed="active === 'you-may-proceed'">You may proceed</button>
+      <button type="button" @click="preset('aerodrome-too-short')" :aria-pressed="active === 'aerodrome-too-short'">Too short</button>
+      <button type="button" @click="preset('night-follow-me')" :aria-pressed="active === 'night-follow-me'">At night</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each interceptor signal has one meaning and one reply. Wing rocking from ahead-left then a slow level turn: follow me (rock your wings and follow). An abrupt climbing breakaway that does not cross ahead of you: you may proceed (rock your wings). Gear down, landing lights, low over the runway: land here (follow and land if safe). Your own lights answer back: flashing landing lights over the runway, inadequate; all lights on and off at regular intervals, cannot comply; at irregular intervals, in distress. At night the navigation lights are flashed at irregular intervals as well as rocking the wings, by both aircraft (ICAO Annex 2 gives the signal as rocking and flashing). Positions and timing are illustrative; the full table is in AIP ENR 1.12.</p>
+  <details class="widget-try"><summary>Try it: ATS tells you to continue on track, but the interceptor is signalling "follow me". What do you do?</summary><p>Follow the interceptor and ask ATS for clarification. The interceptor can see you and is acting on its instructions; ATS cannot see you.</p></details>
+  <details class="widget-try"><summary>Try it: what squawk, what frequency, the moment you realise you are intercepted?</summary><p>Squawk 7700 unless ATS tells you otherwise, and call the interceptor on 121.5 MHz with your identity and the nature of your flight; notify ATS if you can.</p></details>
+</div>

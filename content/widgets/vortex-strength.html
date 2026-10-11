@@ -1,0 +1,109 @@
+<div class="widget" x-data="widget({
+  w: 100, spd: 1.1, flaps: false,
+  // BAKC 4.4: the wing must make lift equal to the weight; slower needs a higher angle of attack; a clean wing
+  // concentrates the spill-over into tight tip vortices, flaps break it into smaller ones that mix sooner.
+  // Model: strength ∝ weight ÷ speed (the circulation a wing needs to carry its weight), × 0.7 with flaps out
+  // (illustrative), as a share of the worst case: maximum take-off weight, clean, at its lift-off speed.
+  get str() { return this.w / 100 / this.spd * (this.flaps ? 0.7 : 1) },
+  get pct() { return Math.round(this.str * 100) },
+  get level() { return this.str >= 0.75 ? 'bad' : this.str >= 0.45 ? 'warn' : 'ok' },
+  get aoaText() { return this.spd < 1.4 ? 'high' : this.spd < 2.2 ? 'moderate' : 'small' },
+  // picture: the heavy seen from behind, wing tips at x 180 and 460, y 107
+  get R() { return 10 + 18 * this.str },
+  spiral(cx, cy, dir, R) {
+    const pts = [], n = 44, turns = 2.4;
+    for (let i = 0; i <= n; i++) { const f = i / n, th = f * turns * 2 * Math.PI, r = 2 + (R - 2) * f; pts.push([cx + dir * r * Math.cos(th), cy + r * Math.sin(th)]) }
+    return this.path(pts);
+  },
+  get left() { return this.spiral(180, 129, 1, this.R) },
+  get right() { return this.spiral(460, 129, -1, this.R) },
+  get sw() { return 1.25 + 2 * this.str },
+  // small extra vortices off the flap ends when flap is out
+  get flapL() { return this.spiral(262, 141, 1, 7) },
+  get flapR() { return this.spiral(378, 141, -1, 7) },
+  get down() { return 12 + 40 * this.str },
+  get caption() {
+    if (this.spd >= 2.2) return 'Fast, in the cruise: the wing carries the weight at a small angle of attack, so the vortices are much weaker. They still sink behind and below the aircraft.';
+    if (this.flaps) return 'Flaps out: the lift is spread differently along the span and the spill-over breaks into several smaller vortices that mix and weaken sooner.';
+    if (this.str >= 0.75) return 'Heavy, clean and slow: the wing is working at a high angle of attack and the spill-over rolls up into two tight, strong vortices. This is the worst wake there is.';
+    return 'Lighter or a little faster: the wing needs less lift or less angle of attack, so the vortices are weaker, but behind a heavy they can still roll a trainer.';
+  },
+  presets: {
+    'heavy-clean-slow': { w: 100, spd: 1, flaps: false },
+    'departing-clean-at-mtow': { w: 100, spd: 1.2, flaps: false },
+    'landing-full-flap': { w: 80, spd: 1, flaps: true },
+    'fast-cruise': { w: 85, spd: 3, flaps: false },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="vst-title" class="widget-stage">
+    <title id="vst-title">A large jet seen from behind with its two wing-tip vortices, left turning clockwise and right anticlockwise, drawn larger and tighter as the wake gets stronger, with the downwash between them and a light trainer for scale</title>
+    <defs>
+      <marker id="vst-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-sky-soft)" fill-opacity="0.6"/>
+    <text x="16" y="24" font-size="13" font-weight="700" fill="var(--color-fg)">Seen from behind</text>
+    <!-- the heavy (python -m tools.diagrams.plane airliner, scale 2.8) -->
+    <g transform="translate(320 140)"><g transform="translate(0 0) scale(2.8)"><rect x="-36" y="4" width="14" height="9" rx="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><rect x="22" y="4" width="14" height="9" rx="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-50 -7 L-10 3 L-10 8 L-50 -1 Z M50 -7 L10 3 L10 8 L50 -1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><circle cx="0" cy="0" r="10" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-2 -10 L0 -44 L3 -44 L3.5 -10 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-18 -8 L-2 -10 L3 -10 L18 -8 L18 -5 L3 -7 L-2 -7 L-18 -5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+    <!-- tip vortices: left clockwise, right anticlockwise -->
+    <g fill="none" stroke="var(--color-brand)" stroke-linecap="round" marker-end="url(#vst-arrow)">
+      <path :d="left" :stroke-width="sw"/>
+      <path :d="right" :stroke-width="sw"/>
+    </g>
+    <g fill="none" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round" x-show="flaps" stroke-opacity="0.8">
+      <path :d="flapL"/><path :d="flapR"/>
+    </g>
+    <text x="180" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" :y="129 - R - 10">left: clockwise</text>
+    <text x="460" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" :y="129 - R - 10">right: anticlockwise</text>
+    <!-- downwash between, upwash outside -->
+    <g stroke="var(--color-warn)" stroke-width="2" marker-end="url(#vst-arrow)">
+      <line x1="290" y1="186" x2="290" :y2="186 + down"/><line x1="320" y1="186" x2="320" :y2="186 + down"/><line x1="350" y1="186" x2="350" :y2="186 + down"/>
+    </g>
+    <text x="320" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)" :y="186 + down + 18">downwash</text>
+    <g stroke="var(--color-ok)" stroke-width="1.5" marker-end="url(#vst-arrow)">
+      <line x1="100" y1="160" x2="100" :y2="160 - down * 0.5"/><line x1="540" y1="160" x2="540" :y2="160 - down * 0.5"/>
+    </g>
+    <text x="100" y="180" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)">upwash</text>
+    <text x="540" y="180" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)">upwash</text>
+    <!-- a light trainer for scale (python -m tools.diagrams.plane rear, scale 0.47) -->
+    <g transform="translate(46 268)"><g transform="translate(0 0) rotate(0) scale(0.47)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-fg)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+    <text x="80" y="266" font-size="12" fill="var(--color-fg-muted)">light trainer, to scale:</text>
+    <text x="80" y="282" font-size="12" fill="var(--color-fg-muted)">fits inside one vortex</text>
+    <!-- strength meter -->
+    <rect x="400" y="268" width="220" height="12" rx="6" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="400" y="268" height="12" rx="6" :width="220 * Math.min(1, str)" :fill="level === 'bad' ? 'var(--color-bad)' : level === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+    <text x="392" y="278" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">vortex strength</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vst-w">Weight of the aircraft ahead <output for="vst-w" x-text="w + '% of its MTOW'"></output></label>
+      <input type="range" id="vst-w" min="50" max="100" step="5" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="vst-s">Its speed <output for="vst-s" x-text="fmt(spd, 1) + ' × its lift-off speed'"></output></label>
+      <input type="range" id="vst-s" min="0.9" max="3" step="0.1" x-model.number="spd">
+    </div>
+    <div class="widget-control">
+      <label for="vst-f" class="cursor-pointer"><span>Flaps and gear out</span>
+        <input type="checkbox" id="vst-f" x-model="flaps" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="level"><dt class="widget-label">Vortex strength</dt><dd class="widget-value"><span x-text="pct + '% of the worst'"></span><span class="widget-flag bad" x-show="level === 'bad'">avoid</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Its angle of attack</dt><dd class="widget-value" x-text="aoaText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Configuration</dt><dd class="widget-value" x-text="flaps ? 'dirty: vortex broken up' : 'clean: tight vortex'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('heavy-clean-slow')" :aria-pressed="active === 'heavy-clean-slow'">Heavy, clean, slow</button>
+      <button type="button" @click="preset('departing-clean-at-mtow')" :aria-pressed="active === 'departing-clean-at-mtow'">Departing at MTOW</button>
+      <button type="button" @click="preset('landing-full-flap')" :aria-pressed="active === 'landing-full-flap'">Landing, full flap</button>
+      <button type="button" @click="preset('fast-cruise')" :aria-pressed="active === 'fast-cruise'">Fast cruise</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The vortices come from the wing working to carry the weight: heavier means more lift, slower means a higher angle of attack, and a clean wing rolls the spill-over into two tight cores. So the worst wake is heavy, clean and slow, typically just after rotation; flaps break it up and speed weakens it. Seen from behind, the left vortex turns clockwise and the right anticlockwise, with downwash between them. The strength scale and the flap effect are illustrative.</p>
+  <details class="widget-try"><summary>Try it: one airliner lands with full flap at its landing weight, another departs clean at its maximum take-off weight. Which wake is worse?</summary><p>Press Landing, full flap (about 56% of the worst), then Departing at MTOW (about 83%): the departing aircraft is heavier and, once the flaps come up, clean and still slow, so its wake is stronger.</p></details>
+  <details class="widget-try"><summary>Try it: is a fast aircraft's wake the dangerous one?</summary><p>No. Press Fast cruise: at three times its lift-off speed the wing needs a small angle of attack and the strength falls to about a third. "Fast" is the exam's distractor; heavy, clean and slow is the answer.</p></details>
+</div>

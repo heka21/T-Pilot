@@ -1,0 +1,141 @@
+<div class="widget" x-data="widget({
+  dep: 390, slept: 5, poor: 0,
+  // PHFC 2.13: fatigue comes from too little sleep, too long awake and a disturbed circadian rhythm, whose low point is
+  // about 0200 to 0600; aim for 7 to 9 hours of regular sleep. Acute fatigue: hours, one long day or one poor night,
+  // relieved by a good night's sleep. Chronic fatigue: accumulated over weeks, not fixed by one night, needs extended
+  // rest. Where 'a few poor nights' becomes 'weeks' (two weeks here) is illustrative; the lesson draws the line by
+  // time scale. Bringing it together: a 0630 departure after five hours' sleep and a stressful week.
+  get h() { return this.dep / 60 },
+  get inLow() { return this.dep >= 120 && this.dep <= 360 },
+  get nearLow() { return !this.inLow && ((this.dep > 360 && this.dep <= 480) || (this.dep >= 60 && this.dep < 120)) },
+  get shortNight() { return this.slept < 7 },
+  get chronic() { return this.poor >= 14 },
+  get building() { return !this.chronic && this.poor >= 4 },
+  get type() {
+    if (this.chronic && this.shortNight) return ['Chronic, plus acute', 'bad'];
+    if (this.chronic) return ['Chronic', 'bad'];
+    if (this.shortNight || this.building) return ['Acute', 'warn'];
+    return ['None', 'ok'];
+  },
+  get fix() {
+    if (this.chronic) return ['No: extended rest', 'bad'];
+    if (this.shortNight || this.building) return ['Yes, a good night', 'warn'];
+    return ['Nothing to fix', 'ok'];
+  },
+  get circ() { return this.inLow ? ['In the low', 'bad'] : this.nearLow ? ['Close to the low', 'warn'] : ['Outside the low', 'ok'] },
+  get imsafe() { return this.chronic || this.inLow && this.shortNight || (this.shortNight && (this.nearLow || this.building)) ? ['F: no-go', 'bad'] : this.shortNight || this.inLow || this.building ? ['F: think hard', 'warn'] : ['F: fit', 'ok'] },
+  // 24-hour dial, midnight at the top
+  P(min, r) { return this.pol(130, 146, r, min / 1440 * 360) },
+  arc(m0, m1, r) { const a = this.P(m0, r), b = this.P(m1, r); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 1 ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  get hand() { return this.P(this.dep, 48) },
+  // the last 21 nights, oldest on the left; the poor ones at 5 h, last night as set
+  night(i) { return i === 20 ? this.slept : 20 - i <= this.poor ? 5 : 8 },
+  bx(i) { return 300 + i * 15 },
+  by(hr) { return 236 - hr * 16 },
+  get caption() {
+    if (this.chronic) return 'Weeks of poor sleep add up to chronic fatigue. ' + (this.slept >= 9 ? 'Last night\'s long sleep feels like a fix, but it is not: chronic fatigue needs extended rest and attention to whatever is disturbing the sleep.' : 'It does not switch off for the flight, and one good night will not cure it.');
+    if (this.inLow && this.shortNight) return 'A departure in the circadian low on a short night: alertness is at its lowest just when you most need it. Expect slow reactions, lapses and lower standards: a sloppy approach that \'will do\'.';
+    if (this.shortNight) return 'One short night: acute fatigue. Slower reactions and judgement today; a good night\'s sleep puts it right.' + (this.nearLow ? ' Departing close to the circadian low makes it worse.' : '');
+    if (this.inLow) return 'Well rested, but the body clock is at its low point (about 0200 to 0600): alertness is down whatever the sleep.';
+    if (this.building) return 'A run of poor nights is starting to accumulate. Fix it now, before it becomes chronic.';
+    return '7 to 9 hours, a regular pattern and a departure outside the circadian low: the F in IMSAFE is a yes.';
+  },
+  presets: {
+    'busselton-0630': { dep: 390, slept: 5, poor: 0 },
+    'three-weeks-then-ten-hours': { dep: 600, slept: 10, poor: 20 },
+    'rested-mid-morning': { dep: 600, slept: 8, poor: 0 },
+    'dawn-patrol-0400': { dep: 240, slept: 8, poor: 0 },
+    'one-late-night': { dep: 900, slept: 5, poor: 0 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="fac-title" class="widget-stage">
+    <title id="fac-title">A 24-hour clock with the circadian low from about 0200 to 0600 and the departure time, beside the hours slept on each of the last 21 nights against the 7 to 9 hour band</title>
+    <!-- the 24 h dial -->
+    <text x="130" y="20" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Body clock</text>
+    <circle cx="130" cy="146" r="100" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <path fill="none" stroke="var(--color-bad)" stroke-width="16" stroke-opacity="0.35" :d="arc(120, 360, 88)"/>
+    <path fill="none" stroke="var(--color-warn)" stroke-width="16" stroke-opacity="0.2" :d="arc(60, 120, 88)"/>
+    <path fill="none" stroke="var(--color-warn)" stroke-width="16" stroke-opacity="0.2" :d="arc(360, 480, 88)"/>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">
+      <text x="130" y="86">00</text><text x="197" y="150">06</text><text x="130" y="218">12</text><text x="63" y="150">18</text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1.5">
+      <line x1="130" y1="46" x2="130" y2="54"/><line x1="230" y1="146" x2="222" y2="146"/><line x1="130" y1="246" x2="130" y2="238"/><line x1="30" y1="146" x2="38" y2="146"/>
+    </g>
+    <text x="176" y="96" font-size="11" fill="var(--color-bad-fg)" font-weight="600">low</text>
+    <line x1="130" y1="146" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" :x2="hand.x" :y2="hand.y"/>
+    <circle cx="130" cy="146" r="5" fill="var(--color-brand)"/>
+    <text x="130" y="274" font-size="15" font-weight="700" text-anchor="middle" class="num" fill="var(--color-brand-fg)" x-text="'departure ' + hhmm(dep)"></text>
+
+    <!-- the last 21 nights -->
+    <text x="300" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">Sleep, the last three weeks</text>
+    <rect x="296" :y="by(9)" width="320" :height="by(7) - by(9)" fill="var(--color-ok)" fill-opacity="0.12"/>
+    <text x="300" :y="by(9) - 6" font-size="11" fill="var(--color-ok-fg)">7 to 9 h</text>
+    <line x1="296" y1="236" x2="616" y2="236" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="292" :y="by(10) + 4">10 h</text><text x="292" :y="by(5) + 4">5 h</text><text x="292" y="240">0</text>
+    </g>
+    <g>
+      <rect width="11" :x="bx(0)" :y="by(night(0))" :height="236 - by(night(0))" :fill="night(0) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(1)" :y="by(night(1))" :height="236 - by(night(1))" :fill="night(1) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(2)" :y="by(night(2))" :height="236 - by(night(2))" :fill="night(2) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(3)" :y="by(night(3))" :height="236 - by(night(3))" :fill="night(3) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(4)" :y="by(night(4))" :height="236 - by(night(4))" :fill="night(4) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(5)" :y="by(night(5))" :height="236 - by(night(5))" :fill="night(5) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(6)" :y="by(night(6))" :height="236 - by(night(6))" :fill="night(6) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(7)" :y="by(night(7))" :height="236 - by(night(7))" :fill="night(7) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(8)" :y="by(night(8))" :height="236 - by(night(8))" :fill="night(8) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(9)" :y="by(night(9))" :height="236 - by(night(9))" :fill="night(9) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(10)" :y="by(night(10))" :height="236 - by(night(10))" :fill="night(10) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(11)" :y="by(night(11))" :height="236 - by(night(11))" :fill="night(11) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(12)" :y="by(night(12))" :height="236 - by(night(12))" :fill="night(12) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(13)" :y="by(night(13))" :height="236 - by(night(13))" :fill="night(13) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(14)" :y="by(night(14))" :height="236 - by(night(14))" :fill="night(14) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(15)" :y="by(night(15))" :height="236 - by(night(15))" :fill="night(15) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(16)" :y="by(night(16))" :height="236 - by(night(16))" :fill="night(16) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(17)" :y="by(night(17))" :height="236 - by(night(17))" :fill="night(17) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(18)" :y="by(night(18))" :height="236 - by(night(18))" :fill="night(18) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(19)" :y="by(night(19))" :height="236 - by(night(19))" :fill="night(19) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" fill-opacity="0.7"/>
+      <rect width="11" :x="bx(20)" :y="by(night(20))" :height="236 - by(night(20))" stroke-width="2" :fill="night(20) < 7 ? 'var(--color-warn)' : 'var(--color-info)'" :stroke="night(20) < 7 ? 'var(--color-warn)' : 'var(--color-info)'"/>
+    </g>
+    <text x="300" y="256" font-size="11" fill="var(--color-fg-faint)">3 weeks ago</text>
+    <text x="611" y="256" font-size="11" text-anchor="end" font-weight="600" fill="var(--color-fg)">last night</text>
+    <text x="456" y="280" font-size="12" text-anchor="middle" :fill="chronic ? 'var(--color-bad-fg)' : building ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" x-text="chronic ? 'weeks of debt: chronic' : building ? 'poor nights building up' : 'no lasting debt'"></text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="fac-dep">Departure time <output for="fac-dep" x-text="hhmm(dep)"></output></label>
+      <input type="range" id="fac-dep" min="0" max="1410" step="30" x-model.number="dep">
+    </div>
+    <div class="widget-control">
+      <label for="fac-slept">Sleep last night <output for="fac-slept" x-text="slept + ' h'"></output></label>
+      <input type="range" id="fac-slept" min="3" max="10" step="1" x-model.number="slept">
+    </div>
+    <div class="widget-control">
+      <label for="fac-poor">Poor nights before that <output for="fac-poor" x-text="poor + (poor === 1 ? ' night' : ' nights')"></output></label>
+      <input type="range" id="fac-poor" min="0" max="20" step="1" x-model.number="poor">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="circ[1]"><dt class="widget-label">Circadian</dt><dd class="widget-value" x-text="circ[0]"></dd></div>
+    <div class="widget-readout" :class="shortNight ? 'warn' : 'ok'"><dt class="widget-label">Last night</dt><dd class="widget-value" x-text="slept + ' h' + (shortNight ? ', short of 7 to 9' : '')"></dd></div>
+    <div class="widget-readout" :class="type[1]"><dt class="widget-label">Fatigue</dt><dd class="widget-value" x-text="type[0]"></dd></div>
+    <div class="widget-readout" :class="fix[1]"><dt class="widget-label">One good night fixes it?</dt><dd class="widget-value" x-text="fix[0]"></dd></div>
+    <div class="widget-readout" :class="imsafe[1]"><dt class="widget-label">IMSAFE</dt><dd class="widget-value" x-text="imsafe[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('busselton-0630')" :aria-pressed="active === 'busselton-0630'">0630 Busselton</button>
+      <button type="button" @click="preset('three-weeks-then-ten-hours')" :aria-pressed="active === 'three-weeks-then-ten-hours'">3 weeks, then 10 h</button>
+      <button type="button" @click="preset('rested-mid-morning')" :aria-pressed="active === 'rested-mid-morning'">Rested</button>
+      <button type="button" @click="preset('dawn-patrol-0400')" :aria-pressed="active === 'dawn-patrol-0400'">0400 start</button>
+      <button type="button" @click="preset('one-late-night')" :aria-pressed="active === 'one-late-night'">One late night</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Three separate things make you tired: last night (acute, fixed by one good sleep), the weeks behind it (chronic, which one night does not fix) and the body clock, whose low point is about 0200 to 0600 however well you slept. The 7 to 9 hours and the circadian low are the lesson's; where a run of poor nights becomes 'weeks' is illustrative.</p>
+  <details class="widget-try"><summary>Try it: a pilot who has slept badly for three weeks sleeps ten hours before a flight. Is the fatigue gone?</summary><p>Press 3 weeks, then 10 h: last night's bar is tall, but the readout still says chronic. It accumulated over weeks and needs extended rest and attention to whatever has been disturbing the sleep.</p></details>
+  <details class="widget-try"><summary>Try it: the 0630 departure to Busselton after five hours' sleep and a stressful week. What does IMSAFE's F say?</summary><p>Press 0630 Busselton: a short night (acute fatigue) and a departure close to the circadian low, so the F is a no, on top of a stressful week for the S. Add the passenger and the booking pushing you to go, and the good decision is the one you made at home: if the cloud is below your minimum, drive to breakfast.</p></details>
+</div>

@@ -1,0 +1,212 @@
+<div class="widget" x-data="widget({
+  month: 1, along: 70,
+  monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  // RMTC 2.1: summer pattern about November to March, winter (fog season) May to September; April and October are
+  // the change-overs between them
+  get season() { const m = this.month; return m >= 11 || m <= 3 ? 'summer' : m >= 5 && m <= 9 ? 'winter' : 'transition' },
+  // schematic map, north up: x = (lon - 109) * 26.67, y = (lat - 26) * 25. The highs move west to east along their
+  // belt; in summer the belt is over the far south, in winter it has moved north over the continent
+  get hx() { const s = 300 + this.along * 2.2, w = 240 + this.along * 0.9; return this.season === 'summer' ? s : this.season === 'winter' ? w : (s + w) / 2 },
+  get hy() { return this.season === 'summer' ? 290 : this.season === 'winter' ? 55 : 172 },
+  px: 183, py: 148.7,
+  // flow along the high's elliptical isobars (2.5 times as wide as tall), anticlockwise in the Southern Hemisphere:
+  // the bearing the air moves TOWARDS at Perth
+  get flowTo() { const dx = (this.px - this.hx) / 6.25, dy = this.py - this.hy; const n = Math.atan2(dx, -dy) * 180 / Math.PI; return ((n - 90) % 360 + 360) % 360 },
+  get windFrom() { return (this.flowTo + 180) % 360 },
+  windName(from) { return ['Southerly', 'South-easterly', 'Easterly', 'North-easterly', 'Northerly', 'North-westerly', 'Westerly', 'South-westerly'][(Math.round((((180 - from) % 360) + 360) % 360 / 45)) % 8] },
+  get arrow() { const a = this.pol(131, 149, -26, this.flowTo), b = this.pol(131, 149, 26, this.flowTo); return { x1: a.x, y1: a.y, x2: b.x, y2: b.y } },
+  get where() { return this.season === 'winter' ? 'over the continent' : this.hx < 390 ? 'south of Esperance' : 'in the Bight' },
+  get prevailing() {
+    if (this.season === 'transition') return 'Changeable (transition month)';
+    if (this.season === 'summer') return this.windName(this.windFrom) + ' (summer high ' + this.where + ')';
+    return this.windName(this.windFrom) + ' (in the westerlies)';
+  },
+  get pattern() {
+    if (this.season === 'summer') return 'High ' + this.where + ', west coast trough';
+    if (this.season === 'winter') return 'Highs over the continent, a cold front every few days';
+    return this.month === 4 ? 'Transition: the highs moving north' : 'Transition: the highs moving south';
+  },
+  hazards: [
+    { name: 'fog in the south-west', m: [5, 6, 7, 8, 9] },
+    { name: 'afternoon storms inland and over the Scarp', m: [11, 12, 1, 2, 3] },
+    { name: 'frontal storms', m: [3, 4, 5, 11] },
+    { name: 'frontal storms with vigorous winter fronts', m: [6, 7, 8] },
+    { name: 'tropical storms and cyclones in the north', m: [10, 11, 12, 1, 2, 3, 4] },
+    { name: 'smoke', m: [2, 3, 4, 5] },
+    { name: 'the Fremantle Doctor', m: [11, 12, 1, 2, 3] },
+  ],
+  get inSeason() { const l = this.hazards.filter((h) => h.m.includes(this.month)).map((h) => h.name); return l.length ? l.join('; ') : '–' },
+  get caption() {
+    const n = this.monthNames[this.month - 1];
+    if (this.season === 'summer') return n + ': the high is ' + this.where + '. Round a Southern Hemisphere high the air goes anticlockwise, so on its northern side, over Perth, it blows from east to west: a dry, hot easterly off the interior. The west coast trough along the coast decides each day whether Perth gets a scorching easterly or an early sea breeze.';
+    if (this.season === 'winter') return n + ': the belt of highs has moved north over the continent and the south-west lies in the westerlies beneath it. Cold fronts sweep in from the Indian Ocean every few days: a freshening northerly and lowering cloud ahead, a change to the west or south-west with rain and sometimes thunderstorms, then cold, showery south-westerlies behind. The long, clear winter nights also make May to September fog season.';
+    return n + ' is a transition month: the belt of highs is moving ' + (this.month === 4 ? 'north towards its winter position, between the summer easterlies and the winter fronts.' : 'south towards its summer position, between the winter fronts and the summer easterlies.') + ' The lesson gives no single pattern for it, so expect either.';
+  },
+  presets: {
+    'january-easterlies': { month: 1, along: 70 },
+    'july-fronts': { month: 7, along: 50 },
+    'fog-season-june': { month: 6, along: 50 },
+    'high-south-of-esperance': { month: 1, along: 20 },
+  },
+})">
+  <svg viewBox="0 0 640 552" role="img" aria-labelledby="wwy-title" class="widget-stage">
+    <title id="wwy-title">A schematic map of south-west Western Australia, north up, with Perth, Northam and Esperance, the Indian Ocean and the Great Australian Bight. A high pressure system with anticlockwise arrows sits in the Bight in summer and over the continent in winter, Perth's wind is drawn as an arrow, and in winter a cold front approaches from the west. Below the map, a calendar strip shows the summer and winter patterns and the season of each hazard, with the chosen month marked</title>
+    <defs>
+      <marker id="wwy-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <marker id="wwy-arrow-big" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="wwy-map"><rect x="0" y="0" width="640" height="340" rx="10"/></clipPath>
+    </defs>
+    <g clip-path="url(#wwy-map)">
+      <rect x="0" y="0" width="640" height="340" fill="var(--color-sky-soft)"/>
+      <polygon points="115,-25 111,4 123,17 138,43 150,69 158,81 161,108 169,125 180,149 179,163 177,183 169,191 160,188 164,209 184,219 206,224 237,226 259,215 277,210 297,199 344,196 378,199 397,190 432,169 477,156 530,142 589,137 625,150 640,151 640,-25"
+        fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+      <text x="450" y="112" font-size="13" text-anchor="middle" fill="var(--color-fg-faint)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">Western Australia</text>
+      <text x="548" y="192" font-size="12" text-anchor="middle" fill="var(--color-sky-fg)">Great Australian Bight</text>
+      <text x="60" y="300" font-size="13" fill="var(--color-sky-fg)">Indian Ocean</text>
+      <!-- summer: the west coast trough along the coast -->
+      <g x-show="season === 'summer'">
+        <path d="M124 -2 Q150 60 176 126" fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-dasharray="7 4" stroke-linecap="round"/>
+        <text x="172" y="62" font-size="12" font-weight="600" fill="var(--color-warn-fg)">west coast trough</text>
+      </g>
+      <!-- winter: a cold front approaching from the Indian Ocean (triangles point the way it moves) -->
+      <g x-show="season === 'winter'">
+        <path d="M82 -5 L66 80 L52 150 L36 240 L18 345" fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linejoin="round"/>
+        <path fill="var(--color-info)" d="M79.4 8.8 L87.1 16.3 L77.2 20.6 Z M71.3 52.0 L79.0 59.6 L69.1 63.8 Z M63.0 95.2 L70.6 102.9 L60.6 107.0 Z M54.3 138.4 L62.0 146.0 L52.0 150.1 Z M46.4 181.6 L54.2 189.1 L44.3 193.4 Z M38.7 224.9 L46.5 232.4 L36.6 236.8 Z M31.1 268.3 L39.0 275.7 L29.1 280.1 Z M23.7 311.7 L31.6 319.1 L21.7 323.5 Z"/>
+        <text x="50" y="252" font-size="12" font-weight="600" fill="var(--color-info-fg)">cold front</text>
+        <text x="50" y="267" font-size="11" fill="var(--color-fg-muted)">every few days</text>
+      </g>
+      <!-- the high: elliptical isobars, anticlockwise flow -->
+      <g x-show="season !== 'transition'">
+        <ellipse fill="none" stroke="var(--color-info)" stroke-width="1.25" :cx="hx" :cy="hy" rx="75" ry="30"/>
+        <ellipse fill="none" stroke="var(--color-info)" stroke-width="1.25" :cx="hx" :cy="hy" rx="150" ry="60"/>
+        <g stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" marker-end="url(#wwy-arrow)">
+          <line :x1="hx + 20" :x2="hx - 20" :y1="hy - 60" :y2="hy - 60"/>
+          <line :x1="hx - 20" :x2="hx + 20" :y1="hy + 60" :y2="hy + 60"/>
+          <line :x1="hx - 150" :x2="hx - 150" :y1="hy - 14" :y2="hy + 14"/>
+          <line :x1="hx + 150" :x2="hx + 150" :y1="hy + 14" :y2="hy - 14"/>
+        </g>
+        <text font-size="30" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" :x="hx" :y="hy + 11">H</text>
+      </g>
+      <!-- April and October: the belt of highs on the move between its summer and winter positions -->
+      <g x-show="season === 'transition'">
+        <text x="450" y="300" font-size="30" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" fill-opacity="0.4">H</text>
+        <text x="300" y="66" font-size="30" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" fill-opacity="0.4">H</text>
+        <line stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" marker-end="url(#wwy-arrow)"
+          :x1="month === 4 ? 446 : 306" :y1="month === 4 ? 262 : 80" :x2="month === 4 ? 306 : 446" :y2="month === 4 ? 80 : 262"/>
+        <text x="448" y="226" font-size="12" font-weight="600" fill="var(--color-info-fg)">belt of highs</text>
+        <text x="448" y="241" font-size="12" fill="var(--color-fg-muted)" x-text="month === 4 ? 'moving north for winter' : 'moving south for summer'"></text>
+      </g>
+      <!-- places -->
+      <circle cx="183" cy="148.7" r="4" fill="var(--color-fg)"/>
+      <text x="190" y="167" font-size="13" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">Perth</text>
+      <circle cx="204.6" cy="141.2" r="3" fill="var(--color-fg-muted)"/>
+      <text x="212" y="140" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">Northam</text>
+      <circle cx="343.8" cy="196.5" r="3" fill="var(--color-fg-muted)"/>
+      <text x="343.8" y="186" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">Esperance</text>
+      <!-- Perth's wind: the arrow points where the wind blows TO -->
+      <line stroke="var(--color-brand)" stroke-width="5" stroke-linecap="round" marker-end="url(#wwy-arrow-big)" x-show="season !== 'transition'"
+        :x1="arrow.x1" :y1="arrow.y1" :x2="arrow.x2" :y2="arrow.y2"/>
+      <text x="131" y="124" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+        x-text="season === 'transition' ? 'changeable' : windName(windFrom).toLowerCase()"></text>
+      <text x="632" y="330" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">schematic: positions not to scale</text>
+    </g>
+    <!-- hazard calendar -->
+    <rect x="0" y="348" width="640" height="204" rx="10" fill="var(--color-surface-2)"/>
+    <rect y="356" width="40" height="170" rx="5" fill="var(--color-brand-soft)" :x="171 + (month - 1) * 38"/>
+    <text x="191" y="372" font-size="12" text-anchor="middle" :font-weight="month === 1 ? 700 : 400" :fill="month === 1 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">J</text>
+    <text x="229" y="372" font-size="12" text-anchor="middle" :font-weight="month === 2 ? 700 : 400" :fill="month === 2 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">F</text>
+    <text x="267" y="372" font-size="12" text-anchor="middle" :font-weight="month === 3 ? 700 : 400" :fill="month === 3 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">M</text>
+    <text x="305" y="372" font-size="12" text-anchor="middle" :font-weight="month === 4 ? 700 : 400" :fill="month === 4 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">A</text>
+    <text x="343" y="372" font-size="12" text-anchor="middle" :font-weight="month === 5 ? 700 : 400" :fill="month === 5 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">M</text>
+    <text x="381" y="372" font-size="12" text-anchor="middle" :font-weight="month === 6 ? 700 : 400" :fill="month === 6 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">J</text>
+    <text x="419" y="372" font-size="12" text-anchor="middle" :font-weight="month === 7 ? 700 : 400" :fill="month === 7 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">J</text>
+    <text x="457" y="372" font-size="12" text-anchor="middle" :font-weight="month === 8 ? 700 : 400" :fill="month === 8 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">A</text>
+    <text x="495" y="372" font-size="12" text-anchor="middle" :font-weight="month === 9 ? 700 : 400" :fill="month === 9 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">S</text>
+    <text x="533" y="372" font-size="12" text-anchor="middle" :font-weight="month === 10 ? 700 : 400" :fill="month === 10 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">O</text>
+    <text x="571" y="372" font-size="12" text-anchor="middle" :font-weight="month === 11 ? 700 : 400" :fill="month === 11 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">N</text>
+    <text x="609" y="372" font-size="12" text-anchor="middle" :font-weight="month === 12 ? 700 : 400" :fill="month === 12 ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">D</text>
+    <text x="164" y="393" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-fg)">Pattern</text>
+    <rect x="173" y="380" width="112" height="17" rx="4" fill="var(--color-warn-soft)"/><text x="229" y="393" font-size="11" text-anchor="middle" fill="var(--color-fg)">summer easterlies</text>
+    <rect x="325" y="380" width="188" height="17" rx="4" fill="var(--color-info-soft)"/><text x="419" y="393" font-size="11" text-anchor="middle" fill="var(--color-fg)">westerlies and cold fronts</text>
+    <rect x="553" y="380" width="74" height="17" rx="4" fill="var(--color-warn-soft)"/><text x="590" y="393" font-size="11" text-anchor="middle" fill="var(--color-fg)">easterlies</text>
+    <rect x="287" y="380" width="36" height="17" rx="4" fill="none" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="3 3"/>
+    <rect x="515" y="380" width="36" height="17" rx="4" fill="none" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="164" y="414" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">Fog (south-west)</text>
+    <rect x="172" y="401" width="456" height="17" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="326" y="403" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="364" y="403" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="402" y="403" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="440" y="403" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="478" y="403" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <text x="164" y="435" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">Inland storms (heat)</text>
+    <rect x="172" y="422" width="456" height="17" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="554" y="424" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="592" y="424" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="174" y="424" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="212" y="424" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="250" y="424" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <text x="164" y="456" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">Frontal storms</text>
+    <rect x="172" y="443" width="456" height="17" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="250" y="445" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="288" y="445" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="326" y="445" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="554" y="445" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="364" y="445" width="34" height="13" rx="3" fill="var(--color-warn-soft)" fill-opacity="0.5" stroke="var(--color-warn)" stroke-width="1" stroke-dasharray="3 2"/>
+    <rect x="402" y="445" width="34" height="13" rx="3" fill="var(--color-warn-soft)" fill-opacity="0.5" stroke="var(--color-warn)" stroke-width="1" stroke-dasharray="3 2"/>
+    <rect x="440" y="445" width="34" height="13" rx="3" fill="var(--color-warn-soft)" fill-opacity="0.5" stroke="var(--color-warn)" stroke-width="1" stroke-dasharray="3 2"/>
+    <text x="164" y="477" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">Tropical storms (north)</text>
+    <rect x="172" y="464" width="456" height="17" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="516" y="466" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="554" y="466" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="592" y="466" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="174" y="466" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="212" y="466" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="250" y="466" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="288" y="466" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <text x="164" y="498" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">Smoke</text>
+    <rect x="172" y="485" width="456" height="17" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="212" y="487" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="250" y="487" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="288" y="487" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <rect x="326" y="487" width="34" height="13" rx="3" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1"/>
+    <text x="164" y="519" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">Fremantle Doctor</text>
+    <rect x="172" y="506" width="456" height="17" rx="4" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="554" y="508" width="34" height="13" rx="3" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1"/>
+    <rect x="592" y="508" width="34" height="13" rx="3" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1"/>
+    <rect x="174" y="508" width="34" height="13" rx="3" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1"/>
+    <rect x="212" y="508" width="34" height="13" rx="3" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1"/>
+    <rect x="250" y="508" width="34" height="13" rx="3" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1"/>
+    <rect y="399" width="40" height="126" rx="5" fill="none" stroke="var(--color-brand)" stroke-width="2" :x="171 + (month - 1) * 38"/>
+    <text x="16" y="372" font-size="12" font-weight="600" fill="var(--color-fg)">In season</text>
+    <text x="172" y="542" font-size="11" fill="var(--color-fg-faint)">April and October: transition months · dashed: with the more vigorous winter fronts</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wwy-month">Month <output for="wwy-month" x-text="monthNames[month - 1]"></output></label>
+      <input type="range" id="wwy-month" min="1" max="12" step="1" x-model.number="month">
+    </div>
+    <div class="widget-control">
+      <label for="wwy-along">The high along its track <output for="wwy-along" x-text="along < 34 ? 'west' : along > 66 ? 'east' : 'middle'"></output></label>
+      <input type="range" id="wwy-along" min="0" max="100" step="1" x-model.number="along">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="season === 'transition' ? '' : 'ok'"><dt class="widget-label">Perth's prevailing wind</dt><dd class="widget-value" x-text="prevailing"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Pattern</dt><dd class="widget-value" x-text="pattern"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Hazards in season</dt><dd class="widget-value" x-text="inSeason"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('january-easterlies')" :aria-pressed="active === 'january-easterlies'">January</button>
+      <button type="button" @click="preset('july-fronts')" :aria-pressed="active === 'july-fronts'">July</button>
+      <button type="button" @click="preset('fog-season-june')" :aria-pressed="active === 'fog-season-june'">June fog</button>
+      <button type="button" @click="preset('high-south-of-esperance')" :aria-pressed="active === 'high-south-of-esperance'">High south of Esperance</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Where the highs sit decides Perth's weather. In summer the high is to the south, Perth is on its northern side and the anticlockwise flow gives a hot, dry easterly; in winter the highs move north over the continent, Perth lies in the westerlies and cold fronts arrive every few days. The hazards follow the same calendar: storms with heating in summer and with fronts in autumn and late spring, fog in the long winter nights. The positions on the map are schematic, and the high is drawn wider than tall, as the highs often are along their belt.</p>
+  <details class="widget-try"><summary>Try it: a high is centred south of Esperance. What wind would you expect over Perth, and why?</summary><p>Easterly. Press High south of Esperance: Perth is on the high's northern side, and round a Southern Hemisphere high the air circulates anticlockwise, so there it flows from east to west.</p></details>
+  <details class="widget-try"><summary>Try it: you are planning an early-morning flight to Northam in June. Which hazard is in season that would not be in January?</summary><p>Fog. Move to June: fog season in the south-west is May to September, when the long, clear, still winter nights let the ground cool the air to its dew point, and it pools in valleys like the Avon around Northam.</p></details>
+</div>

@@ -1,0 +1,362 @@
+<div class="widget" x-data="timeline({
+  duration: 40,
+  loop: false,
+  defect: 'tyre',
+  endorsed: true,
+  eng: 'rectify',
+  // the lesson's defects (BAKC 6.1); mx, my place the marker on the aeroplane (side view, scale 1.6, CG at 0 0)
+  defects: {
+    tyre: { desc: 'Left main tyre cut, cords showing', fix: 'Tyre replaced; signed off', mx: -12, my: 26, r: 10, pu: false, air: false },
+    exhaust: { desc: 'Exhaust pipe cracked', fix: 'Exhaust pipe rectified; signed off', mx: 29, my: 17, r: 9, pu: false, air: false },
+    alt: { desc: 'Alternator light flickered in flight', fix: 'Alternator rectified; signed off', mx: 11, my: -3, r: 6, pu: false, air: true },
+    cabin: { desc: 'Cabin light unserviceable', fix: 'Cabin light rectified; signed off', mx: -2, my: -4, r: 6, pu: true, air: false },
+  },
+  get d() { return this.defects[this.defect] },
+  get alt() { return this.defect === 'alt' },
+  get fixed() { return this.endorsed && this.eng !== 'pending' },
+  // illustrative clock: t 0..1 is 0700 to 1745 on 3 Oct, stretched so each event gets screen time
+  get min() {
+    const T = [0, 0.08, 0.16, 0.30, 0.42, 0.56, 0.68, 0.78, 0.86, 0.94, 1];
+    const M = [420, 435, 510, 600, 840, 850, 945, 960, 1020, 1050, 1065];
+    for (let i = 0; i < T.length - 1; i++) if (this.t <= T[i + 1]) return this.lerp(M[i], M[i + 1], this.seg(this.t, T[i], T[i + 1]));
+    return 1065;
+  },
+  get clock() { return this.hhmm(this.min) },
+  X(m) { return 110 + (m - 420) / 660 * 514 },
+  // typewriter for the Part 2 fields
+  typed(s, a, b) { return s.slice(0, Math.round(s.length * this.at(a, b))) },
+  // flights: flight 1 0830-1000, your flight 1230-1400 (alternator case), the next pilot's at 1730
+  get lift() {
+    const f1 = this.eased(0.16, 0.18) * (1 - this.eased(0.28, 0.30));
+    const f2 = this.alt ? this.eased(0.375, 0.385) * (1 - this.eased(0.413, 0.42)) : 0;
+    const f3 = !this.endorsed || this.eng !== 'pending' ? this.eased(0.94, 0.98) : 0;
+    return Math.max(f1, f2, f3);
+  },
+  get airborne() { return this.lift > 0.3 },
+  get planeT() { return 'translate(' + (160 + 24 * this.lift) + ' ' + (248.8 - 92 * this.lift) + ') rotate(' + (-5 * this.lift) + ')' },
+  get flicker() { return this.alt && this.t >= 0.405 && this.t < 0.42 },
+  get known() { return this.t >= 0.42 },
+  // the lock: snaps shut on the endorsement, opens only with the engineer's signature
+  get closed() { return this.endorsed ? this.eased(0.56, 0.575) * (this.eng === 'pending' ? 1 : 1 - this.eased(0.765, 0.78)) : 0 },
+  get grounded() { return this.closed > 0.5 },
+  get released() { return this.fixed && this.t >= 0.78 },
+  get lockLabel() {
+    if (this.t < 0.56) return 'endorse to lock';
+    if (this.grounded) return 'locked: engineer only';
+    return this.eng === 'pu' ? 'open: PU, day VFR' : 'open: signed off';
+  },
+  get person() {
+    const t = this.t;
+    if (t < 0.075) return { c: 'var(--color-info)', on: true };
+    if (t >= 0.125 && t < 0.16) return { c: 'var(--color-fg-muted)', on: true };
+    if (this.alt ? (t >= 0.36 && t < 0.375) || (t >= 0.42 && t < 0.58) : t >= 0.40 && t < 0.58) return { c: 'var(--color-brand)', on: true };
+    if (!this.endorsed && t >= 0.58 && t < 0.68) return { c: 'var(--color-brand)', on: true };
+    if (this.fixed && t >= 0.68 && t < 0.79) return { c: 'var(--color-info)', on: true };
+    if (t >= 0.86 && (t < 0.94 || (this.endorsed && this.eng === 'pending'))) return { c: 'var(--color-fg-muted)', on: true };
+    return { c: 'var(--color-fg-muted)', on: false };
+  },
+  get scene() {
+    const t = this.t;
+    if (t < 0.075) return 'Authorised pilot: daily inspection';
+    if (t < 0.125) return 'Daily certified at 0715';
+    if (t < 0.16) return 'Pilot 1: pre-flight (not certified)';
+    if (t < 0.30) return 'Flight 1';
+    if (this.alt && t < 0.42) return t < 0.36 ? 'On the line' : t < 0.375 ? 'You: pre-flight' : 'Your flight';
+    if (t < 0.40) return 'On the line';
+    if (t < 0.42) return 'You: pre-flight';
+    if (t < 0.45) return this.alt ? 'Landed: endorse it now' : 'You find a defect';
+    if (!this.endorsed) return t < 0.68 ? 'You: tell the instructor' : t < 0.86 ? 'Nothing on the release' : t < 0.94 ? 'Next pilot: checks the release' : 'Next pilot: takes off';
+    if (t < 0.56) return 'You: endorse Part 2';
+    if (t < 0.68) return 'Grounded';
+    if (t < 0.79) return this.eng === 'pending' ? 'Waiting for an engineer' : 'Engineer';
+    if (t < 0.86) return this.eng === 'pending' ? 'Still grounded' : 'Released';
+    if (t < 0.94) return 'Next pilot: checks the release';
+    return this.eng === 'pending' ? 'Stays on the ground' : 'Next pilot: takes off';
+  },
+  get v() {
+    const t = this.t;
+    if (t < 0.075) return ['warn', 'Not yet: daily first'];
+    if (this.flicker) return ['warn', 'In flight: endorse after landing'];
+    if (t < 0.42) return ['ok', this.airborne ? 'Flying' : 'Yes, after a pre-flight'];
+    if (!this.endorsed) return ['bad', this.airborne ? 'No, but it is flying' : 'No, but Part 2 is blank'];
+    if (t < 0.575) return ['bad', 'No: known defect'];
+    if (t < 0.765 || this.eng === 'pending') return ['bad', 'No: grounded'];
+    if (this.eng === 'pu') return ['warn', this.airborne ? 'Flying, day VFR only' : 'Yes, day VFR only'];
+    return ['ok', this.airborne ? 'Flying again' : 'Yes, after a pre-flight'];
+  },
+  get trap() { return !this.endorsed && this.t >= 0.86 },
+  get lockText() {
+    if (!this.known) return 'No lock: nothing open';
+    if (!this.endorsed) return 'No lock was placed';
+    if (this.t < 0.565) return 'You place it: endorse Part 2';
+    if (this.grounded) return 'Only a licensed engineer';
+    return this.eng === 'pu' ? 'Released: engineer, as a PU' : 'Released: engineer signed off';
+  },
+  get p2Text() {
+    if (!this.known) return 'Nothing open';
+    if (!this.endorsed) return 'Nothing: never written';
+    if (this.t < 0.555) return 'Being written';
+    if (this.t < 0.765 || this.eng === 'pending') return 'Open defect: do not fly';
+    return this.eng === 'pu' ? 'PU: day VFR only' : 'Rectified, signed off';
+  },
+  get engText() { return this.eng === 'pu' ? 'PU, condition: day VFR only' : this.d.fix },
+  get engColor() { return this.eng === 'pu' ? 'var(--color-warn-fg)' : 'var(--color-ok-fg)' },
+  get steps() {
+    const s = [{ at: 0.08, label: 'Daily certified' }, { at: 0.2, label: 'Flight 1' }];
+    if (this.alt) s.push({ at: 0.411, label: 'Light in flight' });
+    s.push({ at: 0.43, label: 'Defect found' });
+    if (!this.endorsed) {
+      s.push({ at: 0.5, label: 'Told, not endorsed' }, { at: 0.79, label: 'Engineer never told' });
+    } else {
+      s.push({ at: 0.56, label: 'Endorsed' }, { at: 0.6, label: 'Grounded' });
+      s.push({ at: 0.79, label: this.eng === 'rectify' ? 'Engineer rectifies' : this.eng === 'pu' ? 'Engineer: PU' : 'No engineer yet' });
+    }
+    s.push({ at: 0.88, label: 'Next pilot checks' });
+    s.push({ at: 1, label: !this.endorsed ? 'Flies unknowingly' : this.eng === 'pending' ? 'Stays grounded' : 'Flies again' });
+    return s;
+  },
+  get caption() {
+    const t = this.t;
+    if (t < 0.075) return 'Before the first flight of the day an authorised pilot (a licensed engineer could too) does the daily inspection to the written schedule and certifies it on the maintenance release.';
+    if (t < 0.125) return 'The daily is certified for today and valid for the rest of the day, so later flights need no other daily. Each one still needs its own pre-flight.';
+    if (t < 0.16) return 'Pilot 1 does the pre-flight walk-around from the POH. It is required before every flight but is not certified: nothing is written on the maintenance release.';
+    if (t < 0.30) return 'Flight 1. Every link is in place: release current, daily certified, nothing open in Part 2, a pre-flight done.';
+    if (this.alt && t >= 0.36 && t < 0.42) return t < 0.405 ? 'Your flight, after your own pre-flight.' : 'In the last twenty minutes the alternator warning light flickers. A defect that appears in flight is endorsed after landing.';
+    if (t < 0.40) return 'Back on the line. The morning daily still covers the aeroplane for the rest of the day.';
+    if (t < 0.42) return '1400, your own pre-flight. Someone else certified the daily this morning, but being satisfied the aeroplane is airworthy is your responsibility as pilot in command.';
+    if (t < 0.45) {
+      if (this.defect === 'tyre') return 'A cut in the left main tyre, deep enough to show the cords. The chain breaks at its last link: do not fly.';
+      if (this.defect === 'exhaust') return 'A crack in the exhaust pipe. Do not fly.';
+      if (this.alt) return 'Landed. The next pilot cannot know about that light unless you write it where they will look, so it is your job now, before you walk away.';
+      return 'The cabin light does not work. Small, but still a defect: you do not decide alone that it is probably fine.';
+    }
+    if (!this.endorsed) {
+      if (t < 0.68) return 'You tell the instructor on duty and leave Part 2 blank. That is not recording the defect: nothing is on the document the next pilot must check.';
+      if (t < 0.86) return 'No lock: the maintenance release still looks clean, nothing reaches an engineer through it, and the defect is still there.';
+      if (t < 0.94) return 'The next pilot checks the maintenance release: Part 2 is blank. Their walk-around may or may not catch it' + (this.alt ? ', and a light that flickers in flight cannot be seen on a walk-around.' : '.');
+      return 'The next pilot takes off with your defect on board, unknowingly. Only the endorsement reaches every future pilot.';
+    }
+    if (t < 0.56) return 'You endorse it in Part 2 of the maintenance release: a clear description, the date and time in service, your signature and licence number.';
+    if (t < 0.68) return 'The endorsement is a lock. Any pilot who finds a defect can place it; only a licensed engineer can release it. Until then the aeroplane cannot fly.';
+    if (t < 0.86) {
+      if (this.eng === 'pending') return 'No engineer has dealt with it yet, so the lock stays shut. A pilot in command must not fly with a known defect that has not been dealt with.';
+      if (this.eng === 'pu') return 'An engineer finds it does not affect safety and endorses it as a permissible unserviceability, with a condition: day VFR only. The lock opens, within that condition.';
+      return 'A licensed engineer rectifies it' + (this.defect === 'tyre' ? ' (a new tyre)' : '') + ' and signs it off in Part 2. Only that signature opens the lock.';
+    }
+    if (t < 0.94) {
+      if (this.eng === 'pending') return 'The next pilot checks the maintenance release and finds an open defect in Part 2. Decision made: not today.';
+      if (this.eng === 'pu') return 'The next pilot checks the maintenance release, sees the permissible unserviceability and its condition, and plans a day VFR flight. Then their own pre-flight.';
+      return 'The next pilot checks the maintenance release: endorsed and signed off. Then their own pre-flight, as before every flight.';
+    }
+    if (this.eng === 'pending') return 'The aeroplane stays on the ground until an engineer rectifies the defect or endorses it as a permissible unserviceability.';
+    return 'Off they go, with every link signed for.';
+  },
+  presets: {
+    'daily-certified': { defect: 'tyre', endorsed: true, eng: 'rectify', t: 0.08 },
+    'defect-found': { defect: 'tyre', endorsed: true, eng: 'rectify', t: 0.43 },
+    'in-flight-defect': { defect: 'alt', endorsed: true, eng: 'rectify', t: 0.43 },
+    'endorsed-grounded': { defect: 'tyre', endorsed: true, eng: 'rectify', t: 0.6 },
+    'engineer-rectifies': { defect: 'tyre', endorsed: true, eng: 'rectify', t: 0.79 },
+    'permissible-unserviceability': { defect: 'cabin', endorsed: true, eng: 'pu', t: 0.79 },
+    'not-yet-dealt-with': { defect: 'exhaust', endorsed: true, eng: 'pending', t: 0.88 },
+    'told-not-endorsed': { defect: 'alt', endorsed: false, eng: 'rectify', t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 400" role="img" aria-labelledby="des-title" class="widget-stage">
+    <title id="des-title">One club aeroplane's day: a timeline from the morning daily inspection to the next pilot's flight; the aeroplane on the apron with a padlock that shuts when a defect is endorsed; a schematic maintenance release whose Part 2 defect fields fill in; and whether the aeroplane can fly</title>
+    <defs>
+      <clipPath id="des-clip-daily"><rect x="516" y="146" height="26" :width="90 * at(0.05, 0.075)"/></clipPath>
+      <clipPath id="des-clip-sig"><rect x="356" y="324" height="24" :width="96 * at(0.52, 0.54)"/></clipPath>
+      <clipPath id="des-clip-eng"><rect x="416" y="350" height="20" :width="66 * at(0.75, 0.765)"/></clipPath>
+    </defs>
+
+    <!-- the day: clock, events and a now cursor (times illustrative) -->
+    <text x="16" y="38" font-size="22" font-weight="700" fill="var(--color-fg)" class="num" x-text="clock"></text>
+    <text x="16" y="56" font-size="12" fill="var(--color-fg-faint)">3 Oct</text>
+    <line x1="110" y1="36" x2="624" y2="36" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-linecap="round"/>
+    <rect x="180" y="30" width="70" height="12" rx="3" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1"/>
+    <text x="215" y="22" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">flight 1</text>
+    <g x-show="alt">
+      <rect x="357" y="30" width="80" height="12" rx="3" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1"/>
+      <text x="397" y="22" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">your flight</text>
+    </g>
+    <g x-show="!endorsed || eng !== 'pending'">
+      <rect x="601" y="30" width="23" height="12" rx="3" :fill="endorsed ? 'var(--color-brand-soft)' : 'var(--color-bad-soft)'" :stroke="endorsed ? 'var(--color-brand)' : 'var(--color-bad)'" stroke-width="1"/>
+    </g>
+    <circle cx="122" cy="36" r="5" fill="var(--color-ok)"/>
+    <text x="122" y="60" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">daily</text>
+    <circle cx="437" cy="36" r="5" fill="var(--color-bad)"/>
+    <text x="437" y="60" font-size="11" text-anchor="middle" fill="var(--color-bad-fg)">defect</text>
+    <circle cx="531" cy="36" r="5" x-show="endorsed" :fill="!released ? 'var(--color-surface)' : eng === 'pu' ? 'var(--color-warn)' : 'var(--color-ok)'" :stroke="!released ? (eng === 'pending' &amp;&amp; t >= 0.75 ? 'var(--color-bad)' : 'var(--color-fg-muted)') : 'none'" stroke-width="1.5"/>
+    <text x="531" y="60" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" x-show="endorsed">engineer</text>
+    <circle cx="577" cy="36" r="4" fill="var(--color-fg-muted)"/>
+    <text x="574" y="60" font-size="11" fill="var(--color-fg-muted)">next pilot</text>
+    <path stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round" fill="var(--color-fg)" :d="'M' + X(min) + ' 28 L' + X(min) + ' 45 M' + (X(min) - 4) + ' 26 L' + (X(min) + 4) + ' 26 L' + X(min) + ' 30 Z'"/>
+
+    <!-- the apron -->
+    <rect x="0" y="72" width="330" height="240" rx="10" fill="var(--color-surface-2)"/>
+    <text x="16" y="98" font-size="14" font-weight="600" fill="var(--color-fg)" x-text="scene"></text>
+    <text x="16" y="118" font-size="13" fill="var(--color-bad-fg)" x-show="known" x-text="'Defect: ' + d.desc.toLowerCase()"></text>
+    <line x1="0" y1="280" x2="330" y2="280" stroke="var(--color-line-strong)" stroke-width="2"/>
+
+    <!-- the aeroplane, greyed while grounded -->
+    <g :transform="planeT">
+      <g :opacity="grounded ? 0.4 : 1">
+        <!-- python -m tools.diagrams.plane side, scale 1.6 -->
+        <g transform="translate(0 0) rotate(0) scale(1.6)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      </g>
+      <!-- the alternator warning light, flickering in flight -->
+      <circle cx="11" cy="-3" r="3.5" fill="var(--color-warn)" x-show="flicker" :opacity="0.55 + 0.45 * Math.sin(t * 2400)"/>
+      <!-- the defect -->
+      <circle fill="none" stroke-width="2.5" :cx="d.mx" :cy="d.my" :r="d.r" x-show="(known || flicker) && !(released && eng === 'rectify')"
+        :stroke="flicker || (released && eng === 'pu') ? 'var(--color-warn)' : 'var(--color-bad)'"/>
+    </g>
+
+    <!-- the padlock: shut by the endorsement, opened only by the engineer -->
+    <g x-show="endorsed && t >= 0.43 && lift < 0.05" transform="translate(-16 0)">
+      <path fill="none" stroke-width="5" stroke-linecap="round" :stroke="grounded ? 'var(--color-bad)' : released ? 'var(--color-ok)' : 'var(--color-fg-faint)'"
+        :transform="'translate(0 ' + (-14 * (1 - closed)) + ')'" d="M250 174 V160 A12 12 0 0 1 274 160 V174"/>
+      <rect x="240" y="172" width="44" height="36" rx="6" stroke-width="2" :fill="grounded ? 'var(--color-bad-soft)' : released ? 'var(--color-ok-soft)' : 'var(--color-surface)'" :stroke="grounded ? 'var(--color-bad)' : released ? 'var(--color-ok)' : 'var(--color-fg-faint)'"/>
+      <circle cx="262" cy="186" r="4" :fill="grounded ? 'var(--color-bad)' : released ? 'var(--color-ok)' : 'var(--color-fg-faint)'"/>
+      <path d="M260 188 L258 199 L266 199 L264 188 Z" :fill="grounded ? 'var(--color-bad)' : released ? 'var(--color-ok)' : 'var(--color-fg-faint)'"/>
+      <text x="262" y="224" font-size="12" font-weight="600" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+        :fill="grounded ? 'var(--color-bad-fg)' : released ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="lockLabel"></text>
+    </g>
+
+    <!-- told the instructor instead -->
+    <g x-show="!endorsed && t >= 0.45 && t < 0.68">
+      <path d="M206 148 H318 A8 8 0 0 1 326 156 V176 A8 8 0 0 1 318 184 H300 L294 226 L284 184 H206 A8 8 0 0 1 198 176 V156 A8 8 0 0 1 206 148 Z" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-linejoin="round"/>
+      <text x="262" y="171" font-size="12" text-anchor="middle" fill="var(--color-fg)">Told the instructor!</text>
+    </g>
+
+    <!-- whoever is at the aeroplane -->
+    <g x-show="person.on" :stroke="person.c" stroke-width="2.5" stroke-linecap="round" fill="none">
+      <circle cx="294" cy="241" r="6" :fill="person.c"/>
+      <path d="M294 249 V266 M294 266 L288 279 M294 266 L300 279 M294 254 L286 262 M294 254 L302 262"/>
+    </g>
+
+    <!-- can it fly? -->
+    <rect x="0" y="322" width="330" height="72" rx="10" :fill="v[0] === 'ok' ? 'var(--color-ok-soft)' : v[0] === 'warn' ? 'var(--color-warn-soft)' : 'var(--color-bad-soft)'"/>
+    <text x="16" y="346" font-size="13" fill="var(--color-fg-muted)">Can it fly?</text>
+    <text x="314" y="346" font-size="12" font-weight="700" text-anchor="end" fill="var(--color-bad-fg)" x-show="trap">THE TRAP</text>
+    <text x="16" y="378" font-size="20" font-weight="700" :fill="v[0] === 'ok' ? 'var(--color-ok-fg)' : v[0] === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-bad-fg)'" x-text="v[1]"></text>
+
+    <!-- a schematic maintenance release -->
+    <rect x="342" y="72" width="282" height="324" rx="8" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="356" y="96" font-size="14" font-weight="700" fill="var(--color-fg)">MAINTENANCE RELEASE</text>
+    <text x="356" y="112" font-size="11" fill="var(--color-fg-faint)">schematic, not a facsimile</text>
+
+    <rect x="350" y="122" width="266" height="68" rx="4" fill="none" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="350" y="122" width="266" height="22" rx="4" fill="var(--color-surface-2)"/>
+    <text x="358" y="137" font-size="12" font-weight="700" fill="var(--color-fg)">Part 3: daily inspection</text>
+    <text x="358" y="166" font-size="13" fill="var(--color-fg)">3 Oct</text>
+    <text x="400" y="166" font-size="13" fill="var(--color-ok-fg)" font-weight="600" x-text="typed('certified', 0.02, 0.05)"></text>
+    <line x1="516" y1="172" x2="606" y2="172" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <path clip-path="url(#des-clip-daily)" d="M520 166 C524 152 530 150 530 162 C530 168 534 156 540 156 C544 156 542 166 548 162 C554 158 556 154 562 160 C566 164 572 156 580 158 C588 160 594 156 602 154" fill="none" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="358" y="184" font-size="11" fill="var(--color-fg-faint)" x-show="t >= 0.05">by an authorised pilot; valid all day</text>
+
+    <rect x="350" y="198" width="266" height="190" rx="4" fill="none" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect x="350" y="198" width="266" height="22" rx="4" fill="var(--color-surface-2)"/>
+    <text x="358" y="213" font-size="12" font-weight="700" fill="var(--color-fg)">Part 2: defects</text>
+    <g font-size="11" fill="var(--color-fg-faint)">
+      <text x="358" y="238">Defect</text>
+      <text x="358" y="282">Date</text>
+      <text x="470" y="282">Time in service</text>
+      <text x="358" y="320">Signature</text>
+      <text x="470" y="320">Licence no.</text>
+      <text x="358" y="366">Engineer</text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="358" y1="264" x2="606" y2="264"/>
+      <line x1="358" y1="304" x2="456" y2="304"/>
+      <line x1="470" y1="304" x2="606" y2="304"/>
+      <line x1="358" y1="348" x2="456" y2="348"/>
+      <line x1="470" y1="348" x2="606" y2="348"/>
+    </g>
+    <g x-show="endorsed" font-size="13" fill="var(--color-fg)">
+      <text x="358" y="257" fill="var(--color-bad-fg)" font-weight="600" x-text="typed(d.desc, 0.45, 0.49)"></text>
+      <text x="358" y="298" class="num" x-text="typed('3 Oct', 0.49, 0.505)"></text>
+      <text x="470" y="298" class="num" x-text="typed(alt ? '3,500.2 h' : '3,498.7 h', 0.505, 0.52)"></text>
+      <path clip-path="url(#des-clip-sig)" d="M362 342 C366 326 372 326 370 338 C368 346 378 330 384 332 C390 334 386 342 394 338 C400 334 404 328 410 334 C414 338 420 330 428 332 C436 334 442 330 450 328" fill="none" stroke="var(--color-brand)" stroke-width="1.5" stroke-linecap="round"/>
+      <text x="470" y="341" class="num" x-text="typed('123456', 0.54, 0.555)"></text>
+    </g>
+    <text x="358" y="257" font-size="13" fill="var(--color-fg-faint)" x-show="!endorsed && t >= 0.45">nothing written</text>
+    <path clip-path="url(#des-clip-eng)" x-show="fixed" d="M420 366 C424 354 428 352 430 362 C432 368 436 356 442 358 C448 360 452 354 458 360 C462 364 470 356 478 356" fill="none" stroke="var(--color-info)" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="358" y="382" font-size="13" font-weight="600" x-show="fixed" :fill="engColor" x-text="typed(engText, 0.70, 0.75)"></text>
+    <text x="358" y="382" font-size="13" font-weight="600" fill="var(--color-bad-fg)" x-show="endorsed && eng === 'pending' && t >= 0.75">open: not dealt with</text>
+
+    <!-- who is reading or writing the release now -->
+    <rect x="346" y="118" width="274" height="76" rx="6" fill="none" stroke="var(--color-brand)" stroke-width="2.5" x-show="t >= 0.015 &amp;&amp; t < 0.08"/>
+    <rect x="346" y="194" width="274" height="196" rx="6" fill="none" stroke="var(--color-brand)" stroke-width="2.5" x-show="(endorsed &amp;&amp; t >= 0.44 &amp;&amp; t < 0.575) || (fixed &amp;&amp; t >= 0.69 &amp;&amp; t < 0.78) || (t >= 0.86 &amp;&amp; t < 0.94)"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the day'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="des-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time of day">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="des-defect">The defect (from the lesson)</label>
+      <select id="des-defect" class="input" x-model="defect" @change="if (!d.pu &amp;&amp; eng === 'pu') eng = 'rectify'">
+        <option value="tyre">Pre-flight: left main tyre cut to the cords</option>
+        <option value="exhaust">Pre-flight: cracked exhaust pipe</option>
+        <option value="alt">In flight: alternator warning light flickers</option>
+        <option value="cabin">Pre-flight: cabin light unserviceable</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="des-endorse" class="cursor-pointer"><span>Endorse it in Part 2 (untick: just tell the instructor)</span>
+        <input type="checkbox" id="des-endorse" x-model="endorsed" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="endorsed">
+      <label for="des-eng">The engineer's decision</label>
+      <select id="des-eng" class="input" x-model="eng">
+        <option value="rectify">Rectifies it and signs it off</option>
+        <option value="pu" :disabled="!d.pu">Endorses it as a permissible unserviceability, with a condition</option>
+        <option value="pending">Not dealt with yet</option>
+      </select>
+      <span class="text-xs text-fg-faint">A permissible unserviceability must not affect safety; of these four, the cabin light is the lesson's example of one.</span>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="v[0]">
+      <dt class="widget-label">Can it fly?</dt>
+      <dd class="widget-value"><span x-text="v[1]"></span><span class="widget-flag bad" x-show="trap">trap</span></dd>
+    </div>
+    <div class="widget-readout" :class="known ? (grounded ? 'bad' : released ? 'ok' : endorsed ? '' : 'bad') : ''">
+      <dt class="widget-label">Who may release the lock?</dt>
+      <dd class="widget-value" x-text="lockText"></dd>
+    </div>
+    <div class="widget-readout" :class="known ? (p2Text.startsWith('Open') || !endorsed ? 'bad' : released ? (eng === 'pu' ? 'warn' : 'ok') : '') : 'ok'">
+      <dt class="widget-label">Part 2 shows the next pilot</dt>
+      <dd class="widget-value" x-text="p2Text"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('daily-certified')" :aria-pressed="active === 'daily-certified'">Daily certified</button>
+      <button type="button" @click="preset('defect-found')" :aria-pressed="active === 'defect-found'">Defect found</button>
+      <button type="button" @click="preset('in-flight-defect')" :aria-pressed="active === 'in-flight-defect'">In-flight defect</button>
+      <button type="button" @click="preset('endorsed-grounded')" :aria-pressed="active === 'endorsed-grounded'">Endorsed: grounded</button>
+      <button type="button" @click="preset('engineer-rectifies')" :aria-pressed="active === 'engineer-rectifies'">Engineer rectifies</button>
+      <button type="button" @click="preset('permissible-unserviceability')" :aria-pressed="active === 'permissible-unserviceability'">Permissible unserviceability</button>
+      <button type="button" @click="preset('not-yet-dealt-with')" :aria-pressed="active === 'not-yet-dealt-with'">Not dealt with</button>
+      <button type="button" @click="preset('told-not-endorsed')" :aria-pressed="active === 'told-not-endorsed'">Told, not endorsed</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The endorsement is a lock. Any pilot who finds a defect places it, in Part 2 with a description, the date and time in service, a signature and licence number, and only a licensed engineer releases it, by rectifying the defect and signing it off or by endorsing it as a permissible unserviceability with any conditions. Telling someone places no lock at all, and the release still looks clean to the next pilot. Clock times, hours, the licence number and the day VFR condition are illustrative.</p>
+  <details class="widget-try"><summary>Try it: your pre-flight finds a cracked exhaust pipe and no engineer is in until tomorrow. May the aeroplane fly this afternoon if the next pilot is happy to take it?</summary><p>No. Press Not dealt with: Part 2 holds an open defect, so the lock stays shut and the aeroplane is grounded. Only a licensed engineer can release it, by rectifying it or endorsing it as a permissible unserviceability; neither you nor the next pilot can decide alone that it is probably fine.</p></details>
+  <details class="widget-try"><summary>Try it: the alternator light flickered in flight and you told the instructor as you walked in. Why is that not enough?</summary><p>Press Told, not endorsed and step through: Part 2 stays blank, so when the next pilot checks the maintenance release there is nothing to see, and a light that flickers in flight cannot be found on a walk-around. They fly it unknowingly. Endorse it in Part 2 after landing; that is the only record every future pilot is required to check.</p></details>
+</div>

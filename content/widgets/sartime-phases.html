@@ -1,0 +1,201 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false,
+  story: 'forced',
+  // RFRC 2.7 worked example: Jandakot to Hyden, depart 0930 WST, 1 h 50 min, arrive 1120, SARTIME 1150 WST = 0350 UTC;
+  // delayed by a headwind to 1145, extended by radio to 0420 UTC (1220 WST). Times in WST minutes after midnight.
+  tS: 0.45,
+  get S() { return this.story === 'extend' ? 740 : 710 },
+  get arr() { return this.story === 'extend' ? 705 : 680 },
+  // the clock runs to scale up to the SARTIME; after it, the phases are drawn in order, not to scale
+  get w() { return 570 + Math.min(this.t, this.tS) / this.tS * (this.S - 570) },
+  get after() { return this.t > this.tS ? (this.t - this.tS) / (1 - this.tS) : 0 },
+  get passed() { return this.t > this.tS + 1e-6 },
+  get escalates() { return this.story === 'forced' || this.story === 'forgot' },
+  get extended() { return this.story === 'extend' && this.w >= 670 },
+  get sartime() { return this.extended ? 740 : 710 },
+  get cancelled() { return (this.story === 'cancel' && this.w >= 680) || (this.story === 'extend' && this.w >= 705) },
+  get down() { return this.story === 'forced' ? this.w >= 650 : this.w >= this.arr },
+  get stood() { return this.story === 'forgot' && this.after >= 0.2 },
+  get found() { return this.story === 'forced' && this.after >= 0.85 },
+  // 0 none, 1 uncertainty, 2 alert, 3 distress, -1 stood down
+  get phase() { if (!this.escalates || !this.passed) return 0; if (this.stood) return -1; return this.after < 1 / 3 ? 1 : this.after < 2 / 3 ? 2 : 3 },
+  get phaseName() { return ['Stood down', 'None', 'Uncertainty', 'Alert', 'Distress'][this.phase + 1] },
+  get action() {
+    if (this.found) return 'Found';
+    if (this.stood) return 'Found by phone';
+    return ['–', 'Calls to you', 'Comms search', 'Physical search'][this.phase];
+  },
+  // the picture: route Jandakot x 70 to Hyden x 590; bar x = 70 + 1.5 px per minute from 0930
+  bx(min) { return 70 + (min - 570) * 1.5 },
+  get xS() { return this.bx(this.S) },
+  get head() { return this.t <= this.tS ? this.bx(this.w) : this.xS + this.after * (610 - this.xS) },
+  get px() { return 70 + 520 * this.seg(Math.min(this.w, this.story === 'forced' ? 650 : 9999), 570, this.arr) },
+  get searchX() { return this.lerp(70, this.px - 34, this.ease(this.seg(this.after, 2 / 3, 0.85))) },
+  arcs(x, y) { return 'M' + (x - 9) + ' ' + (y - 7) + ' a10 10 0 0 0 0 14 M' + (x + 9) + ' ' + (y - 7) + ' a10 10 0 0 1 0 14 M' + (x - 15) + ' ' + (y - 12) + ' a17 17 0 0 0 0 24 M' + (x + 15) + ' ' + (y - 12) + ' a17 17 0 0 1 0 24' },
+  get clock() { return this.passed ? 'after SARTIME' : this.hhmm(this.w) + ' WST' },
+  tt(min) { return 0.45 * (min - 570) / (this.S - 570) },
+  get steps() {
+    const s = [{ at: 0, label: 'Lodge and depart' }];
+    if (this.story === 'forced') s.push({ at: this.tt(650), label: 'Forced landing' }, { at: 0.4505, label: 'Uncertainty' }, { at: 0.634, label: 'Alert' }, { at: 0.817, label: 'Distress' }, { at: 0.918, label: 'Found' });
+    if (this.story === 'forgot') s.push({ at: this.tt(680), label: 'Land, no cancel' }, { at: 0.4505, label: 'Uncertainty' }, { at: 0.56, label: 'Phone call' });
+    if (this.story === 'cancel') s.push({ at: this.tt(680), label: 'Land and cancel' }, { at: 0.4505, label: 'SARTIME passes' });
+    if (this.story === 'extend') s.push({ at: this.tt(670), label: 'Extend by radio' }, { at: this.tt(705), label: 'Land and cancel' }, { at: 0.4505, label: 'SARTIME passes' });
+    return s;
+  },
+  get caption() {
+    const st = this.story;
+    if (this.w < 600 && !this.passed) return 'Before departure you lodge a SARTIME with Airservices (NAIPS, phone, or radio to Flight Information): planned arrival 1120 WST plus your own 30-minute margin, 1150 WST, which is 0350 UTC. From now on the system is waiting for you.';
+    if (st === 'extend' && !this.extended) return 'A stronger headwind than forecast: your arrival is now 1145, too close to the 1150 SARTIME. Do something before it expires.';
+    if (st === 'extend' && !this.cancelled) return 'You call Flight Information on the radio and extend the SARTIME to 0420 UTC (1220 WST), before the original one expires.';
+    if ((st === 'cancel' || st === 'extend') && !this.passed) return 'On landing you cancel the SARTIME at once, by phone. The clock stops; nobody will come looking.';
+    if (st === 'cancel' || st === 'extend') return 'The SARTIME time comes and goes, and nothing happens: it was cancelled. Cancelling on arrival is the one step you must never skip.';
+    if (st === 'forgot' && !this.down) return 'The flight goes to plan. The SARTIME keeps running, waiting for you to report your arrival.';
+    if (st === 'forgot' && !this.passed) return 'You land at Hyden, tie down and walk off to lunch, and you forget to cancel the SARTIME.';
+    if (st === 'forced' && !this.down) return 'En route over the wheatbelt the engine fails. The radio is damaged in the landing, and there is no phone coverage.';
+    if (st === 'forced' && !this.passed) return 'You are down, uninjured, beside the aircraft. Nobody can hear you, but you do not need them to: the SARTIME is still running, and it will raise the alarm for you.';
+    if (this.stood) return 'The phone call to your destination finds you, safe and embarrassed, and the search is stood down. Found by the first step, but at the cost of a lot of people\'s time.';
+    if (this.phase === 1) return 'Uncertainty phase. The SARTIME has passed uncancelled, so the system assumes you may be in trouble and tries to contact you: calls on frequency and a phone call to your destination. The JRCC coordinates.';
+    if (this.phase === 2) return 'Alert phase. Nobody has heard from you, so the net widens: a communications search of aerodromes and contacts along your notified route.';
+    if (this.phase === 3) return 'Distress phase. Still nothing, so a physical search starts, by aircraft and ground parties, along the route you notified. Effort has grown step by step with the evidence.';
+    return 'Found. You stayed with the aircraft, on the route you notified: far easier to see from the air than a person on foot, and exactly where the search was looking.';
+  },
+  presets: {
+    'cancel-on-landing': { story: 'cancel', t: 0.36 },
+    'extend-before-expiry': { story: 'extend', t: 0.3 },
+    'forgot-to-cancel': { story: 'forgot', t: 0.5 },
+    'uncertainty-phase': { story: 'forced', t: 0.52 },
+    'alert-phase': { story: 'forced', t: 0.72 },
+    'distress-phase': { story: 'forced', t: 0.88 },
+    'forced-landing': { story: 'forced', t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 262" role="img" aria-labelledby="sph-title" class="widget-stage">
+    <title id="sph-title">A flight from Jandakot to Hyden on a map strip above a timeline: the clock runs to scale up to the SARTIME, then, if it is not cancelled, the uncertainty, alert and distress phases follow in order with the search action of each shown on the map</title>
+    <rect x="0" y="0" width="640" height="262" fill="var(--color-surface-2)" rx="10"/>
+    <!-- clock and coordinator -->
+    <text x="16" y="26" font-size="16" font-weight="600" fill="var(--color-fg)" class="num" x-text="clock"></text>
+    <text x="16" y="42" font-size="12" fill="var(--color-fg-faint)" class="num" x-show="!passed" x-text="hhmm(w - 480) + ' UTC'"></text>
+    <text x="624" y="26" font-size="13" text-anchor="end" fill="var(--color-fg-muted)" x-show="phase > 0">JRCC (AMSA) coordinating</text>
+
+    <!-- the physical search: a swath along the notified route -->
+    <rect y="74" height="36" rx="18" fill="var(--color-info)" fill-opacity="0.14" x="56" :width="Math.max(0, searchX - 40)" x-show="phase === 3 || found"/>
+    <!-- notified route and aerodromes -->
+    <line x1="70" y1="92" x2="590" y2="92" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="330" y="84" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-show="phase === 0 && !found">your notified route</text>
+    <g fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5">
+      <circle cx="70" cy="92" r="6"/><circle cx="590" cy="92" r="6"/><circle cx="230" cy="92" r="4"/><circle cx="390" cy="92" r="4"/>
+    </g>
+    <text x="70" y="132" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg)">Jandakot</text>
+    <text x="70" y="147" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">dep 0930</text>
+    <text x="590" y="132" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg)">Hyden</text>
+    <text x="590" y="147" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="story === 'extend' ? 'arr 1145' : 'ETA 1120'"></text>
+
+    <!-- uncertainty: calls on frequency and a phone call to the destination -->
+    <g fill="none" stroke="var(--color-warn)" stroke-width="1.5" stroke-linecap="round" x-show="phase === 1 || stood">
+      <path :d="arcs(70, 92)"/><path :d="arcs(590, 92)"/>
+    </g>
+    <!-- alert: communications search along the route -->
+    <g fill="none" stroke="var(--color-warn)" stroke-width="1.5" stroke-linecap="round" x-show="phase === 2">
+      <path :d="arcs(70, 92)"/><path :d="arcs(230, 92)"/><path :d="arcs(390, 92)"/><path :d="arcs(590, 92)"/>
+    </g>
+    <text x="330" y="60" font-size="13" text-anchor="middle" fill="var(--color-warn-fg)" x-show="phase === 1 || stood">calls on frequency, and a phone call to Hyden</text>
+    <text x="330" y="60" font-size="13" text-anchor="middle" fill="var(--color-warn-fg)" x-show="phase === 2">communications search: aerodromes and contacts on your route</text>
+    <text x="330" y="60" font-size="13" text-anchor="middle" fill="var(--color-info-fg)" x-show="phase === 3">physical search by aircraft and ground parties along your route</text>
+
+    <!-- you -->
+    <g :transform="'translate(' + px + ' 92)'">
+      <g transform="translate(0 0) rotate(0) scale(0.4)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <g x-show="story === 'forced' && down">
+      <text font-size="12" text-anchor="middle" fill="var(--color-bad-fg)" font-weight="600" y="134" :x="px">forced landing</text>
+      <path fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" x-show="phase >= 2 || found" :d="'M' + (px + 26) + ' 80 L' + (px + 33) + ' 98 L' + (px + 40) + ' 80'"/>
+      <text font-size="12" fill="var(--color-brand-fg)" y="148" :x="px" text-anchor="middle" x-show="phase >= 2 || found">V laid out: require assistance</text>
+    </g>
+    <!-- search aircraft -->
+    <g x-show="phase === 3 || found" :transform="'translate(' + searchX + ' 92)'">
+      <g transform="translate(0 0) rotate(0) scale(0.3)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-info)" stroke-width="2" fill="var(--color-info-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-info)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-info)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-info)" stroke-width="2" fill="var(--color-info-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-info)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-info)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-info)" stroke-width="2" fill="var(--color-info-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-info)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-info)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-info)" stroke-width="2" fill="var(--color-info-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-info)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+
+    <!-- timeline bar: to scale up to the SARTIME, then the phases in order -->
+    <rect y="190" height="26" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25" x="70" :width="xS - 70"/>
+    <g x-show="escalates" stroke-width="1.25">
+      <rect y="190" height="26" fill="var(--color-warn-soft)" stroke="var(--color-warn)" :fill-opacity="phase === 1 ? 1 : 0.5" :x="xS" :width="(610 - xS) / 3"/>
+      <rect y="190" height="26" fill="var(--color-warn)" stroke="var(--color-warn)" :fill-opacity="phase === 2 ? 0.45 : 0.2" :x="xS + (610 - xS) / 3" :width="(610 - xS) / 3"/>
+      <rect y="190" height="26" fill="var(--color-bad-soft)" stroke="var(--color-bad)" :fill-opacity="phase === 3 ? 1 : 0.5" :x="xS + 2 * (610 - xS) / 3" :width="(610 - xS) / 3"/>
+      <g font-size="13" text-anchor="middle" fill="var(--color-fg)" font-weight="600" stroke="none">
+        <text y="208" :x="xS + (610 - xS) / 6">Uncertainty</text>
+        <text y="208" :x="xS + (610 - xS) / 2">Alert</text>
+        <text y="208" :x="xS + 5 * (610 - xS) / 6">Distress</text>
+      </g>
+    </g>
+    <g x-show="!escalates">
+      <rect y="190" height="26" fill="var(--color-ok-soft)" stroke="var(--color-ok)" stroke-width="1.25" :x="xS" :width="610 - xS"/>
+      <text y="208" font-size="13" text-anchor="middle" fill="var(--color-ok-fg)" font-weight="600" :x="(xS + 610) / 2">cancelled: no phases, no search</text>
+    </g>
+    <text y="234" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" :x="(xS + 610) / 2">in order, not to scale</text>
+    <!-- clock ticks every 30 min, WST above UTC -->
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="70" y="234">0930</text><text x="115" y="234">1000</text><text x="160" y="234">1030</text><text x="205" y="234">1100</text><text x="250" y="234">1130</text><text x="295" y="234" x-show="S > 730">1200</text>
+      <text x="70" y="250">0130Z</text><text x="115" y="250">0200Z</text><text x="160" y="250">0230Z</text><text x="205" y="250">0300Z</text><text x="250" y="250">0330Z</text><text x="295" y="250" x-show="S > 730">0400Z</text>
+    </g>
+    <!-- event dots: landing or forced landing -->
+    <circle cy="203" r="4" fill="var(--color-fg-muted)" :cx="bx(story === 'forced' ? 650 : arr)" x-show="down"/>
+    <!-- SARTIME flag -->
+    <line y1="170" y2="216" stroke-width="2" :x1="bx(sartime)" :x2="bx(sartime)" :stroke="cancelled ? 'var(--color-ok)' : 'var(--color-brand)'"/>
+    <text y="164" font-size="13" font-weight="600" text-anchor="middle" class="num" :x="bx(sartime)" :fill="cancelled ? 'var(--color-ok-fg)' : 'var(--color-brand-fg)'"
+      x-text="'SARTIME ' + hhmm(sartime - 480) + ' UTC' + (cancelled ? ': cancelled' : extended ? ' (extended)' : '')"></text>
+    <!-- playhead -->
+    <path fill="var(--color-fg)" stroke="var(--color-surface)" stroke-width="1.5" stroke-linejoin="round" :d="'M' + (head - 7) + ' 176 L' + (head + 7) + ' 176 L' + head + ' 189 Z'"/>
+    <line y1="216" y2="224" stroke="var(--color-fg)" stroke-width="2" :x1="head" :x2="head"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the flight'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="sph-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time through the flight">
+    <span class="widget-clock" x-text="passed ? 'after' : hhmm(w)"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="story + s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="sph-story">How the flight ends</label>
+      <select id="sph-story" class="input" x-model="story" @change="pause(); active = null">
+        <option value="cancel">Lands on time and cancels</option>
+        <option value="extend">Delayed: extends, then cancels</option>
+        <option value="forgot">Lands but forgets to cancel</option>
+        <option value="forced">Forced landing, radio dead</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Clock</dt><dd class="widget-value" x-text="passed ? 'SARTIME passed' : hhmm(w) + ' WST'"></dd></div>
+    <div class="widget-readout" :class="cancelled ? 'ok' : passed && escalates ? 'bad' : ''">
+      <dt class="widget-label">SARTIME</dt>
+      <dd class="widget-value"><span x-text="hhmm(sartime - 480) + ' UTC'"></span><span class="widget-flag ok" x-show="cancelled">cancelled</span><span class="widget-flag ok" x-show="extended && !cancelled">extended</span><span class="widget-flag bad" x-show="passed && escalates">expired</span></dd>
+    </div>
+    <div class="widget-readout" :class="phase === 3 ? 'bad' : phase > 0 ? 'warn' : 'ok'"><dt class="widget-label">SAR phase</dt><dd class="widget-value" x-text="phaseName"></dd></div>
+    <div class="widget-readout" :class="phase === 3 ? 'bad' : phase > 0 ? 'warn' : ''"><dt class="widget-label">What happens</dt><dd class="widget-value" x-text="action"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cancel-on-landing')" :aria-pressed="active === 'cancel-on-landing'">Cancel on landing</button>
+      <button type="button" @click="preset('extend-before-expiry')" :aria-pressed="active === 'extend-before-expiry'">Extend</button>
+      <button type="button" @click="preset('forgot-to-cancel')" :aria-pressed="active === 'forgot-to-cancel'">Forgot</button>
+      <button type="button" @click="preset('uncertainty-phase')" :aria-pressed="active === 'uncertainty-phase'">Uncertainty</button>
+      <button type="button" @click="preset('alert-phase')" :aria-pressed="active === 'alert-phase'">Alert</button>
+      <button type="button" @click="preset('distress-phase')" :aria-pressed="active === 'distress-phase'">Distress</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Nothing at all happens until the SARTIME passes; after that the system climbs through the uncertainty, alert and distress phases, from calls to you, to a communications search, to a physical search along your notified route, with the effort growing only as the evidence grows. The flight times are the lesson's Hyden example; the lessons give the order of the phases, not their timings, so the phases here are drawn in order and not to scale.</p>
+  <details class="widget-try"><summary>Try it: on the delayed flight, what would have happened if you had not called Flight Information?</summary><p>Choose "Delayed" and step to Extend by radio: without the call the SARTIME stays at 0350 UTC (1150 WST), and you land at 1145 with five minutes to cancel. Miss it and the uncertainty phase starts for an aircraft that is on the ground. Extend before it expires, not after.</p></details>
+  <details class="widget-try"><summary>Try it: after the forced landing, why stay with the aircraft rather than walk to the nearest farm?</summary><p>Play the forced landing to the distress phase: the physical search follows the route you notified. An aircraft on that route is far easier to see from the air than a person on foot, and it gives you shade.</p></details>
+</div>

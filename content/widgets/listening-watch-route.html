@@ -1,0 +1,126 @@
+<div class="widget" x-data="timeline({
+  duration: 30, loop: false,
+  // PFRA 2.4 worked example: Jandakot (controlled) -> Northam -> Kellerberrin. The map is illustrative, not to scale;
+  // frequencies are named, never numbered (121.5 MHz is the only figure the lesson gives).
+  K: [[0, 76, 200], [0.10, 92, 190], [0.20, 142, 172], [0.30, 204, 155], [0.44, 282, 136], [0.50, 330, 130], [0.55, 330, 130],
+      [0.62, 380, 134], [0.80, 492, 148], [1, 540, 150]],
+  posAt(t) {
+    const K = this.K;
+    for (let i = 1; i < K.length; i++) {
+      if (t <= K[i][0]) { const a = K[i - 1], b = K[i], f = (t - a[0]) / (b[0] - a[0]); return { x: a[1] + (b[1] - a[1]) * f, y: a[2] + (b[2] - a[2]) * f } }
+    }
+    return { x: K[K.length - 1][1], y: K[K.length - 1][2] };
+  },
+  get pos() { return this.posAt(this.t) },
+  get hdg() { const a = this.posAt(Math.max(0, this.t - 0.01)), b = this.posAt(Math.min(1, this.t + 0.01)); return Math.abs(b.x - a.x) + Math.abs(b.y - a.y) < 0.01 ? 90 : Math.atan2(b.x - a.x, a.y - b.y) * 180 / Math.PI },
+  get phase() {
+    const t = this.t;
+    if (t < 0.10) return 'ground';
+    if (t < 0.20) return 'tower';
+    if (t < 0.30) return 'atc';
+    if (t < 0.44) return 'area1';
+    if (t < 0.62) return 'northam';
+    if (t < 0.80) return 'area2';
+    return 'kellerberrin';
+  },
+  get com1() { return { ground: 'Jandakot Ground', tower: 'Jandakot Tower', atc: 'ATC frequency', area1: 'Area frequency', northam: 'Northam CTAF', area2: 'Area frequency', kellerberrin: 'Kellerberrin CTAF' }[this.phase] },
+  get com2() { return this.phase === 'area1' || this.phase === 'area2' ? '121.5 MHz' : '' },
+  get who() { return { ground: 'the controller who will answer your taxi call', tower: 'the tower controlling the zone', atc: 'ATC, while you are near controlled airspace', area1: 'flight information service: traffic, weather, SARTIME relays', northam: 'the other circuit traffic at Northam', area2: 'flight information service again', kellerberrin: 'the circuit traffic at Kellerberrin' }[this.phase] },
+  get steps() { return [{ at: 0, label: 'Test and taxi' }, { at: 0.10, label: 'Tower' }, { at: 0.20, label: 'Near CTA' }, { at: 0.30, label: 'Cruise' }, { at: 0.44, label: 'Northam 10 nm' }, { at: 0.55, label: 'Depart Northam' }, { at: 0.62, label: 'Area again' }, { at: 0.80, label: 'Kellerberrin 10 nm' }] },
+  get caption() {
+    const t = this.t;
+    if (t < 0.05) return 'Before you move: select the correct frequency, check the squelch and volume, and make a radio check where appropriate. A fault found here costs minutes; found downwind on a busy CTAF, a great deal more.';
+    if (t < 0.10) return 'At a controlled aerodrome the taxi call itself confirms two-way communication: the controller answers and you hear them, so both directions work.';
+    if (t < 0.20) return 'Departing through the control zone you are on the tower frequency.';
+    if (t < 0.30) return 'Then the ATC frequency while you are in or near controlled airspace, because ATC may need to reach you.';
+    if (t < 0.44) return 'Cruising over the Wheatbelt in Class G, away from aerodromes: the area frequency for the flight information service, with 121.5 MHz on the second radio where you are able, because an aircraft in distress or an ELT may be heard on it.';
+    if (t < 0.55) return 'Within 10 nm of Northam you change to its CTAF: in the vicinity of a non-controlled aerodrome, the other circuit traffic is listening there.';
+    if (t < 0.62) return 'Departing Northam you stay on the CTAF until you are clear of the vicinity.';
+    if (t < 0.80) return 'Then back to the area frequency, with 121.5 MHz on the second radio, until within 10 nm of Kellerberrin.';
+    return 'Within 10 nm of Kellerberrin, its CTAF. At each stage you listen where whoever may need to reach you is transmitting.';
+  },
+  presets: {
+    'taxi-at-jandakot': { t: 0.06 },
+    'cruise-wheatbelt': { t: 0.37 },
+    'within-10nm-northam': { t: 0.47 },
+    'kellerberrin-ctaf': { t: 0.9 },
+    'whole-flight': { t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="lwr-title" class="widget-stage">
+    <title id="lwr-title">An illustrative map, not to scale, of a flight from Jandakot inside its control zone near Perth's controlled airspace, east over the Wheatbelt to Northam and on to Kellerberrin, each with a 10 nm circle. As the aeroplane flies the route, a radio panel shows the frequency you should be listening on</title>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)" rx="10"/>
+    <rect x="12" y="12" width="616" height="176" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="12" y="12" width="616" height="176" rx="8" fill="var(--color-ok)" fill-opacity="0.05"/>
+    <!-- controlled airspace near Perth, the Jandakot zone -->
+    <g transform="translate(0 -44)">
+    <path d="M12 104 Q110 94 170 154 Q200 194 186 232" fill="none" stroke="var(--color-info)" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="22" y="84" font-size="11" fill="var(--color-info-fg)">Perth controlled airspace</text>
+    <circle cx="92" cy="190" r="40" fill="var(--color-info)" fill-opacity="0.1" stroke="var(--color-info)" stroke-width="1.5"/>
+    <text x="40" y="146" font-size="11" fill="var(--color-info-fg)">Jandakot zone (D)</text>
+    <!-- the 10 nm circles -->
+    <circle cx="330" cy="130" r="50" fill="var(--color-brand)" :fill-opacity="phase === 'northam' ? 0.12 : 0.04" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="5 4"/>
+    <circle cx="540" cy="150" r="50" fill="var(--color-brand)" :fill-opacity="phase === 'kellerberrin' ? 0.12 : 0.04" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="5 4"/>
+    <text x="330" y="72" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)">10 nm</text>
+    <text x="540" y="92" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)">10 nm</text>
+    <!-- route -->
+    <path d="M76 200 L92 190 L142 172 L204 155 L282 136 L330 130 L380 134 L492 148 L540 150" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 4"/>
+    <g fill="var(--color-fg)" font-size="12" font-weight="600">
+      <circle cx="92" cy="190" r="4"/><text x="102" y="206">Jandakot</text>
+      <circle cx="330" cy="130" r="4"/><text x="330" y="162" text-anchor="middle">Northam</text>
+      <circle cx="540" cy="150" r="4"/><text x="540" y="182" text-anchor="middle">Kellerberrin</text>
+    </g>
+    <text x="300" y="218" font-size="12" fill="var(--color-fg-muted)">Wheatbelt, Class G</text>
+    <!-- the aeroplane -->
+    <g :transform="'translate(' + pos.x.toFixed(1) + ' ' + pos.y.toFixed(1) + ') rotate(' + (hdg - 90).toFixed(1) + ')'">
+      <!-- tools/diagrams/plane.py: top, scale 0.36, colour brand, fill surface -->
+      <g transform="translate(0 0) rotate(0) scale(0.36)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    </g>
+    <!-- radio panel -->
+    <rect x="12" y="198" width="616" height="90" rx="8" fill="var(--color-tarmac)"/>
+    <text x="28" y="220" font-size="11" font-weight="700" fill="var(--color-paint)" letter-spacing="1">COM 1 · LISTENING</text>
+    <rect x="28" y="228" width="280" height="44" rx="6" fill="var(--color-surface)"/>
+    <text x="168" y="257" font-size="18" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" x-text="com1"></text>
+    <text x="330" y="220" font-size="11" font-weight="700" fill="var(--color-paint)" letter-spacing="1">COM 2 · MONITOR WHERE ABLE</text>
+    <rect x="330" y="228" width="160" height="44" rx="6" :fill="com2 ? 'var(--color-surface)' : 'var(--color-tarmac)'" stroke="var(--color-paint)" stroke-width="1" stroke-opacity="0.4"/>
+    <text x="410" y="257" font-size="17" font-weight="700" text-anchor="middle" class="num" :fill="com2 ? 'var(--color-bad-fg)' : 'var(--color-paint)'" x-text="com2 || '—'"></text>
+    <text x="504" y="246" font-size="11" fill="var(--color-paint)" :opacity="(phase === 'ground') ? 1 : 0">test: frequency,</text>
+    <text x="504" y="262" font-size="11" fill="var(--color-paint)" :opacity="(phase === 'ground') ? 1 : 0">squelch, volume</text>
+    <text x="504" y="246" font-size="11" fill="var(--color-paint)" :opacity="(com2) ? 1 : 0">emergency</text>
+    <text x="504" y="262" font-size="11" fill="var(--color-paint)" :opacity="(com2) ? 1 : 0">frequency, ELTs</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the route'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" :opacity="(!playing) ? 1 : 0"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" :opacity="(playing) ? 1 : 0"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="lwr-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress along the route">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Listen on</dt><dd class="widget-value" x-text="com1 + (com2 ? ' (and ' + com2 + ')' : '')"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Because that is where</dt><dd class="widget-value" x-text="who"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('taxi-at-jandakot')" :aria-pressed="active === 'taxi-at-jandakot'">Taxi at Jandakot</button>
+      <button type="button" @click="preset('cruise-wheatbelt')" :aria-pressed="active === 'cruise-wheatbelt'">Cruise</button>
+      <button type="button" @click="preset('within-10nm-northam')" :aria-pressed="active === 'within-10nm-northam'">Northam, 10 nm</button>
+      <button type="button" @click="preset('kellerberrin-ctaf')" :aria-pressed="active === 'kellerberrin-ctaf'">Kellerberrin</button>
+      <button type="button" @click="preset('whole-flight')" :aria-pressed="active === 'whole-flight'">Whole flight</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Test the radio before you move, then keep a continuous listening watch where whoever may need to reach you is transmitting: the CTAF within 10 nm of a non-controlled aerodrome, the ATC frequency in or near controlled airspace, the area frequency everywhere else, and 121.5 MHz on the second radio where you are able. The map is illustrative and not to scale; real frequencies come from ERSA and the charts.</p>
+  <details class="widget-try"><summary>Try it: at a non-controlled aerodrome with nobody on the CTAF, how do you know your receiver works before taxiing?</summary><p>Listen to the AWIS (or ATIS) on its frequency: if you hear it clearly, the receiver works. A radio check on the CTAF proves your transmitter only if someone answers.</p></details>
+  <details class="widget-try"><summary>Try it: you depart Northam for Kellerberrin. When do you leave the Northam CTAF?</summary><p>Step to Depart Northam: you stay on the CTAF until clear of the vicinity, then the area frequency until within 10 nm of Kellerberrin, then its CTAF.</p></details>
+</div>

@@ -1,0 +1,135 @@
+<div class="widget" x-data="timeline({
+  duration: 13, loop: false,
+  scen: 'fight',
+  // No forces or angles in the lesson: pulls are shown as light / heavy / very heavy, trim as a share of its travel, and
+  // the pitch angles are illustrative. The sequence is the lesson's.
+  get disc() { return this.scen === 'fight' ? this.t >= 0.78 : this.t >= 0.25 },
+  get pull() {
+    if (this.scen === 'fight') return this.t < 0.78 ? this.eased(0.1, 0.75) : 1 - this.eased(0.8, 0.95);
+    return 0.25 * this.eased(0.12, 0.22) - 0.25 * this.eased(0.3, 0.5);
+  },
+  get trim() {
+    if (this.scen === 'fight') return -0.85 * this.eased(0.15, 0.76) + 0.85 * this.eased(0.9, 1);
+    return -0.15 * this.eased(0.14, 0.24) + 0.15 * this.eased(0.5, 0.8);
+  },
+  get pitch() {
+    if (this.scen === 'fight') return 2 + 1.2 * Math.sin(this.t * 40) * this.at(0.1, 0.76) * (1 - this.at(0.7, 0.76)) - 24 * this.eased(0.78, 0.88) + 24 * this.eased(0.9, 1);
+    return 2 + 3 * this.eased(0.12, 0.24) - 5 * this.eased(0.25, 0.35) + 2 * this.eased(0.35, 0.5);
+  },
+  get upset() { return this.pitch < -8 },
+  get trimLit() { return !this.disc && this.trim < -0.05 },
+  pullText(p) { return p < 0.05 ? 'none' : p < 0.35 ? 'light' : p < 0.7 ? 'heavy' : 'very heavy' },
+  // trim indicator: nose up at the top (y 80), nose down at the bottom (y 220), centre 150
+  get trimY() { return 150 - this.trim * 70 },
+  get steps() {
+    if (this.scen === 'disconnect') return [{ at: 0, label: 'ALT engaged' }, { at: 0.12, label: 'Surprise' }, { at: 0.25, label: 'A/P DISC' }, { at: 0.5, label: 'Retrim' }];
+    return [{ at: 0, label: 'ALT engaged' }, { at: 0.1, label: 'You pull' }, { at: 0.4, label: 'Trim runs down' }, { at: 0.78, label: 'Disconnect' }, { at: 0.86, label: 'Pitch upset' }, { at: 0.97, label: 'Recover' }];
+  },
+  get caption() {
+    const t = this.t;
+    if (this.scen === 'disconnect') {
+      if (t < 0.12) return 'In ALT with auto-trim, in trim, the aeroplane holding its height.';
+      if (t < 0.25) return 'Something unexpected: the nose pitches and you feel the column move. This time you do not fight it.';
+      if (t < 0.5) return 'Thumb on A/P DISC, hands firm on the column expecting a pitch change: the small out-of-trim force is yours now, and you hold it.';
+      return 'Fly by hand and retrim, then re-engage in a sensible mode if you want the autopilot back. A small, controlled pitch change instead of an upset.';
+    }
+    if (t < 0.1) return 'In ALT with auto-trim, in trim, holding altitude. You want to climb and pull back on the column, against the servo.';
+    if (t < 0.4) return 'The autopilot senses the aeroplane trying to leave the altitude and its elevator servo under load, so it does what it was designed to do: it runs the trim nose down to relieve the load. Against you.';
+    if (t < 0.78) return 'You pull harder; it trims further. The attitude looks almost normal while a big nose-up pull is held against a big nose-down trim.';
+    if (t < 0.9) return 'Disconnect: you press the button or the autopilot gives up. The trim is still wound nose down and nothing holds it: a sharp nose-down pitch upset, towards the ground.';
+    return 'Recover by hand and retrim. The answer was always to disconnect, not overpower.';
+  },
+  pickScen(s) { this.scen = s; this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'start-the-pull': { scen: 'fight', t: 0, play: true },
+    'trim-runs-against-you': { scen: 'fight', t: 0.6 },
+    'upset-at-disconnect': { scen: 'fight', t: 0.88 },
+    'disconnect-first': { scen: 'disconnect', t: 0, play: true },
+    'disconnected-and-retrimmed': { scen: 'disconnect', t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="atf-title" class="widget-stage">
+    <title id="atf-title">An aeroplane on autopilot with auto-trim while the pilot pulls against it: the pilot's pull and the trim's nose-down push grow together while the attitude barely changes, until the disconnect leaves the trim unopposed and the nose drops</title>
+    <defs><marker id="atf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="396" height="300" rx="10" :fill="upset ? 'var(--color-bad-soft)' : 'var(--color-sky-soft)'"/>
+    <line x1="16" y1="130" x2="380" y2="130" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="20" y="122" font-size="11" fill="var(--color-fg-faint)">level</text>
+    <g :transform="'translate(196 130) rotate(' + (-pitch).toFixed(2) + ')'">
+      <!-- python -m tools.diagrams.plane side scale 1.3 no-gear -->
+<g transform="translate(0 0) rotate(0) scale(1.3)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="20" y="28" font-size="12" fill="var(--color-fg-muted)">pitch</text>
+    <text x="60" y="28" font-size="16" font-weight="700" class="num" :fill="upset ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="sign(Math.round(pitch)) + '°'"></text>
+    <text x="376" y="28" font-size="13" font-weight="700" text-anchor="end" fill="var(--color-bad-fg)" x-show="upset">PITCH UPSET</text>
+    <!-- the tug of war on the elevator -->
+    <text x="196" y="214" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">forces on the elevator</text>
+    <line x1="196" y1="222" x2="196" y2="262" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <rect y="230" height="22" rx="3" fill="var(--color-brand)" :x="196 - 150 * pull" :width="150 * pull"/>
+    <rect x="196" y="230" height="22" rx="3" fill="var(--color-bad)" :fill-opacity="disc ? 1 : 0.85" :width="150 * (-trim) / 0.85"/>
+    <text x="20" y="280" font-size="12" fill="var(--color-brand-fg)" font-weight="600" x-text="'your pull: ' + pullText(pull)"></text>
+    <text x="376" y="280" font-size="12" text-anchor="end" font-weight="600" :fill="trim < -0.05 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="trim < -0.05 ? 'nose-down trim' : 'trim neutral'"></text>
+
+    <!-- annunciators -->
+    <g font-size="13" font-weight="700" text-anchor="middle">
+      <rect x="420" y="20" width="90" height="32" rx="6" stroke-width="1.5" :fill="disc ? 'var(--color-bad)' : 'var(--color-ok-soft)'" :stroke="disc ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <text x="465" y="41" :fill="disc ? 'var(--color-surface)' : 'var(--color-ok-fg)'" x-text="disc ? 'AP DISC' : 'AP  ALT'"></text>
+      <rect x="524" y="20" width="96" height="32" rx="6" stroke-width="1.5" :fill="trimLit ? 'var(--color-warn-soft)' : 'var(--color-surface-2)'" :stroke="trimLit ? 'var(--color-warn)' : 'var(--color-line-strong)'"/>
+      <text x="572" y="41" :fill="trimLit ? 'var(--color-warn-fg)' : 'var(--color-fg-faint)'">TRIM</text>
+    </g>
+    <text x="465" y="68" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">autopilot</text>
+    <text x="572" y="68" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">pitch trim running</text>
+    <!-- trim position indicator -->
+    <text x="500" y="96" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Trim position</text>
+    <rect x="490" y="108" width="20" height="160" rx="10" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <line x1="484" y1="188" x2="516" y2="188" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <g font-size="11" fill="var(--color-fg-muted)" text-anchor="end"><text x="482" y="120">nose up</text><text x="482" y="192">neutral</text><text x="482" y="266">nose down</text></g>
+    <path stroke-width="1.5" stroke-linejoin="round" :fill="trim < -0.3 ? 'var(--color-bad)' : 'var(--color-fg)'" :stroke="trim < -0.3 ? 'var(--color-bad)' : 'var(--color-fg)'" :d="'M514 ' + (trimY + 38) + ' L532 ' + (trimY + 30) + ' L532 ' + (trimY + 46) + ' Z'"/>
+    <text x="538" font-size="13" font-weight="700" class="num" :y="trimY + 43" :fill="trim < -0.3 ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="Math.abs(trim) < 0.03 ? 'neutral' : fmt(-trim * 100) + '% down'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="atf-t" min="0" max="1" step="0.005" x-model.number="t" @input="pause()" aria-label="Progress">
+    <span class="widget-clock" x-text="sign(Math.round(pitch)) + '°'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="atf-scen">When the autopilot surprises you</label>
+      <select id="atf-scen" class="input" :value="scen" @change="pickScen($event.target.value)">
+        <option value="fight">Fight it: pull against the servo</option>
+        <option value="disconnect">Disconnect first (A/P DISC)</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="pull > 0.7 ? 'warn' : ''"><dt class="widget-label">Your pull on the column</dt><dd class="widget-value" x-text="pullText(pull)"></dd></div>
+    <div class="widget-readout" :class="trim < -0.3 ? 'bad' : ''"><dt class="widget-label">Trim (share of its travel)</dt><dd class="widget-value" x-text="Math.abs(trim) < 0.03 ? 'neutral' : fmt(-trim * 100) + '% nose down'"></dd></div>
+    <div class="widget-readout" :class="disc ? 'warn' : 'ok'"><dt class="widget-label">Autopilot</dt><dd class="widget-value" x-text="disc ? 'disconnected' : 'engaged, ALT'"></dd></div>
+    <div class="widget-readout" :class="upset ? 'bad' : ''">
+      <dt class="widget-label">Pitch attitude</dt>
+      <dd class="widget-value"><span x-text="sign(Math.round(pitch)) + '°'"></span><span class="widget-flag bad" x-show="upset">upset</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('start-the-pull')" :aria-pressed="active === 'start-the-pull'">Fight it</button>
+      <button type="button" @click="preset('trim-runs-against-you')" :aria-pressed="active === 'trim-runs-against-you'">Trim runs down</button>
+      <button type="button" @click="preset('upset-at-disconnect')" :aria-pressed="active === 'upset-at-disconnect'">Upset</button>
+      <button type="button" @click="preset('disconnect-first')" :aria-pressed="active === 'disconnect-first'">Disconnect first</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> With auto-trim, every pull against the servo is answered by more nose-down trim, and the attitude hardly changes, so nothing looks wrong until the disconnect hands you the whole out-of-trim force at once. Pressing A/P DISC at the first surprise leaves only a small force to hold. The sequence is the lesson's; the force levels, trim travel and pitch angles are illustrative.</p>
+  <details class="widget-try"><summary>Try it: the autopilot does something you did not expect. Do you hold it or disconnect it?</summary><p>Disconnect, with A/P DISC, holding the controls firmly for a pitch change, then fly by hand and retrim. Holding against an auto-trim autopilot makes it trim further against you, and the bigger the trim, the bigger the upset when it lets go.</p></details>
+  <details class="widget-try"><summary>Try it: why does the attitude look normal while the trouble builds?</summary><p>Press Trim runs down: your pull and the nose-down trim are cancelling each other, and the autopilot is still holding the altitude, so the aeroplane barely moves. The out-of-trim force is hidden until the disconnect, when it all arrives at once.</p></details>
+</div>

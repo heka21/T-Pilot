@@ -1,0 +1,190 @@
+<div class="widget" x-data="timeline({
+  duration: 5, loop: false,
+  sc: 0, guess: '',
+  // the six gates of the lesson's unauthorised transmissions (PAKC 3.5.1 b), in the order of the diagram
+  _G: [
+    { q: ['Necessary?'], short: 'Necessary', why: 'Unnecessary or superfluous: chatting, jokes, “thanks a lot”, repeated radio checks. While it is on the air nobody else can be heard.' },
+    { q: ['Clean', 'language?'], short: 'Clean language', why: 'Profane, obscene or offensive language: the band reaches every receiver in range, including ground stations, other aircraft and anyone with a scanner.' },
+    { q: ['True?'], short: 'True', why: 'False or misleading, and above all a false distress or urgency signal, which is an offence: it launches search and rescue resources that are then not available for a real emergency.' },
+    { q: ['Identified?'], short: 'Identified', why: 'No call-sign: the listener cannot tell who it is from, cannot reply, and cannot judge whether it applies to them.' },
+    { q: ['Right', 'frequency?'], short: 'Right frequency', why: 'The wrong frequency for the purpose: 121.5 MHz is the emergency frequency, and a CTAF is for keeping track of traffic, not for company messages.' },
+    { q: ['Approved', 'radio?'], short: 'Approved radio', why: 'A radio not approved for aeronautical use can drift off frequency, splatter onto neighbouring channels or interfere with navigation aids.' },
+  ],
+  // the calls: the lesson's worked examples first; fail = index of the first gate that says no, -1 if it passes them all
+  _S: [
+    { name: 'Joining crosswind', where: 'In the Northam circuit on the CTAF, two other aircraft', words: ['“Northam traffic, Cessna Alpha Bravo Charlie, joining crosswind', 'runway 23, Northam.”'], fail: -1,
+      why: 'a broadcast to all stations, identified, on the right frequency, for a safety purpose.' },
+    { name: 'Thanks on short final', where: 'On short final at Northam', words: ['“Thanks for the heads-up, mate, nice day for it.”'], fail: 0,
+      why: 'unnecessary and superfluous, and it blocks the frequency at the busiest point of the circuit.' },
+    { name: 'Turning base', where: 'In the Northam circuit, three aircraft', words: ['“Northam traffic, turning base runway 23, Northam.”'], fail: 3,
+      why: 'no call-sign, so nobody knows which of the three aircraft is turning base. Adding the type and call-sign makes it a correct call.' },
+    { name: 'Fuel truck on the CTAF', where: 'In the Northam circuit, on the CTAF', words: ['A message to your school asking them to have the fuel truck ready.'], fail: 4,
+      why: 'a company message on a frequency reserved for traffic separation.' },
+    { name: 'Fuel truck on 121.5', where: 'The same request, on 121.5 MHz', words: ['The fuel request again, “because nobody else is using it”.'], fail: 4,
+      why: 'the emergency frequency is reserved for emergencies, and somebody may need it at any moment.' },
+    { name: 'Thank you, tower', where: 'Jandakot tower, after your landing clearance', words: ['“Thank you, tower, have a good afternoon.”'], fail: 0,
+      why: 'it sounds like good airmanship but is an unnecessary transmission. Courtesy on the radio is brevity: a correct readback with your call-sign.' },
+    { name: 'One more radio check', where: 'On every frequency change', words: ['Another radio check, though you made one properly before departure.'], fail: 0,
+      why: 'one radio check before departure, made properly, tells you what you need to know. Asking again on every frequency change adds nothing.' },
+    { name: 'Swearing', where: 'At a pilot who cut in front of you', words: ['(a few choice words, on the air)'], fail: 1,
+      why: 'the aeronautical band is a public utility used by professionals, and every receiver in range hears it.' },
+    { name: 'MAYDAY for a joke', where: 'A mate dares you', words: ['“MAYDAY MAYDAY MAYDAY …”, with nothing wrong.'], fail: 2,
+      why: 'a false distress signal is an offence, not just bad practice: it launches real search and rescue, and its crews take risks to respond.' },
+    { name: 'MAYDAY, then cancel', where: 'The engine failed, you called MAYDAY, then it restarted', words: ['“MAYDAY Alpha Bravo Charlie, cancel distress, engine has restarted,', 'continuing to York.”'], fail: -1,
+      why: 'the rule is against falsehood, not against caution. A genuine distress call that turns out to be unnecessary is cancelled, and nobody blames you.' },
+    { name: 'Modified handheld', where: 'From a handheld not approved for aeronautical use', words: ['“Northam traffic, Cessna Alpha Bravo Charlie, …” (a correct call)'], fail: 5,
+      why: 'the words are fine, but an unapproved or modified set can drift off frequency or interfere with navigation aids.' },
+    { name: 'Inbound at 10 miles', where: '10 miles south of Northam at 2,500 ft, the CTAF now quiet', words: ['“Northam traffic, Cessna 172 Alpha Bravo Charlie, 10 miles south, 2,500,', 'inbound, estimate circuit at 25, Northam.”'], fail: -1,
+      why: 'necessary (an inbound call by 10 nm is recommended), identified, truthful, and on the CTAF where the traffic is.' },
+  ],
+  get s() { return this._S[this.sc] },
+  get ok() { return this.s.fail < 0 },
+  // the call moves through gate positions X[1..6] to the antenna at X[7]; p counts gates passed (0..7)
+  _X: [34, 100, 184, 268, 352, 436, 520, 596],
+  get p() { const raw = this.t * 7; return this.ok ? raw : Math.min(raw, this.s.fail + 0.7) },
+  get stopped() { return !this.ok && this.t * 7 >= this.s.fail + 0.7 },
+  get done() { return this.ok ? this.t >= 0.999 : this.stopped },
+  get tokenX() { const j = Math.min(6, Math.floor(this.p)), f = this.p - j; return this._X[j] + f * (this._X[j + 1] - this._X[j]) },
+  // gate k: passed once the call is through it, failed once the call reaches it and it is the failing gate
+  gs(k) { if (!this.ok && k === this.s.fail) return this.p >= k + 0.65 ? 'fail' : 'idle'; return this.p >= k + 0.75 ? 'pass' : 'idle' },
+  gc(k) { const g = this.gs(k); return g === 'pass' ? 'var(--color-ok)' : g === 'fail' ? 'var(--color-bad)' : 'var(--color-fg-muted)' },
+  gl(k) { const g = this.gs(k); return g === 'pass' ? 'var(--color-ok-fg)' : g === 'fail' ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)' },
+  // the boom lifts as the call arrives at a gate it passes
+  boom(k) { const lift = this.ok || k < this.s.fail ? this.ease(this.seg(this.p, k + 0.5, k + 0.75)) : 0; return 'rotate(' + (-150 * lift).toFixed(1) + ' ' + this._X[k + 1] + ' 166)' },
+  get onAir() { return this.ok && this.t >= 0.97 },
+  get verdict() { return !this.done ? 'Checking…' : this.ok ? 'Authorised' : 'Unauthorised' },
+  get stoppedAt() { return !this.done ? '–' : this.ok ? 'None: yes at every gate' : 'Gate ' + (this.s.fail + 1) + ': ' + this._G[this.s.fail].short + '?' },
+  get guessText() {
+    if (!this.guess) return 'Make a guess first';
+    if (!this.done) return 'You said ' + this.guess.toLowerCase();
+    return 'You said ' + this.guess.toLowerCase() + (this.guess === this.verdict ? ': right' : ': not this time');
+  },
+  get guessClass() { return !this.guess || !this.done ? '' : this.guess === this.verdict ? 'ok' : 'bad' },
+  get steps() {
+    const st = [{ at: 0, label: 'Press the PTT?' }], last = this.ok ? 5 : this.s.fail;
+    for (let k = 0; k <= last; k++) st.push({ at: (k + 0.7) / 7, label: this._G[k].short });
+    if (this.ok) st.push({ at: 1, label: 'On air' });
+    return st;
+  },
+  get caption() {
+    if (this.p < 0.4) return 'About to press the PTT. Is it necessary, clean, true, identified, on the right frequency and from an approved radio? One “no” at any gate makes the call unauthorised.';
+    if (this.done && this.ok) return 'Authorised: ' + this.s.why;
+    if (this.done) return 'Unauthorised at gate ' + (this.s.fail + 1) + ', ' + this._G[this.s.fail].short.toLowerCase() + ': ' + this.s.why;
+    const k = Math.min(5, Math.floor(this.p - 0.4));
+    return 'Gate ' + (k + 1) + ', ' + this._G[k].short.toLowerCase() + '? Yes, so the call goes on.';
+  },
+  pick(i) { this.sc = i; this.guess = ''; this.active = null; this.t = 0; this.pause() },
+  run() { this.t = 0; this.play() },
+  presets: {
+    'joining-crosswind': { sc: 0, guess: '', t: 1 },
+    'thanks-on-short-final': { sc: 1, guess: '', t: 1 },
+    'no-call-sign': { sc: 2, guess: '', t: 1 },
+    'fuel-truck-on-ctaf': { sc: 3, guess: '', t: 1 },
+    'fuel-request-on-121-5': { sc: 4, guess: '', t: 1 },
+    'false-mayday': { sc: 8, guess: '', t: 1 },
+    'genuine-mayday-cancelled': { sc: 9, guess: '', t: 1 },
+    'inbound-call': { sc: 11, guess: '', t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 344" role="img" aria-labelledby="mit-title" class="widget-stage">
+    <title id="mit-title">A radio call, shown in a speech bubble, travels left to right through six gates: necessary, clean language, true, identified, right frequency and approved radio. Each gate lifts when the call passes it; a gate that says no stays down in red and the call is unauthorised; a call that passes all six reaches the antenna and goes on air</title>
+    <rect x="0" y="0" width="640" height="344" rx="10" fill="var(--color-surface-2)"/>
+    <!-- the call in a speech bubble -->
+    <rect x="16" y="14" width="608" height="80" rx="12" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path d="M40 93 L36 112 L60 93 Z" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-linejoin="round"/>
+    <line x1="41" y1="93" x2="59" y2="93" stroke="var(--color-surface)" stroke-width="2.5"/>
+    <text x="32" y="36" font-size="12" font-weight="600" fill="var(--color-fg-muted)" x-text="s.where"></text>
+    <text x="32" y="60" font-size="14" font-style="italic" fill="var(--color-fg)" x-text="s.words[0]"></text>
+    <text x="32" y="80" font-size="14" font-style="italic" fill="var(--color-fg)" x-text="s.words[1] || ''"></text>
+    <!-- the track -->
+    <line x1="34" y1="216" x2="566" y2="216" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <!-- six gates, written out: boom (pivot y 166, crossing the track when down) and its label below -->
+    <g stroke-linecap="round">
+      <line :transform="boom(0)" x1="100" y1="166" x2="100" y2="238" stroke-width="6" :stroke="gc(0)"/><circle cx="100" cy="166" r="5" :fill="gc(0)"/>
+      <line :transform="boom(1)" x1="184" y1="166" x2="184" y2="238" stroke-width="6" :stroke="gc(1)"/><circle cx="184" cy="166" r="5" :fill="gc(1)"/>
+      <line :transform="boom(2)" x1="268" y1="166" x2="268" y2="238" stroke-width="6" :stroke="gc(2)"/><circle cx="268" cy="166" r="5" :fill="gc(2)"/>
+      <line :transform="boom(3)" x1="352" y1="166" x2="352" y2="238" stroke-width="6" :stroke="gc(3)"/><circle cx="352" cy="166" r="5" :fill="gc(3)"/>
+      <line :transform="boom(4)" x1="436" y1="166" x2="436" y2="238" stroke-width="6" :stroke="gc(4)"/><circle cx="436" cy="166" r="5" :fill="gc(4)"/>
+      <line :transform="boom(5)" x1="520" y1="166" x2="520" y2="238" stroke-width="6" :stroke="gc(5)"/><circle cx="520" cy="166" r="5" :fill="gc(5)"/>
+    </g>
+    <g font-size="13" font-weight="600" text-anchor="middle">
+      <circle cx="100" cy="258" r="10" fill="none" stroke-width="1.25" :stroke="gc(0)"/><text x="100" y="262.5" font-size="12" class="num" :fill="gl(0)">1</text><text x="100" y="288" :fill="gl(0)">Necessary?</text>
+      <circle cx="184" cy="258" r="10" fill="none" stroke-width="1.25" :stroke="gc(1)"/><text x="184" y="262.5" font-size="12" class="num" :fill="gl(1)">2</text><text x="184" y="288" :fill="gl(1)">Clean</text><text x="184" y="303" :fill="gl(1)">language?</text>
+      <circle cx="268" cy="258" r="10" fill="none" stroke-width="1.25" :stroke="gc(2)"/><text x="268" y="262.5" font-size="12" class="num" :fill="gl(2)">3</text><text x="268" y="288" :fill="gl(2)">True?</text>
+      <circle cx="352" cy="258" r="10" fill="none" stroke-width="1.25" :stroke="gc(3)"/><text x="352" y="262.5" font-size="12" class="num" :fill="gl(3)">4</text><text x="352" y="288" :fill="gl(3)">Identified?</text>
+      <circle cx="436" cy="258" r="10" fill="none" stroke-width="1.25" :stroke="gc(4)"/><text x="436" y="262.5" font-size="12" class="num" :fill="gl(4)">5</text><text x="436" y="288" :fill="gl(4)">Right</text><text x="436" y="303" :fill="gl(4)">frequency?</text>
+      <circle cx="520" cy="258" r="10" fill="none" stroke-width="1.25" :stroke="gc(5)"/><text x="520" y="262.5" font-size="12" class="num" :fill="gl(5)">6</text><text x="520" y="288" :fill="gl(5)">Approved</text><text x="520" y="303" :fill="gl(5)">radio?</text>
+    </g>
+    <!-- the antenna: on air when every gate says yes -->
+    <line x1="596" y1="238" x2="596" y2="182" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M584 238 L596 216 L608 238" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+    <g fill="none" stroke-width="2" stroke-linecap="round" :stroke="onAir ? 'var(--color-ok)' : 'var(--color-line-strong)'">
+      <path d="M586 174 a14 14 0 0 1 20 0"/><path d="M579 166 a24 24 0 0 1 34 0"/><path d="M572 158 a34 34 0 0 1 48 0"/>
+    </g>
+    <text x="596" y="263" font-size="13" font-weight="700" text-anchor="middle" :fill="onAir ? 'var(--color-ok-fg)' : 'var(--color-fg-faint)'" x-text="onAir ? 'On air' : 'antenna'"></text>
+    <!-- the call itself -->
+    <g :transform="'translate(' + tokenX.toFixed(1) + ' 216)'" x-show="!onAir">
+      <circle r="15" :fill="stopped ? 'var(--color-bad-soft)' : 'var(--color-brand-soft)'" :stroke="stopped ? 'var(--color-bad)' : 'var(--color-brand)'" stroke-width="2"/>
+      <g fill="none" stroke-width="1.75" stroke-linecap="round" :stroke="stopped ? 'var(--color-bad)' : 'var(--color-brand)'">
+        <path d="M-4 -5 a7 7 0 0 1 0 10"/><path d="M1 -9 a12 12 0 0 1 0 18"/>
+      </g>
+      <circle cx="-8" cy="0" r="2.5" :fill="stopped ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+    </g>
+    <text x="320" y="332" font-size="14" font-weight="700" text-anchor="middle" x-show="done"
+      :fill="ok ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="ok ? 'Authorised: transmit once, short and standard' : 'Unauthorised transmission: do not make this call'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="t >= 0.999 || done ? run() : toggle()" :aria-label="playing ? 'Pause' : 'Send the call through the gates'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="mit-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="The call's progress through the gates">
+    <span class="widget-clock" x-text="verdict"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">Pick a call</span>
+      <div class="widget-steps">
+        <template x-for="(c, i) in _S" :key="c.name">
+          <button type="button" @click="pick(i)" :aria-pressed="sc === i" x-text="c.name"></button>
+        </template>
+      </div>
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">Your verdict, then send it</span>
+      <div class="widget-steps">
+        <button type="button" @click="guess = 'Authorised'; run()" :aria-pressed="guess === 'Authorised'">Authorised</button>
+        <button type="button" @click="guess = 'Unauthorised'; run()" :aria-pressed="guess === 'Unauthorised'">Unauthorised</button>
+      </div>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="!done ? '' : ok ? 'ok' : 'bad'"><dt class="widget-label">Verdict</dt><dd class="widget-value" x-text="verdict"></dd></div>
+    <div class="widget-readout" :class="done && !ok ? 'bad' : ''"><dt class="widget-label">Stopped at</dt><dd class="widget-value" x-text="stoppedAt"></dd></div>
+    <div class="widget-readout" :class="guessClass"><dt class="widget-label">Your call</dt><dd class="widget-value" x-text="guessText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('joining-crosswind')" :aria-pressed="active === 'joining-crosswind'">Joining call</button>
+      <button type="button" @click="preset('thanks-on-short-final')" :aria-pressed="active === 'thanks-on-short-final'">“Thanks, mate”</button>
+      <button type="button" @click="preset('no-call-sign')" :aria-pressed="active === 'no-call-sign'">No call-sign</button>
+      <button type="button" @click="preset('fuel-truck-on-ctaf')" :aria-pressed="active === 'fuel-truck-on-ctaf'">Fuel on CTAF</button>
+      <button type="button" @click="preset('fuel-request-on-121-5')" :aria-pressed="active === 'fuel-request-on-121-5'">Fuel on 121.5</button>
+      <button type="button" @click="preset('false-mayday')" :aria-pressed="active === 'false-mayday'">False MAYDAY</button>
+      <button type="button" @click="preset('genuine-mayday-cancelled')" :aria-pressed="active === 'genuine-mayday-cancelled'">Cancelled MAYDAY</button>
+      <button type="button" @click="preset('inbound-call')" :aria-pressed="active === 'inbound-call'">Inbound call</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A call goes on air only if every gate says yes, and the polite ones fail first: “thanks, mate” and “thank you, tower” stop at gate 1. A correct call can still fail on its call-sign, its frequency or the radio it comes from, while a genuine MAYDAY that you later cancel is never a false one.</p>
+  <details class="widget-try"><summary>Try it: why is the fuel request wrong on the CTAF and also wrong on 121.5, when both frequencies are quiet?</summary><p>Both stop at gate 5. A CTAF is reserved for traffic separation, so a company message blocks the position reports that keep people apart; 121.5 MHz is the emergency frequency, and somebody may need it at any moment. A quiet frequency is still somebody else’s.</p></details>
+  <details class="widget-try"><summary>Try it: what one change turns “Northam traffic, turning base runway 23, Northam” into a correct call?</summary><p>Add the type and call-sign: “Northam traffic, Cessna Alpha Bravo Charlie, turning base runway 23, Northam.” Without them, every pilot in the circuit has to guess which of the three aircraft is turning base.</p></details>
+</div>

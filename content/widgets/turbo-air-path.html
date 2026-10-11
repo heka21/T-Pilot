@@ -1,0 +1,225 @@
+<div class="widget" x-data="timeline({
+  duration: 16,
+  drive: 'turbo', ic: true,
+  get turbo() { return this.drive === 'turbo' },
+  // the parcel's route: [t, x, y] waypoints; it waits at each component for a moment. Layout is schematic
+  get wp() {
+    const a = [[0, 8, 80], [0.05, 37, 80], [0.12, 140, 80], [0.16, 140, 80], [0.26, 252, 80], [0.3, 252, 80], [0.38, 349, 80], [0.41, 349, 80],
+      [0.48, 455, 80], [0.52, 535, 80], [0.545, 535, 120], [0.58, 550, 150], [0.62, 550, 150], [0.635, 565, 112], [0.645, 565, 96],
+      [0.665, 624, 96], [0.69, 624, 180], [0.73, 624, 262]];
+    if (this.turbo) a.push([0.82, 140, 262], [0.88, 140, 262], [0.94, 60, 262], [1, 10, 262]);
+    else a.push([0.86, 330, 262], [1, 10, 262]);
+    return a;
+  },
+  along(list, t) {
+    if (t <= list[0][0]) return { x: list[0][1], y: list[0][2] };
+    for (let i = 1; i < list.length; i++) {
+      const p = list[i - 1], q = list[i];
+      if (t <= q[0]) { const f = q[0] === p[0] ? 1 : (t - p[0]) / (q[0] - p[0]); return { x: this.lerp(p[1], q[1], f), y: this.lerp(p[2], q[2], f) } }
+    }
+    const l = list[list.length - 1];
+    return { x: l[1], y: l[2] };
+  },
+  get pos() { return this.along(this.wp, this.t) },
+  // the share the wastegate lets round the turbine, shown by a smaller parcel on the bypass
+  get ghostOn() { return this.turbo && this.t > 0.8 && this.t < 0.99 },
+  get ghost() { return this.along([[0.8, 250, 262], [0.83, 250, 305], [0.9, 60, 305], [0.93, 60, 262], [0.99, 10, 262]], this.t) },
+  // what the parcel is: outside air, squeezed and hot, cooled charge, burnt exhaust
+  get stage() {
+    if (this.t < 0.12) return 'air';
+    if (this.t < 0.58) return this.ic && this.t >= 0.28 ? 'cooled' : 'hot';
+    return 'exhaust';
+  },
+  get parcelFill() { return { air: 'var(--color-info)', hot: 'var(--color-warn)', cooled: 'var(--color-info)', exhaust: 'var(--color-bad)' }[this.stage] },
+  // compressor (and turbine) spin together; gears turn in opposite senses
+  get spin() { return this.t * 360 * 9 },
+  get piston() { return 10 * Math.cos(this.t * Math.PI * 2 * 12) },
+  get steps() {
+    const s = [{ at: 0, label: 'Filter' }, { at: 0.12, label: 'Compressor' }];
+    if (this.ic) s.push({ at: 0.26, label: 'Intercooler' });
+    s.push({ at: 0.38, label: 'Throttle and fuel' }, { at: 0.48, label: 'Intake manifold' }, { at: 0.58, label: 'Cylinders' }, { at: 0.665, label: 'Exhaust' });
+    if (this.turbo) s.push({ at: 0.82, label: 'Turbine' }, { at: 0.92, label: 'Exhaust pipe' });
+    else s.push({ at: 0.86, label: 'Exhaust pipe' });
+    return s;
+  },
+  get caption() {
+    switch (this.stepLabel) {
+      case 'Filter': return 'Outside air enters through the filter, at the pressure and temperature of the air around the aeroplane. A normally aspirated engine can never give its cylinders air denser than this.';
+      case 'Compressor': return 'The impeller, spinning at tens of thousands of RPM, flings the air outwards and the widening housing turns its speed into pressure: the air is squeezed and heated. ' +
+        (this.turbo ? 'It is spun by the turbine on the same shaft.' : 'It is spun through gears from the crankshaft, so its speed is locked to the engine\'s.') +
+        (!this.ic && this.t > 0.2 ? ' With no intercooler the charge goes on hot: less dense, and closer to detonation.' : '');
+      case 'Intercooler': return 'The intercooler, a radiator in which outside air cools the charge: cooler charge is denser charge, more power for the same manifold pressure and a wider margin from detonation.';
+      case 'Throttle and fuel': return 'Then through the throttle and the fuel metering (carburettor or fuel injection). In most light-aeroplane installations the compressor squeezes the air before it reaches the carburettor or injector.';
+      case 'Intake manifold': return 'The intake manifold carries the charge, denser than the outside air, to the cylinders. The manifold pressure gauge reads the pressure here, so it can show more than the outside air pressure.';
+      case 'Cylinders': return 'More mass of air in each cylinderful means more fuel can be burnt and more power made.';
+      case 'Exhaust': return this.turbo
+        ? 'The exhaust leaves the cylinders hot and under pressure. In a normally aspirated engine all of that energy goes straight out of the exhaust pipe; here it is led first to the turbine.'
+        : 'The exhaust leaves hot and under pressure and goes straight out of the exhaust pipe: a gear-driven supercharger makes no use of it.';
+      case 'Turbine': return 'The exhaust spins the turbine, the turbine spins the compressor on the same shaft, and the compressor squeezes the intake air. The cost to the engine is only a slight rise in back pressure. Exhaust let through the wastegate bypasses the turbine.';
+      case 'Exhaust pipe': return this.turbo
+        ? 'Out through the exhaust pipe with energy that would otherwise be thrown away already spent. The catch: open the throttle and the turbine must speed up first, so the manifold pressure follows a few seconds late.'
+        : 'Out through the exhaust pipe. Meanwhile the supercharger has taken its power from the crankshaft before it reaches the propeller, but it answers the throttle instantly.';
+    }
+    return '';
+  },
+  presets: {
+    'follow-the-air': { drive: 'turbo', ic: true, t: 0, play: true },
+    'in-the-compressor': { drive: 'turbo', ic: true, t: 0.14 },
+    'at-the-turbine': { drive: 'turbo', ic: true, t: 0.85 },
+    'gear-driven': { drive: 'gear', ic: true, t: 0.14 },
+    'no-intercooler': { drive: 'turbo', ic: false, t: 0.33 },
+  },
+})">
+  <svg viewBox="0 0 640 332" role="img" aria-labelledby="tap-title" class="widget-stage">
+    <title id="tap-title">Schematic of a turbocharged engine: air through the filter, compressor, intercooler, throttle and fuel metering, intake manifold and cylinders; exhaust to a turbine on the same shaft as the compressor and out of the exhaust pipe, with the wastegate bypass round the turbine. A gear-driven supercharger takes its drive from the crankshaft instead.</title>
+    <defs>
+      <marker id="tap-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="332" fill="var(--color-surface)"/>
+
+    <!-- intake ducting -->
+    <g fill="none" stroke-linecap="butt" stroke-linejoin="round">
+      <path d="M22 80 H535 V112" stroke="var(--color-line-strong)" stroke-width="14"/>
+      <path d="M22 80 H535 V112" stroke="var(--color-sky-soft)" stroke-width="10"/>
+    </g>
+    <line x1="2" y1="80" x2="18" y2="80" stroke="var(--color-info)" stroke-width="2" marker-end="url(#tap-arrow)"/>
+
+    <!-- exhaust ducting: round the engine to the turbine (or straight out) -->
+    <g fill="none" stroke-linecap="butt" stroke-linejoin="round">
+      <path d="M565 112 V96 H624 V262 H6" stroke="var(--color-line-strong)" stroke-width="14"/>
+      <path d="M565 112 V96 H624 V262 H6" stroke="var(--color-bad-soft)" stroke-width="10"/>
+      <g x-show="turbo">
+        <path d="M250 262 V305 H60 V262" stroke="var(--color-line-strong)" stroke-width="12"/>
+        <path d="M250 262 V305 H60 V262" stroke="var(--color-bad-soft)" stroke-width="8"/>
+      </g>
+    </g>
+    <line x1="14" y1="262" x2="0" y2="262" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#tap-arrow)"/>
+
+    <!-- air filter -->
+    <rect x="22" y="62" width="30" height="36" rx="3" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <path d="M27 66 L35 72 L27 78 L35 84 L27 90 L35 96 M39 66 L47 72 L39 78 L47 84 L39 90 L47 96" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-linejoin="round"/>
+    <text x="37" y="52" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">air filter</text>
+
+    <!-- compressor: snail housing and impeller -->
+    <path d="M140 52 A28 28 0 1 1 112 80 L112 64 L126 64" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="140" cy="80" r="20" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5"/>
+    <g :transform="'rotate(' + spin + ' 140 80)'" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" fill="none">
+      <path d="M140 80 Q146 70 140 62 M140 80 Q150 86 158 80 M140 80 Q134 90 140 98 M140 80 Q130 74 122 80"/>
+    </g>
+    <circle cx="140" cy="80" r="3.5" fill="var(--color-brand)"/>
+    <text x="140" y="40" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)">compressor</text>
+
+    <!-- intercooler -->
+    <g x-show="ic">
+      <rect x="220" y="58" width="64" height="44" rx="4" fill="var(--color-surface-2)" stroke="var(--color-info)" stroke-width="1.5"/>
+      <path d="M228 62 V98 M236 62 V98 M244 62 V98 M252 62 V98 M260 62 V98 M268 62 V98 M276 62 V98" stroke="var(--color-info)" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="252" y="48" font-size="13" text-anchor="middle" fill="var(--color-info-fg)">intercooler</text>
+    </g>
+    <text x="252" y="56" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-show="!ic">no intercooler</text>
+
+    <!-- throttle and fuel metering -->
+    <rect x="322" y="64" width="54" height="32" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <line x1="342" y1="72" x2="356" y2="88" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="349" cy="80" r="2" fill="var(--color-fg)"/>
+    <path d="M366 96 V106 M362 110 q4 -6 8 0 a4 4 0 1 1 -8 0 Z" fill="var(--color-fg-faint)" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-linecap="round"/>
+    <text x="349" y="52" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">throttle + fuel</text>
+
+    <text x="452" y="64" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">intake manifold</text>
+
+    <!-- engine: a cylinder with its piston, the crankshaft below -->
+    <rect x="490" y="112" width="112" height="112" rx="8" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2"/>
+    <rect x="522" y="118" width="56" height="64" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <rect x="525" width="50" height="18" rx="2" fill="var(--color-fg-faint)" :y="152 + piston"/>
+    <line x1="550" x2="550" stroke="var(--color-fg-faint)" stroke-width="3" stroke-linecap="round" :y1="170 + piston" y2="192"/>
+    <circle cx="550" cy="200" r="8" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <text x="546" y="244" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">cylinders</text>
+    <text x="440" y="250" font-size="13" text-anchor="middle" fill="var(--color-bad-fg)">exhaust</text>
+
+    <!-- turbocharger: turbine on the same shaft as the compressor -->
+    <g x-show="turbo">
+      <line x1="140" y1="102" x2="140" y2="240" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round"/>
+      <text x="150" y="176" font-size="13" font-weight="600" fill="var(--color-brand-fg)">same shaft</text>
+      <circle cx="140" cy="262" r="22" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
+      <g :transform="'rotate(' + spin + ' 140 262)'" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round">
+        <path d="M140 262 L140 244 M140 262 L158 262 M140 262 L140 280 M140 262 L122 262 M140 262 L153 249 M140 262 L153 275 M140 262 L127 275 M140 262 L127 249"/>
+      </g>
+      <circle cx="140" cy="262" r="3.5" fill="var(--color-brand)"/>
+      <text x="112" y="236" font-size="14" font-weight="600" text-anchor="end" fill="var(--color-brand-fg)">turbine</text>
+      <!-- wastegate valve, part open -->
+      <line x1="160" y1="297" x2="172" y2="313" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="166" cy="305" r="2" fill="var(--color-fg)"/>
+      <text x="166" y="327" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">wastegate (bypass round the turbine)</text>
+    </g>
+
+    <!-- gear-driven supercharger: gears from the crankshaft -->
+    <g x-show="!turbo">
+      <line x1="140" y1="102" x2="140" y2="160" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round"/>
+      <line x1="158" y1="196" x2="542" y2="196" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round"/>
+      <g :transform="'rotate(' + spin + ' 140 168)'"><circle cx="140" cy="168" r="10" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="3 2"/></g>
+      <g :transform="'rotate(' + (-spin * 10 / 18) + ' 140 196)'"><circle cx="140" cy="196" r="18" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="3 2"/></g>
+      <text x="166" y="164" font-size="13" font-weight="600" fill="var(--color-brand-fg)">gears</text>
+      <text x="340" y="186" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)">drive from the crankshaft</text>
+      <text x="300" y="290" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">no turbine: the exhaust energy is thrown away</text>
+    </g>
+
+    <!-- key to the parcel's colour -->
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <circle cx="372" cy="16" r="6" fill="var(--color-info)" stroke="var(--color-fg)" stroke-width="1.5"/><text x="383" y="20">cool air</text>
+      <circle cx="452" cy="16" r="6" fill="var(--color-warn)" stroke="var(--color-fg)" stroke-width="1.5"/><text x="463" y="20">squeezed, hot</text>
+      <circle cx="562" cy="16" r="6" fill="var(--color-bad)" stroke="var(--color-fg)" stroke-width="1.5"/><text x="573" y="20">exhaust</text>
+    </g>
+
+    <!-- the parcel of air, then exhaust -->
+    <circle r="5" fill="var(--color-bad)" fill-opacity="0.7" stroke="var(--color-fg-muted)" stroke-width="1.25" x-show="ghostOn" :cx="ghost.x" :cy="ghost.y"/>
+    <circle r="8" stroke="var(--color-fg)" stroke-width="2" :fill="parcelFill" :cx="pos.x" :cy="pos.y"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Follow the air'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="tap-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Position along the air path">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tap-drive">What spins the compressor</label>
+      <select id="tap-drive" class="input" x-model="drive">
+        <option value="turbo">Turbocharger: a turbine in the exhaust</option>
+        <option value="gear">Gear-driven supercharger: the crankshaft</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="tap-ic" class="cursor-pointer"><span>Intercooler fitted</span>
+        <input type="checkbox" id="tap-ic" x-model="ic" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">What drives the compressor</dt><dd class="widget-value" x-text="turbo ? 'A turbine in the exhaust, on the same shaft' : 'The crankshaft, through gears'"></dd></div>
+    <div class="widget-readout" :class="turbo ? 'ok' : 'warn'"><dt class="widget-label">Cost to the engine</dt><dd class="widget-value" x-text="turbo ? 'Uses waste exhaust energy; slight back pressure only' : 'Takes power from the crankshaft'"></dd></div>
+    <div class="widget-readout" :class="turbo ? 'warn' : 'ok'"><dt class="widget-label">Response to the throttle</dt><dd class="widget-value"><span x-text="turbo ? 'A few seconds of lag' : 'Instant'"></span><span class="widget-flag warn" x-show="turbo">turbo lag</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Boost tied to</dt><dd class="widget-value" x-text="turbo ? 'Exhaust flow, controlled by the wastegate' : 'Engine RPM'"></dd></div>
+    <div class="widget-readout" :class="ic ? 'ok' : 'warn'"><dt class="widget-label">Charge reaching the cylinders</dt><dd class="widget-value" x-text="ic ? 'Cooled: denser, wider detonation margin' : 'Hot from the compressor: less dense, closer to detonation'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('follow-the-air')" :aria-pressed="active === 'follow-the-air'">Follow the air</button>
+      <button type="button" @click="preset('in-the-compressor')" :aria-pressed="active === 'in-the-compressor'">In the compressor</button>
+      <button type="button" @click="preset('at-the-turbine')" :aria-pressed="active === 'at-the-turbine'">At the turbine</button>
+      <button type="button" @click="preset('gear-driven')" :aria-pressed="active === 'gear-driven'">Gear-driven</button>
+      <button type="button" @click="preset('no-intercooler')" :aria-pressed="active === 'no-intercooler'">No intercooler</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Both methods use the same centrifugal compressor; they differ only in what spins it. The turbocharger's turbine and compressor share one shaft, so the exhaust that a normally aspirated engine throws away does the squeezing, at the price of a few seconds of lag. The gear-driven supercharger answers instantly but spends crankshaft power. The layout is schematic, not a real installation.</p>
+  <details class="widget-try"><summary>Try it: why is a turbocharger more efficient than a gear-driven supercharger?</summary><p>Press Gear-driven and follow the drive line: it comes off the crankshaft, so part of the extra power the supercharger makes is spent turning it. Switch to the turbocharger and press At the turbine: the compressor is spun by exhaust energy that would otherwise go out of the pipe, costing only a slight rise in back pressure.</p></details>
+  <details class="widget-try"><summary>Try it: why does an intercooler give more power for the same manifold pressure?</summary><p>Press No intercooler: the parcel leaves the compressor squeezed and hot, and hot air is less dense at the same pressure. Tick the intercooler and replay: outside air cools the charge, so each cylinderful holds more mass of air at the same manifold pressure, with a wider margin from detonation.</p></details>
+</div>

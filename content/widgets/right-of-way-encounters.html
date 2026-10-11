@@ -1,0 +1,202 @@
+<div class="widget" x-data="timeline({
+  duration: 14,
+  loop: false,
+  sc: 'right',
+  // illustrative kinematics in picture units: start point, heading (0 up, 90 right), speed per unit of the clock,
+  // and the turns [from t, to t, degrees] (positive = right). Only the directions come from the lesson.
+  _S: {
+    right: { me: { x: 140, y: 230, h: 90, s: 330, turns: [[0.12, 0.25, 85], [0.56, 0.72, -85]] },
+             ot: { x: 240, y: 386, h: 30, s: 330, turns: [] }, meet: [330, 230], clear: 0.45 },
+    left:  { me: { x: 140, y: 230, h: 90, s: 330, turns: [] },
+             ot: { x: 240, y: 74, h: 150, s: 330, turns: [[0.12, 0.25, 85], [0.56, 0.72, -85]] }, meet: [330, 230], clear: 0.45 },
+    head:  { me: { x: 90, y: 230, h: 90, s: 420, turns: [[0.12, 0.25, 30], [0.62, 0.74, -30]] },
+             ot: { x: 550, y: 230, h: 270, s: 420, turns: [[0.12, 0.25, 30], [0.62, 0.74, -30]] }, meet: [320, 230], clear: 0.5 },
+    over:  { me: { x: 50, y: 210, h: 90, s: 520, turns: [[0.12, 0.25, 30], [0.8, 0.92, -30]] },
+             ot: { x: 200, y: 210, h: 90, s: 220, turns: [] }, meet: [310, 210], clear: 0.62 },
+  },
+  get S() { return this._S[this.sc] },
+  hd(d, t) { return d.h + d.turns.reduce((a, q) => a + q[2] * this.ease(this.seg(t, q[0], q[1])), 0) },
+  // position at time t by stepping along the heading; also the trail of points flown so far
+  sim(d, t, pts) {
+    const n = Math.max(2, Math.ceil(t * 120)), dt = t / n;
+    let x = d.x, y = d.y;
+    if (pts) pts.push([x, y]);
+    for (let i = 0; i < n; i++) {
+      const h = this.hd(d, (i + 0.5) * dt) * Math.PI / 180;
+      x += d.s * dt * Math.sin(h); y -= d.s * dt * Math.cos(h);
+      if (pts && (i % 4 === 3 || i === n - 1)) pts.push([x, y]);
+    }
+    return { x: x, y: y, h: this.hd(d, t) };
+  },
+  get me() { return this.sim(this.S.me, this.t) },
+  get ot() { return this.sim(this.S.ot, this.t) },
+  trail(k) { const pts = []; this.sim(this.S[k], this.t, pts); return this.path(pts) },
+  ghost(k) { const d = this.S[k], p = this.pol(d.x, d.y, 560, d.h); return 'M' + d.x + ' ' + d.y + ' L' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) },
+  plane(p) { return 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ') rotate(' + (p.h - 90).toFixed(1) + ')' },
+  // where the other aircraft is from you, as a clock code
+  rbAt(a, b) { const brg = Math.atan2(b.x - a.x, a.y - b.y) * 180 / Math.PI; return ((brg - a.h) % 360 + 360) % 360 },
+  hourOf(rb) { const h = Math.round(rb / 30) % 12; return h === 0 ? 12 : h },
+  get rb() { return this.rbAt(this.me, this.ot) },
+  get seenHour() { return this.hourOf(this.rbAt(this.sim(this.S.me, 0.08), this.sim(this.S.ot, 0.08))) },
+  get seenText() {
+    const h = this.seenHour, side = h === 12 ? 'dead ahead' : h < 6 ? 'on your right' : 'on your left';
+    return h + ' o’clock, ' + side;
+  },
+  get hourPos() { return this.pol(this.me.x, this.me.y, 70, this.me.h + this.hourOf(this.rb) * 30) },
+  get twelvePos() { return this.pol(this.me.x, this.me.y, 70, this.me.h) },
+  
+  get looking() { return this.t >= 0.04 && this.t < 0.12 },
+  get tagA() { return this.looking ? 66 : 34 },
+  get tagB() { return this.looking ? 76 : 46 },
+  get meTagPos() {
+    const m = this.me;
+    if (this.sc === 'right' && this.t < 0.62) return { x: m.x - this.tagA + 2, y: m.y + 2, a: 'end' };
+    if (this.sc === 'right') return { x: m.x, y: m.y - 50, a: 'middle' };
+    if (this.sc === 'head') return { x: m.x, y: m.y - this.tagA - 16, a: 'middle' };
+    return { x: m.x, y: m.y + this.tagB, a: 'middle' };
+  },
+  get otTagPos() {
+    const o = this.ot;
+    if (this.sc === 'head') return { x: o.x, y: o.y + 46, a: 'middle' };
+    if (this.sc === 'over') return { x: o.x, y: o.y - 50, a: 'middle' };
+    return { x: o.x + 32, y: o.y + 2, a: 'start' };
+  },
+  get decided() { return this.t >= 0.08 },
+  get steps() {
+    return [{ at: 0.04, label: 'Sighting' }, { at: 0.08, label: 'Decision' }, { at: 0.12, label: 'Avoiding turn' }, { at: this.S.clear, label: 'Passing clear' }];
+  },
+  get phase() { return this.t < 0.04 ? 0 : this.t < 0.08 ? 1 : this.t < 0.12 ? 2 : this.t < this.S.clear ? 3 : 4 },
+  get givesWay() { return { right: 'You', left: 'The other aircraft', head: 'Both of you', over: 'You, the overtaker' }[this.sc] },
+  get youGive() { return this.sc !== 'left' },
+  get youDo() {
+    return { right: 'Turn right, pass behind it', left: 'Hold heading and speed, keep watching',
+      head: 'Turn right', over: 'Alter right, stay clear until well past' }[this.sc];
+  },
+  get otDoes() {
+    return { right: 'Holds heading and speed, keeps watching', left: 'Turns right, passes behind you',
+      head: 'Turns right', over: 'Has right of way: holds heading and speed' }[this.sc];
+  },
+  get meTag() { return !this.decided ? '' : { right: 'gives way: turns right', left: 'holds heading', head: 'turns right', over: 'overtaking: alters right' }[this.sc] },
+  get otTag() { return !this.decided ? '' : { right: 'holds heading', left: 'gives way: turns right', head: 'turns right', over: 'right of way' }[this.sc] },
+  get caption() {
+    const c = {
+      right: [
+        'Two aeroplanes at about the same level on courses that meet. Press play and keep a look-out.',
+        'You see the other aeroplane at ' + this.seenHour + ' o’clock: on your right, at about your level, closing.',
+        'It is on your right, so you give way. Think of a roundabout: traffic from your right has priority.',
+        'You turn right to pass behind it. It holds its heading and speed, and its pilot keeps watching in case you had not seen them.',
+        'Passed behind it and clear. Once well clear you turn back on course.'],
+      left: [
+        'Two aeroplanes at about the same level on courses that meet. Press play and keep a look-out.',
+        'You see the other aeroplane at ' + this.seenHour + ' o’clock: on your left, at about your level, closing.',
+        'You are on its right, so it gives way: at the roundabout you are the traffic from its right. You hold heading and speed.',
+        'It turns right to pass behind you. You keep your heading and speed but keep watching: right of way never excuses you from avoiding a pilot who has not seen you.',
+        'It has passed behind you and resumes its course.'],
+      head: [
+        'Two aeroplanes at about the same level flying straight at each other. Press play and keep a look-out.',
+        'You see the other aeroplane at ' + this.seenHour + ' o’clock: head-on, or nearly so.',
+        'Head-on, neither has the other on its right, so both give way, and both turn right.',
+        'Both alter heading to the right and the gap opens. If one turned left they would turn into each other: the rule only works because everyone turns right.',
+        'Each passes clear down the other’s left side, and both resume course.'],
+      over: [
+        'You are faster than the aeroplane ahead on the same track and closing on it from behind. Press play.',
+        'You see it at ' + this.seenHour + ' o’clock, ahead and slower: you are overtaking.',
+        'The aircraft being overtaken has right of way, so you, the overtaker, give way.',
+        'You alter heading to the right and keep clear, whether you are climbing, descending or level. It holds its heading and speed.',
+        'Stay clear until you are well past, then resume course.'],
+    };
+    return c[this.sc][this.phase];
+  },
+  pick() { this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'other-on-your-right': { sc: 'right', t: 0.22 },
+    'other-on-your-left': { sc: 'left', t: 0.22 },
+    'head-on': { sc: 'head', t: 0.24 },
+    'overtaking': { sc: 'over', t: 0.4 },
+    'converging-play': { sc: 'right', t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 430" role="img" aria-labelledby="row-title" class="widget-stage">
+    <title id="row-title">Plan view of two aeroplanes at about the same level on courses that meet: yours, highlighted, and another. A clock face on your nose shows where you first see the other aircraft. Converging with the other on your right, you give way and turn right to pass behind it; with it on your left, it gives way and you hold heading and speed; head-on, both turn right; overtaking, the overtaker alters to the right and keeps clear until well past</title>
+    <rect x="0" y="0" width="640" height="430" rx="10" fill="var(--color-surface-2)"/>
+    <!-- the tracks each would fly if nobody turned, and where they would meet -->
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :d="ghost('me')"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :d="ghost('ot')" x-show="sc !== 'over'"/>
+    <g x-show="t < 0.3" :transform="'translate(' + S.meet[0] + ' ' + S.meet[1] + ')'">
+      <path d="M-7 -7 L7 7 M-7 7 L7 -7" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="12" y="-10" font-size="12" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="sc === 'over' ? 'catch-up point' : 'conflict point'"></text>
+    </g>
+    <!-- the paths flown so far -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round" stroke-linejoin="round" :d="trail('me')"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-opacity="0.6" stroke-linecap="round" stroke-linejoin="round" :d="trail('ot')"/>
+    <!-- sight line and the clock face on your nose -->
+    <line stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="2 4" stroke-linecap="round" x-show="looking" :x1="me.x" :y1="me.y" :x2="ot.x" :y2="ot.y"/>
+    <g x-show="looking" :transform="plane(me)">
+      <circle r="52" fill="var(--color-surface)" fill-opacity="0.55" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <path d="M48.0 0.0L57.0 0.0M41.6 24.0L49.4 28.5M24.0 41.6L28.5 49.4M0.0 48.0L0.0 57.0M-24.0 41.6L-28.5 49.4M-41.6 24.0L-49.4 28.5M-48.0 0.0L-57.0 0.0M-41.6 -24.0L-49.4 -28.5M-24.0 -41.6L-28.5 -49.4M-0.0 -48.0L-0.0 -57.0M24.0 -41.6L28.5 -49.4M41.6 -24.0L49.4 -28.5" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+    <g x-show="looking" font-size="13" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text class="num" fill="var(--color-fg-muted)" :x="twelvePos.x" :y="twelvePos.y + 5" x-show="hourOf(rb) !== 12">12</text>
+      <text class="num" font-weight="700" fill="var(--color-brand-fg)" :x="hourPos.x" :y="hourPos.y + 5" x-text="hourOf(rb) + ' o’clock'"></text>
+    </g>
+    <!-- the other aircraft (tools.diagrams.plane top, scale 0.46, colour fg-muted, fill surface) -->
+    <g :transform="plane(ot)"><g transform="translate(0 0) rotate(0) scale(0.46)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <!-- your aeroplane (tools.diagrams.plane top, scale 0.46, colour brand, fill brand-soft) -->
+    <g :transform="plane(me)"><g transform="translate(0 0) rotate(0) scale(0.46)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-brand-soft)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <!-- name tags -->
+    <g paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" text-anchor="middle">
+      <text font-size="14" font-weight="700" fill="var(--color-brand-fg)" :text-anchor="meTagPos.a" :x="meTagPos.x" :y="meTagPos.y">You</text>
+      <text font-size="12" fill="var(--color-fg-muted)" :text-anchor="meTagPos.a" :x="meTagPos.x" :y="meTagPos.y + 16" x-text="meTag"></text>
+      <text font-size="14" font-weight="600" fill="var(--color-fg)" :text-anchor="otTagPos.a" :x="otTagPos.x" :y="otTagPos.y">Other</text>
+      <text font-size="12" fill="var(--color-fg-muted)" :text-anchor="otTagPos.a" :x="otTagPos.x" :y="otTagPos.y + 16" x-text="otTag"></text>
+    </g>
+    <text x="20" y="30" font-size="15" font-weight="600" fill="var(--color-fg)" x-text="{ right: 'Converging: other on your right', left: 'Converging: other on your left', head: 'Head-on', over: 'Overtaking' }[sc]"></text>
+    <text x="20" y="48" font-size="12" fill="var(--color-fg-faint)">same level, seen from above</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the encounter'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="row-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress of the encounter">
+    <span class="widget-clock" x-text="stepLabel || 'Approach'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="row-sc">Encounter</label>
+      <select id="row-sc" class="input" x-model="sc" @change="pick()">
+        <option value="right">Converging, other on your right</option>
+        <option value="left">Converging, other on your left</option>
+        <option value="head">Head-on</option>
+        <option value="over">Overtaking</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Seen at</dt><dd class="widget-value" x-text="seenText"></dd></div>
+    <div class="widget-readout" :class="youGive ? 'warn' : 'ok'"><dt class="widget-label">Gives way</dt><dd class="widget-value"><span x-text="givesWay"></span><span class="widget-flag warn" x-show="youGive">give way</span><span class="widget-flag ok" x-show="!youGive">right of way</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">You</dt><dd class="widget-value" x-text="youDo"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">The other aircraft</dt><dd class="widget-value" x-text="otDoes"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('other-on-your-right')" :aria-pressed="active === 'other-on-your-right'">On your right</button>
+      <button type="button" @click="preset('other-on-your-left')" :aria-pressed="active === 'other-on-your-left'">On your left</button>
+      <button type="button" @click="preset('head-on')" :aria-pressed="active === 'head-on'">Head-on</button>
+      <button type="button" @click="preset('overtaking')" :aria-pressed="active === 'overtaking'">Overtaking</button>
+      <button type="button" @click="preset('converging-play')" :aria-pressed="active === 'converging-play'">Play it</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every avoiding turn in the picture is to the right, and whoever gives way passes behind or beside the other, never across its nose. Converging, the aircraft with the other on its right gives way; head-on, both turn right; the overtaker keeps clear. The one with right of way holds heading and speed but keeps watching. Speeds, distances and turn sizes here are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you see another aeroplane at your 10 o’clock, at your level and closing. Who gives way?</summary><p>It does: 10 o’clock is on your left, so you are on its right, the roundabout traffic with priority. You hold heading and speed and keep watching, ready to avoid it if its pilot has not seen you. Choose “On your left” to watch it turn right and pass behind you.</p></details>
+  <details class="widget-try"><summary>Try it: in the head-on case, what would happen if the other pilot turned left instead?</summary><p>Both aeroplanes would turn towards the same side of the sky and could turn straight into each other. The rule works only because everyone turns right, so each passes down the other’s left side.</p></details>
+</div>

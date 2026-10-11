@@ -1,0 +1,122 @@
+<div class="widget" x-data="widget({
+  power: 73, v: 100,
+  // Illustrative trainer at maximum weight, sea level, forces as fractions of the weight (the climb-performance widget's
+  // calibration: Vx 60 kt and Vy 75 kt with a best rate of 560 fpm at full power, BAKC 4.3). Drag a·V² + b/V²; thrust from
+  // a fixed-pitch propeller falls with speed and scales with the throttle. Steady flight: T = D + W sin γ and L = W cos γ.
+  a: 8.494e-6, b: 161.17, k: 4.73e-4, T0: 0.18564,
+  get thrust() { return this.power / 100 * (this.T0 - this.k * this.v) },
+  get drag() { return this.a * this.v * this.v + this.b / (this.v * this.v) },
+  get excess() { return this.thrust - this.drag },
+  get sinG() { return this.clamp(this.excess, -0.5, 0.5) },
+  get gamma() { return Math.asin(this.sinG) * 180 / Math.PI },
+  get roc() { return this.v * 101.27 * this.sinG },
+  get grad() { return this.roc * 60 / this.v },
+  // angle of attack needed to make lift = weight at this speed (illustrative: 16° at a 50 kt stall, about −2° at zero lift)
+  get aoa() { return -2 + 18 * (50 / this.v) ** 2 * Math.cos(this.gamma * Math.PI / 180) },
+  get attitude() { return this.gamma + this.aoa },
+  get level() { return Math.abs(this.roc) < 30 },
+  get pathText() { return this.level ? 'level' : (this.roc > 0 ? 'climbing ' : 'descending ') + this.fmt(Math.abs(this.gamma), 1) + '°' },
+  // picture: CG at (240, 160); lift and weight 110 px for the full weight; thrust and drag drawn 5 times larger (550 px)
+  L: 96, F: 550,
+  get d() { const g = this.gamma * Math.PI / 180; return { x: Math.cos(g), y: -Math.sin(g) } },
+  rot(x, y) { const t = this.attitude * Math.PI / 180; return { x: 240 + x * Math.cos(t) + y * Math.sin(t), y: 160 - x * Math.sin(t) + y * Math.cos(t) } },
+  get wing() { return this.rot(-3.4, -13.6) },
+  get hub() { return this.rot(46, 4.4) },
+  get liftEnd() { const c = Math.cos(this.gamma * Math.PI / 180) * this.L; return { x: this.wing.x - this.d.y * -c, y: this.wing.y - this.d.x * c } },
+  get thrustEnd() { const t = this.attitude * Math.PI / 180, l = Math.max(0, this.thrust) * this.F; return { x: this.hub.x + Math.cos(t) * l, y: this.hub.y - Math.sin(t) * l } },
+  // drag back along the path from the tail cone; the weight's share along the path continues from the drag's tip
+  get dragStart() { return { x: 240 - this.d.x * 126, y: 160 - this.d.y * 126 } },
+  get dragEnd() { const l = this.drag * this.F; return { x: this.dragStart.x - this.d.x * l, y: this.dragStart.y - this.d.y * l } },
+  // climbing, the weight's share acts back along the path (drawn on from the drag's tip); descending it acts forward
+  get wsStart() { return this.sinG > 0 ? this.dragEnd : { x: 240 + this.d.x * 60, y: 182 + this.d.y * 60 } },
+  get wsEnd() { const l = this.sinG * this.F; return { x: this.wsStart.x - this.d.x * l, y: this.wsStart.y - this.d.y * l } },
+  get pathLine() { return { x1: 240 - this.d.x * 230, y1: 160 - this.d.y * 230, x2: 240 + this.d.x * 200, y2: 160 + this.d.y * 200 } },
+  // balance bars along the path: thrust (plus the weight's share in a descent) against drag (plus the weight's share in a climb)
+  bar(f) { return Math.max(0, f) * this.F },
+  get caption() {
+    if (this.power === 0) return 'Throttle closed: no thrust, so the weight\'s share along the path is all that balances the drag. The aeroplane glides down a path whose angle is set by drag ÷ weight.';
+    if (this.level) return 'Steady level flight: thrust equals drag and lift equals weight. Nothing is left over, so the path stays level.';
+    if (this.roc > 0) return 'Thrust is more than drag. In a steady climb the surplus is used up by the part of the weight that acts back along the path: T = D + W sin γ. More surplus, steeper path.';
+    return 'Thrust is less than drag. The aeroplane descends until the part of the weight acting forward along the path makes up the shortfall.';
+  },
+  presets: {
+    'level-cruise': { power: 73, v: 100 },
+    'nose-up-same-power': { power: 73, v: 80 },
+    'full-power-vy': { power: 100, v: 75 },
+    'full-power-vx': { power: 100, v: 60 },
+    'power-off-glide': { power: 0, v: 70 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="ffp-title" class="widget-stage">
+    <title id="ffp-title">A trainer on its flight path with lift, weight, thrust and drag, and the part of the weight acting along the path; bars on the right compare the forces along the path</title>
+    <defs>
+      <marker id="ffp-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="456" height="320" fill="var(--color-sky-soft)" fill-opacity="0.6"/>
+    <!-- horizon reference and the flight path -->
+    <line x1="10" y1="160" x2="450" y2="160" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="446" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" :y="roc < -30 ? 152 : 176">horizontal</text>
+    <line :x1="pathLine.x1" :y1="pathLine.y1" :x2="pathLine.x2" :y2="pathLine.y2" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="8 4"/>
+    <!-- the aeroplane (python -m tools.diagrams.plane side, scale 1.7, no gear) at its nose attitude -->
+    <g :transform="'translate(240 160) rotate(' + (-attitude) + ')'"><g transform="translate(0 0) rotate(0) scale(1.7)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <!-- forces -->
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#ffp-arrow)" :x1="wing.x" :y1="wing.y" :x2="liftEnd.x" :y2="liftEnd.y"/>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="liftEnd.x + 10" :y="liftEnd.y + 12">lift</text>
+    <line stroke="var(--color-info)" stroke-width="2.5" marker-end="url(#ffp-arrow)" x1="240" y1="166" x2="240" y2="262"/>
+    <text x="250" y="258" font-size="13" font-weight="700" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">weight</text>
+    <line stroke="var(--color-ok)" stroke-width="2.5" marker-end="url(#ffp-arrow)" x-show="thrust > 0.005" :x1="hub.x" :y1="hub.y" :x2="thrustEnd.x" :y2="thrustEnd.y"/>
+    <text font-size="13" font-weight="700" fill="var(--color-ok-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-show="thrust > 0.005" :x="thrustEnd.x - 14" :y="thrustEnd.y - 12">thrust</text>
+    <line stroke="var(--color-warn)" stroke-width="2.5" marker-end="url(#ffp-arrow)" :x1="dragStart.x" :y1="dragStart.y" :x2="dragEnd.x" :y2="dragEnd.y"/>
+    <text font-size="13" font-weight="700" fill="var(--color-warn-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="(dragStart.x + dragEnd.x) / 2" :y="(dragStart.y + dragEnd.y) / 2 + 22">drag</text>
+    <g x-show="!level">
+      <line stroke="var(--color-fg-muted)" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#ffp-arrow)" :x1="wsStart.x" :y1="wsStart.y" :x2="wsEnd.x" :y2="wsEnd.y"/>
+      <text font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="(wsStart.x + wsEnd.x) / 2" :y="(wsStart.y + wsEnd.y) / 2 + (sinG > 0 ? -12 : 22)">W sin γ</text>
+    </g>
+    <text x="12" y="22" font-size="13" font-weight="700" fill="var(--color-fg)" x-text="'Path ' + pathText + ' · nose ' + fmt(attitude, 1) + '° ' + (attitude >= 0 ? 'up' : 'down')"></text>
+    <text x="12" y="306" font-size="12" fill="var(--color-fg-faint)">Dashed: the flight path. Thrust and drag drawn 5× larger.</text>
+
+    <!-- along the path: what pushes forward against what holds back -->
+    <text x="548" y="22" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)">Along the path</text>
+    <line x1="470" y1="250" x2="626" y2="250" stroke="var(--color-fg)" stroke-width="1.25"/>
+    <rect x="486" width="40" fill="var(--color-ok)" :y="250 - bar(thrust)" :height="bar(thrust)"/>
+    <rect x-show="!level" x="486" width="40" fill="var(--color-fg-muted)" fill-opacity="0.35" stroke="var(--color-fg-muted)" stroke-dasharray="4 3" :y="250 - bar(thrust) - bar(-sinG)" :height="bar(-sinG)"/>
+    <rect x="570" width="40" fill="var(--color-warn)" :y="250 - bar(drag)" :height="bar(drag)"/>
+    <rect x-show="!level" x="570" width="40" fill="var(--color-fg-muted)" fill-opacity="0.35" stroke="var(--color-fg-muted)" stroke-dasharray="4 3" :y="250 - bar(drag) - bar(sinG)" :height="bar(sinG)"/>
+    <text x="506" y="268" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)" font-weight="600">thrust</text>
+    <text x="506" y="284" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" x-show="sinG < -0.003">+ W sin γ</text>
+    <text x="590" y="268" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)" font-weight="600">drag</text>
+    <text x="590" y="284" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" x-show="sinG > 0.003">+ W sin γ</text>
+    <text x="548" y="306" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">equal in steady flight</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ffp-power">Throttle <output for="ffp-power" x-text="power + '%'"></output></label>
+      <input type="range" id="ffp-power" min="0" max="100" step="1" x-model.number="power">
+    </div>
+    <div class="widget-control">
+      <label for="ffp-v">Airspeed, held with the elevator <output for="ffp-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="ffp-v" min="55" max="120" step="1" x-model.number="v">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="excess > 0.002 ? 'ok' : excess < -0.002 ? 'warn' : ''"><dt class="widget-label">Thrust − drag</dt><dd class="widget-value" x-text="sign(excess * 100, 1) + '% of weight'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Flight path</dt><dd class="widget-value" x-text="level ? 'level' : sign(gamma, 1) + '° · ' + fmt(Math.abs(grad)) + ' ft/NM'"></dd></div>
+    <div class="widget-readout" :class="roc > 30 ? 'ok' : roc < -30 ? 'warn' : ''"><dt class="widget-label">Vertical speed</dt><dd class="widget-value" x-text="level ? '0 fpm' : sign(Math.round(roc / 10) * 10) + ' fpm'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Angle of attack</dt><dd class="widget-value" x-text="fmt(aoa, 1) + '°'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('level-cruise')" :aria-pressed="active === 'level-cruise'">Level, 100 kt</button>
+      <button type="button" @click="preset('nose-up-same-power')" :aria-pressed="active === 'nose-up-same-power'">Nose up, same power</button>
+      <button type="button" @click="preset('full-power-vy')" :aria-pressed="active === 'full-power-vy'">Full power, Vy</button>
+      <button type="button" @click="preset('full-power-vx')" :aria-pressed="active === 'full-power-vx'">Full power, Vx</button>
+      <button type="button" @click="preset('power-off-glide')" :aria-pressed="active === 'power-off-glide'">Glide</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In steady flight the forces always balance. Level, thrust equals drag and lift equals weight; climbing, part of the weight acts back along the path, so thrust must equal drag plus that share, and the surplus thrust sets how steep the path is. Lift stays at right angles to the path and is a little less than the weight in a climb. The nose attitude is the path angle plus the angle of attack, so it always looks steeper than the climb. An illustrative trainer at maximum weight, sea level, still air, tuned to the climb figures: its power-off glide comes out flatter (about 1 in 13 at 70 kt) than the 1 in 10 of BAKC 2.5's example and the 9:1 of RBKA 3.4, so use the lesson's ratio for glide arithmetic.</p>
+  <details class="widget-try"><summary>Try it: level at 100 kt, you raise the nose to 80 kt without touching the throttle. What happens?</summary><p>Press Level, 100 kt, then Nose up, same power: at 80 kt drag is lower and the propeller gives a little more thrust, so about 3% of the weight is left over and the aeroplane climbs at roughly 230 fpm. The elevator chose the speed; the surplus thrust at that speed made the climb.</p></details>
+  <details class="widget-try"><summary>Try it: why is the climb steeper at Vx than at Vy, although the rate is lower?</summary><p>Press Full power, Vy (75 kt): thrust − drag is about 7.4% of the weight, a 4.2° path and 560 fpm. Press Full power, Vx (60 kt): the surplus is bigger (8.2%), so the path is steeper, about 500 ft/NM against 450, but the aeroplane moves along it more slowly, so the rate falls to about 500 fpm. Vx about 60 kt and Vy about 75 kt are BAKC 4.3's typical trainer; the climb rates come from this illustrative model.</p></details>
+</div>

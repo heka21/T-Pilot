@@ -1,0 +1,121 @@
+<div class="widget" x-data="widget({
+  th: 60,
+  // illustrative relative model (no numbers in the lessons): the butterfly opens from about 8 to 90 degrees; the air
+  // through the venturi (and so its speed and suction at the throat) grows with the opening; the main jet meters
+  // fuel in proportion to the air; the manifold pressure climbs towards, but never quite reaches, outside pressure
+  get ang() { return 8 + 82 * this.th / 100 },
+  get air() { return 0.1 + 0.9 * this.th / 100 },
+  get fuel() { return this.air },
+  get idle() { return this.th < 10 },
+  get mp() { return 0.35 + 0.6 * this.th / 100 },
+  get chill() { return 1 - 0.75 * this.th / 100 },
+  get drops() { return Math.round(2 + 10 * this.fuel) },
+  get state() { return this.th < 10 ? 'nearly closed' : this.th < 85 ? 'part open' : 'wide open' },
+  get bf() { const a = this.ang * Math.PI / 180, r = 44; return { x1: 182 - r * Math.cos(a), y1: 112 + r * Math.sin(a), x2: 182 + r * Math.cos(a), y2: 112 - r * Math.sin(a) } },
+  bar(f) { return 150 * this.clamp(f, 0, 1) },
+  get caption() {
+    if (this.th < 10) return 'Throttle closed to idle: the butterfly almost blocks the passage. Little air flows, the manifold pressure is well below the outside air, each cylinder gets a small charge and the power is low. The squeeze past the nearly closed butterfly is where the air is chilled most.';
+    if (this.th < 85) return 'Part throttle: more air flows, faster through the venturi, so its pressure drop draws more fuel from the main jet. Fuel follows the air, so the mixture strength stays about the same while the amount of mixture rises.';
+    return 'Full throttle: the butterfly is edge-on to the flow and the cylinders fill as well as the air allows. The manifold pressure is close to the outside air pressure; climb into thinner air and even full throttle gives less.';
+  },
+  presets: {
+    'idle-nearly-closed': { th: 4 },
+    'descent-low-power': { th: 20 },
+    'cruise-part-throttle': { th: 60 },
+    'full-throttle-wide-open': { th: 100 },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="cth-title" class="widget-stage">
+    <title id="cth-title">An updraft carburettor: air rising through the venturi draws fuel from the main jet, and the throttle butterfly above it sets how much mixture reaches the cylinders; bars show airflow, fuel, manifold pressure and power</title>
+    <defs>
+      <marker id="cth-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- chilled air around the throat and the butterfly -->
+    <path d="M138 88 L226 88 L226 150 Q226 170 206 196 L158 196 Q138 170 138 150 Z" fill="var(--color-info)" :fill-opacity="0.03 + 0.14 * chill"/>
+    <!-- carburettor body: walls of the duct with the venturi narrowing -->
+    <g fill="none" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M138 20 L138 150 Q138 170 158 196 Q138 222 138 242 L138 318"/>
+      <path d="M226 20 L226 150 Q226 170 206 196 Q226 222 226 242 L226 318"/>
+    </g>
+    <!-- float chamber and the fuel path to the nozzle -->
+    <rect x="22" y="196" width="84" height="86" rx="4" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="24" y="226" width="80" height="54" fill="var(--color-brand)" fill-opacity="0.18"/>
+    <line x1="24" y1="226" x2="104" y2="226" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <rect x="46" y="214" width="36" height="16" rx="3" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <text x="64" y="186" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">float chamber</text>
+    <path d="M104 266 L182 266 L182 202" fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="114" y="259" width="14" height="14" fill="var(--color-brand)"/>
+    <text x="126" y="300" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">main jet</text>
+    <!-- fuel spray from the nozzle: more drops for more air -->
+    <g fill="var(--color-brand)">
+      <circle cx="182" cy="190" r="2.5" x-show="drops > 0"/><circle cx="176" cy="182" r="2.2" x-show="drops > 1"/><circle cx="188" cy="178" r="2.2" x-show="drops > 2"/>
+      <circle cx="172" cy="170" r="2" x-show="drops > 3"/><circle cx="184" cy="166" r="2" x-show="drops > 4"/><circle cx="194" cy="160" r="2" x-show="drops > 5"/>
+      <circle cx="168" cy="156" r="1.8" x-show="drops > 6"/><circle cx="178" cy="150" r="1.8" x-show="drops > 7"/><circle cx="190" cy="146" r="1.8" x-show="drops > 8"/>
+      <circle cx="198" cy="138" r="1.6" x-show="drops > 9"/><circle cx="166" cy="140" r="1.6" x-show="drops > 10"/><circle cx="182" cy="134" r="1.6" x-show="drops > 11"/>
+    </g>
+    <!-- air coming in below, faster through the throat -->
+    <g stroke="var(--color-sky-fg)" stroke-linecap="round" marker-end="url(#cth-arrow)">
+      <line x1="162" y1="314" :y2="300 - 34 * air" x2="162" :stroke-width="1.25 + 2 * air"/>
+      <line x1="202" y1="314" :y2="300 - 34 * air" x2="202" :stroke-width="1.25 + 2 * air"/>
+    </g>
+    <text x="240" y="316" font-size="12" fill="var(--color-sky-fg)">air in, through the filter</text>
+    <text x="240" y="200" font-size="13" font-weight="600" fill="var(--color-fg)">venturi</text>
+    <text x="240" y="216" font-size="12" fill="var(--color-fg-muted)" x-text="air > 0.6 ? 'fast air, strong suction' : air > 0.3 ? 'air speeds up, pressure drops' : 'slow air, weak suction'"></text>
+    <!-- throttle butterfly -->
+    <line stroke-width="4" stroke-linecap="round" :x1="bf.x1" :y1="bf.y1" :x2="bf.x2" :y2="bf.y2" stroke="var(--color-brand)"/>
+    <circle cx="182" cy="112" r="5" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/>
+    <text x="240" y="108" font-size="13" font-weight="600" fill="var(--color-brand-fg)">throttle butterfly</text>
+    <text x="240" y="124" font-size="12" fill="var(--color-fg-muted)" x-text="state + (th < 25 ? ': coldest squeeze' : '')"></text>
+    <!-- mixture to the cylinders -->
+    <line x1="182" y1="74" x2="182" stroke="var(--color-brand)" marker-end="url(#cth-arrow)" stroke-linecap="round" :y2="72 - 44 * air" :stroke-width="1.25 + 2 * air"/>
+    <text x="240" y="36" font-size="13" font-weight="600" fill="var(--color-fg)">to the cylinders</text>
+    <text x="240" y="52" font-size="12" fill="var(--color-fg-muted)">intake manifold</text>
+    <!-- bars -->
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <text x="440" y="40">air through the venturi</text>
+      <text x="440" y="96">fuel drawn from the jet</text>
+      <text x="440" y="152">manifold pressure</text>
+      <text x="440" y="208">power (and RPM, fixed pitch)</text>
+    </g>
+    <g>
+      <rect x="440" y="48" width="150" height="14" rx="3" fill="var(--color-surface-2)"/>
+      <rect x="440" y="48" height="14" rx="3" fill="var(--color-sky-fg)" :width="bar(air)"/>
+      <rect x="440" y="104" width="150" height="14" rx="3" fill="var(--color-surface-2)"/>
+      <rect x="440" y="104" height="14" rx="3" fill="var(--color-brand)" :width="bar(fuel)"/>
+      <rect x="440" y="160" width="150" height="14" rx="3" fill="var(--color-surface-2)"/>
+      <rect x="440" y="160" height="14" rx="3" fill="var(--color-info)" :width="bar(mp)"/>
+      <line x1="590" y1="154" x2="590" y2="180" stroke="var(--color-fg)" stroke-width="1.25" stroke-dasharray="3 2"/>
+      <text x="590" y="194" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">outside air</text>
+      <rect x="440" y="216" width="150" height="14" rx="3" fill="var(--color-surface-2)"/>
+      <rect x="440" y="216" height="14" rx="3" fill="var(--color-ok)" :width="bar(air)"/>
+    </g>
+    <text x="440" y="262" font-size="13" font-weight="600" fill="var(--color-fg)">mixture strength</text>
+    <text x="440" y="280" font-size="12" :fill="idle ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" x-text="idle ? 'richer: the idle system adds fuel' : 'about the same: fuel follows air'"></text>
+    <text x="440" y="314" font-size="11" fill="var(--color-fg-faint)">relative, not to scale</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cth-th">Throttle <output for="cth-th" x-text="th === 0 ? 'closed (idle)' : th === 100 ? 'fully open' : th + '% open'"></output></label>
+      <input type="range" id="cth-th" min="0" max="100" step="1" x-model.number="th">
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Butterfly</dt><dd class="widget-value" x-text="state"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Manifold pressure</dt><dd class="widget-value" x-text="mp < 0.55 ? 'well below outside air' : mp < 0.85 ? 'rising towards outside air' : 'nearly outside air pressure'"></dd></div>
+    <div class="widget-readout" :class="th < 25 ? 'warn' : ''"><dt class="widget-label">Chilling at the butterfly</dt><dd class="widget-value"><span x-text="th < 25 ? 'greatest' : th < 70 ? 'moderate' : 'least'"></span><span class="widget-flag warn" x-show="th < 25">carb ice risk, BAKC 3.4</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('idle-nearly-closed')" :aria-pressed="active === 'idle-nearly-closed'">Idle</button>
+      <button type="button" @click="preset('descent-low-power')" :aria-pressed="active === 'descent-low-power'">Low power descent</button>
+      <button type="button" @click="preset('cruise-part-throttle')" :aria-pressed="active === 'cruise-part-throttle'">Cruise</button>
+      <button type="button" @click="preset('full-throttle-wide-open')" :aria-pressed="active === 'full-throttle-wide-open'">Full throttle</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The throttle does not pump fuel: it opens the butterfly, more air rushes through the venturi, and the stronger suction at the throat draws more fuel with it, so the amount of mixture rises while its strength stays about the same (the mixture control sets that). Opening the throttle raises the manifold pressure and, with a fixed-pitch propeller, the RPM. The bars are relative; the shapes are illustrative.</p>
+  <details class="widget-try"><summary>Try it: why is the air coldest at a nearly closed butterfly?</summary><p>Press Low power descent: the gap past the butterfly is small, so the air squeezing through it has the biggest pressure drop, and air cools as its pressure drops. Add the fuel evaporating and, on a humid day, that is where carburettor ice forms first (BAKC 3.4).</p></details>
+  <details class="widget-try"><summary>Try it: at full throttle, does the manifold pressure ever reach the outside air pressure?</summary><p>Press Full throttle: it comes close but not quite, because the air still has to get through the filter and the venturi. Climb and the outside pressure itself falls, so full throttle gives less power (BAKC 3.1, about 3% per 1,000 ft).</p></details>
+</div>

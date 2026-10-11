@@ -1,0 +1,184 @@
+<div class="widget" x-data="widget({
+  pos: 'BOTH', dropL: 90, dropR: 150, broken: false, seenL: false, seenR: false,
+  // the lesson's worked example (BAKC 3.3): POH limits 125 RPM drop on either magneto, 50 RPM difference,
+  // check RPM 1,800 on BOTH. A drop is what the engine loses running on one magneto (one spark per cylinder).
+  check: 1800, maxDrop: 125, maxDiff: 50,
+  positions: ['OFF', 'R', 'L', 'BOTH'],
+  bearings: { OFF: 300, R: 330, L: 30, BOTH: 60 },
+  // the switch stops a magneto by earthing it through its P-lead; a broken right P-lead cannot be earthed
+  get leftLive() { return this.pos === 'L' || this.pos === 'BOTH' },
+  get rightLive() { return this.pos === 'R' || this.pos === 'BOTH' || this.broken },
+  get running() { return this.leftLive || this.rightLive },
+  get rpm() {
+    if (this.leftLive && this.rightLive) return this.check;
+    if (this.leftLive) return this.check - this.dropL;
+    if (this.rightLive) return this.check - this.dropR;
+    return 0;
+  },
+  // what the pilot reads on each position (with a broken right P-lead, LEFT shows no drop at all)
+  get readL() { return this.broken ? 0 : this.dropL },
+  get diff() { return Math.abs(this.readL - this.dropR) },
+  get okL() { return this.readL > 0 && this.readL <= this.maxDrop },
+  get okR() { return this.dropR > 0 && this.dropR <= this.maxDrop },
+  get okDiff() { return this.diff <= this.maxDiff },
+  get verdict() {
+    if (!this.seenL || !this.seenR) return { t: 'Select L, then BOTH, then R', c: '' };
+    if (this.readL === 0 || this.dropR === 0) return { t: 'No drop: a magneto is not being earthed. Live propeller', c: 'bad' };
+    if (!this.okL || !this.okR || !this.okDiff) return { t: 'Fails: clear the plugs and repeat; still failing, it does not fly', c: 'bad' };
+    return { t: 'Passes, if it ran smoothly on each', c: 'ok' };
+  },
+  set_(p) { this.pos = p; if (p === 'L') this.seenL = true; if (p === 'R') this.seenR = true; },
+  // tachometer: 0..3000 RPM over 240 degrees, centre (110, 160), radius 92
+  tachPt(r, rr) { const a = (-120 + 240 * this.clamp(r, 0, 3000) / 3000) * Math.PI / 180; return { x: 110 + rr * Math.sin(a), y: 160 - rr * Math.cos(a) } },
+  get needle() { return this.tachPt(this.rpm, 54) },
+  get key() { return this.pol(548, 168, 40, this.bearings[this.pos]) },
+  lab(p) { return this.pol(548, 168, 64, this.bearings[p]) },
+  get caption() {
+    const p = this.pos;
+    if (p === 'BOTH') return 'Both magnetos are firing, two sparks in every cylinder: ' + this.fmt(this.check) + ' RPM. This is the reference for the check.';
+    if (p === 'L') return this.broken ? 'LEFT selected, but the RPM has not moved. The switch should have earthed the right magneto; with its P-lead broken it is still firing, and it will be live with the switch at OFF.' : 'LEFT alone: the right magneto is earthed, so each cylinder has one spark, the burn is slower and the RPM drops ' + this.dropL + '.';
+    if (p === 'R') return 'RIGHT alone: the left magneto is earthed, so each cylinder has one spark and the RPM drops ' + this.dropR + (this.dropR > this.maxDrop ? ', more than the limit: probably a fouled plug on the right side.' : '.');
+    return this.broken ? 'Dead cut (done at idle, just before shutdown): the switch is at OFF but the engine keeps running on the right magneto. A P-lead is broken: the propeller is live, and the aeroplane must be reported and fixed.' : 'Dead cut (done at idle, just before shutdown): at OFF both P-leads earth their magnetos and the engine falters. Switch straight back to BOTH before it stops, then shut down with the mixture.';
+  },
+  presets: {
+    'worked-example-right-fails': { pos: 'R', dropL: 90, dropR: 150, broken: false, seenL: true, seenR: true },
+    'try-it-passes': { pos: 'R', dropL: 80, dropR: 110, broken: false, seenL: true, seenR: true },
+    'no-drop-broken-p-lead': { pos: 'L', dropL: 90, dropR: 110, broken: true, seenL: true, seenR: true },
+    'dead-cut-good': { pos: 'OFF', dropL: 80, dropR: 110, broken: false, seenL: false, seenR: false },
+    'dead-cut-live-magneto': { pos: 'OFF', dropL: 80, dropR: 110, broken: true, seenL: false, seenR: false },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="mgc-title" class="widget-stage">
+    <title id="mgc-title">The magneto check: a tachometer, the two magnetos each feeding one spark plug in every cylinder, and the ignition switch at OFF, R, L or BOTH</title>
+    <!-- tachometer -->
+    <circle cx="110" cy="160" r="96" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round">
+      <path :d="'M' + tachPt(0, 92).x + ' ' + tachPt(0, 92).y + ' L' + tachPt(0, 80).x + ' ' + tachPt(0, 80).y"/>
+      <path :d="'M' + tachPt(500, 92).x + ' ' + tachPt(500, 92).y + ' L' + tachPt(500, 80).x + ' ' + tachPt(500, 80).y"/>
+      <path :d="'M' + tachPt(1000, 92).x + ' ' + tachPt(1000, 92).y + ' L' + tachPt(1000, 80).x + ' ' + tachPt(1000, 80).y"/>
+      <path :d="'M' + tachPt(1500, 92).x + ' ' + tachPt(1500, 92).y + ' L' + tachPt(1500, 80).x + ' ' + tachPt(1500, 80).y"/>
+      <path :d="'M' + tachPt(2000, 92).x + ' ' + tachPt(2000, 92).y + ' L' + tachPt(2000, 80).x + ' ' + tachPt(2000, 80).y"/>
+      <path :d="'M' + tachPt(2500, 92).x + ' ' + tachPt(2500, 92).y + ' L' + tachPt(2500, 80).x + ' ' + tachPt(2500, 80).y"/>
+      <path :d="'M' + tachPt(3000, 92).x + ' ' + tachPt(3000, 92).y + ' L' + tachPt(3000, 80).x + ' ' + tachPt(3000, 80).y"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-muted)" text-anchor="middle" class="num">
+      <text :x="tachPt(0, 66).x" :y="tachPt(0, 66).y + 4">0</text>
+      <text :x="tachPt(500, 66).x" :y="tachPt(500, 66).y + 4">5</text>
+      <text :x="tachPt(1000, 66).x" :y="tachPt(1000, 66).y + 4">10</text>
+      <text :x="tachPt(1500, 66).x" :y="tachPt(1500, 66).y + 4">15</text>
+      <text :x="tachPt(2000, 66).x" :y="tachPt(2000, 66).y + 4">20</text>
+      <text :x="tachPt(2500, 66).x" :y="tachPt(2500, 66).y + 4">25</text>
+      <text :x="tachPt(3000, 66).x" :y="tachPt(3000, 66).y + 4">30</text>
+    </g>
+    <!-- the check RPM mark and the allowed band below it -->
+    <path stroke="var(--color-ok)" stroke-width="5" fill="none" stroke-linecap="round" :d="'M' + tachPt(check - maxDrop, 92).x + ' ' + tachPt(check - maxDrop, 92).y + ' A92 92 0 0 1 ' + tachPt(check, 92).x + ' ' + tachPt(check, 92).y"/>
+    <text x="110" y="214" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">RPM × 100</text>
+    <line x1="110" y1="160" stroke-width="3" stroke-linecap="round" :x2="needle.x" :y2="needle.y" :stroke="pos === 'BOTH' ? 'var(--color-fg)' : 'var(--color-brand)'"/>
+    <circle cx="110" cy="160" r="6" fill="var(--color-fg)"/>
+    <text x="110" y="240" font-size="18" font-weight="600" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="running ? fmt(rpm) : 'stopping'"></text>
+    <text x="110" y="290" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)">green: within 125 of 1,800</text>
+    <!-- magnetos -->
+    <rect x="226" y="28" width="104" height="46" rx="8" stroke-width="2" :fill="leftLive ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="leftLive ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+    <rect x="356" y="28" width="104" height="46" rx="8" stroke-width="2" :fill="rightLive ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="rightLive ? (broken ? 'var(--color-bad)' : 'var(--color-brand)') : 'var(--color-line-strong)'"/>
+    <text x="278" y="48" font-size="13" font-weight="600" text-anchor="middle" :fill="leftLive ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">Left magneto</text>
+    <text x="408" y="48" font-size="13" font-weight="600" text-anchor="middle" :fill="rightLive ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">Right magneto</text>
+    <text x="278" y="66" font-size="12" text-anchor="middle" :fill="leftLive ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" x-text="leftLive ? 'sparking' : 'earthed: off'"></text>
+    <text x="408" y="66" font-size="12" text-anchor="middle" :fill="rightLive ? (broken && pos !== 'R' && pos !== 'BOTH' ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)') : 'var(--color-fg-faint)'" x-text="rightLive ? (broken && pos !== 'R' && pos !== 'BOTH' ? 'still sparking!' : 'sparking') : 'earthed: off'"></text>
+    <!-- harnesses: the left magneto feeds one plug in every cylinder, the right the other -->
+    <g fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M262 74 L262 128 L428 128 M262 128 L262 150 M318 128 L318 150 M374 128 L374 150 M428 128 L428 150" :stroke="leftLive ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+      <path d="M422 74 L422 112 L242 112 L242 140 M242 112 L242 140 M298 112 L298 150 M354 112 L354 150 M410 112 L410 150" :stroke="rightLive ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-dasharray="6 3"/>
+    </g>
+    <!-- four cylinders, two plugs each -->
+    <g>
+      <rect x="232" y="150" width="40" height="52" rx="5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+      <rect x="288" y="150" width="40" height="52" rx="5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+      <rect x="344" y="150" width="40" height="52" rx="5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+      <rect x="400" y="150" width="40" height="52" rx="5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+      <!-- flames: bigger with two sparks -->
+      <circle cx="252" cy="178" :r="running ? (leftLive && rightLive ? 13 : 8) : 0" fill="var(--color-warn)" fill-opacity="0.35"/>
+      <circle cx="308" cy="178" :r="running ? (leftLive && rightLive ? 13 : 8) : 0" fill="var(--color-warn)" fill-opacity="0.35"/>
+      <circle cx="364" cy="178" :r="running ? (leftLive && rightLive ? 13 : 8) : 0" fill="var(--color-warn)" fill-opacity="0.35"/>
+      <circle cx="420" cy="178" :r="running ? (leftLive && rightLive ? 13 : 8) : 0" fill="var(--color-warn)" fill-opacity="0.35"/>
+      <g stroke="var(--color-fg-muted)" stroke-width="1.25">
+        <circle cx="242" cy="150" r="5" :fill="rightLive ? 'var(--color-warn)' : 'var(--color-surface)'"/><circle cx="262" cy="150" r="5" :fill="leftLive ? 'var(--color-warn)' : 'var(--color-surface)'"/>
+        <circle cx="298" cy="150" r="5" :fill="rightLive ? 'var(--color-warn)' : 'var(--color-surface)'"/><circle cx="318" cy="150" r="5" :fill="leftLive ? 'var(--color-warn)' : 'var(--color-surface)'"/>
+        <circle cx="354" cy="150" r="5" :fill="rightLive ? (dropR > maxDrop ? 'var(--color-fg-faint)' : 'var(--color-warn)') : 'var(--color-surface)'"/><circle cx="374" cy="150" r="5" :fill="leftLive ? (dropL > maxDrop ? 'var(--color-fg-faint)' : 'var(--color-warn)') : 'var(--color-surface)'"/>
+        <circle cx="410" cy="150" r="5" :fill="rightLive ? 'var(--color-warn)' : 'var(--color-surface)'"/><circle cx="428" cy="150" r="5" :fill="leftLive ? 'var(--color-warn)' : 'var(--color-surface)'"/>
+      </g>
+    </g>
+    <text x="336" y="222" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">four cylinders, two plugs each</text>
+    <text x="364" y="240" font-size="12" text-anchor="middle" fill="var(--color-bad-fg)" x-show="dropR > maxDrop || (dropL > maxDrop && !broken)" x-text="(dropR > maxDrop ? 'right' : 'left') + ' plug in cylinder 3: fouled?'"></text>
+    <!-- P-leads to the switch -->
+    <path d="M278 28 L278 14 L544 14 L544 124" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <path d="M460 58 L470 58 M486 58 L552 58 L552 124" fill="none" stroke-width="1.25" stroke-dasharray="4 3" :stroke="broken ? 'var(--color-bad)' : 'var(--color-fg-faint)'"/>
+    <path d="M470 58 L486 58" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" x-show="!broken"/>
+    <text x="562" y="36" font-size="11" fill="var(--color-fg-faint)">P-leads</text>
+    <g x-show="broken"><path d="M472 50 L484 66 M484 50 L472 66" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round"/><text x="478" y="90" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)">broken</text></g>
+    <!-- ignition switch: tap a position -->
+    <circle cx="548" cy="168" r="44" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <g font-size="13" font-weight="600" text-anchor="middle" style="cursor: pointer">
+      <g @click="set_('OFF')"><circle :cx="lab('OFF').x" :cy="lab('OFF').y - 4" r="16" fill="var(--color-surface)" fill-opacity="0"/><text :x="lab('OFF').x" :y="lab('OFF').y" :fill="pos === 'OFF' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">OFF</text></g>
+      <g @click="set_('R')"><circle :cx="lab('R').x" :cy="lab('R').y - 4" r="16" fill="var(--color-surface)" fill-opacity="0"/><text :x="lab('R').x" :y="lab('R').y" :fill="pos === 'R' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">R</text></g>
+      <g @click="set_('L')"><circle :cx="lab('L').x" :cy="lab('L').y - 4" r="16" fill="var(--color-surface)" fill-opacity="0"/><text :x="lab('L').x" :y="lab('L').y" :fill="pos === 'L' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">L</text></g>
+      <g @click="set_('BOTH')"><circle :cx="lab('BOTH').x" :cy="lab('BOTH').y - 4" r="18" fill="var(--color-surface)" fill-opacity="0"/><text :x="lab('BOTH').x" :y="lab('BOTH').y" :fill="pos === 'BOTH' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">BOTH</text></g>
+    </g>
+    <line x1="548" y1="168" stroke="var(--color-brand)" stroke-width="6" stroke-linecap="round" :x2="key.x" :y2="key.y"/>
+    <circle cx="548" cy="168" r="10" fill="var(--color-brand)"/>
+    <text x="548" y="240" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">ignition switch</text>
+    <text x="548" y="256" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">tap a position</text>
+    <!-- readings so far -->
+    <g font-size="13">
+      <text x="232" y="276" fill="var(--color-fg-muted)">Left drop</text>
+      <text x="330" y="276" fill="var(--color-fg-muted)">Right drop</text>
+      <text x="432" y="276" fill="var(--color-fg-muted)">Difference</text>
+      <text x="232" y="298" font-size="16" font-weight="600" class="num" :fill="!seenL ? 'var(--color-fg-faint)' : okL ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="seenL ? readL + ' RPM' : '–'"></text>
+      <text x="330" y="298" font-size="16" font-weight="600" class="num" :fill="!seenR ? 'var(--color-fg-faint)' : okR ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="seenR ? dropR + ' RPM' : '–'"></text>
+      <text x="432" y="298" font-size="16" font-weight="600" class="num" :fill="!(seenL && seenR) ? 'var(--color-fg-faint)' : okDiff ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="seenL && seenR ? diff + ' RPM' : '–'"></text>
+      <text x="232" y="318" font-size="11" fill="var(--color-fg-faint)">limits (worked example's POH): drop 125, difference 50</text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label>Ignition switch <output x-text="pos"></output></label>
+      <span class="widget-presets">
+        <button type="button" @click="set_('OFF')" :aria-pressed="pos === 'OFF'">OFF</button>
+        <button type="button" @click="set_('R')" :aria-pressed="pos === 'R'">R</button>
+        <button type="button" @click="set_('L')" :aria-pressed="pos === 'L'">L</button>
+        <button type="button" @click="set_('BOTH')" :aria-pressed="pos === 'BOTH'">BOTH</button>
+      </span>
+    </div>
+    <div class="widget-control">
+      <label for="mgc-l">This engine's drop on the left magneto <output for="mgc-l" x-text="dropL + ' RPM'"></output></label>
+      <input type="range" id="mgc-l" min="0" max="250" step="5" x-model.number="dropL">
+    </div>
+    <div class="widget-control">
+      <label for="mgc-r">This engine's drop on the right magneto <output for="mgc-r" x-text="dropR + ' RPM'"></output></label>
+      <input type="range" id="mgc-r" min="0" max="250" step="5" x-model.number="dropR">
+    </div>
+    <div class="widget-control">
+      <label for="mgc-b" class="cursor-pointer"><span>Right magneto's P-lead broken</span>
+        <input type="checkbox" id="mgc-b" x-model="broken" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Tachometer</dt><dd class="widget-value" x-text="pos === 'OFF' ? (running ? 'still running at OFF' : 'engine faltering') : fmt(rpm) + ' RPM on ' + pos"></dd></div>
+    <div class="widget-readout" :class="verdict.c"><dt class="widget-label">Magneto check</dt><dd class="widget-value" x-text="verdict.t"></dd></div>
+    <div class="widget-readout" :class="pos !== 'OFF' ? '' : broken ? 'bad' : 'ok'"><dt class="widget-label">Dead cut at OFF</dt><dd class="widget-value"><span x-text="pos !== 'OFF' ? 'select OFF to test' : broken ? 'keeps running: magneto live' : 'falters: both earthed'"></span><span class="widget-flag bad" x-show="pos === 'OFF' && broken">live propeller</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('worked-example-right-fails')" :aria-pressed="active === 'worked-example-right-fails'">Worked example</button>
+      <button type="button" @click="preset('try-it-passes')" :aria-pressed="active === 'try-it-passes'">Try-it example</button>
+      <button type="button" @click="preset('no-drop-broken-p-lead')" :aria-pressed="active === 'no-drop-broken-p-lead'">No drop on L</button>
+      <button type="button" @click="preset('dead-cut-good')" :aria-pressed="active === 'dead-cut-good'">Dead cut</button>
+      <button type="button" @click="preset('dead-cut-live-magneto')" :aria-pressed="active === 'dead-cut-live-magneto'">Dead cut, live magneto</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> On one magneto each cylinder has one spark instead of two, so a healthy engine always loses a little RPM. The check asks three things: is each drop within the limit, is the difference within its limit, and was there a drop at all? No drop means the other magneto is not being earthed, and the dead cut at OFF finds the same fault. The limits are the worked example's POH figures; use your own POH's.</p>
+  <details class="widget-try"><summary>Try it: BOTH 1,800, left alone 1,710, right alone 1,650. Does it pass?</summary><p>Press Worked example: left drop 90 (within 125), right drop 150 (over 125), difference 60 (over 50). The right side has a problem, probably a fouled plug: clear it as the POH directs (higher RPM, leaned, briefly) and repeat; if it still fails, the aeroplane is unserviceable.</p></details>
+  <details class="widget-try"><summary>Try it: you select L and the RPM does not change at all. Good news?</summary><p>No. Press No drop on L: the right magneto should have been earthed but is still firing, so its P-lead or the switch is faulty. Then select OFF: the engine keeps running. With the switch at OFF that magneto is live, and moving the propeller by hand can start the engine.</p></details>
+</div>

@@ -51,7 +51,8 @@ def test_estimate_minutes_model() -> None:
     body = "word " * 1000
     assert loader.estimate_minutes(body) == 10
     assert loader.estimate_minutes(body + "\n![c](diagram:x)\n") == 12
-    assert loader.estimate_minutes(body + "\n![c](widget:x)\n") == 15
+    assert loader.estimate_minutes(body + "\n![c](widget:x)\n") == 13
+    assert loader.word_count('![q](widget:x "a (b) c")\nword\n') == 1  # a ")" inside the quoted title stays in the caption
     assert loader.estimate_minutes(body + '\n!!! example "W"\n    s\n??? check "Q"\n    a\n') == 10 + 2 + 1 + 1  # 'a' and 's' add a minute
     assert loader.estimate_minutes("") == loader.MIN_MINUTES
     assert loader.word_count('![a b c](diagram:x "d e")\n!!! tip "Exam tip"\n    one two\n') == 2
@@ -92,3 +93,16 @@ def test_lint_body_on_synthetic_lessons() -> None:
     for needle in ("short lesson", "self-check", "Worked example", "Why this matters", "Key points", "no diagram", "minutes 90"):
         assert needle in joined, needle
     assert "unknown admonition type `!!! danger`" in "\n".join(lint_body(full + '\n!!! danger "x"\n    y\n', [], {}))
+
+
+def test_lint_body_interactive_is_opt_in() -> None:
+    from app.seed.lint_lessons import is_interactive
+
+    assert is_interactive("widget", "anything")
+    assert is_interactive("diagram", "four-stroke-cycle")  # animated (@keyframes)
+    assert not is_interactive("diagram", "stall-speed-vs-bank")
+    still = LESSON.replace("Text.", "word " * 2100)  # its only visual is the still stall-speed-vs-bank chart
+    assert not any("nothing to move" in p for p in lint_body(still, [], {}))
+    assert any("nothing to move" in p for p in lint_body(still, [], {}, interactive=True))
+    animated = still + "\n![q](diagram:four-stroke-cycle)\n"
+    assert not any("nothing to move" in p for p in lint_body(animated, [], {}, interactive=True))

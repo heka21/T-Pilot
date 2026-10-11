@@ -1,0 +1,119 @@
+<div class="widget" x-data="widget({
+  glide: true, ld: 10, gam: 0,
+  W: 9810,
+  // BAKC 2.5: steady flight, no net force. Across the path lift = W cos γ; along it thrust = drag + W sin γ, with
+  // drag = lift ÷ (L/D). With the engine at idle (thrust 0) the path must tilt down until W sin γ pays for the drag:
+  // tan γ = 1 / (L/D). Weight of a 1,000 kg aeroplane, 9,810 N, as in the lesson.
+  rad(d) { return d * Math.PI / 180 },
+  get g() { return this.glide ? -Math.atan(1 / this.ld) * 180 / Math.PI : this.gam },
+  get L() { return this.W * Math.cos(this.rad(this.g)) },
+  get D() { return this.L / this.ld },
+  get Ws() { return this.W * Math.sin(this.rad(this.g)) },
+  get T() { return this.glide ? 0 : this.D + this.Ws },
+  get impossible() { return !this.glide && this.T < -0.5 },
+  get grad() { return Math.abs(this.g) < 0.05 ? 'level' : '1 in ' + this.fmt(1 / Math.abs(Math.tan(this.rad(this.g))), 1).replace(/\.0$/, '') + (this.g > 0 ? ' up' : ' down') },
+  // picture: CG at (220, 160); lift and weight at 110 px per 9,810 N, forces along the path 4 times longer
+  cx: 220, cy: 160,
+  get k() { return 110 / this.W },
+  get u() { return { x: Math.cos(this.rad(this.g)), y: -Math.sin(this.rad(this.g)) } },
+  get n() { return { x: -Math.sin(this.rad(this.g)), y: -Math.cos(this.rad(this.g)) } },
+  // a point on the aeroplane (side-view units, scale 1.3) turned with the pitch
+  pt(x, y) { const s = 1.3, c = Math.cos(this.rad(-this.g)), si = Math.sin(this.rad(-this.g)); return { x: this.cx + s * (x * c - y * si), y: this.cy + s * (x * si + y * c) } },
+  get wing() { return this.pt(-2, -8) },
+  get hub() { return this.pt(29, 2.6) },
+  get liftTip() { return { x: this.wing.x + this.n.x * this.L * this.k, y: this.wing.y + this.n.y * this.L * this.k } },
+  // drag drawn from the tail, back along the path, so it stays clear of the aeroplane
+  get tail() { return this.pt(-72, 0) },
+  get dragTip() { return { x: this.tail.x - this.u.x * this.D * this.k * 4, y: this.tail.y - this.u.y * this.D * this.k * 4 } },
+  get thrustTip() { return { x: this.hub.x + this.u.x * Math.max(0, this.T) * this.k * 4, y: this.hub.y + this.u.y * Math.max(0, this.T) * this.k * 4 } },
+  // W sin γ, drawn along the path just below it: backwards in a climb, forwards in a descent
+  get wsBase() { return { x: this.cx - this.n.x * 26, y: this.cy - this.n.y * 26 } },
+  get wsTip() { return { x: this.wsBase.x - this.u.x * this.Ws * this.k * 4, y: this.wsBase.y - this.u.y * this.Ws * this.k * 4 } },
+  get pathD() { return 'M' + (this.cx - this.u.x * 200).toFixed(1) + ' ' + (this.cy - this.u.y * 200).toFixed(1) + ' L' + (this.cx + this.u.x * 200).toFixed(1) + ' ' + (this.cy + this.u.y * 200).toFixed(1) },
+  get arcD() { const r = 185, e = { x: this.cx + r * this.u.x, y: this.cy + r * this.u.y }; return 'M' + (this.cx + r) + ' ' + this.cy + ' A' + r + ' ' + r + ' 0 0 ' + (this.g > 0 ? 0 : 1) + ' ' + e.x.toFixed(1) + ' ' + e.y.toFixed(1) },
+  presets: {
+    'glide-ld-10': { glide: true, ld: 10 },
+    'level-cruise': { glide: false, ld: 10, gam: 0 },
+    'steady-climb': { glide: false, ld: 10, gam: 5 },
+    'powered-descent': { glide: false, ld: 10, gam: -3 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="gcf-title" class="widget-stage">
+    <title id="gcf-title">An aeroplane on a climbing, level or descending flight path with lift at right angles to the path, weight straight down, drag back along the path, thrust forward, and the part of the weight that acts along the path</title>
+    <defs>
+      <marker id="gcf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-surface-2)"/>
+    <!-- horizon reference and the path -->
+    <line stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3" x1="20" x2="410" :y1="cy" :y2="cy"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="6 4" :d="pathD"/>
+    <path fill="none" stroke="var(--color-warn)" stroke-width="2" x-show="Math.abs(g) > 0.3" :d="arcD"/>
+    <text font-size="13" fill="var(--color-warn-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x="398" text-anchor="end" :y="g > 0 ? cy - 22 : cy + 34" x-show="Math.abs(g) > 0.3" x-text="'γ ' + fmt(Math.abs(g), 1) + '°'"></text>
+    <!-- the aeroplane, along its path (angle of attack ignored) -->
+    <g :transform="'translate(' + cx + ' ' + cy + ') rotate(' + (-g) + ')'">
+      <!-- plane side, scale 1.3, colour fg-muted, fill surface, no gear -->
+      <g transform="scale(1.3)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg-muted)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg-muted)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- forces -->
+    <line stroke="var(--color-fg)" stroke-width="2.5" marker-end="url(#gcf-arrow)" :x1="cx" :y1="cy" :x2="cx" :y2="cy + W * k"/>
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#gcf-arrow)" :x1="wing.x" :y1="wing.y" :x2="liftTip.x" :y2="liftTip.y"/>
+    <line stroke="var(--color-info)" stroke-width="2.5" marker-end="url(#gcf-arrow)" :x1="tail.x" :y1="tail.y" :x2="dragTip.x" :y2="dragTip.y"/>
+    <line stroke="var(--color-ok)" stroke-width="2.5" marker-end="url(#gcf-arrow)" x-show="T > 1" :x1="hub.x" :y1="hub.y" :x2="thrustTip.x" :y2="thrustTip.y"/>
+    <line stroke="var(--color-fg-muted)" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#gcf-arrow)" x-show="Math.abs(Ws) > 20" :x1="wsBase.x" :y1="wsBase.y" :x2="wsTip.x" :y2="wsTip.y"/>
+    <g font-size="13" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text fill="var(--color-brand-fg)" :x="liftTip.x + 10" :y="liftTip.y + 14">Lift</text>
+      <text fill="var(--color-fg)" :x="cx + 10" :y="cy + W * k - 4">Weight</text>
+      <text fill="var(--color-info)" text-anchor="middle" :x="dragTip.x + 4" :y="dragTip.y + (g > 0 ? 24 : -12)">Drag</text>
+      <text fill="var(--color-ok-fg)" x-show="T > 1" text-anchor="end" :x="thrustTip.x" :y="thrustTip.y + 24">Thrust</text>
+      <text fill="var(--color-fg-muted)" font-weight="400" font-size="12" x-show="Math.abs(Ws) > 20" :text-anchor="Ws > 0 ? 'end' : 'start'" :x="wsTip.x + (Ws > 0 ? -8 : 8)" :y="wsTip.y + 16" x-text="'W sin γ'"></text>
+    </g>
+    <!-- the balance -->
+    <g class="num" font-size="13">
+      <text x="440" y="40" font-weight="700" fill="var(--color-fg)">Across the path</text>
+      <text x="440" y="62" fill="var(--color-fg-muted)">Lift = W cos γ</text>
+      <text x="440" y="84" fill="var(--color-brand-fg)" font-weight="700" x-text="'= ' + fmt(L) + ' N'"></text>
+      <text x="440" y="124" font-weight="700" fill="var(--color-fg)">Along the path</text>
+      <text x="440" y="146" fill="var(--color-fg-muted)">Thrust = Drag + W sin γ</text>
+      <text x="440" y="168" :fill="impossible ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" font-weight="700" x-text="(glide ? '0' : fmt(Math.max(0, T))) + ' = ' + fmt(D) + (Ws < 0 ? ' − ' : ' + ') + fmt(Math.abs(Ws))"></text>
+      <text x="440" y="208" font-weight="700" fill="var(--color-fg)">Glide angle</text>
+      <text x="440" y="230" fill="var(--color-fg-muted)" x-text="'tan γ = drag ÷ lift = 1 ÷ ' + fmt(ld, 1).replace(/\.0$/, '')"></text>
+      <text x="440" y="252" fill="var(--color-fg-muted)" x-text="'= ' + fmt(Math.atan(1 / ld) * 180 / Math.PI, 1) + '° with no power, 1 in ' + fmt(ld, 1).replace(/\.0$/, '')"></text>
+    </g>
+    <text x="20" y="290" font-size="12" fill="var(--color-fg-faint)">Thrust, drag and W sin γ drawn 4 times longer than lift and weight</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gcf-glide" class="cursor-pointer"><span>Engine at idle: glide (no thrust)</span>
+        <input type="checkbox" id="gcf-glide" x-model="glide" class="size-5 accent-[var(--color-brand)]" @change="active = null"></label>
+    </div>
+    <div class="widget-control" x-show="!glide">
+      <label for="gcf-gam">Flight path angle, with power <output for="gcf-gam" x-text="(gam > 0 ? 'climb ' : gam < 0 ? 'descent ' : 'level ') + Math.abs(gam) + '°'"></output></label>
+      <input type="range" id="gcf-gam" min="-6" max="10" step="0.5" x-model.number="gam" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="gcf-ld">Lift-to-drag ratio <output for="gcf-ld" x-text="fmt(ld, 1)"></output></label>
+      <input type="range" id="gcf-ld" min="5" max="15" step="0.5" x-model.number="ld" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Flight path</dt><dd class="widget-value" x-text="Math.abs(g) < 0.05 ? 'level' : (g > 0 ? 'climb ' : 'descent ') + fmt(Math.abs(g), 1) + '° (' + grad + ')'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Lift and drag</dt><dd class="widget-value" x-text="fmt(L) + ' N and ' + fmt(D) + ' N'"></dd></div>
+    <div class="widget-readout" :class="impossible ? 'bad' : glide ? 'ok' : ''">
+      <dt class="widget-label">Thrust needed</dt>
+      <dd class="widget-value"><span x-text="glide ? '0 N: the weight pays for the drag' : impossible ? 'less than zero' : fmt(T) + ' N'"></span><span class="widget-flag bad" x-show="impossible">steeper than the glide</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('glide-ld-10')" :aria-pressed="active === 'glide-ld-10'">Glide, L/D 10</button>
+      <button type="button" @click="preset('level-cruise')" :aria-pressed="active === 'level-cruise'">Level</button>
+      <button type="button" @click="preset('steady-climb')" :aria-pressed="active === 'steady-climb'">Climb 5°</button>
+      <button type="button" @click="preset('powered-descent')" :aria-pressed="active === 'powered-descent'">Descent 3° with power</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In every steady case the forces balance: lift holds the part of the weight across the path, and thrust pays for drag plus the part of the weight along it. Climbing, that part of the weight acts backwards like extra drag, so thrust must exceed drag. With the engine at idle there is no thrust, so the path tilts down until the weight's forward share pays for the drag: the glide angle depends only on the lift-to-drag ratio. The 5° climb and 3° descent are illustrative angles; weight 9,810 N is the lesson's 1,000 kg aeroplane.</p>
+  <details class="widget-try"><summary>Try it: in a glide at L/D 10, what are lift and drag, and what is the glide angle?</summary><p>Press Glide, L/D 10: lift ≈ 9,761 N and drag ≈ 976 N, the lesson's figures. The path is 1 in 10, about 5.7°. A better L/D gives a flatter glide; slide it up and watch γ shrink.</p></details>
+  <details class="widget-try"><summary>Try it: why does a climb need more thrust than level flight at the same lift-to-drag ratio?</summary><p>Press Level, then Climb 5°: drag barely changes, but W sin γ, about 855 N here, now acts back along the path, so thrust rises from about 981 N to about 1,832 N. That extra is the work of lifting the weight.</p></details>
+</div>

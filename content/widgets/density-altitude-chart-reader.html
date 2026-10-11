@@ -1,0 +1,120 @@
+<div class="widget" x-data="widget({
+  temp: 30, pa: 3000,
+  // the lines are the lesson's mathematics: density altitude = pressure altitude + 120 x (OAT - ISA), ISA = 15 - 2 per 1,000 ft
+  get isa() { return 15 - 2 * this.pa / 1000 },
+  get dev() { return this.temp - this.isa },
+  get da() { return this.pa + 120 * this.dev },
+  // chart: -10..45 C across x 60..600, density altitude -2,000..10,000 ft up y 260..30
+  X(t) { return 60 + (t + 10) * 540 / 55 },
+  Y(d) { return 260 - (d + 2000) * 230 / 12000 },
+  get px() { return this.X(this.temp) },
+  get py() { return this.Y(this.clamp(this.da, -2000, 10000)) },
+  get onChart() { return this.da >= -2000 && this.da <= 10000 },
+  // the pressure altitude line through the point (dashed when it falls between two printed lines)
+  get paLine() {
+    const d = (t) => 1.24 * this.pa + 120 * (t - 15);
+    const a = Math.max(-10, 15 + (-2000 - 1.24 * this.pa) / 120), b = Math.min(45, 15 + (10000 - 1.24 * this.pa) / 120);
+    return { x1: this.X(a), y1: this.Y(d(a)), x2: this.X(b), y2: this.Y(d(b)) };
+  },
+  get between() {
+    if (this.pa % 1000 === 0) return 'on the ' + this.fmt(this.pa) + ' ft line';
+    const lo = Math.floor(this.pa / 1000) * 1000;
+    return this.fmt((this.pa - lo) / 10) + '% of the way from the ' + this.fmt(lo) + ' to the ' + this.fmt(lo + 1000) + ' ft line';
+  },
+  pick(p) {
+    this.temp = Math.round(this.clamp((p.x - 60) * 55 / 540 - 10, -10, 45));
+    const d = (260 - p.y) * 12000 / 230 - 2000;
+    this.pa = Math.round(this.clamp((d - 120 * (this.temp - 15)) / 1.24, -1000, 8000) / 50) * 50;
+    this.active = null;
+  },
+  presets: {
+    'worked-3000-30': { temp: 30, pa: 3000 },
+    'stirling-range-6500': { temp: -4, pa: 6500 },
+    'kalgoorlie-1350-40': { temp: 40, pa: 1350 },
+    'nav-computer-2500-30': { temp: 30, pa: 2500 },
+    'murchison-1850-34': { temp: 34, pa: 1850 },
+    'isa-2000-11': { temp: 11, pa: 2000 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="dac-title" class="widget-stage">
+    <title id="dac-title">A density altitude chart: temperature along the bottom, density altitude up the side and a sloping line for each 1,000 ft of pressure altitude. A crosshair goes up from the temperature to the pressure altitude line and across to the density altitude</title>
+    <!-- grid -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="60" y1="221.7" x2="600" y2="221.7"/><line x1="60" y1="183.3" x2="600" y2="183.3"/><line x1="60" y1="145" x2="600" y2="145"/>
+      <line x1="60" y1="106.7" x2="600" y2="106.7"/><line x1="60" y1="68.3" x2="600" y2="68.3"/>
+      <line x1="158.2" y1="30" x2="158.2" y2="260"/><line x1="256.4" y1="30" x2="256.4" y2="260"/><line x1="354.5" y1="30" x2="354.5" y2="260"/>
+      <line x1="452.7" y1="30" x2="452.7" y2="260"/><line x1="550.9" y1="30" x2="550.9" y2="260"/>
+    </g>
+    <rect x="60" y="30" width="540" height="230" fill="none" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="54" y="264">−2,000</text><text x="54" y="225.7">0</text><text x="54" y="187.3">2,000</text><text x="54" y="149">4,000</text>
+      <text x="54" y="110.7">6,000</text><text x="54" y="72.3">8,000</text><text x="54" y="34">10,000</text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="60" y="276">−10</text><text x="158.2" y="276">0</text><text x="256.4" y="276">10</text><text x="354.5" y="276">20</text>
+      <text x="452.7" y="276">30</text><text x="550.9" y="276">40</text>
+    </g>
+    <text x="330" y="294" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">outside air temperature (°C)</text>
+    <text x="13" y="145" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 13 145)">density altitude (ft)</text>
+    <!-- ISA: density altitude equals pressure altitude -->
+    <line x1="344.7" y1="260" x2="128.7" y2="49.2" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="2 4"/>
+    <text x="136" y="44" font-size="11" fill="var(--color-fg-faint)">ISA day</text>
+    <!-- pressure altitude lines, every 1,000 ft -->
+    <g stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round">
+      <line x1="141.8" y1="260" x2="600" y2="152.7"/><line x1="60" y1="255.4" x2="600" y2="128.9"/><line x1="60" y1="231.6" x2="600" y2="105.1"/>
+      <line x1="60" y1="207.9" x2="600" y2="81.4"/><line x1="60" y1="184.1" x2="600" y2="57.6"/><line x1="60" y1="160.3" x2="600" y2="33.8"/>
+      <line x1="60" y1="136.6" x2="514.9" y2="30"/><line x1="60" y1="112.8" x2="413.5" y2="30"/><line x1="60" y1="89" x2="312" y2="30"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-muted)" class="num">
+      <text x="604" y="156.7">SL</text><text x="604" y="132.9">1,000</text><text x="604" y="109.1">2,000</text><text x="604" y="85.4">3,000</text>
+      <text x="604" y="61.6">4,000</text><text x="604" y="37.8">5,000</text>
+      <text x="514.9" y="24" text-anchor="middle">6,000</text><text x="413.5" y="24" text-anchor="middle">7,000</text><text x="312" y="24" text-anchor="middle">8,000</text>
+    </g>
+    <text x="60" y="18" font-size="12" font-weight="600" fill="var(--color-fg-muted)">Lines: pressure altitude (ft)</text>
+    <!-- your pressure altitude line -->
+    <line stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" :x1="paLine.x1" :y1="paLine.y1" :x2="paLine.x2" :y2="paLine.y2" x-show="pa % 1000 !== 0"/>
+    <line stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :x1="paLine.x1" :y1="paLine.y1" :x2="paLine.x2" :y2="paLine.y2" x-show="pa % 1000 === 0"/>
+    <!-- the crosshair: up from the temperature, across to the density altitude -->
+    <g x-show="onChart">
+      <line y1="260" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" :x1="px" :x2="px" :y2="py"/>
+      <line x1="60" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" :y1="py" :y2="py" :x2="px"/>
+      <text font-size="13" font-weight="700" fill="var(--color-bad-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="px > 200 ? 66 : px + 12" :y="py - 9" x-text="fmt(da) + ' ft'"></text>
+      <text font-size="13" font-weight="700" fill="var(--color-bad-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" text-anchor="middle" y="253" :x="Math.min(580, Math.max(80, px))" x-text="fmt(temp) + '°'"></text>
+      <circle r="6" fill="var(--color-surface)" stroke="var(--color-bad)" stroke-width="3" :cx="px" :cy="py"/>
+    </g>
+    <circle r="18" fill="var(--color-fg)" fill-opacity="0" style="touch-action: none; cursor: grab" :cx="px" :cy="py" @pointerdown="drag($event, (p) => pick(p))"/>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dac-temp">Outside air temperature <output for="dac-temp" x-text="temp + ' °C'"></output></label>
+      <input type="range" id="dac-temp" min="-10" max="45" step="1" x-model.number="temp" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="dac-pa">Pressure altitude <output for="dac-pa" x-text="fmt(pa) + ' ft'"></output></label>
+      <input type="range" id="dac-pa" min="-1000" max="8000" step="50" x-model.number="pa" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="da - pa >= 2000 ? 'warn' : da < pa ? 'ok' : ''">
+      <dt class="widget-label">Density altitude (read across)</dt>
+      <dd class="widget-value" x-text="fmt(da) + ' ft'"></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Check by the arithmetic</dt><dd class="widget-value" x-text="fmt(pa) + ' + 120 × (' + fmt(temp) + ' − ' + fmt(isa, 1) + ') = ' + fmt(da)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Where the point sits</dt><dd class="widget-value" x-text="between"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('worked-3000-30')" :aria-pressed="active === 'worked-3000-30'">3,000 ft, 30°</button>
+      <button type="button" @click="preset('nav-computer-2500-30')" :aria-pressed="active === 'nav-computer-2500-30'">2,500 ft, 30°</button>
+      <button type="button" @click="preset('kalgoorlie-1350-40')" :aria-pressed="active === 'kalgoorlie-1350-40'">Kalgoorlie</button>
+      <button type="button" @click="preset('stirling-range-6500')" :aria-pressed="active === 'stirling-range-6500'">6,500 ft, −4°</button>
+      <button type="button" @click="preset('murchison-1850-34')" :aria-pressed="active === 'murchison-1850-34'">Murchison strip</button>
+      <button type="button" @click="preset('isa-2000-11')" :aria-pressed="active === 'isa-2000-11'">ISA day</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Up from the temperature to your pressure altitude line, interpolating between lines, then straight across to read the density altitude. The lines slope at the 120 ft per degree of the mathematics, so a chart answer must agree with the arithmetic; where a line crosses the dotted ISA line the two altitudes are equal. Drag the crosshair or use the sliders. This chart is drawn from the lesson's formula; a POH chart may lay its lines out differently.</p>
+  <details class="widget-try"><summary>Try it: pressure altitude 3,000 ft, OAT 30 degrees. Read the density altitude, then check it.</summary><p>Up from 30 to the 3,000 ft line and across: 5,520 ft. Check: ISA at 3,000 ft is 9 degrees, so the deviation is +21 and 3,000 + 120 × 21 = 5,520 ft.</p></details>
+  <details class="widget-try"><summary>Try it: your pressure altitude is 2,500 ft, halfway between two lines. What do you do?</summary><p>Interpolate: go up from the temperature to a point halfway between the 2,000 and 3,000 ft lines, then across. At 30 degrees that gives 4,900 ft, the same as the arithmetic: 2,500 + 120 × 20.</p></details>
+</div>

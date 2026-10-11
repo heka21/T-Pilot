@@ -99,7 +99,8 @@ stylesheet stops all `.visual` animation under `prefers-reduced-motion`, so diag
 
 ## Widgets
 
-A widget file is one root element: `<div class="widget" x-data="{ ... }">` containing, in order, the picture
+A widget file is one root element: `<div class="widget" x-data="widget({ ... })">` (or `timeline({ ... })` for a
+process over time; both from `app/static/viz.js`, see `tools/diagrams/AUTHORING.md`; older widgets use a bare `{ ... }`) containing, in order, the picture
 (`<svg>` with Alpine bindings, or `<div class="widget-canvas" data-widget="explorer-name" ...>` for Three.js),
 `.widget-controls` (a `.widget-control` per slider with `<label>` + `<output>`), `.widget-readouts`
 (`.widget-readout` with `.widget-label` and `.widget-value`; add class `bad`/`warn`/`ok` and a

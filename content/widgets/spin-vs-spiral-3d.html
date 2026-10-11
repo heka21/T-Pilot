@@ -1,0 +1,32 @@
+<div class="widget" data-widget="explorer" data-explorer="spinspiral">
+  <div class="widget-canvas" data-canvas aria-label="3D view of an aeroplane in a spin or a spiral dive, with the path it leaves behind"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="spiral"> Spiral dive instead of a spin</label>
+      <label class="check"><input type="checkbox" data-param="recover"> Recover (the standard actions, in order)</label>
+    </div>
+    <div class="widget-control"><label for="ss3-vs">Book stall speed (level, flaps up) <output data-out="vs">50 kt</output></label><input id="ss3-vs" type="range" min="40" max="60" step="1" value="50" data-param="vs"></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout warn"><dt>ASI</dt><dd data-out="ias">50 kt · low, steady</dd></div>
+    <div class="widget-readout ok"><dt>Load factor</dt><dd><span data-out="g">1.2 g · low</span><span class="widget-flag bad" data-flag="overstress" style="display:none">Over +3.8 g</span></dd></div>
+    <div class="widget-readout"><dt>Rate of descent</dt><dd data-out="rod">4,900 ft/min · high</dd></div>
+    <div class="widget-readout bad"><dt>Wings</dt><dd data-out="wings" class="text-sm">stalled: push to unstall</dd></div>
+    <div class="widget-readout"><dt>Turn coordinator</dt><dd data-out="tc" class="text-sm">rotation to the left; cannot tell them apart</dd></div>
+    <div class="widget-readout"><dt>Time</dt><dd data-out="clock">0.0 s</dd></div>
+  </dl>
+  <p class="widget-value mt-2 text-sm font-semibold" data-out="mode">SPIN: both wings stalled, autorotation</p>
+  <ol class="mt-1 list-decimal pl-5 text-sm text-fg-muted" data-out="recovery" aria-label="Standard recovery"></ol>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Scenarios">
+      <button type="button" data-preset="spin" data-set='{"spiral": false, "recover": false}'>Spin</button>
+      <button type="button" data-preset="spiral-dive" data-set='{"spiral": true, "recover": false}'>Spiral dive</button>
+      <button type="button" data-preset="spin-recovery" data-set='{"spiral": false, "recover": true}'>Spin recovery</button>
+      <button type="button" data-preset="spiral-recovery" data-set='{"spiral": true, "recover": true}'>Spiral recovery</button>
+    </div>
+    <button type="button" class="btn-secondary" data-action="play">Pause</button><button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit; the aeroplane stays in view and the air moves past it.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Both are steep rotating descents, and the one instrument that tells them apart is the ASI. In a spin the wings are stalled (the streamers break away), the aeroplane autorotates about a near-vertical path and the airspeed stays low and steady, because a stalled wing's drag stops it accelerating; the load factor is low. In a spiral dive the wings are flying, the airspeed is high and rising fast and the load factor builds: the danger is overspeed and overstress. The recoveries are nearly opposite: push in a spin, roll level then ease out in a spiral dive. The POH procedure for your type overrides any generic one. The spiral's radius is drawn compressed so the turn fits the picture.</p>
+  <details class="widget-try"><summary>Try this: the aeroplane is rotating and descending steeply and the ASI reads 120 kt and rising. What do you do first, and what must you not do?</summary><p>It is a spiral dive. Close the throttle, roll the wings level with aileron and coordinated rudder, then ease out of the dive gently. Do not push (that is spin recovery and only steepens the dive) and do not pull before the wings are level (that tightens the spiral and builds the load factor).</p></details>
+  <details class="widget-try"><summary>Try this: in the spin, why does the load factor stay low while the rate of descent is high?</summary><p>The wings are stalled, so they make little lift: the aeroplane is falling as much as flying, with the stalled wings' drag holding the airspeed near the stall. No lift, no g. Pulling would only deepen the stall; the control column goes centrally forward until the rotation stops.</p></details>
+</div>

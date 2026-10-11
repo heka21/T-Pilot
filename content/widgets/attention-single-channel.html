@@ -1,0 +1,183 @@
+<div class="widget" x-data="timeline({
+  duration: 20, loop: false, chatter: false, expect: false,
+  // PHFC 2.13: senses -> a short-lived sensory store (a fraction of a second) -> perception, using expectation ->
+  // a limited, essentially single-channel attention -> the mental model -> decision and action, with feedback.
+  // Well-practised skills run in the background. Errors can enter at every stage. The lesson's scene: joining the
+  // circuit at Murrayfield, with the runway, the windsock, a speck that might be traffic, a radio call and a gentle
+  // bank. The timings are compressed and illustrative.
+  hold: 0.13,
+  get items() {
+    const it = [
+      { k: 'sock', a: 0.04, d: 0.11, row: 0, name: 'windsock', know: 'wind: light, from the left' },
+      { k: 'traffic', a: 0.2, d: 0.11, row: 1, name: 'the speck', know: 'traffic: on base, ahead' },
+      { k: 'radio', a: 0.42, d: 0.13, row: 2, name: 'radio call', know: '' },
+    ];
+    if (this.chatter) it.push({ k: 'pax', a: 0.16, d: 0.44, row: 3, name: 'passenger', know: '' });
+    return it.sort((x, y) => x.a - y.a);
+  },
+  // the single channel: one item at a time, first come; an item not reached before its store fades is lost
+  get plan() {
+    let free = 0; const out = {};
+    for (const it of this.items) {
+      if (free <= it.a + this.hold) { const s = Math.max(free, it.a); out[it.k] = { s, e: s + it.d, lost: false }; free = s + it.d }
+      else out[it.k] = { s: null, e: null, lost: true };
+    }
+    return out;
+  },
+  st(k) {
+    const it = this.items.find((i) => i.k === k), p = this.plan[k];
+    if (!it || this.t < it.a) return 'none';
+    if (p.lost) return this.t < it.a + this.hold ? 'store' : 'lost';
+    if (this.t < p.s) return 'store';
+    if (this.t < p.e) return 'attend';
+    return 'known';
+  },
+  store(k) { const it = this.items.find((i) => i.k === k); return it && this.t >= it.a ? this.clamp(1 - (this.t - it.a) / this.hold, 0, 1) : 0 },
+  get busy() { for (const it of this.items) if (this.st(it.k) === 'attend') return it; return null },
+  get trafficKnown() { return this.st('traffic') === 'known' },
+  get decided() { return this.t >= 0.66 },
+  get decision() {
+    if (!this.decided) return '';
+    if (!this.trafficKnown) return 'Turn base now';
+    return this.expect ? 'Turn base now' : 'Extend, follow the traffic';
+  },
+  get bad() { return this.decided && (!this.trafficKnown || this.expect) },
+  get acted() { return this.t >= 0.78 },
+  get feedback() { return this.t >= 0.88 },
+  steps: [
+    { at: 0, label: 'Joining' }, { at: 0.04, label: 'Windsock' }, { at: 0.2, label: 'A speck' }, { at: 0.42, label: 'Radio call' },
+    { at: 0.66, label: 'Decide' }, { at: 0.78, label: 'Act' }, { at: 0.88, label: 'Feedback' },
+  ],
+  get caption() {
+    const t = this.t;
+    if (t < 0.04) return 'Joining the circuit at Murrayfield. Your senses take in far more than you can use; each impression waits a fraction of a second in a sensory store, then fades unless attention picks it up.';
+    if (this.chatter && t >= 0.42 && t < 0.66) return 'The radio call comes while your passenger is still talking. It waits in the sensory store too, and fades: one channel, one thing at a time. Your mental model still has an empty circuit.';
+    if (this.chatter && t >= 0.16 && t < 0.42 && this.st('traffic') !== 'known') return 'Your passenger starts talking and your one channel of attention goes to them. The speck that might be traffic sits in the sensory store, unattended, and fades: it never reaches your mental model.';
+    if (t < 0.2) return 'Attention takes the windsock: light wind from the left. The gentle bank you are holding runs in the background as a well-practised skill and needs no attention.';
+    if (t < 0.42) return this.st('traffic') === 'lost' ? 'The speck was never attended, and it has gone from the sensory store.' : this.expect ? 'A speck low on the left. You expect an empty circuit, and perception matches the speck to what you expect: a bird. Perception is fast because it uses expectation, and that is also how it goes wrong.' : 'A speck low on the left: attention switches to it and perception matches it to past experience: an aeroplane on base. It goes into your mental model.';
+    if (t < 0.66) return this.expect ? 'A partly heard call, \'on base, full stop\', is filled in by expectation and heard as \'departing\'. Both cues were sensed and attended, but misperceived.' : 'The radio call confirms it: the other aircraft is on base for a full stop. Attention can take only one demanding thing at a time, so it switches here from the lookout to listening.';
+    if (t < 0.78) return this.bad ? 'You decide on a mental model that no longer matches reality: you believe the circuit is clear. Every good decision built on it will be wrong.' : 'With an accurate mental model the decision is easy: extend downwind and follow the traffic.';
+    if (t < 0.88) return this.bad ? 'You turn base, towards the aircraft you never knew was there. The error entered at ' + (this.trafficKnown ? 'perception' : 'attention') + ', not at the decision.' : 'You act: extend downwind, keep the traffic in sight.';
+    return this.bad ? 'Feedback: the speck is now a Cessna filling the windscreen. Senses update the model and the loop goes round again, but late. The defences: a lookout that keeps cycling, a passenger briefing (quiet in the circuit), and a readback of anything you are unsure of.' : 'Feedback: your eyes check the result, the model is updated and the loop goes round again: senses, perception, decision, action.';
+  },
+  presets: {
+    'clear-head': { chatter: false, expect: false, t: 0.6 },
+    'passenger-talking': { chatter: true, expect: false, t: 0.3 },
+    'passenger-decision': { chatter: true, expect: false, t: 0.8 },
+    'expectation': { chatter: false, expect: true, t: 0.55 },
+    'expectation-decision': { chatter: false, expect: true, t: 0.8 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="asc-title" class="widget-stage">
+    <title id="asc-title">Information processing joining the circuit: the senses feed short-lived sensory stores, a single channel of attention takes one item at a time into the mental model, then decision and action, with feedback; unattended items fade and are lost</title>
+    <defs>
+      <marker id="asc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- column heads -->
+    <g font-size="12" font-weight="600" fill="var(--color-fg-muted)" text-anchor="middle">
+      <text x="78" y="20">Senses</text><text x="196" y="20">Sensory store</text><text x="306" y="20">Attention</text>
+      <text x="442" y="20">Mental model</text><text x="576" y="20">Decide, act</text>
+    </g>
+    <!-- the inputs: rows 0..3 at y 52, 102, 152, 202 -->
+    <g font-size="12">
+      <rect x="16" y="36" width="124" height="32" rx="8" stroke-width="1.25" :fill="st('sock') === 'none' ? 'var(--color-surface)' : 'var(--color-surface-2)'" stroke="var(--color-line-strong)"/>
+      <text x="26" y="56" fill="var(--color-fg)">eyes: windsock</text>
+      <rect x="16" y="86" width="124" height="32" rx="8" stroke-width="1.25" :fill="st('traffic') === 'none' ? 'var(--color-surface)' : 'var(--color-surface-2)'" stroke="var(--color-line-strong)"/>
+      <text x="26" y="106" fill="var(--color-fg)">eyes: a speck</text>
+      <rect x="16" y="136" width="124" height="32" rx="8" stroke-width="1.25" :fill="st('radio') === 'none' ? 'var(--color-surface)' : 'var(--color-surface-2)'" stroke="var(--color-line-strong)"/>
+      <text x="26" y="156" fill="var(--color-fg)">ears: radio call</text>
+      <rect x="16" y="186" width="124" height="32" rx="8" stroke-width="1.25" fill="var(--color-surface)" stroke="var(--color-line-strong)" :stroke-dasharray="chatter ? 'none' : '4 3'"/>
+      <text x="26" y="206" :fill="chatter ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="chatter ? 'ears: passenger' : '(quiet cabin)'"></text>
+      <rect x="16" y="236" width="124" height="32" rx="8" stroke-width="1.25" fill="var(--color-surface)" stroke="var(--color-line-strong)"/>
+      <text x="26" y="256" fill="var(--color-fg)">inner ear: bank</text>
+    </g>
+    <!-- sensory store bars, fading -->
+    <g>
+      <rect x="160" y="46" width="72" height="12" rx="6" fill="var(--color-surface-2)"/>
+      <rect x="160" y="46" height="12" rx="6" :width="72 * store('sock')" :fill="st('sock') === 'lost' ? 'var(--color-bad)' : 'var(--color-info)'"/>
+      <rect x="160" y="96" width="72" height="12" rx="6" fill="var(--color-surface-2)"/>
+      <rect x="160" y="96" height="12" rx="6" :width="72 * store('traffic')" fill="var(--color-info)"/>
+      <rect x="160" y="146" width="72" height="12" rx="6" fill="var(--color-surface-2)"/>
+      <rect x="160" y="146" height="12" rx="6" :width="72 * store('radio')" fill="var(--color-info)"/>
+      <rect x="160" y="196" width="72" height="12" rx="6" fill="var(--color-surface-2)"/>
+      <rect x="160" y="196" height="12" rx="6" :width="72 * store('pax')" fill="var(--color-info)"/>
+    </g>
+    <text x="196" y="124" font-size="12" text-anchor="middle" font-weight="700" fill="var(--color-bad-fg)" x-show="st('traffic') === 'lost'">faded, unseen</text>
+    <text x="196" y="174" font-size="12" text-anchor="middle" font-weight="700" fill="var(--color-bad-fg)" x-show="st('radio') === 'lost'">faded, unheard</text>
+    <!-- the single channel: a funnel -->
+    <path d="M250 36 L362 36 L322 120 L322 170 L290 170 L290 120 Z" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="306" y="186" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)">one channel</text>
+    <g x-show="busy">
+      <rect x="252" y="66" width="108" height="30" rx="15" fill="var(--color-brand)"/>
+      <text x="306" y="86" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-on-brand)" x-text="busy ? busy.name : ''"></text>
+    </g>
+    <!-- background skill: the bank bypasses attention -->
+    <path d="M140 252 L442 252 L442 240" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#asc-arrow)"/>
+    <text x="260" y="244" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">skill runs in the background</text>
+    <!-- mental model -->
+    <rect x="370" y="36" width="144" height="200" rx="10" fill="var(--color-surface)" stroke-width="2" :stroke="bad ? 'var(--color-bad)' : 'var(--color-line-strong)'"/>
+    <g font-size="11">
+      <text x="378" y="58" fill="var(--color-fg)">runway ahead</text>
+      <text x="378" y="80" fill="var(--color-fg)" x-show="st('sock') === 'known'">wind: light, from left</text>
+      <text x="378" y="102" :fill="trafficKnown && !expect ? 'var(--color-fg)' : 'var(--color-bad-fg)'" x-show="trafficKnown || t >= 0.4" x-text="!trafficKnown ? 'traffic: none (wrong)' : expect ? 'speck: a bird (wrong)' : 'traffic: on base'"></text>
+      <text x="378" y="124" :fill="expect ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-show="st('radio') === 'known'" x-text="expect ? 'call: departing (wrong)' : 'call: one on base'"></text>
+      <text x="378" y="146" fill="var(--color-fg)">holding a gentle bank</text>
+    </g>
+    <text x="442" y="226" font-size="11" text-anchor="middle" :fill="bad ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'" x-text="bad ? 'does not match reality' : 'situational awareness'"></text>
+    <line x1="358" y1="104" x2="368" y2="104" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#asc-arrow)"/>
+    <!-- decide and act -->
+    <line x1="514" y1="104" x2="522" y2="104" stroke="var(--color-fg-muted)" stroke-width="1.5" marker-end="url(#asc-arrow)"/>
+    <rect x="524" y="70" width="104" height="66" rx="10" stroke-width="2" :fill="decided ? (bad ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)') : 'var(--color-surface)'" :stroke="decided ? (bad ? 'var(--color-bad)' : 'var(--color-ok)') : 'var(--color-line-strong)'"/>
+    <text x="576" y="96" font-size="12" text-anchor="middle" font-weight="600" :fill="bad ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-show="decided" x-text="decision.split(', ')[0]"></text>
+    <text x="576" y="114" font-size="12" text-anchor="middle" :fill="bad ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-show="decided && decision.includes(', ')" x-text="decision.split(', ')[1] || ''"></text>
+    <text x="576" y="96" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-show="!decided">…</text>
+    <text x="576" y="156" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="acted">action</text>
+    <!-- feedback loop -->
+    <path d="M576 136 L576 288 L78 288 L78 272" fill="none" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#asc-arrow)" :stroke="feedback ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="330" y="282" font-size="11" text-anchor="middle" :fill="feedback ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">feedback: senses check the result</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the join'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="asc-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Through the circuit join">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="asc-chatter" class="cursor-pointer"><span>A passenger starts talking as you join</span>
+        <input type="checkbox" id="asc-chatter" x-model="chatter" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="asc-expect" class="cursor-pointer"><span>You expect to be first in</span>
+        <input type="checkbox" id="asc-expect" x-model="expect" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="busy ? 'warn' : ''"><dt class="widget-label">Attention on</dt><dd class="widget-value text-sm" x-text="busy ? busy.name : 'scanning'"></dd></div>
+    <div class="widget-readout" :class="trafficKnown ? (expect ? 'bad' : 'ok') : st('traffic') === 'lost' ? 'bad' : ''"><dt class="widget-label">The traffic</dt><dd class="widget-value text-sm" x-text="trafficKnown ? (expect ? 'Seen, taken for a bird' : 'In your mental model') : st('traffic') === 'attend' ? 'Being attended' : st('traffic') === 'lost' ? 'Sensed, never attended' : st('traffic') === 'none' ? 'Not yet in view' : 'In the sensory store'"></dd></div>
+    <div class="widget-readout" :class="decided ? (bad ? 'bad' : 'ok') : ''"><dt class="widget-label">Decision</dt><dd class="widget-value text-sm"><span x-text="decided ? decision : 'not yet'"></span><span class="widget-flag bad" x-show="bad">conflict</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('clear-head')" :aria-pressed="active === 'clear-head'">Clear head</button>
+      <button type="button" @click="preset('passenger-talking')" :aria-pressed="active === 'passenger-talking'">Passenger talking</button>
+      <button type="button" @click="preset('passenger-decision')" :aria-pressed="active === 'passenger-decision'">…and the decision</button>
+      <button type="button" @click="preset('expectation')" :aria-pressed="active === 'expectation'">Expectation</button>
+      <button type="button" @click="preset('expectation-decision')" :aria-pressed="active === 'expectation-decision'">…and the turn</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Everything you sense has to queue for one channel of attention, and what waits too long in the sensory store simply fades. A passenger's chatter at the wrong moment and the speck of traffic never reaches your mental model; expectation can turn a call into the one you wanted to hear. Either way the decision is reasonable and wrong, because the picture it rests on is wrong. Timings are compressed and illustrative.</p>
+  <details class="widget-try"><summary>Try it: where did the error enter when the passenger was talking?</summary><p>Press Passenger talking, then …and the decision: the speck and then the radio call were sensed, but attention was busy with the passenger, so both faded from the sensory store. The error entered at attention; the decision itself was logical on the picture you had. Brief passengers to stay quiet in the circuit.</p></details>
+  <details class="widget-try"><summary>Try it: how can you see the traffic and still turn in front of it?</summary><p>Press Expectation: the speck and the call both reached attention, but perception interprets them against what you expect and fills the gaps: a bird, and a call heard as ‘departing’. The error entered at perception. If in doubt, look again and ask.</p></details>
+</div>

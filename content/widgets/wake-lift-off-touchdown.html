@@ -1,0 +1,131 @@
+<div class="widget" x-data="widget({
+  mode: 'to-after-to', you: 30, rot: 45, td: 35,
+  // BAKC 4.4: the wake exists from the heavy's rotation (nosewheel lifting) to its nosewheel touchdown, along and below
+  // its flight path; near the ground it settles and spreads. The four runway rows of the lesson's table. Positions are
+  // percentages of the runway length; the heavy's points are illustrative.
+  get youTakeOff() { return this.mode === 'to-after-to' || this.mode === 'to-after-ld' },
+  get heavyTookOff() { return this.mode === 'to-after-to' || this.mode === 'ld-after-to' },
+  get hp() { return this.heavyTookOff ? this.rot : this.td },
+  get gap() { return this.you - this.hp },
+  get safe() {
+    if (this.mode === 'to-after-to') return this.gap <= -3;
+    if (this.mode === 'ld-after-ld') return this.gap >= 3;
+    if (this.mode === 'ld-after-to') return this.gap <= -10;
+    return this.gap >= 3;
+  },
+  get rule() {
+    return { 'to-after-to': 'Rotate before its rotation point, climb above its path', 'ld-after-ld': 'At or above its approach path, touch down beyond its touchdown point', 'ld-after-to': 'Touch down well before its rotation point', 'to-after-ld': 'Rotate beyond its touchdown point' }[this.mode];
+  },
+  get youWord() { return this.youTakeOff ? 'lift-off' : 'touchdown' },
+  get heavyWord() { return this.heavyTookOff ? 'rotation point' : 'touchdown point' },
+  // picture: runway from x 60 to 600 on the ground at y 240
+  X(p) { return 60 + p * 5.4 },
+  get hx() { return this.X(this.hp) },
+  get yx() { return this.X(this.you) },
+  // the heavy's path: climbing away from its rotation point, or descending to its touchdown point (drawn steeper than life)
+  get heavyPath() { return this.heavyTookOff ? 'M' + this.hx + ' 240 L640 ' + (240 - (640 - this.hx) * 0.35) : 'M0 ' + (240 - this.hx * 0.35) + ' L' + this.hx + ' 240' },
+  // the wake: a band along and below the heavy's path, settling onto the runway
+  get wake() {
+    if (this.heavyTookOff) { const x0 = this.hx; return 'M' + x0 + ' 240 L640 ' + (240 - (640 - x0) * 0.35 + 4) + ' L640 ' + Math.min(240, 240 - (640 - x0) * 0.35 + 70) + ' L' + (x0 + 70) + ' 240 Z' }
+    const x1 = this.hx; return 'M' + Math.max(0, x1 - 300) + ' 240 L0 ' + Math.min(240, 240 - x1 * 0.35 + 70) + ' L0 ' + (240 - x1 * 0.35 + 4) + ' L' + x1 + ' 240 Z';
+  },
+  // your path: a steeper climb from your lift-off point, or a descent parallel to the heavy's ending at your touchdown
+  get yourPath() { return this.youTakeOff ? 'M' + this.yx + ' 240 L' + Math.min(640, this.yx + 180) + ' ' + (240 - Math.min(640 - this.yx, 180) * 0.75) : 'M0 ' + (240 - this.yx * 0.35) + ' L' + this.yx + ' 240' },
+  get roll() { return this.youTakeOff ? 'M60 236 L' + this.yx + ' 236' : 'M' + this.yx + ' 236 L' + Math.min(600, this.yx + 90) + ' 236' },
+  pathY(x) { return this.heavyTookOff ? 240 - (x - this.hx) * 0.35 : 240 - (this.hx - x) * 0.35 },
+  get wakeLabelX() { return this.heavyTookOff ? Math.min(560, this.hx + 150) : Math.max(40, this.hx - 150) },
+  get caption() {
+    const s = this.safe;
+    if (this.mode === 'to-after-to') return s ? 'You are airborne before the point where its wake begins, and your steeper climb keeps you above its path. Turn away upwind of its track if you can.' : 'You lift off past its rotation point: you are climbing into the wake that lies along and below its climb path. Wait for it to decay instead.';
+    if (this.mode === 'ld-after-ld') return s ? 'Your approach stays above its path and you touch down where its wing had stopped making lift: no wake on that part of the runway.' : 'You touch down short of its touchdown point, so your last few hundred feet are below its approach path, in the sinking vortices. Go around, or land beyond it.';
+    if (this.mode === 'ld-after-to') return s ? 'You land and stop well before the place where it rotated, so you never meet the wake, which starts there.' : 'Too close to (or past) its rotation point: the wake begins there and lies over the runway beyond. Touch down well before it.';
+    return s ? 'You roll past its touchdown point before lifting off, so you climb out over runway it never made wake over.' : 'Lifting off before its touchdown point puts you in the air under its approach path, where the vortices have settled.';
+  },
+  presets: {
+    'takeoff-before-its-rotation': { mode: 'to-after-to', you: 30, rot: 45 },
+    'takeoff-after-its-rotation': { mode: 'to-after-to', you: 60, rot: 45 },
+    'land-beyond-its-touchdown': { mode: 'ld-after-ld', you: 55, td: 35 },
+    'land-short-of-its-touchdown': { mode: 'ld-after-ld', you: 22, td: 35 },
+    'land-before-its-rotation': { mode: 'ld-after-to', you: 20, rot: 55 },
+    'takeoff-beyond-its-touchdown': { mode: 'to-after-ld', you: 55, td: 35 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="wlt-title" class="widget-stage">
+    <title id="wlt-title">Side view of a runway with a heavier aircraft's rotation or touchdown point, its flight path and the wake lying along and below it, and your own lift-off or touchdown point and path</title>
+    <defs>
+      <marker id="wlt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="240" fill="var(--color-sky-soft)" fill-opacity="0.6"/>
+    <!-- wake band and vortex pairs -->
+    <path :d="wake" fill="var(--color-bad)" fill-opacity="0.16" stroke="var(--color-bad)" stroke-width="1" stroke-dasharray="4 3"/>
+    <!-- heavy's path -->
+    <path :d="heavyPath" fill="none" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- ground and runway -->
+    <rect x="0" y="240" width="640" height="60" fill="var(--color-surface-2)"/>
+    <rect x="60" y="238" width="540" height="8" rx="2" fill="var(--color-tarmac)"/>
+    <line x1="60" y1="242" x2="600" y2="242" stroke="var(--color-paint)" stroke-width="1" stroke-dasharray="12 10"/>
+    <!-- heavy's point -->
+    <line :x1="hx" :x2="hx" y1="200" y2="256" stroke="var(--color-info)" stroke-width="2"/>
+    <circle r="5" fill="var(--color-info)" :cx="hx" cy="240"/>
+    <text font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" :x="hx" y="272" x-text="'heavy\'s ' + heavyWord"></text>
+    <text font-size="12" fill="var(--color-bad-fg)" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="wakeLabelX" :y="pathY(wakeLabelX) + 24" text-anchor="middle">wake</text>
+    <g font-size="12" stroke-linecap="round">
+      <line x1="498" y1="22" x2="522" y2="22" stroke="var(--color-info)" stroke-width="2.5"/>
+      <text x="530" y="26" fill="var(--color-info-fg)">heavy's path</text>
+      <line x1="498" y1="40" x2="522" y2="40" stroke="var(--color-brand)" stroke-width="2.5"/>
+      <text x="530" y="44" fill="var(--color-brand-fg)">your path</text>
+    </g>
+    <!-- your roll and path -->
+    <path :d="roll" fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round"/>
+    <path :d="yourPath" fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#wlt-arrow)"/>
+    <!-- your point: drag it along the runway -->
+    <g style="touch-action: none; cursor: ew-resize" @pointerdown="drag($event, (p) => { you = Math.round(clamp((p.x - 60) / 5.4, 5, 95)) })">
+      <rect :x="yx - 18" y="200" width="36" height="66" fill="var(--color-brand)" fill-opacity="0"/>
+      <circle r="8" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="3" :cx="yx" cy="240"/>
+    </g>
+    <text font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" :x="yx" y="290" x-text="'your ' + youWord"></text>
+    <!-- verdict -->
+    <text x="16" y="26" font-size="14" font-weight="700" :fill="safe ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="safe ? 'Clear of the wake' : youTakeOff ? 'In the wake: wait for it to decay' : 'In the wake: go around'"></text>
+    <text x="16" y="44" font-size="12" fill="var(--color-fg-muted)" x-text="rule"></text>
+    <text x="630" y="290" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">direction →</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control sm:col-span-2">
+      <span class="widget-label">Situation</span>
+      <span class="widget-presets">
+        <button type="button" @click="mode = 'to-after-to'" :aria-pressed="mode === 'to-after-to'">Take off after it took off</button>
+        <button type="button" @click="mode = 'ld-after-ld'" :aria-pressed="mode === 'ld-after-ld'">Land after it landed</button>
+        <button type="button" @click="mode = 'ld-after-to'" :aria-pressed="mode === 'ld-after-to'">Land after it took off</button>
+        <button type="button" @click="mode = 'to-after-ld'" :aria-pressed="mode === 'to-after-ld'">Take off after it landed</button>
+      </span>
+    </div>
+    <div class="widget-control">
+      <label for="wlt-you">Your <span x-text="youWord"></span> point <output for="wlt-you" x-text="you + '% along'"></output></label>
+      <input type="range" id="wlt-you" min="5" max="95" step="1" x-model.number="you">
+    </div>
+    <div class="widget-control">
+      <label for="wlt-hp">Heavy's <span x-text="heavyWord"></span> <output for="wlt-hp" x-text="hp + '% along'"></output></label>
+      <input type="range" id="wlt-hp" min="15" max="70" step="1" :value="hp" @input="if (heavyTookOff) rot = Number($event.target.value); else td = Number($event.target.value)">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="safe ? 'ok' : 'bad'"><dt class="widget-label">Verdict</dt><dd class="widget-value"><span x-text="safe ? 'clear' : 'in the wake'"></span><span class="widget-flag bad" x-show="!safe">wait</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Your point vs the heavy's</dt><dd class="widget-value" x-text="Math.abs(gap) < 1 ? 'the same' : Math.abs(gap) + '% of the runway ' + (gap < 0 ? 'before' : 'beyond')"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('takeoff-before-its-rotation')" :aria-pressed="active === 'takeoff-before-its-rotation'">Off before</button>
+      <button type="button" @click="preset('takeoff-after-its-rotation')" :aria-pressed="active === 'takeoff-after-its-rotation'">Off after</button>
+      <button type="button" @click="preset('land-beyond-its-touchdown')" :aria-pressed="active === 'land-beyond-its-touchdown'">Land beyond</button>
+      <button type="button" @click="preset('land-short-of-its-touchdown')" :aria-pressed="active === 'land-short-of-its-touchdown'">Land short</button>
+      <button type="button" @click="preset('land-before-its-rotation')" :aria-pressed="active === 'land-before-its-rotation'">Land before its rotation</button>
+      <button type="button" @click="preset('takeoff-beyond-its-touchdown')" :aria-pressed="active === 'takeoff-beyond-its-touchdown'">Off beyond its touchdown</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The wake exists only while the heavy's wing carries its weight: from its rotation point on take-off to its nosewheel touchdown on landing, lying along and below its path. So you choose your own points to stay out of it: airborne before its rotation and above its climb, or down beyond its touchdown and above its approach. Drag your point along the runway. The paths are drawn much steeper than life, and if the runway does not let you do it, wait.</p>
+  <details class="widget-try"><summary>Try it: a heavier aircraft has just taken off. Where do you lift off?</summary><p>Press Off before: you are airborne at 30% of the runway, before its rotation at 45%, and climb above its path. Press Off after: you would climb into the wake that starts at its rotation point. If you cannot get airborne before that point, wait.</p></details>
+  <details class="widget-try"><summary>Try it: you land after a heavy that touched down a third of the way along. Where do you aim?</summary><p>Press Land beyond: touching down beyond its touchdown point keeps your approach above its path and your landing on runway it left clear. Land short puts your final approach below its path, in the sinking vortices.</p></details>
+</div>

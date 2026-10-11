@@ -1,0 +1,196 @@
+<div class="widget" x-data="timeline({
+  duration: 16, loop: false,
+  U: 25, cut: false, ga: false,
+  // RMTC 2.3: entering the outflow a headwind (airspeed and lift rise, it floats), in the centre the downdraught, on
+  // the far side a tailwind (airspeed and lift fall just as it is low). Inertia holds the groundspeed for a moment,
+  // so a change of headwind changes the airspeed by the same amount; here it then recovers about 4% a step.
+  // Strengths, sink rates and the geometry are illustrative; 70 kt is the lesson's final approach speed.
+  vref: 70,
+  // the approach: x 40 to the threshold at x 560, 600 ft to 0; the microburst centred at x 330
+  glide(x) { return Math.max(0, 600 * (560 - x) / 520) },
+  windH(x, U) { return x > 110 && x < 330 ? U * Math.sin(Math.PI * (x - 110) / 220) : x >= 330 && x < 550 ? -U * Math.sin(Math.PI * (x - 330) / 220) : 0 },
+  windW(x, U) { return U * Math.exp(-Math.pow((x - 330) / 60, 2)) },
+  run: (function () {
+    const cache = {};
+    return function (U, cut, ga) {
+      const key = U + '|' + cut + '|' + ga;
+      if (cache[key]) return cache[key];
+      const pts = []; let dv = 0, dz = 0, Hp = 0, cutOn = false, gaOn = false, down = -1, gaAt = -1;
+      for (let i = 0; i <= 200; i++) {
+        const x = 40 + 560 * i / 200, H = this.windH(x, U), W = this.windW(x, U);
+        if (i) {
+          dv = dv * 0.96 + (H - Hp);
+          if (cut && !gaOn && dv > 4) cutOn = true;
+          if (ga && !gaOn && Math.abs(dv) >= 5) { gaOn = true; gaAt = i; cutOn = false; }
+          if (cutOn) dv -= 0.2;
+          dz += dv * 0.18 - W * 0.14 + (cutOn ? -0.8 : 0) + (gaOn ? 3 : 0);
+        }
+        Hp = H;
+        let h = this.glide(x) + dz;
+        if (down < 0 && h <= 0 && !gaOn) down = i;
+        if (!gaOn && x >= 556) h = Math.max(0, h);
+        pts.push({ x: x, H: H, W: W, ias: this.vref + dv, dv: dv, dz: dz, h: Math.max(0, h), ga: gaOn, cut: cutOn });
+      }
+      return (cache[key] = { pts: pts, down: down, gaAt: gaAt });
+    };
+  })(),
+  get sim() { return this.run(this.U, this.cut, this.ga) },
+  get base() { return this.run(this.U, false, false) },
+  get k() { return Math.min(200, Math.round(this.t * 200)) },
+  get kk() { const d = this.sim.down; return d >= 0 ? Math.min(this.k, d) : this.k },
+  get now() { return this.sim.pts[this.kk] },
+  get crashed() { return this.sim.down >= 0 && this.k >= this.sim.down },
+  Y(h) { return 272 - h * 0.36 },
+  get px() { return this.now.x },
+  get py() { return this.Y(this.now.h) },
+  trailOf(s, n) { return this.path(s.pts.slice(0, n + 1).map((p) => [p.x, this.Y(p.h)])) },
+  get trail() { return this.trailOf(this.sim, this.kk) },
+  get ghost() { const b = this.base; return this.trailOf(b, b.down >= 0 ? b.down : 200) },
+  // airspeed strip under the ground: 70 kt at y 338, 1.4 px per kt
+  iy(v) { return 338 - (this.clamp(v, 40, 100) - 70) * 1.4 },
+  get iasTrail() { return this.path(this.sim.pts.slice(0, this.kk + 1).map((p) => [p.x, this.iy(p.ias)])) },
+  get iasGhost() { const b = this.base; return this.path(b.pts.slice(0, (b.down >= 0 ? b.down : 200) + 1).map((p) => [p.x, this.iy(p.ias)])) },
+  get pitch() { return this.now.ga ? -8 : this.crashed ? 8 : 2 },
+  get ias() { return Math.round(this.now.ias) },
+  get dvr() { return Math.round(this.now.dv) },
+  get iasState() { return this.dvr <= -10 ? 'bad' : this.dvr <= -5 || this.dvr >= 5 ? 'warn' : 'ok' },
+  get windText() {
+    const H = Math.round(this.now.H), W = this.now.W > 3;
+    const h = H >= 1 ? 'Headwind ' + H + ' kt' : H <= -1 ? 'Tailwind ' + -H + ' kt' : '';
+    if (h && W) return h + ' + downdraught';
+    return h || (W ? 'Downdraught' : 'Calm');
+  },
+  get windState() { return this.now.W > 3 || this.now.H <= -1 ? 'bad' : this.now.H >= 1 ? 'warn' : '' },
+  get pathText() {
+    const d = Math.round(this.now.dz);
+    if (this.crashed) return 'Hits the ground';
+    if (this.now.ga) return 'Going around, ' + this.fmt(this.now.h) + ' ft up';
+    if (Math.abs(d) < 15) return 'On the path';
+    return d > 0 ? d + ' ft above: floating' : -d + ' ft below: sinking';
+  },
+  get pathState() { return this.crashed ? 'bad' : this.now.ga ? 'ok' : this.now.dz < -15 ? 'bad' : this.now.dz > 15 ? 'warn' : 'ok' },
+  get steps() {
+    const d = this.sim.down, near = d >= 0 ? Math.max(0.63, d / 200) : 0.8;
+    return [{ at: 0.143, label: 'Entering the outflow' }, { at: 0.3, label: 'Headwind: float' }, { at: 0.5, label: 'Downdraught' }, { at: 0.6, label: 'Tailwind: sink' }, { at: near, label: 'Near the ground' }];
+  },
+  get caption() {
+    const x = this.now.x;
+    if (this.crashed) return 'The tailwind has taken away airspeed and lift just as the downdraught pushed the aeroplane low: it hits the ground short of the runway. The total change of wind can exceed what a light aeroplane can out-climb, so the only defence is avoidance.';
+    if (this.now.ga) return 'Go-around at the first sign: full power and climb while the headwind still gives you extra speed. The downdraught and the tailwind still cost speed and height; going early leaves room for them, but a stronger microburst can exceed what a light aeroplane can out-climb.';
+    if (x < 110) return 'On final at 70 kt, on the path. Ahead, under the storm, a microburst: an intense downdraught hitting the ground and spreading out in all directions.';
+    if (x < 240) return 'Entering the outflow you meet a growing headwind. Inertia holds the groundspeed for a moment, so the new headwind shows up as extra airspeed: more lift, and the aeroplane floats above the path. Performance-increasing shear.' + (this.now.cut ? ' Reducing power to get back down has made the next part worse.' : '');
+    if (x < 300) return 'The headwind is dying away and the downdraught begins: the extra airspeed drains off and the aeroplane starts to sink.' + (this.now.cut ? ' With the power reduced it sinks faster.' : '');
+    if (x < 370) return 'In the centre the downdraught pushes the aeroplane down, and the headwind it had is gone.';
+    return 'On the far side the outflow is a tailwind: performance-decreasing shear. The airspeed and lift fall just as the downdraught has pushed the aeroplane low and the ground is close.';
+  },
+  presets: {
+    'headwind-float': { U: 25, cut: false, ga: false, t: 0.3 },
+    'downdraught': { U: 25, cut: false, ga: false, t: 0.5 },
+    'tailwind-sink': { U: 25, cut: false, ga: false, t: 0.6 },
+    'power-cut-mistake': { U: 25, cut: true, ga: false, t: 1 },
+    'go-around-early': { U: 25, cut: false, ga: true, t: 1 },
+    'whole-encounter': { U: 25, cut: false, ga: false, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 390" role="img" aria-labelledby="mba-title" class="widget-stage">
+    <title id="mba-title">Side view of an approach from the left to a runway on the right, under a thunderstorm whose microburst downdraught hits the ground and spreads out both ways. The aeroplane meets a headwind and floats above the glidepath, is pushed down in the downdraught, then loses airspeed and lift in the tailwind on the far side, close to the ground. A strip below traces its airspeed against the normal 70 kt approach speed</title>
+    <defs>
+      <marker id="mba-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="282" fill="var(--color-sky-soft)" rx="10"/>
+    <rect x="0" y="282" width="640" height="108" fill="var(--color-surface-2)" rx="10"/>
+    <!-- the storm and its downdraught column -->
+    <rect x="290" y="30" width="80" height="242" fill="var(--color-info)" fill-opacity="0.1"/>
+    <path d="M190 34 C190 14 214 6 236 12 C250 -2 286 -4 302 8 C318 -4 360 -4 376 8 C396 0 432 2 446 16 C470 14 484 24 480 34 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <text x="490" y="26" font-size="13" fill="var(--color-fg-muted)">thunderstorm</text>
+    <g stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" marker-end="url(#mba-arrow)" :stroke-opacity="0.35 + 0.65 * U / 30">
+      <line x1="306" y1="46" x2="306" y2="122"/><line x1="330" y1="46" x2="330" y2="132"/><line x1="354" y1="46" x2="354" y2="122"/>
+      <path fill="none" d="M318 214 Q318 258 270 258 L130 258"/>
+      <path fill="none" d="M342 214 Q342 258 390 258 L530 258"/>
+    </g>
+    <text x="150" y="248" font-size="12" font-weight="600" fill="var(--color-info-fg)">outflow: headwind for you</text>
+    <text x="548" y="248" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">outflow: tailwind</text>
+    <text x="378" y="74" font-size="12" font-weight="600" fill="var(--color-info-fg)">downdraught</text>
+    <!-- ground and runway -->
+    <line x1="0" y1="272" x2="640" y2="272" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="556" y="268" width="80" height="6" fill="var(--color-tarmac)"/>
+    <line x1="566" y1="271" x2="626" y2="271" stroke="var(--color-paint)" stroke-width="1" stroke-dasharray="6 5"/>
+    <!-- the glidepath, the path without the mistake or the go-around, and the path flown -->
+    <line x1="40" y1="56" x2="560" y2="272" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="6 4"/>
+    <text x="112" y="128" font-size="12" fill="var(--color-ok-fg)">glidepath</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.5" stroke-dasharray="3 3" x-show="cut || ga" :d="ghost"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" :d="trail"/>
+    <g x-show="crashed">
+      <path d="M-8 -8 L8 8 M8 -8 L-8 8" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" :transform="'translate(' + px + ' 266)'"/>
+    </g>
+    <!-- the aeroplane: python -m tools.diagrams.plane side, scale 0.45 -->
+    <g :transform="'translate(' + px + ' ' + (py - 9) + ') rotate(' + pitch + ')'">
+      <g transform="translate(0 0) rotate(0) scale(0.45)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- airspeed tag -->
+    <g x-show="!crashed" :transform="'translate(' + clamp(px, 50, 590) + ' ' + Math.max(py - 40, 16) + ')'">
+      <rect x="-42" y="-14" width="84" height="22" rx="6" stroke-width="1.5" :fill="iasState === 'bad' ? 'var(--color-bad-soft)' : iasState === 'warn' ? 'var(--color-warn-soft)' : 'var(--color-ok-soft)'" :stroke="iasState === 'bad' ? 'var(--color-bad)' : iasState === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'"/>
+      <text y="2" font-size="13" font-weight="600" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="'IAS ' + ias + ' kt'"></text>
+    </g>
+    <!-- airspeed strip -->
+    <text x="12" y="302" font-size="12" font-weight="600" fill="var(--color-fg-muted)">airspeed</text>
+    <g stroke="var(--color-line)" stroke-width="1" stroke-dasharray="2 4"><line x1="40" y1="324" x2="600" y2="324"/><line x1="40" y1="352" x2="600" y2="352"/></g>
+    <line x1="40" y1="338" x2="600" y2="338" stroke="var(--color-ok)" stroke-width="1.25"/>
+    <g font-size="11" class="num" text-anchor="end" fill="var(--color-fg-faint)">
+      <text x="34" y="328">80</text><text x="34" y="356">60</text>
+    </g>
+    <text x="604" y="342" font-size="11" class="num" fill="var(--color-ok-fg)">70 kt</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 3" x-show="cut || ga" :d="iasGhost"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linejoin="round" :d="iasTrail"/>
+    <circle r="4" fill="var(--color-brand)" :cx="px" :cy="iy(now.ias)"/>
+    <text x="320" y="382" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">all strengths and speeds illustrative</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the approach'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="mba-t" min="0" max="1" step="0.005" x-model.number="t" @input="pause()" aria-label="Progress along the approach">
+    <span class="widget-clock" x-text="fmt(now.h) + ' ft'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="mba-u">Outflow strength (illustrative) <output for="mba-u" x-text="U + ' kt each way'"></output></label>
+      <input type="range" id="mba-u" min="10" max="30" step="5" x-model.number="U">
+    </div>
+    <div class="widget-control">
+      <label for="mba-cut" class="cursor-pointer"><span>Pilot reduces power in the headwind</span>
+        <input type="checkbox" id="mba-cut" x-model="cut" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="mba-ga" class="cursor-pointer"><span>Go around at the first sign</span>
+        <input type="checkbox" id="mba-ga" x-model="ga" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="windState"><dt class="widget-label">Wind on the aeroplane</dt><dd class="widget-value" x-text="windText"></dd></div>
+    <div class="widget-readout" :class="iasState"><dt class="widget-label">IAS (normal 70 kt)</dt><dd class="widget-value"><span x-text="ias + ' kt (' + sign(dvr) + ')'"></span><span class="widget-flag bad" x-show="iasState === 'bad'">slow</span></dd></div>
+    <div class="widget-readout" :class="pathState"><dt class="widget-label">Glidepath</dt><dd class="widget-value"><span x-text="pathText"></span><span class="widget-flag bad" x-show="crashed">short</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('headwind-float')" :aria-pressed="active === 'headwind-float'">Headwind</button>
+      <button type="button" @click="preset('downdraught')" :aria-pressed="active === 'downdraught'">Downdraught</button>
+      <button type="button" @click="preset('tailwind-sink')" :aria-pressed="active === 'tailwind-sink'">Tailwind</button>
+      <button type="button" @click="preset('power-cut-mistake')" :aria-pressed="active === 'power-cut-mistake'">Power cut</button>
+      <button type="button" @click="preset('go-around-early')" :aria-pressed="active === 'go-around-early'">Go around</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A microburst on approach comes in three parts: a headwind that makes the aeroplane fast and high, a downdraught that pushes it down, then a tailwind that takes airspeed and lift away just as it is low and close to the ground. Each change of headwind comes straight off (or onto) the airspeed for a moment, because inertia holds the groundspeed. Reducing power in the float makes the rest worse, and the total change of wind can exceed what a light aeroplane can out-climb: the only defence is avoidance. Every strength, speed and height here except the 70 kt approach speed is illustrative.</p>
+  <details class="widget-try"><summary>Try it: on final the airspeed suddenly rises and you float above the path, with a dark-based storm just beyond the aerodrome. What is happening, and what do you do?</summary><p>You have entered a microburst’s outflow: a growing headwind, performance-increasing shear. Do not reduce power to get back on the path; what comes next is the downdraught and then a tailwind. Go around at once, and keep away from the storm. Press Headwind, then tick Pilot reduces power and play on to see why.</p></details>
+  <details class="widget-try"><summary>Try it: why is the tailwind side the dangerous one?</summary><p>On the far side the outflow is a tailwind, so the airspeed drops by the gain in tailwind: lift falls just when the downdraught has already pushed the aeroplane low and there is little height left to recover. Press Tailwind and watch the airspeed strip dip below 70 kt.</p></details>
+</div>

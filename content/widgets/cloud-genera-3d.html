@@ -1,0 +1,35 @@
+<div class="widget" data-widget="explorer" data-explorer="clouds">
+  <div class="widget-canvas" data-canvas aria-label="3D sky with the ten cloud genera at their heights in the low, middle and high bands"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="cl3-genus">Highlight a genus</label>
+      <select id="cl3-genus" data-param="genus" class="rounded-lg border border-line bg-surface px-2 py-1 text-sm">
+        <option value="0">All ten</option>
+        <option value="1">Cirrus (Ci)</option><option value="2">Cirrocumulus (Cc)</option><option value="3">Cirrostratus (Cs)</option>
+        <option value="4">Altocumulus (Ac)</option><option value="5">Altostratus (As)</option><option value="6">Nimbostratus (Ns)</option>
+        <option value="7">Stratocumulus (Sc)</option><option value="8">Stratus (St)</option>
+        <option value="9">Cumulus (Cu)</option><option value="10">Cumulonimbus (Cb)</option>
+      </select></div>
+    <div class="widget-control"><label class="check"><input type="checkbox" data-param="showPlane" checked> Show the C152 at 3,000 ft for scale (drawn large)</label></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Genus</dt><dd data-out="genus" class="text-sm">all ten genera</dd></div>
+    <div class="widget-readout"><dt>Level of the base</dt><dd data-out="band" class="text-sm">low, middle, high</dd></div>
+    <div class="widget-readout"><dt>In a TAF or METAR</dt><dd data-out="report" class="text-sm">only CB and TCU are named</dd></div>
+  </dl>
+  <p class="widget-value mt-2 text-sm text-fg-muted"><span class="font-semibold text-fg">Look:</span> <span data-out="look">pick a genus</span></p>
+  <p class="widget-value mt-1 text-sm text-fg-muted"><span class="font-semibold text-fg">Weather:</span> <span data-out="weather">layer cloud: stable air; heap cloud: unstable air</span></p>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Clouds the exam asks about">
+      <button type="button" data-preset="all-ten-genera" data-set='{"genus": 0}'>All ten</button>
+      <button type="button" data-preset="halo-cirrostratus" data-set='{"genus": 3}'>Cs and its halo</button>
+      <button type="button" data-preset="altostratus-ground-glass" data-set='{"genus": 5}'>As: ground glass</button>
+      <button type="button" data-preset="nimbostratus-rain" data-set='{"genus": 6}'>Ns: continuous rain</button>
+      <button type="button" data-preset="stratus-hill-fog" data-set='{"genus": 8}'>St: hill fog</button>
+      <button type="button" data-preset="cumulonimbus" data-set='{"genus": 10}'>Cb: the one to avoid</button>
+    </div>
+    <button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Three bands by the height of the base: high above about 20,000 ft (Ci, Cc, Cs, all ice crystals, thin and white), middle about 6,500 to 20,000 ft (Ac, As, Ns, water droplets often supercooled), low below about 6,500 ft (Sc, St), plus Cu and Cb, which start low and grow tall, the Cb spreading into an anvil at the tropopause. Nimbostratus is classed as middle cloud but its base often lowers to near the ground. Only the halo tells cirrostratus from altostratus. The bands are approximate for Australian latitudes and higher in the tropics; each cloud's drawn base and top are representative, not figures from the lesson.</p>
+  <details class="widget-try"><summary>Try this: two featureless grey-white sheets, the sun visible through both. One has a halo round it. Which is which, and which could ice the aeroplane?</summary><p>The halo is cirrostratus: ice crystals above 20,000 ft, which bend the light into a halo and do not stick to an airframe. The other is altostratus, water droplets in the middle band, which shows the sun as if through ground glass and can give light to moderate icing and light continuous rain.</p></details>
+  <details class="widget-try"><summary>Try this: a TAF says SCT040CB. What air, what hazards, and why is this cloud named when stratus is not?</summary><p>Unstable air: cumulonimbus grows upwards on its own buoyancy. Expect severe turbulence, hail, heavy showers, lightning, severe icing and microburst wind shear. Only CB and TCU are named in a TAF or METAR because only they are a direct hazard; every other cloud is reported as amount and base alone.</p></details>
+</div>

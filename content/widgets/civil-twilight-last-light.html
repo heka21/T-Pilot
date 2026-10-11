@@ -1,0 +1,178 @@
+<div class="widget" x-data="timeline({
+  duration: 24, loop: false,
+  hills: false, cloud: false, haze: false,
+  // the clock: t 0..1 is 1735 to 1846 WST. Last light (sun's centre 6° below the horizon) is the lesson's Perth example,
+  // 1831 WST. Illustrative model: the sun sinks about 13° an hour at Perth's latitude near the equinox (15 × cos 32°),
+  // so its centre crosses the horizon about 28 minutes before last light.
+  get min() { return 1055 + this.t * 71 },
+  get clock() { return this.hhmm(this.min) },
+  get alt() { return (1111 - this.min) * 0.2117 - 6 },
+  get altText() { const a = this.alt; return Math.abs(a) < 0.05 ? 'on the horizon' : this.fmt(Math.abs(a), 1) + '° ' + (a > 0 ? 'above' : 'below') + ' the horizon' },
+  // light the graph assumes: full until the sun is down, fading to nothing a little after 6° below
+  lightAt(a) { return a >= 0 ? 1 : this.clamp(1 + a / 7.5, 0, 1) },
+  // qualitative extra loss from each factor (illustrative): it acts as if the sun were lower
+  get loss() { return (this.hills ? 3 : 0) + (this.cloud ? 2.5 : 0) + (this.haze ? 1.5 : 0) },
+  get any() { return this.hills || this.cloud || this.haze },
+  get daylight() { return this.lightAt(this.alt - this.loss * 0.6) },
+  get stars() { return this.seg(-this.alt, 5.5, 8) },
+  get glow() { return this.alt < 1.5 && this.alt > -7 ? 1 - Math.abs(this.alt + 2) / 5 : 0 },
+  // useful light ends (illustrative): when the light the pilot actually has drops to the level of last light
+  get usefulEndAlt() { return -6 + this.loss },
+  get usefulGone() { return this.alt <= this.usefulEndAlt },
+  get phase() { return this.alt > -0.27 ? 'Day' : this.alt > -5.95 ? 'Civil twilight' : this.alt > -6.3 ? 'Last light' : 'Dark (night)' },
+  get sunset() { return this.alt <= -0.27 },
+  // picture: horizon at y 200, 12 px per degree; the sun slides down and slightly right as it sets (the gauge uses the same 12 px per degree)
+  get sunY() { return 200 - this.alt * 12 },
+  get sunX() { return 300 + (6 - this.alt) * 3 },
+  // the aeroplane lands at 1821
+  get plane() {
+    const m = this.min;
+    if (m < 1093) { const f = this.seg(m, 1066, 1093); return { x: this.lerp(40, 250, f), y: this.lerp(220, 285, f), p: -3 } }
+    return { x: Math.min(330, 250 + (m - 1093) * 12), y: 285, p: 0 };
+  },
+  get steps() {
+    const s = [{ at: 0, label: 'Sun up' }, { at: 0.408, label: 'Sunset' }, { at: 0.648, label: 'Latest landing 1821' }, { at: 0.789, label: 'Last light 1831' }, { at: 0.93, label: 'Dark' }];
+    return s;
+  },
+  get caption() {
+    if (this.alt > -0.27) return 'The sun is still above the horizon. The daylight graph does not give sunset: it gives the end of civil twilight, which comes later.';
+    if (this.any && this.usefulGone && this.alt > -6) return 'The graph says it is still daylight, but ' + (this.hills ? 'the hills to the west have put the strip in shadow' : this.cloud ? 'the cloud to the west has cut off the twilight glow' : 'the haze has swallowed the light and the horizon') + ': useful light has already ended.';
+    if (this.min < 1100.5) return 'The sun has set, but the sky still scatters light down. This is civil twilight: the sun\'s centre is between the horizon and 6° below it.';
+    if (this.min < 1110.5) return 'From 1821 a day VFR flight should be on the ground: the 10-minute margin comes off the end of daylight, not off sunset.';
+    if (this.alt > -6.4) return 'Last light, 1831 WST: the sun\'s centre is 6° below the horizon and civil twilight ends. This is the end of daylight the graph gives.';
+    return 'Night: without a night rating you should have been on the ground well before now.';
+  },
+  presets: {
+    'clear-evening': { hills: false, cloud: false, haze: false, t: 0.789 },
+    'latest-landing': { hills: false, cloud: false, haze: false, t: 0.648 },
+    'hills-to-the-west': { hills: true, cloud: false, haze: false, t: 0.6 },
+    'cloud-and-haze': { hills: false, cloud: true, haze: true, t: 0.6 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="ctl-title" class="widget-stage">
+    <title id="ctl-title">Looking west from an airstrip at sunset: the sky fades as the sun sinks behind the horizon. A gauge beside the scene shows the sun's centre against the horizon, with civil twilight between the horizon and 6 degrees below it, where last light falls. An aeroplane lands before the latest landing time.</title>
+    <defs>
+      <clipPath id="ctl-sky"><rect x="0" y="0" width="462" height="200"/></clipPath>
+    </defs>
+    <!-- sky: blue by day, glow at dusk, stars at night -->
+    <rect x="0" y="0" width="462" height="200" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="462" height="200" fill="var(--color-sky-soft)" :fill-opacity="daylight"/>
+    <rect x="0" y="188" width="462" height="12" fill="var(--color-warn)" :fill-opacity="0.170 * glow * (cloud ? 0.2 : 1)"/>
+    <rect x="0" y="176" width="462" height="12" fill="var(--color-warn)" :fill-opacity="0.146 * glow * (cloud ? 0.2 : 1)"/>
+    <rect x="0" y="164" width="462" height="12" fill="var(--color-warn)" :fill-opacity="0.121 * glow * (cloud ? 0.2 : 1)"/>
+    <rect x="0" y="152" width="462" height="12" fill="var(--color-warn)" :fill-opacity="0.097 * glow * (cloud ? 0.2 : 1)"/>
+    <rect x="0" y="140" width="462" height="12" fill="var(--color-warn)" :fill-opacity="0.073 * glow * (cloud ? 0.2 : 1)"/>
+    <rect x="0" y="128" width="462" height="12" fill="var(--color-warn)" :fill-opacity="0.049 * glow * (cloud ? 0.2 : 1)"/>
+    <rect x="0" y="116" width="462" height="12" fill="var(--color-warn)" :fill-opacity="0.024 * glow * (cloud ? 0.2 : 1)"/>
+    <g fill="var(--color-fg-faint)" :fill-opacity="stars">
+      <circle cx="230" cy="30" r="1.5"/><circle cx="300" cy="96" r="1.2"/><circle cx="250" cy="70" r="1.2"/><circle cx="380" cy="44" r="1.5"/>
+      <circle cx="430" cy="110" r="1.2"/><circle cx="410" cy="20" r="1.2"/><circle cx="330" cy="56" r="1.5"/><circle cx="200" cy="120" r="1.2"/>
+      <path d="M140 84 a12 12 0 1 0 10 19 a9.5 9.5 0 1 1 -10 -19 Z"/>
+    </g>
+    <!-- the sun, hidden behind the horizon as it sets -->
+    <circle r="10" fill="var(--color-warn)" clip-path="url(#ctl-sky)" :cx="sunX" :cy="sunY" :display="alt > -0.9 ? 'inline' : 'none'"/>
+    <!-- cloud to the west -->
+    <g :display="cloud ? 'inline' : 'none'">
+      <path d="M150 168 q10 -26 40 -22 q16 -22 46 -12 q20 -18 52 -6 q26 -16 56 0 q30 -12 52 8 q28 -4 34 22 q-16 14 -40 10 L170 178 q-26 4 -20 -10 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25" fill-opacity="0.92"/>
+      <text x="290" y="112" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">thick cloud to the west</text>
+    </g>
+    <!-- haze over the horizon -->
+    <rect x="0" y="150" width="462" height="50" fill="var(--color-fg-faint)" fill-opacity="0.28" :display="haze ? 'inline' : 'none'"/>
+    <text x="16" y="166" font-size="12" fill="var(--color-fg-muted)" :display="haze ? 'inline' : 'none'">haze or smoke</text>
+    <!-- hills on the western horizon -->
+    <path d="M200 200 L240 184 L275 172 L310 161 L340 165 L370 178 L400 190 L430 200 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round" :display="hills ? 'inline' : 'none'"/>
+    <text x="315" y="152" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" :display="hills ? 'inline' : 'none'">hills to the west</text>
+    <!-- ground -->
+    <rect x="0" y="200" width="462" height="120" fill="var(--color-surface-2)"/>
+    <rect x="0" y="200" width="462" height="120" fill="var(--color-ok-soft)" :fill-opacity="0.9 * daylight"/>
+    <line x1="0" y1="200" x2="462" y2="200" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <text x="16" y="222" font-size="12" fill="var(--color-fg-muted)">western horizon (flat, at sea level)</text>
+    <!-- the strip and the aeroplane -->
+    <rect x="200" y="292" width="200" height="10" rx="2" fill="var(--color-tarmac)"/>
+    <line x1="210" y1="297" x2="390" y2="297" stroke="var(--color-paint)" stroke-width="1.5" stroke-dasharray="10 8"/>
+    <g :transform="'translate(' + plane.x + ' ' + plane.y + ') rotate(' + plane.p + ')'">
+      <!-- plane side scale 0.35 -->
+      <g transform="translate(0 0) rotate(0) scale(0.35)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- clock -->
+    <rect x="12" y="12" width="170" height="50" rx="8" fill="var(--color-surface)" fill-opacity="0.85"/>
+    <text x="24" y="36" font-size="18" font-weight="700" fill="var(--color-fg)" class="num" x-text="clock + ' WST'"></text>
+    <text x="24" y="54" font-size="12" fill="var(--color-fg-muted)" x-text="phase"></text>
+    <rect x="300" y="12" width="150" height="26" rx="6" fill="var(--color-surface)" fill-opacity="0.85" :display="any && usefulGone && alt > -6 ? 'inline' : 'none'"/>
+    <text x="375" y="30" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-warn-fg)" :display="any && usefulGone && alt > -6 ? 'inline' : 'none'">useful light gone</text>
+    <!-- gauge: the sun's centre against the horizon, 12 px per degree, horizon at y 110 -->
+    <rect x="462" y="0" width="178" height="320" fill="var(--color-surface)"/>
+    <line x1="462" y1="0" x2="462" y2="320" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="551" y="22" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Sun's centre</text>
+    <rect x="506" y="110" width="16" height="72" fill="var(--color-brand-soft)"/>
+    <line x1="514" y1="34" x2="514" y2="232" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path d="M508 38 H520 M510 62 H518 M510 86 H518 M510 134 H518 M510 158 H518 M510 206 H518 M510 230 H518" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="500" y="42" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">+6°</text>
+    <text x="500" y="114" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">0°</text>
+    <text x="500" y="186" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">−6°</text>
+    <text x="500" y="234" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">−10°</text>
+    <line x1="506" y1="110" x2="634" y2="110" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <text x="545" y="104" font-size="12" fill="var(--color-fg-muted)">horizon</text>
+    <text x="0" y="0" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)" transform="translate(535 146) rotate(-90)">civil twilight</text>
+    <line x1="506" y1="182" x2="634" y2="182" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="545" y="200" font-size="12" font-weight="600" fill="var(--color-brand-fg)">last light</text>
+    <text x="545" y="214" font-size="11" fill="var(--color-fg-muted)">6° below</text>
+    <g :display="any ? 'inline' : 'none'">
+      <line x1="496" y1="0" x2="526" y2="0" stroke="var(--color-warn)" stroke-width="3" stroke-linecap="round" :y1="110 - usefulEndAlt * 12" :y2="110 - usefulEndAlt * 12"/>
+      <text x="551" y="298" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-warn-fg)">amber bar:</text>
+      <text x="551" y="313" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-warn-fg)">useful light ends</text>
+    </g>
+    <circle cx="514" r="7" stroke="var(--color-warn)" stroke-width="2" :cy="110 - alt * 12" :fill="alt > -0.27 ? 'var(--color-warn)' : 'var(--color-surface)'"/>
+    <text x="551" y="256" font-size="13" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="altText.replace(' the horizon', '')"></text>
+    <text x="551" y="274" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="alt > 0 ? 'the sun is up' : alt > -0.27 ? 'setting' : 'set'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the evening'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ctl-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time of evening">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ctl-hills" class="cursor-pointer"><span>High ground to the west</span>
+        <input type="checkbox" id="ctl-hills" x-model="hills" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ctl-cloud" class="cursor-pointer"><span>Thick cloud to the west</span>
+        <input type="checkbox" id="ctl-cloud" x-model="cloud" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ctl-haze" class="cursor-pointer"><span>Haze, smoke or dust</span>
+        <input type="checkbox" id="ctl-haze" x-model="haze" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Time</dt><dd class="widget-value" x-text="clock + ' WST'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Sun's centre</dt><dd class="widget-value" x-text="altText"></dd></div>
+    <div class="widget-readout" :class="alt > -5.95 ? '' : alt > -6.3 ? 'warn' : 'bad'"><dt class="widget-label">By the graph</dt><dd class="widget-value" x-text="phase"></dd></div>
+    <div class="widget-readout" :class="min < 1101.5 ? 'ok' : 'bad'"><dt class="widget-label">Day VFR on the ground by</dt><dd class="widget-value"><span>1821 WST</span><span class="widget-flag bad" x-show="min >= 1101.5">too late</span></dd></div>
+    <div class="widget-readout" :class="any ? 'warn' : ''"><dt class="widget-label">Useful light</dt><dd class="widget-value" x-text="any ? 'ends earlier than the graph' : 'as the graph, clear and flat'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('clear-evening')" :aria-pressed="active === 'clear-evening'">Last light, clear</button>
+      <button type="button" @click="preset('latest-landing')" :aria-pressed="active === 'latest-landing'">Latest landing</button>
+      <button type="button" @click="preset('hills-to-the-west')" :aria-pressed="active === 'hills-to-the-west'">Hills to the west</button>
+      <button type="button" @click="preset('cloud-and-haze')" :aria-pressed="active === 'cloud-and-haze'">Cloud and haze</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Last light is not sunset: it is the end of civil twilight, when the sun's centre is 6° below the horizon, and the graph assumes a clear sky and a flat horizon at sea level. Hills to the west, cloud, haze or smoke take the useful light away sooner, so treat last light as a deadline with a margin; the 10-minute rule comes off last light. The 1831 last light is the lesson's Perth example; the sunset time, the rate the sun sinks and the light levels are an illustrative model.</p>
+  <details class="widget-try"><summary>Try it: last light at Perth is 1831 WST. When must a day VFR flight be on the ground, and is that 10 minutes before sunset?</summary><p>1821 WST, 10 minutes before the end of daylight. Play the evening: the sun has already set by then; the margin comes off last light, not off sunset.</p></details>
+  <details class="widget-try"><summary>Try it: tick the hills. Why can the strip be in shadow while the graph still says daylight?</summary><p>The graph assumes a flat horizon. A ridge to the west hides the sun before it reaches the true horizon and the valley fills with shadow, so useful light ends before the published last light.</p></details>
+</div>

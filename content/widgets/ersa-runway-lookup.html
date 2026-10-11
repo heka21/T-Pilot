@@ -1,0 +1,126 @@
+<div class="widget" x-data="widget({
+  rwy: '24', night: false,
+  // BAKC 5.2's invented Example Creek entry: 06/24 1200 × 30 sealed, 0.5% up E, lit; 12/30 800 × 18 gravel, no slope
+  // given, unlit; RH circuits RWY 24; PPR; ELEV 1050
+  R: {
+    '06': { pair: '06/24', hdg: 60, len: 1200, wid: 30, surf: 'sealed', lit: true, slope: 'uphill', rh: false },
+    '24': { pair: '06/24', hdg: 240, len: 1200, wid: 30, surf: 'sealed', lit: true, slope: 'downhill', rh: true },
+    '12': { pair: '12/30', hdg: 120, len: 800, wid: 18, surf: 'gravel', lit: false, slope: 'level', rh: false },
+    '30': { pair: '12/30', hdg: 300, len: 800, wid: 18, surf: 'gravel', lit: false, slope: 'level', rh: false },
+  },
+  get r() { return this.R[this.rwy] },
+  get main() { return this.r.pair === '06/24' },
+  get usable() { return !this.night || this.r.lit },
+  get slopeText() { return this.r.slope === 'level' ? 'no slope given: treat as level' : '0.5% up E: ' + this.r.slope + ' on ' + this.rwy + ', about 6 m (20 ft) over the length' },
+  // plan: 06/24 centred at (470, 170), 12/30 crossing it; 0.15 px per metre
+  k: 0.15,
+  C(pair) { return pair === '06/24' ? { x: 470, y: 170 } : { x: 505, y: 200 } },
+  get c() { return this.C(this.r.pair) },
+  get rot() { return this.r.hdg - 90 },
+  // the end you touch down on (bearing hdg + 180 from the centre) and the far end
+  // number labels sit beside the threshold, to the left of the landing direction, clear of the approach arrow
+  end(id) { const r = this.R[id], c = this.C(r.pair), p = this.pol(c.x, c.y, r.len * this.k / 2 + 6, r.hdg + 180); return this.pol(p.x, p.y, 20, r.hdg - 90) },
+  get side() { return this.r.rh ? 1 : -1 },
+  presets: {
+    'runway-24': { rwy: '24', night: false },
+    'runway-06-uphill': { rwy: '06', night: false },
+    'runway-30-at-night': { rwy: '30', night: true },
+    'runway-12': { rwy: '12', night: false },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="erl-title" class="widget-stage">
+    <title id="erl-title">An invented ERSA entry for Example Creek beside a plan of its two runways: the line for the chosen runway is highlighted, and the plan shows the landing direction, the slope and which side the circuit is flown</title>
+    <defs>
+      <marker id="erl-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- the ERSA entry -->
+    <rect x="8" y="8" width="318" height="314" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="20" y="30" font-size="12" font-weight="700" fill="var(--color-bad-fg)">Invented example, not a real aerodrome</text>
+    <g font-size="12" class="num" fill="var(--color-fg)">
+      <text x="20" y="56" font-weight="700">EXAMPLE CREEK</text><text x="140" y="56" font-weight="700">WA</text><text x="240" y="56" font-weight="700">UTC +8</text>
+      <text x="20" y="74">ELEV 1050</text><text x="140" y="74">VAR 1 DEG W</text>
+      <text x="20" y="92">S31 00.0 E117 00.0</text>
+      <g font-weight="700" fill="var(--color-fg-muted)"><text x="20" y="124">RWY</text><text x="72" y="124">L × W</text><text x="160" y="124">SURFACE</text><text x="234" y="124">SLOPE</text></g>
+      <rect x="14" y="132" width="306" height="22" rx="4" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25" x-show="main"/>
+      <rect x="14" y="156" width="306" height="22" rx="4" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25" x-show="!main"/>
+      <text x="20" y="148">06/24</text><text x="72" y="148">1200 × 30</text><text x="160" y="148">sealed</text><text x="234" y="148">0.5% up E</text>
+      <text x="20" y="172">12/30</text><text x="72" y="172">800 × 18</text><text x="160" y="172">gravel</text>
+      <rect x="14" y="186" width="306" height="22" rx="4" :fill="night && !r.lit ? 'var(--color-bad-soft)' : 'none'" :stroke="night ? (r.lit ? 'var(--color-ok)' : 'var(--color-bad)') : 'none'" stroke-width="1.25"/>
+      <text x="20" y="202">Lighting: RWY 06/24</text>
+      <text x="20" y="234" font-weight="700" fill="var(--color-fg-muted)">REMARKS</text>
+      <rect x="14" y="242" width="160" height="22" rx="4" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25" x-show="rwy === '24'"/>
+      <text x="20" y="258">RH circuits RWY 24.</text>
+      <text x="20" y="280">PPR. Fuel: AVGAS.</text>
+      <text x="20" y="308" font-size="12" fill="var(--color-fg-faint)">lengths and widths in metres; ELEV in feet</text>
+    </g>
+
+    <!-- the plan -->
+    <text x="470" y="26" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">plan, magnetic north up</text>
+    <path d="M620 64 L620 36 M614 44 L620 36 L626 44" stroke="var(--color-fg-muted)" stroke-width="1.5" fill="none"/>
+    <text x="620" y="78" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">N</text>
+    <!-- circuit for the chosen runway, on the side the turns are made -->
+    <g :transform="'translate(' + c.x + ' ' + c.y + ') rotate(' + rot + ')'">
+      <rect rx="34" fill="none" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="6 4" :x="-r.len * k / 2 - 34" :y="side > 0 ? 0 : -78" :width="r.len * k + 68" height="78" x-show="usable"/>
+    </g>
+    <!-- 12/30, gravel -->
+    <g transform="translate(505 200) rotate(30)">
+      <rect x="-60" y="-6" width="120" height="12" :fill="!main ? 'var(--color-brand)' : 'var(--color-fg-faint)'" :fill-opacity="!main ? 0.8 : 0.5"/>
+    </g>
+    <!-- 06/24, sealed, rising to the east -->
+    <g transform="translate(470 170) rotate(-30)">
+      <rect x="-90" y="-8" width="180" height="16" :fill="main ? 'var(--color-brand)' : 'var(--color-tarmac)'"/>
+      <line x1="-70" y1="0" x2="70" y2="0" stroke="var(--color-paint)" stroke-width="1.5" stroke-dasharray="8 6"/>
+    </g>
+    <!-- slope: up to the east -->
+    <g x-show="main">
+      <line x1="430" y1="122" x2="512" y2="75" stroke="var(--color-warn)" stroke-width="2" marker-end="url(#erl-arrow)"/>
+      <text x="452" y="86" font-size="12" fill="var(--color-warn-fg)" text-anchor="end">uphill to the east</text>
+    </g>
+    <!-- landing direction on the chosen runway -->
+    <line stroke="var(--color-fg)" stroke-width="3" marker-end="url(#erl-arrow)" x-show="usable"
+      :x1="pol(c.x, c.y, r.len * k / 2 + 46, r.hdg + 180).x" :y1="pol(c.x, c.y, r.len * k / 2 + 46, r.hdg + 180).y"
+      :x2="pol(c.x, c.y, r.len * k / 2 + 6, r.hdg + 180).x" :y2="pol(c.x, c.y, r.len * k / 2 + 6, r.hdg + 180).y"/>
+    <!-- runway numbers: click one to look it up -->
+    <g font-size="14" font-weight="700" text-anchor="middle" class="num" style="cursor: pointer">
+      <text :x="end('06').x" :y="end('06').y + 5" :fill="rwy === '06' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" @click="rwy = '06'; active = null">06</text>
+      <text :x="end('24').x" :y="end('24').y + 5" :fill="rwy === '24' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" @click="rwy = '24'; active = null">24</text>
+      <text :x="end('12').x" :y="end('12').y + 5" :fill="rwy === '12' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" @click="rwy = '12'; active = null">12</text>
+      <text :x="end('30').x" :y="end('30').y + 5" :fill="rwy === '30' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" @click="rwy = '30'; active = null">30</text>
+    </g>
+    <text x="470" y="306" font-size="13" font-weight="600" text-anchor="middle" :fill="usable ? 'var(--color-fg)' : 'var(--color-bad-fg)'"
+      x-text="usable ? (r.rh ? 'Right-hand circuit for ' + rwy : 'Standard left-hand circuit for ' + rwy) : 'Unlit: runway ' + rwy + ' cannot be used at night'"></text>
+    <g x-show="night" fill="var(--color-fg-faint)"><circle cx="360" cy="40" r="1.5"/><circle cx="400" cy="60" r="1.2"/><circle cx="560" cy="120" r="1.5"/><circle cx="600" cy="250" r="1.2"/><circle cx="380" cy="270" r="1.5"/><path d="M372 72 a10 10 0 1 0 9 16 a8 8 0 1 1 -9 -16 Z"/></g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="erl-rwy">Runway you were asked about (or click a number)</label>
+      <select id="erl-rwy" class="input" x-model="rwy" @change="active = null">
+        <option value="06">06</option><option value="24">24</option><option value="12">12</option><option value="30">30</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="erl-night" class="cursor-pointer"><span>At night</span>
+        <input type="checkbox" id="erl-night" x-model="night" class="size-5 accent-[var(--color-brand)]" @change="active = null"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Line to read</dt><dd class="widget-value" x-text="r.pair + ': ' + rwy + ' is one end of it'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Length × width, surface</dt><dd class="widget-value" x-text="fmt(r.len) + ' m × ' + r.wid + ' m (about ' + fmt(Math.round(r.len * 3.28084 / 100) * 100) + ' ft long), ' + r.surf"></dd></div>
+    <div class="widget-readout" :class="r.slope === 'uphill' ? 'warn' : ''"><dt class="widget-label">Slope, taking off on this runway</dt><dd class="widget-value" x-text="slopeText"></dd></div>
+    <div class="widget-readout" :class="night ? (r.lit ? 'ok' : 'bad') : ''"><dt class="widget-label">Lighting</dt><dd class="widget-value"><span x-text="r.lit ? 'lit (RWY 06/24)' : 'none listed: unlit'"></span><span class="widget-flag bad" x-show="night && !r.lit">no night use</span></dd></div>
+    <div class="widget-readout" :class="r.rh ? 'warn' : ''"><dt class="widget-label">Circuit</dt><dd class="widget-value"><span x-text="r.rh ? 'right-hand (remarks: RH circuits RWY 24)' : 'left-hand, the standard'"></span><span class="widget-flag warn" x-show="r.rh">remark</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('runway-24')" :aria-pressed="active === 'runway-24'">Runway 24</button>
+      <button type="button" @click="preset('runway-06-uphill')" :aria-pressed="active === 'runway-06-uphill'">Runway 06</button>
+      <button type="button" @click="preset('runway-30-at-night')" :aria-pressed="active === 'runway-30-at-night'">Runway 30 at night</button>
+      <button type="button" @click="preset('runway-12')" :aria-pressed="active === 'runway-12'">Runway 12</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A runway end is never listed on its own: find the line with both numbers (24 lives on 06/24), read the length and width in metres, the surface and the slope, then check the lighting line and the remarks for anything that names your runway. The slope reads the same for both ends but you roll the opposite way on each. Example Creek is the lesson's invented aerodrome.</p>
+  <details class="widget-try"><summary>Try it: what do you need to know about runway 24 before you join?</summary><p>Press Runway 24: 1,200 m × 30 m sealed, lit, and 0.5% up to the east, so taking off on 24 you roll downhill from the higher eastern end, about 6 m (20 ft) over the length. The remarks give right-hand circuits for 24, so join for a right-hand circuit.</p></details>
+  <details class="widget-try"><summary>Try it: could you land on runway 30 at night?</summary><p>Press Runway 30 at night: 12/30 is 800 m × 18 m gravel with no lighting listed, so it is unlit and cannot be used at night. By day it is shorter and gravel, so check the performance chart before planning to use it.</p></details>
+</div>

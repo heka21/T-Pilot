@@ -1,0 +1,106 @@
+<div class="widget" x-data="widget({
+  alt: 5000, pct: 21,
+  // PHFC 2.11: Dalton's law, PO2 = fraction x total pressure. Pressures are the lesson's ISA table (1013, 843 at
+  // 5,000 ft from the worked example, 700, 500, 375 hPa), joined smoothly (log-linear) between them. Sea-level PO2
+  // is quoted as about 213 hPa (0.21 x 1013). Water vapour and CO2 in the alveoli are ignored, as in the lesson's
+  // round-number example (about 43 percent oxygen restores 213 hPa at 18,000 ft).
+  anchors: [[0, 1013], [5000, 843], [10000, 700], [18000, 500], [25000, 375]],
+  get p() {
+    const a = this.anchors, ft = this.alt;
+    for (let i = 1; i < a.length; i++) if (ft <= a[i][0]) { const f = (ft - a[i - 1][0]) / (a[i][0] - a[i - 1][0]); return a[i - 1][1] * Math.pow(a[i][1] / a[i - 1][1], f) }
+    return a[a.length - 1][1];
+  },
+  slPo2: 213,
+  get f() { return this.pct / 100 },
+  get po2() { return this.f * this.p },
+  get ratio() { return this.po2 / this.slPo2 },
+  get need() { return this.slPo2 / this.p * 100 },
+  // columns: 1013 hPa is 200 px tall, standing on y 250
+  H(hpa) { return hpa / 1013 * 200 },
+  get state() { return this.ratio >= 0.97 ? ['Sea-level oxygen pressure', 'ok'] : this.alt > 10000 ? ['Low: hypoxia territory', 'bad'] : ['Reduced', 'warn'] },
+  get caption() {
+    if (this.pct > 21 && this.ratio >= 0.97) return 'Supplemental oxygen: the total pressure is still ' + this.fmt(this.p) + ' hPa, but with ' + this.pct + ' percent oxygen the oxygen share is back to sea level. That is the principle of every oxygen system.';
+    if (this.pct > 21) return 'More oxygen in the mix raises its share of the same low total pressure. You need about ' + this.fmt(this.need) + ' percent here to match sea level.';
+    if (this.alt === 0) return 'At sea level 21 percent of 1013 hPa gives about 213 hPa of oxygen pressure. That pressure, not the percentage, drives oxygen across the alveolar wall into the blood.';
+    return 'Still 21 percent oxygen, but of a smaller total: ' + this.fmt(this.p) + ' hPa. The oxygen pressure falls in step with the total, to ' + this.fmt(this.ratio * 100) + ' percent of sea level. The two fixes: descend (a taller column) or breathe more oxygen (a bigger blue share).';
+  },
+  presets: {
+    'sea-level': { alt: 0, pct: 21 },
+    'worked-5000': { alt: 5000, pct: 21 },
+    'ten-thousand': { alt: 10000, pct: 21 },
+    'esperance-9500': { alt: 9500, pct: 21 },
+    'half-at-18000': { alt: 18000, pct: 21 },
+    'oxygen-at-18000': { alt: 18000, pct: 43 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="opp-title" class="widget-stage">
+    <title id="opp-title">Two columns of air pressure, sea level and the chosen altitude, each split into its oxygen share and the rest; the oxygen partial pressure is the oxygen fraction times the total</title>
+    <!-- sea level column, for comparison -->
+    <text x="110" y="20" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">Sea level, air</text>
+    <rect x="70" :y="250 - H(1013)" width="80" :height="H(1013) - H(213)" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <rect x="70" :y="250 - H(213)" width="80" :height="H(213)" fill="var(--color-brand)" fill-opacity="0.35" stroke="var(--color-brand)" stroke-width="1.25"/>
+    <text x="110" :y="250 - H(213) / 2 + 5" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-brand-fg)" class="num">213</text>
+    <text x="110" y="270" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">1,013 hPa</text>
+    <!-- your column -->
+    <text x="250" y="20" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" x-text="(alt ? fmt(alt) + ' ft' : 'Sea level') + ', ' + pct + '% O₂'"></text>
+    <rect x="210" :y="250 - H(p)" width="80" :height="H(p) - H(po2)" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <rect x="210" :y="250 - H(po2)" width="80" :height="H(po2)" fill="var(--color-brand)" fill-opacity="0.35" stroke="var(--color-brand)" stroke-width="2"/>
+    <text x="250" :y="250 - H(po2) / 2 + 5" font-size="13" text-anchor="middle" font-weight="700" fill="var(--color-brand-fg)" class="num" x-text="fmt(po2)"></text>
+    <text x="250" :y="250 - (H(p) + H(po2)) / 2 + 5" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="H(p) - H(po2) > 24">rest</text>
+    <text x="250" y="270" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="fmt(p) + ' hPa'"></text>
+    <!-- the sea-level oxygen line across both -->
+    <line x1="60" x2="310" :y1="250 - H(213)" :y2="250 - H(213)" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <line x1="56" y1="250" x2="304" y2="250" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <g font-size="12">
+      <rect x="70" y="276" width="10" height="10" fill="var(--color-brand)" fill-opacity="0.35" stroke="var(--color-brand)" stroke-width="1"/>
+      <text x="84" y="285" fill="var(--color-brand-fg)">oxygen</text>
+      <rect x="140" y="276" width="10" height="10" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+      <text x="154" y="285" fill="var(--color-fg-muted)">nitrogen and the rest</text>
+    </g>
+
+    <!-- the formula, worked live -->
+    <text x="340" y="56" font-size="14" font-weight="600" fill="var(--color-fg)">Dalton's law</text>
+    <text x="340" y="84" font-size="16" fill="var(--color-fg)" class="num">P<tspan font-size="11" dy="4">O₂</tspan><tspan dy="-4"> = fraction × total</tspan></text>
+    <text x="340" y="116" font-size="16" class="num" fill="var(--color-brand-fg)" font-weight="700" x-text="fmt(f, 2) + ' × ' + fmt(p) + ' = ' + fmt(po2) + ' hPa'"></text>
+    <text x="340" y="146" font-size="14" fill="var(--color-fg-muted)" class="num" x-text="fmt(po2) + ' ÷ 213 = ' + fmt(ratio, 2) + ' of sea level'"></text>
+    <!-- a gauge: share of sea-level oxygen pressure -->
+    <rect x="340" y="166" width="270" height="16" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="340" y="166" height="16" rx="8" :width="clamp(ratio, 0.02, 1.2) / 1.2 * 270" :fill="ratio >= 0.97 ? 'var(--color-ok)' : alt > 10000 ? 'var(--color-bad)' : 'var(--color-warn)'"/>
+    <line x1="565" y1="160" x2="565" y2="188" stroke="var(--color-fg)" stroke-width="1.25"/>
+    <text x="565" y="202" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">sea level</text>
+    <text x="340" y="236" font-size="13" fill="var(--color-fg-muted)">To get 213 hPa back here you would need</text>
+    <text x="340" y="258" font-size="15" font-weight="700" fill="var(--color-fg)" class="num" x-text="'about ' + fmt(need) + ' % oxygen'"></text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="opp-alt">Altitude (ISA) <output for="opp-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="opp-alt" min="0" max="25000" step="500" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="opp-pct">Oxygen in what you breathe <output for="opp-pct" x-text="pct + ' %'"></output></label>
+      <input type="range" id="opp-pct" min="21" max="100" step="1" x-model.number="pct">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Total pressure</dt><dd class="widget-value" x-text="fmt(p) + ' hPa'"></dd></div>
+    <div class="widget-readout" :class="pct === 21 ? 'ok' : ''"><dt class="widget-label">Oxygen fraction</dt><dd class="widget-value" x-text="pct + ' %'"></dd></div>
+    <div class="widget-readout" :class="state[1]"><dt class="widget-label">Oxygen partial pressure</dt><dd class="widget-value"><span x-text="fmt(po2) + ' hPa'"></span><span class="widget-flag bad" x-show="state[1] === 'bad'">low</span></dd></div>
+    <div class="widget-readout" :class="state[1]"><dt class="widget-label">Share of sea level</dt><dd class="widget-value" x-text="fmt(ratio * 100) + ' %'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('sea-level')" :aria-pressed="active === 'sea-level'">SL</button>
+      <button type="button" @click="preset('worked-5000')" :aria-pressed="active === 'worked-5000'">5,000</button>
+      <button type="button" @click="preset('esperance-9500')" :aria-pressed="active === 'esperance-9500'">9,500</button>
+      <button type="button" @click="preset('ten-thousand')" :aria-pressed="active === 'ten-thousand'">10,000</button>
+      <button type="button" @click="preset('half-at-18000')" :aria-pressed="active === 'half-at-18000'">18,000</button>
+      <button type="button" @click="preset('oxygen-at-18000')" :aria-pressed="active === 'oxygen-at-18000'">18,000 + O₂</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The blue share is always the same 21 percent of the column; what shrinks with height is the column, so the oxygen pressure falls with it: 177 hPa at 5,000 ft, 147 at 10,000, 105 (half) at 18,000. Only two things put it back: more total pressure (descend, or pressurise) or a bigger oxygen fraction. Pressures are the lesson's ISA figures, smoothed between them; water vapour and carbon dioxide in the lungs are left out, as in the lesson's round numbers.</p>
+  <details class="widget-try"><summary>Try it: what is the oxygen partial pressure at 5,000 ft, as a share of sea level?</summary><p>Press 5,000: $0.21 \times 843 = 177$ hPa, and $177 \div 213 = 0.83$. Each breath pushes oxygen into the blood with about 83 percent of the sea-level pressure.</p></details>
+  <details class="widget-try"><summary>Try it: at 18,000 ft, what oxygen percentage gives you sea-level oxygen pressure back?</summary><p>Press 18,000: 21 percent of 500 hPa is only 105 hPa. Slide the oxygen up, or press 18,000 + O₂: $213 \div 500 \approx 0.43$, so about 43 percent oxygen gives about 213 hPa again, ignoring water vapour.</p></details>
+</div>

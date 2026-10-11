@@ -1,0 +1,233 @@
+<div class="widget" x-data="widget({
+  cls: 'C', piper: false,
+  // the lesson's table (RFRC 2.6): links between pairs of aircraft. yv you-VFR, yi you-IFR, vi VFR-IFR, ii IFR-IFR.
+  // kind: atc = ATC separates, info = traffic information only, you = see and avoid (your job), pil = pilots separate
+  // themselves, '' = no link
+  _k: {
+    A: { yv: '', yi: '', vi: '', ii: 'atc' },
+    C: { yv: 'info', yi: 'atc', vi: 'atc', ii: 'atc' },
+    D: { yv: 'info', yi: 'info', vi: 'info', ii: 'atc' },
+    E: { yv: 'you', yi: 'you', vi: 'pil', ii: 'atc' },
+    G: { yv: 'you', yi: 'you', vi: 'pil', ii: 'pil' },
+  },
+  _r: {
+    A: { ctl: 'Yes', clr: 'VFR not permitted', sep: 'Not applicable: IFR only', carry: 'Not applicable: IFR only',
+      sub: 'controlled airspace, high level', atc: 'ATC: IFR only, every flight separated', tag: 'VFR not permitted',
+      why: 'Class A is the high-level airspace where the airliners cruise. Everything there is IFR and fully separated, and a VFR aircraft relying on see and avoid at jet speeds has no place in it, so VFR flight is not permitted.' },
+    C: { ctl: 'Yes', clr: 'Required before entry', sep: 'ATC from IFR; you from other VFR, with traffic information', carry: 'Transponder and radio',
+      sub: 'controlled airspace, e.g. around Perth', atc: 'ATC: your clearance; separates IFR from VFR', tag: 'cleared · transponder · radio',
+      why: 'Class C is the busiest airspace a light aeroplane is likely to enter, with fast IFR traffic mixing with VFR. So ATC takes on more: a clearance is required, ATC separates IFR from VFR and gives you traffic information about other VFR. It needs to see and hear you to do that, so a transponder and radio are required.' },
+    D: { ctl: 'Yes', clr: 'Required before entry', sep: 'You, by sight; the tower gives traffic information', carry: 'Radio, to talk to the tower',
+      sub: 'controlled airspace, e.g. Jandakot', atc: 'Tower: your clearance; controls the circuit', tag: 'cleared · radio',
+      why: 'Class D sits around regional towered aerodromes such as Jandakot: mostly light aircraft at lower speeds, many in the circuit. A clearance is required and the tower controls the circuit, but ATC separates only IFR from IFR: it tells you who is around, and you keep your own spacing with what you can see.' },
+    E: { ctl: 'Yes, for IFR', clr: 'Not required', sep: 'You: see and avoid (ATC separates only IFR)', carry: 'Transponder squawking 1200 and radio, listening watch',
+      sub: 'controlled airspace (for IFR, not for VFR)', atc: 'ATC: controls IFR only; you squawk 1200 and listen', tag: 'squawk 1200 · listening watch',
+      why: 'Class E is controlled for IFR, not for VFR: IFR flights get clearances and separation, but a VFR flight needs no clearance. So that ATC and the IFR traffic it is separating can see and hear you, you must meet the VMC minima, carry a serviceable transponder squawking 1200 and a radio, and keep a listening watch on the area frequency. It is still controlled airspace.' },
+    G: { ctl: 'No: the only non-controlled class', clr: 'Not required', sep: 'You: lookout and radio', carry: 'No clearance; broadcast on the CTAF at aerodromes',
+      sub: 'non-controlled airspace', atc: 'No ATC: flight information on request; CTAF at aerodromes', tag: 'lookout · radio',
+      why: 'Class G is non-controlled: no clearance, and nobody is controlling you. Pilots keep themselves apart by lookout and radio, a flight information service and traffic information are available on request, and at a non-controlled aerodrome you use CTAF procedures, broadcasting your position and intentions.' },
+  },
+  get r() { return this._r[this.cls] },
+  get k() { return this._k[this.cls] },
+  // the check-yourself scene: on final behind a Piper in Class D
+  get pp() { return this.piper && this.cls === 'D' },
+  get you() { return this.pp ? [150, 222] : [130, 175] },
+  get vfr() { return this.pp ? [370, 262] : [330, 245] },
+  i1: [455, 140], i2: [585, 82],
+  // a link from a to b, each end pulled back by ra / rb; labels sit along it, above (-) and below (+) the line
+  L(a, b, ra, rb, f) {
+    f = f || 0.5;
+    const dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy), ux = dx / d, uy = dy / d;
+    const mx = a[0] + dx * f + ux * (ra - rb) / 2, my = a[1] + dy * f + uy * (ra - rb) / 2;
+    const rot = Math.atan2(dy, dx) * 180 / Math.PI;
+    return { x1: a[0] + ux * ra, y1: a[1] + uy * ra, x2: b[0] - ux * rb, y2: b[1] - uy * rb,
+      ta: 'translate(' + (mx + uy * 9).toFixed(1) + ' ' + (my - ux * 9).toFixed(1) + ') rotate(' + rot.toFixed(1) + ')',
+      tb: 'translate(' + (mx - uy * 18).toFixed(1) + ' ' + (my + ux * 18).toFixed(1) + ') rotate(' + rot.toFixed(1) + ')' };
+  },
+  get yv() { return this.L([this.you[0] - 8, this.you[1]], [this.vfr[0] - 8, this.vfr[1]], 34, 32) },
+  get yi() { return this.L([this.you[0] - 8, this.you[1]], this.i1, 34, 30, 0.56) },
+  get vi() { return this.L([this.vfr[0] - 8, this.vfr[1]], this.i1, 32, 30) },
+  col(kind) { return { atc: 'var(--color-ok)', info: 'var(--color-info)', you: 'var(--color-warn)', pil: 'var(--color-warn)' }[kind] || 'none' },
+  tcol(kind) { return { atc: 'var(--color-ok-fg)', info: 'var(--color-info-fg)', you: 'var(--color-warn-fg)', pil: 'var(--color-warn-fg)' }[kind] || 'none' },
+  dash(kind) { return kind === 'info' ? '8 5' : kind === 'you' || kind === 'pil' ? '0.5 6' : 'none' },
+  wid(kind) { return kind === 'atc' ? 2.5 : kind === 'info' ? 2 : 3 },
+  // label above the line (what happens) and below it (whose job it is)
+  la(kind, pair) {
+    if (pair === 'yv' && this.pp) return 'traffic info: the Piper';
+    return { atc: 'ATC separates', info: 'traffic info', you: 'see and avoid: you', pil: 'lookout + radio' }[kind] || '';
+  },
+  lb(kind, pair) {
+    if (pair === 'yv' && this.pp) return 'your spacing, by sight';
+    return kind === 'info' && pair !== 'vi' ? 'you keep clear' : '';
+  },
+  get youTag() { return this.pp ? 'cleared to land, number 2' : this.r.tag },
+  get atcText() { return this.pp ? 'Tower: cleared to land; traffic is the Piper on final ahead' : this.r.atc },
+  get sepText() { return this.pp ? 'You, by sight: keep your spacing behind the Piper' : this.r.sep },
+  get caption() {
+    if (this.pp) return 'The tower clears you to land and tells you about the Piper on final, and it sequences you behind it. But in Class D ATC separates only IFR from IFR: keeping your spacing behind the Piper is your job, by sight.';
+    return this.r.why;
+  },
+  presets: {
+    'class-c-perth': { cls: 'C', piper: false },
+    'class-d-jandakot': { cls: 'D', piper: false },
+    'class-e-trap': { cls: 'E', piper: false },
+    'class-g-ctaf': { cls: 'G', piper: false },
+    'class-a-no-vfr': { cls: 'A', piper: false },
+    'class-d-piper-on-final': { cls: 'D', piper: true },
+  },
+})">
+  <svg viewBox="0 0 640 372" role="img" aria-labelledby="wsw-title" class="widget-stage">
+    <title id="wsw-title">A patch of sky in the chosen airspace class with your VFR Cessna, another VFR aeroplane and two IFR airliners in a cloud. Solid green links join the pairs ATC separates, dashed blue links show where ATC only passes traffic information, and dotted amber links show where pilots must see and avoid. Class A: VFR crossed out, ATC separates the IFR. Class C: ATC separates IFR from VFR and IFR from IFR, and gives you traffic information about the other VFR. Class D: ATC separates only IFR from IFR and gives traffic information to VFR. Class E: ATC separates only IFR, you see and avoid and squawk 1200. Class G: pilots separate themselves by lookout and radio.</title>
+    <defs>
+      <clipPath id="wsw-sky"><rect x="0" y="0" width="640" height="300" rx="10"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="372" rx="10" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-sky-soft)"/>
+    <rect x="0" y="290" width="640" height="10" fill="var(--color-sky-soft)"/>
+    <line x1="0" y1="300" x2="640" y2="300" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+
+    <!-- class heading -->
+    <text x="16" y="32" font-size="18" font-weight="700" fill="var(--color-fg)" x-text="'Class ' + cls"></text>
+    <text x="16" y="52" font-size="13" fill="var(--color-fg-muted)" x-text="r.sub"></text>
+    <text x="16" y="72" font-size="13" font-weight="700" fill="var(--color-warn-fg)" x-show="cls === 'E'">Trap: Class E IS controlled airspace</text>
+    <text x="16" y="72" font-size="13" font-weight="700" fill="var(--color-ok-fg)" x-show="cls === 'G'">the only non-controlled class</text>
+
+    <!-- the runway, for the circuit scene -->
+    <g x-show="pp">
+      <rect x="452" y="297" width="176" height="7" rx="1" fill="var(--color-tarmac)"/>
+      <line x1="462" y1="300.5" x2="618" y2="300.5" stroke="var(--color-paint)" stroke-width="1" stroke-dasharray="8 6"/>
+      <text x="540" y="320" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">runway</text>
+    </g>
+
+    <!-- the tower or ATC unit -->
+    <g :opacity="cls === 'G' ? 0.35 : 1">
+      <rect x="30" y="262" width="12" height="38" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+      <path d="M22 248 L50 248 L46 262 L26 262 Z" fill="var(--color-info-soft)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+      <line x1="20" y1="248" x2="52" y2="248" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <text x="64" y="321" font-size="13" fill="var(--color-fg-muted)" x-text="atcText"></text>
+    <!-- radio contact between ATC and you (C, D, E) -->
+    <line stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="2 4" stroke-linecap="round" x1="50" y1="246"
+      x-show="cls === 'C' || cls === 'D' || cls === 'E'" :x2="you[0] - 46" :y2="you[1] + 12"/>
+
+    <!-- the cloud, with the IFR traffic in and under it -->
+    <g>
+      <!-- shared twin-jet silhouette from behind: python -m tools.diagrams.plane airliner, scale 0.32 -->
+      <g :transform="'translate(' + i2[0] + ' ' + i2[1] + ')'">
+        <g transform="translate(0 0) scale(0.32)"><rect x="-36" y="4" width="14" height="9" rx="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><rect x="22" y="4" width="14" height="9" rx="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-50 -7 L-10 3 L-10 8 L-50 -1 Z M50 -7 L10 3 L10 8 L50 -1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><circle cx="0" cy="0" r="10" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-2 -10 L0 -44 L3 -44 L3.5 -10 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-18 -8 L-2 -10 L3 -10 L18 -8 L18 -5 L3 -7 L-2 -7 L-18 -5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+      </g>
+      <!-- shared twin-jet silhouette from behind: python -m tools.diagrams.plane airliner, scale 0.6 -->
+      <g :transform="'translate(' + i1[0] + ' ' + i1[1] + ')'">
+        <g transform="translate(0 0) scale(0.6)"><rect x="-36" y="4" width="14" height="9" rx="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><rect x="22" y="4" width="14" height="9" rx="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-50 -7 L-10 3 L-10 8 L-50 -1 Z M50 -7 L10 3 L10 8 L50 -1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><circle cx="0" cy="0" r="10" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-2 -10 L0 -44 L3 -44 L3.5 -10 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-18 -8 L-2 -10 L3 -10 L18 -8 L18 -5 L3 -7 L-2 -7 L-18 -5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g>
+      </g>
+      <g clip-path="url(#wsw-sky)" fill="var(--color-surface)" fill-opacity="0.82">
+        <path d="M478 140 C452 140 446 112 470 106 C468 80 500 70 516 84 C524 56 566 52 578 74 C596 56 634 66 630 92 C652 98 648 132 624 136 C622 148 600 152 588 144 C574 156 540 156 530 144 C516 152 488 150 478 140 Z"/>
+      </g>
+      <path d="M478 140 C452 140 446 112 470 106 C468 80 500 70 516 84 C524 56 566 52 578 74 C596 56 634 66 630 92 C652 98 648 132 624 136 C622 148 600 152 588 144 C574 156 540 156 530 144 C516 152 488 150 478 140 Z"
+        fill="none" stroke="var(--color-line-strong)" stroke-width="1.25" clip-path="url(#wsw-sky)"/>
+      <text x="446" y="180" font-size="13" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">IFR</text>
+      <text x="476" y="180" font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">in cloud</text>
+      <text x="606" y="118" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">IFR</text>
+    </g>
+
+    <!-- links between the pairs -->
+    <g stroke-linecap="round" fill="none">
+      <line x-show="k.ii" x1="478" y1="124" x2="566" y2="92" :stroke="col(k.ii)" :stroke-dasharray="dash(k.ii)" :stroke-width="wid(k.ii)"/>
+      <line x-show="k.vi && !pp" :x1="vi.x1" :y1="vi.y1" :x2="vi.x2" :y2="vi.y2" :stroke="col(k.vi)" :stroke-dasharray="dash(k.vi)" :stroke-width="wid(k.vi)"/>
+      <line x-show="k.yi && !pp" :x1="yi.x1" :y1="yi.y1" :x2="yi.x2" :y2="yi.y2" :stroke="col(k.yi)" :stroke-dasharray="dash(k.yi)" :stroke-width="wid(k.yi)"/>
+      <line x-show="k.yv" :x1="yv.x1" :y1="yv.y1" :x2="yv.x2" :y2="yv.y2" :stroke="col(pp ? 'you' : k.yv)" :stroke-dasharray="dash(pp ? 'you' : k.yv)" :stroke-width="wid(pp ? 'you' : k.yv)"/>
+    </g>
+    <g font-size="12" font-weight="600" text-anchor="middle" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round">
+      <text x="520" y="46" x-show="k.ii" :fill="tcol(k.ii)" x-text="la(k.ii, 'ii')"></text>
+      <text x-show="k.vi && !pp" :transform="vi.ta" :fill="tcol(k.vi)" x-text="la(k.vi, 'vi')"></text>
+      <text x-show="k.yi && !pp" :transform="yi.ta" :fill="tcol(k.yi)" x-text="la(k.yi, 'yi')"></text>
+      <text x-show="k.yi && !pp && lb(k.yi, 'yi')" :transform="yi.tb" fill="var(--color-warn-fg)" x-text="lb(k.yi, 'yi')"></text>
+      <text x-show="k.yv" :transform="yv.ta" :fill="tcol(k.yv)" x-text="la(k.yv, 'yv')"></text>
+      <text x-show="k.yv && lb(k.yv, 'yv')" :transform="yv.tb" fill="var(--color-warn-fg)" x-text="lb(k.yv, 'yv')"></text>
+    </g>
+
+    <!-- the other VFR aeroplane -->
+    <g :transform="'translate(' + vfr[0] + ' ' + vfr[1] + ') rotate(' + (pp ? 4 : 0) + ')'">
+      <!-- shared Cessna silhouette: python -m tools.diagrams.plane side, scale 0.45, fill surface, no gear -->
+      <g transform="translate(0 0) rotate(0) scale(0.45)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      <g x-show="cls === 'A'" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round">
+        <line x1="-34" y1="-16" x2="16" y2="16"/><line x1="-34" y1="16" x2="16" y2="-16"/>
+      </g>
+    </g>
+    <text font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :x="vfr[0] - 8" :y="vfr[1] + 30" x-text="pp ? 'Piper' : 'VFR'"></text>
+
+    <!-- you -->
+    <g :transform="'translate(' + you[0] + ' ' + you[1] + ') rotate(' + (pp ? 4 : 0) + ')'">
+      <!-- shared Cessna silhouette: python -m tools.diagrams.plane side, scale 0.55, fill brand, no gear -->
+      <g transform="translate(0 0) rotate(0) scale(0.55)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-brand)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-brand)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-brand)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-brand)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-brand)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      <g x-show="cls === 'A'" stroke="var(--color-bad)" stroke-width="3.5" stroke-linecap="round">
+        <line x1="-42" y1="-18" x2="20" y2="18"/><line x1="-42" y1="18" x2="20" y2="-18"/>
+      </g>
+    </g>
+    <text font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :x="you[0] - 10" :y="you[1] + 32">You · VFR</text>
+    <text font-size="12" font-weight="600" text-anchor="middle" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"
+      :fill="cls === 'A' ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" :x="you[0] - 10" :y="you[1] - 24" x-text="youTag"></text>
+
+    <!-- legend -->
+    <g font-size="12" fill="var(--color-fg-muted)" stroke-linecap="round">
+      <line x1="16" y1="352" x2="46" y2="352" stroke="var(--color-ok)" stroke-width="2.5"/>
+      <text x="54" y="356">ATC separates</text>
+      <line x1="170" y1="352" x2="200" y2="352" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="8 5"/>
+      <text x="208" y="356">traffic information only</text>
+      <line x1="372" y1="352" x2="402" y2="352" stroke="var(--color-warn)" stroke-width="3" stroke-dasharray="0.5 6"/>
+      <text x="410" y="356">pilots see and avoid</text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wsw-cls">Airspace class <output for="wsw-cls" x-text="'Class ' + cls"></output></label>
+      <select id="wsw-cls" class="input" x-model="cls" @change="active = null">
+        <option value="A">A: high level</option>
+        <option value="C">C: around Perth, en route steps</option>
+        <option value="D">D: regional tower (Jandakot)</option>
+        <option value="E">E: controlled for IFR</option>
+        <option value="G">G: non-controlled</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="cls === 'D'">
+      <label for="wsw-piper" class="cursor-pointer"><span>On final behind a Piper (cleared to land)</span>
+        <input type="checkbox" id="wsw-piper" x-model="piper" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="cls === 'E' ? 'warn' : ''">
+      <dt class="widget-label">Controlled?</dt>
+      <dd class="widget-value"><span x-text="r.ctl"></span><span class="widget-flag warn" x-show="cls === 'E'">exam trap</span></dd>
+    </div>
+    <div class="widget-readout" :class="cls === 'A' ? 'bad' : (cls === 'C' || cls === 'D') ? 'warn' : 'ok'">
+      <dt class="widget-label">Clearance for VFR?</dt>
+      <dd class="widget-value"><span x-text="r.clr"></span><span class="widget-flag bad" x-show="cls === 'A'">no VFR</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Who separates you</dt>
+      <dd class="widget-value" x-text="sepText"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Must carry</dt>
+      <dd class="widget-value" x-text="r.carry"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('class-c-perth')" :aria-pressed="active === 'class-c-perth'">C: Perth</button>
+      <button type="button" @click="preset('class-d-jandakot')" :aria-pressed="active === 'class-d-jandakot'">D: Jandakot</button>
+      <button type="button" @click="preset('class-d-piper-on-final')" :aria-pressed="active === 'class-d-piper-on-final'">D: Piper on final</button>
+      <button type="button" @click="preset('class-e-trap')" :aria-pressed="active === 'class-e-trap'">E: the trap</button>
+      <button type="button" @click="preset('class-g-ctaf')" :aria-pressed="active === 'class-g-ctaf'">G: CTAF</button>
+      <button type="button" @click="preset('class-a-no-vfr')" :aria-pressed="active === 'class-a-no-vfr'">A: no VFR</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Read each class as three answers: do you need a clearance, who keeps you apart, what must you carry. Solid links appear only where ATC separates: in Class C they reach your aeroplane from the IFR traffic, in D and E they join only the IFR traffic, and in G there are none. Class E is controlled airspace even though VFR needs no clearance; Class G is the only non-controlled class. The picture is illustrative, not to scale.</p>
+  <details class="widget-try"><summary>Try it: in Class C, who keeps you apart from another VFR Cessna, and who keeps you apart from an IFR airliner?</summary><p>Choose Class C. ATC separates IFR from VFR, so the airliner is ATC's job (solid link). For the other VFR aeroplane ATC only gives you traffic information (dashed link): seeing it and keeping clear is still your job.</p></details>
+  <details class="widget-try"><summary>Try it: an exam option says "VFR flights need no clearance in Class E, so Class E is non-controlled airspace." True or false?</summary><p>False. Choose Class E: IFR flights get clearances and separation there, so it is controlled airspace; VFR flights need no clearance but must meet the VMC minima, squawk 1200 on a serviceable transponder and keep a listening watch on the radio. Class G is the only non-controlled class.</p></details>
+</div>

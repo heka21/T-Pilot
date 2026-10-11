@@ -1,0 +1,145 @@
+<div class="widget" x-data="widget({
+  sys: 'low', sp: 34, pos: 0, level: 'aloft',
+  // map: north up, the centre of the system at (240, 172); isobars every sp px (every 4 hPa)
+  cx: 240, cy: 172,
+  get isLow() { return this.sys === 'low' },
+  // Southern Hemisphere: clockwise round a low, anticlockwise round a high (bearing the air moves TOWARDS)
+  motion(b) { return this.isLow ? b + 90 : b - 90 },
+  get turn() { return this.level === 'land' ? 30 : this.level === 'sea' ? 12.5 : 0 },
+  get slow() { return this.level === 'land' ? 0.58 : this.level === 'sea' ? 0.71 : 1 },
+  // friction turns the surface flow across the isobars towards the low: clockwise (veered) in the Southern Hemisphere
+  flow(b) { return this.motion(b) + this.turn },
+  get strength() { return 34 / this.sp },
+  get strengthWord() { return this.sp < 28 ? 'strong' : this.sp < 42 ? 'moderate' : 'light' },
+  get youR() { return 3 * this.sp },
+  get you() { return this.pol(this.cx, this.cy, this.youR, this.pos) },
+  get youLabel() { const p = this.pol(this.you.x, this.you.y, 18, this.pos), sn = Math.sin(this.pos * Math.PI / 180), cs = Math.cos(this.pos * Math.PI / 180); return { x: p.x, y: p.y + (cs > 0.3 ? 0 : cs < -0.3 ? 10 : 5), a: sn > 0.3 ? 'start' : sn < -0.3 ? 'end' : 'middle' } },
+  get gradFrom() { return ((this.motion(this.pos) + 180) % 360 + 360) % 360 },
+  get lowSide() { return ((this.motion(this.pos) + 90) % 360 + 360) % 360 },
+  compass(deg) { return ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round((((deg % 360) + 360) % 360) / 45) % 8] },
+  windName(from) { return ['northerly', 'north-easterly', 'easterly', 'south-easterly', 'southerly', 'south-westerly', 'westerly', 'north-westerly'][Math.round((((from % 360) + 360) % 360) / 45) % 8] },
+  // an arrow centred on (x, y) pointing along bearing b, length L: returns {x1, y1, x2, y2}
+  arr(x, y, b, L) { const a = this.pol(x, y, -L / 2, b), c = this.pol(x, y, L / 2, b); return { x1: a.x, y1: a.y, x2: c.x, y2: c.y } },
+  ring(i) { const b = i * 45, p = this.pol(this.cx, this.cy, 2 * this.sp, b); return this.arr(p.x, p.y, this.flow(b), Math.min(34 * this.strength * this.slow, 1.1 * this.sp)) },
+  // from the tail at (x, y) along bearing b
+  ray(x, y, b, L) { const c = this.pol(x, y, L, b); return { x1: x, y1: y, x2: c.x, y2: c.y } },
+  get youArrow() { return this.ray(this.you.x, this.you.y, this.flow(this.pos), 70 * this.strength * this.slow) },
+  get gradArrow() { return this.ray(this.you.x, this.you.y, this.motion(this.pos), 70 * this.strength) },
+  label(k) { const v = this.isLow ? 996 + 4 * (k - 1) : 1028 - 4 * (k - 1); return String(v) },
+  labelAt(k) { return this.pol(this.cx, this.cy, k * this.sp, this.pos + 180) },
+  // Buys Ballot panel: the wind blowing down the page past the reader, low on the right
+  get surfaceText() {
+    if (this.level === 'land') return 'from ' + this.dir(this.gradFrom + 30) + ', ½–⅔ the speed';
+    if (this.level === 'sea') return 'from ' + this.dir(this.gradFrom + 10) + '–' + this.dir(this.gradFrom + 15) + ', ⅔–¾ the speed';
+    return 'over land ' + this.dir(this.gradFrom + 30) + ', ½–⅔ the speed';
+  },
+  presets: {
+    'high-in-the-bight': { sys: 'high', sp: 34, pos: 0, level: 'aloft' },
+    'westerlies-low-south': { sys: 'low', sp: 30, pos: 0, level: 'aloft' },
+    'northerly-low-west': { sys: 'low', sp: 34, pos: 90, level: 'aloft' },
+    'cunderdin-surface': { sys: 'low', sp: 30, pos: 50, level: 'land' },
+    'rottnest-sea': { sys: 'low', sp: 34, pos: 290, level: 'sea' },
+    'close-isobars': { sys: 'low', sp: 22, pos: 0, level: 'aloft' },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="psw-title" class="widget-stage">
+    <title id="psw-title">A plan view, north up, of a high or a low with circular isobars. Arrows show the wind circulating anticlockwise round a high or clockwise round a low, along the isobars at 2,000 ft or crossing them towards the low at the surface. Your position is marked with your wind; a panel on the right shows Buys Ballot's law: back to the wind, low on your right</title>
+    <defs>
+      <marker id="psw-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="psw-map"><rect x="0" y="0" width="470" height="340" rx="10"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="340" fill="var(--color-surface-2)" rx="10"/>
+    <g clip-path="url(#psw-map)">
+      <rect x="0" y="0" width="470" height="340" fill="var(--color-surface)"/>
+      <!-- isobars -->
+      <g fill="none" stroke="var(--color-line-strong)" stroke-width="1.25">
+        <circle :cx="cx" :cy="cy" :r="sp"/><circle :cx="cx" :cy="cy" :r="2 * sp"/><circle :cx="cx" :cy="cy" :r="3 * sp"/>
+        <circle :cx="cx" :cy="cy" :r="4 * sp"/><circle :cx="cx" :cy="cy" :r="5 * sp"/><circle :cx="cx" :cy="cy" :r="6 * sp"/>
+      </g>
+      <g font-size="11" class="num" fill="var(--color-fg-faint)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+        <text :x="labelAt(3).x" :y="labelAt(3).y + 4" x-text="label(3) + ' hPa'"></text>
+        <text :x="labelAt(5).x" :y="labelAt(5).y + 4" x-text="label(5)"></text>
+      </g>
+      <text font-size="34" font-weight="700" text-anchor="middle" :x="cx" :y="cy + 12" :fill="isLow ? 'var(--color-bad-fg)' : 'var(--color-info-fg)'" x-text="isLow ? 'L' : 'H'"></text>
+      <!-- circulation on the second isobar, written out (no x-for in svg) -->
+      <g stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#psw-arrow)">
+        <line :x1="ring(0).x1" :y1="ring(0).y1" :x2="ring(0).x2" :y2="ring(0).y2"/><line :x1="ring(1).x1" :y1="ring(1).y1" :x2="ring(1).x2" :y2="ring(1).y2"/>
+        <line :x1="ring(2).x1" :y1="ring(2).y1" :x2="ring(2).x2" :y2="ring(2).y2"/><line :x1="ring(3).x1" :y1="ring(3).y1" :x2="ring(3).x2" :y2="ring(3).y2"/>
+        <line :x1="ring(4).x1" :y1="ring(4).y1" :x2="ring(4).x2" :y2="ring(4).y2"/><line :x1="ring(5).x1" :y1="ring(5).y1" :x2="ring(5).x2" :y2="ring(5).y2"/>
+        <line :x1="ring(6).x1" :y1="ring(6).y1" :x2="ring(6).x2" :y2="ring(6).y2"/><line :x1="ring(7).x1" :y1="ring(7).y1" :x2="ring(7).x2" :y2="ring(7).y2"/>
+      </g>
+      <!-- you: the gradient wind (dashed when the surface wind is shown) and the wind at your level -->
+      <line stroke="var(--color-fg-faint)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#psw-arrow)" x-show="level !== 'aloft'"
+        :x1="gradArrow.x1" :y1="gradArrow.y1" :x2="gradArrow.x2" :y2="gradArrow.y2"/>
+      <line stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#psw-arrow)"
+        :x1="youArrow.x1" :y1="youArrow.y1" :x2="youArrow.x2" :y2="youArrow.y2"/>
+      <circle r="6" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2.5" :cx="you.x" :cy="you.y"/>
+      <text font-size="13" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+        :x="youLabel.x" :y="youLabel.y" :text-anchor="youLabel.a">you</text>
+      <!-- compass -->
+      <g transform="translate(36 38)">
+        <line x1="0" y1="14" x2="0" y2="-12" stroke="var(--color-fg-muted)" stroke-width="2" marker-end="url(#psw-arrow)"/>
+        <text x="0" y="28" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)">N</text>
+      </g>
+      <text x="456" y="326" font-size="11" text-anchor="end" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-text="level === 'aloft' ? 'wind at 2,000 ft, along the isobars' : 'surface wind; dashed: the 2,000 ft wind'"></text>
+    </g>
+    <!-- Buys Ballot panel -->
+    <text x="555" y="26" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Back to the wind</text>
+    <g :transform="'rotate(' + (motion(pos) - 180) + ' 555 130)'">
+      <circle cx="555" cy="130" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <line x1="555" y1="70" x2="555" y2="190" stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#psw-arrow)"/>
+      <!-- the pilot from above, back to the wind: facing down the page in this frame -->
+      <ellipse cx="555" cy="128" rx="13" ry="6" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="1.5"/>
+      <circle cx="555" cy="130" r="5" fill="var(--color-fg-muted)"/>
+      <text x="515" y="135" font-size="20" font-weight="700" text-anchor="middle" fill="var(--color-bad-fg)" :transform="'rotate(' + (180 - motion(pos)) + ' 515 130)'">L</text>
+      <text x="595" y="135" font-size="20" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" :transform="'rotate(' + (180 - motion(pos)) + ' 595 130)'">H</text>
+    </g>
+    <text x="555" y="218" font-size="13" text-anchor="middle" fill="var(--color-fg)">low on your right</text>
+    <text x="555" y="236" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="'here: low to the ' + compass(lowSide)"></text>
+    <text x="555" y="274" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">Southern Hemisphere</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="psw-sys">Pressure system</label>
+      <select id="psw-sys" class="input" x-model="sys">
+        <option value="low">Low (depression)</option>
+        <option value="high">High (anticyclone)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="psw-sp">Isobar spacing <output for="psw-sp" x-text="sp < 28 ? 'close' : sp < 42 ? 'moderate' : 'wide'"></output></label>
+      <input type="range" id="psw-sp" min="22" max="56" step="1" x-model.number="sp">
+    </div>
+    <div class="widget-control">
+      <label for="psw-pos">Your position <output for="psw-pos" x-text="compass(pos) + ' of the centre'"></output></label>
+      <input type="range" id="psw-pos" min="0" max="355" step="5" x-model.number="pos">
+    </div>
+    <div class="widget-control">
+      <label for="psw-level">Wind at</label>
+      <select id="psw-level" class="input" x-model="level">
+        <option value="aloft">2,000 ft (gradient wind)</option>
+        <option value="land">The surface, over land</option>
+        <option value="sea">The surface, over the sea</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="strengthWord === 'strong' ? 'warn' : ''"><dt class="widget-label">Wind at 2,000 ft</dt><dd class="widget-value" x-text="dir(gradFrom) + ', ' + strengthWord"></dd></div>
+    <div class="widget-readout" :class="level === 'aloft' ? '' : 'ok'"><dt class="widget-label">Surface wind (veered, lighter)</dt><dd class="widget-value" x-text="surfaceText"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Buys Ballot: low pressure</dt><dd class="widget-value" x-text="'to the ' + compass(lowSide)"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('high-in-the-bight')" :aria-pressed="active === 'high-in-the-bight'">High in the Bight</button>
+      <button type="button" @click="preset('westerlies-low-south')" :aria-pressed="active === 'westerlies-low-south'">Westerly</button>
+      <button type="button" @click="preset('northerly-low-west')" :aria-pressed="active === 'northerly-low-west'">Northerly</button>
+      <button type="button" @click="preset('cunderdin-surface')" :aria-pressed="active === 'cunderdin-surface'">Cunderdin</button>
+      <button type="button" @click="preset('rottnest-sea')" :aria-pressed="active === 'rottnest-sea'">Off Rottnest</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> In the Southern Hemisphere the wind blows clockwise round a low and anticlockwise round a high, along the isobars at 2,000 ft and faster where they are closer together. With your back to that wind the low is on your right. Near the ground friction slows the wind and turns it across the isobars towards the low: the surface wind is veered and lighter, about 30 degrees over land and 10 to 15 over the sea. Arrow lengths show strength only roughly.</p>
+  <details class="widget-try"><summary>Try it: a high sits in the Bight, south of Perth. What wind does Perth get, and where is the low?</summary><p>Press High in the Bight: on the northern side of an anticlockwise high the wind is from 090, an easterly. Back to the easterly, you face west and your right hand points north: the low pressure lies to the north and the high to the south.</p></details>
+  <details class="widget-try"><summary>Try it: the 2,000 ft wind over the Wheatbelt is 320. What does the Cunderdin windsock show?</summary><p>Press Cunderdin: over land the surface wind is veered about 30 degrees, to 350, and only half to two-thirds the speed. Climbing out of it you would feel the wind back and strengthen.</p></details>
+</div>

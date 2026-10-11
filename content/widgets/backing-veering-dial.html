@@ -1,0 +1,195 @@
+<div class="widget" x-data="widget({
+  old: 180, nu: 150,
+  // the dial: centre and ring radius in the picture
+  cx: 190, cy: 180, R: 118,
+  // change of direction the shorter way round, -180..180: negative is anticlockwise (backing), positive clockwise (veering)
+  get diff() { return ((this.nu - this.old) % 360 + 540) % 360 - 180 },
+  get amount() { return Math.abs(this.diff) },
+  get half() { return this.amount === 180 },
+  get kind() { return this.diff === 0 ? 'none' : this.half ? 'half' : this.diff < 0 ? 'backed' : 'veered' },
+  get result() {
+    if (this.kind === 'none') return 'No change';
+    if (this.kind === 'half') return 'Reversed: 180°';
+    return (this.kind === 'backed' ? 'Backed ' : 'Veered ') + this.amount + '°';
+  },
+  get sense() {
+    if (this.kind === 'none') return 'same direction';
+    if (this.kind === 'half') return 'either way round: neither word fits';
+    return this.kind === 'backed' ? 'anticlockwise round the dial' : 'clockwise round the dial';
+  },
+  // crossing north: the number jumps between 360 and small values, but the movement round the dial is what counts
+  get throughNorth() { return !this.half && this.diff !== 0 && (this.diff > 0 ? this.old !== 360 && this.old + this.diff > 360 : this.old + this.diff < 0) },
+  names: ['north', 'north-north-east', 'north-east', 'east-north-east', 'east', 'east-south-east', 'south-east', 'south-south-east',
+    'south', 'south-south-west', 'south-west', 'west-south-west', 'west', 'west-north-west', 'north-west', 'north-north-west'],
+  word(d) { return this.names[Math.round((((d % 360) + 360) % 360) / 22.5) % 16] },
+  get words() { return this.word(this.old) + ' to ' + this.word(this.nu) },
+  P(r, b) { return this.pol(this.cx, this.cy, r, b) },
+  // a wind arrow across the dial: tail on the from side, head on the side it blows to
+  windArrow(from) { const a = this.P(106, from), b = this.P(70, this.windTo(from)); return { x1: a.x, y1: a.y, x2: b.x, y2: b.y } },
+  get oldArrow() { return this.windArrow(this.old) },
+  get newArrow() { return this.windArrow(this.nu) },
+  // the change, drawn on the from side between the two tails, the shorter way
+  get arcD() {
+    if (this.diff === 0) return '';
+    const r = 76, s = this.P(r, this.old), e = this.P(r, this.nu), sweep = this.diff > 0 || this.half ? 1 : 0;
+    return 'M' + s.x.toFixed(1) + ' ' + s.y.toFixed(1) + ' A' + r + ' ' + r + ' 0 0 ' + sweep + ' ' + e.x.toFixed(1) + ' ' + e.y.toFixed(1);
+  },
+  get arcMid() { return this.old + (this.half ? 90 : this.diff / 2) },
+  get arcLabel() { const p = this.P(54, this.arcMid); return { x: p.x, y: p.y + 5 } },
+  // from-labels outside the ring, pushed apart when the two directions are close
+  labelAt(which) {
+    const gap = 40, d = this.diff, spread = this.amount < gap ? (gap - this.amount) / 2 : 0, s = d >= 0 ? 1 : -1;
+    const b = which === 'old' ? this.old - s * spread : this.nu + s * spread;
+    const p = this.P(140, b), sn = Math.sin(b * Math.PI / 180), cs = Math.cos(b * Math.PI / 180);
+    return { x: p.x, y: p.y + (cs > 0.5 ? 0 : cs < -0.5 ? 12 : 5), a: sn > 0.35 ? 'start' : sn < -0.35 ? 'end' : 'middle' };
+  },
+  get oldLab() { return this.labelAt('old') },
+  get newLab() { return this.labelAt('new') },
+  tick(b) { const big = b % 30 === 0, a = this.P(this.R, b), c = this.P(this.R - (big ? 12 : 6), b); return { x1: a.x, y1: a.y, x2: c.x, y2: c.y } },
+  num(b) { const p = this.P(this.R - 24, b); return { x: p.x, y: p.y + 4 } },
+  angDist(a, b) { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d) },
+  // drag on the dial: picks up whichever wind is nearer the pointer, in 10 degree steps
+  grab(evt) {
+    let which = null;
+    this.drag(evt, (p) => {
+      const dx = p.x - this.cx, dy = p.y - this.cy;
+      if (Math.hypot(dx, dy) < 20) return;
+      const b = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+      if (!which) which = this.angDist(b, this.old) <= this.angDist(b, this.nu) ? 'old' : 'nu';
+      this[which] = (Math.round(b / 10) * 10) % 360 || 360;
+      this.active = null;
+    });
+  },
+  get caption() {
+    if (this.kind === 'none') return 'Same direction before and after: move one of the sliders, or drag a wind round the dial.';
+    if (this.kind === 'half') return 'A complete reversal: either way round is 180°, so the change is neither a back nor a veer. Real wind changes are rarely this neat.';
+    const t = this.kind === 'backed'
+      ? 'From ' + this.dir(this.old) + ' the wind has moved anticlockwise round the dial to ' + this.dir(this.nu) + ': it has backed ' + this.amount + '°.'
+      : 'From ' + this.dir(this.old) + ' the wind has moved clockwise round the dial to ' + this.dir(this.nu) + ': it has veered ' + this.amount + '°.';
+    if (this.throughNorth) return t + (this.kind === 'veered' ? ' It went through north, so the number got smaller even though the wind veered.' : ' It went through north, so the number got bigger even though the wind backed.');
+    return t;
+  },
+  presets: {
+    'backed-180-to-150': { old: 180, nu: 150 },
+    'veered-through-north': { old: 320, nu: 10 },
+    'jandakot-090-to-040': { old: 90, nu: 40 },
+    'cold-front-nw-to-sw': { old: 320, nu: 230 },
+    'busselton-taf-340-to-270': { old: 340, nu: 270 },
+  },
+})">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="bvd-title" class="widget-stage">
+    <title id="bvd-title">A compass dial with the old wind and the new wind drawn as arrows blowing across it from their labelled from-directions, and an arc between them showing the change round the dial the shorter way. On the right, the answer: backed (anticlockwise) or veered (clockwise), and by how many degrees</title>
+    <defs>
+      <marker id="bvd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="360" fill="var(--color-surface-2)" rx="10"/>
+    <!-- the dial -->
+    <circle :cx="cx" :cy="cy" :r="R" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="2"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1.25" stroke-linecap="round">
+      <line :x1="tick(10).x1" :y1="tick(10).y1" :x2="tick(10).x2" :y2="tick(10).y2"/><line :x1="tick(20).x1" :y1="tick(20).y1" :x2="tick(20).x2" :y2="tick(20).y2"/>
+      <line :x1="tick(40).x1" :y1="tick(40).y1" :x2="tick(40).x2" :y2="tick(40).y2"/><line :x1="tick(50).x1" :y1="tick(50).y1" :x2="tick(50).x2" :y2="tick(50).y2"/>
+      <line :x1="tick(70).x1" :y1="tick(70).y1" :x2="tick(70).x2" :y2="tick(70).y2"/><line :x1="tick(80).x1" :y1="tick(80).y1" :x2="tick(80).x2" :y2="tick(80).y2"/>
+      <line :x1="tick(100).x1" :y1="tick(100).y1" :x2="tick(100).x2" :y2="tick(100).y2"/><line :x1="tick(110).x1" :y1="tick(110).y1" :x2="tick(110).x2" :y2="tick(110).y2"/>
+      <line :x1="tick(130).x1" :y1="tick(130).y1" :x2="tick(130).x2" :y2="tick(130).y2"/><line :x1="tick(140).x1" :y1="tick(140).y1" :x2="tick(140).x2" :y2="tick(140).y2"/>
+      <line :x1="tick(160).x1" :y1="tick(160).y1" :x2="tick(160).x2" :y2="tick(160).y2"/><line :x1="tick(170).x1" :y1="tick(170).y1" :x2="tick(170).x2" :y2="tick(170).y2"/>
+      <line :x1="tick(190).x1" :y1="tick(190).y1" :x2="tick(190).x2" :y2="tick(190).y2"/><line :x1="tick(200).x1" :y1="tick(200).y1" :x2="tick(200).x2" :y2="tick(200).y2"/>
+      <line :x1="tick(220).x1" :y1="tick(220).y1" :x2="tick(220).x2" :y2="tick(220).y2"/><line :x1="tick(230).x1" :y1="tick(230).y1" :x2="tick(230).x2" :y2="tick(230).y2"/>
+      <line :x1="tick(250).x1" :y1="tick(250).y1" :x2="tick(250).x2" :y2="tick(250).y2"/><line :x1="tick(260).x1" :y1="tick(260).y1" :x2="tick(260).x2" :y2="tick(260).y2"/>
+      <line :x1="tick(280).x1" :y1="tick(280).y1" :x2="tick(280).x2" :y2="tick(280).y2"/><line :x1="tick(290).x1" :y1="tick(290).y1" :x2="tick(290).x2" :y2="tick(290).y2"/>
+      <line :x1="tick(310).x1" :y1="tick(310).y1" :x2="tick(310).x2" :y2="tick(310).y2"/><line :x1="tick(320).x1" :y1="tick(320).y1" :x2="tick(320).x2" :y2="tick(320).y2"/>
+      <line :x1="tick(340).x1" :y1="tick(340).y1" :x2="tick(340).x2" :y2="tick(340).y2"/><line :x1="tick(350).x1" :y1="tick(350).y1" :x2="tick(350).x2" :y2="tick(350).y2"/>
+    </g>
+    <g stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round">
+      <line :x1="tick(0).x1" :y1="tick(0).y1" :x2="tick(0).x2" :y2="tick(0).y2"/><line :x1="tick(30).x1" :y1="tick(30).y1" :x2="tick(30).x2" :y2="tick(30).y2"/>
+      <line :x1="tick(60).x1" :y1="tick(60).y1" :x2="tick(60).x2" :y2="tick(60).y2"/><line :x1="tick(90).x1" :y1="tick(90).y1" :x2="tick(90).x2" :y2="tick(90).y2"/>
+      <line :x1="tick(120).x1" :y1="tick(120).y1" :x2="tick(120).x2" :y2="tick(120).y2"/><line :x1="tick(150).x1" :y1="tick(150).y1" :x2="tick(150).x2" :y2="tick(150).y2"/>
+      <line :x1="tick(180).x1" :y1="tick(180).y1" :x2="tick(180).x2" :y2="tick(180).y2"/><line :x1="tick(210).x1" :y1="tick(210).y1" :x2="tick(210).x2" :y2="tick(210).y2"/>
+      <line :x1="tick(240).x1" :y1="tick(240).y1" :x2="tick(240).x2" :y2="tick(240).y2"/><line :x1="tick(270).x1" :y1="tick(270).y1" :x2="tick(270).x2" :y2="tick(270).y2"/>
+      <line :x1="tick(300).x1" :y1="tick(300).y1" :x2="tick(300).x2" :y2="tick(300).y2"/><line :x1="tick(330).x1" :y1="tick(330).y1" :x2="tick(330).x2" :y2="tick(330).y2"/>
+    </g>
+    <!-- the change, round the from side the shorter way -->
+    <path fill="none" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round" :d="arcD" x-show="diff !== 0" marker-end="url(#bvd-arrow)" :stroke-dasharray="half ? '6 6' : 'none'"/>
+    <!-- old and new winds: arrows point where the wind blows TO -->
+    <line stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#bvd-arrow)" :x1="oldArrow.x1" :y1="oldArrow.y1" :x2="oldArrow.x2" :y2="oldArrow.y2"/>
+    <line stroke="var(--color-info)" stroke-width="3" stroke-linecap="round" marker-end="url(#bvd-arrow)" :x1="newArrow.x1" :y1="newArrow.y1" :x2="newArrow.x2" :y2="newArrow.y2"/>
+    <circle r="6" fill="var(--color-fg-muted)" stroke="var(--color-surface)" stroke-width="2" :cx="P(R, old).x" :cy="P(R, old).y"/>
+    <circle r="6" fill="var(--color-info)" stroke="var(--color-surface)" stroke-width="2" :cx="P(R, nu).x" :cy="P(R, nu).y"/>
+    <!-- degrees and cardinal letters inside the ring -->
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text :x="num(30).x" :y="num(30).y">030</text><text :x="num(60).x" :y="num(60).y">060</text>
+      <text :x="num(120).x" :y="num(120).y">120</text><text :x="num(150).x" :y="num(150).y">150</text>
+      <text :x="num(210).x" :y="num(210).y">210</text><text :x="num(240).x" :y="num(240).y">240</text>
+      <text :x="num(300).x" :y="num(300).y">300</text><text :x="num(330).x" :y="num(330).y">330</text>
+    </g>
+    <g font-size="15" font-weight="700" fill="var(--color-fg-muted)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text :x="num(0).x" :y="num(0).y + 1">N</text><text :x="num(90).x" :y="num(90).y + 1">E</text>
+      <text :x="num(180).x" :y="num(180).y + 1">S</text><text :x="num(270).x" :y="num(270).y + 1">W</text>
+    </g>
+    <circle r="3" fill="var(--color-fg-muted)" :cx="cx" :cy="cy"/>
+    <text font-size="14" font-weight="700" fill="var(--color-brand-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" class="num"
+      x-show="diff !== 0" :x="arcLabel.x" :y="arcLabel.y" x-text="amount + '°'"></text>
+    <!-- from labels -->
+    <text font-size="13" font-weight="600" fill="var(--color-fg-muted)" class="num" :x="oldLab.x" :y="oldLab.y" :text-anchor="oldLab.a" x-text="'old ' + dir(old)"></text>
+    <text font-size="13" font-weight="700" fill="var(--color-info-fg)" class="num" :x="newLab.x" :y="newLab.y" :text-anchor="newLab.a" x-text="'new ' + dir(nu)"></text>
+    <!-- drag surface -->
+    <circle :cx="cx" :cy="cy" r="140" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: grab" @pointerdown="grab($event)"/>
+
+    <!-- RIGHT: the answer -->
+    <g font-size="13">
+      <line x1="392" y1="40" x2="420" y2="40" stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="428" y="45" fill="var(--color-fg-muted)">old wind from <tspan class="num" x-text="dir(old)"></tspan></text>
+      <text x="428" y="62" font-size="12" fill="var(--color-fg-faint)" x-text="word(old)"></text>
+      <line x1="392" y1="86" x2="420" y2="86" stroke="var(--color-info)" stroke-width="3" stroke-linecap="round"/>
+      <text x="428" y="91" fill="var(--color-info-fg)" font-weight="600">new wind from <tspan class="num" x-text="dir(nu)"></tspan></text>
+      <text x="428" y="108" font-size="12" fill="var(--color-fg-faint)" x-text="word(nu)"></text>
+    </g>
+    <text x="392" y="156" font-size="26" font-weight="700" fill="var(--color-brand-fg)" x-text="result"></text>
+    <text x="392" y="178" font-size="13" fill="var(--color-fg-muted)" x-text="sense"></text>
+    <text x="392" y="198" font-size="12" font-weight="600" fill="var(--color-warn-fg)" x-show="throughNorth" x-text="kind === 'veered' ? 'Through north: still a veer' : 'Through north: still a back'"></text>
+    <!-- the two words as movements round a dial -->
+    <g :opacity="kind === 'backed' ? 1 : 0.45">
+      <circle cx="442" cy="268" r="30" fill="var(--color-surface)" :stroke="kind === 'backed' ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="2"/>
+      <text x="442" y="233" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">N</text>
+      <path d="M456.1 253.9 A20 20 0 0 0 427.9 253.9" fill="none" stroke-width="2.5" stroke-linecap="round" :stroke="kind === 'backed' ? 'var(--color-brand)' : 'var(--color-fg-faint)'" marker-end="url(#bvd-arrow)"/>
+      <text x="442" y="318" font-size="14" font-weight="700" text-anchor="middle" :fill="kind === 'backed' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">Backing</text>
+      <text x="442" y="334" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">anticlockwise</text>
+    </g>
+    <g :opacity="kind === 'veered' ? 1 : 0.45">
+      <circle cx="566" cy="268" r="30" fill="var(--color-surface)" :stroke="kind === 'veered' ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="2"/>
+      <text x="566" y="233" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">N</text>
+      <path d="M551.9 253.9 A20 20 0 0 1 580.1 253.9" fill="none" stroke-width="2.5" stroke-linecap="round" :stroke="kind === 'veered' ? 'var(--color-brand)' : 'var(--color-fg-faint)'" marker-end="url(#bvd-arrow)"/>
+      <text x="566" y="318" font-size="14" font-weight="700" text-anchor="middle" :fill="kind === 'veered' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">Veering</text>
+      <text x="566" y="334" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">clockwise</text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="bvd-old">Old wind, from <output for="bvd-old" class="num" x-text="dir(old) + '°'"></output></label>
+      <input type="range" id="bvd-old" min="10" max="360" step="10" x-model.number="old">
+    </div>
+    <div class="widget-control">
+      <label for="bvd-new">New wind, from <output for="bvd-new" class="num" x-text="dir(nu) + '°'"></output></label>
+      <input type="range" id="bvd-new" min="10" max="360" step="10" x-model.number="nu">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Change</dt><dd class="widget-value" x-text="dir(old) + ' → ' + dir(nu)"></dd></div>
+    <div class="widget-readout" :class="kind === 'backed' || kind === 'veered' ? 'ok' : ''"><dt class="widget-label">Backed or veered</dt><dd class="widget-value"><span x-text="result"></span><span class="widget-flag warn" x-show="throughNorth">through north</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">In compass words</dt><dd class="widget-value" x-text="words"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('backed-180-to-150')" :aria-pressed="active === 'backed-180-to-150'">180 → 150</button>
+      <button type="button" @click="preset('veered-through-north')" :aria-pressed="active === 'veered-through-north'">320 → 010</button>
+      <button type="button" @click="preset('jandakot-090-to-040')" :aria-pressed="active === 'jandakot-090-to-040'">Jandakot ATIS</button>
+      <button type="button" @click="preset('cold-front-nw-to-sw')" :aria-pressed="active === 'cold-front-nw-to-sw'">Cold front</button>
+      <button type="button" @click="preset('busselton-taf-340-to-270')" :aria-pressed="active === 'busselton-taf-340-to-270'">Busselton TAF</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Backing and veering describe only the movement round the dial: anticlockwise is backing, clockwise is veering, taken the shorter way round. Read it as movement, not as bigger or smaller numbers: 320 to 010 is a veer of 50° through north. The definitions are the same in both hemispheres; what differs is which one happens. At a Southern Hemisphere cold front the wind backs, north-west to south-west; at a Northern Hemisphere one it veers.</p>
+  <details class="widget-try"><summary>Try it: the Jandakot ATIS wind goes from 090 to 040 over an hour. Backed or veered, and by how much?</summary><p>Press Jandakot ATIS: from east the wind moves anticlockwise towards north-east, so it has backed 50°.</p></details>
+  <details class="widget-try"><summary>Try it: the Busselton TAF has 34015G25KT, then FM 27020G32KT. What kind of change is that?</summary><p>Press Busselton TAF: from 340 round to 270 is anticlockwise, a back of 70°, which in the Southern Hemisphere is the signature of a cold front passing.</p></details>
+</div>

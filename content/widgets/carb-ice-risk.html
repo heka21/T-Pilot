@@ -1,0 +1,154 @@
+<div class="widget" x-data="widget({
+  oat: 14, dew: 12, power: 'cruise', moist: false,
+  // dew point cannot exceed the temperature; visible moisture means saturated air
+  get td() { return this.moist ? this.oat : Math.min(this.dew, this.oat) },
+  // relative humidity from temperature and dew point (Magnus formula)
+  rhOf(t, td) { return 100 * Math.exp(17.62 * td / (243.12 + td) - 17.62 * t / (243.12 + t)) },
+  tdOf(t, rh) { const g = Math.log(rh / 100) + 17.62 * t / (243.12 + t); return 243.12 * g / (17.62 - g) },
+  get rh() { return this.rhOf(this.oat, this.td) },
+  get spread() { return this.oat - this.td },
+  // the lessons' temperature ranges (BAKC 3.4): any power about -10 to +30, throttle ice (low power) about -5 to +20.
+  // The humidity bands (80% and 60%, 40%) are illustrative: the lessons say only 'high humidity'
+  get inRange() { return this.oat >= -10 && this.oat <= 30 },
+  get band() { const r = this.rh; return !this.inRange ? 0 : r >= 80 ? 3 : r >= 60 ? 2 : r >= 40 ? 1 : 0 },
+  get cruiseRisk() { return ['Low', 'Light', 'Moderate', 'Serious'][this.band] },
+  get descentRisk() { return ['Low', 'Light', 'Serious', 'Serious'][this.band] },
+  get risk() { return this.power === 'cruise' ? this.cruiseRisk : this.descentRisk },
+  get throttleIce() { return this.power === 'descent' && this.oat >= -5 && this.oat <= 20 && this.band >= 2 },
+  get evapIce() { return this.band >= 2 },
+  get impactIce() { return this.moist && this.oat <= 0 },
+  get types() {
+    const t = [];
+    if (this.throttleIce) t.push('throttle ice (the most dangerous)');
+    if (this.evapIce) t.push('fuel evaporation ice');
+    if (this.impactIce) t.push('impact ice on the intake');
+    return t.length ? t.join(', ') : 'none likely';
+  },
+  // chart: temperature -15..35 across x 80..600, temperature/dew point spread 0..25 down y 40..270
+  X(t) { return 80 + (t + 15) / 50 * 520 },
+  Y(sp) { return 40 + this.clamp(sp, 0, 25) / 25 * 230 },
+  spOf(t, rh) { return t - this.tdOf(t, rh) },
+  // a band between two humidity curves, over -10..30 degrees
+  bandPath(lo, hi) {
+    const top = [], bot = [];
+    for (let t = -10; t <= 30; t += 1) { top.push([this.X(t), this.Y(this.spOf(t, hi))]); bot.unshift([this.X(t), this.Y(this.spOf(t, lo))]) }
+    return this.path(top.concat(bot)) + ' Z';
+  },
+  curve(rh) { const pts = []; for (let t = -15; t <= 35; t += 1) pts.push([this.X(t), this.Y(this.spOf(t, rh))]); return this.path(pts) },
+  presets: {
+    'jandakot-winter-morning': { oat: 14, dew: 12, power: 'cruise', moist: false },
+    'glide-approach': { oat: 14, dew: 12, power: 'descent', moist: false },
+    'drizzly-15-degrees': { oat: 15, dew: 15, power: 'cruise', moist: true },
+    'humid-20-degrees': { oat: 20, dew: 17, power: 'cruise', moist: false },
+    'frosty-dry-morning': { oat: 0, dew: -14, power: 'descent', moist: false },
+  },
+})">
+  <svg viewBox="0 0 640 316" role="img" aria-labelledby="cir-title" class="widget-stage">
+    <title id="cir-title">Carburettor icing risk against outside air temperature and the spread between temperature and dew point: the smaller the spread, the more humid the air and the more serious the risk, from well below freezing to about 30 degrees</title>
+    <rect x="0" y="0" width="640" height="316" fill="var(--color-surface)"/>
+    <!-- risk bands -->
+    <path fill="var(--color-ok)" fill-opacity="0.16" :d="bandPath(40, 60)"/>
+    <path fill="var(--color-warn)" fill-opacity="0.22" :d="bandPath(60, 80)"/>
+    <path fill="var(--color-bad)" fill-opacity="0.22" :d="bandPath(80, 100)"/>
+    <!-- grid and axes -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line :x1="X(-10)" :x2="X(-10)" y1="40" y2="270"/><line :x1="X(0)" :x2="X(0)" y1="40" y2="270"/><line :x1="X(10)" :x2="X(10)" y1="40" y2="270"/>
+      <line :x1="X(20)" :x2="X(20)" y1="40" y2="270"/><line :x1="X(30)" :x2="X(30)" y1="40" y2="270"/>
+      <line x1="80" x2="600" :y1="Y(5)" :y2="Y(5)"/><line x1="80" x2="600" :y1="Y(10)" :y2="Y(10)"/><line x1="80" x2="600" :y1="Y(15)" :y2="Y(15)"/><line x1="80" x2="600" :y1="Y(20)" :y2="Y(20)"/>
+    </g>
+    <line x1="80" y1="270" x2="600" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="80" y1="40" x2="80" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="80" y1="40" x2="600" y2="40" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="middle">
+      <text :x="X(-10)" y="286">−10</text><text :x="X(0)" y="286">0</text><text :x="X(10)" y="286">10</text><text :x="X(20)" y="286">20</text><text :x="X(30)" y="286">30</text>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" class="num" text-anchor="end">
+      <text x="72" :y="Y(0) + 4">0</text><text x="72" :y="Y(5) + 4">5</text><text x="72" :y="Y(10) + 4">10</text><text x="72" :y="Y(15) + 4">15</text><text x="72" :y="Y(20) + 4">20</text><text x="72" :y="Y(25) + 4">25</text>
+    </g>
+    <text x="340" y="306" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">outside air temperature (°C)</text>
+    <text x="16" y="155" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 16 155)">spread: temperature − dew point (°C)</text>
+    <text x="84" y="32" font-size="12" fill="var(--color-fg-muted)">saturated air: cloud, fog, rain</text>
+    <!-- humidity lines -->
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :d="curve(80)"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :d="curve(60)"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3" :d="curve(40)"/>
+    <g font-size="11" class="num" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" text-anchor="end">
+      <text x="596" :y="Y(spOf(35, 80)) - 4">80% RH</text>
+      <text x="596" :y="Y(spOf(35, 60)) - 4">60%</text>
+      <text x="596" :y="Y(spOf(35, 40)) - 4">40%</text>
+    </g>
+    <!-- band names -->
+    <g font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text :x="X(-9)" :y="Y(spOf(-9, 90)) + 4" fill="var(--color-bad-fg)">serious at any power</text>
+      <text :x="X(-9)" :y="Y(spOf(-9, 70)) + 4" fill="var(--color-warn-fg)">serious at descent power, moderate at cruise</text>
+      <text :x="X(-9)" :y="Y(spOf(-9, 50)) + 4" fill="var(--color-ok-fg)">light icing</text>
+      <text :x="X(14)" y="198" fill="var(--color-fg-muted)">low risk: dry air</text>
+    </g>
+    <text font-size="11" fill="var(--color-fg-faint)" text-anchor="end" x="596" y="264">bands: lessons' −10 to +30 °C; humidity edges illustrative</text>
+    <g x-show="power === 'descent'">
+      <line stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" :x1="X(-5)" :x2="X(20)" y1="246" y2="246"/>
+      <line stroke="var(--color-bad)" stroke-width="2" :x1="X(-5)" :x2="X(-5)" y1="240" y2="252"/><line stroke="var(--color-bad)" stroke-width="2" :x1="X(20)" :x2="X(20)" y1="240" y2="252"/>
+      <text font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="X(7.5)" y="240">throttle ice at low power, about −5 to +20 °C</text>
+    </g>
+    <!-- the day -->
+        <circle r="8" stroke="var(--color-surface)" stroke-width="2.5" :cx="X(oat)" :cy="Y(spread)"
+      :fill="risk === 'Serious' ? 'var(--color-bad)' : risk === 'Moderate' ? 'var(--color-warn)' : 'var(--color-brand)'"/>
+    <circle r="16" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: move" :cx="X(oat)" :cy="Y(spread)"
+      @pointerdown="drag($event, (p) => { oat = Math.round(clamp((p.x - 80) / 520 * 50 - 15, -15, 35)); dew = oat - Math.round(clamp((p.y - 40) / 230 * 25, 0, 25)); moist = false; active = null })"/>
+    <text font-size="13" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="X(oat) + (oat > 22 ? -14 : 14)" :y="Y(spread) + 5" :text-anchor="oat > 22 ? 'end' : 'start'"
+      fill="var(--color-fg)" x-text="fmt(oat) + '/' + fmt(td) + ': ' + fmt(rh) + '%'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cir-oat">Outside air temperature <output for="cir-oat" x-text="fmt(oat) + ' °C'"></output></label>
+      <input type="range" id="cir-oat" min="-15" max="35" step="1" x-model.number="oat">
+    </div>
+    <div class="widget-control">
+      <label for="cir-dew">Dew point <output for="cir-dew" x-text="fmt(td) + ' °C (spread ' + spread + '°)'"></output></label>
+      <input type="range" id="cir-dew" min="-25" max="35" step="1" x-model.number="dew" :disabled="moist">
+    </div>
+    <div class="widget-control">
+      <label for="cir-power">Power</label>
+      <select id="cir-power" class="input" x-model="power">
+        <option value="cruise">Cruise power</option>
+        <option value="descent">Descent or glide: throttle nearly closed</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="cir-moist" class="cursor-pointer"><span>Visible moisture: cloud, rain or drizzle</span>
+        <input type="checkbox" id="cir-moist" x-model="moist" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="risk === 'Serious' ? 'bad' : risk === 'Moderate' ? 'warn' : risk === 'Light' ? 'warn' : 'ok'">
+      <dt class="widget-label" x-text="'Icing risk at ' + (power === 'cruise' ? 'cruise' : 'descent') + ' power'"></dt>
+      <dd class="widget-value"><span x-text="risk + (power === 'cruise' ? ' (descent power: ' + descentRisk.toLowerCase() + ')' : ' (cruise power: ' + cruiseRisk.toLowerCase() + ')')"></span><span class="widget-flag bad" x-show="throttleIce">throttle ice</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Humidity</dt>
+      <dd class="widget-value" x-text="fmt(rh) + '% relative humidity, spread ' + spread + '°' + (moist ? ', visible moisture' : '')"></dd>
+    </div>
+    <div class="widget-readout" :class="oat - 20 <= 0 && band >= 1 ? 'warn' : ''">
+      <dt class="widget-label">Air past the butterfly (cooled 20 to 30°)</dt>
+      <dd class="widget-value" x-text="'about ' + fmt(oat - 30) + ' to ' + fmt(oat - 20) + ' °C' + (oat - 20 <= 0 ? ': below freezing' : '')"></dd>
+    </div>
+    <div class="widget-readout" :class="throttleIce || impactIce ? 'bad' : evapIce ? 'warn' : ''">
+      <dt class="widget-label">Ice to expect</dt>
+      <dd class="widget-value" x-text="types"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('jandakot-winter-morning')" :aria-pressed="active === 'jandakot-winter-morning'">Winter morning, 14/12</button>
+      <button type="button" @click="preset('glide-approach')" :aria-pressed="active === 'glide-approach'">Same air, glide approach</button>
+      <button type="button" @click="preset('drizzly-15-degrees')" :aria-pressed="active === 'drizzly-15-degrees'">Drizzly 15°</button>
+      <button type="button" @click="preset('humid-20-degrees')" :aria-pressed="active === 'humid-20-degrees'">Humid 20°</button>
+      <button type="button" @click="preset('frosty-dry-morning')" :aria-pressed="active === 'frosty-dry-morning'">Frosty, bone dry</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Carburettor ice needs moisture, not frost: the venturi and the nearly closed butterfly cool the air 20 to 30°, so humid air at 20° can freeze inside the carburettor. The closer the dew point to the temperature, the worse it gets, from well below freezing to about 30°, and low power widens the danger. The temperature ranges are the lessons'; the humidity boundaries of the bands are illustrative, so read the CASA icing chart for real ones.</p>
+  <details class="widget-try"><summary>Try it: which is the bigger carburettor icing risk, a clear, frosty, bone-dry morning or a grey, drizzly 15° one?</summary><p>Press Frosty, bone dry: even gliding, the dry air sits below the bands. Press Drizzly 15°: saturated air, serious icing at any power. It needs moisture, not cold (BAKC 3.4).</p></details>
+  <details class="widget-try"><summary>Try it: 14° with a dew point of 12 after overnight rain. What changes when you close the throttle for the descent?</summary><p>Press Winter morning, 14/12: 88% humidity, serious icing even at cruise power (fuel evaporation ice). Then Same air, glide approach: 14° is inside the throttle-ice range of about −5 to +20°, and the nearly closed butterfly makes it the most dangerous kind. Apply full carburettor heat before you reduce power.</p></details>
+</div>

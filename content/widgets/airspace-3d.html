@@ -1,0 +1,30 @@
+<div class="widget" data-widget="explorer" data-explorer="airspace">
+  <div class="widget-canvas" data-canvas aria-label="3D view of the Perth-area airspace steps as translucent blocks, with an aeroplane flying a track under them"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="as3-alt">Your altitude <output data-out="altitude">1,500 ft</output></label><input id="as3-alt" type="range" min="500" max="9000" step="100" value="1500" data-param="altitude"></div>
+    <div class="widget-control"><label for="as3-pos">Position along the track (pause to scrub)</label><input id="as3-pos" type="range" min="0" max="1" step="0.001" value="0.15" data-param="position"></div>
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="towerOpen" checked> Jandakot tower open (its ERSA hours)</label>
+      <label class="check"><input type="checkbox" data-param="rActive" checked> Restricted area active today (ERSA PRD and NOTAM)</label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Airspace here</dt><dd data-out="class">Class D</dd></div>
+    <div class="widget-readout"><dt>Jandakot zone</dt><dd data-out="tower" class="text-sm">tower open: Class D, clearance required</dd></div>
+    <div class="widget-readout"><dt>Restricted area</dt><dd data-out="rArea" class="text-sm">active: a clearance is required to enter</dd></div>
+  </dl>
+  <p class="widget-value mt-2 text-sm text-fg-muted" data-out="here">Jandakot Class D (tower open): clearance required; the tower controls the circuit</p>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Scenarios">
+      <button type="button" data-preset="under-the-steps" data-set='{"altitude": 1500, "position": 0.3, "towerOpen": true}'>Under the steps</button>
+      <button type="button" data-preset="climbing-into-the-step" data-set='{"altitude": 3000, "position": 0.2, "towerOpen": true}'>3,000 ft under C LL 2500</button>
+      <button type="button" data-preset="tower-closed" data-set='{"altitude": 800, "position": 0, "towerOpen": false}'>Tower closed</button>
+      <button type="button" data-preset="restricted-area-active" data-set='{"altitude": 1500, "position": 0.97, "rActive": true}'>R area active</button>
+      <button type="button" data-preset="restricted-area-inactive" data-set='{"altitude": 1500, "position": 0.97, "rActive": false}'>R area by NOTAM: inactive</button>
+    </div>
+    <button type="button" class="btn-secondary" data-action="play">Pause</button><button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Controlled airspace is a stack of volumes. Perth's Class C starts at the surface in the control zone, then its lower limit steps up with distance (C LL 1500, 2500, 4500), with Class E (LL 8500) further out; under each step you are in Class G and need no clearance. Jandakot's Class D zone sits from the surface under the first step while the tower is open and reverts to Class G, a CTAF aerodrome, outside its ERSA hours. The restricted area needs a clearance only while it is active. The ring sizes, the D zone's upper limit and the R area are schematic (heights are exaggerated): the real limits are on the VTC and in ERSA, never on the WAC.</p>
+  <details class="widget-try"><summary>Try this: set 3,000 ft and watch the readout as the track leaves Jandakot. Where does it turn red, and what has happened?</summary><p>Under the C LL 2500 step, 3,000 ft is inside Class C: an infringement without a clearance, even though you crossed no line on the ground. The boundary you must watch is above you. Descend below 2,500 ft, or wait until you are under the C LL 4500 step where 3,000 ft is Class G again.</p></details>
+  <details class="widget-try"><summary>Try this: untick the tower and look at Jandakot. Which three sources told you the zone's status?</summary><p>The chart (VTC) for where the zone is, ERSA for the tower's hours, and NOTAMs for any change today. Outside the hours the zone is Class G and you use CTAF procedures; no clearance and no controlled-aerodrome endorsement is needed.</p></details>
+</div>

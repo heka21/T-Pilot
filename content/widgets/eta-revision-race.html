@@ -1,0 +1,137 @@
+<div class="widget" x-data="timeline({
+  duration: 16, loop: false,
+  leg: 75, f: 30, pt: 16, at2: 18, fixT: 582,
+  // leg: nm; f: distance to the fix (nm); pt / at2: planned and actual minutes to the fix; fixT: the fix time, WST minutes
+  get pgs() { return this.f / this.pt * 60 },
+  get gs() { return this.f / this.at2 * 60 },
+  get dep() { return this.fixT - this.at2 },
+  get togo() { return this.leg - this.f },
+  get ttg() { return this.togo * this.at2 / this.f },
+  get pttg() { return this.togo * this.pt / this.f },
+  get eta() { return this.fixT + this.ttg },
+  get planEta() { return this.dep + this.leg * this.pt / this.f },
+  get late() { return this.ttg - this.pttg },
+  // the clock runs from departure to 2 minutes after the later arrival
+  get tEnd() { return Math.max(this.eta, this.planEta) + 2 },
+  get min() { return this.dep + this.t * (this.tEnd - this.dep) },
+  get clock() { return this.hhmm(this.min) },
+  T(m) { return (m - this.dep) / (this.tEnd - this.dep) },
+  // picture: A at x 50, B at x 590
+  X(nm) { return 50 + this.clamp(nm, 0, this.leg) * 540 / this.leg },
+  get real() { return this.gs / 60 * (this.min - this.dep) },
+  get ghost() { return this.pgs / 60 * (this.min - this.dep) },
+  get pastFix() { return this.min >= this.fixT - 0.01 },
+  get ticks() { let d = ''; for (let n = 10; n < this.leg; n += 10) d += 'M' + this.X(n).toFixed(1) + ' 150 v8 '; return d },
+  r1(v) { return Math.abs(v - Math.round(v)) < 0.05 ? this.fmt(v) : this.fmt(v, 1) },
+  get steps() {
+    const s = [{ at: 0, label: 'Depart ' + this.hhmm(this.dep) }, { at: this.T(this.fixT), label: 'Fix ' + this.hhmm(this.fixT) }];
+    const a = { at: this.T(this.planEta), label: 'Planned arrival ' + this.hhmm(this.planEta) }, b = { at: this.T(this.eta), label: 'Revised arrival ' + this.hhmm(this.eta) };
+    return s.concat(this.planEta <= this.eta ? [a, b] : [b, a]);
+  },
+  get caption() {
+    if (!this.pastFix) return 'Both aeroplanes left ' + (this.leg > 0 ? 'A' : '') + ' at ' + this.hhmm(this.dep) + '. The faint one flies the plan at ' + this.r1(this.pgs) + ' kt; yours is making good only ' + this.r1(this.gs) + ' kt, but you cannot tell until you reach a fix.';
+    if (this.min < this.eta - 0.01) return 'Fix at ' + this.hhmm(this.fixT) + ': ' + this.f + ' nm took ' + this.at2 + ' min against ' + this.pt + ' planned. The remaining ' + this.togo + ' nm will take ' + this.togo + ' × ' + this.at2 + ' ÷ ' + this.f + ' = ' + this.r1(this.ttg) + ' min, so the revised ETA is ' + this.hhmm(this.eta) + '.';
+    return 'Arrived at ' + this.hhmm(this.eta) + ', as revised at the fix. Pass a significant change to ATS and revise the fuel and SARTIME with it.';
+  },
+  presets: {
+    'first-30-of-75': { leg: 75, f: 30, pt: 16, at2: 18, fixT: 582, t: 0.383 },
+    'leg-240-45-of-135': { leg: 135, f: 45, pt: 23, at2: 25, fixT: 643, t: 0.325 },
+    'on-plan': { leg: 75, f: 30, pt: 16, at2: 16, fixT: 580, t: 0.381 },
+  },
+})">
+  <svg viewBox="0 0 640 260" role="img" aria-labelledby="erv-title" class="widget-stage">
+    <title id="erv-title">A leg from A to B with distance marks: a faint aeroplane flying the planned groundspeed and yours flying the actual groundspeed, both leaving together; at the timed fix the gap shows, and the remaining distance gives the revised ETA</title>
+    <rect x="0" y="0" width="640" height="260" fill="var(--color-ok-soft)" fill-opacity="0.4" rx="10"/>
+    <!-- the leg -->
+    <line x1="50" y1="150" x2="590" y2="150" stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-linecap="round"/>
+    <path :d="ticks" stroke="var(--color-fg-muted)" stroke-width="1"/>
+    <circle cx="50" cy="150" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <circle cx="590" cy="150" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="50" y="180" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)">A</text>
+    <text x="590" y="180" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)">B</text>
+    <text x="590" y="198" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="leg + ' nm'"></text>
+    <!-- the fix -->
+    <line y1="128" y2="172" stroke="var(--color-warn)" stroke-width="2" :x1="X(f)" :x2="X(f)"/>
+    <text font-size="12" text-anchor="middle" fill="var(--color-warn-fg)" font-weight="600" :x="X(f)" y="190" x-text="'fix at ' + f + ' nm'"></text>
+    <text font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" :x="X(f)" y="206" x-text="'planned ' + pt + ' min, took ' + at2"></text>
+    <!-- time to go, shown once past the fix -->
+    <g :display="(pastFix) ? 'inline' : 'none'">
+      <line y1="222" y2="222" stroke="var(--color-brand)" stroke-width="1.5" :x1="X(f)" x2="590"/>
+      <line y1="216" y2="228" stroke="var(--color-brand)" stroke-width="1.5" :x1="X(f)" :x2="X(f)"/>
+      <line x1="590" y1="216" x2="590" y2="228" stroke="var(--color-brand)" stroke-width="1.5"/>
+      <text font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="(X(f) + 590) / 2" y="246" x-text="togo + ' nm × ' + at2 + ' ÷ ' + f + ' = ' + r1(ttg) + ' min to go'"></text>
+    </g>
+    <!-- the planned aeroplane (ghost) and yours -->
+    <g opacity="0.75" :transform="'translate(' + X(ghost) + ' 112)'">
+      <!-- plane top scale 0.35 heading 90 colour fg-faint -->
+      <g transform="translate(0 0) rotate(0) scale(0.35)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg-faint)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg-faint)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg-faint)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg-faint)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg-faint)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" :x="X(ghost)" y="92">plan</text>
+    <g :transform="'translate(' + X(real) + ' 150)'">
+      <!-- plane top scale 0.35 heading 90 colour brand -->
+      <g transform="translate(0 0) rotate(0) scale(0.35)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- arrival flags -->
+    <text x="600" y="42" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="'ETA on the original plan ' + hhmm(planEta)"></text>
+    <text x="600" y="78" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" class="num" :display="(pastFix &amp;&amp; Math.abs(eta - planEta) > 0.5) ? 'inline' : 'none'" x-text="r1(Math.abs(at2 - pt)) + ' min ' + (at2 > pt ? 'lost' : 'gained') + ' before the fix, ' + r1(Math.abs(late)) + ' after'"></text>
+    <text x="600" y="60" font-size="13" text-anchor="end" font-weight="700" fill="var(--color-brand-fg)" class="num" :display="(pastFix) ? 'inline' : 'none'" x-text="'revised ETA ' + hhmm(eta)"></text>
+    <!-- clock -->
+    <text x="20" y="34" font-size="18" font-weight="700" fill="var(--color-fg)" class="num" x-text="clock + ' WST'"></text>
+    <text x="20" y="52" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="'groundspeed ' + r1(gs) + ' kt (plan ' + r1(pgs) + ')'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the leg'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="erv-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time along the leg">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="i">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="erv-leg">Leg distance <output for="erv-leg" x-text="leg + ' nm'"></output></label>
+      <input type="range" id="erv-leg" min="40" max="150" step="1" x-model.number="leg" @input="f = Math.min(f, leg - 5)">
+    </div>
+    <div class="widget-control">
+      <label for="erv-f">Distance to the fix <output for="erv-f" x-text="f + ' nm'"></output></label>
+      <input type="range" id="erv-f" min="10" :max="leg - 5" step="1" x-model.number="f">
+    </div>
+    <div class="widget-control">
+      <label for="erv-pt">Planned time to the fix <output for="erv-pt" x-text="pt + ' min'"></output></label>
+      <input type="range" id="erv-pt" min="4" max="60" step="1" x-model.number="pt">
+    </div>
+    <div class="widget-control">
+      <label for="erv-at">Actual time to the fix <output for="erv-at" x-text="at2 + ' min'"></output></label>
+      <input type="range" id="erv-at" min="4" max="60" step="1" x-model.number="at2">
+    </div>
+    <div class="widget-control">
+      <label for="erv-fix">Time at the fix <output for="erv-fix" x-text="hhmm(fixT) + ' WST'"></output></label>
+      <input type="range" id="erv-fix" min="420" max="1080" step="1" x-model.number="fixT">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Groundspeed</dt><dd class="widget-value" x-text="f + ' ÷ ' + at2 + ' × 60 = ' + r1(gs) + ' kt'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Time to go, by proportion</dt><dd class="widget-value" x-text="togo + ' × ' + at2 + ' ÷ ' + f + ' = ' + r1(ttg) + ' min (plan ' + r1(pttg) + ')'"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Revised ETA</dt><dd class="widget-value" x-text="hhmm(fixT) + ' + ' + r1(ttg) + ' = ' + hhmm(eta) + ' WST'"></dd></div>
+    <div class="widget-readout" :class="Math.abs(late) < 0.5 ? 'ok' : 'warn'"><dt class="widget-label">Rest of the leg</dt><dd class="widget-value" x-text="Math.abs(late) < 0.5 ? 'on plan' : r1(Math.abs(late)) + ' min ' + (late > 0 ? 'later' : 'earlier') + ' than planned'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('first-30-of-75')" :aria-pressed="active === 'first-30-of-75'">30 of 75 nm in 18 min</button>
+      <button type="button" @click="preset('leg-240-45-of-135')" :aria-pressed="active === 'leg-240-45-of-135'">45 of 135 nm in 25 min</button>
+      <button type="button" @click="preset('on-plan')" :aria-pressed="active === 'on-plan'">On plan</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Until you reach a fix you cannot see that the wind is costing you time. Two timed fixes give the real groundspeed, and the rest of the leg takes time in the same ratio: time to go = distance to go × time taken ÷ distance flown. Groundspeed is per hour, so a distance over minutes needs × 60. Revise the fuel and the SARTIME with the ETA.</p>
+  <details class="widget-try"><summary>Try it: the first 30 nm of a 75 nm leg took 18 minutes (planned 16). The fix was at 0942 WST. Revised ETA?</summary><p>45 × 18 ÷ 30 = 27 min (the plan was 24). 0942 + 27 = 1009 WST, 3 minutes later than planned for that part of the leg. Check: 30 ÷ 18 × 60 = 100 kt, and 45 nm at 100 kt is 27 min.</p></details>
+  <details class="widget-try"><summary>Try it: the first 45 nm took 25 minutes against a plan of 23, fix at 1043 WST, 90 nm to go. ETA and groundspeed?</summary><p>90 × 25 ÷ 45 = 50 min, so 1133 WST, 4 minutes later than planned for that stretch. Groundspeed 45 ÷ 25 × 60 = 108 kt. Press 45 of 135 nm in 25 min.</p></details>
+</div>

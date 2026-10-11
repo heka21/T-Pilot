@@ -1,0 +1,322 @@
+<div class="widget" x-data="widget({
+  q: 'pinjarra-how-far', quiz: false, guess: null,
+  // the documents drawn below: full name and the band they sit in (RFRC 2.1)
+  D: {
+    act: ['the Civil Aviation Act 1988', 'law'], p61: ['CASR Part 61', 'law'], p67: ['CASR Part 67', 'law'],
+    p91: ['CASR Part 91', 'law'], car4a: ['CAR 1988 Part 4A', 'law'], mos61: ['the Part 61 MOS', 'law'],
+    mos91: ['the Part 91 MOS', 'law'], cao: ['the CAOs', 'law'], aip: ['the AIP', 'info'], supaic: ['an AIP SUP or AIC', 'info'],
+    ersa: ['ERSA', 'info'], dap: ['the DAP', 'info'], vtc: ['the VTC', 'info'], vnc: ['the VNC', 'info'], erc: ['the ERC', 'info'],
+    wac: ['the WAC', 'info'], pca: ['the PCA', 'info'], notam: ['NOTAM', 'info'], ac: ['an Advisory Circular', 'guide'],
+    vfrg: ['the VFRG', 'guide'], mr: ['the maintenance release', 'acft'],
+  },
+  K: { you: 'About you', fit: 'Your fitness', fly: 'How you fly', place: 'A place or emergency', change: 'Changed recently', air: 'Airspace boundaries', acft: 'The aeroplane' },
+  // each question: kind of fact, the answer (brand), other documents worth a tag (info: related, warn: the trap, bad: wrong), the lesson's reason
+  Q: {
+    'licence': { kind: 'you', text: 'What does my RPL let me do, and which endorsements lift its limits?', doc: ['p61'], look: 'CASR Part 61',
+      also: { vfrg: ['info', 'summarised here'] }, why: 'A rule about you, your licence and its privileges, is in CASR Part 61. The VFRG summarises it.' },
+    'pinjarra-how-far': { kind: 'you', text: 'Pinjarra: as an RPL holder without a navigation endorsement, may I fly that far?', doc: ['p61'], look: 'CASR Part 61',
+      also: { vfrg: ['info', 'summarised here'] }, why: 'Pinjarra, question 1: how far you may go is a licence privilege, so the answer is in CASR Part 61, summarised in the VFRG.' },
+    'syllabus': { kind: 'you', text: 'Where are the RPL syllabus and the flight test standards?', doc: ['mos61'], look: 'Part 61 MOS',
+      also: { p61: ['info', 'made under it'] }, why: 'The detail of licensing sits one level below the regulation: the Part 61 MOS holds this syllabus and the flight test standards, and a MOS is law.' },
+    'medical': { kind: 'fit', text: 'Which medical certificate do I need, and what does it limit?', doc: ['p67'], look: 'CASR Part 67',
+      also: {}, why: 'A rule about your fitness to fly: medical certificates are in CASR Part 67.' },
+    'vmc-minima': { kind: 'fly', text: 'What are the VMC minima?', doc: ['mos91'], look: 'Part 91 MOS',
+      also: { p91: ['info', 'the regulation'], vfrg: ['info', 'summarised here'] }, why: 'A rule about how you fly: CASR Part 91 and the Part 91 MOS, which holds the VMC minima. The VFRG summarises them.' },
+    'fuel': { kind: 'fly', text: 'How much fuel must I carry?', doc: ['mos91'], look: 'Part 91 MOS',
+      also: { p91: ['info', 'the regulation'], vfrg: ['info', 'summarised here'] }, why: 'Fuel rules are operating detail: CASR Part 91 and the Part 91 MOS, summarised in the VFRG.' },
+    'altimetry': { kind: 'fly', text: 'What are the altimetry rules?', doc: ['mos91'], look: 'Part 91 MOS',
+      also: { p91: ['info', 'the regulation'], vfrg: ['info', 'summarised here'] }, why: 'Altimetry is part of how you fly: CASR Part 91 and the Part 91 MOS, summarised in the VFRG.' },
+    'circuits': { kind: 'fly', text: 'How do I join the circuit at a non-controlled aerodrome?', doc: ['mos91'], look: 'Part 91 MOS',
+      also: { p91: ['info', 'the regulation'], vfrg: ['info', 'summarised here'] }, why: 'Non-controlled aerodrome procedures are operating rules: CASR Part 91 and the Part 91 MOS, summarised in the VFRG.' },
+    'vmc-rule-set-out': { kind: 'fly', text: 'Where is the VMC rule set out?', doc: ['mos91'], look: 'Part 91 MOS', trap: 'VFRG: only a summary',
+      also: { p91: ['info', 'the regulation'], vfrg: ['warn', 'a summary, not the rule'] }, why: '“Set out” asks for the law: the Part 91 MOS, made under CASR Part 91. The VFRG only summarises it, and if the two ever differed the regulation would win.' },
+    'vfrg-summary': { kind: 'fly', text: 'Where can a VFR pilot find a plain-English summary of the VMC rules?', doc: ['vfrg'], look: 'VFRG',
+      also: { mos91: ['info', 'the law it summarises'] }, why: '“A summary” asks for guidance: the VFRG, CASA’s plain-English book for VFR pilots, permitted in the RPL and PPL exams. It is not law; the Part 91 MOS is.' },
+    'aerodrome': { kind: 'place', text: 'What are the runways and the frequency at this aerodrome?', doc: ['ersa'], look: 'ERSA',
+      also: { aip: ['info', 'the full text'] }, why: 'A fact about a place: aerodrome data and frequencies are in ERSA, the book you carry, with the AIP for the full text.' },
+    'prd-area': { kind: 'place', text: 'What are the hours of the restricted area near my training area?', doc: ['ersa'], look: 'ERSA',
+      also: { aip: ['info', 'the full text'], notam: ['info', 'if activated today'] }, why: 'A fact about a place: PRD areas (prohibited, restricted and danger) are in ERSA. A NOTAM tells you when one has been activated.' },
+    'emergency': { kind: 'place', text: 'What is the radio failure procedure?', doc: ['ersa'], look: 'ERSA (EMERG)',
+      also: { aip: ['info', 'the full text'] }, why: 'Emergency procedures are in ERSA, the EMERG pages, with the AIP for the full text.' },
+    'pinjarra-runway-works': { kind: 'change', text: 'Pinjarra: are there works on the runway this month?', doc: ['notam'], look: 'NOTAM', trap: 'ERSA: not yet updated',
+      also: { ersa: ['warn', 'not yet shown'] }, why: 'Pinjarra, question 2: works on the runway are a temporary change, so you check the NOTAMs for the aerodrome. The ERSA entry would not yet show it.' },
+    'ersa-vs-notam': { kind: 'change', text: 'ERSA shows the runway available; a NOTAM issued yesterday says it is closed. Which do I follow?', doc: ['notam'], look: 'NOTAM', trap: 'ERSA: older',
+      also: { ersa: ['warn', 'older: overridden'] }, why: 'Follow the NOTAM. ERSA is updated on a fixed cycle; NOTAM publish the changes in between, so the NOTAM is the more recent information.' },
+    'airspace-boundaries': { kind: 'air', text: 'Where does controlled airspace start along my route?', doc: ['vtc', 'vnc', 'erc'], look: 'VTC, VNC or ERC', trap: 'WAC: shows no airspace',
+      also: { wac: ['bad', 'shows no airspace'] }, why: 'Airspace boundaries are on the VTC, VNC or ERC. Never the WAC: it shows no airspace (RFRC 2.6).' },
+    'pinjarra-100-hourly': { kind: 'acft', text: 'Pinjarra: is the aeroplane due for its 100-hourly before I get back?', doc: ['mr'], look: 'Maintenance release',
+      also: {}, why: 'Pinjarra, question 3: this is about the aircraft, not you, so the answer is on its maintenance release, which travels with it.' },
+    'fit-to-fly': { kind: 'acft', text: 'Is the aeroplane fit to fly today: daily inspection signed, no open defect?', doc: ['mr'], look: 'Maintenance release',
+      also: { car4a: ['info', 'the rules for it'] }, why: 'Whether the aeroplane may fly is on its maintenance release: hours and dates, today’s daily inspection, defects. The rules for the release are in CAR 1988 Part 4A.' },
+  },
+  get cur() { return this.Q[this.q] },
+  get hidden() { return this.quiz && this.guess === null },
+  get right() { return this.guess !== null && this.cur.doc.includes(this.guess) },
+  pick(id) { if (this.quiz && this.guess === null) this.guess = id },
+  ask() { this.guess = null; this.active = null },
+  role(id) {
+    if (this.hidden) return '';
+    if (this.cur.doc.includes(id)) return 'ans';
+    if (this.quiz && this.guess === id) return 'pick';
+    return this.cur.also[id] ? this.cur.also[id][0] : '';
+  },
+  fill(id) { return { ans: 'var(--color-brand-soft)', info: 'var(--color-info-soft)', warn: 'var(--color-warn-soft)', bad: 'var(--color-bad-soft)', pick: 'var(--color-bad-soft)' }[this.role(id)] || 'var(--color-surface)' },
+  stroke(id) { return { ans: 'var(--color-brand)', info: 'var(--color-info)', warn: 'var(--color-warn)', bad: 'var(--color-bad)', pick: 'var(--color-bad)' }[this.role(id)] || 'var(--color-line-strong)' },
+  sw(id) { const r = this.role(id); return r === 'ans' ? 2.5 : r ? 1.5 : 1 },
+  dash(id) { return ['info', 'warn', 'bad'].includes(this.role(id)) ? '4 3' : null },
+  tfill(id) { return { ans: 'var(--color-brand-fg)', info: 'var(--color-info-fg)', warn: 'var(--color-warn-fg)', bad: 'var(--color-bad-fg)', pick: 'var(--color-bad-fg)' }[this.role(id)] || 'var(--color-fg)' },
+  sfill(id) { return this.role(id) && this.role(id) !== 'ans' ? this.tfill(id) : 'var(--color-fg-muted)' },
+  sub(id) {
+    if (this.role(id) === 'pick') return 'your pick';
+    const a = !this.hidden && this.cur.also[id];
+    return a ? a[1] : this.S[id];
+  },
+  S: { act: 'creates CASA and the rule-making system', p61: 'licences', p67: 'medicals', p91: 'operating rules', car4a: 'release rules',
+    mos61: 'syllabus · flight tests', mos91: 'VMC · fuel · altimetry', cao: 'mostly replaced', aip: 'GEN · ENR · AD', supaic: 'amendments',
+    ersa: 'places · emergencies', dap: 'instrument', vtc: 'terminal', vnc: 'navigation', erc: 'en route', wac: 'world', pca: 'planning',
+    notam: 'temporary or urgent changes', ac: 'how to comply', vfrg: 'summary · allowed in the exam', mr: '' },
+  get band() { return this.D[this.cur.doc[0]][1] },
+  bandOn(b) { return !this.hidden && this.band === b },
+  get bandText() { return { law: 'Law', info: 'Information', guide: 'Guidance', acft: 'The aircraft’s own' }[this.band] },
+  get bandNote() { return { law: 'binding', info: 'Airservices', guide: 'not binding', acft: 'travels with it' }[this.band] },
+  get caption() {
+    if (this.hidden) return 'Tap the document you think answers it. Ask yourself what kind of fact the question needs.';
+    const lead = this.quiz ? (this.right ? 'Right. ' : 'Not ' + this.D[this.guess][0] + '. ') : '';
+    return lead + this.cur.why;
+  },
+  presets: {
+    'pinjarra-how-far': { q: 'pinjarra-how-far', quiz: false, guess: null },
+    'pinjarra-runway-works': { q: 'pinjarra-runway-works', quiz: false, guess: null },
+    'pinjarra-100-hourly': { q: 'pinjarra-100-hourly', quiz: false, guess: null },
+    'vmc-rule-set-out': { q: 'vmc-rule-set-out', quiz: false, guess: null },
+    'vfrg-summary': { q: 'vfrg-summary', quiz: false, guess: null },
+    'ersa-vs-notam': { q: 'ersa-vs-notam', quiz: false, guess: null },
+  },
+})">
+  <svg viewBox="0 0 640 476" role="img" aria-labelledby="whd-title" class="widget-stage">
+    <title id="whd-title">The documents a pilot uses, stacked in three bands: law at the top (the Civil Aviation Act 1988, CASR Parts 61, 67 and 91, CAR Part 4A, the Part 61 and Part 91 MOS and the CAOs), information from Airservices in the middle (AIP, SUP and AIC, ERSA, DAP, the VTC, VNC, ERC, WAC and PCA charts and NOTAM), guidance at the base (Advisory Circulars and the VFRG), and the aircraft's maintenance release off to the side. A row of chips above names the kind of fact the question needs; the document that answers it lights up, and related documents or the tempting wrong answer are tagged</title>
+    <rect x="0" y="0" width="640" height="476" fill="var(--color-surface-2)" rx="10"/>
+    <!-- the kind of fact the question needs -->
+    <rect x="16" y="14" width="73" height="26" rx="13" stroke-width="1.5" :fill="cur.kind === 'you' && !hidden ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="cur.kind === 'you' && !hidden ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="52.5" y="31" font-size="12" text-anchor="middle" :fill="cur.kind === 'you' && !hidden ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">about you</text>
+    <rect x="94" y="14" width="60" height="26" rx="13" stroke-width="1.5" :fill="cur.kind === 'fit' && !hidden ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="cur.kind === 'fit' && !hidden ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="124" y="31" font-size="12" text-anchor="middle" :fill="cur.kind === 'fit' && !hidden ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">fitness</text>
+    <rect x="159" y="14" width="85" height="26" rx="13" stroke-width="1.5" :fill="cur.kind === 'fly' && !hidden ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="cur.kind === 'fly' && !hidden ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="201.5" y="31" font-size="12" text-anchor="middle" :fill="cur.kind === 'fly' && !hidden ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">how you fly</text>
+    <rect x="249" y="14" width="60" height="26" rx="13" stroke-width="1.5" :fill="cur.kind === 'place' && !hidden ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="cur.kind === 'place' && !hidden ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="279" y="31" font-size="12" text-anchor="middle" :fill="cur.kind === 'place' && !hidden ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">a place</text>
+    <rect x="314" y="14" width="117" height="26" rx="13" stroke-width="1.5" :fill="cur.kind === 'change' && !hidden ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="cur.kind === 'change' && !hidden ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="372.5" y="31" font-size="12" text-anchor="middle" :fill="cur.kind === 'change' && !hidden ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">changed recently</text>
+    <rect x="436" y="14" width="66" height="26" rx="13" stroke-width="1.5" :fill="cur.kind === 'air' && !hidden ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="cur.kind === 'air' && !hidden ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="469" y="31" font-size="12" text-anchor="middle" :fill="cur.kind === 'air' && !hidden ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">airspace</text>
+    <rect x="507" y="14" width="98" height="26" rx="13" stroke-width="1.5" :fill="cur.kind === 'acft' && !hidden ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="cur.kind === 'acft' && !hidden ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="556" y="31" font-size="12" text-anchor="middle" :fill="cur.kind === 'acft' && !hidden ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">the aeroplane</text>
+    <!-- three bands of documents -->
+    <rect x="16" y="62" width="460" height="158" rx="10" stroke-width="1.5" :fill="bandOn('law') ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :fill-opacity="bandOn('law') ? 0.45 : 1" :stroke="bandOn('law') ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="28" y="78" font-size="12"><tspan font-weight="700" :fill="bandOn('law') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">LAW</tspan><tspan fill="var(--color-fg-muted)"> · Act, regulations, MOS, orders</tspan></text>
+    <rect x="16" y="228" width="460" height="158" rx="10" stroke-width="1.5" :fill="bandOn('info') ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :fill-opacity="bandOn('info') ? 0.45 : 1" :stroke="bandOn('info') ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="28" y="244" font-size="12"><tspan font-weight="700" :fill="bandOn('info') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">INFORMATION</tspan><tspan fill="var(--color-fg-muted)"> · published by Airservices Australia</tspan></text>
+    <rect x="16" y="394" width="460" height="70" rx="10" stroke-width="1.5" :fill="bandOn('guide') ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :fill-opacity="bandOn('guide') ? 0.45 : 1" :stroke="bandOn('guide') ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="28" y="410" font-size="12"><tspan font-weight="700" :fill="bandOn('guide') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">GUIDANCE</tspan><tspan fill="var(--color-fg-muted)"> · explains the law; not law itself</tspan></text>
+    <g @click="pick('act')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="28" y="86" width="436" height="38" rx="6" :fill="fill('act')" :stroke="stroke('act')" :stroke-width="sw('act')" :stroke-dasharray="dash('act')"/>
+      <text x="246" y="102" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('act')">Civil Aviation Act 1988</text>
+      <text x="246" y="117" font-size="11" text-anchor="middle" :fill="sfill('act')" x-text="sub('act')">creates CASA and the rule-making system</text>
+    </g>
+    <g @click="pick('p61')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="28" y="130" width="103" height="38" rx="6" :fill="fill('p61')" :stroke="stroke('p61')" :stroke-width="sw('p61')" :stroke-dasharray="dash('p61')"/>
+      <text x="79.5" y="146" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('p61')">CASR Part 61</text>
+      <text x="79.5" y="161" font-size="11" text-anchor="middle" :fill="sfill('p61')" x-text="sub('p61')">licences</text>
+    </g>
+    <g @click="pick('p67')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="139" y="130" width="103" height="38" rx="6" :fill="fill('p67')" :stroke="stroke('p67')" :stroke-width="sw('p67')" :stroke-dasharray="dash('p67')"/>
+      <text x="190.5" y="146" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('p67')">CASR Part 67</text>
+      <text x="190.5" y="161" font-size="11" text-anchor="middle" :fill="sfill('p67')" x-text="sub('p67')">medicals</text>
+    </g>
+    <g @click="pick('p91')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="250" y="130" width="103" height="38" rx="6" :fill="fill('p91')" :stroke="stroke('p91')" :stroke-width="sw('p91')" :stroke-dasharray="dash('p91')"/>
+      <text x="301.5" y="146" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('p91')">CASR Part 91</text>
+      <text x="301.5" y="161" font-size="11" text-anchor="middle" :fill="sfill('p91')" x-text="sub('p91')">operating rules</text>
+    </g>
+    <g @click="pick('car4a')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="361" y="130" width="103" height="38" rx="6" :fill="fill('car4a')" :stroke="stroke('car4a')" :stroke-width="sw('car4a')" :stroke-dasharray="dash('car4a')"/>
+      <text x="412.5" y="146" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('car4a')">CAR Part 4A</text>
+      <text x="412.5" y="161" font-size="11" text-anchor="middle" :fill="sfill('car4a')" x-text="sub('car4a')">release rules</text>
+    </g>
+    <g @click="pick('mos61')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="28" y="174" width="140" height="38" rx="6" :fill="fill('mos61')" :stroke="stroke('mos61')" :stroke-width="sw('mos61')" :stroke-dasharray="dash('mos61')"/>
+      <text x="98" y="190" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('mos61')">Part 61 MOS</text>
+      <text x="98" y="205" font-size="11" text-anchor="middle" :fill="sfill('mos61')" x-text="sub('mos61')">syllabus · flight tests</text>
+    </g>
+    <g @click="pick('mos91')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="176" y="174" width="140" height="38" rx="6" :fill="fill('mos91')" :stroke="stroke('mos91')" :stroke-width="sw('mos91')" :stroke-dasharray="dash('mos91')"/>
+      <text x="246" y="190" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('mos91')">Part 91 MOS</text>
+      <text x="246" y="205" font-size="11" text-anchor="middle" :fill="sfill('mos91')" x-text="sub('mos91')">VMC · fuel · altimetry</text>
+    </g>
+    <g @click="pick('cao')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="324" y="174" width="140" height="38" rx="6" :fill="fill('cao')" :stroke="stroke('cao')" :stroke-width="sw('cao')" :stroke-dasharray="dash('cao')"/>
+      <text x="394" y="190" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('cao')">CAOs</text>
+      <text x="394" y="205" font-size="11" text-anchor="middle" :fill="sfill('cao')" x-text="sub('cao')">mostly replaced</text>
+    </g>
+    <g @click="pick('aip')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="28" y="252" width="124" height="38" rx="6" :fill="fill('aip')" :stroke="stroke('aip')" :stroke-width="sw('aip')" :stroke-dasharray="dash('aip')"/>
+      <text x="90" y="268" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('aip')">AIP</text>
+      <text x="90" y="283" font-size="11" text-anchor="middle" :fill="sfill('aip')" x-text="sub('aip')">GEN · ENR · AD</text>
+    </g>
+    <g @click="pick('supaic')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="160" y="252" width="84" height="38" rx="6" :fill="fill('supaic')" :stroke="stroke('supaic')" :stroke-width="sw('supaic')" :stroke-dasharray="dash('supaic')"/>
+      <text x="202" y="268" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('supaic')">SUP · AIC</text>
+      <text x="202" y="283" font-size="11" text-anchor="middle" :fill="sfill('supaic')" x-text="sub('supaic')">amendments</text>
+    </g>
+    <g @click="pick('ersa')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="252" y="252" width="132" height="38" rx="6" :fill="fill('ersa')" :stroke="stroke('ersa')" :stroke-width="sw('ersa')" :stroke-dasharray="dash('ersa')"/>
+      <text x="318" y="268" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('ersa')">ERSA</text>
+      <text x="318" y="283" font-size="11" text-anchor="middle" :fill="sfill('ersa')" x-text="sub('ersa')">places · emergencies</text>
+    </g>
+    <g @click="pick('dap')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="392" y="252" width="72" height="38" rx="6" :fill="fill('dap')" :stroke="stroke('dap')" :stroke-width="sw('dap')" :stroke-dasharray="dash('dap')"/>
+      <text x="428" y="268" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('dap')">DAP</text>
+      <text x="428" y="283" font-size="11" text-anchor="middle" :fill="sfill('dap')" x-text="sub('dap')">instrument</text>
+    </g>
+    <g @click="pick('vtc')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="28" y="296" width="80" height="38" rx="6" :fill="fill('vtc')" :stroke="stroke('vtc')" :stroke-width="sw('vtc')" :stroke-dasharray="dash('vtc')"/>
+      <text x="68" y="312" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('vtc')">VTC</text>
+      <text x="68" y="327" font-size="11" text-anchor="middle" :fill="sfill('vtc')" x-text="sub('vtc')">terminal</text>
+    </g>
+    <g @click="pick('vnc')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="117" y="296" width="80" height="38" rx="6" :fill="fill('vnc')" :stroke="stroke('vnc')" :stroke-width="sw('vnc')" :stroke-dasharray="dash('vnc')"/>
+      <text x="157" y="312" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('vnc')">VNC</text>
+      <text x="157" y="327" font-size="11" text-anchor="middle" :fill="sfill('vnc')" x-text="sub('vnc')">navigation</text>
+    </g>
+    <g @click="pick('erc')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="206" y="296" width="80" height="38" rx="6" :fill="fill('erc')" :stroke="stroke('erc')" :stroke-width="sw('erc')" :stroke-dasharray="dash('erc')"/>
+      <text x="246" y="312" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('erc')">ERC</text>
+      <text x="246" y="327" font-size="11" text-anchor="middle" :fill="sfill('erc')" x-text="sub('erc')">en route</text>
+    </g>
+    <g @click="pick('wac')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="295" y="296" width="80" height="38" rx="6" :fill="fill('wac')" :stroke="stroke('wac')" :stroke-width="sw('wac')" :stroke-dasharray="dash('wac')"/>
+      <text x="335" y="312" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('wac')">WAC</text>
+      <text x="335" y="327" font-size="11" text-anchor="middle" :fill="sfill('wac')" x-text="sub('wac')">world</text>
+    </g>
+    <g @click="pick('pca')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="384" y="296" width="80" height="38" rx="6" :fill="fill('pca')" :stroke="stroke('pca')" :stroke-width="sw('pca')" :stroke-dasharray="dash('pca')"/>
+      <text x="424" y="312" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('pca')">PCA</text>
+      <text x="424" y="327" font-size="11" text-anchor="middle" :fill="sfill('pca')" x-text="sub('pca')">planning</text>
+    </g>
+    <g @click="pick('notam')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="28" y="340" width="436" height="38" rx="6" :fill="fill('notam')" :stroke="stroke('notam')" :stroke-width="sw('notam')" :stroke-dasharray="dash('notam')"/>
+      <text x="246" y="356" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('notam')">NOTAM</text>
+      <text x="246" y="371" font-size="11" text-anchor="middle" :fill="sfill('notam')" x-text="sub('notam')">temporary or urgent changes</text>
+    </g>
+    <g @click="pick('ac')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="28" y="418" width="214" height="38" rx="6" :fill="fill('ac')" :stroke="stroke('ac')" :stroke-width="sw('ac')" :stroke-dasharray="dash('ac')"/>
+      <text x="135" y="434" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('ac')">Advisory Circulars</text>
+      <text x="135" y="449" font-size="11" text-anchor="middle" :fill="sfill('ac')" x-text="sub('ac')">how to comply</text>
+    </g>
+    <g @click="pick('vfrg')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="250" y="418" width="214" height="38" rx="6" :fill="fill('vfrg')" :stroke="stroke('vfrg')" :stroke-width="sw('vfrg')" :stroke-dasharray="dash('vfrg')"/>
+      <text x="357" y="434" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('vfrg')">VFRG</text>
+      <text x="357" y="449" font-size="11" text-anchor="middle" :fill="sfill('vfrg')" x-text="sub('vfrg')">summary · allowed in the exam</text>
+    </g>
+    <!-- off to the side: the aeroplane's own document -->
+    <rect x="488" y="62" width="136" height="402" rx="10" stroke-width="1.5" :fill="bandOn('acft') ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :fill-opacity="bandOn('acft') ? 0.45 : 1" :stroke="bandOn('acft') ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="556" y="78" font-size="12" font-weight="700" text-anchor="middle" :fill="bandOn('acft') ? 'var(--color-brand-fg)' : 'var(--color-fg)'">THE AEROPLANE</text>
+    <text x="556" y="94" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">not you, not the rules</text>
+    <!-- Cessna top view: python -m tools.diagrams.plane top, scale 1.05, heading 90 -->
+    <g transform="translate(570 162)"><g transform="translate(0 0) rotate(0) scale(1.05)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    <g @click="pick('mr')" :class="quiz && guess === null ? 'cursor-pointer' : ''">
+      <rect x="498" y="236" width="116" height="80" rx="6" :fill="fill('mr')" :stroke="stroke('mr')" :stroke-width="sw('mr')"/>
+      <text x="556" y="258" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('mr')">Maintenance</text>
+      <text x="556" y="274" font-size="13" font-weight="600" text-anchor="middle" :fill="tfill('mr')">release</text>
+      <text x="556" y="294" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">travels with</text>
+      <text x="556" y="307" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">the aircraft</text>
+    </g>
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">
+      <text x="556" y="346">hours and dates</text>
+      <text x="556" y="362">maintenance due</text>
+      <text x="556" y="378">daily inspection</text>
+      <text x="556" y="394">defects</text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="whd-q">The question</label>
+      <select id="whd-q" class="input" x-model="q" @change="ask()">
+        <optgroup label="About you">
+          <option value="licence">What does my RPL let me do, and which endorsements lift its limits?</option>
+          <option value="pinjarra-how-far">Pinjarra: may I fly that far without a navigation endorsement?</option>
+          <option value="syllabus">Where are the RPL syllabus and the flight test standards?</option>
+        </optgroup>
+        <optgroup label="Your fitness">
+          <option value="medical">Which medical certificate do I need, and what does it limit?</option>
+        </optgroup>
+        <optgroup label="How you fly">
+          <option value="vmc-minima">What are the VMC minima?</option>
+          <option value="fuel">How much fuel must I carry?</option>
+          <option value="altimetry">What are the altimetry rules?</option>
+          <option value="circuits">How do I join the circuit at a non-controlled aerodrome?</option>
+          <option value="vmc-rule-set-out">Where is the VMC rule set out?</option>
+          <option value="vfrg-summary">Where can a VFR pilot find a plain summary of the VMC rules?</option>
+        </optgroup>
+        <optgroup label="A place or an emergency">
+          <option value="aerodrome">What are the runways and the frequency at this aerodrome?</option>
+          <option value="prd-area">What are the hours of the restricted area near my training area?</option>
+          <option value="emergency">What is the radio failure procedure?</option>
+        </optgroup>
+        <optgroup label="Changed recently">
+          <option value="pinjarra-runway-works">Pinjarra: are there works on the runway this month?</option>
+          <option value="ersa-vs-notam">ERSA says the runway is open, yesterday&#39;s NOTAM says closed: which wins?</option>
+        </optgroup>
+        <optgroup label="Airspace boundaries">
+          <option value="airspace-boundaries">Where does controlled airspace start along my route?</option>
+        </optgroup>
+        <optgroup label="The aeroplane">
+          <option value="pinjarra-100-hourly">Pinjarra: is the 100-hourly due before I get back?</option>
+          <option value="fit-to-fly">Is the aeroplane fit to fly today?</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="whd-quiz" class="cursor-pointer"><span>Guess first: tap a document before the answer shows</span>
+        <input type="checkbox" id="whd-quiz" x-model="quiz" @change="ask()" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Kind of fact</dt>
+      <dd class="widget-value text-sm" x-text="hidden ? '?' : K[cur.kind]"></dd>
+    </div>
+    <div class="widget-readout" :class="hidden ? '' : 'ok'">
+      <dt class="widget-label">Look in</dt>
+      <dd class="widget-value text-sm" x-text="hidden ? '?' : cur.look"></dd>
+    </div>
+    <div class="widget-readout" :class="hidden ? '' : band === 'guide' ? 'warn' : ''">
+      <dt class="widget-label">Is it law?</dt>
+      <dd class="widget-value text-sm"><span x-text="hidden ? '?' : bandText"></span><span class="widget-flag warn" x-show="!hidden && band === 'guide'">not law</span></dd>
+    </div>
+    <div class="widget-readout" :class="cur.trap && !hidden ? 'warn' : ''">
+      <dt class="widget-label">The trap</dt>
+      <dd class="widget-value text-sm" x-text="cur.trap && !hidden ? cur.trap : '–'"></dd>
+    </div>
+    <div class="widget-readout" :class="right ? 'ok' : 'bad'" x-show="quiz && guess !== null">
+      <dt class="widget-label">Your pick</dt>
+      <dd class="widget-value text-sm"><span x-text="guess ? D[guess][0] : ''"></span><span class="widget-flag" :class="right ? 'ok' : 'bad'" x-text="right ? 'right' : 'wrong'"></span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('pinjarra-how-far')" :aria-pressed="active === 'pinjarra-how-far'">How far?</button>
+      <button type="button" @click="preset('pinjarra-runway-works')" :aria-pressed="active === 'pinjarra-runway-works'">Runway works</button>
+      <button type="button" @click="preset('pinjarra-100-hourly')" :aria-pressed="active === 'pinjarra-100-hourly'">100-hourly</button>
+      <button type="button" @click="preset('vmc-rule-set-out')" :aria-pressed="active === 'vmc-rule-set-out'">VMC set out</button>
+      <button type="button" @click="preset('vfrg-summary')" :aria-pressed="active === 'vfrg-summary'">VMC summary</button>
+      <button type="button" @click="preset('ersa-vs-notam')" :aria-pressed="active === 'ersa-vs-notam'">ERSA vs NOTAM</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> You never need to remember every document, only to ask what kind of fact the question needs. A rule about you is in CASR Part 61, your fitness in Part 67, how you fly in Part 91 and its MOS; a place or an emergency procedure is in ERSA; anything that changed recently is a NOTAM, which beats the older ERSA entry; airspace boundaries are on the VTC, VNC or ERC, never the WAC; and the aeroplane's fitness is on its maintenance release. Watch the wording: “set out” wants the law, “a summary” wants the VFRG.</p>
+  <details class="widget-try"><summary>Try it: the three Pinjarra questions from the lesson, one after another. Why three different documents?</summary><p>Press How far?, Runway works and 100-hourly. How far you may go is about you (CASR Part 61); works this month are a recent change (NOTAM, because ERSA would not show it yet); the 100-hourly is about the aeroplane (its maintenance release). Each kind of fact lives in its own document.</p></details>
+  <details class="widget-try"><summary>Try it: tick “Guess first”, choose “Where is the VMC rule set out?” and tap the VFRG. Why is it marked wrong?</summary><p>The VFRG is guidance: an accurate plain-English summary, permitted in the exam, but not law. “Set out” asks where the rule itself is, which is the Part 91 MOS under CASR Part 91. Now try “Where can a VFR pilot find a plain summary?”: there the VFRG is right.</p></details>
+</div>

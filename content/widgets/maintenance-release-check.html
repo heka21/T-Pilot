@@ -1,0 +1,179 @@
+<div class="widget" x-data="widget({
+  sc: 0, hrs: 3498.7, ft: 1.5, today: 1006, daily: true, fixed: false, condMet: true,
+  // the lessons' maintenance releases; dates are day numbers from 1 Jan 2023 (the examples sit in 2025)
+  scenarios: [
+    { name: 'BAKC 6.1', iH: 3412.5, iD: 801, due: null, hrs: 3498.7, ft: 1.5, today: 1006, daily: true,
+      defects: [{ text: 'Cabin light u/s', st: 'pu', cond: '' }] },
+    { name: 'RFRC 2.1', iH: 3812.4, iD: 803, due: null, hrs: 3909.6, ft: 1.5, today: 1006, daily: true,
+      defects: [{ text: 'Left landing light inoperative', st: 'pu', cond: 'day VFR only' }] },
+    { name: 'POPC 2.7', iH: 1876.3, iD: 868, due: { h: 1950, text: 'AD inspection' }, hrs: 1942.6, ft: 1.6, today: 1007, daily: false,
+      defects: [{ text: 'Left fuel gauge reading low', st: 'fixed', cond: '' }, { text: 'Transponder u/s', st: 'pu', cond: 'not where a transponder is required' }, { text: 'Right brake soft and pulling', st: 'open', cond: '' }] },
+  ],
+  get s() { return this.scenarios[this.sc] },
+  M: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  dt(n) { return new Date(Date.UTC(2023, 0, 1 + n)) },
+  fd(n, yr) { const d = this.dt(Math.round(n)); return d.getUTCDate() + ' ' + this.M[d.getUTCMonth()] + (yr ? ' ' + d.getUTCFullYear() : '') },
+  // validity: 100 hours or 12 months, whichever comes first (BAKC 6.1, RFRC 2.1, POPC 2.7)
+  get expH() { return this.s.iH + 100 },
+  get expD() { const d = this.dt(this.s.iD); return Math.round((Date.UTC(d.getUTCFullYear() + 1, d.getUTCMonth(), d.getUTCDate()) - Date.UTC(2023, 0, 1)) / 864e5) },
+  // the first hours limit: the release's own expiry, or maintenance due before it
+  get lim() { return this.s.due ? Math.min(this.expH, this.s.due.h) : this.expH },
+  get limText() { return this.s.due && this.s.due.h < this.expH ? this.s.due.text : 'release expiry' },
+  get land() { return Math.round((this.hrs + this.ft) * 10) / 10 },
+  get leftNow() { return Math.round((this.lim - this.hrs) * 10) / 10 },
+  get leftAfter() { return Math.round((this.lim - this.land) * 10) / 10 },
+  get currentNow() { return this.leftNow > 0 && this.today <= this.expD },
+  get fitsFlight() { return this.leftAfter >= 0 && this.today <= this.expD },
+  get openDefect() { return this.s.defects.find((d) => d.st === 'open' && !this.fixed) },
+  get puBreach() { return this.s.defects.find((d) => d.st === 'pu' && d.cond && !this.condMet) },
+  get defectsOk() { return !this.openDefect && !this.puBreach },
+  // at the rate the aeroplane has been flown since issue, when do the hours run out?
+  get rate() { const days = this.today - this.s.iD; return days > 0 ? (this.hrs - this.s.iH) / days : 0 },
+  get proj() { return this.rate > 0 ? this.today + Math.max(0, this.lim - this.hrs) / this.rate : Infinity },
+  get hoursFirst() { return this.proj < this.expD },
+  get verdict() {
+    if (!this.defectsOk) return 'bad';
+    if (!this.currentNow || !this.fitsFlight) return 'bad';
+    return this.daily ? 'ok' : 'warn';
+  },
+  get verdictText() {
+    if (!this.defectsOk) return 'Not airworthy';
+    if (!this.currentNow) return 'Release expired';
+    if (!this.fitsFlight) return 'Not for this flight';
+    return this.daily ? 'Serviceable for this flight' : 'Certify the daily first';
+  },
+  // pictures: hours bar 40..600 for issue hours to +105; date bar for issue date to +386 days
+  XH(h) { return 40 + this.clamp((h - this.s.iH) / 105, 0, 1) * 560 },
+  XD(d) { return 40 + this.clamp((d - this.s.iD) / 386, 0, 1) * 560 },
+  pick() { const s = this.s; this.hrs = s.hrs; this.ft = s.ft; this.today = s.today; this.daily = s.daily; this.fixed = false; this.condMet = true; this.active = null },
+  mark(ok) { return ok ? 'var(--color-ok)' : 'var(--color-bad)' },
+  presets: {
+    'bakc-current': { sc: 0, hrs: 3498.7, ft: 1.5, today: 1006, daily: true, fixed: false, condMet: true },
+    'bakc-two-weeks-later': { sc: 0, hrs: 3511.0, ft: 2.0, today: 1020, daily: true, fixed: false, condMet: true },
+    'eleven-months-40-hours': { sc: 0, hrs: 3452.5, ft: 1.0, today: 1138, daily: true, fixed: false, condMet: true },
+    'rfrc-landing-light-pu': { sc: 1, hrs: 3909.6, ft: 1.5, today: 1006, daily: true, fixed: false, condMet: true },
+    'rfrc-1-3-hours-left': { sc: 1, hrs: 3911.1, ft: 1.5, today: 1006, daily: true, fixed: false, condMet: true },
+    'popc-brake-uncleared': { sc: 2, hrs: 1942.6, ft: 1.6, today: 1007, daily: false, fixed: false, condMet: true },
+    'popc-geraldton-trip': { sc: 2, hrs: 1944.2, ft: 6.5, today: 1014, daily: true, fixed: true, condMet: true },
+  },
+})">
+  <svg viewBox="0 0 640 312" role="img" aria-labelledby="mrc-title" class="widget-stage">
+    <title id="mrc-title">The maintenance release's two limits as bars, hours on top and the calendar below, with the aircraft's hours now, the hours when you land, any maintenance due, today's date and the expiry date; beneath them the four pre-flight questions answered for this flight</title>
+    <rect x="0" y="0" width="640" height="312" fill="var(--color-surface-2)" rx="10"/>
+    <!-- hours -->
+    <text x="16" y="22" font-size="13" font-weight="600" fill="var(--color-fg)">Time in service (hours)</text>
+    <rect x="40" y="46" width="560" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect y="46" height="22" fill="var(--color-ok-soft)" x="40" :width="XH(hrs) - 40"/>
+    <rect y="46" height="22" :x="XH(hrs)" :width="Math.max(2, XH(land) - XH(hrs))" :fill="fitsFlight ? 'var(--color-brand)' : 'var(--color-bad)'" fill-opacity="0.75"/>
+    <line y1="36" y2="74" stroke="var(--color-bad)" stroke-width="2" :x1="XH(expH)" :x2="XH(expH)"/>
+    <text y="32" font-size="12" text-anchor="middle" class="num" fill="var(--color-bad-fg)" :x="Math.min(XH(expH), 560)" x-text="'expires ' + fmt(expH, 1)"></text>
+    <g x-show="s.due">
+      <line y1="36" y2="74" stroke="var(--color-warn)" stroke-width="2" :x1="XH(s.due ? s.due.h : 0)" :x2="XH(s.due ? s.due.h : 0)"/>
+      <text y="32" font-size="12" text-anchor="end" class="num" fill="var(--color-warn-fg)" :x="XH(s.due ? s.due.h : 0) + 4" x-text="s.due ? 'AD due ' + fmt(s.due.h, 1) : ''"></text>
+    </g>
+    <g font-size="12" class="num">
+      <text x="40" y="86" fill="var(--color-fg-faint)" x-text="'issued ' + fmt(s.iH, 1)"></text>
+      <text y="86" text-anchor="end" fill="var(--color-fg)" font-weight="600" :x="XH(hrs) - 2" x-show="XH(hrs) > 170" x-text="'now ' + fmt(hrs, 1)"></text>
+      <text y="100" fill="var(--color-brand-fg)" font-weight="600" :x="XH(hrs) + 2" :text-anchor="XH(hrs) > 470 ? 'end' : 'start'" x-text="'land ' + fmt(land, 1) + ' (+' + fmt(ft, 1) + ')'"></text>
+    </g>
+
+    <!-- calendar -->
+    <text x="16" y="126" font-size="13" font-weight="600" fill="var(--color-fg)">Calendar</text>
+    <rect x="40" y="150" width="560" height="22" rx="4" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <rect y="150" height="22" fill="var(--color-ok-soft)" x="40" :width="XD(today) - 40"/>
+    <line y1="140" y2="178" stroke="var(--color-bad)" stroke-width="2" :x1="XD(expD)" :x2="XD(expD)"/>
+    <text y="190" font-size="12" text-anchor="end" class="num" fill="var(--color-bad-fg)" :x="XD(expD) + 4" x-text="'expires ' + fd(expD, true)"></text>
+    <g x-show="hoursFirst && XD(expD) - XD(proj) > 110">
+      <line y1="146" y2="176" stroke="var(--color-brand)" stroke-width="1.5" stroke-dasharray="4 3" :x1="XD(proj)" :x2="XD(proj)"/>
+      <text y="190" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" :x="XD(proj)" x-text="'hours run out ≈ ' + fd(proj)"></text>
+    </g>
+    <line y1="144" y2="178" stroke="var(--color-fg)" stroke-width="2" :x1="XD(today)" :x2="XD(today)"/>
+    <text y="140" font-size="12" font-weight="700" class="num" fill="var(--color-fg)" :x="XD(today)" :text-anchor="XD(today) > 470 ? 'end' : 'middle'" x-text="'today ' + fd(today)"></text>
+    <text x="40" y="190" font-size="12" fill="var(--color-fg-faint)" class="num" x-text="'issued ' + fd(s.iD, true)"></text>
+
+    <!-- the four questions -->
+    <g font-size="13">
+      <circle cx="30" cy="218" r="7" :fill="mark(currentNow)"/>
+      <text x="44" y="223" fill="var(--color-fg)">Current in hours and date?</text>
+      <text x="310" y="223" class="num" :fill="currentNow ? 'var(--color-fg-muted)' : 'var(--color-bad-fg)'" x-text="currentNow ? fmt(leftNow, 1) + ' h left; ' + (expD - today) + ' days to ' + fd(expD, true) : 'expired'"></text>
+      <circle cx="30" cy="242" r="7" :fill="daily ? 'var(--color-ok)' : 'var(--color-warn)'"/>
+      <text x="44" y="247" fill="var(--color-fg)">Daily inspection certified today?</text>
+      <text x="310" y="247" :fill="daily ? 'var(--color-fg-muted)' : 'var(--color-warn-fg)'" x-text="daily ? 'yes' : 'not yet: certify it before flight'"></text>
+      <circle cx="30" cy="266" r="7" :fill="mark(defectsOk)"/>
+      <text x="44" y="271" fill="var(--color-fg)">No defect that grounds it?</text>
+      <text x="310" y="271" :fill="defectsOk ? 'var(--color-fg-muted)' : 'var(--color-bad-fg)'"
+        x-text="openDefect ? openDefect.text + ': not cleared' : puBreach ? 'PU condition not met: ' + puBreach.cond : s.defects.filter((d) => d.st === 'pu').length + ' PU, conditions met'"></text>
+      <circle cx="30" cy="290" r="7" :fill="mark(fitsFlight)"/>
+      <text x="44" y="295" fill="var(--color-fg)">Nothing due before you land?</text>
+      <text x="310" y="295" class="num" :fill="fitsFlight ? 'var(--color-fg-muted)' : 'var(--color-bad-fg)'"
+        x-text="leftAfter >= 0 ? fmt(leftAfter, 1) + ' h to the ' + limText + ' after landing' : 'you would land ' + fmt(-leftAfter, 1) + ' h past the ' + limText"></text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="mrc-sc">Maintenance release</label>
+      <select id="mrc-sc" class="input" x-model.number="sc" @change="pick()">
+        <option value="0">BAKC 6.1: issued 12 Mar at 3,412.5 h</option>
+        <option value="1">RFRC 2.1: issued 14 Mar at 3,812.4 h</option>
+        <option value="2">POPC 2.7: issued 18 May at 1,876.3 h, AD at 1,950.0 h</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="mrc-today">Today <output for="mrc-today" x-text="fd(today, true)"></output></label>
+      <input type="range" id="mrc-today" step="1" :min="s.iD" :max="s.iD + 380" x-model.number="today">
+    </div>
+    <div class="widget-control">
+      <label for="mrc-hrs">Aircraft hours now <output for="mrc-hrs" x-text="fmt(hrs, 1) + ' h'"></output></label>
+      <input type="range" id="mrc-hrs" step="0.1" :min="s.iH" :max="s.iH + 100" x-model.number="hrs">
+    </div>
+    <div class="widget-control">
+      <label for="mrc-ft">Planned flight time <output for="mrc-ft" x-text="fmt(ft, 1) + ' h'"></output></label>
+      <input type="range" id="mrc-ft" min="0.5" max="8" step="0.1" x-model.number="ft">
+    </div>
+    <div class="widget-control">
+      <label for="mrc-daily" class="cursor-pointer"><span>Daily inspection certified today</span>
+        <input type="checkbox" id="mrc-daily" x-model="daily" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="s.defects.some((d) => d.st === 'open')">
+      <label for="mrc-fixed" class="cursor-pointer"><span>An engineer has rectified the open defect</span>
+        <input type="checkbox" id="mrc-fixed" x-model="fixed" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control" x-show="s.defects.some((d) => d.st === 'pu' && d.cond)">
+      <label for="mrc-cond" class="cursor-pointer"><span x-text="'This flight meets the PU condition: ' + (s.defects.find((d) => d.st === 'pu' && d.cond) || { cond: '' }).cond"></span>
+        <input type="checkbox" id="mrc-cond" x-model="condMet" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="leftAfter >= 0 ? (leftAfter < 2 ? 'warn' : 'ok') : 'bad'">
+      <dt class="widget-label">Hours left after landing</dt>
+      <dd class="widget-value"><span x-text="fmt(leftAfter, 1) + ' h'"></span><span class="widget-flag bad" x-show="leftAfter < 0">due in flight</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Runs out first</dt>
+      <dd class="widget-value" x-text="hoursFirst ? 'Hours, about ' + fd(proj) : 'Date, ' + fd(expD, true)"></dd>
+    </div>
+    <div class="widget-readout" :class="defectsOk ? 'ok' : 'bad'">
+      <dt class="widget-label">Part 2 defects</dt>
+      <dd class="widget-value" x-text="openDefect ? 'Open: ' + openDefect.text.toLowerCase() : puBreach ? 'PU condition not met' : 'None grounding'"></dd>
+    </div>
+    <div class="widget-readout" :class="verdict">
+      <dt class="widget-label">Verdict</dt>
+      <dd class="widget-value" x-text="verdictText"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('bakc-current')" :aria-pressed="active === 'bakc-current'">12.3 h to spare</button>
+      <button type="button" @click="preset('bakc-two-weeks-later')" :aria-pressed="active === 'bakc-two-weeks-later'">Two weeks later</button>
+      <button type="button" @click="preset('eleven-months-40-hours')" :aria-pressed="active === 'eleven-months-40-hours'">11 months, 40 h</button>
+      <button type="button" @click="preset('rfrc-1-3-hours-left')" :aria-pressed="active === 'rfrc-1-3-hours-left'">1.3 h left</button>
+      <button type="button" @click="preset('popc-brake-uncleared')" :aria-pressed="active === 'popc-brake-uncleared'">Brake open</button>
+      <button type="button" @click="preset('popc-geraldton-trip')" :aria-pressed="active === 'popc-geraldton-trip'">AD before landing</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The release runs out on hours or on the date, whichever comes first (commonly 100 hours or 12 months for a private or training aeroplane; check the aircraft's schedule), and maintenance due inside it, such as an AD at a lower hour count, comes first of all. The question is not "is it current now?" but "will it still be current when I land?", so add the flight time before you compare. A permissible unserviceability lets you fly only within its conditions, and an open defect grounds the aeroplane until an engineer deals with it. "Runs out first" projects the hours at the rate the aeroplane has been flown since the release was issued.</p>
+  <details class="widget-try"><summary>Try it: two weeks later the aeroplane shows 3,511.0 hours and you plan a 2-hour flight to Northam and back. Can you go?</summary><p>Press Two weeks later: the release expires at 3,512.5 hours, so it is current now, but you would land at 3,513.0, half an hour past it. Not for this flight; one of under 1.5 hours would do.</p></details>
+  <details class="widget-try"><summary>Try it: on the POPC release the brake has been fixed. How long a trip can you plan before the AD falls due?</summary><p>Press AD before landing: at 1,944.2 hours a 6.5-hour trip would end at 1,950.7, 0.7 hours past the AD at 1,950.0. Drag the flight time down to 5.8 hours and the last question turns green: that is the most you can fly before the inspection.</p></details>
+</div>

@@ -1,0 +1,292 @@
+<div class="widget" x-data="timeline({
+  duration: 16, loop: false,
+  way: 'hold',
+  // RBKA 3.7 wheelbarrowing. Everything here is illustrative: the shares of the weight carried by the wing, the
+  // nosewheel and the main wheels, the speeds, the size and growth of the swing and the timings. The lesson gives the
+  // physics (nosewheel ahead of the CG = unstable pivot, mains behind it = stable) and the actions, not numbers.
+  // Story moments: touchdown at TD, weight settled on a wheel by P1, gust at P2, the pilot's response at P3, outcome P4.
+  TD: 0.12, P1: 0.22, P2: 0.42, P3: 0.6, P4: 0.8,
+  get fast() { return this.way !== 'mains' },
+  get onNose() { return this.way === 'hold' || this.t < this.P3 && this.way !== 'mains' },
+  // shares of the weight [wing, nosewheel, mains] at each moment
+  keys() {
+    const w = this.way;
+    if (w === 'mains') return [[0, 1, 0, 0], [this.TD, 1, 0, 0], [this.P1, 0.7, 0, 0.3], [this.P3, 0.5, 0, 0.5], [this.P4, 0.35, 0.1, 0.55], [1, 0.2, 0.15, 0.65]];
+    const k = [[0, 1, 0, 0], [this.TD, 1, 0, 0], [this.P1, 0.75, 0.2, 0.05], [this.P3, 0.7, 0.25, 0.05]];
+    if (w === 'hold') return k.concat([[this.P4, 0.5, 0.4, 0.1], [0.9, 0.15, 0.5, 0.35], [1, 0.05, 0.55, 0.4]]);
+    if (w === 'ease') return k.concat([[0.7, 0.55, 0.03, 0.42], [this.P4, 0.45, 0.02, 0.53], [0.92, 0.3, 0.03, 0.67], [1, 0.25, 0.1, 0.65]]);
+    return k.concat([[0.68, 1, 0, 0], [1, 1, 0, 0]]);
+  },
+  get share() {
+    const k = this.keys(), t = this.t;
+    for (let i = 1; i < k.length; i++) if (t <= k[i][0]) {
+      const f = this.ease(this.seg(t, k[i - 1][0], k[i][0])), a = k[i - 1], b = k[i];
+      return { lift: this.lerp(a[1], b[1], f), nose: this.lerp(a[2], b[2], f), mains: this.lerp(a[3], b[3], f) };
+    }
+    const z = k[k.length - 1];
+    return { lift: z[1], nose: z[2], mains: z[3] };
+  },
+  get airborne() { return this.t < this.TD || this.way === 'around' && this.t > 0.68 },
+  // the swing in degrees, nose right positive: a gust at P2 starts it
+  psiAt(t) {
+    const w = this.way;
+    if (t < this.P2) return 0;
+    if (w === 'mains') return 6 * Math.exp(-(t - this.P2) * 8);
+    if (t < this.P3) return 3 * Math.exp((t - this.P2) * 5.45);
+    if (w === 'hold') return Math.min(80, 8 * Math.exp((t - this.P3) * 9));
+    return 8 * Math.exp(-(t - this.P3) * 10);
+  },
+  // groundspeed, relative to the fast touchdown
+  vAt(t) {
+    const w = this.way, v0 = this.fast ? 1 : 0.85;
+    if (t <= this.TD) return v0;
+    if (w === 'mains') return Math.max(0.15, v0 - 0.85 * (t - this.TD));
+    const vP3 = v0 - 0.5 * (this.P3 - this.TD);
+    if (t <= this.P3) return v0 - 0.5 * (t - this.TD);
+    if (w === 'hold') return Math.max(0, vP3 - 2.3 * (t - this.P3));
+    if (w === 'ease') return Math.max(0.2, vP3 - 0.9 * (t - this.P3));
+    return vP3 + 0.8 * (t - this.P3);
+  },
+  // where the aeroplane is on the runway (top view): integrate the speed along a track that follows half the swing
+  get pos() {
+    let x = 70, y = 0;
+    const N = 60, dt = this.t / N;
+    for (let i = 0; i < N; i++) {
+      const ti = (i + 0.5) * dt, v = this.vAt(ti) * 560 * dt, a = this.psiAt(ti) * 0.5 * Math.PI / 180;
+      x += v * Math.cos(a); y += v * Math.sin(a);
+    }
+    return { x: x, y: y };
+  },
+  get psi() { return this.psiAt(this.t) },
+  get dpsi() { return this.psiAt(this.t + 0.01) - this.psi },
+  get looped() { return this.way === 'hold' && this.psi >= 79.5 },
+  get damaged() { return this.way === 'hold' && this.t > 0.86 },
+  // nose attitude in degrees (side view), nose up positive
+  get pitch() {
+    const t = this.t, w = this.way;
+    if (w === 'mains') return t < 0.65 ? 7 : this.lerp(7, 0, this.ease(this.seg(t, 0.65, 0.8)));
+    if (t < this.P1) return 0;
+    if (t < this.P3) return -1.5 * this.ease(this.seg(t, this.P1, this.P2));
+    if (w === 'hold') return this.damaged ? -2 - 1.5 * this.ease(this.seg(t, 0.86, 0.92)) : -1.5 - 0.5 * this.ease(this.seg(t, this.P3, this.P4));
+    if (w === 'ease') return t < 0.9 ? this.lerp(-1.5, 6, this.ease(this.seg(t, this.P3, 0.7))) : this.lerp(6, 0, this.ease(this.seg(t, 0.9, 1)));
+    return this.lerp(-1.5, 8, this.ease(this.seg(t, this.P3, 0.68)));
+  },
+  get height() {
+    if (this.t < this.TD) return 16 * (1 - this.t / this.TD);
+    if (this.way === 'around') return 30 * this.ease(this.seg(this.t, 0.68, 1));
+    return 0;
+  },
+  // side view: CG at x 250, ground at y 150, scale 2.2 (wheels 42.9 below the CG; nosewheel x +33, mains x -16.5);
+  // pitched about the main wheels, so nose-down pitch compresses (or, damaged, collapses) the nose strut
+  get sideT() {
+    const p = this.pitch, piv = '-16.5 42.9';
+    return 'translate(250 ' + (107.1 - this.height) + ') rotate(' + (-p) + ' ' + piv + ')';
+  },
+  // a point of the aeroplane (local side-view units) in the picture, after pitch and height
+  sidePt(lx, ly) {
+    const p = this.pitch, a = -p * Math.PI / 180, cx = -16.5, cy = 42.9, dx = lx - cx, dy = ly - cy;
+    return { x: 250 + cx + dx * Math.cos(a) - dy * Math.sin(a), y: 107.1 - this.height + cy + dx * Math.sin(a) + dy * Math.cos(a) };
+  },
+  get wingPt() { return this.sidePt(-4, -22) },
+  get cgPt() { return this.sidePt(0, 0) },
+  get scroll() { return -((this.pos.x * 3) % 60) },
+  // top view: runway centreline y 318; the pivot wheel (nosewheel x +16.5, mains x -8.3 at scale 1.1) stays on the path
+  get pivX() { return this.airborne ? 0 : this.onNose ? 16.5 : -8.3 },
+  get topT() {
+    const x = Math.min(this.pos.x, 700) + this.pivX, y = 318 + this.pos.y;
+    return 'translate(' + x + ' ' + y + ') rotate(' + this.psi + ') translate(' + (-this.pivX) + ' 0)';
+  },
+  get cgTop() {
+    const a = this.psi * Math.PI / 180, x = Math.min(this.pos.x, 700) + this.pivX, y = 318 + this.pos.y;
+    return { x: x - this.pivX * Math.cos(a), y: y - this.pivX * Math.sin(a) };
+  },
+  get pivotText() { return this.onNose ? 'pivot: the nosewheel, ahead of the CG' : 'pivot: the main wheels, behind the CG' },
+  get input() {
+    const t = this.t, w = this.way;
+    if (w === 'mains') return t < 0.65 ? 'Column back, nosewheel held off' : 'Nosewheel lowered gently';
+    if (t < this.TD) return 'Fast and flat';
+    if (t < this.P3) return 'Forward pressure';
+    if (w === 'hold') return 'Push harder, brake harder';
+    if (w === 'ease') return 'Throttle closed, column back';
+    return 'Full power, ease back';
+  },
+  get outcome() {
+    const t = this.t, w = this.way;
+    if (this.damaged) return 'Ground loop: nose gear damaged';
+    if (this.looped) return 'Ground loop';
+    if (w === 'around' && t > 0.68) return 'Climbing away';
+    if (w !== 'hold' && t > this.P4) return 'Rolling straight';
+    return '';
+  },
+  pct(v) { return Math.round(v * 100) + '%' },
+  get noseState() { return this.damaged ? 'bad' : this.share.nose > this.share.mains + 0.02 ? 'bad' : this.share.nose > 0.2 ? 'warn' : 'ok' },
+  get swingText() {
+    if (this.airborne && this.t > this.TD) return 'none: airborne';
+    if (this.psi < 0.5) return 'none';
+    if (this.looped) return 'ground loop';
+    return this.fmt(this.psi) + '°, ' + (this.dpsi > 0 ? 'growing' : 'dying away');
+  },
+  get swingState() { return this.looped || this.psi > 15 && this.dpsi > 0 ? 'bad' : this.dpsi > 0 && this.psi > 0.5 ? 'warn' : this.psi > 0.5 ? 'ok' : '' },
+  get steps() {
+    return this.way === 'mains'
+      ? [{ at: 0, label: 'Right speed, nose up' }, { at: this.P1, label: 'Weight on the mains' }, { at: this.P2, label: 'A swing starts' }, { at: this.P3, label: 'Your response' }, { at: this.P4, label: 'Outcome' }]
+      : [{ at: 0, label: 'Fast, flat touchdown' }, { at: this.P1, label: 'Weight on the nosewheel' }, { at: this.P2, label: 'A swing starts' }, { at: this.P3, label: 'Your response' }, { at: this.P4, label: 'Outcome' }];
+  },
+  get caption() {
+    const t = this.t, w = this.way;
+    if (w === 'mains') {
+      if (t < this.P1) return 'Prevention: over the threshold at the correct speed and touch down main wheels first, nose up. The wing has almost finished flying.';
+      if (t < this.P2) return 'The main wheels, just behind the CG, take the weight and the nosewheel is held off: the pivot is behind the weight, like a shopping trolley.';
+      if (t < this.P3) return 'A gust swings the nose. The weight, ahead of the pivot, keeps going straight and pulls the nose back into line: the swing dies away by itself.';
+      return 'Hold the nosewheel off until it lowers naturally, then steer with rudder and nosewheel. The aeroplane rolls straight.';
+    }
+    if (t < this.TD) return 'Too fast and too flat: the aeroplane is flown onto the runway in a level attitude with speed to spare.';
+    if (t < this.P1) return 'It touches down nosewheel first or on all three wheels at once. With the excess speed the wing is still lifting most of the weight, so the main wheels are light.';
+    if (t < this.P2) return 'Forward pressure holds the nose down: the aeroplane is balanced on its nosewheel, ahead of the CG. That is wheelbarrowing.';
+    if (t < this.P3) return 'A gust (or a touch of brake) swings the nose. The weight, behind the nosewheel pivot, keeps going straight and swings the tail further out: the swing grows, like a wheelbarrow.';
+    if (w === 'hold') {
+      if (t < this.P4) return 'Pushing harder or braking harder only loads the nosewheel more; the light main wheels barely help. The swing keeps growing.';
+      return this.damaged ? 'Ground loop: the aeroplane swings violently off its path and the nose gear, never built to carry that load at that speed, is damaged or collapses.' : 'The swing is out of control and growing towards a ground loop.';
+    }
+    if (w === 'ease') {
+      if (t < this.P4) return 'Close the throttle and ease the column back: the nose rises, the nosewheel unloads and the main wheels, behind the CG, take the weight.';
+      return 'With the pivot back behind the weight the aeroplane is a stable shopping trolley again: the swing dies away and it slows straight down the runway.';
+    }
+    if (t < 0.68) return 'Speed still high or not enough runway left: full power, ease back and go around rather than force it to stay down.';
+    return 'Airborne again and climbing away, wings level and straight. Fly the circuit and set up a correct, slower approach.';
+  },
+  presets: {
+    'fast-flat-touchdown': { way: 'hold', t: 0.16 },
+    'swing-grows': { way: 'hold', t: 0.56 },
+    'ground-loop': { way: 'hold', t: 1 },
+    'ease-back-weight-on-mains': { way: 'ease', t: 0.85 },
+    'go-around': { way: 'around', t: 1 },
+    'main-wheels-first': { way: 'mains', t: 0.5 },
+  },
+})">
+  <svg viewBox="0 0 640 472" role="img" aria-labelledby="wbr-title" class="widget-stage">
+    <title id="wbr-title">Above, a side view of the aeroplane landing with arrows for how much of the weight the wing, the nosewheel and the main wheels carry; below, a top view of the runway showing the aeroplane pivoting on its nosewheel ahead of the centre of gravity so that a small swing grows into a ground loop, or pivoting on its main wheels behind the centre of gravity so the swing dies away</title>
+    <defs>
+      <marker id="wbr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="wbr-clip-side"><rect x="0" y="0" width="640" height="252"/></clipPath>
+      <clipPath id="wbr-clip-top"><rect x="0" y="212" width="640" height="218"/></clipPath>
+    </defs>
+    <!-- side view -->
+    <g clip-path="url(#wbr-clip-side)">
+      <rect x="0" y="0" width="640" height="150" fill="var(--color-sky-soft)"/>
+      <rect x="0" y="150" width="640" height="102" fill="var(--color-surface)"/>
+      <rect x="0" y="150" width="640" height="5" fill="var(--color-tarmac)"/>
+      <g stroke="var(--color-fg-faint)" stroke-width="1.25" :transform="'translate(' + scroll + ' 0)'">
+        <line x1="0" y1="158" x2="0" y2="164"/><line x1="60" y1="158" x2="60" y2="164"/><line x1="120" y1="158" x2="120" y2="164"/><line x1="180" y1="158" x2="180" y2="164"/><line x1="240" y1="158" x2="240" y2="164"/><line x1="300" y1="158" x2="300" y2="164"/><line x1="360" y1="158" x2="360" y2="164"/><line x1="420" y1="158" x2="420" y2="164"/><line x1="480" y1="158" x2="480" y2="164"/><line x1="540" y1="158" x2="540" y2="164"/><line x1="600" y1="158" x2="600" y2="164"/><line x1="660" y1="158" x2="660" y2="164"/>
+      </g>
+      <text x="14" y="24" font-size="13" fill="var(--color-fg-muted)">Who carries the weight?</text>
+      <!-- the aeroplane (python -m tools.diagrams.plane side, scale 2.2), pitched about the wheel on the ground -->
+      <g :transform="sideT">
+        <g transform="translate(0 0) rotate(0) scale(2.2)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+        <circle cx="0" cy="0" r="4" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+        <path d="M0 -4 A4 4 0 0 1 4 0 L0 0 Z M0 4 A4 4 0 0 1 -4 0 L0 0 Z" fill="var(--color-fg)"/>
+        <!-- nose gear damage -->
+        <path d="M26 34 L40 50 M40 34 L26 50" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" :opacity="damaged ? 1 : 0"/>
+      </g>
+      <!-- lift from the wing, vertical (the airflow is level along the runway), length in proportion to its share of the weight -->
+      <line stroke="var(--color-info)" stroke-width="3" stroke-linecap="round" marker-end="url(#wbr-arrow)" :x1="wingPt.x" :y1="wingPt.y" :x2="wingPt.x" :y2="Math.max(8, wingPt.y - 50 * share.lift)" :opacity="share.lift > 0.08 ? 1 : 0"/>
+      <text font-size="12" font-weight="600" fill="var(--color-info)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="wingPt.x + 12" :y="Math.max(40, wingPt.y - 50 * share.lift + 10)" x-text="'wing lifting ' + pct(share.lift)" :opacity="share.lift > 0.08 ? 1 : 0"></text>
+      <line y2="230" stroke="var(--color-fg-muted)" stroke-width="1" stroke-dasharray="3 3" :x1="cgPt.x" :x2="cgPt.x" :y1="cgPt.y + 6" :opacity="airborne ? 0 : 1"/>
+      <text y="246" font-size="12" font-weight="600" text-anchor="middle" :x="cgPt.x" fill="var(--color-fg-muted)" :opacity="airborne ? 0 : 1">CG</text>
+      <!-- the runway pushing up on each wheel: arrow length in proportion to the share of the weight -->
+      <line x1="283" x2="283" y1="230" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" marker-end="url(#wbr-arrow)" :y2="Math.min(225, 230 - 90 * share.nose)" :opacity="share.nose > 0.015 && !airborne ? 1 : 0"/>
+      <line x1="233.5" x2="233.5" y1="230" stroke="var(--color-ok)" stroke-width="3" stroke-linecap="round" marker-end="url(#wbr-arrow)" :y2="Math.min(225, 230 - 90 * share.mains)" :opacity="share.mains > 0.015 && !airborne ? 1 : 0"/>
+      <g font-size="12" font-weight="600">
+        <text x="294" y="200" fill="var(--color-bad-fg)" :opacity="airborne ? 0 : 1" x-text="'nosewheel ' + pct(share.nose)"></text>
+        <text x="294" y="215" font-weight="400" fill="var(--color-fg-muted)" :opacity="airborne ? 0 : 1">ahead of the CG</text>
+        <text x="222" y="200" text-anchor="end" fill="var(--color-ok-fg)" :opacity="airborne ? 0 : 1" x-text="'main wheels ' + pct(share.mains)"></text>
+        <text x="222" y="215" text-anchor="end" font-weight="400" fill="var(--color-fg-muted)" :opacity="airborne ? 0 : 1">behind the CG</text>
+      </g>
+      <!-- the pilot's input -->
+      <g font-size="13" font-weight="600" text-anchor="end">
+        <text x="626" y="236" :fill="way === 'hold' && t > 0.15 ? 'var(--color-bad-fg)' : way === 'ease' && t >= P3 ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="input"></text>
+        <text x="626" y="218" font-weight="400" font-size="12" fill="var(--color-fg-muted)">your input</text>
+      </g>
+    </g>
+    <g transform="translate(0 42)">
+    <line x1="0" y1="211" x2="640" y2="211" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <!-- top view -->
+    <g clip-path="url(#wbr-clip-top)">
+      <rect x="0" y="212" width="640" height="218" fill="var(--color-ok-soft)"/>
+      <rect x="0" y="232" width="640" height="172" fill="var(--color-tarmac)"/>
+      <g stroke="var(--color-paint)" stroke-width="2"><line x1="0" y1="238" x2="640" y2="238"/><line x1="0" y1="398" x2="640" y2="398"/></g>
+      <line x1="0" y1="318" x2="640" y2="318" stroke="var(--color-paint)" stroke-width="2" stroke-dasharray="18 14" stroke-opacity="0.7"/>
+      <!-- the aeroplane (python -m tools.diagrams.plane top, scale 1.1), rotated about the wheel it pivots on -->
+      <g :transform="topT">
+        <g transform="translate(0 0) rotate(0) scale(1.1)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+        <!-- the swing at the tail: grows (bad) or comes back (ok) -->
+        <g :opacity="!airborne && psi > 1.2 && !looped ? 1 : 0" fill="none" stroke-linecap="round">
+          <path d="M-58 -6 Q-62 -20 -54 -34" stroke="var(--color-surface)" stroke-width="7"/>
+          <path stroke-width="3" marker-end="url(#wbr-arrow)" :d="dpsi > 0 ? 'M-58 -6 Q-62 -20 -54 -34' : 'M-54 -34 Q-62 -20 -58 -6'" :stroke="dpsi > 0 ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+        </g>
+        <circle cx="0" cy="0" r="3.5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+        <!-- the pivot -->
+        <circle r="6" stroke="var(--color-surface)" stroke-width="2" :cx="pivX" cy="0" :fill="onNose ? 'var(--color-bad)' : 'var(--color-ok)'" :opacity="airborne ? 0 : 1"/>
+        <path d="M10 -6 L22 6 M22 -6 L10 6" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" :opacity="damaged ? 1 : 0"/>
+      </g>
+      <!-- inertia: the weight carries on in the direction it was going -->
+      <g :opacity="!airborne && psi > 1.2 && !looped ? 1 : 0">
+        <line stroke="var(--color-surface)" stroke-width="7" stroke-linecap="round" :x1="cgTop.x + 8" :y1="cgTop.y" :x2="cgTop.x + 46" :y2="cgTop.y"/>
+        <line stroke="var(--color-info)" stroke-width="3" stroke-linecap="round" marker-end="url(#wbr-arrow)" :x1="cgTop.x + 8" :y1="cgTop.y" :x2="cgTop.x + 46" :y2="cgTop.y"/>
+      </g>
+      <g font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+        <text :opacity="!airborne && psi > 1.2 && !looped ? 1 : 0" fill="var(--color-info)" :x="cgTop.x + 52" :y="cgTop.y + 4">the weight keeps going</text>
+        <text x="14" y="228" fill="var(--color-fg-muted)" font-weight="400" stroke-width="0">Which wheel is the pivot?</text>
+        <text text-anchor="middle" :x="Math.min(560, Math.max(80, cgTop.x))" :y="pos.y > 30 ? cgTop.y - 52 : cgTop.y + 66" :fill="onNose ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" :opacity="airborne ? 0 : 1" x-text="pivotText"></text>
+      </g>
+      <text x="626" y="424" font-size="13" font-weight="700" text-anchor="end" :fill="looped || damaged ? 'var(--color-bad-fg)' : way === 'around' && t > 0.68 || t > P4 ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="outcome"></text>
+    </g>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the landing'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="wbr-t" min="0" max="1" step="0.005" x-model.number="t" @input="pause()" aria-label="Progress through the landing">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="wbr-way">What the pilot does</label>
+      <select id="wbr-way" class="input" x-model="way" @change="pause(); active = null">
+        <option value="hold">Hold it down: forward pressure, harder braking</option>
+        <option value="ease">Ease back: throttle closed, column back</option>
+        <option value="around">Go around: speed high or runway short</option>
+        <option value="mains">Prevent it: right speed, main wheels first</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Wing still lifting</dt><dd class="widget-value" x-text="pct(share.lift) + ' of the weight'"></dd></div>
+    <div class="widget-readout" :class="airborne ? '' : noseState"><dt class="widget-label">Nosewheel / main wheels</dt><dd class="widget-value"><span x-text="airborne ? 'airborne' : pct(share.nose) + ' / ' + pct(share.mains)"></span><span class="widget-flag bad" x-show="!airborne && (damaged || share.nose > share.mains + 0.02)" x-text="damaged ? 'nose gear damaged' : 'wheelbarrowing'"></span></dd></div>
+    <div class="widget-readout" :class="swingState"><dt class="widget-label">Swing</dt><dd class="widget-value" x-text="swingText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('fast-flat-touchdown')" :aria-pressed="active === 'fast-flat-touchdown'">Fast, flat touchdown</button>
+      <button type="button" @click="preset('swing-grows')" :aria-pressed="active === 'swing-grows'">Swing grows</button>
+      <button type="button" @click="preset('ground-loop')" :aria-pressed="active === 'ground-loop'">Ground loop</button>
+      <button type="button" @click="preset('ease-back-weight-on-mains')" :aria-pressed="active === 'ease-back-weight-on-mains'">Ease back</button>
+      <button type="button" @click="preset('go-around')" :aria-pressed="active === 'go-around'">Go around</button>
+      <button type="button" @click="preset('main-wheels-first')" :aria-pressed="active === 'main-wheels-first'">Main wheels first</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> What matters is which wheel the aeroplane pivots on. Balanced on the nosewheel, ahead of the CG, the weight behind the pivot keeps going straight and swings the tail further out, so a small swing grows into a ground loop; pushing or braking harder only makes it worse. Ease back (or go around) and the main wheels, behind the CG, take the weight: the weight now leads the pivot and pulls the aeroplane straight, like a shopping trolley. The shares of the weight, the size of the swing and the timings are illustrative.</p>
+  <details class="widget-try"><summary>Try it: after a fast landing the aeroplane starts to swing with the nose held down. Push forward and brake, or ease back?</summary><p>Ease back, with the throttle closed. Play Hold it down, then Ease back from the same moment: forward pressure keeps the weight on the nosewheel ahead of the CG and the swing grows into a ground loop; easing back moves the weight to the main wheels behind the CG and the swing dies away. If the speed is still high or the runway short, go around.</p></details>
+  <details class="widget-try"><summary>Try it: why does a gust that the aeroplane shrugs off on its main wheels cause a ground loop on its nosewheel?</summary><p>Press Main wheels first and watch the swing: the CG is ahead of the main-wheel pivot, so as the nose swings, the weight carrying straight on pulls it back into line. On the nosewheel the CG is behind the pivot, so the same weight carrying straight on swings the tail further out: the swing feeds itself.</p></details>
+</div>

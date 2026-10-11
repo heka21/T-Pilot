@@ -1,0 +1,185 @@
+<div class="widget" x-data="timeline({
+  duration: 35, loop: false,
+  level: 0.5,
+  // the clock: t 0..1 is seven cold nights; each night runs evening → cooling → condensing → sinking → morning.
+  // Amounts and timings are illustrative: the lesson says only that one night makes little and a week of cold nights
+  // with the tanks half empty can make a lot, and that a full tank has very little air space.
+  get d() { return Math.min(6, Math.floor(this.t * 7)) },
+  get p() { return Math.min(1, this.t * 7 - this.d) },
+  ph(a, b) { return this.seg(this.p, a, b) },
+  get day() { return Math.min(1, 1 - this.ease(this.ph(0.08, 0.3)) + this.ease(this.ph(0.84, 0.96))) },
+  get warm() { return 1 - this.ease(this.ph(0.1, 0.4)) + this.ease(this.ph(0.9, 1)) * 0.6 },
+  get full() { return this.level >= 1 },
+  get levelWord() { return { 0.25: 'a quarter full', 0.5: 'half full', 0.75: 'three-quarters full', 1: 'full' }[this.level] || 'part full' },
+  // the tank: inner walls x 90 and 560, roof y 112, floor sloping from y 274 (inboard, at the drain) to y 244
+  get yf() { return 244 - 126 * this.level },
+  get air() { return this.yf - 112 },
+  floorY(x) { return 274 - 30 * (x - 90) / 470 },
+  get airFrac() { return this.full ? 0.03 : 1 - this.level },
+  // nights' worth of water at the drain, in half-tank nights
+  get nights() { return this.d + this.ph(0.6, 0.86) },
+  get eq() { return this.nights * this.airFrac / 0.5 },
+  get poolH() { return 20 * Math.sqrt(Math.min(1, this.eq / 10.5)) },
+  get pool() { const h = this.poolH; return 'M90 ' + (274 - h).toFixed(1) + ' L' + (90 + 15.67 * h).toFixed(1) + ' ' + (274 - h).toFixed(1) + ' L90 274 Z' },
+  get water() {
+    const e = this.eq;
+    if (e < 0.05) return { text: 'None yet', s: '' };
+    if (e < 0.6) return { text: 'A trace', s: 'ok' };
+    if (e < 1.5) return { text: 'A little', s: 'warn' };
+    if (e < 3.5) return { text: 'Some', s: 'warn' };
+    return { text: 'A lot', s: 'bad' };
+  },
+  get nDrops() { return this.full ? 2 : this.level >= 0.75 ? 4 : this.level >= 0.5 ? 6 : 8 },
+  xs: [150, 96, 310, 554, 470, 230, 390, 530],
+  // one droplet: forms on the cold roof or wall, runs down into the fuel, sinks and slides to the drain
+  drop(i) {
+    const o = i * 0.01, wall = this.xs[i] < 100 || this.xs[i] > 550, p = this.p;
+    const grow = this.seg(p, 0.3 + o, 0.46 + o), fall = this.ease(this.seg(p, 0.48 + o, 0.58 + o));
+    const sink = this.ease(this.seg(p, 0.58 + o, 0.72 + o)), slide = this.ease(this.seg(p, 0.72 + o, 0.84 + o));
+    const r = this.full ? 1.5 + grow : 2 + 2.5 * grow;
+    const x0 = this.xs[i], y0 = wall ? 112 + this.air * 0.35 : 113 + r;
+    const yIn = this.yf + r + 2;
+    let x = x0, y = this.lerp(y0, yIn, fall);
+    if (sink > 0) y = this.lerp(yIn, this.floorY(x0) - r - 1, sink);
+    if (slide > 0) { x = this.lerp(x0, 100, slide); y = this.floorY(x) - r - 1; }
+    const on = i < this.nDrops && p >= 0.3 + o && p < 0.86 + o;
+    return { x: x, y: y, r: r, on: on, o: 1 - this.seg(p, 0.82 + o, 0.86 + o) };
+  },
+  get vapour() { return 1 - this.ease(this.ph(0.3, 0.5)) },
+  get when() {
+    const n = this.d + 1;
+    if (this.p < 0.12) return 'Evening, day ' + n;
+    if (this.p < 0.9) return 'Night ' + n + ' of 7';
+    return n === 7 ? 'Morning after a week' : 'Morning after night ' + n;
+  },
+  get temp() { return this.p < 0.12 || this.p >= 0.92 ? 'Warm' : this.p < 0.3 ? 'Cooling' : 'Cold' },
+  steps: [
+    { at: 0, label: 'Evening' },
+    { at: 0.0286, label: 'Cooling' },
+    { at: 0.0571, label: 'Condensing' },
+    { at: 0.0857, label: 'Sinking' },
+    { at: 0.1357, label: 'First morning' },
+    { at: 0.5, label: 'Mid-week' },
+    { at: 1, label: 'A week later' },
+  ],
+  get caption() {
+    const p = this.p, d = this.d;
+    if (p < 0.12) {
+      if (this.full) return 'A full tank has hardly any air space above the fuel, so there is hardly any water vapour in it to condense.';
+      return (d ? 'Another evening: ' : 'Evening: the tank is ' + this.levelWord + ', and ') + 'the space above the fuel is full of air, and that air carries water vapour.';
+    }
+    if (p < 0.3) return 'Night falls: the wing, the tank walls and the air inside cool. Cool air can hold less water vapour than warm air.';
+    if (p < 0.48) return this.full ? 'Only a thin sliver of air is cooling, so only a trace of water condenses.' : 'The excess vapour condenses on the cold metal as droplets, like on the outside of a cold drink.';
+    if (p < 0.9) return 'The droplets run down into the fuel. Water is heavier than fuel, so it sinks to the lowest point of the tank, right beside the drain.';
+    if (d === 0) return 'Morning: one night does not make much, but it is there at the drain. Let the fuel settle, then sample every drain before flight.';
+    if (d < 6) return 'Morning ' + (d + 1) + ': each cold night adds a little more water at the low point.';
+    if (this.full) return 'A week of cold nights with full tanks: almost no water, because there was almost no air to cool. That is why you fill up before parking overnight.';
+    return 'A week of cold nights with the tank ' + this.levelWord + ': a lot of water is waiting at the drain. Keep draining until the samples are clean.';
+  },
+  presets: {
+    'one-night-half-tank': { level: 0.5, t: 0.1357 },
+    'condensing-half-tank': { level: 0.5, t: 0.0643 },
+    'droplets-sinking': { level: 0.5, t: 0.0929 },
+    'week-half-tank': { level: 0.5, t: 1 },
+    'week-full-tank': { level: 1, t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="tco-title" class="widget-stage">
+    <title id="tco-title">A cut-away wing tank through a week of cold nights: the air space above the fuel cools at night, water vapour condenses as droplets on the cold roof and walls, the droplets run down into the fuel and sink to the low point beside the drain, where the water builds up night after night. A full tank has almost no air space and collects almost no water.</title>
+    <!-- sky: blue by day, stars and moon by night -->
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-sky-soft)" :fill-opacity="day"/>
+    <g fill="var(--color-fg-faint)" :fill-opacity="Math.max(0, 1 - 1.15 * day)">
+      <circle cx="210" cy="28" r="1.5"/><circle cx="270" cy="66" r="1.2"/><circle cx="340" cy="22" r="1.5"/><circle cx="410" cy="58" r="1.2"/>
+      <circle cx="470" cy="26" r="1.5"/><circle cx="520" cy="70" r="1.2"/><circle cx="160" cy="72" r="1.2"/><circle cx="600" cy="110" r="1.2"/>
+      <circle cx="40" cy="130" r="1.2"/><circle cx="610" cy="200" r="1.5"/><circle cx="30" cy="230" r="1.2"/>
+      <path d="M580 30 a16 16 0 1 0 14 25 a12.5 12.5 0 1 1 -14 -25 Z"/>
+    </g>
+    <circle cx="590" cy="44" r="14" fill="var(--color-warn)" :fill-opacity="day"/>
+    <!-- apron -->
+    <rect x="0" y="300" width="640" height="30" fill="var(--color-tarmac)"/>
+    <!-- the tank: air space, fuel, water at the low point -->
+    <path d="M90 112 L560 112 L560 244 L90 274 Z" fill="var(--color-surface)"/>
+    <path fill="var(--color-warn-soft)" :fill-opacity="warm" :d="'M90 112 L560 112 L560 ' + yf + ' L90 ' + yf + ' Z'"/>
+    <path fill="var(--color-sky-soft)" :fill-opacity="1 - warm" :d="'M90 112 L560 112 L560 ' + yf + ' L90 ' + yf + ' Z'"/>
+    <path fill="var(--color-brand)" fill-opacity="0.35" :d="'M90 ' + yf + ' L560 ' + yf + ' L560 244 L90 274 Z'"/>
+    <line x1="90" x2="560" stroke="var(--color-brand)" stroke-width="1.25" :y1="yf" :y2="yf"/>
+    <g x-show="eq >= 0.02">
+      <path fill="var(--color-sky-soft)" :d="pool"/>
+      <path fill="var(--color-sky-fg)" fill-opacity="0.22" stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-dasharray="4 3" stroke-linejoin="round" :d="pool"/>
+    </g>
+    <!-- water vapour in the air space -->
+    <g fill="var(--color-sky-fg)" :fill-opacity="0.55 * vapour" x-show="air > 24">
+      <circle cx="130" r="1.6" :cy="112 + air * 0.3"/><circle cx="185" r="1.6" :cy="112 + air * 0.7"/><circle cx="250" r="1.6" :cy="112 + air * 0.85"/>
+      <circle cx="400" r="1.6" :cy="112 + air * 0.75"/><circle cx="455" r="1.6" :cy="112 + air * 0.35"/><circle cx="520" r="1.6" :cy="112 + air * 0.6"/>
+      <circle cx="225" r="1.6" :cy="112 + air * 0.2"/><circle cx="430" r="1.6" :cy="112 + air * 0.15"/><circle cx="505" r="1.6" :cy="112 + air * 0.85"/>
+    </g>
+    <!-- droplets (written out: no templates inside svg) -->
+    <g fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25">
+      <circle x-show="drop(0).on" :cx="drop(0).x" :cy="drop(0).y" :r="drop(0).r" :opacity="drop(0).o"/>
+      <circle x-show="drop(1).on" :cx="drop(1).x" :cy="drop(1).y" :r="drop(1).r" :opacity="drop(1).o"/>
+      <circle x-show="drop(2).on" :cx="drop(2).x" :cy="drop(2).y" :r="drop(2).r" :opacity="drop(2).o"/>
+      <circle x-show="drop(3).on" :cx="drop(3).x" :cy="drop(3).y" :r="drop(3).r" :opacity="drop(3).o"/>
+      <circle x-show="drop(4).on" :cx="drop(4).x" :cy="drop(4).y" :r="drop(4).r" :opacity="drop(4).o"/>
+      <circle x-show="drop(5).on" :cx="drop(5).x" :cy="drop(5).y" :r="drop(5).r" :opacity="drop(5).o"/>
+      <circle x-show="drop(6).on" :cx="drop(6).x" :cy="drop(6).y" :r="drop(6).r" :opacity="drop(6).o"/>
+      <circle x-show="drop(7).on" :cx="drop(7).x" :cy="drop(7).y" :r="drop(7).r" :opacity="drop(7).o"/>
+    </g>
+    <!-- tank walls, filler cap and drain -->
+    <rect x="396" y="104" width="30" height="8" rx="2" fill="var(--color-fg-muted)"/>
+    <path d="M90 112 L560 112 L560 244 L90 274 Z" fill="none" stroke="var(--color-fg)" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="100" y="273" width="8" height="14" rx="2" fill="var(--color-warn)"/>
+    <!-- labels -->
+    <text x="20" y="32" font-size="16" font-weight="600" fill="var(--color-fg)" x-text="when"></text>
+    <text x="20" y="52" font-size="13" fill="var(--color-fg-muted)" x-text="'tank ' + levelWord"></text>
+    <text x="90" y="98" font-size="13" fill="var(--color-fg-muted)">wing tank, cut away</text>
+    <text x="560" y="98" font-size="13" text-anchor="end" fill="var(--color-ok-fg)" font-weight="600" x-show="full">almost no air space</text>
+    <text x="325" font-size="14" text-anchor="middle" fill="var(--color-sky-fg)" font-weight="600" x-show="air > 34" :y="112 + air / 2 + 5" x-text="p >= 0.9 ? 'air space' : temp === 'Warm' ? 'warm air with water vapour' : temp === 'Cooling' ? 'air cooling' : 'cold air: vapour condenses'"></text>
+    <text x="112" font-size="14" fill="var(--color-brand-fg)" font-weight="600" :y="yf + 24">fuel</text>
+    <text x="94" y="296" font-size="13" text-anchor="end" fill="var(--color-warn-fg)" font-weight="600">drain</text>
+    <g x-show="eq >= 0.3">
+      <line x1="168" y1="284" x2="132" y2="268" stroke="var(--color-sky-fg)" stroke-width="1.25"/>
+      <text x="172" y="296" font-size="13" fill="var(--color-sky-fg)" font-weight="600">water at the low point</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the week'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="tco-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Nights">
+    <span class="widget-clock" x-text="'night ' + (d + 1)"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tco-level">Fuel in the tank overnight <output for="tco-level" x-text="levelWord"></output></label>
+      <input type="range" id="tco-level" min="0.25" max="1" step="0.25" x-model.number="level">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">When</dt><dd class="widget-value" x-text="when"></dd></div>
+    <div class="widget-readout" :class="full ? 'ok' : 'warn'"><dt class="widget-label">Air space above the fuel</dt><dd class="widget-value" x-text="full ? 'Almost none' : { 0.25: 'Three-quarters of the tank', 0.5: 'Half the tank', 0.75: 'A quarter of the tank' }[level]"></dd></div>
+    <div class="widget-readout" :class="water.s"><dt class="widget-label">Water at the drain</dt><dd class="widget-value"><span x-text="water.text"></span><span class="widget-flag" :class="water.s" x-show="water.s === 'warn' || water.s === 'bad'">drain it</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('condensing-half-tank')" :aria-pressed="active === 'condensing-half-tank'">Droplets forming</button>
+      <button type="button" @click="preset('droplets-sinking')" :aria-pressed="active === 'droplets-sinking'">Water sinking</button>
+      <button type="button" @click="preset('one-night-half-tank')" :aria-pressed="active === 'one-night-half-tank'">One night, half tank</button>
+      <button type="button" @click="preset('week-half-tank')" :aria-pressed="active === 'week-half-tank'">A week, half tank</button>
+      <button type="button" @click="preset('week-full-tank')" :aria-pressed="active === 'week-full-tank'">A week, full tank</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The water comes from the air space, not the fuel: the more air above the fuel, the more vapour there is to condense on the cold walls each night, and it all sinks to the drain. A full tank has almost no air, so almost no water. The amounts and timings here are illustrative; the lesson gives no figures, only that one night makes little and a week with half tanks can make a lot.</p>
+  <details class="widget-try"><summary>Try it: the aeroplane will sit for a week of cold nights. Half tanks or full?</summary><p>Compare A week, half tank with A week, full tank: half the tank is air, which fills the low point with water by the end of the week; the full tank has almost no air space and collects only a trace. That is the advantage of fuelling before parking (as long as the next flight's weight allows it).</p></details>
+  <details class="widget-try"><summary>Try it: where does the water end up, and why does that matter for your pre-flight?</summary><p>Play one night: the droplets sink through the fuel and slide down the floor to the lowest point, beside the drain, because water is heavier than fuel. So the first fuel out of the drain is exactly where the water is, and a sample shows it before it reaches the engine.</p></details>
+</div>

@@ -1,0 +1,153 @@
+<div class="widget" x-data="widget({
+  alt: 9500, rapid: false,
+  // ISA pressure: the lessons' figures (PHFC 2.11 table and worked example), joined smoothly (log-linear) between them;
+  // 40,000 ft from the ISA (about 188 hPa)
+  anchors: [[0, 1013], [5000, 843], [10000, 700], [18000, 500], [25000, 375], [34000, 250], [40000, 188]],
+  pAt(ft) {
+    const a = this.anchors;
+    for (let i = 1; i < a.length; i++) if (ft <= a[i][0]) { const f = (ft - a[i - 1][0]) / (a[i][0] - a[i - 1][0]); return a[i - 1][1] * Math.pow(a[i][1] / a[i - 1][1], f) }
+    return a[a.length - 1][1];
+  },
+  get p() { return this.pAt(this.alt) },
+  get frac() { return this.p / 1013 },
+  get po2() { return 0.21 * this.p },
+  // molecules in one lungful (48 at sea level, 21% of them oxygen)
+  get n() { return Math.round(48 * this.frac) },
+  // stages of hypoxia by cabin altitude (PHFC 2.12 table)
+  get stage() {
+    if (this.alt <= 10000) return { name: 'Indifferent', cls: 'ok', what: 'little noticeable' };
+    if (this.alt <= 15000) return { name: 'Compensatory', cls: 'warn', what: 'breathing and pulse up' };
+    if (this.alt <= 20000) return { name: 'Disturbance', cls: 'bad', what: 'clear impairment' };
+    return { name: 'Critical', cls: 'bad', what: 'incapacity, then unconsciousness' };
+  },
+  get night() { return this.alt < 5000 ? ['Normal', 'ok'] : this.alt <= 10000 ? ['Starting to fade', 'warn'] : ['May be much reduced', 'bad'] },
+  // time of useful consciousness, seated and resting (PHFC 2.12 table), seconds
+  tucRows: [[18000, 1200, 1800], [22000, 300, 600], [25000, 180, 300], [30000, 60, 120], [35000, 30, 60], [40000, 15, 20]],
+  get tuc() {
+    const r = this.tucRows;
+    if (this.alt < r[0][0]) return null;
+    let lo, hi, between = false;
+    for (let i = 0; i < r.length; i++) {
+      if (this.alt === r[i][0]) { lo = r[i][1]; hi = r[i][2]; break }
+      if (i + 1 < r.length && this.alt < r[i + 1][0]) { lo = r[i + 1][1]; hi = r[i][2]; between = true; break }
+    }
+    const k = this.rapid ? 0.5 : 1;
+    return { lo: lo * k, hi: hi * k, between };
+  },
+  t(s) { return s < 60 ? this.fmt(s) + ' s' : this.fmt(s / 60, s % 60 ? 1 : 0) + ' min' },
+  get tucText() {
+    const u = this.tuc;
+    if (!u) return 'Not tabulated below 18,000 ft';
+    if (u.lo < 60 && u.hi < 60) return this.fmt(u.lo) + ' to ' + this.fmt(u.hi) + ' s';
+    if (u.lo >= 60) return this.fmt(u.lo / 60, u.lo % 60 ? 1 : 0) + ' to ' + this.t(u.hi);
+    return this.t(u.lo) + ' to ' + this.t(u.hi);
+  },
+  // haemoglobin loading: a sketch of the shape only (PHFC 2.11), flat to about 10,000 ft then falling away
+  load(ft) { const a = ft / 1000; return a <= 8 ? 1 - 0.004 * a : 0.968 - 0.75 * Math.pow((a - 8) / 17, 1.8) },
+  X(ft) { return 470 + Math.min(ft, 25000) / 25000 * 150 },
+  Y(s) { return 200 - (s - 0.2) / 0.8 * 140 },
+  get loadPath() { const pts = []; for (let f = 0; f <= 25000; f += 500) pts.push([this.X(f), this.Y(this.load(f))]); return this.path(pts) },
+  yAlt(ft) { return 262 - ft / 40000 * 232 },
+  presets: {
+    'sea-level': { alt: 0, rapid: false },
+    'night-vision-5000': { alt: 5000, rapid: false },
+    'kalgoorlie-7500': { alt: 7500, rapid: false },
+    'darling-range-11500': { alt: 11500, rapid: false },
+    'half-pressure-18000': { alt: 18000, rapid: false },
+    'decompression-fl250': { alt: 25000, rapid: true },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="aox-title" class="widget-stage">
+    <title id="aox-title">Cabin altitude against the stages of hypoxia, one lungful of air with fewer molecules but the same 21 percent oxygen, and a sketch of how fully the blood's haemoglobin is loaded</title>
+    <!-- left: altitude and the stages of hypoxia -->
+    <text x="147" y="18" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Hypoxia stage by altitude</text>
+    <rect x="64" y="204" width="166" height="58" fill="var(--color-ok-soft)"/>
+    <rect x="64" y="175" width="166" height="29" fill="var(--color-warn-soft)"/>
+    <rect x="64" y="146" width="166" height="29" fill="var(--color-bad)" fill-opacity="0.14"/>
+    <rect x="64" y="30" width="166" height="116" fill="var(--color-bad)" fill-opacity="0.26"/>
+    <g font-size="12" text-anchor="end" font-weight="600">
+      <text x="224" y="255" fill="var(--color-ok-fg)">Indifferent</text>
+      <text x="224" y="194" fill="var(--color-warn-fg)">Compensatory</text>
+      <text x="224" y="165" fill="var(--color-bad-fg)">Disturbance</text>
+      <text x="224" y="92" fill="var(--color-bad-fg)">Critical</text>
+    </g>
+    <line x1="64" y1="233" x2="230" y2="233" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="224" y="227" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">night vision fades</text>
+    <line x1="64" y1="30" x2="64" y2="262" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="58" y="266">0</text><text x="58" y="237">5,000</text><text x="58" y="208">10,000</text><text x="58" y="150">20,000</text><text x="58" y="92">30,000</text><text x="58" y="34">40,000</text>
+    </g>
+    <text x="147" y="282" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">feet (stage heights approximate)</text>
+    <line x1="64" x2="230" stroke="var(--color-brand)" stroke-width="2" :y1="yAlt(alt)" :y2="yAlt(alt)"/>
+    <g :transform="'translate(100 ' + (yAlt(alt) - 9) + ')'"><g transform="translate(0 0) rotate(0) scale(0.4)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+
+    <!-- middle: one lungful -->
+    <text x="335" y="18" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">One lungful</text>
+    <g font-size="12">
+      <circle cx="268" cy="40" r="5" fill="var(--color-brand)"/><text x="278" y="44" fill="var(--color-brand-fg)">oxygen</text>
+      <circle cx="336" cy="40" r="3.5" fill="var(--color-fg-faint)"/><text x="344" y="44" fill="var(--color-fg-muted)">nitrogen, other</text>
+    </g>
+    <rect x="262" y="66" width="146" height="140" rx="12" fill="var(--color-sky-soft)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <circle cx="312" cy="96" r="5" fill="var(--color-brand)" x-show="n > 0"/> <circle cx="355" cy="87" r="3.5" fill="var(--color-fg-faint)" x-show="n > 1"/> <circle cx="340" cy="122" r="3.5" fill="var(--color-fg-faint)" x-show="n > 2"/> <circle cx="278" cy="139" r="3.5" fill="var(--color-fg-faint)" x-show="n > 3"/> <circle cx="279" cy="89" r="3.5" fill="var(--color-fg-faint)" x-show="n > 4"/> <circle cx="325" cy="177" r="5" fill="var(--color-brand)" x-show="n > 5"/> <circle cx="286" cy="105" r="3.5" fill="var(--color-fg-faint)" x-show="n > 6"/> <circle cx="352" cy="192" r="3.5" 
+fill="var(--color-fg-faint)" x-show="n > 7"/> <circle cx="397" cy="84" r="3.5" fill="var(--color-fg-faint)" x-show="n > 8"/> <circle cx="382" cy="113" r="3.5" fill="var(--color-fg-faint)" x-show="n > 9"/> <circle cx="310" cy="176" r="5" fill="var(--color-brand)" x-show="n > 10"/> <circle cx="293" cy="148" r="3.5" fill="var(--color-fg-faint)" x-show="n > 11"/> <circle cx="358" cy="129" r="3.5" fill="var(--color-fg-faint)" x-show="n > 12"/> <circle cx="311" cy="148" r="3.5" fill="var(--color-fg-faint)" x-show="n > 13"/> <circle cx="373" cy="162" r="3.5" fill="var(--color-fg-faint)" x-show="n > 
+14"/> <circle cx="365" cy="113" r="5" fill="var(--color-brand)" x-show="n > 15"/> <circle cx="275" cy="158" r="3.5" fill="var(--color-fg-faint)" x-show="n > 16"/> <circle cx="369" cy="147" r="3.5" fill="var(--color-fg-faint)" x-show="n > 17"/> <circle cx="379" cy="191" r="3.5" fill="var(--color-fg-faint)" x-show="n > 18"/> <circle cx="332" cy="158" r="3.5" fill="var(--color-fg-faint)" x-show="n > 19"/> <circle cx="306" cy="128" r="5" fill="var(--color-brand)" x-show="n > 20"/> <circle cx="394" cy="161" r="3.5" fill="var(--color-fg-faint)" x-show="n > 21"/> <circle cx="384" cy="174" r="3.5" 
+fill="var(--color-fg-faint)" x-show="n > 22"/> <circle cx="283" cy="122" r="3.5" fill="var(--color-fg-faint)" x-show="n > 23"/> <circle cx="273" cy="183" r="5" fill="var(--color-brand)" x-show="n > 24"/> <circle cx="331" cy="136" r="3.5" fill="var(--color-fg-faint)" x-show="n > 25"/> <circle cx="378" cy="97" r="3.5" fill="var(--color-fg-faint)" x-show="n > 26"/> <circle cx="339" cy="96" r="3.5" fill="var(--color-fg-faint)" x-show="n > 27"/> <circle cx="292" cy="171" r="3.5" fill="var(--color-fg-faint)" x-show="n > 28"/> <circle cx="339" cy="171" r="5" fill="var(--color-brand)" x-show="n > 
+29"/> <circle cx="316" cy="81" r="3.5" fill="var(--color-fg-faint)" x-show="n > 30"/> <circle cx="394" cy="132" r="3.5" fill="var(--color-fg-faint)" x-show="n > 31"/> <circle cx="355" cy="174" r="3.5" fill="var(--color-fg-faint)" x-show="n > 32"/> <circle cx="303" cy="113" r="3.5" fill="var(--color-fg-faint)" x-show="n > 33"/> <circle cx="338" cy="80" r="5" fill="var(--color-brand)" x-show="n > 34"/> <circle cx="332" cy="191" r="3.5" fill="var(--color-fg-faint)" x-show="n > 35"/> <circle cx="299" cy="192" r="3.5" fill="var(--color-fg-faint)" x-show="n > 36"/> <circle cx="399" cy="178" r="3.5" 
+fill="var(--color-fg-faint)" x-show="n > 37"/> <circle cx="376" cy="130" r="3.5" fill="var(--color-fg-faint)" x-show="n > 38"/> <circle cx="323" cy="120" r="5" fill="var(--color-brand)" x-show="n > 39"/> <circle cx="271" cy="110" r="3.5" fill="var(--color-fg-faint)" x-show="n > 40"/> <circle cx="346" cy="142" r="3.5" fill="var(--color-fg-faint)" x-show="n > 41"/> <circle cx="300" cy="82" r="3.5" fill="var(--color-fg-faint)" x-show="n > 42"/> <circle cx="397" cy="109" r="5" fill="var(--color-brand)" x-show="n > 43"/> <circle cx="370" cy="83" r="3.5" fill="var(--color-fg-faint)" x-show="n > 
+44"/> <circle cx="394" cy="192" r="3.5" fill="var(--color-fg-faint)" x-show="n > 45"/> <circle cx="351" cy="159" r="3.5" fill="var(--color-fg-faint)" x-show="n > 46"/> <circle cx="284" cy="197" r="3.5" fill="var(--color-fg-faint)" x-show="n > 47"/>
+    <text x="335" y="228" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-brand-fg)">still 21% oxygen</text>
+    <text x="335" y="248" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="Math.round(frac * 100) + '% of the molecules'"></text>
+    <text x="335" y="264" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">of a sea-level breath</text>
+
+    <!-- right: haemoglobin loading sketch -->
+    <text x="540" y="18" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Haemoglobin loading</text>
+    <text x="540" y="36" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">sketch: the shape only</text>
+    <line x1="470" y1="56" x2="470" y2="200" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="470" y1="200" x2="622" y2="200" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="455" y="64" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">full</text>
+    <text x="455" y="200" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">low</text>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="470" y="216">0</text><text x="530" y="216">10,000</text><text x="590" y="216">20,000</text>
+    </g>
+    <text x="546" y="234" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">cabin altitude (ft)</text>
+    <line x1="530" y1="60" x2="530" y2="200" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="loadPath"/>
+    <circle r="7" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="3" :cx="X(alt)" :cy="Y(load(Math.min(alt, 25000)))"/>
+    <text x="546" y="256" font-size="12" text-anchor="middle" :fill="alt <= 10000 ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="alt <= 10000 ? 'flat: almost fully loaded' : 'steep part: falling away'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="aox-alt">Cabin altitude <output for="aox-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="aox-alt" min="0" max="40000" step="500" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="aox-rapid" class="cursor-pointer"><span>Rapid decompression (roughly halves the time of useful consciousness)</span>
+        <input type="checkbox" id="aox-rapid" x-model="rapid" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Air pressure</dt><dd class="widget-value" x-text="fmt(p) + ' hPa (' + fmt(frac, 2) + ')'"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Oxygen in the air</dt><dd class="widget-value">21%, always</dd></div>
+    <div class="widget-readout" :class="alt > 10000 ? 'warn' : ''"><dt class="widget-label">Oxygen partial pressure</dt><dd class="widget-value" x-text="fmt(po2) + ' hPa (' + Math.round(po2 / 212.73 * 100) + '%)'"></dd></div>
+    <div class="widget-readout" :class="alt <= 10000 ? 'ok' : 'bad'"><dt class="widget-label">Haemoglobin</dt><dd class="widget-value" x-text="alt <= 10000 ? 'Almost fully loaded' : 'Loading falls away'"></dd></div>
+    <div class="widget-readout" :class="stage.cls"><dt class="widget-label">Hypoxia stage</dt><dd class="widget-value"><span x-text="stage.name"></span><span class="widget-flag bad" x-show="alt > 15000">impaired</span></dd></div>
+    <div class="widget-readout" :class="night[1]"><dt class="widget-label">Night vision</dt><dd class="widget-value" x-text="night[0]"></dd></div>
+    <div class="widget-readout" :class="tuc ? 'bad' : ''"><dt class="widget-label" x-text="rapid ? 'Useful consciousness (rapid decomp.)' : 'Time of useful consciousness'"></dt><dd class="widget-value"><span x-text="tucText"></span><span class="widget-flag warn" x-show="tuc && tuc.between">between rows</span></dd></div>
+    <div class="widget-readout" :class="alt > 10000 ? 'bad' : 'ok'"><dt class="widget-label">Supplemental oxygen</dt><dd class="widget-value" x-text="alt > 10000 ? 'Above 10,000 ft: Part 91 MOS applies' : 'At or below 10,000 ft'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('sea-level')" :aria-pressed="active === 'sea-level'">SL</button>
+      <button type="button" @click="preset('night-vision-5000')" :aria-pressed="active === 'night-vision-5000'">5,000</button>
+      <button type="button" @click="preset('kalgoorlie-7500')" :aria-pressed="active === 'kalgoorlie-7500'">7,500</button>
+      <button type="button" @click="preset('darling-range-11500')" :aria-pressed="active === 'darling-range-11500'">11,500</button>
+      <button type="button" @click="preset('half-pressure-18000')" :aria-pressed="active === 'half-pressure-18000'">18,000</button>
+      <button type="button" @click="preset('decompression-fl250')" :aria-pressed="active === 'decompression-fl250'">FL250 decomp.</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The oxygen percentage never changes; the pressure falls, and the oxygen partial pressure falls with it, to half by 18,000 ft. Haemoglobin hardly notices up to about 10,000 ft (night vision does, from about 5,000), then its loading falls away, the stages arrive and the time of useful consciousness shrinks to seconds. Stage heights and times are approximate textbook values; the loading curve is a sketch of the shape, not a measurement.</p>
+  <details class="widget-try"><summary>Try it: at 18,000 ft, which has halved: the oxygen percentage or the oxygen partial pressure?</summary><p>Press 18,000: the pressure is about 500 hPa and the oxygen partial pressure about 105 hPa, half the sea-level 213. The lungful holds half as many molecules, but one in five is still oxygen: 21 percent.</p></details>
+  <details class="widget-try"><summary>Try it: a pressurised twin at 30,000 ft loses its cabin pressure suddenly. How long does the pilot have?</summary><p>Set 30,000 ft: the table gives 1 to 2 minutes for a resting person. Tick rapid decompression and it roughly halves to 30 s to 1 min. Mask first, then descend.</p></details>
+</div>

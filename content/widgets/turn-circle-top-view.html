@@ -1,0 +1,155 @@
+<div class="widget" x-data="timeline({
+  bank: 30, tas: 90, loop: true,
+  // level, balanced turn: r = V² / (g tan θ), rate = V / r (RBKA 3.5). V in m/s, 1 kt = 0.5144 m/s
+  get vms() { return this.tas * 0.5144 },
+  rad(b, kt) { const v = kt * 0.5144; return v * v / (9.81 * Math.tan(b * Math.PI / 180)) },
+  get r() { return this.rad(this.bank, this.tas) },
+  get rate() { return this.vms / this.r * 180 / Math.PI },
+  get t360() { return 360 / this.rate },
+  // the clock goes round once in the real time a full turn takes
+  get duration() { return this.t360 },
+  get n() { return 1 / Math.cos(this.bank * Math.PI / 180) },
+  // the reference: 90 kt at 30°, about 380 m (the lesson's first figure)
+  get rRef() { return this.rad(30, 90) },
+  get vsRef() { return this.r / this.rRef },
+  get isRef() { return this.bank === 30 && this.tas === 90 },
+  // radius to the nearest 5 m, as the lesson quotes it
+  get r5() { return Math.round(this.r / 5) * 5 },
+  // map scale: metres per pixel steps so the bigger circle fits (radius up to 160 px); grid squares are 20 px
+  get mpp() { const m = Math.max(this.r, this.rRef); for (const s of [2.5, 5, 10, 20]) if (m / s <= 160) return s; return 40 },
+  get gridM() { return 20 * this.mpp },
+  get barM() { return 100 * this.mpp },
+  get rpx() { return this.r / this.mpp },
+  get refPx() { return this.rRef / this.mpp },
+  get cx() { return 44 + this.rpx }, cy: 190,
+  get hdg() { return this.t * 360 },
+  // right turn: the centre is off the right wing, so the aeroplane sits 90° left of its heading from the centre
+  get ac() { return this.pol(this.cx, this.cy, this.rpx, this.hdg - 90) },
+  get start() { return { x: this.cx - this.rpx, y: this.cy } },
+  get trail() { if (this.t < 0.002) return ''; const e = this.ac; return 'M' + this.start.x.toFixed(1) + ' ' + this.start.y.toFixed(1) + ' A' + this.rpx.toFixed(1) + ' ' + this.rpx.toFixed(1) + ' 0 ' + (this.t > 0.5 ? 1 : 0) + ' 1 ' + e.x.toFixed(1) + ' ' + e.y.toFixed(1) },
+  get elapsed() { return this.t * this.t360 },
+  steps: [{ at: 0, label: 'Roll in' }, { at: 0.25, label: '90°' }, { at: 0.5, label: '180°' }, { at: 0.75, label: '270°' }],
+  get caption() {
+    const r = this.fmt(this.r5), t = this.fmt(this.t360);
+    let s = 'At ' + this.tas + ' kt and ' + this.bank + '° of bank the circle has a radius of about ' + r + ' m and a full turn takes about ' + t + ' s. ';
+    if (this.isRef) return s + 'That is the reference circle: bank more and it tightens and quickens; fly faster and it widens with the square of the speed.';
+    return s + (this.vsRef > 1 ? 'That is ' + this.fmt(this.vsRef, 2) + ' times as wide as the 90 kt, 30° circle.' : 'That is ' + this.fmt(1 / this.vsRef, 1) + ' times tighter than the 90 kt, 30° circle.');
+  },
+  presets: {
+    '90kt-30': { bank: 30, tas: 90, t: 0.125 },
+    '90kt-45': { bank: 45, tas: 90, t: 0.125 },
+    '90kt-60': { bank: 60, tas: 90, t: 0.125 },
+    '120kt-45': { bank: 45, tas: 120, t: 0.125 },
+    'full-circle-45': { bank: 45, tas: 90, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="tct-title" class="widget-stage">
+    <title id="tct-title">Plan view of an aeroplane flying a level, balanced turn over a ground grid, the circle drawn to scale for the chosen bank angle and true airspeed beside a dashed reference circle for 90 knots at 30 degrees, with a heading indicator turning at the rate of turn</title>
+    <defs>
+      <pattern id="tct-grid" width="20" height="20" patternUnits="userSpaceOnUse" x="5" y="0">
+        <path d="M20 0 L0 0 L0 20" fill="none" stroke="var(--color-line)" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <!-- ground, to scale -->
+    <rect x="0" y="0" width="410" height="360" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="410" height="360" fill="url(#tct-grid)"/>
+    <text x="12" y="22" font-size="12" fill="var(--color-fg-muted)" x-text="'grid squares ' + fmt(gridM) + ' m · aeroplane not to scale'"></text>
+    <!-- reference circle: 90 kt, 30° -->
+    <circle fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :cx="cx + refPx - rpx" :cy="cy" :r="refPx"/>
+    <text font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" text-anchor="middle"
+      :x="cx + refPx - rpx" :y="cy - refPx + 36" x-show="!isRef">90 kt, 30°: about 380 m</text>
+    <!-- this turn -->
+    <circle fill="var(--color-brand)" fill-opacity="0.08" stroke="var(--color-brand)" stroke-width="2" stroke-dasharray="6 4" :cx="cx" :cy="cy" :r="rpx"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" :d="trail"/>
+    <!-- radius -->
+    <line stroke="var(--color-brand)" stroke-width="1.25" :x1="cx" :y1="cy" :x2="start.x" :y2="cy"/>
+    <circle r="3" fill="var(--color-brand)" :cx="cx" :cy="cy"/>
+    <text font-size="13" font-weight="600" class="num" fill="var(--color-brand-fg)" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="(cx + start.x) / 2" :y="cy + 18" x-text="'r ≈ ' + fmt(r5) + ' m'"></text>
+    <!-- start mark -->
+    <line stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" :x1="start.x - 8" :y1="cy" :x2="start.x + 8" :y2="cy"/>
+    <!-- the aeroplane (python -m tools.diagrams.plane top, heading 0, scale 0.34, color brand) -->
+    <g :transform="'translate(' + ac.x.toFixed(1) + ' ' + ac.y.toFixed(1) + ') rotate(' + hdg.toFixed(1) + ')'">
+      <g transform="translate(0 0) rotate(-90) scale(0.34)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <!-- scale bar -->
+    <g transform="translate(16 334)">
+      <rect x="0" y="-6" width="100" height="6" fill="var(--color-fg)"/>
+      <rect x="0" y="-6" width="50" height="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1"/>
+      <rect x="50" y="-6" width="50" height="6" fill="var(--color-fg)"/>
+      <text x="0" y="16" font-size="12" class="num" fill="var(--color-fg)">0</text>
+      <text x="100" y="16" font-size="12" class="num" fill="var(--color-fg)" text-anchor="middle" x-text="fmt(barM) + ' m'"></text>
+    </g>
+    <!-- heading indicator turning at the rate of turn -->
+    <rect x="410" y="0" width="230" height="360" fill="var(--color-surface)"/>
+    <line x1="410" y1="0" x2="410" y2="360" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="525" y="28" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Heading indicator</text>
+    <circle cx="525" cy="122" r="74" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <g :transform="'rotate(' + (-hdg).toFixed(1) + ' 525 122)'">
+      <g stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round">
+        <line x1="525" y1="52" x2="525" y2="64"/><line x1="560" y1="61.4" x2="555" y2="70"/><line x1="585.6" y1="87" x2="577" y2="92"/>
+        <line x1="595" y1="122" x2="583" y2="122"/><line x1="585.6" y1="157" x2="577" y2="152"/><line x1="560" y1="182.6" x2="555" y2="174"/>
+        <line x1="525" y1="192" x2="525" y2="180"/><line x1="490" y1="182.6" x2="495" y2="174"/><line x1="464.4" y1="157" x2="473" y2="152"/>
+        <line x1="455" y1="122" x2="467" y2="122"/><line x1="464.4" y1="87" x2="473" y2="92"/><line x1="490" y1="61.4" x2="495" y2="70"/>
+      </g>
+      <g font-size="14" font-weight="600" fill="var(--color-fg)" text-anchor="middle">
+        <text x="525" y="80">N</text>
+        <text x="569" y="127" :transform="'rotate(90 569 122)'">E</text>
+        <text x="525" y="174">S</text>
+        <text x="481" y="127" :transform="'rotate(-90 481 122)'">W</text>
+      </g>
+    </g>
+    <path d="M525 104 L531 128 L525 124 L519 128 Z" fill="var(--color-brand)"/>
+    <line x1="525" y1="40" x2="525" y2="50" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+    <text x="525" y="226" font-size="16" font-weight="600" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="dir(hdg)"></text>
+    <text x="525" y="262" font-size="14" text-anchor="middle" class="num" fill="var(--color-brand-fg)" font-weight="600" x-text="fmt(rate, 1) + '° per second'"></text>
+    <text x="525" y="284" font-size="13" text-anchor="middle" class="num" fill="var(--color-fg-muted)" x-text="'360° in ' + fmt(t360) + ' s'"></text>
+    <text x="525" y="306" font-size="13" text-anchor="middle" class="num" fill="var(--color-fg-muted)" x-text="'elapsed ' + fmt(elapsed) + ' s'"></text>
+    <text x="525" y="336" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">plays in real time</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the turn'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="tct-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="How far round the turn">
+    <span class="widget-clock" x-text="fmt(hdg) + '° turned'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="tct-bank">Angle of bank <output for="tct-bank" x-text="bank + '°'"></output></label>
+      <input type="range" id="tct-bank" min="15" max="70" step="1" x-model.number="bank">
+    </div>
+    <div class="widget-control">
+      <label for="tct-tas">True airspeed <output for="tct-tas" x-text="tas + ' kt'"></output></label>
+      <input type="range" id="tct-tas" min="60" max="140" step="5" x-model.number="tas">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Radius of turn</dt><dd class="widget-value" x-text="'about ' + fmt(r5) + ' m'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Rate of turn</dt><dd class="widget-value" x-text="fmt(rate, 1) + '°/s'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Time for 360°</dt><dd class="widget-value" x-text="'about ' + fmt(t360) + ' s'"></dd></div>
+    <div class="widget-readout" :class="n > 3.8 ? 'bad' : ''"><dt class="widget-label">Load factor</dt><dd class="widget-value" x-text="fmt(n, 2) + ' g'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('90kt-30')" :aria-pressed="active === '90kt-30'">90 kt, 30°</button>
+      <button type="button" @click="preset('90kt-45')" :aria-pressed="active === '90kt-45'">90 kt, 45°</button>
+      <button type="button" @click="preset('90kt-60')" :aria-pressed="active === '90kt-60'">90 kt, 60°</button>
+      <button type="button" @click="preset('120kt-45')" :aria-pressed="active === '120kt-45'">120 kt, 45°</button>
+      <button type="button" @click="preset('full-circle-45')" :aria-pressed="active === 'full-circle-45'">Fly a 45° circle</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Only two things size a level, balanced turn: bank and true airspeed. More bank tilts more of the lift sideways, so the circle tightens and the heading comes round faster; more speed widens it with the square of the speed and slows the rate. Weight is not in it: a heavy and a light aeroplane at the same speed and bank fly the same circle. The circles use the formula $r = V^2 / (g \tan\theta)$; the map zooms out in steps when the circle grows, so watch the grid and the scale bar.</p>
+  <details class="widget-try"><summary>Try it: at 90 kt, how much tighter is a 60° turn than a 30° turn?</summary><p>Press 90 kt, 30° (about 380 m), then 90 kt, 60° (about 125 m): three times tighter, because tan 60° is three times tan 30°. The heading comes round three times as fast too, about 21° a second instead of 7.</p></details>
+  <details class="widget-try"><summary>Try it: same 45° bank, 90 kt and then 120 kt. How much wider is the circle?</summary><p>Press 90 kt, 45° (about 220 m), then 120 kt, 45° (about 390 m): (120 ÷ 90)² = 1.78 times as wide, and the full circle takes about 40 s instead of 30.</p></details>
+</div>

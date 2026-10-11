@@ -1,0 +1,147 @@
+<div class="widget" x-data="widget({
+  dep: 480, ft: 170, margin: 30, mode: 'planned', delay: 45, div: 610, done: true,
+  // PFRA 2.9 worked example: depart Jandakot 0800 WST, 2:50 to Kalbarri, a 30-minute margin (the pilot's choice, not
+  // a regulatory figure) -> SARTIME 1120 WST = 0320 UTC. WST is UTC + 8. The phases are drawn in order, not to scale.
+  get arr() { return this.dep + this.ft },
+  get sar() { return this.arr + this.margin },
+  get land() { return this.mode === 'delayed' ? this.arr + this.delay : this.mode === 'diverted' ? this.div : this.arr },
+  get late() { return this.mode === 'delayed' && this.land > this.sar },
+  // the SARTIME in force: extended to the new arrival plus the margin when you extend it in time
+  get sarNow() { return this.late && this.done ? this.land + this.margin : this.sar },
+  // does the SARTIME pass with nobody told?
+  get lapses() { return this.mode === 'diverted' ? !this.done : this.mode === 'delayed' ? this.late && !this.done : !this.done },
+  get t0() { return this.dep - 30 },
+  get t1() { return Math.max(this.sarNow, this.land) + 210 },
+  X(m) { return 70 + (m - this.t0) * 540 / (this.t1 - this.t0) },
+  get hours() { const h = []; for (let m = Math.ceil(this.t0 / 60) * 60; m <= this.t1; m += 60) h.push(m); return h },
+  hx(i) { const m = this.hours[i]; if (m === undefined) return -100; const x = this.X(m); return x < 80 || x > 598 ? -100 : x },
+  hl(i, off) { const m = this.hours[i]; return m === undefined ? '' : this.hhmm(m + off).slice(0, 2) },
+  w(m) { return this.hhmm(m) + ' WST' },
+  u(m) { return this.hhmm(m - 480) + ' UTC' },
+  get status() {
+    if (this.mode === 'diverted') return this.done ? { s: 'ok', t: 'Cancelled at Geraldton: nobody will search' } : { s: 'bad', t: 'Cancel or amend now: at ' + this.u(this.sar) + ' the alerting phases start' };
+    if (this.mode === 'delayed') {
+      if (!this.late) return { s: 'warn', t: 'The delay ate into your margin: cancel on landing' };
+      return this.done ? { s: 'ok', t: 'Extended before it expired, to ' + this.w(this.sarNow) } : { s: 'bad', t: 'Landing after the SARTIME: the uncertainty phase starts at ' + this.w(this.sar) };
+    }
+    return this.done ? { s: 'ok', t: 'Cancelled on landing at ' + this.w(this.land) } : { s: 'bad', t: 'Not cancelled: a search starts for an aeroplane on the apron' };
+  },
+  get doneLabel() { return { planned: 'Cancel it on landing', delayed: 'Extend it by radio to the FIS before it expires', diverted: 'Cancel (or amend) it on landing at Geraldton' }[this.mode] },
+  get landLabel() { return this.mode === 'diverted' ? 'landed Geraldton' : this.mode === 'delayed' ? 'landed (late)' : 'landed' },
+  get caption() {
+    if (this.mode === 'diverted' && !this.done) return 'You are safe on the ground at Geraldton, but the system still expects you at Kalbarri by ' + this.w(this.sar) + '. If you do not cancel or amend it, the alerting phases begin for an aircraft somewhere between the two, wasting search resources someone else may need.';
+    if (this.lapses) return 'Nothing happens until the SARTIME passes; then the system climbs through the uncertainty, alert and distress phases, from calls to you, to a communications search, to a physical search along your notified route.';
+    if (this.late) return 'The headwind would have put your landing after the SARTIME, so you called the FIS and extended it before it expired. The clock now runs to ' + this.w(this.sarNow) + ' (' + this.u(this.sarNow) + ').';
+    return 'Planned arrival ' + this.w(this.arr) + ' plus a ' + this.margin + '-minute margin gives ' + this.w(this.sar) + '; subtract 8 hours and lodge ' + this.u(this.sar) + ' through NAIPS before departure. Every minute of margin is a minute you would wait for help.';
+  },
+  presets: {
+    'kalbarri-0320-utc': { dep: 480, ft: 170, margin: 30, mode: 'planned', done: true },
+    'forgot-to-cancel': { dep: 480, ft: 170, margin: 30, mode: 'planned', done: false },
+    'geraldton-diversion': { dep: 480, ft: 170, margin: 30, mode: 'diverted', div: 610, done: false },
+    'geraldton-cancelled': { dep: 480, ft: 170, margin: 30, mode: 'diverted', div: 610, done: true },
+    'headwind-not-extended': { dep: 480, ft: 170, margin: 30, mode: 'delayed', delay: 45, done: false },
+    'headwind-extend': { dep: 480, ft: 170, margin: 30, mode: 'delayed', delay: 45, done: true },
+  },
+})">
+  <svg viewBox="0 0 640 262" role="img" aria-labelledby="stp-title" class="widget-stage">
+    <title id="stp-title">A time line in Western Standard Time with UTC beneath it: departure, planned arrival, the margin, the SARTIME, your actual landing, and after the SARTIME the uncertainty, alert and distress phases, drawn in order and not to scale, which start only if the SARTIME passes uncancelled</title>
+    <defs>
+      <marker id="stp-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="262" fill="var(--color-surface-2)" rx="10"/>
+    <!-- tapes -->
+    <text x="62" y="128" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-fg)">WST</text>
+    <text x="62" y="160" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-fg-muted)">UTC</text>
+    <rect x="70" y="114" width="540" height="20" rx="3" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="70" y="146" width="540" height="20" rx="3" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <!-- the flight and the margin -->
+    <rect y="114" height="20" fill="var(--color-brand)" fill-opacity="0.22" :x="X(dep)" :width="X(arr) - X(dep)"/>
+    <rect y="114" height="20" fill="var(--color-warn)" fill-opacity="0.3" :x="X(arr)" :width="X(sar) - X(arr)"/>
+    <rect y="114" height="20" fill="var(--color-warn)" fill-opacity="0.18" :opacity="(sarNow !== sar) ? 1 : 0" :x="X(sar)" :width="X(sarNow) - X(sar)"/>
+    <!-- hour ticks -->
+    <g font-size="11" class="num" text-anchor="middle" fill="var(--color-fg-faint)">
+      <text y="128" :x="hx(0)" x-text="hl(0, 0)"></text><text y="128" :x="hx(1)" x-text="hl(1, 0)"></text><text y="128" :x="hx(2)" x-text="hl(2, 0)"></text>
+      <text y="128" :x="hx(3)" x-text="hl(3, 0)"></text><text y="128" :x="hx(4)" x-text="hl(4, 0)"></text><text y="128" :x="hx(5)" x-text="hl(5, 0)"></text>
+      <text y="128" :x="hx(6)" x-text="hl(6, 0)"></text><text y="128" :x="hx(7)" x-text="hl(7, 0)"></text><text y="128" :x="hx(8)" x-text="hl(8, 0)"></text>
+      <text y="160" :x="hx(0)" x-text="hl(0, -480)"></text><text y="160" :x="hx(1)" x-text="hl(1, -480)"></text><text y="160" :x="hx(2)" x-text="hl(2, -480)"></text>
+      <text y="160" :x="hx(3)" x-text="hl(3, -480)"></text><text y="160" :x="hx(4)" x-text="hl(4, -480)"></text><text y="160" :x="hx(5)" x-text="hl(5, -480)"></text>
+      <text y="160" :x="hx(6)" x-text="hl(6, -480)"></text><text y="160" :x="hx(7)" x-text="hl(7, -480)"></text><text y="160" :x="hx(8)" x-text="hl(8, -480)"></text>
+    </g>
+    <!-- departure, planned arrival -->
+    <line y1="96" y2="114" stroke="var(--color-fg)" stroke-width="2" :x1="X(dep)" :x2="X(dep)"/>
+    <text y="90" font-size="12" text-anchor="middle" fill="var(--color-fg)" :x="X(dep)" x-text="'depart ' + hhmm(dep)"></text>
+    <line y1="134" y2="180" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="3 3" :x1="X(arr)" :x2="X(arr)"/>
+    <text y="194" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" :x="X(arr)" x-text="'planned arrival ' + hhmm(arr)"></text>
+    <!-- SARTIME -->
+    <line y1="34" y2="170" stroke="var(--color-bad)" stroke-width="2.5" :x1="X(sarNow)" :x2="X(sarNow)"/>
+    <path fill="var(--color-bad)" :d="'M' + X(sarNow) + ' 34 l26 7 l-26 7 Z'"/>
+    <text y="24" font-size="13" font-weight="700" class="num" :x="clamp(X(sarNow), 120, 520)" text-anchor="middle" fill="var(--color-bad-fg)" x-text="'SARTIME ' + hhmm(sarNow) + ' WST = ' + hhmm(sarNow - 480) + ' UTC'"></text>
+    <line y1="34" y2="134" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="3 3" :opacity="(sarNow !== sar) ? 1 : 0" :x1="X(sar)" :x2="X(sar)"/>
+    <!-- your landing -->
+    <g :transform="'translate(' + X(land) + ' 74)'">
+      <circle r="7" stroke-width="2" :fill="status.s === 'bad' ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="status.s === 'bad' ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <line x1="0" y1="7" x2="0" y2="40" stroke-width="1.5" :stroke="status.s === 'bad' ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+    </g>
+    <text y="62" font-size="12" font-weight="600" text-anchor="middle" :x="clamp(X(land), 100, 540)" :fill="status.s === 'bad' ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'"
+      paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="landLabel + ' ' + hhmm(land)"></text>
+    <!-- the alerting phases, in order, not to scale -->
+    <g :transform="'translate(' + (X(sarNow) + 6) + ' 206)'">
+      <rect x="0" y="0" width="76" height="28" rx="5" stroke-width="1.5" :fill="lapses ? 'var(--color-warn-soft)' : 'var(--color-surface)'" :stroke="lapses ? 'var(--color-warn)' : 'var(--color-line)'"/>
+      <text x="38" y="18" font-size="11" font-weight="600" text-anchor="middle" :fill="lapses ? 'var(--color-warn-fg)' : 'var(--color-fg-faint)'">uncertainty</text>
+      <rect x="80" y="0" width="50" height="28" rx="5" stroke-width="1.5" :fill="lapses ? 'var(--color-bad-soft)' : 'var(--color-surface)'" :stroke="lapses ? 'var(--color-bad)' : 'var(--color-line)'"/>
+      <text x="105" y="18" font-size="11" font-weight="600" text-anchor="middle" :fill="lapses ? 'var(--color-bad-fg)' : 'var(--color-fg-faint)'">alert</text>
+      <rect x="134" y="0" width="60" height="28" rx="5" stroke-width="1.5" :fill="lapses ? 'var(--color-bad)' : 'var(--color-surface)'" :stroke="lapses ? 'var(--color-bad)' : 'var(--color-line)'"/>
+      <text x="164" y="18" font-size="11" font-weight="600" text-anchor="middle" :fill="lapses ? 'var(--color-surface)' : 'var(--color-fg-faint)'">distress</text>
+    </g>
+    <text x="70" y="252" font-size="11" fill="var(--color-fg-faint)" x-text="lapses ? 'uncancelled: the search builds phase by phase (in order, not to scale)' : 'cancelled or extended in time: no search'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="stp-dep">Departure <output for="stp-dep" x-text="w(dep)"></output></label>
+      <input type="range" id="stp-dep" min="360" max="1080" step="5" x-model.number="dep">
+    </div>
+    <div class="widget-control">
+      <label for="stp-ft">Planned flight time <output for="stp-ft" x-text="hmm(ft)"></output></label>
+      <input type="range" id="stp-ft" min="30" max="360" step="5" x-model.number="ft">
+    </div>
+    <div class="widget-control">
+      <label for="stp-margin">Your margin (your choice) <output for="stp-margin" x-text="margin + ' min'"></output></label>
+      <input type="range" id="stp-margin" min="0" max="90" step="5" x-model.number="margin">
+    </div>
+    <div class="widget-control">
+      <label for="stp-mode">What happens</label>
+      <select id="stp-mode" class="input" x-model="mode">
+        <option value="planned">You land at Kalbarri as planned</option>
+        <option value="delayed">A headwind delays you</option>
+        <option value="diverted">Low cloud: you divert to Geraldton</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="mode === 'delayed'">
+      <label for="stp-delay">Headwind delay <output for="stp-delay" x-text="delay + ' min'"></output></label>
+      <input type="range" id="stp-delay" min="0" max="90" step="5" x-model.number="delay">
+    </div>
+    <div class="widget-control">
+      <label for="stp-done" class="cursor-pointer"><span x-text="doneLabel"></span>
+        <input type="checkbox" id="stp-done" x-model="done" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Planned arrival</dt><dd class="widget-value num" x-text="w(arr)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">SARTIME to lodge</dt><dd class="widget-value num" x-text="u(sar) + ' (' + w(sar) + ')'"></dd></div>
+    <div class="widget-readout" :class="status.s"><dt class="widget-label">Status</dt><dd class="widget-value"><span x-text="status.t"></span><span class="widget-flag bad" x-show="status.s === 'bad'">search</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('kalbarri-0320-utc')" :aria-pressed="active === 'kalbarri-0320-utc'">Kalbarri, 0320 UTC</button>
+      <button type="button" @click="preset('geraldton-diversion')" :aria-pressed="active === 'geraldton-diversion'">Diverted to Geraldton</button>
+      <button type="button" @click="preset('headwind-extend')" :aria-pressed="active === 'headwind-extend'">Headwind: extend</button>
+      <button type="button" @click="preset('forgot-to-cancel')" :aria-pressed="active === 'forgot-to-cancel'">Forgot to cancel</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A SARTIME is the time, in UTC, by which you will report your arrival: planned arrival plus a sensible margin, minus 8 hours for UTC. Lodge it through NAIPS or by phone before departure, extend it by radio to the FIS before it expires, and cancel it the moment you land, wherever that is. Nothing happens until it passes; then the phases run uncertainty, alert, distress. The 30-minute margin is the lesson's choice, not a rule; the phases are drawn in order, not to scale, and the headwind delay is illustrative.</p>
+  <details class="widget-try"><summary>Try it: depart Jandakot 0800 WST, 2 hours 50 minutes to Kalbarri, a 30-minute margin. What SARTIME do you lodge?</summary><p>Choose Kalbarri: $0800 + 2{:}50 = 1050$ WST, plus 30 minutes is 1120 WST, and $1120 - 8{:}00 = 0320$ UTC.</p></details>
+  <details class="widget-try"><summary>Try it: low cloud makes you land at Geraldton at 1010 WST, safe. Why does the SARTIME still matter?</summary><p>Choose Diverted to Geraldton: until you cancel or amend it, at 0320 UTC (1120 WST) the system starts the alerting phases for an aircraft it thinks is somewhere between Geraldton and Kalbarri.</p></details>
+</div>

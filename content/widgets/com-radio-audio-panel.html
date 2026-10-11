@@ -1,0 +1,231 @@
+<div class="widget" x-data="widget({
+  // frequencies in kHz (whole numbers, no rounding drift); VHF COM 118.000 to 136.975 MHz in 25 kHz steps
+  a1: 126700, s1: 118100, a2: 120025, s2: 121500,
+  mic: 1, r1: true, r2: true, rn: false,
+  ptt: false, stuck: false,
+  want: 'ctaf',
+  // the lesson gives 126.700 and 120.025 on its radio face; the station names are examples
+  _labels: { 126700: 'CTAF (example)', 120025: 'Area (example)', 118100: 'Tower (example)', 121500: 'Emergency' },
+  _short: { 126700: 'CTAF', 120025: 'Area', 118100: 'Tower', 121500: 'Emerg.' },
+  _cap: { 126700: 'CTAF', 120025: 'area', 118100: 'tower', 121500: 'emergency' },
+  _want: { ctaf: 126700, area: 120025, tower: 118100 },
+  _wantName: { ctaf: 'the CTAF', area: 'the area frequency', tower: 'the tower' },
+  f(k) { return (k / 1000).toFixed(3) },
+  lab(k) { return this._labels[k] || '' },
+  labShort(k) { return this._short[k] || '' },
+  get txOn() { return this.ptt || this.stuck },
+  get txFreq() { return this.mic === 1 ? this.a1 : this.a2 },
+  get wantFreq() { return this._want[this.want] },
+  get reaches() { return this.txFreq === this.wantFreq },
+  // selecting a COM for MIC also selects it to listen; while it transmits its own receiver is silent (simplex)
+  hears(n) { return n === 1 ? (this.r1 || this.mic === 1) : (this.r2 || this.mic === 2) },
+  muted(n) { return this.txOn && this.mic === n },
+  stdby(n, k) { if (n === 1) this.s1 = k; else this.s2 = k; this.active = null },
+  sb(n) { return n === 1 ? this.s1 : this.s2 },
+  // outer knob: whole MHz, 118 to 136, wrapping; inner knob: 25 kHz steps, wrapping within the MHz
+  mhz(n, d) { const k = this.sb(n), m = Math.floor(k / 1000), r = k % 1000; this.stdby(n, ((m - 118 + d + 19) % 19 + 118) * 1000 + r) },
+  khz(n, d) { const k = this.sb(n), m = Math.floor(k / 1000), r = k % 1000; this.stdby(n, m * 1000 + ((r / 25 + d + 40) % 40) * 25) },
+  flip(n) { if (n === 1) { const x = this.a1; this.a1 = this.s1; this.s1 = x } else { const x = this.a2; this.a2 = this.s2; this.s2 = x } this.active = null },
+  setMic(n) { this.mic = n; if (n === 1) this.r1 = true; else this.r2 = true; this.active = null },
+  get outText() {
+    if (!this.txOn) return 'Not transmitting: PTT released';
+    return 'COM ' + this.mic + ', ' + this.f(this.txFreq) + (this.lab(this.txFreq) ? ' ' + this.lab(this.txFreq) : '');
+  },
+  get hearList() {
+    const L = [];
+    if (this.hears(1)) L.push(this.muted(1) ? 'COM 1 (muted)' : 'COM 1 ' + this.f(this.a1) + (this.labShort(this.a1) ? ' ' + this.labShort(this.a1) : ''));
+    if (this.hears(2)) L.push(this.muted(2) ? 'COM 2 (muted)' : 'COM 2 ' + this.f(this.a2) + (this.labShort(this.a2) ? ' ' + this.labShort(this.a2) : ''));
+    if (this.rn) L.push('NAV 1 ident');
+    return L.length ? L.join(' + ') : 'Nothing selected';
+  },
+  get txLight() { return !this.txOn ? 'Off' : this.stuck && !this.ptt ? 'Lit, PTT released: stuck mic' : 'Lit on COM ' + this.mic },
+  get caption() {
+    const where = this.f(this.txFreq) + (this._cap[this.txFreq] ? ' (' + this._cap[this.txFreq] + ')' : '');
+    if (this.stuck && !this.ptt) return 'The TX light is lit with no PTT pressed: a stuck microphone. It keeps transmitting a carrier, and every word in the cockpit, on ' + where + ', blocking it for every other aircraft and the ground station. Unplug the offending microphone or cycle the PTT until the light goes out.';
+    if (!this.txOn) return 'PTT released: you are listening to ' + this.hearList + '. Choose who you want to talk to, then press the PTT to see where the call really goes.';
+    if (this.reaches) return 'Your call goes out on COM ' + this.mic + ', active ' + where + ': ' + this._wantName[this.want] + ', as you meant. While you transmit, COM ' + this.mic + '’s own receiver is silent (simplex), so you cannot hear anyone else on it.';
+    if (this.sb(this.mic) === this.wantFreq) return 'The frequency you want is still in COM ' + this.mic + '’s standby window. The knobs change only standby and you transmit on the active frequency only, so your call went out on ' + where + '. Press the flip-flop.';
+    const other = this.mic === 1 ? 2 : 1, oa = other === 1 ? this.a1 : this.a2;
+    if (oa === this.wantFreq) return 'You can hear ' + this._wantName[this.want] + ' on COM ' + other + ', but the MIC selector is on COM ' + this.mic + ', so your call went out on ' + where + ' instead. Hearing a frequency proves nothing about where your call goes: switch MIC to COM ' + other + '.';
+    return 'Your call goes out on ' + where + ', not ' + this._wantName[this.want] + '. Dial it into standby with the knobs, flip it to active, and check the MIC selector.';
+  },
+  presets: {
+    'ctaf-departure-setup': { a1: 126700, s1: 118100, a2: 120025, s2: 121500, mic: 1, r1: true, r2: true, rn: false, ptt: true, stuck: false, want: 'ctaf' },
+    'mic-left-on-com2': { a1: 126700, s1: 118100, a2: 120025, s2: 121500, mic: 2, r1: true, r2: true, rn: false, ptt: true, stuck: false, want: 'ctaf' },
+    'tower-still-in-standby': { a1: 120025, s1: 118100, a2: 126700, s2: 121500, mic: 1, r1: true, r2: false, rn: false, ptt: true, stuck: false, want: 'tower' },
+    'monitor-com2': { a1: 118100, s1: 120025, a2: 120025, s2: 126700, mic: 1, r1: true, r2: true, rn: false, ptt: false, stuck: false, want: 'tower' },
+    'stuck-microphone': { a1: 126700, s1: 118100, a2: 120025, s2: 121500, mic: 1, r1: true, r2: true, rn: false, ptt: false, stuck: true, want: 'ctaf' },
+  },
+})">
+  <svg viewBox="0 0 640 336" role="img" aria-labelledby="cra-title" class="widget-stage">
+    <title id="cra-title">An audio panel on the left wired to two COM radios. Each radio shows an ACTIVE frequency, which it transmits and receives on, and a STBY frequency that the knobs change, with a flip-flop button between them and a TX light. The MIC selector on the audio panel chooses the one radio your microphone and PTT use; the receive buttons choose which radios you hear. Pressing the PTT lights the TX on the selected radio and sends your call out on its active frequency</title>
+    <defs>
+      <marker id="cra-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="336" rx="10" fill="var(--color-surface-2)"/>
+    <!-- COM 1 -->
+    <rect x="196" y="20" width="428" height="92" rx="12" fill="var(--color-surface)" stroke-width="1.5" :stroke="mic === 1 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+    <text x="210" y="40" font-size="12" font-weight="700" fill="var(--color-fg-muted)">COM 1</text>
+    <g :transform="'translate(262 35)'">
+      <path d="M0 -4 L4 -4 L9 -8 L9 8 L4 4 L0 4 Z" stroke-width="1.25" stroke-linejoin="round" :fill="hears(1) && !muted(1) ? 'var(--color-info)' : 'none'" :stroke="hears(1) ? 'var(--color-info)' : 'var(--color-fg-faint)'"/>
+      <path d="M12 -5 a7 7 0 0 1 0 10" fill="none" stroke="var(--color-info)" stroke-width="1.25" stroke-linecap="round" x-show="hears(1) && !muted(1)"/>
+      <line x1="-1" y1="-8" x2="11" y2="8" stroke="var(--color-bad)" stroke-width="1.75" stroke-linecap="round" x-show="muted(1)"/>
+      <text x="20" y="4" font-size="11" :fill="muted(1) ? 'var(--color-bad-fg)' : hears(1) ? 'var(--color-info)' : 'var(--color-fg-faint)'" x-text="muted(1) ? 'muted while you transmit' : hears(1) ? 'you hear this one' : 'not selected to listen'"></text>
+    </g>
+    <rect x="210" y="50" width="162" height="52" rx="6" fill="var(--color-surface-2)" :stroke="txOn && mic === 1 ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-width="txOn && mic === 1 ? 2.5 : 1.25"/>
+    <text x="220" y="65" font-size="11" font-weight="700" fill="var(--color-brand-fg)">ACTIVE</text>
+    <text x="364" y="65" font-size="11" text-anchor="end" fill="var(--color-brand-fg)" x-text="lab(a1)"></text>
+    <text x="220" y="93" font-size="24" font-weight="700" class="num" fill="var(--color-brand-fg)" x-text="f(a1)"></text>
+    <rect x="378" y="50" width="28" height="20" rx="4" :fill="txOn && mic === 1 ? 'var(--color-bad)' : 'var(--color-surface-2)'" :stroke="txOn && mic === 1 ? 'var(--color-bad)' : 'var(--color-line-strong)'" stroke-width="1"/>
+    <text x="392" y="64" font-size="11" font-weight="700" text-anchor="middle" :fill="txOn && mic === 1 ? 'var(--color-surface)' : 'var(--color-fg-faint)'">TX</text>
+    <g fill="none" stroke="var(--color-brand)" stroke-width="1.5" stroke-linecap="round" x-show="txOn && mic === 1">
+      <path d="M386 82 a8 8 0 0 1 12 0"/><path d="M382 90 a14 14 0 0 1 20 0"/>
+    </g>
+    <rect x="412" y="50" width="114" height="52" rx="6" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="420" y="65" font-size="11" font-weight="700" fill="var(--color-fg-muted)">STBY</text>
+    <text x="518" y="65" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" x-text="labShort(s1)"></text>
+    <text x="420" y="92" font-size="18" class="num" fill="var(--color-fg-muted)" x-text="f(s1)"></text>
+    <g @click="flip(1)" style="cursor: pointer">
+      <rect x="534" y="60" width="34" height="32" rx="6" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25"/>
+      <text x="551" y="82" font-size="16" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)">⇄</text>
+    </g>
+    <circle cx="596" cy="76" r="20" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <circle cx="596" cy="76" r="11" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <line x1="596" y1="67" x2="596" y2="72" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="596" y="40" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">MHz/kHz</text>
+    <!-- wire from the audio panel -->
+    <line x1="146" y1="76" x2="196" y2="76" stroke-linecap="round" :stroke="mic === 1 ? (txOn ? 'var(--color-brand)' : 'var(--color-brand)') : hears(1) ? 'var(--color-info)' : 'var(--color-line)'" :stroke-width="mic === 1 ? 3 : hears(1) ? 2 : 1.25"
+      :marker-end="mic === 1 && txOn ? 'url(#cra-arrow)' : null" :marker-start="hears(1) && !muted(1) ? 'url(#cra-arrow)' : null"/>
+    <!-- COM 2 -->
+    <rect x="196" y="130" width="428" height="92" rx="12" fill="var(--color-surface)" stroke-width="1.5" :stroke="mic === 2 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/>
+    <text x="210" y="150" font-size="12" font-weight="700" fill="var(--color-fg-muted)">COM 2</text>
+    <g :transform="'translate(262 145)'">
+      <path d="M0 -4 L4 -4 L9 -8 L9 8 L4 4 L0 4 Z" stroke-width="1.25" stroke-linejoin="round" :fill="hears(2) && !muted(2) ? 'var(--color-info)' : 'none'" :stroke="hears(2) ? 'var(--color-info)' : 'var(--color-fg-faint)'"/>
+      <path d="M12 -5 a7 7 0 0 1 0 10" fill="none" stroke="var(--color-info)" stroke-width="1.25" stroke-linecap="round" x-show="hears(2) && !muted(2)"/>
+      <line x1="-1" y1="-8" x2="11" y2="8" stroke="var(--color-bad)" stroke-width="1.75" stroke-linecap="round" x-show="muted(2)"/>
+      <text x="20" y="4" font-size="11" :fill="muted(2) ? 'var(--color-bad-fg)' : hears(2) ? 'var(--color-info)' : 'var(--color-fg-faint)'" x-text="muted(2) ? 'muted while you transmit' : hears(2) ? 'you hear this one' : 'not selected to listen'"></text>
+    </g>
+    <rect x="210" y="160" width="162" height="52" rx="6" fill="var(--color-surface-2)" :stroke="txOn && mic === 2 ? 'var(--color-brand)' : 'var(--color-line-strong)'" :stroke-width="txOn && mic === 2 ? 2.5 : 1.25"/>
+    <text x="220" y="175" font-size="11" font-weight="700" fill="var(--color-brand-fg)">ACTIVE</text>
+    <text x="364" y="175" font-size="11" text-anchor="end" fill="var(--color-brand-fg)" x-text="lab(a2)"></text>
+    <text x="220" y="203" font-size="24" font-weight="700" class="num" fill="var(--color-brand-fg)" x-text="f(a2)"></text>
+    <rect x="378" y="160" width="28" height="20" rx="4" :fill="txOn && mic === 2 ? 'var(--color-bad)' : 'var(--color-surface-2)'" :stroke="txOn && mic === 2 ? 'var(--color-bad)' : 'var(--color-line-strong)'" stroke-width="1"/>
+    <text x="392" y="174" font-size="11" font-weight="700" text-anchor="middle" :fill="txOn && mic === 2 ? 'var(--color-surface)' : 'var(--color-fg-faint)'">TX</text>
+    <g fill="none" stroke="var(--color-brand)" stroke-width="1.5" stroke-linecap="round" x-show="txOn && mic === 2">
+      <path d="M386 192 a8 8 0 0 1 12 0"/><path d="M382 200 a14 14 0 0 1 20 0"/>
+    </g>
+    <rect x="412" y="160" width="114" height="52" rx="6" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="420" y="175" font-size="11" font-weight="700" fill="var(--color-fg-muted)">STBY</text>
+    <text x="518" y="175" font-size="11" text-anchor="end" fill="var(--color-fg-faint)" x-text="labShort(s2)"></text>
+    <text x="420" y="202" font-size="18" class="num" fill="var(--color-fg-muted)" x-text="f(s2)"></text>
+    <g @click="flip(2)" style="cursor: pointer">
+      <rect x="534" y="170" width="34" height="32" rx="6" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25"/>
+      <text x="551" y="192" font-size="16" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)">⇄</text>
+    </g>
+    <circle cx="596" cy="186" r="20" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <circle cx="596" cy="186" r="11" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <line x1="596" y1="177" x2="596" y2="182" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="596" y="150" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">MHz/kHz</text>
+    <!-- wire from the audio panel -->
+    <line x1="146" y1="186" x2="196" y2="186" stroke-linecap="round" :stroke="mic === 2 ? (txOn ? 'var(--color-brand)' : 'var(--color-brand)') : hears(2) ? 'var(--color-info)' : 'var(--color-line)'" :stroke-width="mic === 2 ? 3 : hears(2) ? 2 : 1.25"
+      :marker-end="mic === 2 && txOn ? 'url(#cra-arrow)' : null" :marker-start="hears(2) && !muted(2) ? 'url(#cra-arrow)' : null"/>
+    <!-- audio panel -->
+    <rect x="16" y="20" width="130" height="202" rx="12" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <text x="81" y="40" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">AUDIO PANEL</text>
+    <text x="26" y="62" font-size="11" font-weight="700" fill="var(--color-brand-fg)">MIC (transmit)</text>
+    <text x="26" y="118" font-size="11" font-weight="700" fill="var(--color-info)">RECEIVE (listen)</text>
+    <g @click="setMic(1)" style="cursor: pointer"><rect x="26" y="68" width="52" height="24" rx="5" stroke-width="1.25" :fill="mic === 1 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="mic === 1 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/><text x="52.0" y="84" font-size="11.5" font-weight="700" text-anchor="middle" :fill="mic === 1 ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">COM 1</text></g>
+    <g @click="setMic(2)" style="cursor: pointer"><rect x="84" y="68" width="52" height="24" rx="5" stroke-width="1.25" :fill="mic === 2 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="mic === 2 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/><text x="110.0" y="84" font-size="11.5" font-weight="700" text-anchor="middle" :fill="mic === 2 ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">COM 2</text></g>
+    <g @click="r1 = !r1; active = null" style="cursor: pointer"><rect x="26" y="124" width="52" height="24" rx="5" stroke-width="1.25" :fill="r1 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="r1 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/><text x="52.0" y="140" font-size="11.5" font-weight="700" text-anchor="middle" :fill="r1 ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">COM 1</text></g>
+    <g @click="r2 = !r2; active = null" style="cursor: pointer"><rect x="84" y="124" width="52" height="24" rx="5" stroke-width="1.25" :fill="r2 ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="r2 ? 'var(--color-brand)' : 'var(--color-line-strong)'"/><text x="110.0" y="140" font-size="11.5" font-weight="700" text-anchor="middle" :fill="r2 ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">COM 2</text></g>
+    <g @click="rn = !rn; active = null" style="cursor: pointer"><rect x="26" y="154" width="52" height="24" rx="5" stroke-width="1.25" :fill="rn ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="rn ? 'var(--color-brand)' : 'var(--color-line-strong)'"/><text x="52.0" y="170" font-size="11.5" font-weight="700" text-anchor="middle" :fill="rn ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'">NAV 1</text></g>
+    <text x="81" y="198" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">one MIC,</text><text x="81" y="212" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">many receivers</text>
+    <!-- headset and PTT -->
+    <line x1="81" y1="222" x2="81" y2="254" stroke-width="2" stroke-linecap="round" :stroke="txOn ? 'var(--color-brand)' : 'var(--color-info)'"/>
+    <path d="M58 290 a23 23 0 0 1 46 0" fill="none" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round"/>
+    <rect x="50" y="282" width="14" height="24" rx="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <rect x="98" y="282" width="14" height="24" rx="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <path d="M57 304 Q 60 322 80 322" fill="none" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="84" cy="322" r="4" :fill="txOn ? 'var(--color-brand)' : 'var(--color-fg)'"/>
+    <g @click="ptt = !ptt; active = null" style="cursor: pointer">
+      <circle cx="150" cy="296" r="22" stroke-width="2" :fill="ptt ? 'var(--color-brand)' : 'var(--color-surface)'" :stroke="ptt ? 'var(--color-brand)' : 'var(--color-fg-muted)'"/>
+      <text x="150" y="300.5" font-size="12" font-weight="700" text-anchor="middle" :fill="ptt ? 'var(--color-surface)' : 'var(--color-fg-muted)'">PTT</text>
+    </g>
+    <!-- result -->
+    <rect x="196" y="238" width="428" height="86" rx="12" fill="var(--color-surface)" stroke-width="1.5"
+      :stroke="!txOn ? 'var(--color-line-strong)' : stuck && !ptt ? 'var(--color-bad)' : reaches ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+    <text x="212" y="262" font-size="12" font-weight="600" fill="var(--color-fg-muted)" x-text="'You want: ' + _wantName[want] + ' (' + f(wantFreq) + ')'"></text>
+    <text x="212" y="287" font-size="15" font-weight="700"
+      :fill="!txOn ? 'var(--color-fg-faint)' : stuck && !ptt ? 'var(--color-bad-fg)' : reaches ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'"
+      x-text="!txOn ? 'Press the PTT to transmit' : stuck && !ptt ? 'Stuck mic: transmitting on ' + f(txFreq) : (reaches ? '✓ Your call goes out on ' : '✗ Your call goes out on ') + f(txFreq)"></text>
+    <text x="212" y="310" font-size="12" fill="var(--color-info)" x-text="'You hear: ' + hearList"></text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">COM 1 standby <output class="num" x-text="f(s1)"></output></span>
+      <div class="widget-steps">
+        <button type="button" @click="mhz(1, -1)" aria-label="COM 1 outer knob down one megahertz">MHz −</button>
+        <button type="button" @click="mhz(1, 1)" aria-label="COM 1 outer knob up one megahertz">MHz +</button>
+        <button type="button" @click="khz(1, -1)" aria-label="COM 1 inner knob down 25 kilohertz">kHz −</button>
+        <button type="button" @click="khz(1, 1)" aria-label="COM 1 inner knob up 25 kilohertz">kHz +</button>
+        <button type="button" @click="flip(1)">⇄ Flip-flop</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">COM 2 standby <output class="num" x-text="f(s2)"></output></span>
+      <div class="widget-steps">
+        <button type="button" @click="mhz(2, -1)" aria-label="COM 2 outer knob down one megahertz">MHz −</button>
+        <button type="button" @click="mhz(2, 1)" aria-label="COM 2 outer knob up one megahertz">MHz +</button>
+        <button type="button" @click="khz(2, -1)" aria-label="COM 2 inner knob down 25 kilohertz">kHz −</button>
+        <button type="button" @click="khz(2, 1)" aria-label="COM 2 inner knob up 25 kilohertz">kHz +</button>
+        <button type="button" @click="flip(2)">⇄ Flip-flop</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">Audio panel</span>
+      <div class="widget-steps">
+        <button type="button" @click="setMic(1)" :aria-pressed="mic === 1">MIC COM 1</button>
+        <button type="button" @click="setMic(2)" :aria-pressed="mic === 2">MIC COM 2</button>
+        <button type="button" @click="r1 = !r1; active = null" :aria-pressed="r1">Listen COM 1</button>
+        <button type="button" @click="r2 = !r2; active = null" :aria-pressed="r2">Listen COM 2</button>
+        <button type="button" @click="rn = !rn; active = null" :aria-pressed="rn">Listen NAV 1</button>
+      </div>
+    </div>
+    <div class="widget-control">
+      <label for="cra-want">I want to talk to</label>
+      <select id="cra-want" class="input" x-model="want" @change="active = null">
+        <option value="ctaf">The CTAF (126.700, example)</option>
+        <option value="area">The area frequency (120.025, example)</option>
+        <option value="tower">The tower (118.100, example)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <span class="widget-label">Transmit</span>
+      <div class="widget-steps">
+        <button type="button" @click="ptt = !ptt; active = null" :aria-pressed="ptt" x-text="ptt ? 'PTT pressed: release' : 'Press the PTT'"></button>
+        <button type="button" @click="stuck = !stuck; active = null" :aria-pressed="stuck">Stuck microphone</button>
+      </div>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="!txOn ? '' : stuck && !ptt ? 'bad' : reaches ? 'ok' : 'bad'"><dt class="widget-label">Your call goes out on</dt><dd class="widget-value text-sm"><span x-text="outText"></span><span class="widget-flag bad" x-show="txOn && !reaches">wrong station</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">You hear</dt><dd class="widget-value text-sm" x-text="hearList"></dd></div>
+    <div class="widget-readout" :class="stuck && !ptt ? 'bad' : txOn ? 'warn' : ''"><dt class="widget-label">TX light</dt><dd class="widget-value text-sm" x-text="txLight"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('ctaf-departure-setup')" :aria-pressed="active === 'ctaf-departure-setup'">CTAF departure</button>
+      <button type="button" @click="preset('mic-left-on-com2')" :aria-pressed="active === 'mic-left-on-com2'">MIC left on COM 2</button>
+      <button type="button" @click="preset('tower-still-in-standby')" :aria-pressed="active === 'tower-still-in-standby'">Tower in standby</button>
+      <button type="button" @click="preset('monitor-com2')" :aria-pressed="active === 'monitor-com2'">Monitor COM 2</button>
+      <button type="button" @click="preset('stuck-microphone')" :aria-pressed="active === 'stuck-microphone'">Stuck mic</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The knobs change only the standby window, and you transmit and receive on the active frequency only, so a dialled frequency does nothing until you flip it. On the audio panel one MIC selection decides where every call goes, while any number of receive buttons decide what you hear: hearing the CTAF proves nothing about where your next call will go. The station names and frequencies here are examples; take the real ones from ERSA and the VNC.</p>
+  <details class="widget-try"><summary>Try it: you have dialled the tower frequency and made your call, but the tower does not answer. What do you check first?</summary><p>Whether the tower frequency is in the active window or still in standby (press Tower in standby). The knobs only change standby, and the radio transmits and receives on the active frequency only, so an untransferred frequency means your call went out on the old one.</p></details>
+  <details class="widget-try"><summary>Try it: you want to hear the ATIS on COM 2 without losing the tower on COM 1. What do you select?</summary><p>Leave the MIC selector on COM 1 (the tower) and press the COM 2 receive button so you hear COM 2 as well. Turn COM 2 off again once you have the ATIS, so it does not mask tower calls. You transmit on whichever COM the MIC selector chooses, regardless of which ones you are listening to.</p></details>
+</div>

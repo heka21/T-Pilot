@@ -1,0 +1,33 @@
+<div class="widget" data-widget="explorer" data-explorer="crosswind">
+  <div class="widget-canvas" data-canvas aria-label="3D view of an aeroplane on final approach in a crosswind, crabbed or wing-down, tracking the runway centreline"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="cw3-xw">Crosswind component <output data-out="xw">10 kt from the right</output></label><input id="cw3-xw" type="range" min="0" max="25" step="1" value="10" data-param="crosswind"></div>
+    <div class="widget-control"><label for="cw3-tas">Approach speed (TAS) <output data-out="tas">65 kt</output></label><input id="cw3-tas" type="range" min="55" max="80" step="1" value="65" data-param="tas"></div>
+    <div class="widget-control"><label for="cw3-poh">Your POH's maximum demonstrated crosswind</label><input id="cw3-poh" type="range" min="8" max="20" step="1" value="12" data-param="poh"></div>
+    <div class="widget-control"><label for="cw3-pos">Position on the approach (pause to scrub)</label><input id="cw3-pos" type="range" min="0" max="1" step="0.001" value="0" data-param="position"></div>
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="wingDown"> Wing-down method (sideslip) instead of the crab</label>
+      <label class="check"><input type="checkbox" data-param="fromLeft"> Wind from the left instead of the right</label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>What the aeroplane is doing</dt><dd data-out="phase" class="text-sm">crabbed</dd></div>
+    <div class="widget-readout"><dt>Where</dt><dd data-out="where" class="text-sm">900 m out</dd></div>
+    <div class="widget-readout"><dt>Crab angle</dt><dd data-out="crab">9° into wind</dd></div>
+    <div class="widget-readout"><dt>Heading and track</dt><dd data-out="heading" class="text-sm">heading 249°, track 240°</dd></div>
+    <div class="widget-readout ok"><dt>Against the POH</dt><dd data-out="poh" class="text-sm">within the demonstrated crosswind</dd></div>
+  </dl>
+  <p class="widget-value mt-2 text-sm text-fg-muted" data-out="method">crab: wings level, nose into wind; straighten with rudder just before touchdown</p>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Scenarios">
+      <button type="button" data-preset="crab-10-kt" data-set='{"crosswind": 10, "wingDown": false, "fromLeft": false}'>Crab, 10 kt</button>
+      <button type="button" data-preset="wing-down-10-kt" data-set='{"crosswind": 10, "wingDown": true, "fromLeft": false}'>Wing-down, 10 kt</button>
+      <button type="button" data-preset="sea-breeze-on-24" data-set='{"crosswind": 9, "wingDown": true, "fromLeft": false, "tas": 69}'>Sea breeze on 24: 9 kt</button>
+      <button type="button" data-preset="beyond-the-poh" data-set='{"crosswind": 16, "poh": 12, "wingDown": false}'>16 kt: beyond the POH</button>
+    </div>
+    <button type="button" class="btn-secondary" data-action="play">Pause</button><button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> With either method the ground track is the runway centreline; what differs is how the aeroplane is pointed. Crab: wings level, nose into wind by the crab angle, then just before touchdown rudder yaws the nose into line with the runway and aileron stops the drift that starts the moment you do (too early and you drift; too late and you land sideways). Wing-down: the upwind wing is lowered just enough to stop the drift, opposite rudder keeps the nose straight, and the upwind main wheel touches first, with aileron into wind increasing as you slow. The red dashed line is where no correction would take you. The crab angle is asin(crosswind ÷ TAS); the wing-down bank is drawn equal to it, which is illustrative. Enter your own POH's demonstrated crosswind and treat it as a limit until you have the experience.</p>
+  <details class="widget-try"><summary>Try this: 10 kt across at 65 kt. Roughly what crab angle, and what happens to it if you fly the approach 10 kt faster?</summary><p>About 9° (sin⁻¹ of 10/65). At 75 kt the same crosswind needs only about 8°, because the wind has less time to push you sideways for each metre flown. The drift, and the angle to cancel it, scale with crosswind divided by airspeed.</p></details>
+  <details class="widget-try"><summary>Try this: switch to wing-down with the wind from the right. Which wheel touches first, and why is this riskier in a low-wing aeroplane?</summary><p>The right (upwind) main wheel, because the right wing is low. A low-wing aeroplane has much less wing-tip and flap clearance when the upwind wing is lowered, so an over-steep wing-down attitude risks a tip or flap strike; a high-wing aeroplane has generous clearance.</p></details>
+</div>

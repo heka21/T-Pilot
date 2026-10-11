@@ -1,0 +1,29 @@
+<div class="widget" data-widget="explorer" data-explorer="wake">
+  <div class="widget-canvas" data-canvas aria-label="3D view of the two wing-tip vortices trailing a heavy jet after rotation, sinking, spreading and drifting with the wind, with a light aeroplane's safe path"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="wk3-xw">Crosswind component <output data-out="xw">calm: still air</output></label><input id="wk3-xw" type="range" min="-10" max="10" step="1" value="0" data-param="crosswind"><span class="text-xs text-fg-faint">negative = from the left, positive = from the right</span></div>
+    <div class="widget-control"><label for="wk3-time">Time since the heavy rotated (pause to scrub)</label><input id="wk3-time" type="range" min="0" max="40" step="0.5" value="0" data-param="time"></div>
+    <div class="widget-control"><label for="wk3-speed">Animation speed</label><input id="wk3-speed" type="range" min="0.3" max="3" step="0.1" value="1" data-param="speed"></div>
+    <div class="widget-control"><label class="check"><input type="checkbox" data-param="turbulent"> Gusty, turbulent air (instead of calm and stable)</label></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Clock</dt><dd data-out="time">0 s after the heavy rotated</dd></div>
+    <div class="widget-readout"><dt>The heavy</dt><dd data-out="heavy" class="text-sm">at its rotation point</dd></div>
+    <div class="widget-readout warn"><dt>Vortices at its rotation point</dt><dd><span data-out="vortex" class="text-sm">on the runway</span><span class="widget-flag bad" data-flag="parked" style="display:none">Parked on the runway</span></dd></div>
+    <div class="widget-readout"><dt>Sinking</dt><dd data-out="sink" class="text-sm">400 ft/min, levelling 500 to 1,000 ft below</dd></div>
+    <div class="widget-readout bad"><dt>Strength</dt><dd data-out="strength" class="text-sm">full</dd></div>
+    <div class="widget-readout warn"><dt>Air</dt><dd data-out="air" class="text-sm">calm, stable: strongest and longest-lived</dd></div>
+  </dl>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Scenarios">
+      <button type="button" data-preset="calm-morning" data-set='{"crosswind": 0, "turbulent": false}'>Calm morning</button>
+      <button type="button" data-preset="light-crosswind-trap" data-set='{"crosswind": 2, "turbulent": false}'>2 kt crosswind</button>
+      <button type="button" data-preset="five-knot-crosswind" data-set='{"crosswind": 5, "turbulent": false}'>5 kt crosswind</button>
+      <button type="button" data-preset="gusty-afternoon" data-set='{"crosswind": 8, "turbulent": true}'>Gusty afternoon</button>
+    </div>
+    <button type="button" class="btn-secondary" data-action="play">Pause</button><button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The wake begins where the heavy rotates and lies along and below its climb path: the two counter-rotating vortices (left clockwise, right anticlockwise, seen from behind) sink at a few hundred feet per minute and level off 500 to 1,000 ft below its path, but near the ground they stop a short height up and spread outward at a few knots. Your path lifts off before its rotation point, climbs above its path and turns away upwind. Add a light crosswind and the downwind vortex leaves twice as fast while the upwind vortex's outward drift is cancelled: it parks over the runway. Calm, stable air keeps the vortices strongest and longest; wind and turbulence break them up. Sink, spread and decay rates are the lesson's typical values, not limits, and the heavy's climb is schematic.</p>
+  <details class="widget-try"><summary>Try this: set a 2 kt crosswind from the right and let the clock run. Which vortex is still over the runway after 30 s, and why is a stronger crosswind safer here?</summary><p>The right (upwind) vortex. It spreads outward at about the same few knots that the wind blows it back, so it sits almost stationary near the touchdown zone. A stronger crosswind, say 8 kt, overpowers the outward drift and carries both vortices clear of the runway.</p></details>
+  <details class="widget-try"><summary>Try this: why does your path lift off before the heavy's rotation point rather than after it?</summary><p>Because the wake only exists from the rotation point onwards. Airborne before it, and climbing above the heavy's path, you never enter the volume that contains the vortices; if the runway is too short for that, the answer is to wait for the wake to decay.</p></details>
+</div>

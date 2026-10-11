@@ -1,0 +1,207 @@
+<div class="widget" x-data="timeline({
+  duration: 18, loop: false,
+  mode: 'taxi',
+  // block centres in the picture
+  _B: { bat: [75, 50], mst: [200, 50], avm: [325, 50], cb: [450, 50], mic: [75, 158], ptt: [200, 158], tx: [325, 158],
+        rx: [325, 248], hs: [75, 248], ant: [452, 203], gnd: [580, 203] },
+  // PAKC 3.6 worked example (a taxi call at Jandakot) and the ATIS exercise (receive only, on COM 2)
+  _M: {
+    taxi: [
+      { at: 0, label: 'Power', on: ['bat', 'mst', 'avm', 'cb'], pts: [[75, 50], [200, 50], [325, 50], [450, 50]],
+        does: 'Master on, alternator charging, avionics master switched on after start so the start transient never reached the radios. The breakers for COM 1 and the audio panel are in.',
+        fails: 'No power, no radio: everything goes silent. With the alternator failed the battery runs the radios for perhaps 30 to 60 minutes (POH), so shed load early.' },
+      { at: 0.11, label: 'Microphone', on: ['mic'], pts: [[20, 128], [75, 158]],
+        does: 'You hold the boom close to your lips and speak; it turns your voice into an electrical audio signal and rejects the engine noise.',
+        fails: 'Your voice never enters the system: nobody hears you, though you still hear them. Boom away from the lips: your voice weakens, the cabin noise does not.' },
+      { at: 0.2, label: 'PTT', on: ['ptt'], pts: [[75, 158], [200, 158]],
+        does: 'Pressing it keys COM 1’s transmitter.',
+        fails: 'A PTT that sticks keeps the transmitter on and blocks the frequency for everyone.' },
+      { at: 0.29, label: 'Transmitter', on: ['tx'], pts: [[200, 158], [325, 158]],
+        does: 'Generates a carrier on the Ground frequency and amplitude-modulates it with your voice.',
+        fails: 'Nobody hears you, yet the receiver beside it may still work: transmitter and receiver share a box but are separate circuits.' },
+      { at: 0.38, label: 'Antenna, out', on: ['ant', 'gnd'], pts: [[325, 158], [440, 158], [452, 203], [560, 203]],
+        does: 'The blade on the fuselage radiates the signal; Ground’s antenna collects it.',
+        fails: 'A damaged, loose or ice-covered antenna reduces range, which is why the antennas are on the walk-around.' },
+      { at: 0.53, label: 'Ground replies', on: ['gnd', 'ant'], pts: [[560, 203], [452, 203]],
+        does: 'You release the PTT. Ground replies; your antenna collects the reply.',
+        fails: 'One antenna serves both directions, so a damaged antenna costs you range on receive too.' },
+      { at: 0.64, label: 'Receiver', on: ['rx'], pts: [[452, 203], [440, 248], [325, 248]],
+        does: 'Selects the Ground frequency, amplifies the weak signal and demodulates it to recover the controller’s voice; the squelch opens because a signal is present.',
+        fails: 'You hear nothing, though others may still hear you. Opening the squelch for hiss tests that the receiver and audio path are alive.' },
+      { at: 0.78, label: 'Headset', on: ['hs'], pts: [[325, 248], [75, 248]],
+        does: 'Turns that audio back into sound at your ears.',
+        fails: 'The cabin speaker is the back-up: harder to hear over the engine, but it works with nothing plugged in.' },
+      { at: 0.94, label: 'Conversation', on: [], pts: [[75, 248], [75, 248]],
+        does: 'Eight links, each doing one job. If any one fails, the conversation stops, and the job that was not done points you at the cause.',
+        fails: 'A break anywhere looks the same from the seat: silence. Follow the chain to find it (PAKC 3.3).' },
+    ],
+    atis: [
+      { at: 0, label: 'Power', on: ['bat', 'mst', 'avm', 'cb'], pts: [[75, 50], [200, 50], [325, 50], [450, 50]],
+        does: 'Battery or alternator, master, avionics master and the COM 2 breaker: they run the radio.',
+        fails: 'No power, no radio.' },
+      { at: 0.25, label: 'Antenna', on: ['gnd', 'ant'], pts: [[560, 203], [452, 203]],
+        does: 'COM 2’s antenna collects the ATIS signal from the air.',
+        fails: 'A damaged or loose COM 2 antenna: a weak or missing ATIS.' },
+      { at: 0.45, label: 'Receiver', on: ['rx'], pts: [[452, 203], [440, 248], [325, 248]],
+        does: 'COM 2 selects the ATIS frequency, amplifies it and demodulates it to recover the audio; the squelch opens because a signal is present.',
+        fails: 'Wrong frequency in the active window, volume down, squelch set too tight, or the receiver itself.' },
+      { at: 0.65, label: 'Headset', on: ['hs'], pts: [[325, 248], [75, 248]],
+        does: 'The headset or speaker turns the audio back into sound.',
+        fails: 'Headset plug or audio routing: COM 2 not selected to listen on the audio panel.' },
+      { at: 0.85, label: 'No transmit', on: [], pts: [[75, 248], [75, 248]],
+        does: 'The microphone, PTT and transmitter play no part, because you are only receiving.',
+        fails: 'A silent ATIS points at power, the COM 2 antenna, the COM 2 receiver or its settings, or the headset and audio routing.' },
+    ],
+  },
+  get steps() { return this._M[this.mode].map((s) => ({ at: s.at, label: s.label })) },
+  get cur() { return this._M[this.mode][Math.max(0, this.step)] },
+  get nextAt() { const L = this._M[this.mode], i = Math.max(0, this.step); return i + 1 < L.length ? L[i + 1].at : 1 },
+  // the signal: a dot along the current step's points during the first 60% of the step
+  get f() { return this.ease(this.seg(this.t, this.cur.at, this.cur.at + 0.6 * (this.nextAt - this.cur.at))) },
+  get dot() {
+    const p = this.cur.pts, n = p.length - 1;
+    if (n < 1) return { x: p[0][0], y: p[0][1] };
+    let L = 0; const seg = [];
+    for (let i = 0; i < n; i++) { const d = Math.hypot(p[i + 1][0] - p[i][0], p[i + 1][1] - p[i][1]); seg.push(d); L += d }
+    let r = this.f * L, i = 0;
+    while (i < n - 1 && r > seg[i]) { r -= seg[i]; i++ }
+    const q = seg[i] ? r / seg[i] : 0;
+    return { x: p[i][0] + q * (p[i + 1][0] - p[i][0]), y: p[i][1] + q * (p[i + 1][1] - p[i][1]) };
+  },
+  get showDot() { return this.cur.pts.length > 1 && this.cur.label !== 'Conversation' && this.cur.label !== 'No transmit' },
+  get com() { return this.mode === 'atis' ? 'COM 2' : 'COM 1' },
+  unused(b) { return this.mode === 'atis' && (b === 'mic' || b === 'ptt' || b === 'tx') },
+  // a block is active in the current step, done once a step that used it has passed
+  st(b) {
+    if (this.unused(b)) return 'unused';
+    const L = this._M[this.mode], i = Math.max(0, this.step);
+    if (L[i].on.includes(b) && this.f > 0.15) return 'active';
+    for (let k = 0; k < i; k++) if (L[k].on.includes(b)) return 'done';
+    if (L[i].on.includes(b)) return 'active';
+    return 'idle';
+  },
+  fill(b) { const s = this.st(b); return s === 'active' ? 'var(--color-brand-soft)' : s === 'done' ? 'var(--color-ok-soft)' : 'var(--color-surface)' },
+  edge(b) { const s = this.st(b); return s === 'active' ? 'var(--color-brand)' : s === 'done' ? 'var(--color-ok)' : s === 'unused' ? 'var(--color-line-strong)' : 'var(--color-fg-muted)' },
+  ink(b) { const s = this.st(b); return s === 'active' ? 'var(--color-brand-fg)' : s === 'done' ? 'var(--color-ok-fg)' : s === 'unused' ? 'var(--color-fg-faint)' : 'var(--color-fg)' },
+  dash(b) { return this.st(b) === 'unused' ? '4 3' : null },
+  get waveOut() { return this.mode === 'taxi' && this.cur.label === 'Antenna, out' },
+  get waveIn() { return this.cur.label === 'Ground replies' || (this.mode === 'atis' && this.cur.label === 'Antenna') },
+  get pttOn() { return this.mode === 'taxi' && this.step >= 2 && this.step <= 4 },
+  get squelchOpen() { return this.st('rx') !== 'idle' && this.st('rx') !== 'unused' },
+  get caption() { return this.cur.label + ': ' + this.cur.does },
+  pick(m) { this.mode = m; this.t = 0; this.active = null; this.play() },
+  presets: {
+    'taxi-call': { mode: 'taxi', t: 0, play: true },
+    'transmitter-keyed': { mode: 'taxi', t: 0.34 },
+    'reply-from-ground': { mode: 'taxi', t: 0.7 },
+    'atis-receive-only': { mode: 'atis', t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="rcj-title" class="widget-stage">
+    <title id="rcj-title">The radio chain as blocks: power from the battery and alternator through the master, the avionics master and the breaker to the COM radio; on transmit the microphone, the press-to-talk switch, the transmitter and the antenna out to the ground station; on receive the antenna, the receiver with its squelch and the headset. A dot carries the call along the chain one link at a time</title>
+    <defs>
+      <marker id="rcj-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-surface-2)"/>
+    <!-- wiring -->
+    <g stroke="var(--color-line-strong)" stroke-width="1.25" fill="none" marker-end="url(#rcj-arrow)">
+      <line x1="130" y1="50" x2="144" y2="50"/><line x1="255" y1="50" x2="269" y2="50"/><line x1="380" y1="50" x2="394" y2="50"/>
+      <path d="M450 70 L450 92 L388 92 L388 112"/>
+      <line x1="130" y1="158" x2="144" y2="158"/><line x1="255" y1="158" x2="269" y2="158"/>
+      <path d="M381 158 L440 158 L440 186"/>
+      <path d="M440 220 L440 248 L384 248"/>
+      <line x1="269" y1="248" x2="133" y2="248"/>
+    </g>
+    <text x="456" y="88" font-size="11" fill="var(--color-fg-faint)">to the radio</text>
+    <!-- COM radio frame -->
+    <rect x="262" y="114" width="126" height="166" rx="10" fill="none" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="256" y="290" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-fg-muted)" x-text="com + ' (transceiver)'"></text>
+    <!-- power row -->
+    <rect x="20" y="30" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('bat')" :stroke="edge('bat')"/>
+    <text x="75" y="47" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('bat')">Battery +</text><text x="75" y="62" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('bat')">alternator</text>
+    <rect x="145" y="30" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('mst')" :stroke="edge('mst')"/>
+    <text x="200" y="55" font-size="13" font-weight="600" text-anchor="middle" :fill="ink('mst')">Master</text>
+    <rect x="270" y="30" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('avm')" :stroke="edge('avm')"/>
+    <text x="325" y="47" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('avm')">Avionics</text><text x="325" y="62" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('avm')">master</text>
+    <rect x="395" y="30" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('cb')" :stroke="edge('cb')"/>
+    <text x="450" y="47" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('cb')" x-text="com"></text><text x="450" y="62" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('cb')">breaker</text>
+    <!-- transmit row -->
+    <rect x="20" y="138" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('mic')" :stroke="edge('mic')" :stroke-dasharray="dash('mic')"/>
+    <text x="75" y="163" font-size="13" font-weight="600" text-anchor="middle" :fill="ink('mic')">Microphone</text>
+    <rect x="145" y="138" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('ptt')" :stroke="edge('ptt')" :stroke-dasharray="dash('ptt')"/>
+    <text x="200" y="163" font-size="13" font-weight="600" text-anchor="middle" :fill="ink('ptt')" x-text="pttOn ? 'PTT pressed' : 'PTT'"></text>
+    <rect x="270" y="138" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('tx')" :stroke="edge('tx')" :stroke-dasharray="dash('tx')"/>
+    <text x="325" y="155" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('tx')">Transmitter</text><text x="325" y="170" font-size="11" text-anchor="middle" :fill="ink('tx')">modulates (AM)</text>
+    <text x="75" y="126" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-show="mode === 'taxi'">your voice</text>
+    <text x="200" y="198" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" x-show="mode === 'atis'">no part in receiving</text>
+    <!-- receive row -->
+    <rect x="270" y="228" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('rx')" :stroke="edge('rx')"/>
+    <text x="325" y="245" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('rx')">Receiver</text><text x="325" y="260" font-size="11" text-anchor="middle" :fill="ink('rx')" x-text="squelchOpen ? 'squelch open' : 'squelch shut'"></text>
+    <rect x="20" y="228" width="110" height="40" rx="8" stroke-width="1.5" :fill="fill('hs')" :stroke="edge('hs')"/>
+    <text x="75" y="245" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('hs')">Headset</text><text x="75" y="260" font-size="11" text-anchor="middle" :fill="ink('hs')">or speaker</text>
+    <!-- the antenna (one for transmit and receive) -->
+    <circle cx="452" cy="203" r="17" stroke-width="1.5" :fill="fill('ant')" :stroke="edge('ant')"/>
+    <path d="M452 214 L452 192 M446 198 L452 192 L458 198" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :stroke="edge('ant')"/>
+    <text x="472" y="270" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('ant')">Antenna</text>
+    <text x="472" y="285" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">one for both</text>
+    <!-- radio waves across the air -->
+    <g fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" x-show="waveOut">
+      <path d="M478 191 a16 16 0 0 1 0 24"/><path d="M490 183 a28 28 0 0 1 0 40"/><path d="M502 175 a40 40 0 0 1 0 56"/>
+    </g>
+    <g fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" x-show="waveIn">
+      <path d="M554 191 a16 16 0 0 0 0 24"/><path d="M542 183 a28 28 0 0 0 0 40"/><path d="M530 175 a40 40 0 0 0 0 56"/>
+    </g>
+    <!-- the ground station -->
+    <path d="M566 262 L572 196 L588 196 L594 262 Z" stroke-width="1.5" stroke-linejoin="round" :fill="fill('gnd')" :stroke="edge('gnd')"/>
+    <path d="M560 196 L600 196 L596 176 L564 176 Z" stroke-width="1.5" stroke-linejoin="round" :fill="fill('gnd')" :stroke="edge('gnd')"/>
+    <line x1="580" y1="176" x2="580" y2="156" stroke-width="2" stroke-linecap="round" :stroke="edge('gnd')"/>
+    <text x="580" y="280" font-size="12" font-weight="600" text-anchor="middle" :fill="ink('gnd')" x-text="mode === 'atis' ? 'Perth ATIS' : 'Jandakot Ground'"></text>
+    <!-- the call itself -->
+    <circle r="7" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2" x-show="showDot" :cx="dot.x.toFixed(1)" :cy="dot.y.toFixed(1)"/>
+    <!-- step label -->
+    <text x="620" y="124" font-size="15" font-weight="700" text-anchor="end" fill="var(--color-brand-fg)" x-text="cur.label"></text>
+    <text x="620" y="142" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="mode === 'atis' ? 'receive only' : 'a taxi call and its reply'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Follow the call'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="rcj-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress of the call">
+    <span class="widget-clock" x-text="(step + 1) + ' / ' + steps.length"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="mode + s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">Follow</span>
+      <div class="widget-steps">
+        <button type="button" @click="pick('taxi')" :aria-pressed="mode === 'taxi'">A taxi call and the reply</button>
+        <button type="button" @click="pick('atis')" :aria-pressed="mode === 'atis'">Listening to the ATIS</button>
+      </div>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Link</dt><dd class="widget-value" x-text="cur.label"></dd></div>
+    <div class="widget-readout ok col-span-2"><dt class="widget-label">Its job</dt><dd class="widget-value text-sm" x-text="cur.does"></dd></div>
+    <div class="widget-readout warn col-span-2 sm:col-span-3"><dt class="widget-label">If this link fails</dt><dd class="widget-value text-sm" x-text="cur.fails"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('taxi-call')" :aria-pressed="active === 'taxi-call'">Taxi call</button>
+      <button type="button" @click="preset('transmitter-keyed')" :aria-pressed="active === 'transmitter-keyed'">Transmitter keyed</button>
+      <button type="button" @click="preset('reply-from-ground')" :aria-pressed="active === 'reply-from-ground'">The reply</button>
+      <button type="button" @click="preset('atis-receive-only')" :aria-pressed="active === 'atis-receive-only'">ATIS, receive only</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Your words go out through the microphone, PTT, transmitter and antenna, and the reply comes back through the same antenna, the receiver and the headset: transmitter and receiver share a box and an antenna but are separate paths. Every link does one job, so the job that is missing points you at the fault.</p>
+  <details class="widget-try"><summary>Try it: the ATIS on COM 2 is silent. Which links could be to blame, and which cannot?</summary><p>Choose Listening to the ATIS: power, the COM 2 antenna, the COM 2 receiver or its settings, and the headset or audio routing. The microphone, PTT and transmitter play no part, because you are only receiving.</p></details>
+  <details class="widget-try"><summary>Try it: why is the avionics master switched on only after the engine has started?</summary><p>Step back to Power: the starter’s heavy current causes voltage spikes and dips that can damage the solid-state radios. With the avionics bus off during the start, the transient never reaches them.</p></details>
+</div>

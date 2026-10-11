@@ -1,0 +1,175 @@
+<div class="widget" x-data="timeline({
+  duration: 24, loop: true, high: false,
+  // PHFC 2.11: the diaphragm contracts and air flows in; oxygen diffuses from the alveoli (higher oxygen pressure) into
+  // the blood (lower) and rides on haemoglobin in the red cells; the left side of the heart pumps oxygen-rich blood to
+  // the body, the cells use the oxygen and make carbon dioxide, which returns in the veins (mostly as bicarbonate) to
+  // the right side of the heart, which pumps it through the lungs, where it diffuses out and is breathed out.
+  // Sea-level oxygen partial pressure about 213 hPa, about 105 hPa at 18,000 ft. Timings are illustrative.
+  // waypoints [t, x, y] for the oxygen molecule and for the carbon dioxide molecule
+  o2Path: [[0, 410, 8], [0.08, 410, 56], [0.1, 410, 64], [0.18, 410, 106], [0.24, 490, 106], [0.3, 490, 190], [0.34, 490, 220], [0.42, 490, 280], [0.48, 452, 280], [0.56, 412, 300]],
+  co2Path: [[0.6, 412, 300], [0.66, 372, 280], [0.7, 330, 280], [0.74, 330, 224], [0.78, 330, 190], [0.82, 330, 150], [0.86, 330, 106], [0.88, 400, 106], [0.93, 410, 64], [1, 410, 8]],
+  at2(list) {
+    const t = this.t;
+    if (t <= list[0][0]) return { x: list[0][1], y: list[0][2] };
+    for (let i = 1; i < list.length; i++) if (t <= list[i][0]) { const f = (t - list[i - 1][0]) / (list[i][0] - list[i - 1][0]); return { x: this.lerp(list[i - 1][1], list[i][1], f), y: this.lerp(list[i - 1][2], list[i][2], f) } }
+    const l = list[list.length - 1]; return { x: l[1], y: l[2] };
+  },
+  get o2() { return this.at2(this.o2Path) },
+  get co2() { return this.at2(this.co2Path) },
+  get o2On() { return this.t < 0.58 },
+  get co2On() { return this.t >= 0.58 },
+  // breathing: in at the start, out at the end
+  get inhale() { return this.t < 0.12 ? this.ease(this.at(0, 0.1)) : this.t > 0.88 ? 1 - this.ease(this.at(0.9, 1)) : 1 },
+  get bubbleR() { return 26 + 6 * this.inhale },
+  get po2() { return this.high ? 105 : 213 },
+  get phase() {
+    const t = this.t;
+    if (t < 0.1) return { where: 'Air in the lungs', how: 'Breathing in', k: 0 };
+    if (t < 0.18) return { where: 'Crossing the alveolar wall', how: 'Diffusion: high to low pressure', k: 1 };
+    if (t < 0.3) return { where: 'On haemoglobin, back to the heart', how: 'Carried in a red cell', k: 2 };
+    if (t < 0.48) return { where: 'Left side → arteries → body', how: 'Pumped by the heart', k: 3 };
+    if (t < 0.6) return { where: 'Off haemoglobin, into a cell', how: 'Diffusion: high to low pressure', k: 4 };
+    if (t < 0.7) return { where: 'Cell used it: CO₂ made', how: 'Diffusion into the blood', k: 5 };
+    if (t < 0.86) return { where: 'Veins → right side → lungs', how: 'Pumped by the heart', k: 6 };
+    if (t < 0.93) return { where: 'CO₂ into the alveoli', how: 'Diffusion: high to low pressure', k: 7 };
+    return { where: 'Breathed out', how: 'Breathing out', k: 8 };
+  },
+  steps: [
+    { at: 0, label: 'Breathe in' }, { at: 0.1, label: 'Diffuse into blood' }, { at: 0.24, label: 'Left heart' },
+    { at: 0.34, label: 'To the body' }, { at: 0.48, label: 'Into the cell' }, { at: 0.6, label: 'CO₂ back' },
+    { at: 0.74, label: 'Right heart' }, { at: 0.86, label: 'Into the lungs' }, { at: 0.93, label: 'Breathe out' },
+  ],
+  get caption() {
+    const k = this.phase.k;
+    if (k === 0) return 'You do not suck air in: the diaphragm contracts and flattens, the ribs lift, the chest grows, its pressure drops a little below the outside air, and air flows down the windpipe and bronchi into the alveoli.';
+    if (k === 1) return this.high ? 'At 18,000 ft the air you breathe in has about half the oxygen pressure (about 105 hPa instead of 213, still 21 percent oxygen), and the alveoli less again. The push across the wall is weaker, so less oxygen diffuses in and the haemoglobin leaves the lungs less than fully loaded.' : 'Oxygen is not pumped across. It diffuses, from the alveolar air, where its pressure is higher, into the blood arriving from the body, where it is lower. The wall is only a cell or two thick.';
+    if (k === 2) return 'Very little oxygen dissolves in the plasma: almost all of it rides on haemoglobin inside the red cells, which loads up where the oxygen pressure is high.';
+    if (k === 3) return 'The left side of the heart pumps the oxygen-rich blood out through the arteries to the body: the brain and the retina use oxygen fastest and have no store of it.';
+    if (k === 4) return 'In the tissues the oxygen pressure is low, so haemoglobin lets the oxygen go and it diffuses into a cell, which uses it to release energy from food.';
+    if (k === 5) return 'The cell makes carbon dioxide as waste. Its pressure is higher in the cell than in the blood, so it diffuses into the blood and travels mostly as bicarbonate in the plasma.';
+    if (k === 6) return 'The veins bring the oxygen-poor blood back to the right side of the heart, which pumps it to the lungs. The level of this carbon dioxide, not of oxygen, is what drives your breathing.';
+    if (k === 7) return 'In the lungs the blood\'s carbon dioxide pressure is higher than the alveolar air\'s, so it diffuses out across the same thin wall, the opposite way to the oxygen.';
+    return 'The diaphragm relaxes, the chest springs back and the carbon dioxide is breathed out. Breathing out is mostly passive.';
+  },
+  presets: {
+    'breathe-in': { high: false, t: 0.05 },
+    'diffusion-sea-level': { high: false, t: 0.14 },
+    'diffusion-18000': { high: true, t: 0.14 },
+    'left-heart-to-body': { high: false, t: 0.38 },
+    'carbon-dioxide-back': { high: false, t: 0.72 },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="ojy-title" class="widget-stage">
+    <title id="ojy-title">The journey of one oxygen molecule from the air into an alveolus, across into the blood, through the left side of the heart to a body cell, and of the carbon dioxide it becomes, back through the right side of the heart to the lungs and out</title>
+    <defs>
+      <marker id="ojy-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- breathing: chest and diaphragm -->
+    <text x="92" y="22" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Breathing</text>
+    <path d="M40 40 C40 30 144 30 144 40 L150 150 L34 150 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M92 32 L92 70 M92 70 L72 86 M92 70 L112 86" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="66" cy="102" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25" :rx="20 + 4 * inhale" :ry="30 + 6 * inhale"/>
+    <ellipse cx="118" cy="102" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25" :rx="20 + 4 * inhale" :ry="30 + 6 * inhale"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="'M36 ' + (148 - 6 * inhale) + ' Q92 ' + (110 + 30 * inhale) + ' 148 ' + (148 - 6 * inhale)"/>
+    <text x="92" y="172" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)">diaphragm</text>
+    <text x="92" y="190" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" x-text="t < 0.12 ? 'contracts: air in' : t > 0.88 ? 'relaxes: air out' : 'breathing steadily'"></text>
+    <line x1="142" y1="98" x2="376" y2="70" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="92" y="226" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">millions of alveoli,</text>
+    <text x="92" y="242" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">one shown close up →</text>
+
+    <!-- the alveolus close up, with its airway -->
+    <rect x="404" y="0" width="12" height="40" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1"/>
+    <circle cx="410" cy="64" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="2" :r="bubbleR"/>
+    <text x="456" y="34" font-size="12" fill="var(--color-sky-fg)">alveolus</text>
+    <g fill="var(--color-ok)">
+      <circle cx="398" cy="56" r="3.5"/><circle cx="427" cy="74" r="3.5"/><circle cx="402" cy="76" r="3.5" x-show="!high"/>
+      <circle cx="418" cy="52" r="3.5" x-show="!high"/><circle cx="392" cy="68" r="3.5" x-show="!high"/><circle cx="428" cy="60" r="3.5"/>
+    </g>
+    <text x="448" y="58" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="'O₂ pressure ' + po2 + ' hPa'"></text>
+    <text x="448" y="74" font-size="11" fill="var(--color-fg-faint)" x-text="high ? 'air at 18,000 ft' : 'air at sea level'"></text>
+
+    <!-- the circulation: oxygen-rich in brand, oxygen-poor in info -->
+    <g fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M330 167 L330 106 L410 106" stroke="var(--color-info)" stroke-opacity="0.75"/>
+      <path d="M410 106 L490 106 L490 167" stroke="var(--color-brand)" stroke-opacity="0.75"/>
+      <path d="M490 213 L490 280 L410 280" stroke="var(--color-brand)" stroke-opacity="0.75"/>
+      <path d="M410 280 L330 280 L330 213" stroke="var(--color-info)" stroke-opacity="0.75"/>
+    </g>
+    <g stroke-width="1.5" marker-end="url(#ojy-arrow)">
+      <line x1="342" y1="150" x2="342" y2="124" stroke="var(--color-info)"/>
+      <line x1="478" y1="122" x2="478" y2="148" stroke="var(--color-brand)"/>
+      <line x1="478" y1="232" x2="478" y2="258" stroke="var(--color-brand)"/>
+      <line x1="342" y1="262" x2="342" y2="236" stroke="var(--color-info)"/>
+    </g>
+    <text x="520" y="132" font-size="12" fill="var(--color-brand-fg)">oxygen-rich</text>
+    <text x="520" y="250" font-size="12" fill="var(--color-brand-fg)">arteries</text>
+    <text x="520" y="266" font-size="12" fill="var(--color-brand-fg)">to the body</text>
+    <text x="300" y="132" font-size="12" text-anchor="end" fill="var(--color-info-fg)">oxygen-poor</text>
+    <text x="300" y="250" font-size="12" text-anchor="end" fill="var(--color-info-fg)">veins</text>
+    <text x="300" y="266" font-size="12" text-anchor="end" fill="var(--color-info-fg)">from the body</text>
+    <!-- the heart: right side on the reader's left, as in a front view -->
+    <rect x="300" y="167" width="60" height="46" rx="12" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="2"/>
+    <text x="330" y="188" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-info-fg)">right</text>
+    <text x="330" y="203" font-size="12" text-anchor="middle" fill="var(--color-info-fg)">side</text>
+    <rect x="460" y="167" width="60" height="46" rx="12" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2"/>
+    <text x="490" y="188" font-size="12" text-anchor="middle" font-weight="600" fill="var(--color-brand-fg)">left</text>
+    <text x="490" y="203" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)">side</text>
+    <text x="410" y="186" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg)">heart</text>
+    <text x="410" y="202" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">two pumps</text>
+    <!-- a body cell -->
+    <ellipse cx="412" cy="306" rx="26" ry="14" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.5"/>
+    <text x="448" y="318" font-size="12" fill="var(--color-fg-muted)">a cell (brain, retina)</text>
+    <text x="376" y="310" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">body tissues</text>
+    <text x="410" y="126" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">capillary</text>
+
+    <!-- the travellers -->
+    <g x-show="o2On" :transform="'translate(' + o2.x + ' ' + o2.y + ')'">
+      <circle r="8" fill="var(--color-ok)" stroke="var(--color-surface)" stroke-width="2"/>
+      <text x="0" y="-12" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-ok-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">O₂</text>
+    </g>
+    <g x-show="co2On" :transform="'translate(' + co2.x + ' ' + co2.y + ')'">
+      <circle r="8" fill="var(--color-fg-muted)" stroke="var(--color-surface)" stroke-width="2"/>
+      <text x="0" y="-12" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">CO₂</text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Follow the oxygen'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ojy-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Along the journey">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(st, i) in steps" :key="st.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="st.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ojy-high" class="cursor-pointer"><span>Breathe the air at 18,000 ft (half the pressure)</span>
+        <input type="checkbox" id="ojy-high" x-model="high" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Where it is</dt><dd class="widget-value text-sm" x-text="phase.where"></dd></div>
+    <div class="widget-readout" :class="phase.how.startsWith('Diffusion') ? 'ok' : ''"><dt class="widget-label">What moves it</dt><dd class="widget-value text-sm" x-text="phase.how"></dd></div>
+    <div class="widget-readout" :class="high ? 'warn' : 'ok'"><dt class="widget-label">Oxygen in the air</dt><dd class="widget-value" x-text="'21%, ' + po2 + ' hPa'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('breathe-in')" :aria-pressed="active === 'breathe-in'">Breathe in</button>
+      <button type="button" @click="preset('diffusion-sea-level')" :aria-pressed="active === 'diffusion-sea-level'">Diffusion</button>
+      <button type="button" @click="preset('diffusion-18000')" :aria-pressed="active === 'diffusion-18000'">At 18,000 ft</button>
+      <button type="button" @click="preset('left-heart-to-body')" :aria-pressed="active === 'left-heart-to-body'">To the body</button>
+      <button type="button" @click="preset('carbon-dioxide-back')" :aria-pressed="active === 'carbon-dioxide-back'">CO₂ back</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Only two things push the gases: breathing moves air in and out, and the heart moves blood round; everything that crosses a wall does it by diffusion, from higher pressure to lower. The right side of the heart sends blood to the lungs, the left side to the body. At altitude the oxygen is still 21 percent of the air, but its pressure, and so the push across the alveolar wall, is smaller. The timings are illustrative.</p>
+  <details class="widget-try"><summary>Try it: what makes the oxygen cross into the blood, and why does altitude weaken it?</summary><p>Press Diffusion, then At 18,000 ft: the oxygen diffuses because its pressure in the alveolar air is higher than in the blood arriving from the body. At 18,000 ft that pressure is about half (about 105 hPa), so the push is weaker and the haemoglobin leaves the lungs less than fully loaded.</p></details>
+  <details class="widget-try"><summary>Try it: which side of the heart pumps blood to the lungs?</summary><p>Press CO₂ back: the veins bring the oxygen-poor blood to the right side, which pumps it through the lungs. The left side pumps the oxygen-rich blood from the lungs out to the body.</p></details>
+</div>

@@ -1,0 +1,194 @@
+<div class="widget" x-data="timeline({
+  duration: 30,
+  loop: false,
+  turb: false,
+  pic: false,
+  // the profile as keyframes [t, x, y]: ground y 262, cruise y 125 (heights and timings illustrative)
+  K: [[0, 46, 262], [0.07, 100, 262], [0.09, 100, 262], [0.17, 180, 262], [0.19, 193, 256], [0.22, 213, 238],
+      [0.27, 245, 205], [0.34, 298, 158], [0.38, 330, 136], [0.40, 346, 128], [0.42, 360, 125], [0.64, 478, 125],
+      [0.66, 490, 128], [0.68, 503, 137], [0.74, 538, 172], [0.78, 560, 205], [0.84, 588, 243], [0.86, 596, 256],
+      [0.88, 604, 262], [0.95, 618, 262], [1, 618, 262]],
+  posAt(t) {
+    const K = this.K;
+    for (let i = 1; i < K.length; i++) {
+      if (t <= K[i][0]) {
+        const a = K[i - 1], b = K[i], f = b[0] === a[0] ? 1 : (t - a[0]) / (b[0] - a[0]);
+        return { x: this.lerp(a[1], b[1], f), y: this.lerp(a[2], b[2], f) };
+      }
+    }
+    return { x: 618, y: 262 };
+  },
+  // the profile between two moments, as an SVG path
+  sub(t0, t1) { const p = []; for (let i = 0; i <= 40; i++) { const q = this.posAt(this.lerp(t0, t1, i / 40)); p.push([q.x, q.y]); } return this.path(p); },
+  get pos() { return this.posAt(this.t) },
+  get phase() {
+    const t = this.t;
+    if (t < 0.09) return 'taxi';
+    if (t < 0.22) return 'takeoff';
+    if (t < 0.42) return 'climb';
+    if (t < 0.64) return 'cruise';
+    if (t < 0.80) return 'descent';
+    return 'landing';
+  },
+  get phaseName() {
+    return { 'taxi': 'Taxiing out', 'takeoff': this.t < 0.17 ? 'Take-off roll' : 'Take-off, initial climb', 'climb': 'Climb',
+      'cruise': this.inTurb ? 'Cruise, turbulence' : 'Cruise', 'descent': 'Descent',
+      'landing': this.t < 0.88 ? 'Approach and landing' : 'Landing roll' }[this.phase];
+  },
+  get inTurb() { return this.turb && this.t >= 0.495 && this.t < 0.575 },
+  get airborne() { return this.t >= 0.17 && this.t < 0.88 },
+  get low() { return this.phase === 'takeoff' || this.phase === 'landing' },
+  get heightText() { return !this.airborne ? 'On the ground' : this.low ? 'Close to the ground' : 'Clear of the ground' },
+  get reasons() {
+    const r = [];
+    if (this.phase === 'taxi') r.push('taxiing');
+    if (this.phase === 'takeoff') r.push('take-off');
+    if (this.phase === 'landing') r.push('landing');
+    if (this.inTurb) r.push('the pilot in command directs (turbulence)');
+    else if (this.pic) r.push('the pilot in command directs');
+    return r;
+  },
+  get required() { return this.reasons.length > 0 },
+  get beltText() { return this.required ? 'Required' : 'Only if the pilot in command directs' },
+  get whyText() {
+    if (this.required) return this.reasons.join(', ');
+    return 'smooth air, and the pilot in command has not directed it';
+  },
+  get signReason() {
+    if (this.required) return 'Why: ' + this.reasons.join(', ');
+    return 'Smooth air: the pilot in command decides';
+  },
+  get seatText() {
+    if (this.phase === 'taxi') return 'Adjust and lock now';
+    if (this.phase === 'takeoff') return 'Locked for take-off';
+    if (this.phase === 'landing') return 'Locked for landing';
+    return 'Locked';
+  },
+  get pitch() {
+    const climb = -9 * this.eased(0.165, 0.2) * (1 - this.eased(0.38, 0.42));
+    const desc = 4 * this.eased(0.64, 0.67) * (1 - this.eased(0.85, 0.88));
+    const wob = this.inTurb ? 5 * Math.sin(this.t * 700) : 0;
+    return climb + desc + wob;
+  },
+  get bump() { return this.inTurb ? 3 * Math.sin(this.t * 1100) : 0 },
+  get steps() {
+    const s = [{ at: 0, label: 'Taxi' }, { at: 0.09, label: 'Take-off roll' }, { at: 0.30, label: 'Climb' }, { at: 0.45, label: 'Cruise' }];
+    if (this.turb) s.push({ at: 0.53, label: 'Turbulence' });
+    s.push({ at: 0.70, label: 'Descent' }, { at: 0.84, label: 'Landing' });
+    return s;
+  },
+  get caption() {
+    const p = this.phase;
+    if (p === 'taxi') return 'Taxiing out. Before the aeroplane moves, the pilot in command directs everyone to fasten their belt, and every seat is adjusted and locked (try to move it to prove the lock pin is in).';
+    if (p === 'takeoff' && this.t < 0.17) return 'Take-off roll: belts on for everyone and seats locked. A seat that slides back under acceleration pulls the pilot\'s hands back on the column, raising the nose at low speed: the recipe for a stall just after lift-off.';
+    if (p === 'takeoff') return 'Lifting off and climbing away: belts stay on through the take-off. Close to the ground there is no time to react to anything sudden.';
+    if (this.inTurb) return 'Turbulence: the pilot in command directs belts on, because in rough air an unrestrained head hits the cabin roof. Switching on a fasten-seat-belt sign counts as a direction.';
+    if (this.pic && (p === 'climb' || p === 'cruise' || p === 'descent')) return 'The pilot in command has directed belts on, so they stay on even in smooth air: passengers must obey the pilot\'s lawful instructions.';
+    if (p === 'climb' || p === 'cruise' || p === 'descent') return 'Smooth air en route: there is no height rule. Passengers\' belts are on whenever the pilot in command believes it is necessary for their safety. The pilot in command\'s harness stays fastened at all times.';
+    if (this.t < 0.88) return 'Approaching to land: before landing the pilot in command directs everyone to fasten their belt, and the seats are adjusted and locked.';
+    return 'Landing: belts on and seats locked. Taxiing, take-off and landing are the moments when something sudden is most likely and there is least time to react.';
+  },
+  presets: {
+    'take-off-roll': { t: 0.13, turb: false, pic: false },
+    'smooth-climb': { t: 0.30, turb: false, pic: false },
+    'smooth-cruise': { t: 0.45, turb: false, pic: false },
+    'turbulence': { t: 0.535, turb: true, pic: false },
+    'pic-directs': { t: 0.45, turb: false, pic: true },
+    'approach-to-land': { t: 0.84, turb: false, pic: false },
+    'whole-flight': { t: 0, turb: true, pic: false, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="sbp-title" class="widget-stage">
+    <title id="sbp-title">Side view of a flight from the apron to landing: taxi, take-off roll and initial climb, climb, cruise with an optional patch of turbulence, descent, approach and landing. The parts of the flight where everyone must wear a seat belt (taxiing, take-off and landing, and turbulence, where the pilot in command directs it) are highlighted, a cabin sign lights when belts are required and gives the reason, and a second panel shows that the pilot in command's harness stays fastened at all times.</title>
+    <!-- sky and ground -->
+    <rect x="0" y="0" width="640" height="262" fill="var(--color-sky-soft)"/>
+    <rect x="0" y="262" width="640" height="58" fill="var(--color-surface-2)"/>
+    <rect x="92" y="262" width="548" height="11" fill="var(--color-tarmac)"/>
+    <path d="M110 267.5 H130 M150 267.5 H170 M190 267.5 H210 M230 267.5 H250 M270 267.5 H290 M310 267.5 H330 M350 267.5 H370 M390 267.5 H410 M430 267.5 H450 M470 267.5 H490 M510 267.5 H530 M550 267.5 H570 M590 267.5 H610" stroke="var(--color-paint)" stroke-width="1.5"/>
+    <line x1="0" y1="262" x2="640" y2="262" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <text x="46" y="292" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">apron, taxi</text>
+    <text x="140" y="292" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">take-off roll</text>
+    <text x="616" y="292" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">landing</text>
+    <text x="624" y="312" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">heights and timings illustrative</text>
+    <!-- turbulence patch -->
+    <g x-show="turb">
+      <rect x="396" y="100" width="54" height="50" rx="14" :fill="inTurb ? 'var(--color-warn-soft)' : 'var(--color-surface)'" fill-opacity="0.85" stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="4 3"/>
+      <path d="M404 112 q5 -5 10 0 t10 0 t10 0 t10 0 M404 140 q5 -5 10 0 t10 0 t10 0 t10 0" fill="none" stroke="var(--color-warn)" stroke-width="1.5" stroke-linecap="round"/>
+      <text x="423" y="90" font-size="13" text-anchor="middle" fill="var(--color-warn-fg)" font-weight="600">turbulence</text>
+    </g>
+    <!-- the profile; where belts are required in brand -->
+    <path :d="sub(0, 1)" fill="none" stroke="var(--color-line-strong)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path :d="sub(0, 0.22)" fill="none" stroke="var(--color-brand)" stroke-width="5" stroke-opacity="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path :d="sub(0.80, 1)" fill="none" stroke="var(--color-brand)" stroke-width="5" stroke-opacity="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path :d="sub(0.495, 0.575)" x-show="turb" fill="none" stroke="var(--color-brand)" stroke-width="5" stroke-opacity="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path :d="sub(0, 1)" x-show="pic" fill="none" stroke="var(--color-brand)" stroke-width="5" stroke-opacity="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="282" y="162" font-size="13" text-anchor="end" fill="var(--color-fg-muted)">climb</text>
+    <text x="368" y="150" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">cruise</text>
+    <text x="530" y="146" font-size="13" fill="var(--color-fg-muted)">descent</text>
+    <!-- the aeroplane: python -m tools.diagrams.plane side, scale 0.55, strokes thickened for the small size -->
+    <g :transform="'translate(' + pos.x.toFixed(1) + ' ' + (pos.y - 10.7 + bump).toFixed(1) + ') rotate(' + pitch.toFixed(1) + ')'">
+      <g transform="translate(0 0) rotate(0) scale(0.55)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1.5" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1.5" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1.5" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1.5" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="3" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/></g>
+    </g>
+    <!-- the cabin seat-belt sign -->
+    <rect x="16" y="14" width="222" height="44" rx="8" :fill="required ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="required ? 'var(--color-brand)' : 'var(--color-line-strong)'" stroke-width="2"/>
+    <g fill="none" :stroke="required ? 'var(--color-brand)' : 'var(--color-fg-faint)'" stroke-width="3" stroke-linecap="round">
+      <path d="M28 36 H35 M49 36 H56"/>
+      <rect x="35" y="30" width="14" height="12" rx="2" stroke-width="2"/>
+    </g>
+    <text x="66" y="41" font-size="14" font-weight="700" :fill="required ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">FASTEN SEAT BELTS</text>
+    <text x="18" y="78" font-size="13" :fill="required ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)'" :font-weight="required ? 600 : 400" x-text="signReason" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round"></text>
+    <!-- the pilot in command's harness -->
+    <rect x="452" y="14" width="172" height="44" rx="8" fill="var(--color-surface)" stroke="var(--color-ok)" stroke-width="2"/>
+    <text x="538" y="32" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">Pilot in command's harness</text>
+    <text x="538" y="50" font-size="13" text-anchor="middle" fill="var(--color-ok-fg)" font-weight="700">fastened at all times</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the flight'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="sbp-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Moment of the flight">
+    <span class="widget-clock" x-text="phaseName"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="sbp-turb" class="cursor-pointer"><span>Turbulence en route</span>
+        <input type="checkbox" id="sbp-turb" x-model="turb" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="sbp-pic" class="cursor-pointer"><span>Pilot in command directs belts on (whole flight)</span>
+        <input type="checkbox" id="sbp-pic" x-model="pic" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Phase</dt><dd class="widget-value" x-text="phaseName"></dd></div>
+    <div class="widget-readout" :class="airborne && low ? 'warn' : ''"><dt class="widget-label">Height above the ground</dt><dd class="widget-value" x-text="heightText"></dd></div>
+    <div class="widget-readout" :class="required ? 'warn' : phase === 'taxi' ? '' : 'ok'"><dt class="widget-label">Passengers' belts</dt><dd class="widget-value"><span x-text="beltText"></span><span class="widget-flag warn" x-show="required">belts on</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Why</dt><dd class="widget-value" x-text="whyText"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">Pilot's harness</dt><dd class="widget-value">Fastened, always</dd></div>
+    <div class="widget-readout" :class="phase === 'taxi' ? 'warn' : ''"><dt class="widget-label">Seats</dt><dd class="widget-value" x-text="seatText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('take-off-roll')" :aria-pressed="active === 'take-off-roll'">Take-off roll</button>
+      <button type="button" @click="preset('smooth-climb')" :aria-pressed="active === 'smooth-climb'">Smooth climb</button>
+      <button type="button" @click="preset('smooth-cruise')" :aria-pressed="active === 'smooth-cruise'">Smooth cruise</button>
+      <button type="button" @click="preset('turbulence')" :aria-pressed="active === 'turbulence'">Turbulence</button>
+      <button type="button" @click="preset('pic-directs')" :aria-pressed="active === 'pic-directs'">Pilot directs</button>
+      <button type="button" @click="preset('approach-to-land')" :aria-pressed="active === 'approach-to-land'">Approach to land</button>
+      <button type="button" @click="preset('whole-flight')" :aria-pressed="active === 'whole-flight'">Whole flight</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Belts are required where something sudden is most likely and there is least time to react: taxiing, the take-off and the landing. In flight they go on whenever the pilot in command directs, for example in turbulence, and a lit fasten-seat-belt sign counts as a direction. There is no height rule. The pilot in command's harness is never undone. The heights and timings of this flight are illustrative.</p>
+  <details class="widget-try"><summary>Try it: your passenger unfastens her belt in a smooth climb, well clear of the take-off. Is that allowed?</summary><p>Only if you have not directed belts on. Choose Smooth climb: the sign is out, because the rule leaves it to the pilot in command. Tick Pilot in command directs belts on and the sign lights: once you direct it, she must obey your lawful instruction. If the air turns rough, you direct belts on.</p></details>
+  <details class="widget-try"><summary>Try it: why must the seats be locked for the take-off roll, not just the belts fastened?</summary><p>Choose Take-off roll. Under acceleration an unlocked seat slides back, and the pilot's hands pull the column back with it: the nose rises at low speed, the recipe for a stall just after lift-off.</p></details>
+</div>

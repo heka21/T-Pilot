@@ -1,0 +1,181 @@
+<div class="widget" x-data="timeline({
+  duration: 30,
+  loop: false,
+  kind: 'radiation',
+  change: 900,
+  // the clock: t 0..1 is 1800 to 1800 the next day (WST); u is minutes since 1800
+  get u() { return this.t * 1440 },
+  get min() { return (1080 + this.u) % 1440 },
+  get clock() { return this.hhmm(this.min) },
+  // the change time as minutes since 1800
+  get uChange() { return (this.change + 1440 - 1080) % 1440 },
+  get daylight() { const m = this.min; return this.ease(this.seg(m, 380, 440)) * (1 - this.ease(this.seg(m, 1030, 1090))) },
+  get sunUp() { return this.min > 400 && this.min < 1070 },
+  get sunPos() { const a = Math.PI * this.seg(this.min, 400, 1070); return { x: 320 - 280 * Math.cos(a), y: 150 - 110 * Math.sin(a) } },
+  // radiation fog (illustrative timings): forms 0300 to 0600, thickens just after sunrise, burns off from the edges,
+  // lifts into low stratus, clear by about 1030
+  get radDepth() { const u = this.u; return u < 540 ? 0 : u < 760 ? 34 * this.ease(this.seg(u, 540, 760)) : u < 830 ? 34 + 16 * this.ease(this.seg(u, 760, 830)) : 50 },
+  get radWidth() { return 1 - this.ease(this.seg(this.u, 840, 960)) },
+  get radStratus() { return this.u >= 930 && this.u < 1030 ? 1 - this.ease(this.seg(this.u, 990, 1030)) : 0 },
+  get radFog() { return this.radDepth > 4 && this.radWidth > 0.12 },
+  // advection fog: a fog bank over the cool sea drifts ashore on the onshore wind from about 2200 and stays until the
+  // wind changes direction; the sun does nothing to it
+  get changed() { return this.u >= this.uChange },
+  get advFront() {
+    const ashore = 230 + 260 * this.ease(this.seg(this.u, 240, 340));
+    return this.changed ? this.lerp(ashore, 110, this.ease(this.seg(this.u, this.uChange, this.uChange + 70))) : ashore;
+  },
+  get advFog() { return this.advFront > 345 },
+  get fogNow() { return this.kind === 'radiation' ? this.radFog : this.advFog },
+  get fogText() {
+    if (this.kind === 'radiation') {
+      if (this.radFog) return 'Fog: visibility under 1,000 m';
+      if (this.radStratus > 0.1) return 'Fog lifted into low stratus';
+      return this.u < 540 ? 'Clear, cooling fast' : 'Clear';
+    }
+    return this.advFog ? 'Fog: visibility under 1,000 m' : this.advFront > 262 ? 'Fog bank at the coast' : 'Clear: fog bank out at sea';
+  },
+  get windText() {
+    if (this.kind === 'radiation') return 'Light, about 2 to 5 kt';
+    return this.changed ? 'Offshore: the wind has changed' : 'Onshore, moderate';
+  },
+  get clearsText() { return this.kind === 'radiation' ? 'The sun heating the ground (or a stronger wind)' : 'Only a change of wind direction' },
+  get steps() {
+    if (this.kind === 'radiation') return [{ at: 0, label: 'Clear evening' }, { at: 0.375, label: 'Fog forms' }, { at: 0.53, label: 'Sunrise: thicker' }, { at: 0.585, label: 'Burning off' }, { at: 0.72, label: 'Clear' }];
+    return [{ at: 0, label: 'Fog bank at sea' }, { at: 0.2, label: 'Drifts ashore' }, { at: 0.55, label: 'Sun up: no change' }, { at: Math.min(0.99, this.uChange / 1440 + 0.02), label: 'Wind changes' }];
+  },
+  get caption() {
+    if (this.kind === 'radiation') {
+      if (this.u < 540) return 'A clear sky, a light wind and moist air: the ground radiates its heat away and chills the air on it, and the cold air drains downhill into the valley.';
+      if (this.u < 760) return 'Around the coldest time, near dawn, the pooled air reaches its dew point: radiation fog fills the valley floor while the hills stay clear.';
+      if (this.u < 840) return 'Just after sunrise the fog often thickens for a while: the first sunshine stirs the cold, saturated layer before it can warm it.';
+      if (this.radFog || this.radStratus > 0.1) return 'The sun heats the ground that made the fog. It burns off from the edges, often lifting into a layer of low stratus first.';
+      return 'By mid-morning it has gone: sunshine cleared it because the cooling came from the ground, and the ground has warmed.';
+    }
+    if (this.u < 240) return 'Warm, moist air moving over the cooler sea is chilled from below to its dew point: a bank of sea fog, sitting offshore.';
+    if (!this.changed && this.sunUp) return 'The sun is up and shining on the fog, and nothing happens: the cooling comes from the cold sea underneath, and the sun cannot warm the sea much in a day.';
+    if (!this.changed) return 'A moderate onshore wind carries the fog over the coast and the aerodrome. Advection fog forms day or night, and with a wind that would mix radiation fog away.';
+    return 'The wind has swung offshore: that, and only that, clears it. The fog bank is pushed back out to sea.';
+  },
+  presets: {
+    'radiation-fog-at-dawn': { kind: 'radiation', change: 900, t: 0.52 },
+    'radiation-burns-off': { kind: 'radiation', change: 900, t: 0.625 },
+    'sea-fog-persists-in-sun': { kind: 'advection', change: 960, t: 0.79 },
+    'wind-change-clears': { kind: 'advection', change: 840, t: 0.92 },
+    'whole-night-radiation': { kind: 'radiation', change: 900, t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="rva-title" class="widget-stage">
+    <title id="rva-title">A day and a night in cross-section, either an inland valley where radiation fog forms at dawn and burns off with the morning sun, or a coastline where sea fog drifts ashore on an onshore wind and stays through the sunshine until the wind changes direction</title>
+    <defs>
+      <marker id="rva-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- sky, stars, sun -->
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)"/>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-sky-soft)" :fill-opacity="daylight"/>
+    <g fill="var(--color-fg-faint)" :fill-opacity="1 - daylight">
+      <circle cx="210" cy="40" r="1.5"/><circle cx="300" cy="70" r="1.2"/><circle cx="380" cy="30" r="1.5"/><circle cx="460" cy="80" r="1.2"/>
+      <circle cx="540" cy="45" r="1.5"/><circle cx="150" cy="95" r="1.2"/><circle cx="250" cy="120" r="1.2"/>
+      <path d="M572 34 a14 14 0 1 0 12 22 a11 11 0 1 1 -12 -22 Z"/>
+    </g>
+    <circle r="13" fill="var(--color-warn)" :cx="sunPos.x" :cy="sunPos.y" x-show="sunUp"/>
+
+    <!-- ===== radiation: an inland valley ===== -->
+    <g x-show="kind === 'radiation'">
+      <!-- fog in the valley (the hills drawn over it hide its edges) -->
+      <rect :x="320 - 150 * radWidth" :y="252 - radDepth" :width="300 * radWidth" :height="radDepth + 4" rx="10"
+        fill="var(--color-fg-faint)" fill-opacity="0.55" stroke="var(--color-fg-muted)" stroke-width="1.25" x-show="radDepth > 1 && radWidth > 0.02"/>
+      <text x="320" y="240" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg)" x-show="radFog && radDepth > 20">fog</text>
+      <!-- low stratus after the fog lifts -->
+      <rect :x="320 - 110 * radStratus" y="186" :width="220 * radStratus" height="16" rx="8" fill="var(--color-fg-faint)" fill-opacity="0.55" stroke="var(--color-fg-muted)" stroke-width="1.25" x-show="radStratus > 0.05"/>
+      <path d="M0 150 L120 140 L160 152 L220 250 L420 250 L480 150 L540 140 L640 146 L640 300 L0 300 Z" fill="var(--color-ok-soft)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+      <!-- cold air draining downhill at night -->
+      <g stroke="var(--color-info)" stroke-width="1.5" marker-end="url(#rva-arrow)" x-show="u < 760">
+        <line x1="166" y1="170" x2="196" y2="220"/><line x1="474" y1="170" x2="444" y2="220"/>
+      </g>
+      <text x="150" y="132" font-size="12" text-anchor="middle" fill="var(--color-info)" x-show="u < 760">cold air drains down</text>
+      <line x1="320" y1="250" x2="320" y2="258" stroke="var(--color-fg)" stroke-width="2"/>
+      <text x="320" y="276" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg)">Northam</text>
+      <text x="320" y="294" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">Avon valley</text>
+      <text x="580" y="130" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">hills stay clear</text>
+    </g>
+
+    <!-- ===== advection: the coast ===== -->
+    <g x-show="kind === 'advection'">
+      <rect x="0" y="250" width="262" height="50" fill="var(--color-sky-soft)"/>
+      <rect x="0" y="250" width="262" height="50" fill="var(--color-info)" fill-opacity="0.12"/>
+      <path d="M262 250 L640 246 L640 300 L262 300 Z" fill="var(--color-ok-soft)" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linejoin="round"/>
+      <text x="130" y="280" font-size="13" text-anchor="middle" fill="var(--color-sky-fg)">cool sea</text>
+      <!-- the fog bank -->
+      <path :d="'M-10 250 L-10 198 Q' + (advFront * 0.5) + ' 190 ' + (advFront - 24) + ' 200 Q' + (advFront + 6) + ' 206 ' + advFront + ' 250 Z'"
+        fill="var(--color-fg-faint)" fill-opacity="0.55" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+      <text x="80" y="226" font-size="13" fill="var(--color-fg)" font-weight="600">sea fog</text>
+      <!-- the wind: onshore, then offshore after the change -->
+      <g stroke="var(--color-brand)" stroke-width="2" marker-end="url(#rva-arrow)" x-show="!changed">
+        <line x1="60" y1="170" x2="110" y2="170"/><line x1="300" y1="170" x2="350" y2="170"/><line x1="500" y1="170" x2="550" y2="170"/>
+      </g>
+      <g stroke="var(--color-brand)" stroke-width="2" marker-end="url(#rva-arrow)" x-show="changed">
+        <line x1="110" y1="170" x2="60" y2="170"/><line x1="350" y1="170" x2="300" y2="170"/><line x1="550" y1="170" x2="500" y2="170"/>
+      </g>
+      <text x="320" y="158" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" font-weight="600" x-text="changed ? 'wind offshore' : 'moist air, onshore wind'"></text>
+      <line x1="345" y1="248" x2="345" y2="256" stroke="var(--color-fg)" stroke-width="2"/>
+      <text x="345" y="276" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg)">coastal aerodrome</text>
+    </g>
+
+    <!-- clock -->
+    <text x="20" y="28" font-size="16" font-weight="600" fill="var(--color-fg)" class="num" x-text="clock + ' WST'"></text>
+    <text x="20" y="46" font-size="12" fill="var(--color-fg-faint)" x-text="kind === 'radiation' ? 'radiation fog' : 'advection (sea) fog'"></text>
+    <text x="620" y="28" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">timings illustrative</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the night and day'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="rva-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time from 1800 to 1800 the next day">
+    <span class="widget-clock" x-text="clock"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">Kind of fog</span>
+      <div class="widget-presets" role="group" aria-label="Kind of fog">
+        <button type="button" @click="kind = 'radiation'; active = null" :aria-pressed="kind === 'radiation'">Radiation (inland valley)</button>
+        <button type="button" @click="kind = 'advection'; active = null" :aria-pressed="kind === 'advection'">Advection (sea fog)</button>
+      </div>
+    </div>
+    <div class="widget-control" x-show="kind === 'advection'">
+      <label for="rva-change">Wind changes to offshore at <output for="rva-change" class="num" x-text="hhmm(change)"></output></label>
+      <input type="range" id="rva-change" min="480" max="1050" step="30" x-model.number="change" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Time</dt><dd class="widget-value num" x-text="clock + ' WST'"></dd></div>
+    <div class="widget-readout" :class="fogNow ? 'bad' : 'ok'">
+      <dt class="widget-label">At the aerodrome</dt>
+      <dd class="widget-value"><span x-text="fogText"></span><span class="widget-flag bad" x-show="fogNow">below VMC</span></dd>
+    </div>
+    <div class="widget-readout"><dt class="widget-label">Wind</dt><dd class="widget-value" x-text="windText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">What clears it</dt><dd class="widget-value" x-text="clearsText"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('whole-night-radiation')" :aria-pressed="active === 'whole-night-radiation'">Play the night</button>
+      <button type="button" @click="preset('radiation-fog-at-dawn')" :aria-pressed="active === 'radiation-fog-at-dawn'">Valley fog at dawn</button>
+      <button type="button" @click="preset('radiation-burns-off')" :aria-pressed="active === 'radiation-burns-off'">Burning off</button>
+      <button type="button" @click="preset('sea-fog-persists-in-sun')" :aria-pressed="active === 'sea-fog-persists-in-sun'">Sea fog in sunshine</button>
+      <button type="button" @click="preset('wind-change-clears')" :aria-pressed="active === 'wind-change-clears'">Wind change clears it</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> What makes the fog decides what clears it. Radiation fog is made by the ground cooling under a clear night sky, so the morning sun, heating that ground, burns it off. Advection fog is made by moist air flowing over a cold sea, so sunshine does almost nothing and it stays, day or night, until the wind changes direction. Timings here are illustrative; the exam wants the causes and the cures.</p>
+  <details class="widget-try"><summary>Try it: fog that "persisted through the day despite sunshine" with a 12 kt wind. Which kind?</summary><p>Advection fog. Press Sea fog in sunshine: the sun is high and the fog has not moved, because the cold sea keeps chilling the air from below. A 12 kt wind would have mixed radiation fog away.</p></details>
+  <details class="widget-try"><summary>Try it: you plan a 0800 departure from Northam after a clear, still winter night. When do you go?</summary><p>Play the night: the fog forms near dawn, thickens just after sunrise and burns off from the edges through the morning. Plan for late morning, once the sun has heated the valley floor.</p></details>
+</div>

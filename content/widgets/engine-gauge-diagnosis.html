@@ -1,0 +1,400 @@
+<div class="widget" x-data="timeline({
+  duration: 26, loop: false, sc: 'oil-loss',
+  // Needle positions are 0..1 across each dial (no numbers: the lessons give no limits, except the voltmeter's
+  // about 14 volts while charging, sinking towards battery voltage, 12 volts on a 12-volt system, BAKC 3.1).
+  // The coloured arcs and the timings are illustrative. Each fault follows the two tables in BAKC 3.4 and runs its
+  // course with nothing done, so the reader sees where each trend leads.
+  _norm: { tach: 0.62, oilP: 0.56, oilT: 0.45, cht: 0.46, fuelP: 0.5, amp: 0.57, volt: 0.62, suct: 0.52 },
+  _bands: {
+    tach: [[0.3, 0.8, 'ok'], [0.86, 0.9, 'bad']],
+    oilP: [[0, 0.12, 'bad'], [0.12, 0.3, 'warn'], [0.3, 0.8, 'ok'], [0.8, 0.92, 'warn'], [0.92, 1, 'bad']],
+    oilT: [[0.2, 0.7, 'ok'], [0.7, 0.84, 'warn'], [0.84, 1, 'bad']],
+    cht: [[0.15, 0.7, 'ok'], [0.7, 0.84, 'warn'], [0.84, 1, 'bad']],
+    fuelP: [[0, 0.1, 'bad'], [0.1, 0.25, 'warn'], [0.25, 0.75, 'ok'], [0.75, 0.88, 'warn'], [0.88, 1, 'bad']],
+    amp: [[0.08, 0.47, 'warn'], [0.5, 0.72, 'ok'], [0.72, 0.85, 'warn'], [0.85, 1, 'bad']],
+    volt: [[0.08, 0.5, 'warn'], [0.54, 0.72, 'ok'], [0.8, 1, 'bad']],
+    suct: [[0, 0.25, 'bad'], [0.25, 0.35, 'warn'], [0.35, 0.7, 'ok'], [0.7, 0.85, 'warn']],
+  },
+  _info: {
+    'oil-loss': {
+      see: 'Oil pressure falling, oil temperature rising',
+      seeCap: 'Two needles move together: the oil pressure sags while the oil temperature creeps up. Everything else is still in the green.',
+      cause: 'Losing oil or failing to circulate it: low oil quantity, a leak, a pump failure or a blocked cooler',
+      act: 'Reduce power, enrich, land as soon as possible',
+      ifNot: 'Engine seizure',
+      diagCap: 'Less oil is carrying the same heat, so the temperature rises as the pressure falls: the engine is losing oil or failing to circulate it. Reduce power, enrich and land as soon as possible.',
+      end: 'Engine seizes',
+      endCap: 'Unresolved: the pressure reaches the bottom of the dial, the temperature goes into the red and the engine seizes.',
+    },
+    'gauge-fault': {
+      see: 'Oil pressure falling, oil temperature steady',
+      seeCap: 'Only the oil pressure moves. The oil temperature stays on its mark.',
+      cause: 'Perhaps the gauge itself, but it may be real',
+      act: 'Treat it as real: reduce power, enrich, land as soon as possible',
+      ifNot: 'If it is real, engine seizure',
+      diagCap: 'Pressure falling with a steady temperature may be the gauge itself at fault, but you cannot prove that in the air. Treat it as real until you are on the ground: reduce power, enrich and land as soon as possible.',
+      end: 'Still treat it as real',
+      endCap: 'Here nothing else moves, which points to the gauge. You still land and find out on the ground: had it been real, the engine would have seized.',
+    },
+    'cowl-flaps': {
+      see: 'Oil temperature and CHT rising, then oil pressure falling',
+      seeCap: 'The oil temperature and the CHT climb together. A little later the oil pressure starts to fall.',
+      cause: 'Heat is trapped: cowl flaps stuck shut or a blocked oil cooler, and the hot oil thins and loses pressure',
+      act: 'Open the cowl flaps, enrich, reduce power, lower the nose for more airflow',
+      ifNot: 'Overheating: detonation and engine failure',
+      diagCap: 'Heat is not getting out: cowl flaps stuck shut or a blocked oil cooler. The oil thins as it heats, so its pressure falls. Open the cowl flaps, enrich, reduce power and lower the nose for more cooling air.',
+      end: 'Detonation',
+      endCap: 'Unresolved: the CHT goes into the red, detonation makes the engine run rough, and engine failure follows.',
+    },
+    'lean-cht': {
+      see: 'CHT rising on its own',
+      seeCap: 'Only the CHT climbs. The oil pressure and temperature stay close to their marks.',
+      cause: 'Cylinders too hot: a lean mixture (or high power at low airspeed, cowl flaps closed, detonation already happening)',
+      act: 'Enrich, reduce power, increase airspeed, open the cowl flaps',
+      ifNot: 'Detonation and engine damage',
+      diagCap: 'A high CHT means the cylinders are too hot. Here the mixture has been leaned too far. Enrich, reduce power, increase airspeed and open the cowl flaps.',
+      end: 'Detonation',
+      endCap: 'Unresolved: the CHT goes into the red and detonation starts, damaging the engine.',
+    },
+    'alternator': {
+      see: 'Ammeter discharge, voltage sagging, ALT light on',
+      seeCap: 'The ammeter swings to discharge, the ALT warning light comes on and the voltmeter sags from about 14 volts towards battery voltage. The engine gauges do not move.',
+      cause: 'Alternator failed: the battery is carrying the whole load',
+      act: 'Check the alternator switch and field breaker, cycle it once if the POH allows, reduce the load to essentials',
+      ifNot: 'Battery flat in perhaps 30 to 60 minutes: radios, transponder, electric flaps, fuel pump and lights lost',
+      diagCap: 'The alternator has stopped and the battery has quietly taken over. Check the alternator switch and field breaker, cycle it once if the POH allows, and if it stays off reduce the load to essentials and plan to land.',
+      end: 'Battery flat',
+      endCap: 'Unresolved: after perhaps 30 to 60 minutes the battery is flat. The radios fade, with the transponder, electric flaps, fuel pump and lights. The engine runs on its magnetos regardless.',
+    },
+    'regulator': {
+      see: 'Very high charge, high voltage',
+      seeCap: 'The ammeter shows a very high charge that does not settle, and the voltmeter climbs well above 14 volts.',
+      cause: 'Voltage regulator failed: the alternator is overcharging (a very high charge can also be a battery fault)',
+      act: 'Switch the alternator off as the POH directs; reduce load, check breakers',
+      ifNot: 'A runaway charge overheats the battery; avionics damaged',
+      diagCap: 'High voltage means the regulator has failed and the alternator is overcharging. Switch the alternator off, as the POH directs, then fly on the battery as for an alternator failure.',
+      end: 'Overcharging',
+      endCap: 'Unresolved: the runaway charge overheats the battery, and the high voltage can damage the battery and the avionics.',
+    },
+    'fuel': {
+      see: 'Fuel pressure falling, then rough running',
+      seeCap: 'The fuel pressure falls steadily while every other needle holds. Then the engine starts to run rough.',
+      cause: 'Fuel not reaching the engine: a blocked vent or a failed pump (or an empty tank, vapour lock)',
+      act: 'Booster pump on, change tanks, mixture rich',
+      ifNot: 'Fuel starvation: the engine stops, a forced landing',
+      diagCap: 'Fuel is not reaching the engine properly: a blocked vent or a failed pump. Follow the fuel: booster pump on (it takes over from a failed engine pump), change tanks (the other vent is probably clear), mixture rich.',
+      end: 'Engine stops',
+      endCap: 'Unresolved: fuel starvation. The engine stops with fuel still in the tank, and a blocked vent can buckle the tank.',
+    },
+    'vacuum': {
+      see: 'Suction low, LOW VAC light, attitude indicator drifting',
+      seeCap: 'The suction needle drops out of the green and the LOW VAC light comes on. The engine gauges are fine, but the attitude indicator slowly starts to show a bank while the wings are level.',
+      cause: 'Vacuum pump failed: the gyros are slowing down',
+      act: 'Cross-check the turn coordinator, compass and pressure instruments; stay visual',
+      ifNot: 'No reliable attitude or heading reference: do not enter cloud',
+      diagCap: 'The vacuum pump has failed, so the gyros slow, drift and will topple. Cross-check with the turn coordinator, compass and pressure instruments, and stay in visual conditions.',
+      end: 'Gyros topple',
+      endCap: 'Unresolved: the attitude and heading indicators topple. With no reliable attitude reference, do not enter cloud.',
+    },
+    'carb-ice': {
+      see: 'RPM slowly falling, throttle unchanged',
+      seeCap: 'Only the tachometer moves: the RPM creeps down with the throttle untouched. Nothing else changes.',
+      cause: 'Carburettor ice first; then a magneto problem or a propeller fault',
+      act: 'Full carburettor heat and leave it on; then check the magnetos',
+      ifNot: 'Engine stops',
+      diagCap: 'RPM falling with the throttle unchanged in a fixed-pitch aeroplane is carburettor ice until proven otherwise. Apply full carburettor heat and leave it on, then check the magnetos. Do not chase it with the throttle.',
+      end: 'Engine stops',
+      endCap: 'Unresolved: the ice keeps building, the engine runs rough and then stops.',
+    },
+  },
+  get info() { return this._info[this.sc] },
+  // gauge positions for the current scenario and clock
+  get g() {
+    const t = this.t, N = this._norm, L = this.lerp, e = (a, b) => this.ease(this.seg(t, a, b));
+    const j = (a) => a * Math.sin(t * 830) * Math.sin(t * 297 + 1);
+    const g = Object.assign({}, N, { bank: 0, pitch: 0, alt: false, vac: false, com: 1, rough: false, stopped: false });
+    switch (this.sc) {
+      case 'oil-loss':
+        g.oilP = L(N.oilP, 0.14, e(0.12, 0.78)) - 0.13 * e(0.8, 0.92);
+        g.oilT = L(N.oilT, 0.8, e(0.14, 0.78)) + 0.12 * e(0.8, 0.92);
+        g.cht = N.cht + 0.1 * e(0.4, 0.95);
+        g.rough = t > 0.84 && t < 0.94; g.stopped = t >= 0.94;
+        g.tach = N.tach - 0.12 * e(0.84, 0.94) + (g.rough ? j(0.02) : 0);
+        break;
+      case 'gauge-fault':
+        g.oilP = L(N.oilP, 0.1, e(0.12, 0.6));
+        break;
+      case 'cowl-flaps':
+        g.oilT = L(N.oilT, 0.8, e(0.12, 0.6)) + 0.1 * e(0.8, 0.95);
+        g.cht = L(N.cht, 0.8, e(0.12, 0.55)) + 0.14 * e(0.8, 0.95);
+        g.oilP = L(N.oilP, 0.24, e(0.36, 0.8));
+        g.rough = t > 0.84;
+        g.tach = N.tach - 0.07 * e(0.84, 1) + (g.rough ? j(0.02) : 0);
+        break;
+      case 'lean-cht':
+        g.cht = L(N.cht, 0.8, e(0.12, 0.7)) + 0.13 * e(0.8, 0.95);
+        g.oilT = N.oilT + 0.06 * e(0.3, 0.9);
+        g.rough = t > 0.84;
+        g.tach = N.tach - 0.05 * e(0.84, 1) + (g.rough ? j(0.02) : 0);
+        break;
+      case 'alternator':
+        g.amp = L(N.amp, 0.3, e(0.12, 0.17)) + 0.1 * e(0.75, 1);
+        g.volt = L(N.volt, 0.35, e(0.12, 0.3)) - 0.2 * e(0.45, 0.95);
+        g.alt = t >= 0.13; g.com = 1 - e(0.78, 0.95);
+        break;
+      case 'regulator':
+        g.amp = L(N.amp, 0.94, e(0.12, 0.35));
+        g.volt = L(N.volt, 0.93, e(0.12, 0.4));
+        break;
+      case 'fuel':
+        g.rough = t > 0.55 && t < 0.9; g.stopped = t >= 0.9;
+        g.fuelP = L(N.fuelP, 0.14, e(0.12, 0.6)) - 0.14 * e(0.8, 0.9) + (g.rough ? j(0.05) : 0);
+        g.tach = N.tach - 0.1 * e(0.6, 0.9) + (g.rough ? j(0.03) : 0);
+        break;
+      case 'vacuum':
+        g.suct = L(N.suct, 0.1, e(0.12, 0.3)); g.vac = t >= 0.22;
+        g.bank = 10 * e(0.3, 0.78) + 45 * e(0.8, 0.95); g.pitch = 5 * e(0.4, 0.78) + 13 * e(0.8, 0.95);
+        break;
+      case 'carb-ice':
+        g.rough = t > 0.55 && t < 0.94; g.stopped = t >= 0.94;
+        g.tach = N.tach - 0.13 * e(0.12, 0.78) - 0.4 * e(0.82, 0.94) + (g.rough ? j(0.02) : 0);
+        break;
+    }
+    if (g.stopped) g.tach = 0;
+    return g;
+  },
+  // dials: 240 degree sweep, arcs at radius 38
+  tip(cx, cy, v, r) { return this.pol(cx, cy, r || 33, -120 + 240 * this.clamp(v, 0, 1)) },
+  arc(cx, cy, v0, v1) {
+    const a = this.tip(cx, cy, v0, 38), b = this.tip(cx, cy, v1, 38);
+    return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' A38 38 0 ' + ((v1 - v0) * 240 > 180 ? 1 : 0) + ' 1 ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1);
+  },
+  band(k, cx, cy, kind) { return this._bands[k].filter((b) => b[2] === kind).map((b) => this.arc(cx, cy, b[0], b[1])).join(' ') || 'M0 0' },
+  zone(k) { const v = this.g[k], b = this._bands[k].find((z) => v >= z[0] - 1e-9 && v <= z[1] + 1e-9); return b ? b[2] : '' },
+  needle(k) { const z = this.zone(k); return z === 'bad' ? 'var(--color-bad)' : z === 'warn' ? 'var(--color-warn)' : 'var(--color-fg)' },
+  // a trend arrow under the hub once a needle has left its mark
+  moved(k) { return Math.abs(this.g[k] - this._norm[k]) > 0.05 },
+  trend(cx, cy, k) { const up = this.g[k] > this._norm[k]; return up ? 'M' + (cx - 6) + ' ' + (cy + 31) + ' l12 0 l-6 -10 Z' : 'M' + (cx - 6) + ' ' + (cy + 21) + ' l12 0 l-6 10 Z' },
+  mark(cx, cy, k) { const a = this.tip(cx, cy, this._norm[k], 29), b = this.tip(cx, cy, this._norm[k], 43); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  get phase() { return this.t < 0.12 ? 0 : this.t < 0.45 ? 1 : this.t < 0.8 ? 2 : 3 },
+  get steps() { return [{ at: 0, label: 'All on their marks' }, { at: 0.12, label: 'A needle moves' }, { at: 0.45, label: 'Diagnose' }, { at: 0.8, label: this.info.end }] },
+  get caption() {
+    if (this.phase === 0) return 'Cruise, every needle in the green. The faint marks show where each needle sat: watch for one that leaves its mark, and pause to name the cause before the widget does.';
+    if (this.phase === 1) return this.info.seeCap;
+    if (this.phase === 2) return this.info.diagCap;
+    return this.info.endCap;
+  },
+  pick() { this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'losing-oil': { sc: 'oil-loss', t: 0.55 },
+    'oil-gauge-fault': { sc: 'gauge-fault', t: 0.55 },
+    'cowl-flaps-shut': { sc: 'cowl-flaps', t: 0.6 },
+    'lean-mixture-cht': { sc: 'lean-cht', t: 0.6 },
+    'alternator-failed': { sc: 'alternator', t: 0.55 },
+    'regulator-failed': { sc: 'regulator', t: 0.55 },
+    'vent-blocked': { sc: 'fuel', t: 0.6 },
+    'vacuum-pump-failed': { sc: 'vacuum', t: 0.6 },
+    'carb-ice-rpm-loss': { sc: 'carb-ice', t: 0.55 },
+  },
+})">
+  <svg viewBox="0 0 640 298" role="img" aria-labelledby="egd-title" class="widget-stage">
+    <title id="egd-title">An engine and systems panel: tachometer, oil pressure, oil temperature, cylinder head temperature, fuel pressure, centre-zero ammeter, voltmeter, suction gauge, attitude indicator and warning lights, with the needles drifting as the chosen fault develops</title>
+    <defs>
+      <clipPath id="egd-ai-clip"><circle cx="448" cy="206" r="40"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="298" rx="10" fill="var(--color-surface-2)"/>
+
+    <!-- tachometer -->
+    <circle cx="64" cy="72" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('tach', 64, 72, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('tach', 64, 72, 'bad')"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(64, 72, 'tach')"/>
+    <line x1="64" y1="72" stroke-width="3" stroke-linecap="round" :stroke="g.stopped ? 'var(--color-bad)' : needle('tach')" :x2="tip(64, 72, g.tach).x" :y2="tip(64, 72, g.tach).y"/>
+    <circle cx="64" cy="72" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('tach')" :d="trend(64, 72, 'tach')"/>
+    <text x="64" y="146" font-size="12" text-anchor="middle" :fill="g.stopped || g.rough ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" :font-weight="g.stopped || g.rough ? 600 : 400" x-text="g.stopped ? 'engine stopped' : g.rough ? 'RPM: rough' : 'tachometer'"></text>
+
+    <!-- oil pressure -->
+    <circle cx="192" cy="72" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('oilP', 192, 72, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-warn)" :d="band('oilP', 192, 72, 'warn')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('oilP', 192, 72, 'bad')"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(192, 72, 'oilP')"/>
+    <line x1="192" y1="72" stroke-width="3" stroke-linecap="round" :stroke="needle('oilP')" :x2="tip(192, 72, g.oilP).x" :y2="tip(192, 72, g.oilP).y"/>
+    <circle cx="192" cy="72" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('oilP')" :d="trend(192, 72, 'oilP')"/>
+    <text x="192" y="146" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">oil pressure</text>
+
+    <!-- oil temperature -->
+    <circle cx="320" cy="72" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('oilT', 320, 72, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-warn)" :d="band('oilT', 320, 72, 'warn')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('oilT', 320, 72, 'bad')"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(320, 72, 'oilT')"/>
+    <line x1="320" y1="72" stroke-width="3" stroke-linecap="round" :stroke="needle('oilT')" :x2="tip(320, 72, g.oilT).x" :y2="tip(320, 72, g.oilT).y"/>
+    <circle cx="320" cy="72" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('oilT')" :d="trend(320, 72, 'oilT')"/>
+    <text x="320" y="146" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">oil temperature</text>
+
+    <!-- cylinder head temperature -->
+    <circle cx="448" cy="72" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('cht', 448, 72, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-warn)" :d="band('cht', 448, 72, 'warn')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('cht', 448, 72, 'bad')"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(448, 72, 'cht')"/>
+    <line x1="448" y1="72" stroke-width="3" stroke-linecap="round" :stroke="needle('cht')" :x2="tip(448, 72, g.cht).x" :y2="tip(448, 72, g.cht).y"/>
+    <circle cx="448" cy="72" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('cht')" :d="trend(448, 72, 'cht')"/>
+    <text x="448" y="146" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">CHT</text>
+
+    <!-- fuel pressure -->
+    <circle cx="576" cy="72" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('fuelP', 576, 72, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-warn)" :d="band('fuelP', 576, 72, 'warn')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('fuelP', 576, 72, 'bad')"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(576, 72, 'fuelP')"/>
+    <line x1="576" y1="72" stroke-width="3" stroke-linecap="round" :stroke="needle('fuelP')" :x2="tip(576, 72, g.fuelP).x" :y2="tip(576, 72, g.fuelP).y"/>
+    <circle cx="576" cy="72" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('fuelP')" :d="trend(576, 72, 'fuelP')"/>
+    <text x="576" y="146" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">fuel pressure</text>
+
+    <g transform="translate(0 8)">
+    <!-- centre-zero ammeter -->
+    <circle cx="64" cy="206" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('amp', 64, 206, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-warn)" :d="band('amp', 64, 206, 'warn')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('amp', 64, 206, 'bad')"/>
+    <line x1="64" y1="166" x2="64" y2="172" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <text x="64" y="162" font-size="11" text-anchor="middle" class="num" fill="var(--color-fg-muted)">0</text>
+    <text x="30" y="236" font-size="15" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">−</text>
+    <text x="98" y="236" font-size="15" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">+</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(64, 206, 'amp')"/>
+    <line x1="64" y1="206" stroke-width="3" stroke-linecap="round" :stroke="needle('amp')" :x2="tip(64, 206, g.amp).x" :y2="tip(64, 206, g.amp).y"/>
+    <circle cx="64" cy="206" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('amp')" :d="trend(64, 206, 'amp')"/>
+    <text x="64" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">ammeter</text>
+
+    <!-- voltmeter: about 14 V charging, 12 V battery (BAKC 3.1) -->
+    <circle cx="192" cy="206" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('volt', 192, 206, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-warn)" :d="band('volt', 192, 206, 'warn')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('volt', 192, 206, 'bad')"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1.5" :d="'M' + tip(192, 206, 0.35, 34).x + ' ' + tip(192, 206, 0.35, 34).y + ' L' + tip(192, 206, 0.35, 40).x + ' ' + tip(192, 206, 0.35, 40).y"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1.5" :d="'M' + tip(192, 206, 0.62, 34).x + ' ' + tip(192, 206, 0.62, 34).y + ' L' + tip(192, 206, 0.62, 40).x + ' ' + tip(192, 206, 0.62, 40).y"/>
+    <text :x="tip(192, 206, 0.35, 48).x" :y="tip(192, 206, 0.35, 48).y + 4" font-size="11" text-anchor="middle" class="num" fill="var(--color-fg-muted)">12</text>
+    <text :x="tip(192, 206, 0.62, 48).x" :y="tip(192, 206, 0.62, 48).y + 4" font-size="11" text-anchor="middle" class="num" fill="var(--color-fg-muted)">14</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(192, 206, 'volt')"/>
+    <line x1="192" y1="206" stroke-width="3" stroke-linecap="round" :stroke="needle('volt')" :x2="tip(192, 206, g.volt).x" :y2="tip(192, 206, g.volt).y"/>
+    <circle cx="192" cy="206" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('volt')" :d="trend(192, 206, 'volt')"/>
+    <text x="192" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">voltmeter (volts)</text>
+
+    <!-- suction -->
+    <circle cx="320" cy="206" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-ok)" :d="band('suct', 320, 206, 'ok')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-warn)" :d="band('suct', 320, 206, 'warn')"/>
+    <path fill="none" stroke-width="6" stroke="var(--color-bad)" :d="band('suct', 320, 206, 'bad')"/>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="2.5" stroke-linecap="round" :d="mark(320, 206, 'suct')"/>
+    <line x1="320" y1="206" stroke-width="3" stroke-linecap="round" :stroke="needle('suct')" :x2="tip(320, 206, g.suct).x" :y2="tip(320, 206, g.suct).y"/>
+    <circle cx="320" cy="206" r="4.5" fill="var(--color-fg)"/>
+    <path fill="var(--color-brand)" x-show="moved('suct')" :d="trend(320, 206, 'suct')"/>
+    <text x="320" y="280" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">suction</text>
+
+    <!-- attitude indicator (vacuum-driven gyro) -->
+    <circle cx="448" cy="206" r="58" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <g clip-path="url(#egd-ai-clip)">
+      <g :transform="'rotate(' + g.bank + ' 448 206) translate(0 ' + g.pitch + ')'">
+        <rect x="388" y="136" width="120" height="70" fill="var(--color-sky-soft)"/>
+        <rect x="388" y="206" width="120" height="70" fill="var(--color-warn-soft)"/>
+        <line x1="388" y1="206" x2="508" y2="206" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+        <line x1="438" y1="196" x2="458" y2="196" stroke="var(--color-fg-faint)" stroke-width="1"/>
+        <line x1="438" y1="216" x2="458" y2="216" stroke="var(--color-fg-faint)" stroke-width="1"/>
+      </g>
+    </g>
+    <circle cx="448" cy="206" r="40" fill="none" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <path d="M418 206 L438 206 L444 213 M478 206 L458 206 L452 213" fill="none" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="448" cy="206" r="3" fill="var(--color-brand)"/>
+    <path d="M448 166 l-5 -8 l10 0 Z" fill="var(--color-fg-muted)"/>
+    <text x="448" y="280" font-size="12" text-anchor="middle" :fill="g.vac && g.bank > 3 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="g.bank > 30 ? 'attitude: toppled' : g.bank > 3 ? 'attitude: drifting' : 'attitude indicator'"></text>
+
+    <!-- warning lights and radio -->
+    <rect x="532" y="158" width="88" height="26" rx="4" stroke-width="1.5" :fill="g.alt ? 'var(--color-warn-soft)' : 'var(--color-surface)'" :stroke="g.alt ? 'var(--color-warn)' : 'var(--color-line)'"/>
+    <text x="576" y="176" font-size="12" font-weight="700" text-anchor="middle" :fill="g.alt ? 'var(--color-warn-fg)' : 'var(--color-fg-faint)'">ALT</text>
+    <rect x="532" y="190" width="88" height="26" rx="4" stroke-width="1.5" :fill="g.vac ? 'var(--color-warn-soft)' : 'var(--color-surface)'" :stroke="g.vac ? 'var(--color-warn)' : 'var(--color-line)'"/>
+    <text x="576" y="208" font-size="12" font-weight="700" text-anchor="middle" :fill="g.vac ? 'var(--color-warn-fg)' : 'var(--color-fg-faint)'">LOW VAC</text>
+    <rect x="532" y="224" width="88" height="26" rx="4" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.5"/>
+    <text x="542" y="241" font-size="11" font-weight="600" :fill="g.com > 0.3 ? 'var(--color-fg-muted)' : 'var(--color-fg-faint)'">COM</text>
+    <g fill="var(--color-ok)" :fill-opacity="g.com">
+      <rect x="578" y="232" width="6" height="10" rx="1"/><rect x="587" y="232" width="6" height="10" rx="1"/><rect x="596" y="232" width="6" height="10" rx="1"/><rect x="605" y="232" width="6" height="10" rx="1"/>
+    </g>
+    <text x="576" y="280" font-size="12" text-anchor="middle" :fill="g.com < 0.3 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="g.com < 0.3 ? 'radio dead' : g.com < 0.95 ? 'radio fading' : 'lights and radio'"></text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="egd-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time">
+    <span class="widget-clock" x-text="stepLabel"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="egd-sc">What goes wrong</label>
+      <select id="egd-sc" class="input" x-model="sc" @change="pick()">
+        <option value="oil-loss">Losing oil</option>
+        <option value="gauge-fault">Oil pressure falls, temperature steady</option>
+        <option value="cowl-flaps">Cowl flaps stuck shut or oil cooler blocked</option>
+        <option value="lean-cht">High CHT alone: lean mixture</option>
+        <option value="alternator">Alternator failed</option>
+        <option value="regulator">Voltage regulator failed</option>
+        <option value="fuel">Blocked fuel vent or failed fuel pump</option>
+        <option value="vacuum">Vacuum pump failed</option>
+        <option value="carb-ice">Carburettor ice (fixed-pitch propeller)</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="phase === 0 ? 'ok' : phase === 3 ? 'bad' : 'warn'">
+      <dt class="widget-label">What you see</dt>
+      <dd class="widget-value" x-text="phase === 0 ? 'Every needle on its mark' : info.see"></dd>
+    </div>
+    <div class="widget-readout" :class="phase >= 2 ? 'warn' : ''">
+      <dt class="widget-label">Likely cause</dt>
+      <dd class="widget-value" x-text="phase >= 2 ? info.cause : phase === 1 ? 'Your call: pause and name it' : '–'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Do now</dt>
+      <dd class="widget-value" x-text="phase >= 2 ? info.act : 'Keep scanning: which needle left its mark?'"></dd>
+    </div>
+    <div class="widget-readout" :class="phase >= 2 ? 'bad' : ''">
+      <dt class="widget-label">If it cannot be fixed</dt>
+      <dd class="widget-value"><span x-text="phase >= 2 ? info.ifNot : '–'"></span><span class="widget-flag bad" x-show="phase === 3">happening</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('losing-oil')" :aria-pressed="active === 'losing-oil'">Losing oil</button>
+      <button type="button" @click="preset('oil-gauge-fault')" :aria-pressed="active === 'oil-gauge-fault'">Gauge fault?</button>
+      <button type="button" @click="preset('cowl-flaps-shut')" :aria-pressed="active === 'cowl-flaps-shut'">Cowl flaps shut</button>
+      <button type="button" @click="preset('lean-mixture-cht')" :aria-pressed="active === 'lean-mixture-cht'">Lean: high CHT</button>
+      <button type="button" @click="preset('alternator-failed')" :aria-pressed="active === 'alternator-failed'">Alternator</button>
+      <button type="button" @click="preset('regulator-failed')" :aria-pressed="active === 'regulator-failed'">Regulator</button>
+      <button type="button" @click="preset('vent-blocked')" :aria-pressed="active === 'vent-blocked'">Vent blocked</button>
+      <button type="button" @click="preset('vacuum-pump-failed')" :aria-pressed="active === 'vacuum-pump-failed'">Vacuum pump</button>
+      <button type="button" @click="preset('carb-ice-rpm-loss')" :aria-pressed="active === 'carb-ice-rpm-loss'">Carb ice</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The pattern names the fault: which needles move, which way, and which stay still. Oil pressure down with temperature up is losing oil; temperatures up first, then pressure, is trapped heat; electrics only is the alternator or regulator; one needle alone (fuel pressure, suction, RPM) points straight at its system. The coloured arcs, the speed of each trend and the needle positions are illustrative (your POH gives the real limits); the only figure from the lessons is the voltmeter's about 14 volts while charging, sinking towards the battery's 12. The panel is a generic one: a gravity-fed trainer such as the Cessna 152 has no fuel pressure gauge, booster pump or cowl flaps. Each fault runs its course with nothing done, so you see where it leads.</p>
+  <details class="widget-try"><summary>Try it: oil pressure falling. Is it the engine or the gauge?</summary><p>Compare Losing oil with Gauge fault?. When the engine is losing oil, the oil temperature climbs as the pressure falls, because less oil is carrying the same heat. With the gauge at fault the temperature stays on its mark. You cannot prove which in the air, so in both cases reduce power, enrich and land as soon as possible.</p></details>
+  <details class="widget-try"><summary>Try it: the ammeter swings one way or the other. Which fault is which?</summary><p>Alternator: the ammeter shows a discharge and the voltage sags from about 14 towards battery voltage. Shed load to essentials and land within perhaps 30 to 60 minutes, before the battery is flat. Regulator: a very high charge and a high voltage. Switch the alternator off as the POH directs, before it damages the battery and avionics. In both cases the engine runs on, because the magnetos need no battery.</p></details>
+</div>

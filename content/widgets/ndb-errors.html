@@ -1,0 +1,179 @@
+<div class="widget" x-data="timeline({
+  duration: 8, loop: true,
+  mode: 'none', cross: 20,
+  // the NDB sits near the coast at (250, 205). Overland the aeroplane is NNW of it heading 120° M, so the station
+  // is 40° right of the nose (the lesson's example: MH 120 + RB 040 = MB 160). For coastal refraction it is out over
+  // the sea to the west, heading 090° M. Every error size here is illustrative.
+  get sea() { return this.mode === 'coastal' },
+  get mh() { return this.sea ? 90 : 120 },
+  get ac() { return this.sea ? this.pol(250, 205, 165, 285) : this.pol(250, 205, 125, 340) },
+  get mbTrue() { const dx = 250 - this.ac.x, dy = 205 - this.ac.y; return (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360 },
+  get rbTrue() { return ((this.mbTrue - this.mh) % 360 + 360) % 360 },
+  get storm() { return this.pol(this.ac.x, this.ac.y, 95, 205) },
+  get stormRB() { const dx = this.storm.x - this.ac.x, dy = this.storm.y - this.ac.y; return ((Math.atan2(dx, -dy) * 180 / Math.PI - this.mh) % 360 + 360) % 360 },
+  get wob() { const a = 2 * Math.PI * this.t; return Math.sin(a) * 0.6 + Math.sin(3 * a + 1) * 0.3 + Math.sin(7 * a + 2) * 0.1 },
+  get flash() { const k = (this.t * 3) % 1; return k < 0.18 ? 1 - k / 0.18 : 0 },
+  get err() {
+    if (this.mode === 'night') return 14 * this.wob;
+    if (this.mode === 'coastal') return 9 * Math.pow(1 - this.cross / 90, 1.6);
+    if (this.mode === 'storm') return 0;
+    if (this.mode === 'mountain') return 7 * Math.sin(2 * Math.PI * this.t * 5) * (0.6 + 0.4 * Math.sin(2 * Math.PI * this.t));
+    return 0;
+  },
+  angDiff(a, b) { return ((b - a + 540) % 360) - 180 },
+  get needle() {
+    if (this.mode === 'storm') { const swing = this.clamp(0.35 + 0.65 * this.flash + 0.15 * this.wob, 0, 1); return (this.rbTrue + this.angDiff(this.rbTrue, this.stormRB) * swing + 360) % 360 }
+    return (this.rbTrue + this.err + 360) % 360;
+  },
+  get off() { return Math.abs(this.angDiff(this.rbTrue, this.needle)) },
+  get mbNeedle() { return (this.mh + this.needle) % 360 },
+  get indicated() { return this.pol(this.ac.x, this.ac.y, 150, this.mbNeedle) },
+  // coastline: a near-straight shore through the point where the signal crosses it, at the chosen angle (sea mode)
+  get crossPt() { return this.pol(250, 205, 70, 285) },
+  get coastD() {
+    if (!this.sea) return 'M150 10 C 170 80 130 140 160 200 C 180 250 140 290 150 330';
+    const b = 105 + this.cross, p = this.pol(this.crossPt.x, this.crossPt.y, 400, b), q = this.pol(this.crossPt.x, this.crossPt.y, 400, b + 180);
+    return 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' L' + q.x.toFixed(1) + ' ' + q.y.toFixed(1);
+  },
+  get seaD() {
+    if (!this.sea) return 'M0 0 H150 C 170 80 130 140 160 200 C 180 250 140 290 150 330 H0 Z';
+    const c = this.crossPt, b = 105 + this.cross, p = this.pol(c.x, c.y, 400, b), q = this.pol(c.x, c.y, 400, b + 180);
+    const p2 = this.pol(p.x, p.y, 600, b + 90), q2 = this.pol(q.x, q.y, 600, b + 90);
+    return 'M' + [p, p2, q2, q].map((v) => v.x.toFixed(1) + ' ' + v.y.toFixed(1)).join(' L') + ' Z';
+  },
+  get name() { return { none: 'No error', night: 'Night effect', coastal: 'Coastal refraction', storm: 'Thunderstorm (static) effect', mountain: 'Mountain effect' }[this.mode] },
+  get advice() {
+    return {
+      none: 'Daytime, overland, no storms: trust it once identified',
+      night: 'Sky wave mixes with ground wave: needle wanders, worst at dusk and dawn',
+      coastal: 'Treat bearings that cross the coast at a shallow angle with suspicion',
+      storm: 'Disregard the ADF until well clear; navigate by map and clock',
+      mountain: 'Reflections near high ground: needle fluctuates or points wrongly',
+    }[this.mode];
+  },
+  get caption() {
+    return {
+      none: 'The needle points at the station: 40° right of the nose. Heading 120 plus 040 puts the NDB on 160° M from you, and you are on its 340 line.',
+      night: 'After dark the ionosphere reflects a sky wave back down. The ADF hears it and the ground wave from different directions at once, so the needle wanders.',
+      coastal: 'The ground wave bends where it crosses the coast, most when it crosses at a shallow angle, so the needle points slightly away from the station.',
+      storm: 'Lightning is a powerful medium-frequency transmitter: with every flash the needle swings towards the storm instead of the station.',
+      mountain: 'Signals reflected off high ground arrive from several directions, so near the ranges the needle fluctuates or settles on a wrong bearing.',
+    }[this.mode];
+  },
+  presets: {
+    'no-error': { mode: 'none', t: 0, play: true },
+    'night-effect': { mode: 'night', t: 0.2, play: true },
+    'coastal-refraction': { mode: 'coastal', cross: 15, t: 0, play: true },
+    'thunderstorm': { mode: 'storm', t: 0.02, play: true },
+    'mountain': { mode: 'mountain', t: 0.05, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 330" role="img" aria-labelledby="ndb-title" class="widget-stage">
+    <title id="ndb-title">Left, a map with an NDB near the coast, the aeroplane, the true direction to the station and the direction the ADF needle indicates, with the cause of the error drawn: the ionosphere at night, the coastline, a thunderstorm or hills. Right, the fixed-card ADF with its needle</title>
+    <defs>
+      <marker id="ndb-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="ndb-map"><rect x="10" y="10" width="390" height="310" rx="8"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="330" fill="var(--color-surface)" rx="10"/>
+    <g clip-path="url(#ndb-map)">
+      <rect x="10" y="10" width="390" height="310" fill="var(--color-ok-soft)" fill-opacity="0.5"/>
+      <rect x="10" y="10" width="390" height="310" fill="var(--color-surface-2)" :fill-opacity="mode === 'night' ? 0.85 : 0"/>
+      <path :d="seaD" fill="var(--color-sky-soft)"/>
+      <path :d="coastD" fill="none" stroke="var(--color-info)" stroke-width="2"/>
+      <text x="40" y="300" font-size="12" fill="var(--color-sky-fg)">Indian Ocean</text>
+      <!-- night: stars, the ionosphere and the sky wave -->
+      <g :display="(mode === 'night') ? 'inline' : 'none'">
+        <g fill="var(--color-fg-faint)"><circle cx="300" cy="40" r="1.4"/><circle cx="360" cy="70" r="1.2"/><circle cx="230" cy="60" r="1.2"/><circle cx="380" cy="150" r="1.4"/></g>
+        <path d="M10 26 Q 205 -6 400 26" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="5 4"/>
+        <text x="390" y="40" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">ionosphere</text>
+        <path fill="none" stroke="var(--color-warn)" stroke-width="1.5" stroke-dasharray="4 3" :d="'M250 205 L' + ((250 + ac.x) / 2 + 60) + ' 18 L' + ac.x.toFixed(1) + ' ' + ac.y.toFixed(1)"/>
+        <text font-size="11" fill="var(--color-warn-fg)" :x="(250 + ac.x) / 2 + 66" y="52">sky wave</text>
+      </g>
+      <!-- hills -->
+      <g :display="(mode === 'mountain') ? 'inline' : 'none'">
+        <path d="M150 150 L175 118 L196 140 L218 108 L246 146 Z M196 176 L224 140 L252 172 Z" fill="var(--color-warn-soft)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+        <text x="232" y="106" font-size="11" fill="var(--color-fg-muted)">ranges</text>
+      </g>
+      <!-- storm cell with lightning -->
+      <g :display="(mode === 'storm') ? 'inline' : 'none'">
+        <path :d="'M' + (storm.x - 34) + ' ' + (storm.y + 8) + ' q -4 -22 18 -22 q 8 -20 30 -12 q 22 -6 26 16 q 14 4 8 18 Z'" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+        <path :d="'M' + (storm.x + 2) + ' ' + (storm.y + 10) + ' l -8 16 h 8 l -6 16'" fill="none" stroke="var(--color-warn)" stroke-width="2.5" stroke-linejoin="round" :opacity="0.2 + 0.8 * flash"/>
+        <text font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" :x="storm.x" :y="storm.y - 30">thunderstorm</text>
+      </g>
+      <!-- the station and the true direction to it -->
+      <line stroke="var(--color-ok)" stroke-width="2" stroke-dasharray="6 4" :x1="ac.x" :y1="ac.y" x2="250" y2="205"/>
+      <circle cx="250" cy="205" r="9" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+      <circle cx="250" cy="205" r="3" fill="var(--color-fg)"/>
+      <text x="264" y="222" font-size="12" font-weight="600" fill="var(--color-fg)">NDB</text>
+      <!-- what the needle says -->
+      <line stroke="var(--color-bad)" stroke-width="2" marker-end="url(#ndb-arrow)" :x1="ac.x" :y1="ac.y" :x2="indicated.x" :y2="indicated.y" :display="(off > 1.5) ? 'inline' : 'none'"/>
+      <g :transform="'translate(' + ac.x + ' ' + ac.y + ') rotate(' + mh + ')'">
+        <!-- plane top scale 0.3 heading 0 colour brand -->
+        <g transform="translate(0 0) rotate(-90) scale(0.3)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+      </g>
+    </g>
+    <text x="22" y="30" font-size="13" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x-text="name"></text>
+
+    <!-- the fixed-card ADF -->
+    <circle cx="522" cy="170" r="96" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="2"/>
+    <path d="M522.0 74.0L522.0 88.0M538.7 75.5L537.5 82.4M554.8 79.8L552.4 86.4M570.0 86.9L563.0 99.0M583.7 96.5L579.2 101.8M595.5 108.3L590.2 112.8M605.1 122.0L593.0 129.0M612.2 137.2L605.6 139.6M616.5 153.3L609.6 154.5M618.0 170.0L604.0 170.0M616.5 186.7L609.6 185.5M612.2 202.8L605.6 200.4M605.1 218.0L593.0 211.0M595.5 231.7L590.2 227.2M583.7 243.5L579.2 238.2M570.0 253.1L563.0 241.0M554.8 260.2L552.4 253.6M538.7 264.5L537.5 257.6M522.0 266.0L522.0 252.0M505.3 264.5L506.5 257.6M489.2 260.2L491.6 253.6M474.0 253.1L481.0 241.0M460.3 243.5L464.8 238.2M448.5 231.7L453.8 227.2M438.9 218.0L451.0 211.0M431.8 202.8L438.4 200.4M427.5 186.7L434.4 185.5M426.0 170.0L440.0 170.0M427.5 153.3L434.4 154.5M431.8 137.2L438.4 139.6M438.9 122.0L451.0 129.0M448.5 108.3L453.8 112.8M460.3 96.5L464.8 101.8M474.0 86.9L481.0 99.0M489.2 79.8L491.6 86.4M505.3 75.5L506.5 82.4" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <g font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num"><text x="522.0" y="104.5">0</text><text x="557.0" y="113.9">3</text><text x="582.6" y="139.5">6</text><text x="592.0" y="174.5">9</text><text x="582.6" y="209.5">12</text><text x="557.0" y="235.1">15</text><text x="522.0" y="244.5">18</text><text x="487.0" y="235.1">21</text><text x="461.4" y="209.5">24</text><text x="452.0" y="174.5">27</text><text x="461.4" y="139.5">30</text><text x="487.0" y="113.9">33</text></g>
+    <g transform="translate(522 170)">
+      <!-- plane top scale 0.25 heading 0 -->
+      <g transform="translate(0 0) rotate(-90) scale(0.25)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <path fill="var(--color-ok)" :transform="'rotate(' + rbTrue + ' 522 170)'" d="M522 70 l-6 -9 h12 Z"/>
+    <g :transform="'rotate(' + needle + ' 522 170)'">
+      <line x1="522" y1="232" x2="522" y2="94" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round"/>
+      <path d="M522 84 l-9 16 h18 Z" fill="var(--color-brand)"/>
+    </g>
+    <circle cx="522" cy="170" r="5" fill="var(--color-fg)"/>
+    <text x="522" y="294" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">fixed card: 0 is the nose</text>
+    <text x="522" y="312" font-size="12" text-anchor="middle" fill="var(--color-ok-fg)">▲ green: the station's true bearing</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ndb-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time">
+    <span class="widget-clock" x-text="'RB ' + trk(needle)"></span>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ndb-mode">What is affecting the signal</label>
+      <select id="ndb-mode" class="input" x-model="mode" @change="active = null">
+        <option value="none">Nothing: daytime, overland</option>
+        <option value="night">Night effect</option>
+        <option value="coastal">Coastal refraction</option>
+        <option value="storm">Thunderstorm (static) effect</option>
+        <option value="mountain">Mountain effect</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="sea">
+      <label for="ndb-cross">Signal crosses the coast at <output for="ndb-cross" x-text="cross + '°'"></output></label>
+      <input type="range" id="ndb-cross" min="10" max="90" step="5" x-model.number="cross">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Station's true relative bearing</dt><dd class="widget-value" x-text="trk(rbTrue) + ' (MB ' + trk(mbTrue) + '° M)'"></dd></div>
+    <div class="widget-readout" :class="off > 1.5 ? 'bad' : 'ok'"><dt class="widget-label">Needle reads</dt><dd class="widget-value"><span x-text="trk(needle) + ': MH ' + trk(mh) + ' + RB ' + trk(needle) + ' = ' + dir(mbNeedle) + '° M'"></span><span class="widget-flag bad" x-show="off > 1.5" x-text="fmt(off) + '° out'"></span></dd></div>
+    <div class="widget-readout" :class="mode === 'none' ? 'ok' : 'warn'"><dt class="widget-label" x-text="name"></dt><dd class="widget-value text-sm" x-text="advice"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('no-error')" :aria-pressed="active === 'no-error'">No error</button>
+      <button type="button" @click="preset('night-effect')" :aria-pressed="active === 'night-effect'">Night</button>
+      <button type="button" @click="preset('coastal-refraction')" :aria-pressed="active === 'coastal-refraction'">Coastal</button>
+      <button type="button" @click="preset('thunderstorm')" :aria-pressed="active === 'thunderstorm'">Thunderstorm</button>
+      <button type="button" @click="preset('mountain')" :aria-pressed="active === 'mountain'">Mountains</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> An NDB's medium-frequency signal bends at coastlines, reflects off the ionosphere at night and off high ground, and is drowned by lightning, so the ADF needle can point confidently at the wrong thing. Know the four effects, identify the station, and cross-check with the map. A VOR's VHF signal does not suffer them. The sizes of the errors drawn here are illustrative.</p>
+  <details class="widget-try"><summary>Try it: heading 120° M, needle on 040. What is the bearing to the station, and which line from it are you on?</summary><p>MB = 120 + 040 = 160° M to the NDB; the reciprocal, 340° M, is the line from the station you are on. Press No error.</p></details>
+  <details class="widget-try"><summary>Try it: late afternoon, a cumulonimbus 20 nm to your left, and the needle has swung towards it. What now?</summary><p>Thunderstorm effect: lightning is a strong medium-frequency source and the ADF points at it. Disregard the ADF until you are well clear and navigate by map and clock. Press Thunderstorm and watch it swing with each flash.</p></details>
+</div>

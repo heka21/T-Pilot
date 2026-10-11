@@ -1,0 +1,313 @@
+<div class="widget" x-data="timeline({
+  duration: 20,
+  loop: false,
+  mode: 'cold',
+  // picture: Jandakot fixed at x 470, ground at y 250, 10 px per 1,000 ft. Horizontal scale: cold 2 px per nm,
+  // warm 0.95 px per nm (the warm front's cloud spreads hundreds of nm ahead, so its view is squeezed)
+  get k() { return this.mode === 'cold' ? 2 : 0.95 },
+  // d: nm from the surface front to Jandakot, positive while the front is still to the west (approaching)
+  get d() { return this.mode === 'cold' ? 175 - 250 * this.t : 400 - 500 * this.t },
+  get dn() { return Math.round(this.d) },
+  get X() { return 470 - this.d * this.k },
+  // phases
+  get phase() {
+    const d = this.d;
+    if (this.mode === 'cold') return d > 25 ? 'ahead' : d >= -20 ? 'front' : 'behind';
+    return d > 290 ? 'ci' : d > 200 ? 'cs' : d > 100 ? 'as' : d > 0 ? 'ns' : 'after';
+  },
+  get raining() { return this.mode === 'warm' && this.d > 0 && this.d <= 150 },
+  get fog() { return this.mode === 'warm' && this.d > 0 && this.d <= 60 },
+  // the frontal surface above Jandakot: lies over the cold air, so behind a cold front and ahead of a warm front
+  get over() { return this.mode === 'cold' ? this.d < 0 : this.d > 0 },
+  get surfFt() { return this.mode === 'cold' ? -this.d / 50 * 6000 : this.d / 150 * 6000 },
+  get surfY() { return 250 - this.surfFt / 100 },
+  get ftText() { return 'about ' + this.fmt(Math.round(this.surfFt / 100) * 100) + ' ft' },
+  get surfWork() {
+    const n = Math.abs(this.dn), r = this.mode === 'cold' ? 50 : 150, q = n / r;
+    return n + ' nm ÷ ' + r + ' = ' + (Number.isInteger(q) ? q : this.fmt(q, 1)) + ' nm, × 6,000 ft';
+  },
+  // surface wind at Jandakot (FROM, degrees) and how strong it looks
+  get windFrom() {
+    const d = this.d;
+    if (this.mode === 'cold') return this.lerp(315, 225, this.ease(this.seg(d, 18, -12)));
+    return this.lerp(360, 315, this.ease(this.seg(d, 15, -12)));
+  },
+  get windLen() {
+    const d = this.d;
+    if (this.mode === 'cold') return d > 25 ? this.lerp(22, 34, this.seg(d, 175, 25)) : d >= -20 ? 38 : 30;
+    return d > 0 ? 28 : 20;
+  },
+  get windPt() { return { a: this.pol(600, 344, this.windLen / 2, this.windFrom), b: this.pol(600, 344, this.windLen / 2, this.windTo(this.windFrom)) } },
+  get windText() {
+    const d = this.d;
+    if (this.mode === 'cold') {
+      if (this.phase === 'ahead') return d > 90 ? '315 (NW), strengthening' : '315 (NW), strong and strengthening';
+      if (this.phase === 'front') return 'Squall: a sudden change from 315 to 225, backing';
+      return '225 (SW): backed, gusty';
+    }
+    if (d > 15) return '360 (N)';
+    if (d > -12) return 'Backing from 360 towards 315';
+    return '315 (NW): backed, often lighter';
+  },
+  get tempText() {
+    if (this.mode === 'cold') return { ahead: 'Warm: often hot north-westerlies in summer and autumn', front: 'Sharp drop (6 degrees in the lesson\'s Albany example)', behind: 'Colder: maritime polar air' }[this.phase];
+    return this.d > 0 ? 'Cool: you are still in the retreating cold air' : 'Warmer: warm air has replaced the cold';
+  },
+  get pressText() {
+    if (this.mode === 'cold') return { ahead: 'Falling, isobars tightening', front: 'Lowest as the trough passes, then rising', behind: 'Rising' }[this.phase];
+    return this.d > 0 ? 'Falling: the front lies in a trough' : 'The trough has passed: no longer falling';
+  },
+  get stabText() {
+    if (this.mode === 'cold') return { ahead: 'A pre-frontal trough may trigger storms; mechanical turbulence in the strong wind', front: 'Moderate to severe turbulence and wind shear', behind: 'Unstable (heated from below): gusts and thermal turbulence' }[this.phase];
+    if (this.d > 100) return 'Stable: a smooth ride';
+    if (this.d > 0) return 'Mostly smooth; moderate icing in the As and Ns above the freezing level; Cb may be embedded';
+    return 'Stable, with light turbulence';
+  },
+  get cloudText() {
+    if (this.mode === 'cold') return {
+      ahead: this.d > 60 ? 'As and Ac, some Cu' : 'As and Ac, some Cu; the Cb band is close to the west',
+      front: 'Cu, TCu and Cb: heavy showers, thunderstorms, sometimes hail',
+      behind: 'Scattered Cu and showers; good visibility between them',
+    }[this.phase];
+    return {
+      ci: 'Ci: wisps of ice cloud high on the frontal surface',
+      cs: 'Cs: a thin veil, with a halo round the sun or moon',
+      as: this.raining ? 'As, thickening: continuous rain beginning; base lowering' : 'As: a grey sheet, the sun as if through frosted glass',
+      ns: this.fog ? 'Ns and stratus fractus: continuous rain, frontal fog possible' : 'Ns and stratus fractus: thick, dark, continuous rain',
+      after: 'Warm sector: low St, drizzle and poor visibility are common',
+    }[this.phase];
+  },
+  get cloudState() {
+    if (this.mode === 'cold') return this.phase === 'front' ? 'bad' : '';
+    return this.phase === 'ns' ? 'bad' : this.raining ? 'warn' : '';
+  },
+  get surfText() {
+    if (this.over) return this.ftText;
+    if (this.mode === 'cold') return this.d > 0 ? 'None: you are still in the warm air ahead' : 'Right at the surface front';
+    return 'None: you are in the warm air now';
+  },
+  get where() {
+    if (Math.abs(this.dn) <= 2) return 'at Jandakot';
+    return Math.abs(this.dn) + ' nm ' + (this.dn > 0 ? 'west of Jandakot, approaching' : 'east of Jandakot: it has passed');
+  },
+  get steps() {
+    return this.mode === 'cold'
+      ? [{ at: 0, label: 'Ahead' }, { at: 0.6, label: 'At the front' }, { at: 0.82, label: 'Behind' }]
+      : [{ at: 0, label: 'First cirrus' }, { at: 0.24, label: 'Halo' }, { at: 0.52, label: 'Rain' }, { at: 0.82, label: 'Warm sector' }];
+  },
+  get caption() {
+    return {
+      ahead: 'Ahead of the cold front the pressure falls and the north-westerly freshens. Warm air lifted at the front spreads ahead as As and Ac, so the cloud thickens from the west.',
+      front: 'The front itself: the cold air drives under the warm air like a snowplough and lifts it steeply into a narrow band of Cu, TCu and Cb. A squall, a sudden wind change and a sharp temperature drop, with turbulence and shear.',
+      behind: 'Behind it the air is colder maritime polar air, heated from below by the warmer sea and land, so it is unstable: scattered showers, gusts and good visibility. The wind has backed to the south-west and the pressure rises. The frontal surface climbs over it at 1 in 50: about 6,000 ft up 50 nm behind the front.',
+      ci: 'The first sign, perhaps a day ahead: cirrus high on the frontal surface. On a 1 in 150 slope the surface is still about 12,000 ft up 300 nm ahead of the surface front.',
+      cs: 'The cloud lowers and thickens into a veil of cirrostratus, with a halo round the sun or moon.',
+      as: 'Altostratus: a grey sheet, the sun as if through frosted glass. The base keeps lowering, and as it thickens the rain begins.',
+      ns: 'Nimbostratus with ragged stratus fractus beneath: hours of continuous rain falling into the cold air, which saturates it, so the visibility is poor and frontal fog can form. Mostly smooth, but a Cb can hide in the grey.',
+      after: 'The surface front has passed and you are in the warm sector: warmer, the wind has backed from north to north-west and is often lighter, and low stratus, drizzle and poor visibility are common.',
+    }[this.phase];
+  },
+  setMode(m) { this.pause(); this.mode = m; this.t = 0; this.active = null },
+  // a cumulus heap from x0 to x1 with a flat base at `base` and its top near `top`
+  cu(x0, x1, base, top) {
+    const h = base - top, w = x1 - x0, y = (k) => (base - h * k).toFixed(1), x = (k) => (x0 + w * k).toFixed(1);
+    return 'M' + x0 + ' ' + base + ' C' + (x0 - 8) + ' ' + y(0.3) + ' ' + x(0.02) + ' ' + y(0.62) + ' ' + x(0.2) + ' ' + y(0.66) +
+      ' C' + x(0.18) + ' ' + y(0.98) + ' ' + x(0.52) + ' ' + y(1.08) + ' ' + x(0.6) + ' ' + y(0.86) +
+      ' C' + x(0.72) + ' ' + y(0.98) + ' ' + x(0.98) + ' ' + y(0.86) + ' ' + x(0.86) + ' ' + y(0.58) +
+      ' C' + (x1 + 10) + ' ' + y(0.5) + ' ' + (x1 + 6) + ' ' + y(0.12) + ' ' + x1 + ' ' + base + ' Z';
+  },
+  presets: {
+    'cold-front-approaching': { mode: 'cold', t: 0.3 },
+    'cold-front-passing': { mode: 'cold', t: 0.7 },
+    'behind-the-cold-front': { mode: 'cold', t: 0.9 },
+    'warm-front-cirrus-300nm-ahead': { mode: 'warm', t: 0.2 },
+    'warm-front-rain': { mode: 'warm', t: 0.7 },
+    'after-the-warm-front': { mode: 'warm', t: 0.92 },
+  },
+})">
+  <svg viewBox="0 0 640 370" role="img" aria-labelledby="fps-title" class="widget-stage">
+    <title id="fps-title">Cross-section from west to east with a cold or warm front moving east past Jandakot: the cloud, rain and frontal surface overhead change as the front passes, and an inset shows the surface wind at Jandakot backing</title>
+    <defs>
+      <marker id="fps-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+      <clipPath id="fps-clip"><rect x="0" y="44" width="640" height="206"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="370" fill="var(--color-surface)"/>
+    <rect x="0" y="0" width="640" height="250" fill="var(--color-warn-soft)" fill-opacity="0.5"/>
+
+    <!-- height grid -->
+    <g stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="0" y1="190" x2="640" y2="190"/><line x1="0" y1="130" x2="640" y2="130"/><line x1="0" y1="70" x2="640" y2="70"/>
+    </g>
+
+    <!-- the moving front, drawn relative to the surface front (x 0) -->
+    <g clip-path="url(#fps-clip)">
+      <g :transform="'translate(' + X + ' 0)'">
+        <!-- ===== cold front: 1 in 50, 2 px per nm ===== -->
+        <g x-show="mode === 'cold'">
+          <path d="M0 250 L-333 50 L-1200 50 L-1200 250 Z" fill="var(--color-sky-soft)"/>
+          <!-- behind: scattered showery Cu in the cold air -->
+          <path :d="cu(-162, -106, 216, 190)" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+          <path :d="cu(-300, -238, 216, 184)" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+          <g stroke="var(--color-sky-fg)" stroke-width="1" stroke-dasharray="4 3">
+            <line x1="-148" y1="220" x2="-153" y2="244"/><line x1="-134" y1="220" x2="-139" y2="244"/><line x1="-120" y1="220" x2="-125" y2="244"/>
+            <line x1="-284" y1="220" x2="-289" y2="244"/><line x1="-269" y1="220" x2="-274" y2="244"/><line x1="-254" y1="220" x2="-259" y2="244"/>
+          </g>
+          <!-- ahead: As, Ac and some Cu -->
+          <rect x="84" y="128" width="160" height="14" rx="7" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+          <rect x="130" y="106" width="100" height="12" rx="6" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+          <text x="164" y="160" font-size="13" text-anchor="middle" font-weight="600" fill="var(--color-fg-muted)">As, Ac</text>
+          <path :d="cu(150, 196, 216, 192)" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+          <!-- warm air lifted steeply at the nose -->
+          <path d="M230 238 L60 236 Q22 234 10 214 Q2 196 -4 172" fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#fps-arrow)"/>
+          <!-- the Cb band at the front, anvil streaming ahead -->
+          <path d="M-36 76 C-56 72 -66 60 -54 54 L168 50 C184 50 184 64 166 66 L30 76 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+          <path :d="cu(-50, 38, 214, 72)" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+          <g stroke="var(--color-sky-fg)" stroke-width="1" stroke-dasharray="4 3">
+            <line x1="-38" y1="218" x2="-44" y2="248"/><line x1="-26" y1="218" x2="-32" y2="248"/><line x1="-14" y1="218" x2="-20" y2="248"/>
+            <line x1="-2" y1="218" x2="-8" y2="248"/><line x1="10" y1="218" x2="4" y2="248"/><line x1="22" y1="218" x2="16" y2="248"/>
+          </g>
+          <path d="M-2 112 L-12 134 L-4 134 L-14 156 L8 126 L0 126 L6 112 Z" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25" stroke-linejoin="round"/>
+          <text x="-32" y="146" font-size="14" text-anchor="middle" font-weight="700" fill="var(--color-fg)">Cb</text>
+          <!-- frontal surface, 1 in 50 -->
+          <path d="M0 250 L-333 50" fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+
+        <!-- ===== warm front: about 1 in 150, 0.95 px per nm ===== -->
+        <g x-show="mode === 'warm'">
+          <path d="M0 250 L475 50 L1300 50 L1300 250 Z" fill="var(--color-sky-soft)"/>
+          <!-- warm air riding up the shallow slope -->
+          <path d="M-240 241 L-40 241 Q-8 241 14 239 L330 106" fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#fps-arrow)"/>
+          <!-- the warm sector behind the front: low stratus and drizzle -->
+          <rect x="-330" y="218" width="300" height="12" rx="6" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1"/>
+          <g fill="var(--color-sky-fg)">
+            <circle cx="-300" cy="238" r="1.3"/><circle cx="-270" cy="244" r="1.3"/><circle cx="-240" cy="236" r="1.3"/><circle cx="-210" cy="243" r="1.3"/>
+            <circle cx="-180" cy="237" r="1.3"/><circle cx="-150" cy="244" r="1.3"/><circle cx="-120" cy="236" r="1.3"/><circle cx="-90" cy="243" r="1.3"/><circle cx="-60" cy="237" r="1.3"/>
+          </g>
+          <text x="-180" y="210" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" font-weight="600">warm sector: low St, drizzle</text>
+          <!-- rain from the As and Ns, frontal fog, stratus fractus -->
+          <g stroke="var(--color-sky-fg)" stroke-width="1" stroke-dasharray="4 3">
+            <line x1="16" y1="233" x2="12" y2="248"/><line x1="28" y1="228" x2="23" y2="248"/><line x1="40" y1="223" x2="35" y2="248"/>
+            <line x1="52" y1="218" x2="46" y2="248"/><line x1="64" y1="213" x2="58" y2="248"/><line x1="76" y1="208" x2="70" y2="248"/>
+            <line x1="88" y1="203" x2="82" y2="248"/><line x1="100" y1="198" x2="94" y2="248"/><line x1="112" y1="193" x2="106" y2="248"/>
+            <line x1="124" y1="188" x2="118" y2="248"/><line x1="136" y1="183" x2="130" y2="248"/>
+          </g>
+          <rect x="4" y="238" width="56" height="12" rx="6" fill="var(--color-fg-faint)" fill-opacity="0.45" stroke="var(--color-fg-muted)" stroke-width="1"/>
+          <path d="M68 232 q6 -6 12 -2 q6 -5 12 0 q5 4 -2 6 l-20 0 q-6 -1 -2 -4 Z M98 228 q6 -6 12 -2 q6 -5 12 0 q5 4 -2 6 l-20 0 q-6 -1 -2 -4 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1"/>
+          <!-- Ns, As, Cs, Ci along the frontal surface, lowering and thickening towards the front -->
+          <path d="M6 237.5 L95 200 L95 130 Q70 136 50 152 Q30 168 6 186 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+          <path :d="cu(60, 92, 206, 100)" fill="none" stroke="var(--color-warn)" stroke-width="1.25" stroke-dasharray="4 3"/>
+          <path d="M98 198.7 L190 160 L190 134 L98 152.7 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M194 158.3 L276 123.8 L276 112 L194 146.3 Z" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1" stroke-linejoin="round"/>
+          <g fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round">
+            <path d="M292 100 C300 100 306 88 310 84"/><path d="M328 85 C336 85 342 73 346 69"/><path d="M364 70 C372 70 378 58 382 54"/>
+          </g>
+          <text x="30" y="214" font-size="14" text-anchor="middle" font-weight="700" fill="var(--color-fg)">Ns</text>
+          <text x="142" y="166" font-size="14" text-anchor="middle" font-weight="700" fill="var(--color-fg)">As</text>
+          <text x="236" y="112" font-size="13" text-anchor="middle" font-weight="700" fill="var(--color-fg)">Cs</text>
+          <text x="300" y="70" font-size="14" text-anchor="middle" font-weight="700" fill="var(--color-fg)">Ci</text>
+          <text x="76" y="92" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">Cb can hide</text>
+          <!-- frontal surface, 1 in 150 -->
+          <path d="M0 250 L475 50" fill="none" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- height labels -->
+    <g font-size="11" fill="var(--color-fg-faint)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text x="8" y="186">6,000 ft</text><text x="8" y="126">12,000 ft</text><text x="8" y="66">18,000 ft</text>
+    </g>
+
+    <!-- ground -->
+    <rect x="0" y="250" width="640" height="12" fill="var(--color-ok-soft)"/>
+    <line x1="0" y1="250" x2="640" y2="250" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <!-- the surface front on the ground -->
+    <circle :cx="X" cy="250" r="5" :fill="mode === 'cold' ? 'var(--color-brand)' : 'var(--color-bad)'"/>
+
+    <!-- the frontal surface above Jandakot -->
+    <g x-show="over && surfY > 52">
+      <line x1="470" y1="248" x2="470" :y2="surfY" stroke="var(--color-fg)" stroke-width="1.25" stroke-dasharray="4 3"/>
+      <circle cx="470" :cy="surfY" r="4.5" fill="var(--color-surface)" :stroke="mode === 'cold' ? 'var(--color-brand)' : 'var(--color-bad)'" stroke-width="2.5"/>
+      <text x="481" font-size="13" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+        :y="mode === 'cold' ? surfY - 8 : Math.min(surfY + 18, 244)" :fill="mode === 'cold' ? 'var(--color-brand-fg)' : 'var(--color-bad)'"
+        x-show="surfFt >= 1000" x-text="fmt(Math.round(surfFt / 100) * 100) + ' ft'"></text>
+    </g>
+    <text x="330" y="326" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">frontal surface above Jandakot</text>
+    <text x="330" y="344" font-size="14" text-anchor="middle" font-weight="700" class="num" :fill="over ? (mode === 'cold' ? 'var(--color-brand-fg)' : 'var(--color-bad)') : 'var(--color-fg-muted)'" x-text="over ? ftText : 'none: warm air at the surface'"></text>
+
+    <!-- Jandakot -->
+    <path d="M464 250 L465 238 L462 238 L462 232 L478 232 L478 238 L475 238 L476 250 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5" stroke-linejoin="round"/>
+    <text x="470" y="278" font-size="13" text-anchor="middle" font-weight="700" fill="var(--color-fg)">Jandakot</text>
+
+    <!-- air masses either side of the moving front, and its motion -->
+    <line y1="294" y2="294" :x1="X - 20" :x2="X + 24" :stroke="mode === 'cold' ? 'var(--color-brand)' : 'var(--color-bad)'" stroke-width="2.5" marker-end="url(#fps-arrow)"/>
+    <text y="298" font-size="12" text-anchor="end" font-weight="600" :x="X - 30" :fill="mode === 'cold' ? 'var(--color-sky-fg)' : 'var(--color-warn-fg)'" x-show="X > (mode === 'cold' ? 200 : 100)" x-text="mode === 'cold' ? 'cold air (maritime polar)' : 'warm air'"></text>
+    <text y="298" font-size="12" font-weight="600" :x="X + 34" :fill="mode === 'cold' ? 'var(--color-warn-fg)' : 'var(--color-sky-fg)'" x-show="X < (mode === 'cold' ? 540 : 470)" x-text="mode === 'cold' ? 'warm air' : 'cold air, retreating'"></text>
+
+    <!-- what and where -->
+    <text x="16" y="24" font-size="16" font-weight="700" fill="var(--color-fg)" x-text="mode === 'cold' ? 'Cold front moving east' : 'Warm front moving east'"></text>
+    <text x="16" y="40" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="'Surface front ' + where"></text>
+    <text x="624" y="24" font-size="12" text-anchor="end" font-weight="600" :fill="mode === 'cold' ? 'var(--color-brand-fg)' : 'var(--color-bad)'" x-text="mode === 'cold' ? 'slope 1 in 50 (steep)' : 'slope about 1 in 150 (shallow)'"></text>
+    <text x="624" y="40" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">W ← → E</text>
+
+    <!-- scale bar: the horizontal scale differs between the two views -->
+    <line x1="16" y1="334" :x2="16 + (mode === 'cold' ? 100 : 95)" y2="334" stroke="var(--color-fg)" stroke-width="2"/>
+    <line x1="16" y1="328" x2="16" y2="340" stroke="var(--color-fg)" stroke-width="2"/>
+    <line y1="328" y2="340" :x1="16 + (mode === 'cold' ? 100 : 95)" :x2="16 + (mode === 'cold' ? 100 : 95)" stroke="var(--color-fg)" stroke-width="2"/>
+    <text y="338" font-size="12" class="num" fill="var(--color-fg)" :x="mode === 'cold' ? 124 : 119" x-text="mode === 'cold' ? '50 nm' : '100 nm'"></text>
+    <text x="16" y="358" font-size="11" fill="var(--color-fg-faint)" x-text="mode === 'cold' ? 'Horizontal scale about twice the warm-front view\'s; heights exaggerated' : 'Horizontal scale about half the cold-front view\'s; heights exaggerated'"></text>
+
+    <!-- wind at Jandakot, seen from above -->
+    <text x="566" y="340" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">wind at Jandakot</text>
+    <text x="566" y="356" font-size="13" text-anchor="end" font-weight="700" class="num" fill="var(--color-fg)" x-text="dir(windFrom)"></text>
+    <circle cx="600" cy="344" r="21" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="600" y="318" font-size="11" text-anchor="middle" font-weight="700" fill="var(--color-fg-muted)">N</text>
+    <line :x1="windPt.a.x" :y1="windPt.a.y" :x2="windPt.b.x" :y2="windPt.b.y" :stroke="phase === 'front' ? 'var(--color-bad)' : 'var(--color-fg)'" stroke-width="2.5" marker-end="url(#fps-arrow)"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the front past Jandakot'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="fps-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="The front's progress past Jandakot">
+    <span class="widget-clock num" x-text="dn > 0 ? dn + ' nm W' : dn < 0 ? -dn + ' nm E' : 'here'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="mode + s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">Which front</span>
+      <div class="widget-presets" role="group" aria-label="Which front">
+        <button type="button" @click="setMode('cold')" :aria-pressed="mode === 'cold'">Cold front</button>
+        <button type="button" @click="setMode('warm')" :aria-pressed="mode === 'warm'">Warm front</button>
+      </div>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="phase === 'front' ? 'bad' : ''"><dt class="widget-label">Wind</dt><dd class="widget-value" x-text="windText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Temperature</dt><dd class="widget-value" x-text="tempText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Pressure</dt><dd class="widget-value" x-text="pressText"></dd></div>
+    <div class="widget-readout" :class="cloudState"><dt class="widget-label">Cloud and weather overhead</dt><dd class="widget-value"><span x-text="cloudText"></span><span class="widget-flag bad" x-show="phase === 'front'">Cb</span><span class="widget-flag bad" x-show="phase === 'ns'">poor visibility</span></dd></div>
+    <div class="widget-readout" :class="phase === 'front' ? 'bad' : phase === 'behind' ? 'warn' : ''"><dt class="widget-label">Stability and turbulence</dt><dd class="widget-value" x-text="stabText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Frontal surface above you</dt><dd class="widget-value"><span x-text="surfText"></span><span class="num" x-show="over" x-text="' (' + surfWork + ')'"></span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cold-front-approaching')" :aria-pressed="active === 'cold-front-approaching'">Cold front approaching</button>
+      <button type="button" @click="preset('cold-front-passing')" :aria-pressed="active === 'cold-front-passing'">Cold front passing</button>
+      <button type="button" @click="preset('behind-the-cold-front')" :aria-pressed="active === 'behind-the-cold-front'">50 nm behind it</button>
+      <button type="button" @click="preset('warm-front-cirrus-300nm-ahead')" :aria-pressed="active === 'warm-front-cirrus-300nm-ahead'">Warm front 300 nm away</button>
+      <button type="button" @click="preset('warm-front-rain')" :aria-pressed="active === 'warm-front-rain'">Warm-front rain</button>
+      <button type="button" @click="preset('after-the-warm-front')" :aria-pressed="active === 'after-the-warm-front'">After the warm front</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The slope decides the weather. The cold front's steep 1 in 50 to 1 in 100 surface lifts the warm air fast, so its weather is a narrow band (often 50 nm or less) of Cb that passes in an hour or two; the warm front's shallow 1 in 150 surface lifts it slowly, so its layer cloud and rain spread hundreds of miles ahead. At both the wind backs. Slopes and the two worked-example heights are the lesson's; cloud positions are illustrative, and the warm-front view is drawn at about half the horizontal scale.</p>
+  <details class="widget-try"><summary>Try it: Jandakot reports the wind backing from north-west to south-west, a sharp temperature drop and a squall. What has passed, and what comes next?</summary><p>A cold front. Press Cold front passing, then play on: behind it comes colder, unstable maritime polar air with a gusty south-westerly, scattered Cu and showers and good visibility between them, and the pressure rises.</p></details>
+  <details class="widget-try"><summary>Try it: a halo round the sun on a calm morning, then the cloud lowers through the day. How high is the frontal surface above you when it is 300 nm away?</summary><p>A warm front is coming. Press Warm front 300 nm away: 300 nm ÷ 150 = 2 nm, and 2 × 6,000 ft is about 12,000 ft. Expect As, then Ns with hours of continuous rain and possibly fog, a backing from north to north-west and warmer air once it has passed.</p></details>
+</div>

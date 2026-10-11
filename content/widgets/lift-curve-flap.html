@@ -1,0 +1,168 @@
+<div class="widget" x-data="widget({
+  aoa: 8.4, v: 60, rho: 100, flap: false,
+  // lift curves as in the lessons' diagrams (cl-vs-angle-of-attack, flap-effect-on-lift-curve): flap up straight at
+  // 0.1 per degree from zero lift at -2 deg to CL max 1.5 at the critical angle, 16 deg; flap down shifted up, CL max
+  // 1.9 at a slightly lower critical angle, 14.5 deg. Shapes illustrative.
+  clUp(a) { if (a <= 12) return 0.1 * (a + 2); if (a <= 16) { const t = (a - 12) / 4; return 1.4 + 0.1 * (1 - (1 - t) ** 2) } return 1.5 - 0.055 * (a - 16) ** 1.35 },
+  clDn(a) { if (a <= 10.5) return 0.1 * (a + 6); if (a <= 14.5) { const t = (a - 10.5) / 4; return 1.65 + 0.25 * (1 - (1 - t) ** 2) } return 1.9 - 0.07 * (a - 14.5) ** 1.35 },
+  cl(a) { return this.flap ? this.clDn(a) : this.clUp(a) },
+  get crit() { return this.flap ? 14.5 : 16 },
+  get clMax() { return this.flap ? 1.9 : 1.5 },
+  get c() { return this.cl(this.aoa) },
+  get stalled() { return this.aoa > this.crit + 0.05 },
+  get nearStall() { return !this.stalled && this.aoa > this.crit - 2 },
+  get sigma() { return this.rho / 100 },
+  // example aeroplane: 1 g stall at 50 kt flap up at sea level, so lift / weight = sigma (V / 50)^2 CL / 1.5
+  get lw() { return this.sigma * (this.v / 50) ** 2 * this.c / 1.5 },
+  get ias() { return this.v * Math.sqrt(this.sigma) },
+  get vsIas() { return 50 * Math.sqrt(1.5 / this.clMax) },
+  get clLevel() { return 1.5 / (this.sigma * (this.v / 50) ** 2) },
+  get aoaLevel() { const t = this.clLevel; if (t > this.clMax) return null; let lo = this.flap ? -6 : -2, hi = this.crit; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (this.cl(m) < t) lo = m; else hi = m } return lo },
+  get lwText() { return this.fmt(this.lw, 2) + ' × weight' },
+  get lwState() { return this.stalled ? 'bad' : Math.abs(this.lw - 1) < 0.03 ? 'ok' : 'warn' },
+  get lwNote() { return this.stalled ? 'stalled' : this.lw > 1.03 ? 'climbs or turns' : this.lw < 0.97 ? 'sinks' : 'level' },
+  // chart: angle -6..22 deg across x 60..380; CL 0..2 up y 270..40
+  X(a) { return 60 + (a + 6) / 28 * 320 },
+  Y(c) { return 270 - c / 2 * 230 },
+  curve(f, a0) { const pts = []; for (let a = a0; a <= 22.001; a += 0.25) pts.push([this.X(a), this.Y(Math.max(0, f(a)))]); return this.path(pts) },
+  get upPath() { return this.curve((a) => this.clUp(a), -2) },
+  get dnPath() { return this.curve((a) => this.clDn(a), -6) },
+  get dot() { return { x: this.X(this.aoa), y: this.Y(Math.max(0, this.c)) } },
+  // wing panel: lift arrow 34 px per weight, capped
+  get liftLen() { return Math.min(4.4, Math.max(0, this.lw)) * 34 },
+  presets: {
+    'level-at-60': { aoa: 8.4167, v: 60, rho: 100, flap: false },
+    'double-to-120': { aoa: 8.4167, v: 120, rho: 100, flap: false },
+    'level-at-120': { aoa: 0.6042, v: 120, rho: 100, flap: false },
+    'slow-to-70': { aoa: 1.75, v: 70, rho: 100, flap: false },
+    'half-density': { aoa: 1.75, v: 141.42, rho: 50, flap: false },
+    'flap-same-lift': { aoa: 4.4167, v: 60, rho: 100, flap: true },
+    'past-critical': { aoa: 18, v: 50, rho: 100, flap: false },
+  },
+})">
+  <svg viewBox="0 0 640 310" role="img" aria-labelledby="lcf-title" class="widget-stage">
+    <title id="lcf-title">Lift coefficient against angle of attack, flap up and flap down, with the wing section at the chosen angle and its lift arrow compared with the weight</title>
+    <defs>
+      <marker id="lcf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- stalled region beyond the critical angle -->
+    <rect y="40" height="230" fill="var(--color-bad)" fill-opacity="0.08" :x="X(crit)" :width="380 - X(crit)"/>
+    <line y1="270" stroke="var(--color-bad)" stroke-width="1" stroke-dasharray="4 3" :x1="X(crit)" :x2="X(crit)" :y2="Y(clMax)"/>
+    <g font-size="12" fill="var(--color-bad-fg)">
+      <text y="234" :x="X(crit) + 6">stalled past</text>
+      <text y="248" :x="X(crit) + 6">the critical</text>
+      <text y="262" :x="X(crit) + 6" x-text="'angle ≈ ' + (flap ? '14.5°' : '16°')"></text>
+    </g>
+    <!-- axes and grid -->
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="60" y1="212.5" x2="380" y2="212.5"/><line x1="60" y1="155" x2="380" y2="155"/><line x1="60" y1="97.5" x2="380" y2="97.5"/><line x1="60" y1="40" x2="380" y2="40"/>
+    </g>
+    <line x1="60" y1="270" x2="380" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="60" y1="40" x2="60" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="83" y="286">−4°</text><text x="129" y="286">0°</text><text x="174" y="286">4°</text><text x="220" y="286">8°</text>
+      <text x="266" y="286">12°</text><text x="311" y="286">16°</text><text x="357" y="286">20°</text>
+    </g>
+    <g font-size="12" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="54" y="274">0</text><text x="54" y="216">0.5</text><text x="54" y="159">1.0</text><text x="54" y="101">1.5</text><text x="54" y="44">2.0</text>
+    </g>
+    <text x="220" y="304" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">angle of attack</text>
+    <text x="16" y="155" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 16 155)">lift coefficient CL</text>
+    <!-- best L/D angle (flap up) -->
+    <line x1="174.3" x2="174.3" y1="270" :y2="Y(clUp(4))" stroke="var(--color-ok)" stroke-width="1" stroke-dasharray="4 3" x-show="!flap"/>
+    <text x="180" y="262" font-size="12" fill="var(--color-ok-fg)" x-show="!flap">best L/D ≈ 4°</text>
+    <!-- the two curves: the active one in brand colour -->
+    <path fill="none" stroke-linecap="round" stroke-linejoin="round" :d="upPath" :stroke="flap ? 'var(--color-fg-faint)' : 'var(--color-brand)'" :stroke-width="flap ? 1.25 : 2.5" :stroke-dasharray="flap ? '4 3' : 'none'"/>
+    <path fill="none" stroke-linecap="round" stroke-linejoin="round" :d="dnPath" :stroke="flap ? 'var(--color-brand)' : 'var(--color-fg-faint)'" :stroke-width="flap ? 2.5 : 1.25" :stroke-dasharray="flap ? 'none' : '4 3'"/>
+    <text x="300" y="131" font-size="13" text-anchor="middle" :fill="flap ? 'var(--color-fg-faint)' : 'var(--color-brand-fg)'" :font-weight="flap ? 400 : 700">flap up</text>
+    <text x="262" y="54" font-size="13" text-anchor="end" :fill="flap ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" :font-weight="flap ? 700 : 400">flap down</text>
+    <!-- CL max at the critical angle -->
+    <circle r="4" fill="var(--color-bad)" :cx="X(crit)" :cy="Y(clMax)"/>
+    <!-- level-flight CL at this speed -->
+    <g x-show="aoaLevel !== null && clLevel <= 2">
+      <line x1="60" stroke="var(--color-fg-muted)" stroke-width="1" stroke-dasharray="4 3" :x2="X(aoaLevel || 0)" :y1="Y(clLevel)" :y2="Y(clLevel)"/>
+      <text font-size="12" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="X(aoaLevel || 0) + 12" :y="Y(clLevel) + 16">level</text>
+    </g>
+    <!-- you -->
+    <circle r="7" fill="var(--color-surface)" stroke-width="3" :stroke="stalled ? 'var(--color-bad)' : 'var(--color-brand)'" :cx="dot.x" :cy="dot.y"/>
+
+    <!-- wing panel -->
+    <rect x="400" y="14" width="232" height="282" rx="10" fill="var(--color-surface-2)"/>
+    <text x="516" y="36" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="'L = ½ρV²S·CL'"></text>
+    <!-- relative airflow from ahead (the aeroplane flies to the right) -->
+    <g stroke="var(--color-sky-fg)" stroke-width="1.25" marker-end="url(#lcf-arrow)">
+      <line x1="626" y1="186" x2="596" y2="186"/><line x1="626" y1="204" x2="596" y2="204"/><line x1="626" y1="222" x2="596" y2="222"/>
+    </g>
+    <text x="624" y="246" font-size="12" text-anchor="end" fill="var(--color-sky-fg)">airflow</text>
+    <!-- wing section, leading edge to the right, pitched up by the angle of attack about its quarter chord -->
+    <g :transform="'translate(520 204) rotate(' + (-aoa) + ') scale(0.95)'">
+      <line x1="40" y1="0" x2="-95" y2="-2.6" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+      <path d="M25 0 C17 -14 -15 -16 -50 -6.5 L-50 4.8 C-30 6.5 5 8 25 0 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M-50 -6.5 C-60 -4.5 -68 -3 -75 -2 C-68 0 -60 2.5 -50 4.8 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round" :transform="'rotate(' + (flap ? -28 : 0) + ' -50 -1)'"/>
+      <!-- separated flow over the top when stalled -->
+      <path x-show="stalled" d="M-5 -16 q-8 -10 -16 -2 q-8 8 -16 -2 q-8 -10 -16 0 q-8 8 -18 -2 q-8 -8 -16 2" fill="none" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+    <!-- lift, perpendicular to the airflow, and weight -->
+    <line x1="516" y1="200" x2="516" stroke-width="3" stroke-linecap="round" marker-end="url(#lcf-arrow)" :y2="200 - liftLen" :stroke="stalled ? 'var(--color-bad)' : 'var(--color-brand)'" x-show="lw > 0.05"/>
+    <text font-size="14" font-weight="700" x="506" y="66" text-anchor="end" :fill="stalled ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)'" x-text="'Lift ' + fmt(lw, 2) + ' W'"></text>
+    <line x1="516" y1="208" x2="516" y2="242" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#lcf-arrow)"/>
+    <text x="506" y="244" font-size="13" text-anchor="end" fill="var(--color-info-fg)" font-weight="600">Weight</text>
+    <text x="516" y="288" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)" class="num" x-text="'α ' + fmt(aoa, 1) + '°   CL ' + fmt(c, 2)"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="lcf-aoa">Angle of attack <output for="lcf-aoa" x-text="fmt(aoa, 1) + '°'"></output></label>
+      <input type="range" id="lcf-aoa" min="-4" max="22" step="0.1" x-model.number="aoa">
+    </div>
+    <div class="widget-control">
+      <label for="lcf-v">True airspeed V <output for="lcf-v" x-text="fmt(v) + ' kt'"></output></label>
+      <input type="range" id="lcf-v" min="40" max="160" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="lcf-rho">Air density ρ <output for="lcf-rho" x-text="rho + '% of sea level'"></output></label>
+      <input type="range" id="lcf-rho" min="50" max="100" step="1" x-model.number="rho">
+    </div>
+    <div class="widget-control">
+      <label for="lcf-flap" class="cursor-pointer"><span>Flap down (more camber)</span>
+        <input type="checkbox" id="lcf-flap" x-model="flap" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="lwState">
+      <dt class="widget-label">Lift</dt>
+      <dd class="widget-value"><span x-text="lwText"></span><span class="widget-flag" :class="stalled ? 'bad' : 'warn'" x-show="lwState !== 'ok'" x-text="lwNote"></span></dd>
+    </div>
+    <div class="widget-readout" :class="stalled ? 'bad' : nearStall ? 'warn' : ''">
+      <dt class="widget-label">Lift coefficient CL</dt>
+      <dd class="widget-value"><span x-text="fmt(c, 2) + ' (max ' + fmt(clMax, 1) + ')'"></span><span class="widget-flag bad" x-show="stalled">past critical</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">CL for level flight here</dt>
+      <dd class="widget-value" x-text="aoaLevel === null ? 'more than CL max' : fmt(clLevel, 2) + ' at ' + fmt(aoaLevel, 1) + '°'"></dd>
+    </div>
+    <div class="widget-readout" x-show="rho < 100">
+      <dt class="widget-label">Indicated airspeed</dt>
+      <dd class="widget-value" x-text="fmt(ias) + ' kt'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">1 g stall speed (IAS)</dt>
+      <dd class="widget-value" x-text="fmt(vsIas) + ' kt, flap ' + (flap ? 'down' : 'up')"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('level-at-60')" :aria-pressed="active === 'level-at-60'">Level at 60 kt</button>
+      <button type="button" @click="preset('double-to-120')" :aria-pressed="active === 'double-to-120'">Double the speed</button>
+      <button type="button" @click="preset('level-at-120')" :aria-pressed="active === 'level-at-120'">Level at 120 kt</button>
+      <button type="button" @click="preset('slow-to-70')" :aria-pressed="active === 'slow-to-70'">100 → 70 kt</button>
+      <button type="button" @click="preset('half-density')" :aria-pressed="active === 'half-density'">Half the density</button>
+      <button type="button" @click="preset('flap-same-lift')" :aria-pressed="active === 'flap-same-lift'">Flap down</button>
+      <button type="button" @click="preset('past-critical')" :aria-pressed="active === 'past-critical'">Past 16°</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Lift comes from two things the pilot sets: the angle of attack (through CL) and the speed, squared. Double the speed at the same angle and lift is four times as great, so to stay level the angle must come down until CL is a quarter. CL rises in a straight line until the critical angle, about 16°, then the flow separates and lift falls. Flap lifts the whole curve: more CL at every angle, a higher CL max, so a lower stall speed and the same lift at a smaller angle, with a slightly lower critical angle. The curve shapes and the 50 kt stall speed are an illustrative example aeroplane.</p>
+  <details class="widget-try"><summary>Try it: level at 60 kt, you accelerate to 120 kt without moving the elevator. What happens to lift, and what CL do you need to stay level?</summary><p>Press Level at 60 kt, then Double the speed: lift jumps from 1.00 to 4.00 times the weight (2² = 4), so the aeroplane would climb. Press Level at 120 kt: CL falls from 1.04 to 0.26, a quarter, at well under 1° instead of 8.4°. That is why the nose sits low in a fast cruise.</p></details>
+  <details class="widget-try"><summary>Try it: at half the sea-level density, what true airspeed gives the same lift at the same angle, and what does the ASI read?</summary><p>Press Half the density: ρV² must stay the same, so V rises by √2 to about 141 kt TAS, but the dynamic pressure is unchanged, so the ASI still reads 100 kt. The wing needs the same IAS at any height.</p></details>
+</div>

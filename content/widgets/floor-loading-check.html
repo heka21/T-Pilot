@@ -1,0 +1,192 @@
+<div class="widget" x-data="widget({
+  kg: 30, L: 0.20, W: 0.15, board: false, bL: 0.40, bW: 0.30,
+  limit: 450, // ECHO's floor loading limit, kg/m² (POPC 2.1.1e)
+  // the board can only add area: each side of the contact is the larger of the board and the base
+  get eL() { return this.board ? Math.max(this.bL, this.L) : this.L },
+  get eW() { return this.board ? Math.max(this.bW, this.W) : this.W },
+  get clipped() { return this.board && (this.bL < this.L || this.bW < this.W) },
+  get area() { return this.eL * this.eW },
+  // floor loading = weight / contact area (the board's own weight is left out, as in the lesson)
+  get load() { return this.kg / this.area },
+  get over() { return this.load > this.limit + 1e-9 },
+  get minA() { return this.kg / this.limit },
+  // smallest square board that is legal, rounded up to the next centimetre
+  get side() { return Math.ceil(Math.sqrt(this.minA) * 100 - 1e-9) / 100 },
+  // area with 3 decimals, 4 when the fourth matters (0.0625)
+  fa(a) { const s = a.toFixed(3); return Math.abs(a - Number(s)) > 1e-9 ? a.toFixed(4) : s },
+  m(v) { return v.toFixed(2) },
+  // plan view: 350 px per metre, grid centre (180, 184)
+  get item() { return { x: 180 - this.L * 175, y: 184 - this.W * 175, w: this.L * 350, h: this.W * 350 } },
+  get pad() { return { x: 180 - this.eL * 175, y: 184 - this.eW * 175, w: this.eL * 350, h: this.eW * 350 } },
+  get sq() { const s = Math.sqrt(this.minA) * 350; return { x: 180 - s / 2, y: 184 - s / 2, s: s } },
+  // side view: 300 px per metre, centred on x 485, floor top at y 230
+  get sTop() { return (this.board ? 222 : 230) - 56 },
+  get cw() { return this.eL * 300 },
+  get n() { return Math.min(13, Math.max(2, Math.floor(this.cw / 20) + 1)) },
+  ax(i) { return 485 - this.cw / 2 + Math.min(i, this.n - 1) * this.cw / (this.n - 1) },
+  get alen() { return 8 + this.clamp(this.load, 0, 1200) / 1200 * 58 },
+  // gauge: 0..1200 kg/m² across x 40..600
+  gx(v) { return 40 + this.clamp(v, 0, 1200) / 1200 * 560 },
+  get tone() { return this.over ? 'bad' : 'ok' },
+  get caption() {
+    const a = this.fa(this.area), q = this.fmt(this.load), need = this.fmt(this.minA, 3);
+    const pre = this.clipped ? 'The board is smaller than the base on one side, so there the base sets the contact. ' : '';
+    if (!this.board) {
+      if (this.over) return 'On its own base, ' + this.kg + ' kg presses on ' + a + ' m²: ' + q + ' kg/m², ' + (this.load / this.limit).toFixed(1) + ' times the 450 kg/m² limit. It needs at least ' + need + ' m² of contact, for example a square board of ' + this.m(this.side) + ' m a side.';
+      return 'On its own base, ' + this.kg + ' kg presses on ' + a + ' m²: ' + q + ' kg/m², within the 450 kg/m² limit, so it needs no board.';
+    }
+    if (this.over) return pre + 'The board spreads ' + this.kg + ' kg over ' + a + ' m², but ' + q + ' kg/m² still exceeds the limit: it needs at least ' + need + ' m², for example a square board of ' + this.m(this.side) + ' m a side.';
+    return pre + 'The board spreads ' + this.kg + ' kg over ' + a + ' m²: ' + q + ' kg/m², within the 450 kg/m² limit' + (this.load > 405 ? ', but only just' : '') + '. Weigh the board too: it goes on the load sheet.';
+  },
+  presets: {
+    'battery-on-its-base': { kg: 30, L: 0.20, W: 0.15, board: false, bL: 0.40, bW: 0.30 },
+    'battery-on-a-board': { kg: 30, L: 0.20, W: 0.15, board: true, bL: 0.40, bW: 0.30 },
+    'survey-box': { kg: 40, L: 0.25, W: 0.25, board: false, bL: 0.30, bW: 0.30 },
+    'survey-box-on-a-board': { kg: 40, L: 0.25, W: 0.25, board: true, bL: 0.30, bW: 0.30 },
+  },
+})">
+  <svg viewBox="0 0 640 434" role="img" aria-labelledby="flc-title" class="widget-stage">
+    <title id="flc-title">A patch of baggage-compartment floor seen from above with 10 cm squares, the item's footprint drawn to scale and, when it stands on a board, the board's footprint beneath it; a side view with the weight spread into pressure arrows over the contact area; and a gauge of floor loading in kilograms per square metre against the 450 kg/m² limit</title>
+    <defs>
+      <marker id="flc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+
+    <!-- plan view -->
+    <text x="20" y="18" font-size="14" font-weight="700" fill="var(--color-fg)">Plan view of the floor <tspan font-weight="400" font-size="12" fill="var(--color-fg-muted)">(10 cm squares)</tspan></text>
+    <rect x="40" y="44" width="280" height="280" fill="var(--color-surface-2)"/>
+    <g stroke="var(--color-line)" stroke-width="1">
+      <line x1="75" y1="44" x2="75" y2="324"/><line x1="110" y1="44" x2="110" y2="324"/><line x1="145" y1="44" x2="145" y2="324"/>
+      <line x1="180" y1="44" x2="180" y2="324"/><line x1="215" y1="44" x2="215" y2="324"/><line x1="250" y1="44" x2="250" y2="324"/>
+      <line x1="285" y1="44" x2="285" y2="324"/>
+      <line x1="40" y1="79" x2="320" y2="79"/><line x1="40" y1="114" x2="320" y2="114"/><line x1="40" y1="149" x2="320" y2="149"/>
+      <line x1="40" y1="184" x2="320" y2="184"/><line x1="40" y1="219" x2="320" y2="219"/><line x1="40" y1="254" x2="320" y2="254"/>
+      <line x1="40" y1="289" x2="320" y2="289"/>
+    </g>
+    <rect x="40" y="44" width="280" height="280" fill="none" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="40" y="38">0</text><text x="75" y="38">10</text><text x="110" y="38">20</text><text x="145" y="38">30</text><text x="180" y="38">40</text>
+      <text x="215" y="38">50</text><text x="250" y="38">60</text><text x="285" y="38">70</text><text x="320" y="38">80 cm</text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="34" y="83">10</text><text x="34" y="118">20</text><text x="34" y="153">30</text><text x="34" y="188">40</text>
+      <text x="34" y="223">50</text><text x="34" y="258">60</text><text x="34" y="293">70</text><text x="34" y="328">80</text>
+    </g>
+    <!-- board (the contact area when it is on) -->
+    <rect x-show="board" stroke-width="2" stroke-linejoin="round" :x="pad.x" :y="pad.y" :width="pad.w" :height="pad.h"
+      :fill="'var(--color-' + tone + '-soft)'" :stroke="'var(--color-' + tone + ')'"/>
+    <!-- item footprint -->
+    <rect stroke-linejoin="round" :x="item.x" :y="item.y" :width="item.w" :height="item.h"
+      :fill="board ? 'var(--color-surface)' : 'var(--color-' + tone + '-soft)'" :stroke="board ? 'var(--color-fg)' : 'var(--color-' + tone + ')'"
+      :stroke-width="board ? 1.25 : 2"/>
+    <text font-size="12" font-weight="700" text-anchor="middle" class="num" fill="var(--color-fg)" x-show="item.w >= 46 && item.h >= 22"
+      x="180" y="188" x-text="kg + ' kg'"></text>
+    <!-- smallest legal square -->
+    <rect fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" :x="sq.x" :y="sq.y" :width="sq.s" :height="sq.s"/>
+    <line x1="40" y1="345" x2="64" y2="345" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="70" y="349" font-size="12" fill="var(--color-fg-muted)">smallest legal square: weight ÷ 450</text>
+
+    <!-- side view -->
+    <text x="360" y="18" font-size="14" font-weight="700" fill="var(--color-fg)">Side view</text>
+    <text x="360" y="44" font-size="13" fill="var(--color-fg)" class="num" x-text="'Item ' + kg + ' kg, base ' + m(L) + ' × ' + m(W) + ' m'"></text>
+    <text x="360" y="62" font-size="13" fill="var(--color-fg-muted)" class="num"
+      x-text="!board ? 'No board: the base is the contact' : clipped ? 'Board ' + m(bL) + ' × ' + m(bW) + ' m (too small)' : 'On a board ' + m(bL) + ' × ' + m(bW) + ' m'"></text>
+    <!-- weight -->
+    <line x1="485" x2="485" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" marker-end="url(#flc-arrow)" :y1="sTop - 48" :y2="sTop - 4"/>
+    <text x="493" font-size="13" font-weight="600" fill="var(--color-info-fg)" class="num" :y="sTop - 22" x-text="kg + ' kg'"></text>
+    <!-- item, board, floor -->
+    <rect height="56" rx="3" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="2" :x="485 - L * 150" :y="sTop" :width="L * 300"/>
+    <rect x-show="board" y="222" height="8" stroke-width="1.25" :x="485 - cw / 2" :width="cw"
+      :fill="'var(--color-' + tone + '-soft)'" :stroke="'var(--color-' + tone + ')'"/>
+    <rect x="356" y="230" width="260" height="6" fill="var(--color-line-strong)"/>
+    <!-- pressure on the floor: more arrows over a wider contact, each shorter as the loading falls -->
+    <g stroke-width="1.5" stroke-linecap="round" :stroke="'var(--color-' + tone + ')'">
+      <line y1="241" marker-end="url(#flc-arrow)" :x1="ax(0)" :x2="ax(0)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" :x1="ax(1)" :x2="ax(1)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 2" :x1="ax(2)" :x2="ax(2)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 3" :x1="ax(3)" :x2="ax(3)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 4" :x1="ax(4)" :x2="ax(4)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 5" :x1="ax(5)" :x2="ax(5)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 6" :x1="ax(6)" :x2="ax(6)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 7" :x1="ax(7)" :x2="ax(7)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 8" :x1="ax(8)" :x2="ax(8)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 9" :x1="ax(9)" :x2="ax(9)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 10" :x1="ax(10)" :x2="ax(10)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 11" :x1="ax(11)" :x2="ax(11)" :y2="241 + alen"/>
+      <line y1="241" marker-end="url(#flc-arrow)" x-show="n > 12" :x1="ax(12)" :x2="ax(12)" :y2="241 + alen"/>
+    </g>
+    <text x="485" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" :y="241 + alen + 20">pressure on the floor</text>
+
+    <!-- floor loading gauge -->
+    <text x="40" y="376" font-size="13" fill="var(--color-fg-muted)">Floor loading (kg/m²)</text>
+    <text x="256" y="376" font-size="12" font-weight="600" fill="var(--color-fg)">ECHO's limit 450</text>
+    <rect x="40" y="384" width="560" height="16" rx="3" fill="var(--color-surface-2)" stroke="var(--color-line)" stroke-width="1"/>
+    <rect x="40" y="384" height="16" rx="3" :width="Math.max(0, gx(load) - 40)" :fill="'var(--color-' + tone + ')'"/>
+    <path x-show="load > 1200" d="M601 382 L614 392 L601 402 Z" fill="var(--color-bad)"/>
+    <line x1="250" y1="379" x2="250" y2="405" stroke="var(--color-fg)" stroke-width="2"/>
+    <text y="396" font-size="12" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+      :fill="'var(--color-' + tone + '-fg)'" :x="gx(load) < 515 ? gx(load) + 8 : gx(load) - 8" :text-anchor="gx(load) < 515 ? 'start' : 'end'" x-text="fmt(load) + ' kg/m²'"></text>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="40" y="420">0</text><text x="133" y="420">200</text><text x="227" y="420">400</text><text x="320" y="420">600</text>
+      <text x="413" y="420">800</text><text x="507" y="420">1,000</text><text x="600" y="420">1,200</text>
+    </g>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="flc-kg">Item weight <output for="flc-kg" x-text="kg + ' kg'"></output></label>
+      <input type="range" id="flc-kg" min="5" max="60" step="1" x-model.number="kg">
+    </div>
+    <div class="widget-control">
+      <label for="flc-board" class="cursor-pointer"><span>Stand it on a board</span>
+        <input type="checkbox" id="flc-board" x-model="board" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="flc-l">Base length <output for="flc-l" x-text="m(L) + ' m'"></output></label>
+      <input type="range" id="flc-l" min="0.05" max="0.60" step="0.01" x-model.number="L">
+    </div>
+    <div class="widget-control">
+      <label for="flc-w">Base width <output for="flc-w" x-text="m(W) + ' m'"></output></label>
+      <input type="range" id="flc-w" min="0.05" max="0.60" step="0.01" x-model.number="W">
+    </div>
+    <div class="widget-control" x-show="board">
+      <label for="flc-bl">Board length <output for="flc-bl" x-text="m(bL) + ' m'"></output></label>
+      <input type="range" id="flc-bl" min="0.10" max="0.80" step="0.01" x-model.number="bL">
+    </div>
+    <div class="widget-control" x-show="board">
+      <label for="flc-bw">Board width <output for="flc-bw" x-text="m(bW) + ' m'"></output></label>
+      <input type="range" id="flc-bw" min="0.10" max="0.80" step="0.01" x-model.number="bW">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label" x-text="board ? 'Contact area (board)' : 'Contact area (base)'"></dt>
+      <dd class="widget-value" x-text="m(eL) + ' × ' + m(eW) + ' m = ' + fa(area) + ' m²'"></dd>
+    </div>
+    <div class="widget-readout" :class="tone">
+      <dt class="widget-label">Floor loading</dt>
+      <dd class="widget-value" x-text="fmt(load) + ' kg/m²'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Smallest legal area (weight ÷ 450)</dt>
+      <dd class="widget-value" x-text="fmt(minA, 3) + ' m²'"></dd>
+    </div>
+    <div class="widget-readout" :class="tone">
+      <dt class="widget-label">Against the 450 kg/m² limit</dt>
+      <dd class="widget-value"><span x-text="over ? 'Exceeds' : 'Within'"></span><span class="widget-flag" :class="tone" x-text="over ? 'not legal' : 'legal'"></span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('battery-on-its-base')" :aria-pressed="active === 'battery-on-its-base'">Battery on its base</button>
+      <button type="button" @click="preset('battery-on-a-board')" :aria-pressed="active === 'battery-on-a-board'">Battery on a board</button>
+      <button type="button" @click="preset('survey-box')" :aria-pressed="active === 'survey-box'">Survey box</button>
+      <button type="button" @click="preset('survey-box-on-a-board')" :aria-pressed="active === 'survey-box-on-a-board'">Survey box on a board</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Floor loading is weight per square metre, not weight: the same 30 kg on four times the area is a quarter of the loading, 1,000 kg/m² on the battery's base and 250 kg/m² on the board. A dense item can sit well inside a compartment's weight limit (122 kg in CHARLIE, 54 kg in BRAVO, 55 kg and 155 kg for ECHO) and still punch through the floor panel. As in the lesson, the kg/m² figure here leaves out the board's own weight, but the board goes on the load sheet. A board smaller than the base adds nothing on that side, so each side of the contact is the larger of the two.</p>
+  <details class="widget-try"><summary>Try it: what is the smallest square board that makes the 40 kg survey box legal?</summary><p>It needs 40 ÷ 450 = 0.089 m², and the side of a square of that area is √0.089 = 0.298 m, so 0.30 m. Set the board to 0.30 × 0.30 m: 0.09 m², 444 kg/m², within the limit but only just. At 0.29 × 0.29 m (0.0841 m²) it is 476 kg/m², over. A larger board gives a sensible margin.</p></details>
+  <details class="widget-try"><summary>Try it: why does doubling both sides of a board quarter the loading?</summary><p>Area is length × width, so twice the length and twice the width is 2 × 2 = 4 times the area, and the same weight over four times the area is a quarter of the loading. The battery's base is 0.20 × 0.15 m (1,000 kg/m²); the 0.40 × 0.30 m board doubles both sides (250 kg/m²); double again to 0.80 × 0.60 m and it falls to about 63 kg/m².</p></details>
+</div>

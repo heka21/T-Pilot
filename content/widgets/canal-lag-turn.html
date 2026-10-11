@@ -1,0 +1,177 @@
+<div class="widget" x-data="timeline({
+  duration: 40, loop: false,
+  slow: false, senses: false,
+  // one minute in cloud, sampled every 0.1 s
+  get rollIn() { return this.slow ? [4, 30] : [4, 7] },
+  get top() { return this.slow ? 15 : 20 },
+  bankAt(s) {
+    const r = this.rollIn;
+    const top = this.top;
+    let b = s < r[0] ? 0 : s < r[1] ? top * this.ease(this.seg(s, r[0], r[1])) : s < 37 ? top : s < 40 ? top * (1 - this.ease(this.seg(s, 37, 40))) : 0;
+    // trusting the false left turn, the pilot rolls back into the right bank: the graveyard spiral
+    if (this.senses && s >= 42) b = 30 * this.ease(this.seg(s, 42, 46));
+    return b;
+  },
+  // the canal signal: the bank (and with it the rate of turn) seen through a fluid that catches up in about
+  // 10 to 20 seconds (PHFC 2.7); a first-order lag with a 7 s time constant, illustrative
+  get sim() {
+    const dt = 0.1, tau = 7, a = tau / (tau + dt), n = 600, out = { bank: [0], felt: [0], head: [0], lag: [0] };
+    let y = 0, x0 = 0, head = 0, lag = 0;
+    for (let k = 1; k <= n; k++) {
+      const x = this.bankAt(k * dt);
+      y = a * (y + x - x0); x0 = x;
+      head += 0.15 * x * dt; lag += 0.15 * y * dt;
+      out.bank.push(x); out.felt.push(y); out.head.push(head); out.lag.push(lag);
+    }
+    return out;
+  },
+  get sec() { return this.t * 60 },
+  get k() { return Math.round(this.t * 600) },
+  get bank() { return this.sim.bank[this.k] },
+  get felt() { return this.sim.felt[this.k] },
+  get heading() { return this.sim.head[this.k] },
+  get fluid() { return this.sim.head[this.k] - this.sim.lag[this.k] },
+  get feel() { return this.felt > 5 ? 'right' : this.felt < -5 ? 'left' : 'level' },
+  get diving() { return this.senses && this.sec >= 50 },
+  get disagree() { return Math.abs(this.felt - this.bank) > 5 },
+  get realText() { return this.bank < 1 ? 'Wings level' : this.fmt(this.bank) + '° right bank' + (this.diving ? ', diving' : '') },
+  get feelText() { return this.feel === 'level' ? 'Level, not turning' : (this.slow && this.sec > 37 ? 'Banked ' : 'Turning ') + this.feel },
+  get cupula() {
+    if (Math.abs(this.felt) <= 5) return this.bank > 1 ? 'Upright: fluid caught up' : 'Upright';
+    return this.felt > 0 ? 'Bent: fluid lagging' : 'Bent back: fluid runs on';
+  },
+  // the picture
+  X(s) { return 50 + s / 60 * 570 },
+  Y(b) { return 245 - b * 1.3 },
+  trace(key) { const v = this.sim[key], pts = []; for (let k = 0; k <= 600; k += 5) pts.push([this.X(k / 10), this.Y(v[k])]); return this.path(pts) },
+  get bankPath() { return this.trace('bank') },
+  get feltPath() { return this.trace('felt') },
+  dot(i) { return this.pol(530, 110, 46, this.fluid + i * 60) },
+  get cup() { const a = this.pol(530, 110, 39, this.heading), b = this.pol(530, 110, 53, this.heading), m = this.pol(530, 110, 46, this.heading - this.clamp(this.felt, -20, 20) * 0.9); return 'M' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ' Q' + m.x.toFixed(1) + ' ' + m.y.toFixed(1) + ' ' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) },
+  get nose() { const p = this.pol(530, 110, 22, this.heading), l = this.pol(530, 110, 12, this.heading - 140), r = this.pol(530, 110, 12, this.heading + 140); return 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' L' + l.x.toFixed(1) + ' ' + l.y.toFixed(1) + ' L' + r.x.toFixed(1) + ' ' + r.y.toFixed(1) + ' Z' },
+  get steps() {
+    const r = this.rollIn, s = [{ at: 0, label: 'Level' }, { at: r[0] / 60, label: this.slow ? 'Slow roll in' : 'Roll in' }];
+    if (!this.slow) s.push({ at: 22 / 60, label: 'Feels level' });
+    s.push({ at: 37 / 60, label: 'Roll out' }, { at: 40.5 / 60, label: 'Feels a left turn' });
+    s.push(this.senses ? { at: 56 / 60, label: 'Graveyard spiral' } : { at: 54 / 60, label: 'Sensation fades' });
+    return s;
+  },
+  get caption() {
+    const s = this.sec, r = this.rollIn;
+    if (s < r[0]) return 'Wings level in cloud: no horizon, so your balance sense comes from the inner ear and the seat of the pants.';
+    if (s < r[1] + 1) return this.slow ? 'A slow, gentle roll while you refold a chart: it bends the cupula too little to register. You feel level while the aeroplane banks.' : 'You roll into a right turn. The canal turns with your head but the fluid lags, by inertia, and bends the cupula: you feel the roll and the turn.';
+    if (s < 37) {
+      if (this.feel !== 'level') return 'Still turning steadily, and friction is bringing the fluid up to speed with the canal: the sensation is fading.';
+      return 'A steady turn: the fluid has caught up and the cupula is upright again. The canals sense only the start and stop of rotation, and the seat of the pants reads a balanced turn as level, so it feels like straight and level flight.';
+    }
+    if (s < 40.5) return 'You roll out to wings level on the attitude indicator. The canal stops but the fluid runs on and bends the cupula the other way.';
+    if (this.senses && s >= 42) {
+      if (s < 50) return 'It feels like a turn to the left, so you roll right to stop it: straight back into the right bank.';
+      return s < 56 ? 'Held in the bank, the fluid catches up again and the turn fades towards level, while the nose drops and the speed builds.' : 'Banked and feeling level, the nose drops and the altimeter unwinds. You pull back to stop the descent, and with the wings banked that only tightens the turn: the graveyard spiral.';
+    }
+    if (this.feel !== 'level') return this.slow ? 'The leans: the slow roll in never registered, but the brisk roll out did, so wings level now feels like a bank to the left. Hold the attitude indicator level and let the sensation fade.' : 'Wings level, yet you feel a turn to the left: the fluid is still running on. Hold the attitude indicator level and let the sensation fade.';
+    return 'Believe the instruments: after 10 to 20 seconds the false sensation has died away and the senses agree with the attitude indicator again.';
+  },
+  presets: {
+    'roll-in-felt': { slow: false, senses: false, t: 0.1 },
+    'steady-turn-feels-level': { slow: false, senses: false, t: 0.45 },
+    'roll-out-feels-left': { slow: false, senses: false, t: 0.685 },
+    'the-leans': { slow: true, senses: false, t: 0.685 },
+    'graveyard-spiral': { slow: false, senses: true, t: 0.97 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="clt-title" class="widget-stage">
+    <title id="clt-title">A turn in cloud, seen three ways: the real bank angle against the horizon, the bank you feel, and the horizontal semicircular canal from above with its fluid and cupula; below, the real bank and the felt bank over one minute</title>
+    <!-- reality -->
+    <text x="110" y="22" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Reality</text>
+    <rect x="14" y="32" width="192" height="146" rx="10" fill="var(--color-surface-2)"/>
+    <rect x="14" y="32" width="192" height="80" rx="10" fill="var(--color-sky-soft)"/>
+    <rect x="14" y="100" width="192" height="12" fill="var(--color-sky-soft)"/>
+    <line x1="14" y1="112" x2="206" y2="112" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="200" y="128" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">horizon (hidden by cloud)</text>
+    <g :transform="'translate(110 92) rotate(' + bank + ')'"><g transform="translate(0 0) rotate(0) scale(1.1)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-fg)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-fg)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+    <path d="M36 142 L36 164" stroke="var(--color-bad)" stroke-width="2.5" marker-end="url(#clt-arrow)" x-show="diving"/>
+    <text x="110" y="170" font-size="12" text-anchor="middle" fill="var(--color-fg)" x-show="!diving" x-text="realText"></text>
+    <text x="48" y="160" font-size="12" fill="var(--color-bad-fg)" x-show="diving">altimeter unwinding</text>
+    <!-- what you feel -->
+    <text x="320" y="22" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)">What you feel</text>
+    <rect x="224" y="32" width="192" height="146" rx="10" fill="var(--color-surface-2)"/>
+    <g fill="var(--color-surface)" opacity="0.7">
+      <ellipse cx="262" cy="56" rx="30" ry="12"/><ellipse cx="380" cy="64" rx="26" ry="10"/><ellipse cx="300" cy="150" rx="34" ry="12"/><ellipse cx="392" cy="140" rx="20" ry="9"/>
+    </g>
+    <g :transform="'translate(320 92) rotate(' + felt + ')'"><g transform="translate(0 0) rotate(0) scale(1.1)"><rect x="-1.2" y="9.4" width="2.4" height="4.1" rx="1.2" fill="var(--color-brand)" stroke="none"/><line x1="-5" y1="5.2" x2="-24" y2="-5.4" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><line x1="5" y1="5.2" x2="24" y2="-5.4" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><line x1="-4.4" y1="8.2" x2="-10.6" y2="10.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><line x1="4.4" y1="8.2" x2="10.6" y2="10.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><rect x="-12.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-brand)" stroke="none"/><rect x="9.6" y="8.3" width="3" height="5.2" rx="1.5" fill="var(--color-brand)" stroke="none"/><rect x="-5.2" y="-5.2" width="10.4" height="13.8" rx="3" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="2"/><path d="M-3.6 -3.6 L3.6 -3.6 L3.6 -0.6 L-3.6 -0.6 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-50 -9.3 L0 -8.9 L50 -9.3 L50 -6 L0 -5 L-50 -6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-16.7 1.2 L16.7 1.2 L16.7 3.8 L-16.7 3.8 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-1.5 1.2 L-1 -13 L1 -13 L1.5 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+    <text x="320" y="170" font-size="12" text-anchor="middle" font-weight="600" :fill="disagree ? 'var(--color-bad-fg)' : 'var(--color-brand-fg)'" x-text="feelText"></text>
+    <!-- the canal from above -->
+    <text x="530" y="22" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-fg)">Inner ear canal</text>
+    <text x="530" y="40" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">seen from above, turns with your head</text>
+    <circle cx="530" cy="110" r="46" fill="none" stroke="var(--color-fg-muted)" stroke-width="18"/>
+    <circle cx="530" cy="110" r="46" fill="none" stroke="var(--color-sky-soft)" stroke-width="13"/>
+    <g fill="var(--color-sky-fg)">
+      <circle r="3" :cx="dot(0).x" :cy="dot(0).y"/><circle r="3" :cx="dot(1).x" :cy="dot(1).y"/><circle r="3" :cx="dot(2).x" :cy="dot(2).y"/>
+      <circle r="3" :cx="dot(3).x" :cy="dot(3).y"/><circle r="3" :cx="dot(4).x" :cy="dot(4).y"/><circle r="3" :cx="dot(5).x" :cy="dot(5).y"/>
+    </g>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="4" stroke-linecap="round" :d="cup"/>
+    <path fill="var(--color-fg-muted)" :d="nose"/>
+    <text x="530" y="176" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" x-text="'cupula ' + (Math.abs(felt) <= 5 ? 'upright' : 'bent')"></text>
+    <!-- the minute as a trace -->
+    <line x1="50" y1="245" x2="620" y2="245" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="50" y="298">0</text><text x="145" y="298">10</text><text x="240" y="298">20</text><text x="335" y="298">30</text><text x="430" y="298">40</text><text x="525" y="298">50</text><text x="620" y="298">60 s</text>
+    </g>
+    <text x="44" y="214" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">right</text>
+    <text x="44" y="249" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">level</text>
+    <text x="44" y="282" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">left</text>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round" :d="bankPath"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linejoin="round" :d="feltPath"/>
+    <line x1="60" y1="199" x2="82" y2="199" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="88" y="203" font-size="12" fill="var(--color-info)">real bank</text>
+    <line x1="170" y1="199" x2="192" y2="199" stroke="var(--color-brand)" stroke-width="2.5"/>
+    <text x="198" y="203" font-size="12" fill="var(--color-brand-fg)">what you feel</text>
+    <line y1="208" y2="284" stroke="var(--color-fg-muted)" stroke-width="1.25" :x1="X(sec)" :x2="X(sec)"/>
+    <defs><marker id="clt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the turn'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="clt-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time through the turn">
+    <span class="widget-clock" x-text="fmt(sec) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="clt-slow" class="cursor-pointer"><span>Slow, unnoticed roll into the bank</span>
+        <input type="checkbox" id="clt-slow" x-model="slow" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="clt-senses" class="cursor-pointer"><span>Trust your senses after the roll-out</span>
+        <input type="checkbox" id="clt-senses" x-model="senses" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Attitude indicator</dt><dd class="widget-value"><span x-text="realText"></span><span class="widget-flag bad" x-show="diving">spiral</span></dd></div>
+    <div class="widget-readout" :class="disagree ? 'bad' : 'ok'"><dt class="widget-label">Your inner ear says</dt><dd class="widget-value"><span x-text="feelText"></span><span class="widget-flag bad" x-show="disagree">false</span></dd></div>
+    <div class="widget-readout" :class="Math.abs(felt) > 5 ? 'warn' : ''"><dt class="widget-label">Cupula</dt><dd class="widget-value" x-text="cupula"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('roll-in-felt')" :aria-pressed="active === 'roll-in-felt'">Roll in</button>
+      <button type="button" @click="preset('steady-turn-feels-level')" :aria-pressed="active === 'steady-turn-feels-level'">Steady turn</button>
+      <button type="button" @click="preset('roll-out-feels-left')" :aria-pressed="active === 'roll-out-feels-left'">Roll out</button>
+      <button type="button" @click="preset('the-leans')" :aria-pressed="active === 'the-leans'">The leans</button>
+      <button type="button" @click="preset('graveyard-spiral')" :aria-pressed="active === 'graveyard-spiral'">Spiral</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The canals feel only the start and stop of a rotation: a steady turn fades to "level" within 10 to 20 seconds, and the roll-out then feels like a turn the other way. Trust that feeling and you roll straight back into the bank: the graveyard spiral. The 20° bank and the exact shape of the fade are illustrative; the direction of every false sensation is not.</p>
+  <details class="widget-try"><summary>Try it: in cloud you hold a steady right turn for half a minute. What do you feel, and what happens when you roll out?</summary><p>Press Steady turn: the cupula is upright and you feel level although you are banked 20°. Press Roll out: wings level, but the fluid runs on and you feel a turn to the left. Hold the attitude indicator level and the feeling fades.</p></details>
+  <details class="widget-try"><summary>Try it: why does pulling back make a graveyard spiral worse?</summary><p>Press Spiral: the pilot has rolled back into the bank to stop the false left turn, and now feels level while the nose drops. With the wings banked, back pressure tightens the turn instead of raising the nose. Roll wings level on the attitude indicator and accept the false sensation that follows.</p></details>
+</div>

@@ -1,0 +1,96 @@
+<div class="widget" x-data="widget({
+  mag: 214,
+  // BAKC 2.1: a runway's designator is its magnetic direction rounded to the nearest 10 degrees, last zero dropped;
+  // the other end is the reciprocal, so the two numbers always differ by 18
+  n(x) { return ((Math.round(x) % 360) + 360) % 360 || 360 },
+  get rec() { return this.n(this.mag + 180) },
+  r10(x) { const r = Math.round(x / 10) * 10; return r === 0 ? 360 : r },
+  des(x) { return String(this.r10(x) / 10).padStart(2, '0') },
+  get a() { return this.des(this.mag) },
+  get b() { return this.des(this.rec) },
+  get lo() { return Math.min(Number(this.a), Number(this.b)) },
+  get hi() { return Math.max(Number(this.a), Number(this.b)) },
+  get pair() { return String(this.lo).padStart(2, '0') + '/' + String(this.hi).padStart(2, '0') },
+  get nearEdge() { return this.mag % 10 === 5 },
+  // the picture: compass rose centred at (180, 180)
+  get rot() { return this.mag - 90 },
+  get you() { return this.pol(180, 180, 150, this.mag + 180) },
+  onDrag(p) { this.mag = this.n(Math.atan2(p.x - 180, 180 - p.y) * 180 / Math.PI); this.active = null },
+  presets: {
+    'aligned-214': { mag: 214 },
+    'country-strip-166': { mag: 166 },
+    'other-end-034': { mag: 34 },
+    'runway-06-24': { mag: 60 },
+    'renumbering-edge': { mag: 215 },
+  },
+})">
+  <svg viewBox="0 0 640 360" role="img" aria-labelledby="rwd-title" class="widget-stage">
+    <title id="rwd-title">Plan view, magnetic north up: a runway on a compass rose with its two threshold numbers painted on, and beside it the sum that turns the runway's magnetic direction into its two-figure designators</title>
+    <defs>
+      <marker id="rwd-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- compass rose -->
+    <circle cx="180" cy="180" r="150" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path d="M180 30 V42 M255 50.1 L249 60.5 M309.9 105 L299.5 111 M330 180 H318 M309.9 255 L299.5 249 M255 309.9 L249 299.5 M180 330 V318 M105 309.9 L111 299.5 M50.1 255 L60.5 249 M30 180 H42 M50.1 105 L60.5 111 M105 50.1 L111 60.5" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <g font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg-muted)" class="num">
+      <text x="180" y="22">N</text><text x="262" y="42">030</text><text x="322" y="102">060</text><text x="345" y="184">E</text>
+      <text x="322" y="268">120</text><text x="262" y="326">150</text><text x="180" y="350">S</text><text x="98" y="326">210</text>
+      <text x="38" y="268">240</text><text x="15" y="184">W</text><text x="38" y="102">300</text><text x="98" y="42">330</text>
+    </g>
+    <!-- the runway, turned to its magnetic direction -->
+    <g :transform="'translate(180 180) rotate(' + rot + ')'">
+      <rect x="-118" y="-15" width="236" height="30" rx="2" fill="var(--color-tarmac)"/>
+      <line x1="-62" y1="0" x2="62" y2="0" stroke="var(--color-paint)" stroke-width="2" stroke-dasharray="10 8"/>
+      <!-- piano keys -->
+      <path d="M-114 -11 h10 M-114 -6 h10 M-114 6 h10 M-114 11 h10 M104 -11 h10 M104 -6 h10 M104 6 h10 M104 11 h10" stroke="var(--color-paint)" stroke-width="2.5"/>
+      <!-- the number you land on is painted at the end you touch down on, readable on approach -->
+      <text transform="translate(-84 0) rotate(90)" y="7" font-size="20" font-weight="700" text-anchor="middle" fill="var(--color-paint)" class="num" x-text="a"></text>
+      <text transform="translate(84 0) rotate(-90)" y="7" font-size="20" font-weight="700" text-anchor="middle" fill="var(--color-paint)" class="num" x-text="b"></text>
+    </g>
+    <!-- you, on approach to the first number, heading along it -->
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#rwd-arrow)" :x1="you.x" :y1="you.y" :x2="pol(180, 180, 122, mag + 180).x" :y2="pol(180, 180, 122, mag + 180).y"/>
+    <!-- drag anywhere on the rose to turn the runway -->
+    <circle cx="180" cy="180" r="160" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: grab" @pointerdown="drag($event, (p) => onDrag(p))"/>
+
+    <!-- the sum -->
+    <g class="num">
+      <text x="380" y="40" font-size="14" font-weight="700" fill="var(--color-fg)">Landing heading</text>
+      <text x="380" y="66" font-size="15" fill="var(--color-fg)"><tspan font-weight="700" fill="var(--color-brand-fg)" x-text="trk(mag) + '°M'"></tspan><tspan fill="var(--color-fg-muted)"> → nearest 10 → </tspan><tspan x-text="trk(r10(mag))"></tspan></text>
+      <text x="380" y="92" font-size="15" fill="var(--color-fg)"><tspan fill="var(--color-fg-muted)">drop the last zero → runway </tspan><tspan font-weight="700" fill="var(--color-brand-fg)" x-text="a"></tspan></text>
+
+      <text x="380" y="140" font-size="14" font-weight="700" fill="var(--color-fg)">The other end</text>
+      <text x="380" y="166" font-size="15" fill="var(--color-fg)"><tspan x-text="trk(mag) + (mag < 180 ? ' + 180' : ' − 180') + ' = '"></tspan><tspan font-weight="700" x-text="trk(rec) + '°M'"></tspan></text>
+      <text x="380" y="192" font-size="15" fill="var(--color-fg)"><tspan fill="var(--color-fg-muted)">→ </tspan><tspan x-text="trk(r10(rec))"></tspan><tspan fill="var(--color-fg-muted)"> → runway </tspan><tspan font-weight="700" x-text="b"></tspan></text>
+
+      <text x="380" y="240" font-size="14" font-weight="700" fill="var(--color-fg)">Check</text>
+      <text x="380" y="266" font-size="15" fill="var(--color-fg)" x-text="hi + ' − ' + String(lo).padStart(2, '0') + ' = ' + (hi - lo)"></text>
+      <text x="380" y="300" font-size="22" font-weight="700" fill="var(--color-ok-fg)" x-text="'Runway ' + pair"></text>
+      <text x="380" y="326" font-size="12" fill="var(--color-warn-fg)" x-show="nearEdge">Rounding edge: drift can renumber it</text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rwd-mag">Runway direction, landing one way (or drag the rose) <output for="rwd-mag" x-text="trk(mag) + '°M'"></output></label>
+      <input type="range" id="rwd-mag" min="1" max="360" step="1" x-model.number="mag" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Designator you land on</dt><dd class="widget-value" x-text="'Runway ' + a + ' (' + trk(mag) + '°M)'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Reciprocal, the other end</dt><dd class="widget-value" x-text="'Runway ' + b + ' (' + trk(rec) + '°M)'"></dd></div>
+    <div class="widget-readout" :class="nearEdge ? 'warn' : ''"><dt class="widget-label">The two ends differ by</dt><dd class="widget-value"><span x-text="hi - lo"></span><span class="widget-flag warn" x-show="nearEdge">rounding edge</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('aligned-214')" :aria-pressed="active === 'aligned-214'">214°M</button>
+      <button type="button" @click="preset('other-end-034')" :aria-pressed="active === 'other-end-034'">034°M</button>
+      <button type="button" @click="preset('country-strip-166')" :aria-pressed="active === 'country-strip-166'">Country strip 166°M</button>
+      <button type="button" @click="preset('runway-06-24')" :aria-pressed="active === 'runway-06-24'">Runway 06</button>
+      <button type="button" @click="preset('renumbering-edge')" :aria-pressed="active === 'renumbering-edge'">On the edge</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The runway number is the magnetic direction you land on, to the nearest 10 degrees with the last zero dropped, painted at the end you touch down on. Turn the runway round and the other number is always 18 away: 06 pairs with 24, never 26. Near a 5 the number sits on a rounding edge, which is why a slow drift of magnetic north can get a runway renumbered.</p>
+  <details class="widget-try"><summary>Try it: a strip is aligned 166°M. What are its designators, and which way do you point landing on each?</summary><p>Press Country strip: 166 rounds to 170, runway 17, roughly south. The other end is 346°M, which rounds to 350, runway 35, roughly north. 35 − 17 = 18.</p></details>
+  <details class="widget-try"><summary>Try it: a question gives a runway aligned 164°T with 3°E variation. Which runway is it?</summary><p>Runway numbers are magnetic, so apply the variation first: east is least, 164 − 3 = 161°M, which rounds to 160: runway 16, and the other end 34. Set 161°M on the slider to check.</p></details>
+</div>

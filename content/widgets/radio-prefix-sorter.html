@@ -1,0 +1,160 @@
+<div class="widget" x-data="widget({
+  sc: 'kangaroos-on-runway-27', quiz: false, guess: '',
+  // PFRA 2.3 (the SECURITE prefix) and PFRA 2.7 (distress and urgency, hazards to navigation). Calls follow the
+  // lessons' structure: the prefix three times, the station called (or all stations), your callsign, the message.
+  S: {
+    'kangaroos-on-runway-27': { sit: 'You have just vacated runway 27 at a Wheatbelt CTAF. A mob of kangaroos moves onto the far half of the runway, and an aeroplane called inbound a few minutes ago.',
+      ans: 'sec', call: 'SECURITE, SECURITE, SECURITE, all stations [aerodrome name], [your callsign], kangaroos on runway 27, western half, [aerodrome name].',
+      why: 'You are safe on the taxiway, so it is neither distress nor urgency; animals on the runway are a hazard to navigation for the aircraft about to land.' },
+    'windshear-on-climb-out': { sit: 'Climbing out of a coastal aerodrome you meet severe turbulence and lose 15 knots passing 1,500 ft. You recover and climb away safely.',
+      ans: 'sec', call: 'SECURITE, SECURITE, SECURITE, all stations [aerodrome name], [your callsign], severe turbulence and wind shear on climb-out runway [number], loss of 15 knots passing 1,500 ft, [aerodrome name].',
+      why: 'A hazardous weather observation other aircraft need at once, and you are not in difficulty: the pilot who has just flown through it is the fastest source.' },
+    'unlit-crane': { sit: 'Joining the circuit, you see an unlit crane near the approach that is not on your chart.',
+      ans: 'sec', call: 'SECURITE, SECURITE, SECURITE, all stations [aerodrome name], [your callsign], unlit crane near the approach to runway [number], [aerodrome name].',
+      why: 'A hazard to the navigation of other aircraft, but nobody\'s aircraft is in an urgent condition, so not PAN PAN.' },
+    'turning-base': { sit: 'You turn onto base for runway 27 at a CTAF aerodrome with another aeroplane in the circuit.',
+      ans: 'routine', call: '[Aerodrome] traffic, [your callsign], turning base, runway 27, [aerodrome].',
+      why: 'Ordinary CTAF traffic: never dress a routine call up with a prefix.' },
+    'bird-strike-windscreen': { sit: 'A bird hits the aeroplane on climb-out and cracks the windscreen.',
+      ans: 'pan', call: 'PAN PAN, PAN PAN, PAN PAN, [station], [your callsign], bird strike, windscreen cracked, [intentions], [position], [altitude], [heading], [persons on board].',
+      why: 'The hazard has already put you in difficulty, so the message is about your own aircraft: PAN PAN (MAYDAY if the danger is grave and imminent), not SECURITE.' },
+    'smoke-behind-panel': { sit: 'A smell of burning and a little smoke from behind the panel. You will land at the next aerodrome; no immediate danger yet.',
+      ans: 'pan', call: 'PAN PAN, PAN PAN, PAN PAN, [station], [your callsign], smoke from behind the panel, landing at the next aerodrome, [position], [altitude], [heading], [persons on board].',
+      why: 'An urgent condition without immediate danger: PAN PAN, on the frequency in use, then 121.5 MHz if nobody answers. If it becomes a fire, upgrade to MAYDAY and squawk 7700.' },
+    'smoke-becomes-fire': { sit: 'The smoke from behind the panel turns into flames.',
+      ans: 'mayday', call: 'MAYDAY, MAYDAY, MAYDAY, [station], [your callsign], fire, [intentions], [position], [altitude], [heading], [persons on board].',
+      why: 'Grave and imminent danger needing immediate help: MAYDAY clears the frequency and commits help at once. Squawk 7700.' },
+    'galahs-on-threshold': { sit: 'Joining at Wongan Hills on a summer afternoon, you see a large flock of galahs feeding on the threshold of the runway in use.',
+      ans: 'sec', call: 'SECURITE, SECURITE, SECURITE, all stations Wongan Hills, [your callsign], large flock of galahs on the threshold of runway [number], Wongan Hills. Then report it to ATS.',
+      why: 'Birds concentrated on an aerodrome are a hazard to navigation: broadcast on the CTAF at once and report to ATS. A bird strike also goes to the ATSB.' },
+    'bushfire-water-bomber': { sit: 'Ten miles south of Wongan Hills you see a thick column of smoke from a new bushfire, with a water bomber working it.',
+      ans: 'sec', call: 'Report it to ATS on the area frequency (SECURITE prefix if you broadcast it to all stations): where the fire is and that a fire-fighting aircraft is working it, so ATS can warn other traffic and, if needed, issue a NOTAM.',
+      why: 'Bushfire activity and a fire-fighting operation affecting the airspace are hazards to navigation the next pilot would not expect.' },
+    'gusty-within-limits': { sit: 'The wind at Wongan Hills is gustier than the TAF suggested, but within your limits: no severe turbulence, no wind shear.',
+      ans: 'routine', call: 'No hazard report needed. You may pass it on as useful information in an ordinary call.',
+      why: 'A difference from the forecast that is not hazardous is not on the hazard list.' },
+  },
+  rungs: ['mayday', 'pan', 'sec', 'routine'],
+  get s() { return this.S[this.sc] },
+  get shown() { return !this.quiz || this.guess !== '' },
+  rungY(k) { return 40 + this.rungs.indexOf(k) * 58 },
+  get tokenY() { return this.shown ? this.rungY(this.s.ans) : 6 },
+  wrap(str, n) {
+    const out = []; let line = '';
+    str.split(' ').forEach((w) => { if ((line + ' ' + w).trim().length > n) { out.push(line.trim()); line = w; } else line += ' ' + w; });
+    if (line.trim()) out.push(line.trim());
+    return out;
+  },
+  sl(i) { return this.wrap(this.s.sit, 46)[i] || '' },
+  cl(i) { return this.shown ? this.wrap(this.s.call, 44)[i] || '' : '' },
+  pick() { this.guess = ''; this.active = null },
+  rungFill(k) { return this.shown && this.s.ans === k ? 'var(--color-brand-soft)' : this.quiz && this.guess === k ? 'var(--color-bad-soft)' : 'var(--color-surface)' },
+  rungStroke(k) { return this.shown && this.s.ans === k ? 'var(--color-brand)' : this.quiz && this.guess === k ? 'var(--color-bad)' : 'var(--color-line)' },
+  get name() { return { mayday: 'MAYDAY (distress)', pan: 'PAN PAN (urgency)', sec: 'SECURITE (safety)', routine: 'No prefix: an ordinary call' }[this.s.ans] },
+  get verdict() { return !this.quiz || this.guess === '' ? '' : this.guess === this.s.ans ? 'ok' : 'bad' },
+  get caption() { return this.shown ? this.s.why : 'Which rung? Pick one with the buttons, then see the call.' },
+  presets: {
+    'kangaroos-on-runway-27': { sc: 'kangaroos-on-runway-27', quiz: false, guess: '' },
+    'windshear-on-climb-out': { sc: 'windshear-on-climb-out', quiz: false, guess: '' },
+    'unlit-crane': { sc: 'unlit-crane', quiz: false, guess: '' },
+    'turning-base': { sc: 'turning-base', quiz: false, guess: '' },
+    'bird-strike-windscreen': { sc: 'bird-strike-windscreen', quiz: false, guess: '' },
+    'smoke-behind-panel': { sc: 'smoke-behind-panel', quiz: false, guess: '' },
+    'smoke-becomes-fire': { sc: 'smoke-becomes-fire', quiz: false, guess: '' },
+    'galahs-on-threshold': { sc: 'galahs-on-threshold', quiz: false, guess: '' },
+    'bushfire-water-bomber': { sc: 'bushfire-water-bomber', quiz: false, guess: '' },
+    'gusty-within-limits': { sc: 'gusty-within-limits', quiz: false, guess: '' },
+  },
+})">
+  <svg viewBox="0 0 640 296" role="img" aria-labelledby="rps-title" class="widget-stage">
+    <title id="rps-title">A ladder of radio prefixes: MAYDAY for distress and PAN PAN for urgency, both about your own aircraft; SECURITE for a hazard to navigation or a weather warning that concerns everyone else; and an ordinary call with no prefix. A token marks the rung for the situation shown on the right, with the call written out in full</title>
+    <rect x="0" y="0" width="640" height="296" fill="var(--color-surface-2)" rx="10"/>
+    <!-- side brackets -->
+    <path d="M30 42 L22 42 L22 136 L30 136" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25"/>
+    <text x="14" y="89" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 14 89)">about my aircraft</text>
+    <path d="M30 158 L22 158 L22 194 L30 194" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25"/>
+    <text x="14" y="176" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 14 176)">others</text>
+    <!-- rungs -->
+    <g>
+      <rect x="36" y="40" width="250" height="46" rx="8" stroke-width="2" :fill="rungFill('mayday')" :stroke="rungStroke('mayday')"/>
+      <text x="52" y="60" font-size="15" font-weight="700" fill="var(--color-bad-fg)">MAYDAY</text>
+      <text x="52" y="77" font-size="11" fill="var(--color-fg-muted)">distress: grave and imminent danger</text>
+      <rect x="36" y="98" width="250" height="46" rx="8" stroke-width="2" :fill="rungFill('pan')" :stroke="rungStroke('pan')"/>
+      <text x="52" y="118" font-size="15" font-weight="700" fill="var(--color-warn-fg)">PAN PAN</text>
+      <text x="52" y="135" font-size="11" fill="var(--color-fg-muted)">urgency: no immediate danger</text>
+      <rect x="36" y="156" width="250" height="46" rx="8" stroke-width="2" :fill="rungFill('sec')" :stroke="rungStroke('sec')"/>
+      <text x="52" y="176" font-size="15" font-weight="700" fill="var(--color-info-fg)">SECURITE</text>
+      <text x="52" y="193" font-size="11" fill="var(--color-fg-muted)">hazard to others, weather warning</text>
+      <rect x="36" y="214" width="250" height="46" rx="8" stroke-width="2" :fill="rungFill('routine')" :stroke="rungStroke('routine')"/>
+      <text x="52" y="234" font-size="15" font-weight="700" fill="var(--color-fg)">No prefix</text>
+      <text x="52" y="251" font-size="11" fill="var(--color-fg-muted)">routine call, or not a hazard</text>
+    </g>
+    <!-- the message token -->
+    <g :transform="'translate(0 ' + tokenY + ')'">
+      <circle cx="295" cy="23" r="9" :fill="shown ? 'var(--color-brand)' : 'var(--color-fg-faint)'"/>
+      <text x="295" y="27" font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-surface)" x-text="shown ? '✓' : '?'"></text>
+    </g>
+    <text x="36" y="282" font-size="11" fill="var(--color-fg-faint)">prefix three times, station, callsign, message</text>
+    <!-- the situation and the call -->
+    <rect x="304" y="14" width="324" height="112" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="316" y="34" font-size="11" font-weight="700" fill="var(--color-fg-muted)" letter-spacing="0.5">WHAT HAPPENED</text>
+    <g font-size="12" fill="var(--color-fg)">
+      <text x="316" y="54" x-text="sl(0)"></text><text x="316" y="70" x-text="sl(1)"></text><text x="316" y="86" x-text="sl(2)"></text>
+      <text x="316" y="102" x-text="sl(3)"></text><text x="316" y="118" x-text="sl(4)"></text>
+    </g>
+    <rect x="304" y="136" width="324" height="146" rx="8" stroke-width="1.25" :fill="shown ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="shown ? 'var(--color-brand)' : 'var(--color-line)'"/>
+    <text x="316" y="156" font-size="11" font-weight="700" letter-spacing="0.5" :fill="shown ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" x-text="shown ? 'THE CALL' : 'THE CALL: pick a rung first'"></text>
+    <g font-size="12" fill="var(--color-fg)">
+      <text x="316" y="176" x-text="cl(0)"></text><text x="316" y="192" x-text="cl(1)"></text><text x="316" y="208" x-text="cl(2)"></text>
+      <text x="316" y="224" x-text="cl(3)"></text><text x="316" y="240" x-text="cl(4)"></text><text x="316" y="256" x-text="cl(5)"></text>
+      <text x="316" y="272" x-text="cl(6)"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rps-sc">Situation</label>
+      <select id="rps-sc" class="input" x-model="sc" @change="pick()">
+        <option value="kangaroos-on-runway-27">Kangaroos on runway 27</option>
+        <option value="windshear-on-climb-out">Wind shear on climb-out</option>
+        <option value="unlit-crane">Unlit crane near the approach</option>
+        <option value="turning-base">Turning base</option>
+        <option value="bird-strike-windscreen">Bird strike, cracked windscreen</option>
+        <option value="smoke-behind-panel">Smoke behind the panel</option>
+        <option value="smoke-becomes-fire">The smoke becomes a fire</option>
+        <option value="galahs-on-threshold">Galahs on the threshold</option>
+        <option value="bushfire-water-bomber">Bushfire and a water bomber</option>
+        <option value="gusty-within-limits">Gustier than forecast, within limits</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="rps-quiz" class="cursor-pointer"><span>Quiz me: hide the answer until I pick</span>
+        <input type="checkbox" id="rps-quiz" x-model="quiz" @change="guess = ''" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <div class="widget-actions" x-show="quiz">
+    <span class="widget-presets">
+      <button type="button" @click="guess = 'mayday'" :aria-pressed="guess === 'mayday'">MAYDAY</button>
+      <button type="button" @click="guess = 'pan'" :aria-pressed="guess === 'pan'">PAN PAN</button>
+      <button type="button" @click="guess = 'sec'" :aria-pressed="guess === 'sec'">SECURITE</button>
+      <button type="button" @click="guess = 'routine'" :aria-pressed="guess === 'routine'">No prefix</button>
+    </span>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="verdict"><dt class="widget-label">Prefix</dt><dd class="widget-value"><span x-text="shown ? name : '?'"></span><span class="widget-flag" :class="verdict" x-show="verdict" x-text="verdict === 'ok' ? 'right' : 'not quite'"></span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('kangaroos-on-runway-27')" :aria-pressed="active === 'kangaroos-on-runway-27'">Kangaroos</button>
+      <button type="button" @click="preset('windshear-on-climb-out')" :aria-pressed="active === 'windshear-on-climb-out'">Wind shear</button>
+      <button type="button" @click="preset('bird-strike-windscreen')" :aria-pressed="active === 'bird-strike-windscreen'">Bird strike</button>
+      <button type="button" @click="preset('galahs-on-threshold')" :aria-pressed="active === 'galahs-on-threshold'">Galahs</button>
+      <button type="button" @click="preset('gusty-within-limits')" :aria-pressed="active === 'gusty-within-limits'">Gusty</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Ask two questions: is it about my own aircraft (MAYDAY for grave and imminent danger, PAN PAN for urgency), or about a hazard to everyone else that has not yet harmed anyone (SECURITE)? The same bird is a SECURITE call while it sits on the threshold and a PAN PAN once it has cracked your windscreen. Hazards to navigation also go to ATS, which can warn others and issue a NOTAM. Routine calls never carry a prefix. Check the pronunciation and current wording in AIP GEN 3.4.</p>
+  <details class="widget-try"><summary>Try it: why is an unlit crane near the approach a SECURITE call and not a PAN PAN?</summary><p>Choose Unlit crane: it is a hazard to the navigation of other aircraft, but nobody's aircraft is in an urgent condition. PAN PAN is urgency about a particular aircraft.</p></details>
+  <details class="widget-try"><summary>Try it: tick Quiz me, then work through all ten situations. Which ones are not SECURITE?</summary><p>Turning base and the gusty-but-within-limits wind (no prefix), the bird strike and the smoke (PAN PAN), and the fire (MAYDAY).</p></details>
+</div>

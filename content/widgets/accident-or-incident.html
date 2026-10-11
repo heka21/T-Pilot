@@ -1,0 +1,257 @@
+<div class="widget" x-data="widget({
+  inj: 'none', dmg: 'none', missing: false, nearly: false, win: true, safety: true,
+  // damage that does not by itself make an accident (RFRC 2.7), and the cracked windscreen of the lesson's bird strike
+  parts: { prop: 'the propeller', engine: 'the engine', wheels: 'wheels or tyres', brakes: 'the brakes', fairings: 'fairings', dents: 'small dents or puncture holes', windscreen: 'a cracked windscreen, no structural failure' },
+  get limited() { return this.dmg !== 'none' && this.dmg !== 'serious' },
+  // the three accident tests: person, airframe, whereabouts
+  get t1() { return this.inj !== 'none' },
+  get t2() { return this.dmg === 'serious' },
+  get t3() { return this.missing },
+  get accident() { return this.win && (this.t1 || this.t2 || this.t3) },
+  get cat() {
+    if (this.accident) return 'accident';
+    if (this.nearly) return 'serious';
+    return this.safety || this.t1 || this.t2 || this.t3 || this.dmg !== 'none' ? 'incident' : 'none';
+  },
+  // listed serious events are immediately reportable even outside the accident definition
+  get listed() { return this.t1 || this.t2 || this.t3 },
+  get immediate() { return this.cat === 'accident' || this.cat === 'serious' || this.listed },
+  get decider() { return !this.accident ? '' : this.t1 ? 'person' : this.t2 ? 'airframe' : 'whereabouts' },
+  // the state of each step on the path: yes, no, or '' when the path never reaches it
+  node(i) {
+    if (i === 0) return this.win ? 'yes' : 'no';
+    if (i <= 3) {
+      if (!this.win) return '';
+      const t = [this.t1, this.t2, this.t3];
+      for (let k = 0; k < i - 1; k++) if (t[k]) return '';
+      return t[i - 1] ? 'yes' : 'no';
+    }
+    if (this.accident) return '';
+    if (i === 4) return this.nearly ? 'yes' : 'no';
+    return this.nearly ? '' : this.cat === 'incident' ? 'yes' : 'no';
+  },
+  bFill(i) { return this.node(i) === 'yes' ? 'var(--color-brand-soft)' : 'var(--color-surface)' },
+  bStroke(i) { const n = this.node(i); return n === 'yes' ? 'var(--color-brand)' : n === 'no' ? 'var(--color-fg-muted)' : 'var(--color-line)' },
+  bText(i) { return this.node(i) ? 'var(--color-fg)' : 'var(--color-fg-faint)' },
+  ans(i) { const n = this.node(i); return n === 'yes' ? 'yes' : n === 'no' ? 'no' : '' },
+  ansFill(i) { return this.node(i) === 'yes' ? 'var(--color-brand-fg)' : 'var(--color-fg-muted)' },
+  line(on) { return on ? 'var(--color-brand)' : 'var(--color-line-strong)' },
+  out(c) { return this.cat === c },
+  get airframeSub() {
+    if (!this.node(2)) return 'serious damage or structural failure?';
+    if (this.dmg === 'serious') return 'serious damage or structural failure: yes';
+    if (this.dmg === 'windscreen') return 'cracked windscreen: not structural';
+    if (this.limited) return 'only ' + { prop: 'the propeller', engine: 'the engine', wheels: 'wheels, tyres', brakes: 'the brakes', fairings: 'fairings', dents: 'small dents' }[this.dmg] + ': does not count';
+    return 'serious damage or structural failure?';
+  },
+  get catText() { return { accident: 'Accident', serious: 'Serious incident', incident: 'Incident', none: 'Neither' }[this.cat] },
+  get decidedText() {
+    if (this.cat === 'accident') return { person: 'Person: ' + (this.inj === 'death' ? 'a death' : 'a serious injury'), airframe: 'Airframe: serious damage', whereabouts: 'Whereabouts: missing' }[this.decider];
+    if (this.cat === 'serious') return 'An accident nearly occurred';
+    if (this.cat === 'incident') return !this.win && this.listed ? 'Outside the window' : this.limited ? 'Safety; the damage does not count' : 'Affects or could affect safety';
+    return 'Nothing affected safety';
+  },
+  get caption() {
+    const w = 'phone the ATSB on 1800 011 034 as soon as practicable, by the quickest means, then a written report within 72 hours';
+    if (this.cat === 'accident') {
+      const why = { person: 'a person was ' + (this.inj === 'death' ? 'killed' : 'seriously injured'), airframe: 'the aircraft has serious damage or structural failure', whereabouts: 'the aircraft is missing or inaccessible' }[this.decider];
+      return 'An accident: ' + why + ', between boarding to fly and disembarking. Immediately reportable: the pilot in command (or the operator, if the pilot is unable) must ' + w + '. Leave the wreckage except to rescue people or prevent further damage.';
+    }
+    if (this.cat === 'serious') return 'Nobody hurt, no serious damage, nothing missing, but an accident nearly occurred: a serious incident. Immediately reportable: ' + w + '.';
+    if (this.cat === 'incident' && this.listed) return 'Outside the window from boarding to fly to disembarking, so not an accident by the definition; but ' + (this.t1 ? 'a death or serious injury' : this.t2 ? 'serious damage' : 'a missing aircraft') + ' is a listed serious event, so it is still immediately reportable: ' + w + '.';
+    if (this.cat === 'incident') return 'None of the three accident tests is met' + (this.limited ? ' (' + (this.dmg === 'windscreen' ? 'a cracked windscreen is not serious damage or structural failure' : 'damage limited to ' + this.parts[this.dmg] + ' does not by itself make an accident') + ')' : '') + ' and no accident nearly occurred, but safety was or could have been affected: an incident. Routine reportable: a written report to the ATSB within 72 hours.';
+    return 'Nothing in it affected or could have affected safety: outside the definitions, nothing to report to the ATSB.';
+  },
+  presets: {
+    'class-c-infringement': { inj: 'none', dmg: 'none', missing: false, nearly: false, win: true, safety: true },
+    'york-hard-landing': { inj: 'serious', dmg: 'serious', missing: false, nearly: false, win: true, safety: true },
+    'ute-runway-incursion': { inj: 'none', dmg: 'none', missing: false, nearly: true, win: true, safety: true },
+    'bird-strike-windscreen': { inj: 'none', dmg: 'windscreen', missing: false, nearly: false, win: true, safety: true },
+    'nosewheel-tyre-burst': { inj: 'none', dmg: 'wheels', missing: false, nearly: false, win: true, safety: true },
+    'merredin-prop-strike': { inj: 'none', dmg: 'prop', missing: false, nearly: false, win: true, safety: true },
+  },
+})">
+  <svg viewBox="0 0 640 566" role="img" aria-labelledby="aoi-title" class="widget-stage">
+    <title id="aoi-title">A decision path for an occurrence. First, did it happen between someone boarding with the intention of flight and everyone disembarking? If so, three accident tests in turn: a person killed or seriously injured, serious damage or structural failure of the aircraft, the aircraft missing or inaccessible; any yes makes it an accident. Otherwise, did an accident nearly occur (a serious incident), and otherwise did it affect or could it have affected safety (an incident)? The path the occurrence takes is lit. Below, the reporting timeline to the ATSB: a phone call as soon as practicable for immediately reportable matters, and a written report within 72 hours</title>
+    <defs>
+      <marker id="aoi-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="566" fill="var(--color-surface-2)" rx="10"/>
+    <text x="40" y="22" font-size="12" fill="var(--color-fg-muted)"><tspan font-weight="700" fill="var(--color-fg)">Test the outcome, in order</tspan> · not how frightening it felt</text>
+
+    <!-- the connectors (drawn first, under the boxes) -->
+    <g stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#aoi-arrow)">
+      <line x1="185" y1="74" x2="185" y2="88" :stroke="line(win)"/>
+      <line x1="185" y1="130" x2="185" y2="144" :stroke="line(win && !t1)"/>
+      <line x1="185" y1="186" x2="185" y2="200" :stroke="line(win && !t1 && !t2)"/>
+      <line x1="185" y1="242" x2="185" y2="256" :stroke="line(win && !t1 && !t2 && !t3)"/>
+      <line x1="185" y1="298" x2="185" y2="312" :stroke="line(!accident && !nearly)"/>
+      <line x1="185" y1="354" x2="185" y2="370" :stroke="line(cat === 'none')"/>
+      <path d="M40 54 L24 54 L24 278 L38 278" :stroke="line(!win)"/>
+      <line x1="330" y1="110" x2="398" y2="110" :stroke="line(win && t1)"/>
+      <line x1="330" y1="166" x2="398" y2="166" :stroke="line(win && !t1 && t2)"/>
+      <line x1="330" y1="222" x2="398" y2="222" :stroke="line(win && !t1 && !t2 && t3)"/>
+      <line x1="330" y1="278" x2="398" y2="278" :stroke="line(cat === 'serious')"/>
+      <line x1="330" y1="334" x2="398" y2="334" :stroke="line(cat === 'incident')"/>
+    </g>
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <text x="193" y="85">yes</text>
+      <text x="193" y="141">no</text><text x="193" y="197">no</text><text x="193" y="253">no</text><text x="193" y="309">no</text><text x="193" y="366">no</text>
+      <text x="364" y="102" text-anchor="middle">yes</text><text x="364" y="158" text-anchor="middle">yes</text><text x="364" y="214" text-anchor="middle">yes</text>
+      <text x="364" y="270" text-anchor="middle">yes</text><text x="364" y="326" text-anchor="middle">yes</text>
+    </g>
+    <text x="14" y="166" font-size="11" text-anchor="middle" transform="rotate(-90 14 166)" :fill="win ? 'var(--color-fg-faint)' : 'var(--color-brand-fg)'">outside the window</text>
+
+    <!-- the steps -->
+    <rect x="40" y="34" width="290" height="40" rx="8" :fill="bFill(0)" :stroke="bStroke(0)" :stroke-width="node(0) === 'yes' ? 2 : 1.5"/>
+    <text x="52" y="51" font-size="13" font-weight="600" :fill="bText(0)">In the window?</text>
+    <text x="52" y="66" font-size="11" fill="var(--color-fg-muted)">boarded to fly … all disembarked</text>
+    <text x="318" y="58" font-size="13" font-weight="700" text-anchor="end" :fill="ansFill(0)" x-text="ans(0)"></text>
+
+    <rect x="40" y="90" width="290" height="40" rx="8" :fill="bFill(1)" :stroke="bStroke(1)" :stroke-width="node(1) === 'yes' ? 2.5 : 1.5"/>
+    <text x="52" y="107" font-size="13" font-weight="600" :fill="bText(1)">1 Person</text>
+    <text x="52" y="122" font-size="11" fill="var(--color-fg-muted)">killed or seriously injured?</text>
+    <text x="318" y="114" font-size="13" font-weight="700" text-anchor="end" :fill="ansFill(1)" x-text="ans(1)"></text>
+
+    <rect x="40" y="146" width="290" height="40" rx="8" :fill="bFill(2)" :stroke="bStroke(2)" :stroke-width="node(2) === 'yes' ? 2.5 : 1.5"/>
+    <text x="52" y="163" font-size="13" font-weight="600" :fill="bText(2)">2 Airframe</text>
+    <text x="52" y="178" font-size="11" :fill="limited && node(2) ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)'" x-text="airframeSub"></text>
+    <text x="318" y="170" font-size="13" font-weight="700" text-anchor="end" :fill="ansFill(2)" x-text="ans(2)"></text>
+
+    <rect x="40" y="202" width="290" height="40" rx="8" :fill="bFill(3)" :stroke="bStroke(3)" :stroke-width="node(3) === 'yes' ? 2.5 : 1.5"/>
+    <text x="52" y="219" font-size="13" font-weight="600" :fill="bText(3)">3 Whereabouts</text>
+    <text x="52" y="234" font-size="11" fill="var(--color-fg-muted)">missing or completely inaccessible?</text>
+    <text x="318" y="226" font-size="13" font-weight="700" text-anchor="end" :fill="ansFill(3)" x-text="ans(3)"></text>
+
+    <rect x="40" y="258" width="290" height="40" rx="8" :fill="bFill(4)" :stroke="bStroke(4)" :stroke-width="node(4) === 'yes' ? 2.5 : 1.5"/>
+    <text x="52" y="275" font-size="13" font-weight="600" :fill="bText(4)">An accident nearly occurred?</text>
+    <text x="52" y="290" font-size="11" fill="var(--color-fg-muted)">near collision, runway incursion, fuel exhaustion</text>
+    <text x="318" y="275" font-size="13" font-weight="700" text-anchor="end" :fill="ansFill(4)" x-text="ans(4)"></text>
+
+    <rect x="40" y="314" width="290" height="40" rx="8" :fill="bFill(5)" :stroke="bStroke(5)" :stroke-width="node(5) === 'yes' ? 2.5 : 1.5"/>
+    <text x="52" y="331" font-size="13" font-weight="600" :fill="bText(5)">Affects or could affect safety?</text>
+    <text x="52" y="346" font-size="11" fill="var(--color-fg-muted)">anything else in operating the aircraft</text>
+    <text x="318" y="338" font-size="13" font-weight="700" text-anchor="end" :fill="ansFill(5)" x-text="ans(5)"></text>
+
+    <text x="185" y="388" font-size="12" text-anchor="middle" :font-weight="out('none') ? 700 : 400" :fill="out('none') ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">neither: nothing to report</text>
+
+    <!-- the outcomes -->
+    <rect x="400" y="90" width="224" height="152" rx="10" :fill="out('accident') ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="out('accident') ? 'var(--color-brand)' : 'var(--color-line)'" :stroke-width="out('accident') ? 2.5 : 1.25"/>
+    <text x="512" y="148" font-size="17" font-weight="700" text-anchor="middle" :fill="out('accident') ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">ACCIDENT</text>
+    <text x="512" y="170" font-size="12" text-anchor="middle" :fill="out('accident') ? 'var(--color-fg)' : 'var(--color-fg-faint)'">any one test met</text>
+    <text x="512" y="188" font-size="12" text-anchor="middle" :fill="out('accident') ? 'var(--color-fg)' : 'var(--color-fg-faint)'">immediately reportable</text>
+
+    <rect x="400" y="258" width="224" height="40" rx="10" :fill="out('serious') ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="out('serious') ? 'var(--color-brand)' : 'var(--color-line)'" :stroke-width="out('serious') ? 2.5 : 1.25"/>
+    <text x="512" y="275" font-size="14" font-weight="700" text-anchor="middle" :fill="out('serious') ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">SERIOUS INCIDENT</text>
+    <text x="512" y="290" font-size="11" text-anchor="middle" :fill="out('serious') ? 'var(--color-fg)' : 'var(--color-fg-faint)'">immediately reportable</text>
+
+    <rect x="400" y="314" width="224" height="40" rx="10" :fill="out('incident') ? 'var(--color-brand-soft)' : 'var(--color-surface)'" :stroke="out('incident') ? 'var(--color-brand)' : 'var(--color-line)'" :stroke-width="out('incident') ? 2.5 : 1.25"/>
+    <text x="512" y="331" font-size="14" font-weight="700" text-anchor="middle" :fill="out('incident') ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'">INCIDENT</text>
+    <text x="512" y="346" font-size="11" text-anchor="middle" :fill="out('incident') ? 'var(--color-fg)' : 'var(--color-fg-faint)'" x-text="out('incident') && listed ? 'listed event: immediately reportable' : 'routine reportable'"></text>
+
+    <!-- reporting timeline -->
+    <line x1="16" y1="404" x2="624" y2="404" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="16" y="426" font-size="13" font-weight="700" fill="var(--color-fg)">Report to the ATSB, not CASA</text>
+    <text x="624" y="426" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="cat === 'none' ? 'nothing to report' : immediate ? 'immediately reportable' : 'routine reportable'"></text>
+    <rect x="60" y="460" width="540" height="12" rx="6" :fill="cat === 'none' ? 'var(--color-surface)' : 'var(--color-info-soft)'" :stroke="cat === 'none' ? 'var(--color-line)' : 'var(--color-info)'" stroke-width="1.25"/>
+    <circle cx="60" cy="466" r="9" stroke-width="2" :fill="immediate ? 'var(--color-info)' : 'var(--color-surface)'" :stroke="immediate ? 'var(--color-info)' : 'var(--color-line-strong)'"/>
+    <rect x="594" y="456" width="12" height="20" rx="2" stroke-width="2" :fill="cat === 'none' ? 'var(--color-surface)' : 'var(--color-info)'" :stroke="cat === 'none' ? 'var(--color-line-strong)' : 'var(--color-info)'"/>
+    <text x="52" y="446" font-size="12" class="num" :font-weight="immediate ? 700 : 400" :fill="immediate ? 'var(--color-info-fg)' : 'var(--color-fg-faint)'" x-text="immediate ? 'Phone 1800 011 034 as soon as practicable' : 'No phone call needed'"></text>
+    <text x="608" y="446" font-size="12" text-anchor="end" :font-weight="cat === 'none' ? 400 : 700" :fill="cat === 'none' ? 'var(--color-fg-faint)' : 'var(--color-info-fg)'">Written report within 72 h</text>
+    <g font-size="12" class="num" fill="var(--color-fg-faint)" text-anchor="middle">
+      <text x="60" y="494">now</text><text x="240" y="494">24 h</text><text x="420" y="494">48 h</text><text x="600" y="494">72 h</text>
+    </g>
+    <g x-show="cat === 'accident'">
+      <rect x="16" y="506" width="608" height="48" rx="8" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.25"/>
+      <text x="320" y="526" font-size="12" text-anchor="middle" font-weight="700" fill="var(--color-warn-fg)">Leave the wreckage where it is</text>
+      <text x="320" y="543" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)">move it only to rescue people or prevent further damage, unless the ATSB or police agree</text>
+    </g>
+    <g x-show="cat !== 'accident' && dmg !== 'none'">
+      <rect x="16" y="506" width="608" height="48" rx="8" fill="var(--color-surface)" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <text x="320" y="526" font-size="12" text-anchor="middle" font-weight="700" fill="var(--color-fg)">Endorse the damage on the maintenance release</text>
+      <text x="320" y="543" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">so the engineer and the next pilot know, and tell the operator</text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="aoi-inj">People</label>
+      <select id="aoi-inj" class="input" x-model="inj">
+        <option value="none">Nobody hurt</option>
+        <option value="serious">Someone seriously injured</option>
+        <option value="death">Someone killed</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="aoi-dmg">Damage to the aircraft</label>
+      <select id="aoi-dmg" class="input" x-model="dmg">
+        <option value="none">None</option>
+        <option value="prop">Limited to the propeller</option>
+        <option value="engine">Limited to the engine</option>
+        <option value="wheels">Limited to wheels or tyres</option>
+        <option value="brakes">Limited to the brakes</option>
+        <option value="fairings">Limited to fairings</option>
+        <option value="dents">Small dents or puncture holes</option>
+        <option value="windscreen">Cracked windscreen, no structural failure</option>
+        <option value="serious">Serious damage or structural failure</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="aoi-missing" class="cursor-pointer"><span>The aircraft is missing or completely inaccessible</span>
+        <input type="checkbox" id="aoi-missing" x-model="missing" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="aoi-nearly" class="cursor-pointer"><span>An accident nearly occurred: near collision, runway incursion, fuel exhaustion</span>
+        <input type="checkbox" id="aoi-nearly" x-model="nearly" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="aoi-win" class="cursor-pointer"><span>Between boarding with the intention of flight and everyone disembarking</span>
+        <input type="checkbox" id="aoi-win" x-model="win" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="aoi-safety" class="cursor-pointer"><span>It affected, or could have affected, the safety of the operation</span>
+        <input type="checkbox" id="aoi-safety" x-model="safety" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="cat === 'accident' || cat === 'serious' ? 'bad' : cat === 'incident' ? 'warn' : 'ok'">
+      <dt class="widget-label">Category</dt>
+      <dd class="widget-value" x-text="catText"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Decided by</dt>
+      <dd class="widget-value text-sm" x-text="decidedText"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Report to</dt>
+      <dd class="widget-value text-sm" x-text="cat === 'none' ? '–' : 'The ATSB, not CASA'"></dd>
+    </div>
+    <div class="widget-readout" :class="immediate ? 'bad' : ''">
+      <dt class="widget-label">Phone</dt>
+      <dd class="widget-value text-sm"><span x-text="immediate ? '1800 011 034' : 'Not needed'"></span><span class="widget-flag bad" x-show="immediate">now</span></dd>
+    </div>
+    <div class="widget-readout" :class="cat === 'none' ? '' : 'warn'">
+      <dt class="widget-label">Written report</dt>
+      <dd class="widget-value text-sm" x-text="cat === 'none' ? '–' : 'Within 72 hours'"></dd>
+    </div>
+    <div class="widget-readout" :class="cat === 'accident' ? 'warn' : ''">
+      <dt class="widget-label">And also</dt>
+      <dd class="widget-value text-sm" x-text="cat === 'accident' ? 'Leave the wreckage' + (dmg !== 'none' ? '; defects on the MR' : '') : dmg !== 'none' ? 'Endorse the defect on the maintenance release' : '–'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('class-c-infringement')" :aria-pressed="active === 'class-c-infringement'">Class C step</button>
+      <button type="button" @click="preset('york-hard-landing')" :aria-pressed="active === 'york-hard-landing'">York</button>
+      <button type="button" @click="preset('ute-runway-incursion')" :aria-pressed="active === 'ute-runway-incursion'">Ute on runway</button>
+      <button type="button" @click="preset('bird-strike-windscreen')" :aria-pressed="active === 'bird-strike-windscreen'">Bird strike</button>
+      <button type="button" @click="preset('nosewheel-tyre-burst')" :aria-pressed="active === 'nosewheel-tyre-burst'">Tyre burst</button>
+      <button type="button" @click="preset('merredin-prop-strike')" :aria-pressed="active === 'merredin-prop-strike'">Merredin prop</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The category comes from the outcome, never from how dramatic it felt. Three tests make an accident (a person killed or seriously injured, serious damage or structural failure, the aircraft missing), and only inside the window from boarding to fly to everyone disembarking. Damage limited to the engine, propeller, wheels, tyres, brakes, fairings or small dents does not count by itself, so a prop strike is an incident. If an accident nearly occurred it is a serious incident. The category then sets the reporting: accidents and serious incidents phone the ATSB on 1800 011 034 straight away and write within 72 hours; other incidents just write within 72 hours. The timeline's spacing is a picture of the 72 hours, not a schedule.</p>
+  <details class="widget-try"><summary>Try it: the York hard landing cracked the spar and hurt the instructor. Which test decides it, and what if only the spar had cracked?</summary><p>Press York: the person test is met first (a serious injury), so it is an accident. Set People to “Nobody hurt”: the airframe test still catches it, because a cracked spar is structural failure. Either way the student or the operator phones 1800 011 034, then writes within 72 hours, and the wreckage stays where it is.</p></details>
+  <details class="widget-try"><summary>Try it: the Merredin prop strike bent the propeller tips. Why is it not an accident, and what changes if the wing is damaged too?</summary><p>Press Merredin prop: damage limited to the propeller does not by itself make an accident, nobody was hurt, so it is an incident: a written report to the ATSB within 72 hours and a defect endorsement on the maintenance release. Change the damage to “Serious damage or structural failure” and it becomes an accident: phone first.</p></details>
+</div>

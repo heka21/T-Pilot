@@ -1,0 +1,124 @@
+<div class="widget" x-data="widget({
+  pct: 10, vs0: 48,
+  // the lessons' laws: stall speed with the square root of the weight, take-off distance with about the square (rule of
+  // thumb), limit load factor 3.8 g set at the MTOW; the climb is shown as a direction only (no figure in the lessons)
+  get r() { return 1 + this.pct / 100 },
+  get vs() { return this.vs0 * Math.sqrt(this.r) },
+  get toss() { return 1.2 / Math.sqrt(this.r) },
+  get dist() { return this.r * this.r },
+  get g() { return 3.8 / this.r },
+  get kg() { return 1150 * this.r },
+  get over() { return this.pct > 0 },
+  // panels: speed 40..70 kt and 0..4 g across 170 px from the panel's left edge + 10
+  S(v) { return 10 + (v - 40) / 30 * 170 },
+  G(g) { return 10 + g / 4 * 170 },
+  get climbDeg() { return Math.max(2, 9 - 30 * (this.r - 1)) },
+  get climbEnd() { const a = this.climbDeg * Math.PI / 180; return { x: 20 + 150 * Math.cos(a), y: 96 - 150 * Math.sin(a) } },
+  get caption() {
+    if (!this.over) return 'At the MTOW every POH speed, distance and the 3.8 g limit mean what they say. Load it heavier and watch all four panels move at once.';
+    return this.pct + ' percent over: the stall speed is up ' + this.fmt((Math.sqrt(this.r) - 1) * 100, 1) + ' percent, the take-off distance about ' + this.fmt((this.dist - 1) * 100) + ' percent, the structure reaches its design load at ' + this.fmt(this.g, 2) + ' g instead of 3.8, and the climb is weaker. One overload, every margin smaller.';
+  },
+  presets: {
+    'at-mtow': { pct: 0, vs0: 48 },
+    'ten-percent-over': { pct: 10, vs0: 48 },
+    'eight-percent-over': { pct: 8, vs0: 50 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="owc-title" class="widget-stage">
+    <title id="owc-title">An overloaded aeroplane with its lift and weight arrows, and four panels showing what the extra weight costs: a higher stall speed, a longer take-off distance, a lower g limit and a flatter climb</title>
+    <defs><marker id="owc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <!-- the cause -->
+    <text x="115" y="28" font-size="15" font-weight="700" text-anchor="middle" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg)'" class="num" x-text="over ? '+' + pct + '% over MTOW' : 'At the MTOW'"></text>
+    <text x="115" y="46" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="fmt(kg) + ' kg on a 1,150 kg MTOW'"></text>
+    <line x1="113" y1="135" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#owc-arrow)" x2="113" :y2="135 - 58 * r"/>
+    <text x="122" font-size="12" fill="var(--color-brand-fg)" font-weight="600" :y="135 - 58 * r + 10">lift</text>
+    <line x1="116" y1="168" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#owc-arrow)" x2="116" :y2="168 + 58 * r"/>
+    <text x="125" font-size="12" fill="var(--color-info)" font-weight="600" :y="168 + 58 * r - 2" x-text="'weight ×' + fmt(r, 2)"></text>
+    <g transform="translate(116 150)">
+      <!-- python -m tools.diagrams.plane side scale 1.3 no-gear -->
+<g transform="translate(0 0) rotate(0) scale(1.3)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+
+    <!-- panel 1: stall speed -->
+    <g transform="translate(236 14)">
+      <rect width="196" height="126" rx="8" fill="var(--color-surface-2)"/>
+      <text x="10" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">Stall speed</text>
+      <text x="186" y="20" font-size="15" font-weight="700" text-anchor="end" class="num" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="fmt(vs, 1) + ' kt'"></text>
+      <line x1="10" y1="70" x2="180" y2="70" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <rect y="64" height="12" rx="2" fill="var(--color-bad)" fill-opacity="0.18" :x="S(vs0)" :width="Math.max(0, S(vs) - S(vs0))"/>
+      <line y1="58" y2="82" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 2" :x1="S(vs0)" :x2="S(vs0)"/>
+      <line y1="56" y2="84" stroke-width="3" stroke-linecap="round" :stroke="over ? 'var(--color-bad)' : 'var(--color-fg)'" :x1="S(vs)" :x2="S(vs)"/>
+      <line y1="58" y2="82" stroke="var(--color-ok)" stroke-width="2" stroke-linecap="round" :x1="S(1.2 * vs0)" :x2="S(1.2 * vs0)"/>
+      <text font-size="11" text-anchor="middle" fill="var(--color-ok-fg)" y="50" :x="S(1.2 * vs0)" x-text="'POH TOSS ' + fmt(1.2 * vs0, 1)"></text>
+      <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text x="10" y="98">40</text><text x="66.7" y="98">50</text><text x="123.3" y="98">60</text><text x="180" y="98">70 kt</text></g>
+      <text x="10" y="118" font-size="12" class="num" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="'TOSS now ' + fmt(toss, 2) + ' × stall'"></text>
+    </g>
+    <!-- panel 2: take-off distance -->
+    <g transform="translate(438 14)">
+      <rect width="196" height="126" rx="8" fill="var(--color-surface-2)"/>
+      <text x="10" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">Take-off</text>
+      <text x="186" y="20" font-size="15" font-weight="700" text-anchor="end" class="num" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="'×' + fmt(dist, 2)"></text>
+      <rect x="10" y="48" height="14" rx="3" fill="var(--color-tarmac)" width="176"/>
+      <rect x="10" y="48" height="14" rx="3" :width="118 * dist" :fill="over ? 'var(--color-bad)' : 'var(--color-ok)'" fill-opacity="0.75"/>
+      <line x1="128" y1="40" x2="128" y2="70" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 2"/>
+      <text x="128" y="84" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">at MTOW</text>
+      <text x="10" y="104" font-size="12" class="num" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="over ? 'about ' + fmt((dist - 1) * 100) + '% longer (' + fmt(r, 2) + '²)' : 'the book figure'"></text>
+      <text x="10" y="118" font-size="11" fill="var(--color-fg-faint)">landing longer too</text>
+    </g>
+    <!-- panel 3: g limit -->
+    <g transform="translate(236 150)">
+      <rect width="196" height="126" rx="8" fill="var(--color-surface-2)"/>
+      <text x="10" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">g limit</text>
+      <text x="186" y="20" font-size="15" font-weight="700" text-anchor="end" class="num" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="fmt(g, 2) + ' g'"></text>
+      <line x1="10" y1="70" x2="180" y2="70" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <rect y="64" height="12" rx="2" fill="var(--color-bad)" fill-opacity="0.18" :x="G(g)" :width="G(3.8) - G(g)"/>
+      <line y1="58" y2="82" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 2" :x1="G(3.8)" :x2="G(3.8)"/>
+      <text font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" y="50" :x="G(3.8)">3.8</text>
+      <line y1="56" y2="84" stroke-width="3" stroke-linecap="round" :stroke="over ? 'var(--color-bad)' : 'var(--color-fg)'" :x1="G(g)" :x2="G(g)"/>
+      <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text x="10" y="98">0</text><text x="52.5" y="98">1</text><text x="95" y="98">2</text><text x="137.5" y="98">3</text><text x="180" y="98">4 g</text></g>
+      <text x="10" y="118" font-size="12" class="num" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'" x-text="over ? 'less turbulence bends it' : 'normal category, at MTOW'"></text>
+    </g>
+    <!-- panel 4: climb (direction only) -->
+    <g transform="translate(438 150)">
+      <rect width="196" height="126" rx="8" fill="var(--color-surface-2)"/>
+      <text x="10" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">Climb</text>
+      <text x="186" y="20" font-size="15" font-weight="700" text-anchor="end" :fill="over ? 'var(--color-bad-fg)' : 'var(--color-fg)'" x-text="over ? 'falls' : 'as the POH'"></text>
+      <line x1="20" y1="96" x2="180" y2="96" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+      <line x1="20" y1="96" x2="170" y2="72.2" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="3 2"/>
+      <line x1="20" y1="96" stroke-width="2.5" stroke-linecap="round" marker-end="url(#owc-arrow)" :stroke="over ? 'var(--color-bad)' : 'var(--color-ok)'" :x2="climbEnd.x" :y2="climbEnd.y"/>
+      <text x="10" y="118" font-size="11" fill="var(--color-fg-faint)">direction only, no figure</text>
+    </g>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="owc-pct">Loaded above the MTOW <output for="owc-pct" x-text="pct + '%'"></output></label>
+      <input type="range" id="owc-pct" min="0" max="20" step="1" x-model.number="pct" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="owc-vs">Stall speed at the MTOW <output for="owc-vs" x-text="vs0 + ' kt'"></output></label>
+      <input type="range" id="owc-vs" min="40" max="60" step="1" x-model.number="vs0" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="over ? 'bad' : 'ok'">
+      <dt class="widget-label">Stall speed</dt>
+      <dd class="widget-value"><span x-text="fmt(vs, 1) + ' kt = ' + vs0 + ' × √' + fmt(r, 2)"></span><span class="widget-flag bad" x-show="over">over a limit</span></dd>
+    </div>
+    <div class="widget-readout" :class="over ? 'bad' : ''"><dt class="widget-label">Take-off safety speed margin</dt><dd class="widget-value" x-text="fmt(toss, 2) + ' × stall speed (meant to be 1.2)'"></dd></div>
+    <div class="widget-readout" :class="over ? 'bad' : ''"><dt class="widget-label">Take-off distance (rule of thumb)</dt><dd class="widget-value" x-text="'×' + fmt(dist, 2) + (over ? ', about ' + fmt((dist - 1) * 100) + '% longer' : '')"></dd></div>
+    <div class="widget-readout" :class="over ? 'bad' : ''"><dt class="widget-label">Design load reached at</dt><dd class="widget-value" x-text="fmt(g, 2) + ' g (3.8 ÷ ' + fmt(r, 2) + ')'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('at-mtow')" :aria-pressed="active === 'at-mtow'">At the MTOW</button>
+      <button type="button" @click="preset('ten-percent-over')" :aria-pressed="active === 'ten-percent-over'">10% over, 48 kt stall</button>
+      <button type="button" @click="preset('eight-percent-over')" :aria-pressed="active === 'eight-percent-over'">8% over, 50 kt stall</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> One overload hits speed, distance and strength at once: the stall speed rises with the square root of the weight, the take-off distance with about the square, and the 3.8 g limit, set at the MTOW, is reached at 3.8 divided by the weight ratio. The square-root and 3.8 g figures are the lessons'; the distance law is their rule of thumb, and the climb is shown as a direction only. Above the limits the POH has no data at all.</p>
+  <details class="widget-try"><summary>Try it: stall speed 48 kt at the 1,150 kg MTOW, loaded to 1,265 kg. What has changed?</summary><p>Press 10% over: 48 × √1.10 = 50.3 kt; a TOSS meant to be 1.2 times the stall speed is now only about 1.14 times; the take-off is about 21 percent longer (1.1² = 1.21); and the structure reaches its design load at about 3.45 g.</p></details>
+  <details class="widget-try"><summary>Try it: why is 10 percent overweight about 20 percent more runway, not 10?</summary><p>The heavier aeroplane must reach a higher lift-off speed (its square rises with the weight) and it accelerates more slowly (the same thrust on more mass). Two 10 percent effects multiply: 1.1 × 1.1 = 1.21.</p></details>
+</div>

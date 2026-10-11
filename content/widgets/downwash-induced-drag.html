@@ -1,0 +1,133 @@
+<div class="widget" x-data="widget({
+  v: 70, w: 100, slender: false,
+  // BAKC 4.2 worked example (illustrative round numbers): at the 70 kt minimum-drag speed induced drag is 600 N and goes
+  // with 1/V²: 294 N at 100 kt, 972 N at 55 kt. It also goes with weight² (the wing must make more lift) and, for the same
+  // wing area, inversely with aspect ratio. The downwash tilt and vortex sizes in the picture are drawn to the same law,
+  // exaggerated so they can be seen.
+  get wf() { return this.w / 100 },
+  get work() { return this.wf * (70 / this.v) ** 2 },
+  get di() { return 600 * this.wf * this.wf * (70 / this.v) ** 2 * (this.slender ? 0.5 : 1) },
+  get ratio() { return this.di / 600 },
+  // angle of attack for level flight (illustrative: 16° at a 50 kt stall at maximum weight)
+  get aoa() { return -2 + 18 * this.wf * (50 / this.v) ** 2 },
+  // drawn tilt of the effective airflow, degrees (exaggerated)
+  get tilt() { return 12 * this.work * (this.slender ? 0.5 : 1) },
+  get dragLen() { return 216 - this.liftTip.x },
+  get state() { return this.ratio > 1.3 ? 'bad' : this.ratio > 0.9 ? 'warn' : 'ok' },
+  // section view: chord 210 px, pivot at 25% chord at (220, 170), leading edge on the right
+  C: 210,
+  yt(x) { return 0.6 * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1015 * x ** 4) },
+  yc(x) { return x < 0.4 ? 0.04 / 0.16 * (0.8 * x - x * x) : 0.04 / 0.36 * (0.2 + 0.8 * x - x * x) },
+  get foil() {
+    const pts = [];
+    for (let i = 0; i <= 30; i++) { const x = (1 - Math.cos(Math.PI * i / 30)) / 2; pts.push([(0.25 - x) * this.C, -(this.yc(x) + this.yt(x)) * this.C]) }
+    for (let i = 29; i >= 0; i--) { const x = (1 - Math.cos(Math.PI * i / 30)) / 2; pts.push([(0.25 - x) * this.C, -(this.yc(x) - this.yt(x)) * this.C]) }
+    return this.path(pts.reverse()) + ' Z';
+  },
+  // lift (110 px) at right angles to the tilted airflow, leaning back by the tilt; its parts up and back
+  get lean() { return this.tilt * Math.PI / 180 },
+  get liftTip() { return { x: 216 - 110 * Math.sin(this.lean), y: 150 - 110 * Math.cos(this.lean) } },
+  // the effective airflow arrow: arrives from ahead and slightly above, pointing back and down along the tilt
+  get eff() { return { x1: 430, y1: 172 - 134 * Math.tan(this.lean), x2: 296, y2: 172 } },
+  // rear view: span 150 px, or √2 × wider for the same area at twice the aspect ratio
+  get half() { return this.slender ? 106 : 75 },
+  // vortex strength ∝ lift per unit span per unit speed: weight ÷ (speed × span)
+  get gam() { return this.wf * (70 / this.v) * (75 / this.half) },
+  get vr() { return 6 + 12 * this.gam },
+  get dw() { return 10 + 26 * this.gam },
+  get caption() {
+    if (this.slender) return 'The same wing area spread over a longer span: the lift per metre of span is lower, less of it spills round the tips, the vortices and downwash are weaker and induced drag is much smaller (half, in this model). That is why gliders have long, slender wings.';
+    if (this.ratio > 1.3) return 'Slow, so the wing works at a high angle of attack. Strong vortices, strong downwash, a big backward lean of the lift: induced drag is at its highest.';
+    if (this.ratio < 0.6) return 'Fast, so the wing needs only a small angle of attack. The vortices are weak, the downwash small and the lift hardly leans back: induced drag is small.';
+    return 'Downwash behind the wing tilts the airflow the wing actually meets. Lift stays at right angles to that airflow, so it leans back, and the backward part is induced drag.';
+  },
+  presets: {
+    'min-drag-70': { v: 70, w: 100, slender: false },
+    'faster-100': { v: 100, w: 100, slender: false },
+    'slower-55': { v: 55, w: 100, slender: false },
+    'double-speed-140': { v: 140, w: 100, slender: false },
+    'lighter': { v: 70, w: 80, slender: false },
+    'glider-wing': { v: 70, w: 100, slender: true },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="did-title" class="widget-stage">
+    <title id="did-title">Left: a wing section with the free airflow, the airflow tilted down by the downwash, and the lift leaning back so that part of it acts as induced drag. Right: the wing seen from behind with its tip vortices and the downwash between them</title>
+    <defs>
+      <marker id="did-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- section view -->
+    <text x="16" y="24" font-size="14" font-weight="700" fill="var(--color-fg)">The wing from the side</text>
+    <line x1="430" y1="120" x2="300" y2="120" stroke="var(--color-sky-fg)" stroke-width="1.5" marker-end="url(#did-arrow)"/>
+    <text x="430" y="108" font-size="12" text-anchor="end" fill="var(--color-sky-fg)">free airflow</text>
+    <g :transform="'translate(220 170) rotate(' + (-aoa) + ')'">
+      <path :d="foil" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+    </g>
+    <!-- effective airflow at the wing, tilted down by the downwash -->
+    <line stroke="var(--color-warn)" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#did-arrow)" :x1="eff.x1" :y1="eff.y1" :x2="eff.x2" :y2="eff.y2"/>
+    <text x="430" y="196" font-size="12" text-anchor="end" fill="var(--color-warn-fg)">airflow the wing meets,</text>
+    <text x="430" y="212" font-size="12" text-anchor="end" fill="var(--color-warn-fg)">tilted down by the downwash</text>
+    <!-- lift leaning back, and its parts -->
+    <line x1="216" y1="150" x2="216" y2="38" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <line x1="216" y1="150" stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#did-arrow)" :x2="liftTip.x" :y2="liftTip.y"/>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" x="226" y="56">lift</text>
+    <line stroke="var(--color-bad)" stroke-width="2.5" marker-end="url(#did-arrow)" x1="216" y1="150" :x2="liftTip.x" y2="150" x-show="dragLen > 9"/>
+    <line stroke="var(--color-bad)" stroke-width="1" stroke-dasharray="3 3" :x1="liftTip.x" :y1="liftTip.y" :x2="liftTip.x" y2="150" x-show="dragLen > 9"/>
+    <text font-size="13" font-weight="700" fill="var(--color-bad-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="Math.min(liftTip.x, 208) - 8" y="138" x-text="dragLen > 9 ? 'induced drag' : 'induced drag: tiny'"></text>
+    <text x="16" y="290" font-size="12" fill="var(--color-fg-faint)">Leading edge on the right. Tilts exaggerated.</text>
+
+    <!-- rear view -->
+    <rect x="440" y="36" width="196" height="260" rx="10" fill="var(--color-surface-2)"/>
+    <text x="538" y="58" font-size="14" font-weight="700" text-anchor="middle" fill="var(--color-fg)">From behind</text>
+    <line stroke="var(--color-fg)" stroke-width="5" stroke-linecap="round" :x1="538 - half * 0.6" :x2="538 + half * 0.6" y1="140" y2="140"/>
+    <rect x="532" y="126" width="12" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+    <!-- tip vortices: left tip clockwise, right tip anticlockwise, seen from behind -->
+    <g fill="none" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round" marker-end="url(#did-arrow)">
+      <path :d="'M' + (538 - half * 0.6) + ' ' + (140 - vr) + ' A' + vr + ' ' + vr + ' 0 1 1 ' + (538 - half * 0.6 - vr) + ' 140'"/>
+      <path :d="'M' + (538 + half * 0.6) + ' ' + (140 - vr) + ' A' + vr + ' ' + vr + ' 0 1 0 ' + (538 + half * 0.6 + vr) + ' 140'"/>
+    </g>
+    <!-- downwash between the vortices -->
+    <g stroke="var(--color-warn)" stroke-width="2" marker-end="url(#did-arrow)">
+      <line x1="510" y1="168" x2="510" :y2="168 + dw"/>
+      <line x1="538" y1="168" x2="538" :y2="168 + dw"/>
+      <line x1="566" y1="168" x2="566" :y2="168 + dw"/>
+    </g>
+    <text x="538" y="236" font-size="12" text-anchor="middle" fill="var(--color-warn-fg)">downwash</text>
+    <text x="538" y="268" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="slender ? 'long, slender wing' : 'trainer wing'"></text>
+    <text x="538" y="284" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">same area</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="did-v">Airspeed, level flight <output for="did-v" x-text="v + ' kt'"></output></label>
+      <input type="range" id="did-v" min="50" max="140" step="1" x-model.number="v">
+    </div>
+    <div class="widget-control">
+      <label for="did-w">Weight <output for="did-w" x-text="w + '% of maximum'"></output></label>
+      <input type="range" id="did-w" min="75" max="100" step="1" x-model.number="w">
+    </div>
+    <div class="widget-control">
+      <label for="did-slender" class="cursor-pointer"><span>Long, slender wing (twice the aspect ratio)</span>
+        <input type="checkbox" id="did-slender" x-model="slender" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="state"><dt class="widget-label">Induced drag</dt><dd class="widget-value" x-text="fmt(di) + ' N'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Compared with 70 kt</dt><dd class="widget-value" x-text="'× ' + fmt(ratio, 2)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Angle of attack</dt><dd class="widget-value" x-text="fmt(aoa, 1) + '°'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('min-drag-70')" :aria-pressed="active === 'min-drag-70'">70 kt</button>
+      <button type="button" @click="preset('faster-100')" :aria-pressed="active === 'faster-100'">100 kt</button>
+      <button type="button" @click="preset('slower-55')" :aria-pressed="active === 'slower-55'">55 kt</button>
+      <button type="button" @click="preset('double-speed-140')" :aria-pressed="active === 'double-speed-140'">Double, 140 kt</button>
+      <button type="button" @click="preset('lighter')" :aria-pressed="active === 'lighter'">Lighter</button>
+      <button type="button" @click="preset('glider-wing')" :aria-pressed="active === 'glider-wing'">Glider wing</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Induced drag is the price of lift: the harder the wing works (slow, heavy, high angle of attack), the stronger the tip vortices and the downwash, the further the lift leans back and the bigger its backward part. It falls with the square of the speed, so double the speed and it is a quarter. A longer, slender wing of the same area makes much less (half, in this simple model). The 600 N at 70 kt is the lesson's illustrative figure; the angles of attack come from a simple model, and the tilts and vortex sizes are exaggerated.</p>
+  <details class="widget-try"><summary>Try it: the lesson's example has 600 N of induced drag at 70 kt. What is it at 100 kt and at 55 kt?</summary><p>Press 100 kt: 600 × (70 ÷ 100)² = 294 N. Press 55 kt: 600 × (70 ÷ 55)² = 972 N. Slowing down makes the wing work harder, so induced drag climbs steeply as you approach the stall.</p></details>
+  <details class="widget-try"><summary>Try it: why are the wake vortices behind a heavy aircraft worst just after take-off?</summary><p>Press 55 kt and drag the weight to 100%: slow and heavy is the combination that makes the wing work hardest, so the vortices are strongest. Speed up or lighten the aeroplane and they shrink (BAKC 4.4).</p></details>
+</div>

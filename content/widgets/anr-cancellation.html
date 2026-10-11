@@ -1,0 +1,127 @@
+<div class="widget" x-data="timeline({
+  duration: 4, loop: true, autoplay: true,
+  pitch: 0.05, anr: true, leak: false,
+  // illustrative: how much of the noise gets through the shell (most of a low drone, little of a high hiss), a
+  // leaking seal letting noise round the cushion at every pitch, and a fixed delay in the ANR circuit that puts the
+  // anti-noise further out of step the faster the wave changes (PHFC 2.6)
+  get cycles() { return 1.5 + this.pitch * 8.5 },
+  get phaseErr() { return this.cycles * 7 },
+  get shell() { return 0.85 - 0.7 * this.pitch },
+  get inCup() { return Math.min(1, this.shell + (this.leak ? 0.55 : 0)) },
+  // the circuit can only make so much anti-noise
+  get anti() { return this.anr ? Math.min(this.inCup, 0.7) : 0 },
+  get atEar() { const a = this.inCup, b = this.anti, e = this.phaseErr * Math.PI / 180; return Math.sqrt(Math.max(0, a * a + b * b - 2 * a * b * Math.cos(e))) },
+  get gain() { return this.atEar / this.inCup },
+  wave(amp, shift, y0) {
+    const pts = [], ph = this.t * 2 * Math.PI;
+    for (let i = 0; i <= 120; i++) { const x = i / 120; pts.push([270 + x * 350, y0 - amp * 30 * Math.sin(2 * Math.PI * this.cycles * x - ph + shift)]) }
+    return this.path(pts);
+  },
+  get noisePath() { return this.wave(this.inCup, 0, 70) },
+  get antiPath() { return this.wave(this.anti, Math.PI + this.phaseErr * Math.PI / 180, 155) },
+  get earPath() {
+    const pts = [], ph = this.t * 2 * Math.PI, a = this.inCup, b = this.anti, e = this.phaseErr * Math.PI / 180;
+    for (let i = 0; i <= 120; i++) { const x = i / 120, th = 2 * Math.PI * this.cycles * x - ph; pts.push([270 + x * 350, 240 - 30 * (a * Math.sin(th) + b * Math.sin(th + Math.PI + e))]) }
+    return this.path(pts);
+  },
+  get pitchName() { return this.pitch < 0.3 ? 'Low engine drone' : this.pitch < 0.65 ? 'Middle' : 'High hiss' },
+  get shellText() { return this.inCup > 0.6 ? ['Most of it gets in', 'bad'] : this.inCup > 0.35 ? ['Some gets in', 'warn'] : ['Blocks most of it', 'ok'] },
+  get anrText() { if (!this.anr) return ['Off', '']; const g = this.gain; return g < 0.3 ? ['Cancels most of it', 'ok'] : g <= 1 ? ['Cancels part of it', 'warn'] : ['Out of step: adds to it', 'bad'] },
+  get earText() { const v = this.atEar; return v < 0.25 ? ['Quiet', 'ok'] : v < 0.55 ? ['Moderate', 'warn'] : ['Loud', 'bad'] },
+  get caption() {
+    if (this.leak) return 'A gap under the cushion (glasses arms, hair, a cracked seal) lets noise straight round the shell at every pitch, more than the ANR circuit was built to cancel. A broken seal ruins either kind of headset.';
+    if (!this.anr) return this.pitch < 0.3 ? 'A passive headset alone: the slow, heavy pressure swings of the engine drone shake the whole shell and pass straight through.' : 'A passive headset alone: the hard shell and a good seal block most of the fast, high-pitched hiss.';
+    if (this.gain < 0.3) return 'The microphone hears the drone that got through, the circuit plays the mirror-image wave, and the two cancel at your eardrum. A slow wave leaves the circuit time to keep in step.';
+    if (this.gain <= 1) return 'The faster the wave changes, the further the small delay in the circuit puts the anti-noise out of step, and the less it cancels.';
+    return 'At high pitch the anti-noise is so far out of step that it would add to the noise, not cancel it. That is why ANR is built to work on the low band, and the passive shell and seal take care of the hiss.';
+  },
+  presets: {
+    'engine-drone-passive': { pitch: 0.05, anr: false, leak: false },
+    'engine-drone-anr': { pitch: 0.05, anr: true, leak: false },
+    'high-hiss-anr': { pitch: 0.9, anr: true, leak: false },
+    'high-hiss-passive': { pitch: 0.9, anr: false, leak: false },
+    'glasses-break-the-seal': { pitch: 0.05, anr: true, leak: true },
+  },
+})">
+  <svg viewBox="0 0 640 280" role="img" aria-labelledby="anr-title" class="widget-stage">
+    <title id="anr-title">A headset ear cup in cross-section with its shell, seal, microphone and speaker, beside three waves: the noise inside the cup, the anti-noise the circuit plays, and what reaches the eardrum</title>
+    <defs>
+      <marker id="anr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- the ear cup, in section -->
+    <path d="M200 40 L200 118 Q214 120 222 140 Q214 160 200 162 L200 250" fill="none" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="214" y="270" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">your head</text>
+    <line x1="222" y1="140" x2="244" y2="140" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="244" y1="128" x2="244" y2="152" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+    <text x="240" y="172" font-size="11" text-anchor="middle" fill="var(--color-brand-fg)">eardrum</text>
+    <path d="M190 52 Q80 52 80 140 Q80 228 190 228" fill="var(--color-surface-2)" stroke="var(--color-fg)" stroke-width="5" stroke-linecap="round"/>
+    <!-- the seals: the top one lifts off the skin when it leaks -->
+    <rect x="182" width="16" height="22" rx="7" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.5" :y="leak ? 30 : 44" :transform="leak ? 'rotate(-12 190 40)' : ''"/>
+    <rect x="182" y="214" width="16" height="22" rx="7" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.5"/>
+    <text x="122" y="250" font-size="11" fill="var(--color-info)">seal</text>
+    <!-- speaker and microphone -->
+    <path d="M150 124 L162 124 L176 112 L176 168 L162 156 L150 156 Z" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5" stroke-linejoin="round" :opacity="anr ? 1 : 0.35"/>
+    <circle cx="170" cy="92" r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5" :opacity="anr ? 1 : 0.35"/>
+    <text x="158" y="78" font-size="11" fill="var(--color-fg-muted)">mic</text>
+    <text x="120" y="190" font-size="11" fill="var(--color-fg-muted)" x-text="anr ? 'speaker' : 'ANR off'"></text>
+    <!-- noise from the cabin, through the shell and round a leaking seal -->
+    <g fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" marker-end="url(#anr-arrow)">
+      <path d="M14 140 q6 -8 12 0 t12 0 t12 0 L64 140"/>
+      <path d="M14 96 q6 -8 12 0 t12 0 t12 0 L66 104"/>
+      <path d="M14 184 q6 -8 12 0 t12 0 t12 0 L66 176"/>
+      <path d="M150 14 L188 36" x-show="leak"/>
+    </g>
+    <text x="14" y="78" font-size="12" fill="var(--color-bad-fg)">cabin noise</text>
+    <text x="118" y="22" font-size="12" fill="var(--color-bad-fg)" text-anchor="end" x-show="leak">leak</text>
+
+    <!-- the three waves -->
+    <g fill="none" stroke="var(--color-line)" stroke-width="1"><line x1="270" y1="70" x2="620" y2="70"/><line x1="270" y1="155" x2="620" y2="155"/><line x1="270" y1="240" x2="620" y2="240"/></g>
+    <text x="270" y="26" font-size="12" fill="var(--color-fg-muted)">noise inside the cup</text>
+    <text x="270" y="112" font-size="12" fill="var(--color-fg-muted)" x-text="anr ? 'anti-noise from the speaker (mirror image, slightly late)' : 'anti-noise: ANR off'"></text>
+    <text x="270" y="198" font-size="12" font-weight="600" fill="var(--color-brand-fg)">what reaches your eardrum</text>
+    <path fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" :d="noisePath"/>
+    <path fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" :d="antiPath" x-show="anr"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="earPath"/>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause the waves' : 'Play the waves'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="anr-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Wave phase">
+    <span class="widget-clock" x-text="pitchName"></span>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="anr-pitch">Pitch of the noise <output for="anr-pitch" x-text="pitchName"></output></label>
+      <input type="range" id="anr-pitch" min="0" max="1" step="0.05" x-model.number="pitch">
+    </div>
+    <div class="widget-control">
+      <label for="anr-on" class="cursor-pointer"><span>Active noise reduction on</span>
+        <input type="checkbox" id="anr-on" x-model="anr" class="size-5 accent-[var(--color-brand)]"></label>
+      <label for="anr-leak" class="cursor-pointer"><span>Seal lifted (glasses arms, hair, cracked cushion)</span>
+        <input type="checkbox" id="anr-leak" x-model="leak" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="shellText[1]"><dt class="widget-label">Shell and seal</dt><dd class="widget-value" x-text="shellText[0]"></dd></div>
+    <div class="widget-readout" :class="anrText[1]"><dt class="widget-label">ANR</dt><dd class="widget-value" x-text="anrText[0]"></dd></div>
+    <div class="widget-readout" :class="earText[1]"><dt class="widget-label">At your eardrum</dt><dd class="widget-value" x-text="earText[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('engine-drone-passive')" :aria-pressed="active === 'engine-drone-passive'">Drone, passive</button>
+      <button type="button" @click="preset('engine-drone-anr')" :aria-pressed="active === 'engine-drone-anr'">Drone, ANR</button>
+      <button type="button" @click="preset('high-hiss-passive')" :aria-pressed="active === 'high-hiss-passive'">Hiss, passive</button>
+      <button type="button" @click="preset('high-hiss-anr')" :aria-pressed="active === 'high-hiss-anr'">Hiss, ANR</button>
+      <button type="button" @click="preset('glasses-break-the-seal')" :aria-pressed="active === 'glasses-break-the-seal'">Glasses</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The two layers cover each other's weak spot: the shell and seal block the high-pitched hiss but let the low drone through, and ANR cancels the low drone because a slow wave gives the circuit time to stay in step. Lift the seal and both lose. The amounts and the circuit delay are illustrative; which layer handles which noise is the lesson's.</p>
+  <details class="widget-try"><summary>Try it: is ANR better at everything?</summary><p>Compare Drone, ANR with Hiss, ANR: on the drone the anti-noise is a near-perfect mirror and the eardrum trace is almost flat; on the hiss it is out of step and would add to the noise. The passive shell is what deals with the hiss.</p></details>
+  <details class="widget-try"><summary>Try it: you wear thick-framed glasses under an ANR headset. What happens?</summary><p>Press Glasses: the lifted seal lets noise round the cushion at every pitch, more than the circuit can cancel, so the eardrum trace grows. Thin-armed glasses and good cushions keep the seal.</p></details>
+</div>

@@ -1,0 +1,136 @@
+<div class="widget" x-data="widget({
+  b0: false, b1: false, b2: false, b3: false, focus: -1, cause: '',
+  // the four links and the four types of hypoxia (PHFC 2.12 table and remedies)
+  links: [
+    { name: 'Lungs', job: 'air link', type: 'Hypoxic (altitude)', short: 'altitude', why: 'Low partial pressure of oxygen in the lungs', ex: 'flying at altitude without oxygen; cabin decompression', fix: 'descend below 10,000 ft or use supplemental oxygen' },
+    { name: 'Blood', job: 'carrier link', type: 'Anaemic (hypaemic)', short: 'CO, smoking', why: 'The blood cannot carry enough oxygen', ex: 'carbon monoxide, smoking, blood donation, anaemia, blood loss', fix: 'remove the carbon monoxide source (heat off, vents open), use 100 percent oxygen if carried and land; prevent it by not smoking before flight and not flying after giving blood' },
+    { name: 'Circulation', job: 'delivery link', type: 'Stagnant', short: 'g, cold', why: 'The blood is not circulating well', ex: 'positive g, cold, shock, heart problems, sitting cramped for long periods', fix: 'limit g, keep warm and move your limbs on long flights' },
+    { name: 'Cells', job: 'user link', type: 'Histotoxic', short: 'alcohol', why: 'The cells cannot use the oxygen delivered', ex: 'alcohol, some drugs, cyanide', fix: 'prevention only (no alcohol before flight, no unapproved drugs): oxygen does little when the cells cannot use it' },
+  ],
+  cx: [135, 250, 365, 480],
+  br(i) { return this['b' + i] },
+  flip(i) { this['b' + i] = !this['b' + i]; this.focus = this['b' + i] ? i : this.firstBroken; this.cause = ''; this.active = null },
+  get broken() { return [0, 1, 2, 3].filter((i) => this.br(i)) },
+  get firstBroken() { return this.broken.length ? this.broken[0] : -1 },
+  get f() { return this.focus >= 0 && this.br(this.focus) ? this.links[this.focus] : null },
+  // oxygen dots after the first broken link are drawn hollow
+  get breakX() { return this.firstBroken < 0 ? 999 : this.cx[this.firstBroken] - 20 },
+  get typeText() { return this.broken.length ? this.broken.map((i) => this.links[i].type.split(' ')[0]).join(' + ') : 'None' },
+  get supply() {
+    if (!this.broken.length) return ['Normal', 'ok'];
+    if (this.broken.length > 1) return ['Less again: they stack', 'bad'];
+    if (this.b3) return ['Delivered, not used', 'bad'];
+    return ['Reduced', 'bad'];
+  },
+  get caption() {
+    if (!this.broken.length) return 'Air into the lungs, oxygen across the alveolar wall onto haemoglobin, round the body with the heart, into the cells that burn it. Click a link to break it.';
+    const f = this.f || this.links[this.firstBroken];
+    let s = (this.cause ? this.cause + ' ' : '') + f.type + ' hypoxia: ' + f.why.toLowerCase() + '. The lesson\'s examples: ' + f.ex + '.';
+    s += ' Fix: ' + f.fix + '.';
+    if (this.broken.length > 1) s += ' With ' + this.broken.length + ' links weakened at once the effects add together.';
+    return s;
+  },
+  presets: {
+    'altitude': { b0: true, b1: false, b2: false, b3: false, focus: 0, cause: 'An hour at 11,500 ft without oxygen.' },
+    'carbon-monoxide-heater': { b0: false, b1: true, b2: false, b3: false, focus: 1, cause: 'A cracked exhaust in the heater muff on a cold morning.' },
+    'blood-donation': { b0: false, b1: true, b2: false, b3: false, focus: 1, cause: 'Flying the day after giving blood.' },
+    'steep-turn-g': { b0: false, b1: false, b2: true, b3: false, focus: 2, cause: 'Positive g in a steep turn pools blood away from the head and eyes.' },
+    'alcohol': { b0: false, b1: false, b2: false, b3: true, focus: 3, cause: 'Alcohol in the blood.' },
+    'albany-night': { b0: true, b1: true, b2: true, b3: false, focus: 1, cause: 'Albany on a winter night: 10,500 ft, a cigarette and the heater, and the cold.' },
+  },
+})">
+  <svg viewBox="0 0 640 250" role="img" aria-labelledby="oxc-title" class="widget-stage">
+    <title id="oxc-title">The oxygen chain from the air through the lungs, the blood, the circulation and the cells to the brain and eyes; each link can be broken to show the type of hypoxia it causes</title>
+    <text x="290" y="24" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)">Oxygen's journey to the brain: click a link to break it</text>
+    <!-- air -->
+    <circle cx="36" cy="80" r="24" fill="var(--color-sky-soft)" stroke="var(--color-sky-fg)" stroke-width="1.25"/>
+    <text x="36" y="85" font-size="13" text-anchor="middle" fill="var(--color-sky-fg)" font-weight="600">air</text>
+    <text x="36" y="124" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">21% O₂</text>
+    <!-- the four links -->
+    <g role="button" tabindex="0" aria-label="Lungs link" style="cursor: pointer" @click="flip(0)" @keydown.enter="flip(0)">
+      <ellipse cx="135" cy="80" rx="62" ry="32" fill="var(--color-surface)" stroke-width="6" :stroke="b0 ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :stroke-dasharray="b0 ? '120 26 124 26' : 'none'"/>
+      <text x="135" y="80" font-size="14" font-weight="600" text-anchor="middle" :fill="b0 ? 'var(--color-bad-fg)' : 'var(--color-fg)'">Lungs</text>
+      <text x="135" y="96" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">air link</text>
+    </g>
+    <g role="button" tabindex="0" aria-label="Blood link" style="cursor: pointer" @click="flip(1)" @keydown.enter="flip(1)">
+      <ellipse cx="250" cy="80" rx="62" ry="32" fill="var(--color-surface)" stroke-width="6" :stroke="b1 ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :stroke-dasharray="b1 ? '120 26 124 26' : 'none'"/>
+      <text x="250" y="80" font-size="14" font-weight="600" text-anchor="middle" :fill="b1 ? 'var(--color-bad-fg)' : 'var(--color-fg)'">Blood</text>
+      <text x="250" y="96" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">haemoglobin</text>
+    </g>
+    <g role="button" tabindex="0" aria-label="Circulation link" style="cursor: pointer" @click="flip(2)" @keydown.enter="flip(2)">
+      <ellipse cx="365" cy="80" rx="62" ry="32" fill="var(--color-surface)" stroke-width="6" :stroke="b2 ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :stroke-dasharray="b2 ? '120 26 124 26' : 'none'"/>
+      <text x="365" y="80" font-size="14" font-weight="600" text-anchor="middle" :fill="b2 ? 'var(--color-bad-fg)' : 'var(--color-fg)'">Circulation</text>
+      <text x="365" y="96" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">heart pumps</text>
+    </g>
+    <g role="button" tabindex="0" aria-label="Cells link" style="cursor: pointer" @click="flip(3)" @keydown.enter="flip(3)">
+      <ellipse cx="480" cy="80" rx="62" ry="32" fill="var(--color-surface)" stroke-width="6" :stroke="b3 ? 'var(--color-bad)' : 'var(--color-fg-muted)'" :stroke-dasharray="b3 ? '120 26 124 26' : 'none'"/>
+      <text x="480" y="80" font-size="14" font-weight="600" text-anchor="middle" :fill="b3 ? 'var(--color-bad-fg)' : 'var(--color-fg)'">Cells</text>
+      <text x="480" y="96" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">use the oxygen</text>
+    </g>
+    <!-- brain and eyes -->
+    <circle cx="598" cy="80" r="28" stroke-width="2" :fill="broken.length ? 'var(--color-bad-soft)' : 'var(--color-ok-soft)'" :stroke="broken.length ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+    <path d="M588 70 L600 70 L593 82 L606 82 L589 99 L595 85 L584 85 Z" stroke-width="1.25" stroke-linejoin="round" :fill="broken.length ? 'none' : 'var(--color-ok)'" :stroke="broken.length ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+    <text x="598" y="124" font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">brain, eyes</text>
+    <text x="598" y="40" font-size="12" text-anchor="middle" font-weight="600" :fill="broken.length ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="broken.length ? 'short of O₂' : 'working'"></text>
+    <!-- the oxygen stream -->
+    <text x="14" y="150" font-size="11" fill="var(--color-brand-fg)">oxygen</text>
+    <line x1="58" y1="146" x2="560" y2="146" stroke="var(--color-line)" stroke-width="1"/>
+    <g stroke-width="2">
+      <circle cy="146" r="5" cx="80" :fill="80 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="80 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="120" :fill="120 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="120 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="160" :fill="160 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="160 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="200" :fill="200 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="200 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="240" :fill="240 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="240 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="280" :fill="280 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="280 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="320" :fill="320 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="320 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="360" :fill="360 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="360 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="400" :fill="400 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="400 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="440" :fill="440 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="440 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="480" :fill="480 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="480 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+      <circle cy="146" r="5" cx="520" :fill="520 > breakX ? 'var(--color-surface)' : 'var(--color-brand)'" :stroke="520 > breakX ? 'var(--color-fg-faint)' : 'var(--color-brand)'"/>
+    </g>
+    <path d="M552 140 L562 146 L552 152" fill="none" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- the type each link breaks into -->
+    <line x1="58" y1="176" x2="560" y2="176" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="14" y="202" font-size="11" fill="var(--color-fg-faint)">type</text>
+    <g font-size="13" text-anchor="middle">
+      <text x="135" y="202" :font-weight="b0 ? 700 : 400" :fill="b0 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'">Hypoxic</text>
+      <text x="250" y="202" :font-weight="b1 ? 700 : 400" :fill="b1 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'">Anaemic</text>
+      <text x="365" y="202" :font-weight="b2 ? 700 : 400" :fill="b2 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'">Stagnant</text>
+      <text x="480" y="202" :font-weight="b3 ? 700 : 400" :fill="b3 ? 'var(--color-bad-fg)' : 'var(--color-fg-muted)'">Histotoxic</text>
+    </g>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">
+      <text x="135" y="222">altitude</text>
+      <text x="250" y="222">CO, smoking,</text><text x="250" y="238">blood donation</text>
+      <text x="365" y="222">g, cold, shock</text>
+      <text x="480" y="222">alcohol, drugs</text>
+    </g>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="oxc-b0" class="cursor-pointer"><span>Break the lungs link</span><input type="checkbox" id="oxc-b0" :checked="b0" @change="flip(0)" class="size-5 accent-[var(--color-brand)]"></label></div>
+    <div class="widget-control"><label for="oxc-b1" class="cursor-pointer"><span>Break the blood link</span><input type="checkbox" id="oxc-b1" :checked="b1" @change="flip(1)" class="size-5 accent-[var(--color-brand)]"></label></div>
+    <div class="widget-control"><label for="oxc-b2" class="cursor-pointer"><span>Break the circulation link</span><input type="checkbox" id="oxc-b2" :checked="b2" @change="flip(2)" class="size-5 accent-[var(--color-brand)]"></label></div>
+    <div class="widget-control"><label for="oxc-b3" class="cursor-pointer"><span>Break the cells link</span><input type="checkbox" id="oxc-b3" :checked="b3" @change="flip(3)" class="size-5 accent-[var(--color-brand)]"></label></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="broken.length ? 'bad' : 'ok'"><dt class="widget-label">Hypoxia type</dt><dd class="widget-value" x-text="typeText"></dd></div>
+    <div class="widget-readout" :class="supply[1]"><dt class="widget-label">Oxygen used by the brain</dt><dd class="widget-value" x-text="supply[0]"></dd></div>
+    <div class="widget-readout" :class="broken.length ? 'warn' : ''"><dt class="widget-label">Where it breaks</dt><dd class="widget-value" x-text="broken.length > 1 ? broken.length + ' links at once' : broken.length ? links[broken[0]].name + ' (' + links[broken[0]].job + ')' : 'Nowhere'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('altitude')" :aria-pressed="active === 'altitude'">Altitude</button>
+      <button type="button" @click="preset('carbon-monoxide-heater')" :aria-pressed="active === 'carbon-monoxide-heater'">Heater CO</button>
+      <button type="button" @click="preset('blood-donation')" :aria-pressed="active === 'blood-donation'">Gave blood</button>
+      <button type="button" @click="preset('steep-turn-g')" :aria-pressed="active === 'steep-turn-g'">Steep turn</button>
+      <button type="button" @click="preset('alcohol')" :aria-pressed="active === 'alcohol'">Alcohol</button>
+      <button type="button" @click="preset('albany-night')" :aria-pressed="active === 'albany-night'">Albany night</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The type of hypoxia is named by the link that breaks, not by the symptoms, which look alike. Carbon monoxide breaks the blood link at any altitude (anaemic); alcohol breaks the last link, so oxygen arrives but is wasted (histotoxic) and extra oxygen does little. Small breaks in several links add together.</p>
+  <details class="widget-try"><summary>Try it: is carbon monoxide poisoning a kind of altitude hypoxia?</summary><p>Press Heater CO: the lungs link is intact (the air pressure is fine), but the blood link is broken because carbon monoxide occupies the haemoglobin. It is anaemic hypoxia, and it happens on the ground as easily as at 10,000 ft.</p></details>
+  <details class="widget-try"><summary>Try it: on the Albany night flight, which types of hypoxia stack up?</summary><p>Press Albany night: 10,500 ft breaks the lungs link (hypoxic), the cigarette and a leaking heater the blood link (anaemic), and the cold the circulation link (stagnant). Three of the four at once, each small.</p></details>
+</div>

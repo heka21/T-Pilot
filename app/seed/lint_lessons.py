@@ -1,10 +1,11 @@
 """Lesson-format lint: advisory checks on each note against the lesson standard in content/LESSONS.md.
 
-    python -m app.seed.lint_lessons [--strict] [UNIT ...]
+    python -m app.seed.lint_lessons [--strict] [--interactive] [UNIT ...]
 
 Prints one line per warning, then a per-unit table (lessons, mean and minimum words, lessons with no warnings,
 estimated study minutes) and the total against the default plan's capacity. Exit code 1 only with --strict and at
-least one warning. `python -m app.seed.check_content` remains the hard gate for coverage and visuals.
+least one warning. --interactive also warns about lessons with nothing to move or watch (no widget and no animated
+diagram); it is opt-in while the visualisation push (tools/diagrams/VIZ-INVENTORY.md) works through the units. `python -m app.seed.check_content` remains the hard gate for coverage and visuals.
 """
 from __future__ import annotations
 
@@ -30,7 +31,15 @@ DETAILS_RE = re.compile(r"^\?\?\?\+? (\w+)", re.M)
 DEFAULT_CAPACITY_MINUTES = DEFAULT_WEEKS * 6 * (120 - 15)
 
 
-def lint_body(body: str, element_texts: list[str], meta: dict) -> list[str]:
+def is_interactive(kind: str, slug: str) -> bool:
+    """A widget, or a diagram that animates (CSS @keyframes)."""
+    if kind == "widget":
+        return True
+    path = CONTENT / "diagrams" / f"{slug}.svg"
+    return kind == "diagram" and path.exists() and "@keyframes" in path.read_text(encoding="utf-8")
+
+
+def lint_body(body: str, element_texts: list[str], meta: dict, interactive: bool = False) -> list[str]:
     out: list[str] = []
     words = word_count(body)
     if words < MIN_WORDS:
@@ -47,8 +56,11 @@ def lint_body(body: str, element_texts: list[str], meta: dict) -> list[str]:
     for heading in REQUIRED_HEADINGS:
         if not re.search(rf"^{re.escape(heading)}\b", body, re.M):
             out.append(f"no `{heading}` section")
-    if not find_refs(body):
+    refs = find_refs(body)
+    if not refs:
         out.append("no diagram or widget")
+    elif interactive and not any(is_interactive(k, s) for k, s in refs):
+        out.append("nothing to move or watch: no widget and no animated diagram")
     for kind in sorted(set(ADMON_RE.findall(body)) - KNOWN_ADMONITIONS):
         out.append(f"unknown admonition type `!!! {kind}` (no CSS for it)")
     for kind in sorted(set(DETAILS_RE.findall(body)) - KNOWN_DETAILS):
@@ -62,6 +74,7 @@ def lint_body(body: str, element_texts: list[str], meta: dict) -> list[str]:
 
 def main(argv: list[str]) -> int:
     strict = "--strict" in argv
+    interactive = "--interactive" in argv
     units = {a.upper() for a in argv if not a.startswith("--")}
     subtopics, _ = load_syllabus()
     rows: dict[str, dict] = {}
@@ -71,7 +84,7 @@ def main(argv: list[str]) -> int:
         sid = meta.get("subtopic")
         if sid not in subtopics or (units and subtopics[sid]["unit"] not in units):
             continue
-        problems = lint_body(body, subtopics[sid]["element_texts"], meta)
+        problems = lint_body(body, subtopics[sid]["element_texts"], meta, interactive)
         warnings += len(problems)
         for p in problems:
             print(f"{path.relative_to(CONTENT.parent)}: {p}")

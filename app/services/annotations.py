@@ -232,7 +232,7 @@ def export_all(session: Session) -> dict[str, Any]:
     """Every note, highlight and ink page as plain JSON (the backup of the user's annotations)."""
     titles = dict(session.execute(select(Subtopic.id, Subtopic.title)).all())
     return {
-        "app": "CASA Theory",
+        "app": "T-Pilot",
         "format": EXPORT_FORMAT,
         "exported_at": _iso(utcnow()),
         "notes": [{"subtopic_id": n.subtopic_id, "lesson": titles.get(n.subtopic_id, ""), "text": n.text,

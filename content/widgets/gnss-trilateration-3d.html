@@ -1,0 +1,31 @@
+<div class="widget" data-widget="explorer" data-explorer="gnss">
+  <div class="widget-canvas" data-canvas aria-label="3D view of GNSS satellites above the Earth with their range spheres meeting at the receiver"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="gn3-sats">Satellites in view <output data-out="sats">1 in view</output></label><input id="gn3-sats" type="range" min="0" max="6" step="1" value="1" data-param="sats"></div>
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="clockError"> Receiver clock wrong (every pseudorange too long by the same amount)</label>
+      <label class="check"><input type="checkbox" data-param="faulty"> Satellite 5 is faulty (its clock broadcasts a wrong time)</label>
+      <label class="check"><input type="checkbox" data-param="bunched"> Satellites bunched in one part of the sky (poor geometry)</label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout warn"><dt>What the receiver can conclude</dt><dd data-out="status" class="text-sm">one range: a sphere</dd></div>
+    <div class="widget-readout"><dt>Fix</dt><dd data-out="fix" class="text-sm">no fix</dd></div>
+    <div class="widget-readout warn"><dt>RAIM</dt><dd data-out="raim" class="text-sm">not available</dd></div>
+    <div class="widget-readout ok"><dt>Geometry (DOP)</dt><dd data-out="dop" class="text-sm">spread across the sky</dd></div>
+  </dl>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Scenarios">
+      <button type="button" data-preset="three-spheres" data-set='{"sats": 3, "clockError": false, "faulty": false, "bunched": false}'>3: spheres meet</button>
+      <button type="button" data-preset="three-with-clock-error" data-set='{"sats": 3, "clockError": true, "faulty": false, "bunched": false}'>3: clock wrong</button>
+      <button type="button" data-preset="four-for-a-3d-fix" data-set='{"sats": 4, "clockError": true, "faulty": false, "bunched": false}'>4: 3D fix</button>
+      <button type="button" data-preset="five-raim-detects" data-set='{"sats": 5, "clockError": false, "faulty": true, "bunched": false}'>5: RAIM detects</button>
+      <button type="button" data-preset="six-fde-excludes" data-set='{"sats": 6, "clockError": false, "faulty": true, "bunched": false}'>6: FDE excludes</button>
+      <button type="button" data-preset="bunched-high-dop" data-set='{"sats": 6, "clockError": false, "faulty": false, "bunched": true}'>6 bunched: high DOP</button>
+    </div>
+    <button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom. To scale: the satellites are 20,200 km up.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each range puts you on a sphere around its satellite. Two spheres meet in a circle, a third cuts the circle at two points, one of them deep in the Earth or out in space, so three ranges would fix a 3D position if the receiver's clock were perfect. It is not, and its error makes every pseudorange wrong by the same amount, so the spheres miss: a fourth satellite lets the receiver solve for its own clock and gives the 3D fix. A fifth lets RAIM compare four-satellite solutions and detect a faulty satellite (fault detection); a sixth lets it identify and exclude the culprit (FDE). Bunch the satellites together and the spheres cross at shallow angles: high DOP, every range error magnified, however many satellites are in view.</p>
+  <details class="widget-try"><summary>Try this: with the clock error on, add the fourth satellite. What changed, and why could the receiver not do it with three?</summary><p>The spheres shrink to their true ranges and meet at the receiver. With latitude, longitude, height and clock error there are four unknowns, and four unknowns need four measurements; with three the receiver can at best assume a height and give a 2D fix.</p></details>
+  <details class="widget-try"><summary>Try this: six satellites bunched together against five spread out. Which gives the better fix?</summary><p>The five spread out. Accuracy depends on geometry as well as number: bunched satellites give a high DOP, so the same range errors produce a long thin area of uncertainty instead of a small one.</p></details>
+</div>

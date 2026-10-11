@@ -1,0 +1,311 @@
+<div class="widget" x-data="widget({
+  item: 'altitude',
+  alt: 2500, fl: 125, hdg: 90, qnh: 1013, freq: 1267, sq: parseInt('3412', 8), wdir: 270, wspd: 15, wst: 648,
+  // AIP GEN 3.4 digit words as the lesson writes them (PAKC 3.1): spoken word and its stress guide
+  _d: [['zero', 'ZE-RO'], ['one', 'WUN'], ['two', 'TOO'], ['tree', 'TREE'], ['four', 'FOW-er'], ['fife', 'FIFE'], ['six', 'SIX'], ['seven', 'SEV-en'], ['eight', 'AIT'], ['niner', 'NIN-er']],
+  _plain: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'],
+  _teens: ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'],
+  _tens: ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'],
+  _names: { altitude: 'Altitude', fl: 'Flight level', heading: 'Heading', qnh: 'QNH', frequency: 'Frequency', squawk: 'Squawk', wind: 'Wind', time: 'Time' },
+  // everyday English for a number under 100: 25 → twenty-five (only for the traps)
+  words(n) { return n < 10 ? this._plain[n] : n < 20 ? this._teens[n - 10] : this._tens[Math.floor(n / 10)] + (n % 10 ? '-' + this._plain[n % 10] : '') },
+  dig(s) { return String(s).split('').map((c) => ({ word: this._d[+c][0], guide: this._d[+c][1], kind: '359'.includes(c) ? 'special' : 'digit' })) },
+  wd(word) { return { word, guide: '', kind: 'word' } },
+  get sqCode() { return this.sq.toString(8).padStart(4, '0') },
+  get mhz() { return Math.floor(this.freq / 10) },
+  get utcMin() { return this.utc(this.wst).min },
+  get prevDay() { return this.utc(this.wst).day < 0 },
+  get isTime() { return this.item === 'time' },
+  get written() {
+    switch (this.item) {
+      case 'altitude': return this.fmt(this.alt) + ' ft';
+      case 'fl': return 'FL' + String(this.fl).padStart(3, '0');
+      case 'heading': return this.dir(this.hdg);
+      case 'qnh': return String(this.qnh);
+      case 'frequency': return (this.freq / 10).toFixed(1) + ' MHz';
+      case 'squawk': return this.sqCode;
+      case 'wind': return this.dir(this.wdir) + '/' + this.wspd;
+      default: return this.hhmm(this.wst) + ' WST = ' + this.hhmm(this.utcMin) + ' UTC';
+    }
+  },
+  // row A: what you say; row B: the full time, or the digit-by-digit trap for an altitude
+  get sayA() {
+    switch (this.item) {
+      case 'altitude': {
+        const th = Math.floor(this.alt / 1000), h = Math.round(this.alt % 1000 / 100), out = [];
+        if (th) out.push(...this.dig(th), { word: 'thousand', guide: 'TOU-SAND', kind: 'unit' });
+        if (h) out.push(...this.dig(h), { word: 'hundred', guide: 'HUN-dred', kind: 'unit' });
+        return out;
+      }
+      case 'fl': return [this.wd('flight level'), ...this.dig(String(this.fl).padStart(3, '0'))];
+      case 'heading': return [this.wd('heading'), ...this.dig(this.dir(this.hdg))];
+      case 'qnh': return [this.wd('QNH'), ...this.dig(this.qnh)];
+      case 'frequency': return [...this.dig(this.mhz), { word: 'decimal', guide: 'DAY-SEE-MAL', kind: 'unit' }, ...this.dig(this.freq % 10)];
+      case 'squawk': return [this.wd('squawk'), ...this.dig(this.sqCode)];
+      case 'wind': return [this.wd('wind'), ...this.dig(this.dir(this.wdir)), this.wd('degrees'), ...this.dig(this.wspd), this.wd('knots')];
+      default: return this.dig(this.hhmm(this.utcMin).slice(2));
+    }
+  },
+  get sayB() {
+    if (this.isTime) return this.dig(this.hhmm(this.utcMin));
+    if (this.item === 'altitude') return String(this.alt).split('').map((c) => ({ word: this._plain[+c], guide: '', kind: 'trap' }));
+    return [];
+  },
+  get hasB() { return this.sayB.length > 0 },
+  tiles(list) {
+    const look = {
+      word: ['var(--color-surface-2)', 'var(--color-line-strong)', 'var(--color-fg-muted)', 'var(--color-fg-muted)', 'none'],
+      digit: ['var(--color-surface)', 'var(--color-line-strong)', 'var(--color-fg)', 'var(--color-fg-muted)', 'none'],
+      special: ['var(--color-brand-soft)', 'var(--color-brand)', 'var(--color-brand-fg)', 'var(--color-brand-fg)', 'none'],
+      unit: ['var(--color-info-soft)', 'var(--color-info)', 'var(--color-info-fg)', 'var(--color-info-fg)', 'none'],
+      trap: ['var(--color-surface)', 'var(--color-bad)', 'var(--color-bad-fg)', 'var(--color-bad-fg)', '5 4'],
+    };
+    const gap = 8, ws = list.map((t) => Math.max(46, 18 + 9.6 * t.word.length, 14 + 7.2 * t.guide.length));
+    const total = ws.reduce((a, b) => a + b, 0) + gap * Math.max(0, list.length - 1);
+    let x = 320 - total / 2;
+    const out = list.map((t, i) => {
+      const l = look[t.kind], r = { ...t, show: true, x, w: ws[i], cx: x + ws[i] / 2, fill: l[0], stroke: l[1], ink: l[2], gink: l[3], dash: l[4] };
+      x += ws[i] + gap;
+      return r;
+    });
+    while (out.length < 8) out.push({ word: '', guide: '', show: false, x: -100, w: 10, cx: -100, fill: 'none', stroke: 'none', ink: 'none', gink: 'none', dash: 'none' });
+    return out;
+  },
+  get A() { return this.tiles(this.sayA) },
+  get B() { return this.tiles(this.sayB) },
+  get spokenA() { return this.sayA.map((t) => t.word).join(' ') },
+  get spokenB() { return this.sayB.map((t) => t.word).join(' ') },
+  get rule() {
+    if (this.item === 'altitude') return 'Whole thousands and hundreds: TOU-SAND and HUN-dred';
+    if (this.isTime) return 'UTC, minutes only; the hour added if in doubt';
+    return 'Digit by digit';
+  },
+  // the everyday-speech distractors the lesson warns about
+  get trap() {
+    if (this.item === 'altitude') {
+      const hundreds = this.alt / 100;
+      return this.alt > 1000 &amp;&amp; this.alt % 1000 ? this.words(hundreds) + ' hundred' : '';
+    }
+    if (this.isTime) {
+      const h = Math.floor(this.wst / 60), m = this.wst % 60;
+      return this.words(h) + ' ' + (m === 0 ? 'hundred' : m < 10 ? 'oh ' + this._plain[m] : this.words(m));
+    }
+    return '';
+  },
+  get trapNote() {
+    if (this.item === 'altitude') return this.trap ? 'Nor “' + this.trap + '”: everyday speech, not phraseology.' : '';
+    if (this.isTime) return 'Never “' + this.trap + '”: that is local time in everyday speech.';
+    return '';
+  },
+  get labelA() { return this.isTime ? 'Normally, the minutes only (UTC)' : 'Say' },
+  get labelB() { return this.isTime ? 'With the hour, near the change of the hour or for a time well ahead' : 'Not this: digit by digit is for headings, QNH and codes' },
+  get dy() { return this.hasB ? 0 : 50 },
+  presets: {
+    'altitude-2500': { item: 'altitude', alt: 2500 },
+    'fl125': { item: 'fl', fl: 125 },
+    'heading-090': { item: 'heading', hdg: 90 },
+    'qnh-1013': { item: 'qnh', qnh: 1013 },
+    'frequency-126-7': { item: 'frequency', freq: 1267 },
+    'squawk-3412': { item: 'squawk', sq: parseInt('3412', 8) },
+    'wind-270-15': { item: 'wind', wdir: 270, wspd: 15 },
+    'qnh-1019': { item: 'qnh', qnh: 1019 },
+    'heading-350': { item: 'heading', hdg: 350 },
+    'northam-estimate-1048-wst': { item: 'time', wst: 648 },
+    'arrival-0710-wst': { item: 'time', wst: 430 },
+  },
+})">
+  <svg viewBox="0 0 640 352" role="img" aria-labelledby="rnp-title" class="widget-stage">
+    <title id="rnp-title">A number as written and as spoken on the radio, word by word, with TREE, FIFE and NIN-er highlighted and TOU-SAND and HUN-dred used only for altitudes in whole thousands and hundreds</title>
+    <defs>
+      <marker id="rnp-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <text x="20" y="28" font-size="17" font-weight="700" fill="var(--color-fg)" x-text="_names[item]"></text>
+    <text x="620" y="28" font-size="13" text-anchor="end" fill="var(--color-fg-muted)" x-text="rule"></text>
+    <g :transform="'translate(0 ' + dy + ')'">
+      <!-- written form -->
+      <rect y="42" height="58" rx="10" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1.25" :x="isTime ? 110 : 190" :width="isTime ? 420 : 260"/>
+      <text x="320" y="81" text-anchor="middle" font-weight="700" fill="var(--color-fg)" class="num" :font-size="isTime ? 24 : 30" x-text="written"></text>
+      <text x="538" y="76" font-size="12" fill="var(--color-fg-muted)" x-text="isTime &amp;&amp; prevDay ? 'previous' : ''"></text>
+      <text x="538" y="91" font-size="12" fill="var(--color-fg-muted)" x-text="isTime &amp;&amp; prevDay ? 'UTC day' : ''"></text>
+      <line x1="320" y1="104" x2="320" y2="124" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round" marker-end="url(#rnp-arrow)"/>
+      <text x="332" y="119" font-size="12" fill="var(--color-fg-muted)" x-text="isTime ? 'WST − 8 h = UTC' : ''"></text>
+      <!-- row A: what you say -->
+      <text x="20" y="140" font-size="13" font-weight="600" fill="var(--color-fg-muted)" x-text="labelA"></text>
+      <g :display="(A[0].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[0].x" :width="A[0].w" :fill="A[0].fill" :stroke="A[0].stroke" :stroke-dasharray="A[0].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[0].guide ? 175 : 182" :x="A[0].cx" :fill="A[0].ink" x-text="A[0].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[0].cx" :fill="A[0].gink" x-text="A[0].guide"></text>
+      </g>
+      <g :display="(A[1].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[1].x" :width="A[1].w" :fill="A[1].fill" :stroke="A[1].stroke" :stroke-dasharray="A[1].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[1].guide ? 175 : 182" :x="A[1].cx" :fill="A[1].ink" x-text="A[1].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[1].cx" :fill="A[1].gink" x-text="A[1].guide"></text>
+      </g>
+      <g :display="(A[2].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[2].x" :width="A[2].w" :fill="A[2].fill" :stroke="A[2].stroke" :stroke-dasharray="A[2].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[2].guide ? 175 : 182" :x="A[2].cx" :fill="A[2].ink" x-text="A[2].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[2].cx" :fill="A[2].gink" x-text="A[2].guide"></text>
+      </g>
+      <g :display="(A[3].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[3].x" :width="A[3].w" :fill="A[3].fill" :stroke="A[3].stroke" :stroke-dasharray="A[3].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[3].guide ? 175 : 182" :x="A[3].cx" :fill="A[3].ink" x-text="A[3].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[3].cx" :fill="A[3].gink" x-text="A[3].guide"></text>
+      </g>
+      <g :display="(A[4].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[4].x" :width="A[4].w" :fill="A[4].fill" :stroke="A[4].stroke" :stroke-dasharray="A[4].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[4].guide ? 175 : 182" :x="A[4].cx" :fill="A[4].ink" x-text="A[4].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[4].cx" :fill="A[4].gink" x-text="A[4].guide"></text>
+      </g>
+      <g :display="(A[5].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[5].x" :width="A[5].w" :fill="A[5].fill" :stroke="A[5].stroke" :stroke-dasharray="A[5].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[5].guide ? 175 : 182" :x="A[5].cx" :fill="A[5].ink" x-text="A[5].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[5].cx" :fill="A[5].gink" x-text="A[5].guide"></text>
+      </g>
+      <g :display="(A[6].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[6].x" :width="A[6].w" :fill="A[6].fill" :stroke="A[6].stroke" :stroke-dasharray="A[6].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[6].guide ? 175 : 182" :x="A[6].cx" :fill="A[6].ink" x-text="A[6].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[6].cx" :fill="A[6].gink" x-text="A[6].guide"></text>
+      </g>
+      <g :display="(A[7].show) ? null : 'none'">
+        <rect y="148" height="56" rx="8" stroke-width="1.5" :x="A[7].x" :width="A[7].w" :fill="A[7].fill" :stroke="A[7].stroke" :stroke-dasharray="A[7].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="A[7].guide ? 175 : 182" :x="A[7].cx" :fill="A[7].ink" x-text="A[7].word"></text>
+        <text y="194" font-size="11" font-weight="600" text-anchor="middle" :x="A[7].cx" :fill="A[7].gink" x-text="A[7].guide"></text>
+      </g>
+      <!-- row B: the full time, or the trap for an altitude -->
+      <g :display="(hasB) ? null : 'none'">
+        <text x="20" y="228" font-size="13" font-weight="600" :fill="isTime ? 'var(--color-fg-muted)' : 'var(--color-bad-fg)'" x-text="labelB"></text>
+      <g :display="(B[0].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[0].x" :width="B[0].w" :fill="B[0].fill" :stroke="B[0].stroke" :stroke-dasharray="B[0].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[0].guide ? 263 : 270" :x="B[0].cx" :fill="B[0].ink" x-text="B[0].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[0].cx" :fill="B[0].gink" x-text="B[0].guide"></text>
+      </g>
+      <g :display="(B[1].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[1].x" :width="B[1].w" :fill="B[1].fill" :stroke="B[1].stroke" :stroke-dasharray="B[1].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[1].guide ? 263 : 270" :x="B[1].cx" :fill="B[1].ink" x-text="B[1].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[1].cx" :fill="B[1].gink" x-text="B[1].guide"></text>
+      </g>
+      <g :display="(B[2].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[2].x" :width="B[2].w" :fill="B[2].fill" :stroke="B[2].stroke" :stroke-dasharray="B[2].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[2].guide ? 263 : 270" :x="B[2].cx" :fill="B[2].ink" x-text="B[2].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[2].cx" :fill="B[2].gink" x-text="B[2].guide"></text>
+      </g>
+      <g :display="(B[3].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[3].x" :width="B[3].w" :fill="B[3].fill" :stroke="B[3].stroke" :stroke-dasharray="B[3].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[3].guide ? 263 : 270" :x="B[3].cx" :fill="B[3].ink" x-text="B[3].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[3].cx" :fill="B[3].gink" x-text="B[3].guide"></text>
+      </g>
+      <g :display="(B[4].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[4].x" :width="B[4].w" :fill="B[4].fill" :stroke="B[4].stroke" :stroke-dasharray="B[4].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[4].guide ? 263 : 270" :x="B[4].cx" :fill="B[4].ink" x-text="B[4].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[4].cx" :fill="B[4].gink" x-text="B[4].guide"></text>
+      </g>
+      <g :display="(B[5].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[5].x" :width="B[5].w" :fill="B[5].fill" :stroke="B[5].stroke" :stroke-dasharray="B[5].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[5].guide ? 263 : 270" :x="B[5].cx" :fill="B[5].ink" x-text="B[5].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[5].cx" :fill="B[5].gink" x-text="B[5].guide"></text>
+      </g>
+      <g :display="(B[6].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[6].x" :width="B[6].w" :fill="B[6].fill" :stroke="B[6].stroke" :stroke-dasharray="B[6].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[6].guide ? 263 : 270" :x="B[6].cx" :fill="B[6].ink" x-text="B[6].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[6].cx" :fill="B[6].gink" x-text="B[6].guide"></text>
+      </g>
+      <g :display="(B[7].show) ? null : 'none'">
+        <rect y="236" height="56" rx="8" stroke-width="1.5" :x="B[7].x" :width="B[7].w" :fill="B[7].fill" :stroke="B[7].stroke" :stroke-dasharray="B[7].dash"/>
+        <text font-size="16" font-weight="700" text-anchor="middle" :y="B[7].guide ? 263 : 270" :x="B[7].cx" :fill="B[7].ink" x-text="B[7].word"></text>
+        <text y="282" font-size="11" font-weight="600" text-anchor="middle" :x="B[7].cx" :fill="B[7].gink" x-text="B[7].guide"></text>
+      </g>
+      </g>
+      <text x="20" y="314" font-size="13" font-weight="600" fill="var(--color-bad-fg)" x-text="trapNote"></text>
+    </g>
+    <!-- key -->
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <rect x="20" y="334" width="14" height="14" rx="3" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.25"/>
+      <text x="40" y="345">TREE, FIFE, NIN-er: unlike everyday speech</text>
+      <rect x="330" y="334" width="14" height="14" rx="3" fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.25"/>
+      <text x="350" y="345">TOU-SAND, HUN-dred, DAY-SEE-MAL</text>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="rnp-item">What you are saying</label>
+      <select id="rnp-item" x-model="item">
+        <option value="altitude">Altitude</option>
+        <option value="fl">Flight level</option>
+        <option value="heading">Heading</option>
+        <option value="qnh">QNH</option>
+        <option value="frequency">Frequency</option>
+        <option value="squawk">Squawk (transponder code)</option>
+        <option value="wind">Wind</option>
+        <option value="time">Time</option>
+      </select>
+    </div>
+    <div class="widget-control" x-show="item === 'altitude'">
+      <label for="rnp-alt">Altitude <output for="rnp-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="rnp-alt" min="100" max="9900" step="100" x-model.number="alt">
+    </div>
+    <div class="widget-control" x-show="item === 'fl'">
+      <label for="rnp-fl">Flight level <output for="rnp-fl" x-text="'FL' + fl"></output></label>
+      <input type="range" id="rnp-fl" min="110" max="250" step="5" x-model.number="fl">
+    </div>
+    <div class="widget-control" x-show="item === 'heading'">
+      <label for="rnp-hdg">Heading <output for="rnp-hdg" x-text="dir(hdg) + '°'"></output></label>
+      <input type="range" id="rnp-hdg" min="5" max="360" step="5" x-model.number="hdg">
+    </div>
+    <div class="widget-control" x-show="item === 'qnh'">
+      <label for="rnp-qnh">QNH <output for="rnp-qnh" x-text="qnh + ' hPa'"></output></label>
+      <input type="range" id="rnp-qnh" min="980" max="1040" step="1" x-model.number="qnh">
+    </div>
+    <div class="widget-control" x-show="item === 'frequency'">
+      <label for="rnp-freq">Frequency <output for="rnp-freq" x-text="(freq / 10).toFixed(1) + ' MHz'"></output></label>
+      <input type="range" id="rnp-freq" min="1180" max="1369" step="1" x-model.number="freq">
+    </div>
+    <div class="widget-control" x-show="item === 'squawk'">
+      <label for="rnp-sq">Code (digits 0 to 7) <output for="rnp-sq" x-text="sqCode"></output></label>
+      <input type="range" id="rnp-sq" min="0" max="4095" step="1" x-model.number="sq">
+    </div>
+    <div class="widget-control" x-show="item === 'wind'">
+      <label for="rnp-wdir">Wind direction <output for="rnp-wdir" x-text="dir(wdir) + '°'"></output></label>
+      <input type="range" id="rnp-wdir" min="10" max="360" step="10" x-model.number="wdir">
+    </div>
+    <div class="widget-control" x-show="item === 'wind'">
+      <label for="rnp-wspd">Wind speed <output for="rnp-wspd" x-text="wspd + ' kt'"></output></label>
+      <input type="range" id="rnp-wspd" min="10" max="40" step="1" x-model.number="wspd">
+    </div>
+    <div class="widget-control" x-show="item === 'time'">
+      <label for="rnp-wst">Local time (WST = UTC + 8) <output for="rnp-wst" x-text="hhmm(wst) + ' WST'"></output></label>
+      <input type="range" id="rnp-wst" min="0" max="1439" step="1" x-model.number="wst">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Written</dt><dd class="widget-value" x-text="written"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label" x-text="isTime ? 'Say (minutes only)' : 'Say'"></dt><dd class="widget-value" x-text="'“' + spokenA + '”'"></dd></div>
+    <div class="widget-readout ok" x-show="isTime"><dt class="widget-label">Full time (UTC)</dt><dd class="widget-value" x-text="'“' + spokenB + '”'"></dd></div>
+    <div class="widget-readout" x-show="!isTime"><dt class="widget-label">Rule</dt><dd class="widget-value" x-text="item === 'altitude' ? 'Thousand and hundred' : 'Digit by digit'"></dd></div>
+    <div class="widget-readout bad" x-show="item === 'altitude' || isTime">
+      <dt class="widget-label">Not</dt>
+      <dd class="widget-value"><span x-text="'“' + (isTime ? trap : spokenB) + '”' + (item === 'altitude' &amp;&amp; trap ? ' or “' + trap + '”' : '')"></span><span class="widget-flag bad">trap</span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('altitude-2500')" :aria-pressed="active === 'altitude-2500'">2,500 ft</button>
+      <button type="button" @click="preset('fl125')" :aria-pressed="active === 'fl125'">FL125</button>
+      <button type="button" @click="preset('heading-090')" :aria-pressed="active === 'heading-090'">HDG 090</button>
+      <button type="button" @click="preset('qnh-1013')" :aria-pressed="active === 'qnh-1013'">QNH 1013</button>
+      <button type="button" @click="preset('frequency-126-7')" :aria-pressed="active === 'frequency-126-7'">126.7</button>
+      <button type="button" @click="preset('squawk-3412')" :aria-pressed="active === 'squawk-3412'">3412</button>
+    </span>
+    <span class="widget-presets">
+      <button type="button" @click="preset('wind-270-15')" :aria-pressed="active === 'wind-270-15'">270/15</button>
+      <button type="button" @click="preset('qnh-1019')" :aria-pressed="active === 'qnh-1019'">QNH 1019</button>
+      <button type="button" @click="preset('heading-350')" :aria-pressed="active === 'heading-350'">HDG 350</button>
+      <button type="button" @click="preset('northam-estimate-1048-wst')" :aria-pressed="active === 'northam-estimate-1048-wst'">Northam 1048 WST</button>
+      <button type="button" @click="preset('arrival-0710-wst')" :aria-pressed="active === 'arrival-0710-wst'">0710 WST</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Almost everything is said digit by digit, with TREE, FIFE and NIN-er standing out; only an altitude in whole thousands and hundreds gets the words TOU-SAND and HUN-dred, and those words tell the listener it is a height. Times go out in UTC, normally as the minutes only.</p>
+  <details class="widget-try"><summary>Try it: how do you say an altitude of 3,500 ft, and what will the wrong answers in the exam look like?</summary><p>Set Altitude to 3,500 ft: “tree thousand fife hundred”. The distractors are “three five zero zero” (digit by digit, which is for headings and codes) and “thirty-five hundred” (everyday speech).</p></details>
+  <details class="widget-try"><summary>Try it: you estimate arriving at 0710 WST. What is that in UTC, and how would you normally say it?</summary><p>Choose 0710 WST: minus 8 hours is 2310 UTC on the previous day. Normally just the minutes, “one zero”; if the hour is needed, “two tree one zero”.</p></details>
+</div>

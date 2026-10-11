@@ -1,0 +1,130 @@
+<div class="widget" x-data="widget({
+  q: 'vertical', v: 1000,
+  // BAKC 2.2 and 2.4: each quantity has its Australian unit (top scale) and the conversion the lessons give (bottom)
+  Q: {
+    vertical: { job: 'Height, altitude, elevation, cloud base', short: 'Vertical', u: 'ft', o: 'm', f: 0.3048, lo: 0, hi: 10000, step: 50, dp: 0, odp: 0, def: 1000, rule: '1,000 ft, a typical circuit height, is about 300 m' },
+    runway: { job: 'Runway length and width (ERSA)', short: 'Runway', u: 'm', o: 'ft', f: 3.28084, lo: 0, hi: 3000, step: 50, dp: 0, odp: 0, def: 1200, rule: '1,000 m is about 3,300 ft, a little over half a nautical mile' },
+    distance: { job: 'Navigation distance, DME, radius limits', short: 'Distance', u: 'NM', o: 'km', f: 1.852, lo: 0, hi: 100, step: 1, dp: 0, odp: 1, def: 18, rule: '1 NM = 1,852 m, one minute of latitude' },
+    visibility: { job: 'Visibility', short: 'Visibility', u: 'km', o: 'NM', f: 0.54, lo: 0, hi: 15, step: 0.5, dp: 1, odp: 1, def: 8, rule: '1 km = 0.54 NM: a little over half the number of kilometres' },
+    speed: { job: 'Airspeed, groundspeed, wind speed', short: 'Speed', u: 'kt', o: 'km/h', f: 1.852, lo: 0, hi: 160, step: 1, dp: 0, odp: 0, def: 110, rule: 'a knot is 1 NM per hour, so kt × 1.852 = km/h' },
+    pressure: { job: 'Pressure: QNH, standard 1013.2', short: 'Pressure', u: 'hPa', o: 'mb', f: 1, lo: 980, hi: 1040, step: 0.1, dp: 1, odp: 1, def: 1013.2, rule: '1 hPa = 1 mb: the same number under an older name' },
+    fuel: { job: 'Fuel and oil, loaded by volume', short: 'Fuel', u: 'L', o: 'kg', f: 0.72, lo: 0, hi: 200, step: 5, dp: 0, odp: 1, def: 120, rule: 'avgas weighs about 0.72 kg a litre (SG; check your flight manual)' },
+  },
+  keys: ['vertical', 'runway', 'distance', 'visibility', 'speed', 'pressure', 'fuel'],
+  get c() { return this.Q[this.q] },
+  get ov() { return this.v * this.c.f },
+  pick(k) { this.q = k; this.v = this.Q[k].def; this.active = null },
+  // ruler: the quantity's range across x 50..590
+  X(val) { return 50 + (val - this.c.lo) / (this.c.hi - this.c.lo) * 540 },
+  XO(o) { return this.X(o / this.c.f) },
+  nice(span) { const r = span / 6, p = Math.pow(10, Math.floor(Math.log10(r))); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => span / s <= 6.5) },
+  get stepT() { return this.nice(this.c.hi - this.c.lo) },
+  get stepB() { return this.nice((this.c.hi - this.c.lo) * this.c.f) },
+  tk(i) { const s = this.stepT, v = Math.ceil(this.c.lo / s - 1e-9) * s + i * s; return { x: this.X(v), s: this.num(v, s % 1 ? 1 : 0), on: v <= this.c.hi + 1e-9 } },
+  bk(i) { const s = this.stepB, lo = this.c.lo * this.c.f, v = Math.ceil(lo / s - 1e-9) * s + i * s; return { x: this.XO(v), s: this.num(v, s % 1 ? 1 : 0), on: v <= this.c.hi * this.c.f + 1e-9 } },
+  minor(step, f, y, dir) { let d = ''; const s = step / 5, lo = this.c.lo * f, hi = this.c.hi * f; for (let v = Math.ceil(lo / s - 1e-9) * s; v <= hi + 1e-9; v += s) { const x = (50 + (v / f - this.c.lo) / (this.c.hi - this.c.lo) * 540).toFixed(1); const major = Math.abs(v / step - Math.round(v / step)) < 1e-6; d += 'M' + x + ' ' + y + ' v' + dir * (major ? 12 : 6) + ' ' } return d },
+  get ticksTop() { return this.minor(this.stepT, 1, 150, -1) },
+  get ticksBot() { return this.minor(this.stepB, this.c.f, 170, 1) },
+  num(val, dp) { const s = this.q === 'pressure' ? val.toFixed(dp) : this.fmt(val, dp); return s.replace(/\.0+$/, '') },
+  show(val, dp, unit) { if (unit === 'km' && this.q === 'visibility' && val < 5) return this.fmt(val * 1000) + ' m'; return this.num(val, dp) + ' ' + unit },
+  get mainText() { return this.show(this.v, this.c.dp, this.c.u) },
+  get otherText() { return (this.c.f === 1 ? '= ' : '≈ ') + this.num(this.ov, this.c.odp) + ' ' + this.c.o },
+  onDrag(p) { const raw = this.c.lo + (p.x - 50) / 540 * (this.c.hi - this.c.lo); this.v = this.clamp(Math.round(raw / this.c.step) * this.c.step, this.c.lo, this.c.hi); this.v = Number(this.v.toFixed(1)); this.active = null },
+  cx(i) { return 8 + i * 90 },
+  presets: {
+    'circuit-1000-ft': { q: 'vertical', v: 1000 },
+    'runway-1200-m': { q: 'runway', v: 1200 },
+    'rottnest-18-nm': { q: 'distance', v: 18 },
+    'visibility-8-km': { q: 'visibility', v: 8 },
+    'visibility-3500-m': { q: 'visibility', v: 3.5 },
+    'cruise-110-kt': { q: 'speed', v: 110 },
+    'qnh-1015': { q: 'pressure', v: 1015 },
+    'fuel-120-litres': { q: 'fuel', v: 120 },
+  },
+})">
+  <svg viewBox="0 0 640 280" role="img" aria-labelledby="aur-title" class="widget-stage">
+    <title id="aur-title">Seven chips for the quantities a pilot meets, each with its Australian unit, and a double ruler for the chosen one: the Australian unit on top, the conversion the lessons give underneath, with a marker you can drag</title>
+    <!-- the jobs and their units: click a chip -->
+    <g>
+      <rect y="10" width="84" height="54" rx="8" stroke-width="1.5" style="cursor: pointer" :x="cx(0)" :fill="q === keys[0] ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="q === keys[0] ? 'var(--color-brand)' : 'var(--color-line)'" @click="pick(keys[0])"/>
+      <rect y="10" width="84" height="54" rx="8" stroke-width="1.5" style="cursor: pointer" :x="cx(1)" :fill="q === keys[1] ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="q === keys[1] ? 'var(--color-brand)' : 'var(--color-line)'" @click="pick(keys[1])"/>
+      <rect y="10" width="84" height="54" rx="8" stroke-width="1.5" style="cursor: pointer" :x="cx(2)" :fill="q === keys[2] ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="q === keys[2] ? 'var(--color-brand)' : 'var(--color-line)'" @click="pick(keys[2])"/>
+      <rect y="10" width="84" height="54" rx="8" stroke-width="1.5" style="cursor: pointer" :x="cx(3)" :fill="q === keys[3] ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="q === keys[3] ? 'var(--color-brand)' : 'var(--color-line)'" @click="pick(keys[3])"/>
+      <rect y="10" width="84" height="54" rx="8" stroke-width="1.5" style="cursor: pointer" :x="cx(4)" :fill="q === keys[4] ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="q === keys[4] ? 'var(--color-brand)' : 'var(--color-line)'" @click="pick(keys[4])"/>
+      <rect y="10" width="84" height="54" rx="8" stroke-width="1.5" style="cursor: pointer" :x="cx(5)" :fill="q === keys[5] ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="q === keys[5] ? 'var(--color-brand)' : 'var(--color-line)'" @click="pick(keys[5])"/>
+      <rect y="10" width="84" height="54" rx="8" stroke-width="1.5" style="cursor: pointer" :x="cx(6)" :fill="q === keys[6] ? 'var(--color-brand-soft)' : 'var(--color-surface-2)'" :stroke="q === keys[6] ? 'var(--color-brand)' : 'var(--color-line)'" @click="pick(keys[6])"/>
+    </g>
+    <g text-anchor="middle" style="pointer-events: none">
+      <g font-size="12" fill="var(--color-fg-muted)">
+        <text y="32" x="50">Vertical</text><text y="32" x="140">Runway</text><text y="32" x="230">Distance</text><text y="32" x="320">Visibility</text>
+        <text y="32" x="410">Speed</text><text y="32" x="500">Pressure</text><text y="32" x="590">Fuel, oil</text>
+      </g>
+      <g font-size="16" font-weight="700" class="num">
+        <text y="54" x="50" :fill="q === 'vertical' ? 'var(--color-brand-fg)' : 'var(--color-fg)'">ft</text>
+        <text y="54" x="140" :fill="q === 'runway' ? 'var(--color-brand-fg)' : 'var(--color-fg)'">m</text>
+        <text y="54" x="230" :fill="q === 'distance' ? 'var(--color-brand-fg)' : 'var(--color-fg)'">NM</text>
+        <text y="54" x="320" :fill="q === 'visibility' ? 'var(--color-brand-fg)' : 'var(--color-fg)'">m, km</text>
+        <text y="54" x="410" :fill="q === 'speed' ? 'var(--color-brand-fg)' : 'var(--color-fg)'">kt</text>
+        <text y="54" x="500" :fill="q === 'pressure' ? 'var(--color-brand-fg)' : 'var(--color-fg)'">hPa</text>
+        <text y="54" x="590" :fill="q === 'fuel' ? 'var(--color-brand-fg)' : 'var(--color-fg)'">L</text>
+      </g>
+    </g>
+    <text x="20" y="92" font-size="14" font-weight="700" fill="var(--color-fg)" x-text="c.job"></text>
+    <!-- the double ruler -->
+    <rect x="50" y="150" width="540" height="20" fill="var(--color-surface-2)"/>
+    <line x1="50" y1="150" x2="590" y2="150" stroke="var(--color-brand)" stroke-width="2"/>
+    <line x1="50" y1="170" x2="590" y2="170" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="1.25" :d="ticksTop"/>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" :d="ticksBot"/>
+    <text x="20" y="146" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand-fg)" x-text="c.u"></text>
+    <text x="20" y="184" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" x-text="c.o"></text>
+    <g font-size="12" text-anchor="middle" class="num" fill="var(--color-brand-fg)">
+      <text y="130" :x="tk(0).x" x-show="tk(0).on" x-text="tk(0).s"></text><text y="130" :x="tk(1).x" x-show="tk(1).on" x-text="tk(1).s"></text>
+      <text y="130" :x="tk(2).x" x-show="tk(2).on" x-text="tk(2).s"></text><text y="130" :x="tk(3).x" x-show="tk(3).on" x-text="tk(3).s"></text>
+      <text y="130" :x="tk(4).x" x-show="tk(4).on" x-text="tk(4).s"></text><text y="130" :x="tk(5).x" x-show="tk(5).on" x-text="tk(5).s"></text>
+      <text y="130" :x="tk(6).x" x-show="tk(6).on" x-text="tk(6).s"></text>
+    </g>
+    <g font-size="12" text-anchor="middle" class="num" fill="var(--color-fg-muted)">
+      <text y="198" :x="bk(0).x" x-show="bk(0).on" x-text="bk(0).s"></text><text y="198" :x="bk(1).x" x-show="bk(1).on" x-text="bk(1).s"></text>
+      <text y="198" :x="bk(2).x" x-show="bk(2).on" x-text="bk(2).s"></text><text y="198" :x="bk(3).x" x-show="bk(3).on" x-text="bk(3).s"></text>
+      <text y="198" :x="bk(4).x" x-show="bk(4).on" x-text="bk(4).s"></text><text y="198" :x="bk(5).x" x-show="bk(5).on" x-text="bk(5).s"></text>
+      <text y="198" :x="bk(6).x" x-show="bk(6).on" x-text="bk(6).s"></text>
+    </g>
+    <!-- the marker: drag it along the ruler -->
+    <line y1="138" y2="182" stroke="var(--color-brand)" stroke-width="3" :x1="X(v)" :x2="X(v)"/>
+    <rect x="40" y="120" width="560" height="84" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: ew-resize" @pointerdown="drag($event, (p) => onDrag(p))"/>
+    <!-- the answer -->
+    <g class="num">
+      <text x="320" y="236" font-size="20" font-weight="700" text-anchor="middle" fill="var(--color-fg)"><tspan fill="var(--color-brand-fg)" x-text="mainText"></tspan><tspan fill="var(--color-fg-muted)" x-text="'  ' + otherText"></tspan></text>
+    </g>
+    <text x="320" y="264" font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" x-text="c.rule"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="aur-v"><span x-text="c.short + ' in ' + c.u + ' (or drag the ruler)'"></span> <output for="aur-v" x-text="mainText"></output></label>
+      <input type="range" id="aur-v" :min="c.lo" :max="c.hi" :step="c.step" x-model.number="v" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout ok"><dt class="widget-label">Australian unit for this job</dt><dd class="widget-value" x-text="c.u === 'km' ? 'metres and kilometres' : c.u"></dd></div>
+    <div class="widget-readout"><dt class="widget-label" x-text="'In ' + c.o"></dt><dd class="widget-value" x-text="otherText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">The conversion</dt><dd class="widget-value" x-text="(c.f === 1 ? '1 ' + c.u + ' = 1 ' + c.o : c.u + ' × ' + c.f + ' = ' + c.o)"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('circuit-1000-ft')" :aria-pressed="active === 'circuit-1000-ft'">Circuit 1,000 ft</button>
+      <button type="button" @click="preset('runway-1200-m')" :aria-pressed="active === 'runway-1200-m'">Runway 1,200 m</button>
+      <button type="button" @click="preset('rottnest-18-nm')" :aria-pressed="active === 'rottnest-18-nm'">18 NM</button>
+      <button type="button" @click="preset('visibility-8-km')" :aria-pressed="active === 'visibility-8-km'">Visibility 8 km</button>
+      <button type="button" @click="preset('visibility-3500-m')" :aria-pressed="active === 'visibility-3500-m'">Visibility 3,500 m</button>
+      <button type="button" @click="preset('cruise-110-kt')" :aria-pressed="active === 'cruise-110-kt'">110 kt</button>
+      <button type="button" @click="preset('qnh-1015')" :aria-pressed="active === 'qnh-1015'">QNH 1015</button>
+      <button type="button" @click="preset('fuel-120-litres')" :aria-pressed="active === 'fuel-120-litres'">120 L avgas</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each job has its own unit: feet for anything vertical, metres for runways, nautical miles and knots for navigation and speed, metres and kilometres for visibility, hectopascals for pressure and litres for fuel (with kilograms for weight and degrees Celsius for temperature). The conversions you need in the air are rough ones: 1,000 ft is about 300 m, a kilometre is a little over half a nautical mile, a hectopascal is a millibar.</p>
+  <details class="widget-try"><summary>Try it: the forecast says visibility 3,500 m. How far is that in nautical miles?</summary><p>3,500 m is 3.5 km, and 3.5 × 0.54 = 1.9 NM. Press Visibility 3,500 m: a town on track will appear less than 2 NM ahead, about a minute at 120 kt.</p></details>
+  <details class="widget-try"><summary>Try it: ERSA lists a runway as 1,200 m. Is that long in feet?</summary><p>Press Runway 1,200 m: about 3,900 ft. Read the length as feet by mistake and you would think the strip was barely a third of its real length.</p></details>
+</div>

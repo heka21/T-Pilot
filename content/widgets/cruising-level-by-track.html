@@ -1,0 +1,141 @@
+<div class="widget" x-data="widget({
+  trk: 95, alt: 7500, drag: false,
+  // RFRC 2.3, PFRA 2.6: above 5,000 ft, magnetic track 000-179 odd thousands + 500, 180-359 even thousands + 500
+  get east() { return this.trk < 180 },
+  get t3() { return String(this.trk).padStart(3, '0') },
+  odd(lv) { return Math.floor(lv / 1000) % 2 === 1 },
+  valid(lv) { return lv > 5000 && this.odd(lv) === this.east },
+  get levels() { return this.east ? '5,500, 7,500, 9,500' : '6,500, 8,500' },
+  get check() {
+    if (this.alt <= 5000) return 'below';   // the table binds only above 5,000 ft
+    if (this.alt % 1000 !== 500) return 'none';
+    return this.odd(this.alt) === this.east ? 'ok' : 'wrong';
+  },
+  get opposite() { return this.alt > 5000 && this.alt % 1000 === 500 ? [this.alt - 1000, this.alt + 1000].filter((a) => a > 5000 && a < 10000).map((a) => this.fmt(a)).join(' and ') : '' },
+  // the rose
+  cx: 168, cy: 152, r: 112,
+  P(rad, deg) { return this.pol(this.cx, this.cy, rad, deg) },
+  get ticks() { let d = ''; for (let a = 0; a < 360; a += 10) { const p = this.P(this.r, a), q = this.P(this.r - (a % 30 ? 6 : 12), a); d += 'M' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' L' + q.x.toFixed(1) + ' ' + q.y.toFixed(1) + ' ' } return d },
+  get tip() { return this.P(this.r - 8, this.trk) },
+  get tail() { return this.P(36, this.trk) },
+  // the ladder: 3,000 ft at y 270 to 10,000 ft at y 46
+  Y(ft) { return 270 - (ft - 3000) * 224 / 7000 },
+  rs(lv) { return this.valid(lv) ? 'var(--color-brand)' : lv < 5000 ? 'var(--color-line-strong)' : 'var(--color-line-strong)' },
+  move(e) {
+    if (!this.drag || !this.$refs.stage.getScreenCTM) return;
+    const svg = this.$refs.stage, pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const a = Math.atan2(p.x - this.cx, this.cy - p.y) * 180 / Math.PI;
+    this.trk = ((Math.round(a) % 360) + 360) % 360;
+    this.active = null;
+  },
+  grab(e) { this.drag = true; if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId); this.move(e) },
+  presets: {
+    'track-095-at-7500': { trk: 95, alt: 7500 },
+    'kalgoorlie-to-jandakot-250': { trk: 250, alt: 8500 },
+    'track-180-is-westbound': { trk: 180, alt: 7500 },
+    'bunbury-175-at-4500': { trk: 175, alt: 4500 },
+  },
+})">
+  <svg x-ref="stage" viewBox="0 0 640 300" role="img" aria-labelledby="clt-title" class="widget-stage"
+    @pointermove="move($event)" @pointerup="drag = false" @pointercancel="drag = false">
+    <title id="clt-title">A compass rose of magnetic track split into the 000 to 179 half and the 180 to 359 half, with the track arrow, beside a ladder of VFR cruising levels from 3,000 to 10,000 ft with the levels for that track highlighted</title>
+    <defs><marker id="clt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface-2)" rx="10"/>
+    <!-- the two halves of the rose -->
+    <g style="cursor: pointer; touch-action: none" @pointerdown.prevent="grab($event)">
+      <path fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5" :fill-opacity="east ? 1 : 0.3"
+        :d="'M' + cx + ' ' + (cy - r) + ' A' + r + ' ' + r + ' 0 0 1 ' + cx + ' ' + (cy + r) + ' Z'"/>
+      <path fill="var(--color-info-soft)" stroke="var(--color-info)" stroke-width="1.5" :fill-opacity="east ? 0.3 : 1"
+        :d="'M' + cx + ' ' + (cy + r) + ' A' + r + ' ' + r + ' 0 0 1 ' + cx + ' ' + (cy - r) + ' Z'"/>
+    </g>
+    <path fill="none" stroke="var(--color-fg-muted)" stroke-width="1" :d="ticks"/>
+    <g font-size="13" text-anchor="middle" fill="var(--color-fg-muted)" class="num">
+      <text :x="cx" :y="cy - r - 8">000</text><text :x="cx + r + 22" :y="cy + 5">090</text>
+      <text :x="cx" :y="cy + r + 20">180</text><text :x="cx - r - 22" :y="cy + 5">270</text>
+    </g>
+    <g font-size="12" text-anchor="middle" font-weight="600">
+      <text :x="cx + 58" :y="cy - 52" fill="var(--color-brand-fg)">000–179</text>
+      <text :x="cx + 58" :y="cy - 37" fill="var(--color-brand-fg)">odd + 500</text>
+      <text :x="cx - 58" :y="cy - 52" fill="var(--color-info-fg)">180–359</text>
+      <text :x="cx - 58" :y="cy - 37" fill="var(--color-info-fg)">even + 500</text>
+    </g>
+    <!-- track arrow and the aeroplane on it -->
+    <line stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#clt-arrow)" :x1="tail.x" :y1="tail.y" :x2="tip.x" :y2="tip.y"/>
+    <g :transform="'translate(' + cx + ' ' + cy + ') rotate(' + (trk - 90) + ')'">
+      <g transform="translate(0 0) rotate(0) scale(0.5)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="16" font-weight="700" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+      :x="cx" :y="cy + 58" x-text="t3 + '°M'"></text>
+
+    <!-- the ladder of levels -->
+    <text x="372" y="20" font-size="13" font-weight="600" fill="var(--color-fg)">Cruising altitude (ft, on QNH)</text>
+    <rect x="420" width="140" fill="var(--color-fg-faint)" fill-opacity="0.12" :y="Y(5000)" :height="Y(3000) - Y(5000)"/>
+    <text x="490" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" :y="Y(4000) + 4">below 5,000 ft: any altitude</text>
+    <line x1="410" x2="570" stroke="var(--color-fg-muted)" stroke-width="1.25" :y1="Y(5000)" :y2="Y(5000)"/>
+    <line x1="410" x2="570" stroke="var(--color-fg-muted)" stroke-width="1.25" :y1="Y(10000)" :y2="Y(10000)"/>
+    <g font-size="12" text-anchor="end" fill="var(--color-fg-faint)" class="num">
+      <text x="404" :y="Y(5000) + 4">5,000</text><text x="404" :y="Y(10000) + 4">10,000</text>
+    </g>
+    <!-- the five levels above 5,000 ft, written out -->
+    <g stroke-linecap="round">
+      <line x1="420" x2="560" :y1="Y(5500)" :y2="Y(5500)" :stroke="rs(5500)" :stroke-width="valid(5500) ? 3 : 1.25" :stroke-dasharray="valid(5500) ? '' : '4 3'"/>
+      <line x1="420" x2="560" :y1="Y(6500)" :y2="Y(6500)" :stroke="rs(6500)" :stroke-width="valid(6500) ? 3 : 1.25" :stroke-dasharray="valid(6500) ? '' : '4 3'"/>
+      <line x1="420" x2="560" :y1="Y(7500)" :y2="Y(7500)" :stroke="rs(7500)" :stroke-width="valid(7500) ? 3 : 1.25" :stroke-dasharray="valid(7500) ? '' : '4 3'"/>
+      <line x1="420" x2="560" :y1="Y(8500)" :y2="Y(8500)" :stroke="rs(8500)" :stroke-width="valid(8500) ? 3 : 1.25" :stroke-dasharray="valid(8500) ? '' : '4 3'"/>
+      <line x1="420" x2="560" :y1="Y(9500)" :y2="Y(9500)" :stroke="rs(9500)" :stroke-width="valid(9500) ? 3 : 1.25" :stroke-dasharray="valid(9500) ? '' : '4 3'"/>
+    </g>
+    <g font-size="13" text-anchor="end" class="num">
+      <text x="414" :y="Y(5500) + 5" :fill="valid(5500) ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" :font-weight="valid(5500) ? 700 : 400">5,500</text>
+      <text x="414" :y="Y(6500) + 5" :fill="valid(6500) ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" :font-weight="valid(6500) ? 700 : 400">6,500</text>
+      <text x="414" :y="Y(7500) + 5" :fill="valid(7500) ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" :font-weight="valid(7500) ? 700 : 400">7,500</text>
+      <text x="414" :y="Y(8500) + 5" :fill="valid(8500) ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" :font-weight="valid(8500) ? 700 : 400">8,500</text>
+      <text x="414" :y="Y(9500) + 5" :fill="valid(9500) ? 'var(--color-brand-fg)' : 'var(--color-fg-faint)'" :font-weight="valid(9500) ? 700 : 400">9,500</text>
+    </g>
+    <g font-size="12" class="num">
+      <text x="566" :y="Y(5500) + 4" :fill="odd(5500) ? 'var(--color-brand-fg)' : 'var(--color-info-fg)'">000–179</text>
+      <text x="566" :y="Y(6500) + 4" :fill="odd(6500) ? 'var(--color-brand-fg)' : 'var(--color-info-fg)'">180–359</text>
+      <text x="566" :y="Y(7500) + 4" :fill="odd(7500) ? 'var(--color-brand-fg)' : 'var(--color-info-fg)'">000–179</text>
+      <text x="566" :y="Y(8500) + 4" :fill="odd(8500) ? 'var(--color-brand-fg)' : 'var(--color-info-fg)'">180–359</text>
+      <text x="566" :y="Y(9500) + 4" :fill="odd(9500) ? 'var(--color-brand-fg)' : 'var(--color-info-fg)'">000–179</text>
+    </g>
+    <!-- you on the ladder -->
+    <g :transform="'translate(490 ' + Y(alt) + ')'">
+      <circle r="8" stroke-width="3" fill="var(--color-surface)"
+        :stroke="check === 'ok' ? 'var(--color-ok)' : check === 'below' ? 'var(--color-fg-muted)' : 'var(--color-bad)'"/>
+    </g>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="clt-trk">Magnetic track <output for="clt-trk" x-text="t3 + '°M'"></output></label>
+      <input type="range" id="clt-trk" min="0" max="359" step="1" x-model.number="trk">
+    </div>
+    <div class="widget-control">
+      <label for="clt-alt">Planned cruising altitude <output for="clt-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="clt-alt" min="3000" max="9500" step="500" x-model.number="alt">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Track half</dt><dd class="widget-value" x-text="east ? '000–179: odd + 500' : '180–359: even + 500'"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">VFR levels above 5,000 ft</dt><dd class="widget-value" x-text="levels"></dd></div>
+    <div class="widget-readout" :class="check === 'ok' ? 'ok' : check === 'below' ? '' : 'bad'">
+      <dt class="widget-label" x-text="fmt(alt) + ' ft on ' + t3 + '°M'"></dt>
+      <dd class="widget-value" x-text="check === 'ok' ? 'Correct VFR level' : check === 'below' ? 'At or below 5,000 ft: the table does not bind; the same pattern is good practice' : check === 'wrong' ? 'Wrong half: opposite traffic' : 'Not a VFR level'"></dd>
+    </div>
+    <div class="widget-readout" x-show="check === 'ok'"><dt class="widget-label">Opposite-direction traffic at</dt><dd class="widget-value" x-text="opposite + ' ft'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('track-095-at-7500')" :aria-pressed="active === 'track-095-at-7500'">095 at 7,500</button>
+      <button type="button" @click="preset('kalgoorlie-to-jandakot-250')" :aria-pressed="active === 'kalgoorlie-to-jandakot-250'">Kalgoorlie–Jandakot 250</button>
+      <button type="button" @click="preset('track-180-is-westbound')" :aria-pressed="active === 'track-180-is-westbound'">Track 180</button>
+      <button type="button" @click="preset('bunbury-175-at-4500')" :aria-pressed="active === 'bunbury-175-at-4500'">175 at 4,500</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The compass splits at 000 and 180: tracks 000 to 179 (the eastern half) take odd thousands plus 500, tracks 180 to 359 even thousands plus 500, so traffic coming the other way is 1,000 ft above or below you. It is the magnetic track that counts, not the heading. Below 5,000 ft any altitude may be flown, subject to minimum heights (RFRC 2.3); PFRA 2.6 adds that using the hemispherical levels from 3,000 ft is good practice in Class G. Confirm the rule in the current AIP.</p>
+  <details class="widget-try"><summary>Try it: you plan 6,500 ft on a track of 095°M. Right or wrong?</summary><p>Set 095 and 6,500: wrong half. 095 is in 000 to 179, so it takes odd thousands plus 500: 5,500, 7,500 or 9,500. At 6,500 you would be at a westbound level, facing traffic head-on.</p></details>
+  <details class="widget-try"><summary>Try it: what level goes with a track of exactly 180°M?</summary><p>Press Track 180: 180 belongs to the 180 to 359 half, so even thousands plus 500: 6,500 or 8,500. 7,500 is wrong by one degree.</p></details>
+</div>

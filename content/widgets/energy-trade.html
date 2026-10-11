@@ -1,0 +1,125 @@
+<div class="widget" x-data="timeline({
+  duration: 8, loop: false,
+  v1: 100, v2: 60,
+  // BAKC 2.5: h = (v1² − v2²) / 2g with 1 kt = 0.514 m/s, g = 9.81 m/s², 1 m = 3.28 ft; drag ignored
+  ftPerKt2: 0.514 * 0.514 / (2 * 9.81) * 3.28,
+  get vEnd() { return Math.min(this.v2, this.v1 - 5) },
+  get dh() { return (this.v1 ** 2 - this.vEnd ** 2) * this.ftPerKt2 },
+  // the clock: level until 0.15, zoom until 0.85, level after; u is progress along the zoom, f (smoothed) the share of height gained
+  get u() { return this.at(0.15, 0.85) },
+  get f() { return this.ease(this.u) },
+  get h() { return this.dh * this.f },
+  get v() { return Math.sqrt(Math.max(0, this.v1 ** 2 - this.h / this.ftPerKt2)) },
+  get ke() { return this.v ** 2 * this.ftPerKt2 },
+  get ke1() { return this.v1 ** 2 * this.ftPerKt2 },
+  get keRatio() { return (this.v / this.v1) ** 2 },
+  r10(x) { return Math.round(x / 10) * 10 },
+  // picture: 0.24 px per ft; starting height at y 240
+  k: 0.24,
+  get px() { return this.t < 0.15 ? this.lerp(60, 130, this.t / 0.15) : this.t <= 0.85 ? 130 + 230 * this.u : this.lerp(360, 410, (this.t - 0.85) / 0.15) },
+  get py() { return 240 - this.h * this.k },
+  get pitch() { if (this.t < 0.15 || this.t > 0.85) return 0; const du = 0.001, f2 = this.ease(Math.min(1, this.u + du)), f1 = this.ease(Math.max(0, this.u - du)); return -Math.atan((f2 - f1) * this.dh * this.k / (230 * (Math.min(1, this.u + du) - Math.max(0, this.u - du)))) * 180 / Math.PI },
+  get trail() { const pts = [[60, 240], [130, 240]]; for (let i = 1; i <= 24; i++) { const u = i / 24; pts.push([130 + 230 * u, 240 - this.dh * this.ease(u) * this.k]) } pts.push([410, 240 - this.dh * this.k]); return this.path(pts) },
+  get totalY() { return 240 - this.ke1 * this.k },
+  steps: [{ at: 0, label: 'Cruise' }, { at: 0.15, label: 'Nose up' }, { at: 0.5, label: 'Zoom' }, { at: 0.85, label: 'Level off' }],
+  get caption() {
+    if (this.t < 0.15) return 'Level at ' + this.v1 + ' kt with the throttle fixed. The speed is stored energy: ' + this.v1 + ' kt is worth about ' + this.fmt(this.r10(this.ke1)) + ' ft of height (v²/2g).';
+    if (this.t < 0.85) return 'Nose up, no extra power: the elevator only moves energy from speed into height. The airspeed falls as the aeroplane climbs, and the total stays the same.';
+    return 'Level again at ' + this.vEnd + ' kt, about ' + this.fmt(this.r10(this.dh)) + ' ft higher. Kinetic energy goes with speed squared, so it is now ' + this.fmt(this.keRatio, 2) + ' of what it was. In real air drag takes a share and you get a little less.';
+  },
+  presets: {
+    'zoom-100-to-60': { v1: 100, v2: 60, t: 0, play: true },
+    'zoom-100-to-60-result': { v1: 100, v2: 60, t: 1 },
+    'zoom-120-to-80': { v1: 120, v2: 80, t: 1 },
+    'zoom-90-to-60': { v1: 90, v2: 60, t: 1 },
+    'glide-110-to-70': { v1: 110, v2: 70, t: 1 },
+    'double-the-speed': { v1: 120, v2: 60, t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="etz-title" class="widget-stage">
+    <title id="etz-title">An aeroplane zooms up from level flight with the throttle fixed, trading airspeed for height; a stacked bar shows kinetic energy shrinking and potential energy growing while the total stays the same</title>
+    <rect x="0" y="0" width="470" height="300" fill="var(--color-sky-soft)"/>
+    <!-- total energy height: where the aeroplane would be if all its speed became height -->
+    <line x1="20" x2="460" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="6 4" :y1="totalY" :y2="totalY"/>
+    <text x="24" font-size="12" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :y="totalY - 6">total energy: height + speed as height (drag ignored)</text>
+    <!-- starting and final heights -->
+    <line x1="20" y1="240" x2="460" y2="240" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="456" y="256" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">starting height</text>
+    <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="2 4" stroke-linecap="round" :d="trail"/>
+    <!-- height gained so far -->
+    <g x-show="h > 15">
+      <line x1="30" x2="30" y1="240" stroke="var(--color-info)" stroke-width="2" :y2="py"/>
+      <line x1="30" stroke="var(--color-info)" stroke-width="1" stroke-dasharray="2 3" :x2="px - 40" :y1="py" :y2="py"/>
+      <text x="38" font-size="13" font-weight="700" fill="var(--color-info-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :y="(240 + py) / 2 + 4" x-text="'+' + fmt(r10(h)) + ' ft'"></text>
+    </g>
+    <!-- speed as stored height: the gap up to the total line -->
+    <line stroke="var(--color-brand)" stroke-width="2" :x1="px" :x2="px" :y1="py - 16" :y2="totalY + 2" x-show="ke * k > 26"/>
+    <text font-size="12" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="px > 300 ? px - 8 : px + 8" :text-anchor="px > 300 ? 'end' : 'start'" :y="(py - 16 + totalY) / 2 + 4" x-show="ke * k > 26" x-text="'speed ≡ ' + fmt(r10(ke)) + ' ft'"></text>
+    <!-- the aeroplane (tools/diagrams/plane.py side view, gear up) -->
+    <g :transform="'translate(' + px + ' ' + py + ') rotate(' + pitch + ') scale(0.5)'"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <text font-size="14" font-weight="700" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :x="px" :y="py + 26" x-text="fmt(v) + ' kt'"></text>
+
+    <!-- energy bar: potential (height gained) below, kinetic (speed) above; same 0.24 px per ft -->
+    <text x="556" y="22" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)">Energy, as height</text>
+    <rect x="496" width="44" fill="var(--color-info)" :y="240 - h * k" :height="Math.max(0, h * k)"/>
+    <rect x="496" width="44" fill="var(--color-brand)" :y="totalY" :height="ke * k"/>
+    <rect x="496" width="44" fill="none" stroke="var(--color-fg)" stroke-width="1.25" :y="totalY" :height="ke1 * k"/>
+    <line x1="488" y1="240" x2="548" y2="240" stroke="var(--color-fg)" stroke-width="1.25"/>
+    <g font-size="12">
+      <text x="548" fill="var(--color-brand-fg)" font-weight="700" :y="totalY + ke * k / 2" x-show="ke * k > 18">speed</text>
+      <text x="548" fill="var(--color-brand-fg)" class="num" :y="totalY + ke * k / 2 + 14" x-show="ke * k > 18" x-text="fmt(r10(ke)) + ' ft'"></text>
+      <text x="548" fill="var(--color-info-fg)" font-weight="700" :y="240 - h * k / 2" x-show="h * k > 30">height</text>
+      <text x="548" fill="var(--color-info-fg)" class="num" :y="240 - h * k / 2 + 14" x-show="h * k > 30" x-text="'+' + fmt(r10(h)) + ' ft'"></text>
+    </g>
+    <text x="518" y="262" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">total</text>
+    <text x="518" y="278" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="fmt(r10(ke1)) + ' ft'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the zoom'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="etz-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress through the zoom">
+    <span class="widget-clock" x-text="fmt(v) + ' kt'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="etz-v1">Starting speed <output for="etz-v1" x-text="v1 + ' kt'"></output></label>
+      <input type="range" id="etz-v1" min="60" max="140" step="5" x-model.number="v1">
+    </div>
+    <div class="widget-control">
+      <label for="etz-v2">Speed at the top <output for="etz-v2" x-text="vEnd + ' kt'"></output></label>
+      <input type="range" id="etz-v2" min="40" max="130" step="5" x-model.number="v2">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Airspeed</dt><dd class="widget-value" x-text="fmt(v) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="h > 15 ? 'ok' : ''"><dt class="widget-label">Height gained</dt><dd class="widget-value" x-text="'+' + fmt(r10(h)) + ' ft'"></dd></div>
+    <div class="widget-readout" :class="keRatio < 0.99 ? 'warn' : ''">
+      <dt class="widget-label">Kinetic energy vs the start</dt>
+      <dd class="widget-value" x-text="'× ' + fmt(keRatio, 2) + ' = (' + fmt(v) + ' ÷ ' + v1 + ')²'"></dd>
+    </div>
+    <div class="widget-readout ok"><dt class="widget-label">Total, as height</dt><dd class="widget-value" x-text="fmt(r10(ke1)) + ' ft, unchanged'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('zoom-100-to-60')" :aria-pressed="active === 'zoom-100-to-60'">100 → 60 kt</button>
+      <button type="button" @click="preset('zoom-120-to-80')" :aria-pressed="active === 'zoom-120-to-80'">120 → 80 kt</button>
+      <button type="button" @click="preset('zoom-90-to-60')" :aria-pressed="active === 'zoom-90-to-60'">90 → 60 kt</button>
+      <button type="button" @click="preset('glide-110-to-70')" :aria-pressed="active === 'glide-110-to-70'">Engine failure, 110 → 70 kt</button>
+      <button type="button" @click="preset('double-the-speed')" :aria-pressed="active === 'double-the-speed'">120 → 60 kt</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> With the throttle fixed the elevator cannot add energy, only move it: the dashed total-energy line never moves, and the zoom swaps the speed share of the bar for the height share. Because kinetic energy goes with speed squared, the top 40 kt of a fast aeroplane hold more height than the bottom 40 kt, and twice the speed is four times the energy. Drag is ignored, as in the lesson's examples, so a real zoom gains a little less.</p>
+  <details class="widget-try"><summary>Try it: the same 40 kt loss from 100 kt and from 120 kt. Which buys more height?</summary><p>Press 100 → 60 kt: about 280 ft. Press 120 → 80 kt: about 350 ft. The energy goes with the square of the speed, so the faster zoom has more to give for the same drop in speed.</p></details>
+  <details class="widget-try"><summary>Try it: how much more kinetic energy is there at 120 kt than at 60 kt?</summary><p>Press 120 → 60 kt and look at the bar: the speed share at the top is a quarter of what it was at the start (× 0.25), because (60 ÷ 120)² = 1/4. Double the speed, four times the energy.</p></details>
+</div>

@@ -1,0 +1,201 @@
+<div class="widget" x-data="widget({
+  // times in minutes since midnight WST: 1857 = 1137, 1530 = 930
+  ll: 1137, inter: true, tempo: false, dep: 930,
+  // the worked plan (POPC 2.5): legs, ground and holding in flight order
+  // 0 leg 1 Jandakot-Cunderdin, 1 ground Cunderdin, 2 leg 2 Cunderdin-Northam, 3 holding Northam (INTER),
+  // 4 ground Northam, 5 leg 3 Northam-Jandakot, 6 holding Jandakot (TEMPO)
+  mins(i) { return [35.2, 30, 19.8, this.inter ? 30 : 0, 40, 31.6, this.tempo ? 60 : 0][i] },
+  kind(i) { return ['leg', 'ground', 'leg', 'hold', 'ground', 'leg', 'hold'][i] },
+  cum(i) { let s = 0; for (let k = 0; k < i; k++) s += this.mins(k); return s },
+  get flight() { return 35.2 + 19.8 + 31.6 },
+  // round up for a deadline: 86.6 counts as 87
+  get flightUp() { return Math.ceil(this.flight - 1e-9) },
+  get hold() { return (this.inter ? 30 : 0) + (this.tempo ? 60 : 0) },
+  get ground() { return 30 + 40 },
+  get total() { return this.flightUp + this.hold + this.ground },
+  get sumText() { return [this.flightUp].concat(this.inter ? [30] : [], this.tempo ? [60] : [], [30, 40]).join(' + ') },
+  get arr() { return this.ll - 10 },
+  get latest() { return this.arr - this.total },
+  get planArr() { return this.dep + this.total },
+  get margin() { return this.arr - this.planArr },
+  get late() { return this.margin < 0 },
+  get dark() { return this.planArr > this.ll },
+  utcText(m) { return this.hhmm(this.utc(m).min) },
+  // picture: 1300 to 1930 WST across x 56..616
+  k: 560 / 390,
+  X(m) { return 56 + (m - 780) * this.k },
+  bx(origin, i) { return this.X(origin + this.cum(i)) },
+  bw(i) { return this.mins(i) * this.k },
+  fill(i) { const t = this.kind(i); return t === 'leg' ? 'var(--color-brand-soft)' : t === 'hold' ? 'var(--color-warn-soft)' : 'var(--color-surface)' },
+  stroke(i) { const t = this.kind(i); return t === 'leg' ? 'var(--color-brand)' : t === 'hold' ? 'var(--color-warn)' : 'var(--color-line-strong)' },
+  ink(i) { const t = this.kind(i); return t === 'leg' ? 'var(--color-brand-fg)' : t === 'hold' ? 'var(--color-warn-fg)' : 'var(--color-fg-muted)' },
+  // a label over a span of blocks, centred
+  mid(origin, a, b) { return (this.bx(origin, a) + this.bx(origin, b) + this.bw(b)) / 2 },
+  get llX() { return this.X(this.ll) },
+  get arrX() { return this.X(this.arr) },
+  get sunArc() { const x = this.llX; return 'M' + (x - 250) + ' 26 Q' + (x - 70) + ' 30 ' + x + ' 120' },
+  dragDep(p) { this.dep = this.clamp(780 + Math.round((p.x - 56) / this.k / 5) * 5, 780, 1080); this.active = null },
+  get caption() {
+    const lead = 'Flight time ' + this.fmt(this.flight, 1) + ' min, rounded up to ' + this.flightUp + ' for a deadline. ';
+    if (this.late && this.dark) return lead + 'Departing ' + this.hhmm(this.dep) + ' you would land at ' + this.hhmm(this.planArr) + ', after last light and ' + (-this.margin) + ' min past the latest arrival: the plan as drawn is dead. Leave out a stop or go another day.';
+    if (this.late) return lead + 'Departing ' + this.hhmm(this.dep) + ' puts the landing at ' + this.hhmm(this.planArr) + ', inside the 10-minute buffer: too late. Leave by ' + this.hhmm(this.latest) + ' WST.';
+    return lead + 'Departing ' + this.hhmm(this.dep) + ' you land at ' + this.hhmm(this.planArr) + ' with ' + this.margin + ' min in hand before the latest arrival. Every minute of holding or ground time comes off the departure time.';
+  },
+  presets: {
+    'cunderdin-northam': { ll: 1137, inter: true, tempo: false, dep: 930 },
+    'jandakot-tempo': { ll: 1137, inter: true, tempo: true, dep: 930 },
+    'briefed-at-1500': { ll: 1137, inter: true, tempo: true, dep: 900 },
+  },
+})">
+  <svg viewBox="0 0 640 296" role="img" aria-labelledby="ldc-title" class="widget-stage">
+    <title id="ldc-title">An afternoon time line in WST and UTC. The sky fades towards last light, the 10 minutes before it are shaded, and the trip is drawn as legs, ground time and holding counted back from the latest arrival to give the latest departure; a second row shows where your planned departure would land</title>
+    <defs>
+      <linearGradient id="ldc-fade" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="var(--color-sky-soft)" stop-opacity="1"/><stop offset="1" stop-color="var(--color-sky-soft)" stop-opacity="0"/></linearGradient>
+      <radialGradient id="ldc-glow" cx="0.5" cy="1" r="0.5"><stop offset="0" stop-color="var(--color-warn-soft)" stop-opacity="0.9"/><stop offset="1" stop-color="var(--color-warn-soft)" stop-opacity="0"/></radialGradient>
+      <clipPath id="ldc-sky"><rect x="0" y="0" width="640" height="120"/></clipPath>
+      <clipPath id="ldc-plot"><rect x="56" y="0" width="560" height="296"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="640" height="296" fill="var(--color-surface-2)" rx="10"/>
+    <!-- sky: full daylight, fading over the last two hours to last light, then night -->
+    <g clip-path="url(#ldc-sky)">
+      <rect x="0" y="0" height="120" fill="var(--color-sky-soft)" :width="Math.max(0, llX - 172)"/>
+      <rect y="0" height="120" width="172" fill="url(#ldc-fade)" :x="llX - 172"/>
+      <rect y="30" height="90" width="200" fill="url(#ldc-glow)" :x="llX - 100"/>
+      <g fill="var(--color-fg-faint)">
+        <circle cx="596" cy="22" r="1.5" x-show="llX < 586"/><circle cx="622" cy="48" r="1.2" x-show="llX < 612"/>
+        <circle cx="560" cy="58" r="1.2" x-show="llX < 550"/><circle cx="530" cy="26" r="1.5" x-show="llX < 520"/>
+        <circle cx="488" cy="70" r="1.2" x-show="llX < 478"/><circle cx="452" cy="34" r="1.5" x-show="llX < 442"/>
+        <path d="M610 76 a10 10 0 1 0 9 16 a8 8 0 1 1 -9 -16 Z" x-show="llX < 590"/>
+      </g>
+      <path fill="none" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3" :d="sunArc"/>
+      <circle cy="120" r="13" fill="var(--color-warn)" :cx="llX"/>
+    </g>
+    <line x1="0" y1="120" x2="640" y2="120" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <!-- legend -->
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <rect x="16" y="10" width="14" height="10" rx="2" fill="var(--color-brand-soft)" stroke="var(--color-brand)"/>
+      <text x="35" y="19">flying</text>
+      <rect x="80" y="10" width="14" height="10" rx="2" fill="var(--color-surface)" stroke="var(--color-line-strong)"/>
+      <text x="99" y="19">on the ground</text>
+      <rect x="200" y="10" width="14" height="10" rx="2" fill="var(--color-warn-soft)" stroke="var(--color-warn)"/>
+      <text x="219" y="19">holding</text>
+    </g>
+    <!-- the 10-minute buffer before last light -->
+    <rect y="30" height="216" fill="var(--color-bad)" fill-opacity="0.16" :x="arrX" :width="llX - arrX"/>
+    <line y1="30" y2="246" stroke="var(--color-fg-muted)" stroke-width="2" :x1="llX" :x2="llX"/>
+    <line y1="44" y2="246" stroke="var(--color-bad)" stroke-width="2" :x1="arrX" :x2="arrX"/>
+    <text y="40" font-size="13" font-weight="600" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" class="num"
+      :x="llX < 500 ? llX + 6 : llX - 6" :text-anchor="llX < 500 ? 'start' : 'end'" x-text="'last light ' + hhmm(ll)"></text>
+    <text y="60" font-size="13" font-weight="600" fill="var(--color-bad-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" class="num"
+      text-anchor="end" :x="arrX - 6" x-text="'land by ' + hhmm(arr) + ' (−10 min)'"></text>
+    <!-- latest departure -->
+    <line y1="132" y2="246" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="4 3" :x1="X(latest)" :x2="X(latest)" x-show="latest >= 780"/>
+    <g clip-path="url(#ldc-plot)">
+      <!-- row 1: counted back from the latest arrival -->
+      <g x-show="mins(0)"><rect y="140" height="32" rx="4" stroke-width="1.25" :x="bx(latest, 0)" :width="bw(0)" :fill="fill(0)" :stroke="stroke(0)"/><text y="161" font-size="12" text-anchor="middle" class="num" :fill="ink(0)" :x="bx(latest, 0) + bw(0) / 2" x-show="bw(0) >= 26" x-text="fmt(mins(0), 1)"></text></g>
+      <g x-show="mins(1)"><rect y="140" height="32" rx="4" stroke-width="1.25" :x="bx(latest, 1)" :width="bw(1)" :fill="fill(1)" :stroke="stroke(1)"/><text y="161" font-size="12" text-anchor="middle" class="num" :fill="ink(1)" :x="bx(latest, 1) + bw(1) / 2" x-show="bw(1) >= 26" x-text="fmt(mins(1))"></text></g>
+      <g x-show="mins(2)"><rect y="140" height="32" rx="4" stroke-width="1.25" :x="bx(latest, 2)" :width="bw(2)" :fill="fill(2)" :stroke="stroke(2)"/><text y="161" font-size="11" text-anchor="middle" class="num" :fill="ink(2)" :x="bx(latest, 2) + bw(2) / 2" x-show="bw(2) >= 26" x-text="fmt(mins(2), 1)"></text></g>
+      <g x-show="mins(3)"><rect y="140" height="32" rx="4" stroke-width="1.25" :x="bx(latest, 3)" :width="bw(3)" :fill="fill(3)" :stroke="stroke(3)"/><text y="161" font-size="12" text-anchor="middle" class="num" :fill="ink(3)" :x="bx(latest, 3) + bw(3) / 2" x-show="bw(3) >= 26" x-text="fmt(mins(3))"></text></g>
+      <g x-show="mins(4)"><rect y="140" height="32" rx="4" stroke-width="1.25" :x="bx(latest, 4)" :width="bw(4)" :fill="fill(4)" :stroke="stroke(4)"/><text y="161" font-size="12" text-anchor="middle" class="num" :fill="ink(4)" :x="bx(latest, 4) + bw(4) / 2" x-show="bw(4) >= 26" x-text="fmt(mins(4))"></text></g>
+      <g x-show="mins(5)"><rect y="140" height="32" rx="4" stroke-width="1.25" :x="bx(latest, 5)" :width="bw(5)" :fill="fill(5)" :stroke="stroke(5)"/><text y="161" font-size="12" text-anchor="middle" class="num" :fill="ink(5)" :x="bx(latest, 5) + bw(5) / 2" x-show="bw(5) >= 26" x-text="fmt(mins(5), 1)"></text></g>
+      <g x-show="mins(6)"><rect y="140" height="32" rx="4" stroke-width="1.25" :x="bx(latest, 6)" :width="bw(6)" :fill="fill(6)" :stroke="stroke(6)"/><text y="161" font-size="12" text-anchor="middle" class="num" :fill="ink(6)" :x="bx(latest, 6) + bw(6) / 2" x-show="bw(6) >= 26" x-text="fmt(mins(6))"></text></g>
+      <!-- where the stops are -->
+      <g font-size="11" text-anchor="middle" fill="var(--color-fg-muted)">
+        <text y="134" :x="mid(latest, 1, 1)">Cunderdin</text>
+        <text y="134" :x="mid(latest, inter ? 3 : 4, 4)">Northam</text>
+        <text y="134" :x="mid(latest, 6, 6)" x-show="tempo">Jandakot hold</text>
+      </g>
+      <text y="188" font-size="12" font-weight="600" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+        :x="Math.max(60, X(latest))" x-text="'latest departure ' + hhmm(latest) + ' WST'"></text>
+      <!-- row 2: your planned departure -->
+      <g x-show="mins(0)"><rect y="208" height="18" rx="3" stroke-width="1" :x="bx(dep, 0)" :width="bw(0)" :fill="fill(0)" :stroke="stroke(0)"/></g>
+      <g x-show="mins(1)"><rect y="208" height="18" rx="3" stroke-width="1" :x="bx(dep, 1)" :width="bw(1)" :fill="fill(1)" :stroke="stroke(1)"/></g>
+      <g x-show="mins(2)"><rect y="208" height="18" rx="3" stroke-width="1" :x="bx(dep, 2)" :width="bw(2)" :fill="fill(2)" :stroke="stroke(2)"/></g>
+      <g x-show="mins(3)"><rect y="208" height="18" rx="3" stroke-width="1" :x="bx(dep, 3)" :width="bw(3)" :fill="fill(3)" :stroke="stroke(3)"/></g>
+      <g x-show="mins(4)"><rect y="208" height="18" rx="3" stroke-width="1" :x="bx(dep, 4)" :width="bw(4)" :fill="fill(4)" :stroke="stroke(4)"/></g>
+      <g x-show="mins(5)"><rect y="208" height="18" rx="3" stroke-width="1" :x="bx(dep, 5)" :width="bw(5)" :fill="fill(5)" :stroke="stroke(5)"/></g>
+      <g x-show="mins(6)"><rect y="208" height="18" rx="3" stroke-width="1" :x="bx(dep, 6)" :width="bw(6)" :fill="fill(6)" :stroke="stroke(6)"/></g>
+      <!-- arrival of your plan -->
+      <circle cy="217" r="5" :cx="X(planArr)" :fill="late ? 'var(--color-bad)' : 'var(--color-ok)'"/>
+      <text y="242" font-size="12" font-weight="600" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round"
+        :x="X(planArr) > 520 ? Math.min(X(planArr), 616) - 8 : X(planArr) + 8" :text-anchor="X(planArr) > 520 ? 'end' : 'start'"
+        :fill="late ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="'lands ' + hhmm(planArr)"></text>
+    </g>
+    <!-- planned departure handle (drag it, or use the slider) -->
+    <rect x="56" y="196" width="560" height="36" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: ew-resize" @pointerdown="drag($event, (p) => dragDep(p))"/>
+    <line y1="200" y2="234" stroke="var(--color-fg)" stroke-width="2" :x1="X(dep)" :x2="X(dep)" style="pointer-events: none"/>
+    <circle cy="217" r="7" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" :cx="X(dep)" style="touch-action: none; cursor: ew-resize" @pointerdown="drag($event, (p) => dragDep(p))"/>
+    <text y="204" font-size="12" fill="var(--color-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" style="pointer-events: none"
+      :x="X(dep) - 10" text-anchor="end" x-show="X(dep) > 150" x-text="'your plan ' + hhmm(dep)"></text>
+    <text y="204" font-size="12" fill="var(--color-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" style="pointer-events: none"
+      :x="X(dep) + 10" x-show="X(dep) <= 150" x-text="'your plan ' + hhmm(dep)"></text>
+    <!-- time axis: WST with UTC under it -->
+    <line x1="56" y1="252" x2="616" y2="252" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line-strong)" stroke-width="1">
+      <line x1="56" y1="252" x2="56" y2="258"/><line x1="99.1" y1="252" x2="99.1" y2="256"/><line x1="142.2" y1="252" x2="142.2" y2="258"/>
+      <line x1="185.2" y1="252" x2="185.2" y2="256"/><line x1="228.3" y1="252" x2="228.3" y2="258"/><line x1="271.4" y1="252" x2="271.4" y2="256"/>
+      <line x1="314.5" y1="252" x2="314.5" y2="258"/><line x1="357.5" y1="252" x2="357.5" y2="256"/><line x1="400.6" y1="252" x2="400.6" y2="258"/>
+      <line x1="443.7" y1="252" x2="443.7" y2="256"/><line x1="486.8" y1="252" x2="486.8" y2="258"/><line x1="529.8" y1="252" x2="529.8" y2="256"/>
+      <line x1="572.9" y1="252" x2="572.9" y2="258"/><line x1="616" y1="252" x2="616" y2="256"/>
+    </g>
+    <g font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">
+      <text x="56" y="271">1300</text><text x="142.2" y="271">1400</text><text x="228.3" y="271">1500</text><text x="314.5" y="271">1600</text>
+      <text x="400.6" y="271">1700</text><text x="486.8" y="271">1800</text><text x="572.9" y="271">1900</text>
+    </g>
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="56" y="287">0500</text><text x="142.2" y="287">0600</text><text x="228.3" y="287">0700</text><text x="314.5" y="287">0800</text>
+      <text x="400.6" y="287">0900</text><text x="486.8" y="287">1000</text><text x="572.9" y="287">1100</text>
+    </g>
+    <text x="8" y="271" font-size="12" fill="var(--color-fg-muted)">WST</text>
+    <text x="8" y="287" font-size="11" fill="var(--color-fg-faint)">UTC</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ldc-ll">Last light at the final landing point <output for="ldc-ll" class="num" x-text="hhmm(ll) + ' WST'"></output></label>
+      <input type="range" id="ldc-ll" min="1020" max="1170" step="1" x-model.number="ll" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ldc-dep">Your planned departure <output for="ldc-dep" class="num" x-text="hhmm(dep) + ' WST'"></output></label>
+      <input type="range" id="ldc-dep" min="780" max="1080" step="5" x-model.number="dep" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="ldc-inter" class="cursor-pointer"><span>Northam INTER: 30 min holding</span>
+        <input type="checkbox" id="ldc-inter" x-model="inter" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="ldc-tempo" class="cursor-pointer"><span>Jandakot TEMPO: 60 min holding</span>
+        <input type="checkbox" id="ldc-tempo" x-model="tempo" @change="active = null" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout">
+      <dt class="widget-label">Latest arrival</dt>
+      <dd class="widget-value num" x-text="hhmm(arr) + ' WST'"></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Time to take off the clock</dt>
+      <dd class="widget-value num" x-text="sumText + ' = ' + total + ' min = ' + hmm(total)"></dd>
+    </div>
+    <div class="widget-readout ok">
+      <dt class="widget-label">Latest departure</dt>
+      <dd class="widget-value num" x-text="hhmm(latest) + ' WST = ' + utcText(latest) + ' UTC'"></dd>
+    </div>
+    <div class="widget-readout" :class="late ? 'bad' : 'ok'">
+      <dt class="widget-label">Your plan</dt>
+      <dd class="widget-value"><span class="num" x-text="'lands ' + hhmm(planArr) + ', ' + (late ? (-margin) + ' min late' : margin + ' min to spare')"></span><span class="widget-flag bad" x-show="late" x-text="dark ? 'after last light' : 'too late'"></span></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cunderdin-northam')" :aria-pressed="active === 'cunderdin-northam'">Worked plan</button>
+      <button type="button" @click="preset('jandakot-tempo')" :aria-pressed="active === 'jandakot-tempo'">Jandakot TEMPO</button>
+      <button type="button" @click="preset('briefed-at-1500')" :aria-pressed="active === 'briefed-at-1500'">Briefed at 1500</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Count backwards from last light at the final landing point: minus 10 minutes, minus the flight time (rounded up, because for a deadline part of a minute counts as a whole one), minus every holding the TAFs make you carry fuel for, minus the ground time at each stop; then subtract 8 hours for the UTC on the form. Holding costs daylight as well as fuel. The aeroplane, legs and times are the lesson's fictional worked plan.</p>
+  <details class="widget-try"><summary>Try it: in the worked plan, why did the INTER at Northam move the latest departure 30 minutes earlier?</summary><p>Untick the INTER: the clock drops to 157 min and the latest departure moves to 1610 WST. Tick it again and it is back to 1540. The holding fuel is there so that you can actually hold for up to 30 minutes, and if you do, you reach Jandakot 30 minutes later, so the backwards count has to include it.</p></details>
+  <details class="widget-try"><summary>Try it: a Jandakot TEMPO appears and you have finished briefing at 1500. Can you still go?</summary><p>Press Briefed at 1500: the latest departure is now 1440 WST (0640 UTC), so leaving at 1500 lands you at 1907, 20 minutes past the latest arrival and after last light. The plan as drawn is dead. Leaving out Northam recovers about 70 minutes (40 on the ground and 30 of holding), but the legs change too, so redo the flight times and the count before you decide; or go another day.</p></details>
+</div>

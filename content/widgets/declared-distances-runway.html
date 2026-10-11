@@ -1,0 +1,198 @@
+<div class="widget" x-data="widget({
+  dirS: 'S', len: 700, dN: 0, dS: 0, cwS: 0, swS: 0, cwN: 0, swN: 0, tod: 640, ldr: 520,
+  get south() { return this.dirS === 'S' },
+  // for the direction in use: displacement at the approach (start) end, clearway and stopway beyond the far end
+  get disp() { return this.south ? this.dN : this.dS },
+  get cw() { return this.south ? this.cwS : this.cwN },
+  get sw() { return this.south ? this.swS : this.swN },
+  get tora() { return this.len },
+  get toda() { return this.len + this.cw },
+  get asda() { return this.len + this.sw },
+  get lda() { return this.len - this.disp },
+  get toSpare() { return this.toda - this.tod },
+  get ldgSpare() { return this.lda - this.ldr },
+  // drawing: the north end on the left, both ends' extensions on show; k px per metre
+  get eL() { return Math.max(this.cwN, this.swN) },
+  get eR() { return Math.max(this.cwS, this.swS) },
+  get k() { return 540 / (this.eL + this.len + this.eR) },
+  get xA() { return 50 + this.eL * this.k },
+  get xB() { return this.xA + this.len * this.k },
+  // metres from the start of the roll, along the direction in use, to x
+  pos(m) { return this.south ? this.xA + m * this.k : this.xB - m * this.k },
+  mid(a, b) { return (this.pos(a) + this.pos(b)) / 2 },
+  get thrN() { return this.xA + this.dN * this.k },
+  get thrS() { return this.xB - this.dS * this.k },
+  chev(x, toRight) { const d = toRight ? 7 : -7; return 'M' + (x - d) + ' 78 L' + x + ' 85 L' + (x - d) + ' 92' },
+  stopChev(x0, w, right) { if (w < 16) return ''; const d = right ? 6 : -6; let s = ''; for (let i = 1; i <= Math.min(4, Math.floor(w / 14)); i++) { const x = right ? x0 + i * w / (Math.min(4, Math.floor(w / 14)) + 1) : x0 - i * w / (Math.min(4, Math.floor(w / 14)) + 1); s += 'M' + (x - d) + ' 75 L' + x + ' 85 L' + (x - d) + ' 95 ' } return s },
+  spare(n) { return n >= 0 ? this.fmt(n) + ' m spare' : this.fmt(-n) + ' m short' },
+  presets: {
+    'farm-strip-700': { dirS: 'S', len: 700, dN: 0, dS: 0, cwS: 0, swS: 0, cwN: 0, swN: 0, tod: 640, ldr: 520 },
+    'displaced-lda-500': { dirS: 'S', len: 700, dN: 200, dS: 0, cwS: 0, swS: 0, cwN: 0, swN: 0, tod: 640, ldr: 520 },
+    'wongan-hills-strip': { dirS: 'S', len: 650, dN: 0, dS: 0, cwS: 0, swS: 0, cwN: 0, swN: 0, tod: 580, ldr: 520 },
+    'hypothetical-declared': { dirS: 'S', len: 1100, dN: 150, dS: 0, cwS: 150, swS: 0, cwN: 0, swN: 0, tod: 1020, ldr: 980 },
+    'power-poles-north': { dirS: 'S', len: 1250, dN: 220, dS: 0, cwS: 0, swS: 0, cwN: 0, swN: 0, tod: 610, ldr: 540 },
+    'land-north-full-length': { dirS: 'N', len: 1250, dN: 220, dS: 0, cwS: 0, swS: 0, cwN: 0, swN: 0, tod: 610, ldr: 540 },
+    'pavement-works-south': { dirS: 'N', len: 1250, dN: 0, dS: 400, cwS: 0, swS: 0, cwN: 0, swN: 0, tod: 610, ldr: 880 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ddr-title" class="widget-stage">
+    <title id="ddr-title">Plan view of a runway with its clearway, stopway and any displaced threshold, and below it the four declared distances for the direction in use (TORA, TODA, ASDA and LDA) with the chart take-off and landing distances laid against TODA and LDA</title>
+    <defs><marker id="ddr-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+    <rect x="0" y="0" width="640" height="300" fill="var(--color-surface)"/>
+    <!-- ground around the runway -->
+    <rect x="10" y="50" width="620" height="70" rx="6" fill="var(--color-surface-2)"/>
+    <!-- clearways: obstacle-free ground you may climb over, not pavement -->
+    <g x-show="cwN > 0">
+      <rect y="56" height="58" fill="var(--color-ok)" fill-opacity="0.12" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" :x="xA - cwN * k" :width="cwN * k"/>
+    </g>
+    <g x-show="cwS > 0">
+      <rect y="56" height="58" fill="var(--color-ok)" fill-opacity="0.12" stroke="var(--color-ok)" stroke-width="1.25" stroke-dasharray="4 3" :x="xB" :width="cwS * k"/>
+    </g>
+    <!-- stopways: pavement for stopping only, with chevrons -->
+    <g x-show="swN > 0">
+      <rect y="70" height="30" fill="var(--color-tarmac)" fill-opacity="0.6" :x="xA - swN * k" :width="swN * k"/>
+      <path fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-linejoin="round" :d="stopChev(xA, swN * k, false)"/>
+    </g>
+    <g x-show="swS > 0">
+      <rect y="70" height="30" fill="var(--color-tarmac)" fill-opacity="0.6" :x="xB" :width="swS * k"/>
+      <path fill="none" stroke="var(--color-warn)" stroke-width="2" stroke-linejoin="round" :d="stopChev(xB, swS * k, true)"/>
+    </g>
+    <!-- the runway -->
+    <rect y="70" height="30" fill="var(--color-tarmac)" :x="xA" :width="len * k"/>
+    <line y1="85" y2="85" stroke="var(--color-paint)" stroke-width="2" stroke-dasharray="10 8" :x1="thrN + 34" :x2="thrS - 34"/>
+    <!-- north threshold: piano keys, and if displaced a bar with arrows leading to it -->
+    <g stroke="var(--color-paint)" stroke-width="2">
+      <line y1="73" y2="80" :x1="thrN + 4" :x2="thrN + 4"/><line y1="90" y2="97" :x1="thrN + 4" :x2="thrN + 4"/>
+      <line y1="73" y2="80" :x1="thrN + 9" :x2="thrN + 9"/><line y1="90" y2="97" :x1="thrN + 9" :x2="thrN + 9"/>
+    </g>
+    <g x-show="dN > 0">
+      <line y1="71" y2="99" stroke="var(--color-paint)" stroke-width="3" :x1="thrN" :x2="thrN"/>
+      <path fill="none" stroke="var(--color-paint)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" x-show="dN * k > 26" :d="chev(xA + dN * k * 0.35, true) + ' ' + chev(xA + dN * k * 0.75, true)"/>
+    </g>
+    <text font-size="12" font-weight="600" class="num" fill="var(--color-paint)" text-anchor="middle" :transform="'translate(' + (thrN + 22) + ' 85) rotate(90)'" dy="4">18</text>
+    <!-- south threshold -->
+    <g stroke="var(--color-paint)" stroke-width="2">
+      <line y1="73" y2="80" :x1="thrS - 4" :x2="thrS - 4"/><line y1="90" y2="97" :x1="thrS - 4" :x2="thrS - 4"/>
+      <line y1="73" y2="80" :x1="thrS - 9" :x2="thrS - 9"/><line y1="90" y2="97" :x1="thrS - 9" :x2="thrS - 9"/>
+    </g>
+    <g x-show="dS > 0">
+      <line y1="71" y2="99" stroke="var(--color-paint)" stroke-width="3" :x1="thrS" :x2="thrS"/>
+      <path fill="none" stroke="var(--color-paint)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" x-show="dS * k > 26" :d="chev(xB - dS * k * 0.35, false) + ' ' + chev(xB - dS * k * 0.75, false)"/>
+    </g>
+    <text font-size="12" font-weight="600" class="num" fill="var(--color-paint)" text-anchor="middle" :transform="'translate(' + (thrS - 22) + ' 85) rotate(-90)'" dy="4">36</text>
+    <!-- drag the threshold at the approach end -->
+    <rect y="66" height="38" width="26" fill="var(--color-surface)" fill-opacity="0" style="touch-action: none; cursor: ew-resize" :x="(south ? thrN : thrS) - 13"
+      @pointerdown="drag($event, (p) => { const d = Math.round(clamp(south ? (p.x - xA) / k : (xB - p.x) / k, 0, Math.min(500, len - 100)) / 10) * 10; if (south) dN = d; else dS = d; active = null })"/>
+    <!-- ends and direction -->
+    <text x="14" y="40" font-size="12" fill="var(--color-fg-muted)">← north</text>
+    <text x="626" y="40" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">south →</text>
+    <text x="320" y="24" font-size="14" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)" x-text="south ? 'Runway 18: take-off and landing towards the south →' : '← Runway 36: take-off and landing towards the north'"></text>
+    <text font-size="11" text-anchor="middle" fill="var(--color-ok-fg)" y="64" x-show="cw > 0" :x="pos(len + cw / 2)">clearway</text>
+    <text font-size="11" text-anchor="middle" fill="var(--color-warn-fg)" y="112" x-show="sw > 0" :x="pos(len + sw / 2)">stopway</text>
+    <text font-size="11" text-anchor="middle" fill="var(--color-fg-muted)" y="64" x-show="disp * k > 60" :x="pos(disp / 2)">displaced</text>
+    <!-- declared distances, measured from the start of the roll in the direction in use -->
+    <g stroke-width="1.5" stroke="var(--color-fg-muted)">
+      <line y1="138" y2="138" :x1="pos(0)" :x2="pos(tora)"/>
+      <line y1="132" y2="144" :x1="pos(0)" :x2="pos(0)"/><line y1="132" y2="144" :x1="pos(tora)" :x2="pos(tora)"/>
+    </g>
+    <text y="132" font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="clamp(mid(0, tora), 190, 450)"><tspan font-weight="700">TORA</tspan> <tspan x-text="fmt(tora) + ' m: the pavement you roll on'"></tspan></text>
+    <g stroke-width="1.5" stroke="var(--color-ok)">
+      <line y1="166" y2="166" :x1="pos(0)" :x2="pos(toda)"/>
+      <line y1="160" y2="172" :x1="pos(0)" :x2="pos(0)"/><line y1="160" y2="172" :x1="pos(toda)" :x2="pos(toda)"/>
+    </g>
+    <text y="160" font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="clamp(mid(0, toda), 190, 450)"><tspan font-weight="700">TODA</tspan> <tspan x-text="fmt(toda) + ' m' + (cw > 0 ? ' = TORA + clearway' : ' = TORA, no clearway')"></tspan></text>
+    <rect y="174" height="10" rx="3" fill-opacity="0.35" stroke-width="1.5" :x="Math.min(pos(0), pos(tod))" :width="tod * k"
+      :fill="toSpare >= 0 ? 'var(--color-ok)' : 'var(--color-bad)'" :stroke="toSpare >= 0 ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+    <text y="199" font-size="12" text-anchor="middle" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="clamp(mid(0, tod), 190, 450)"
+      :fill="toSpare >= 0 ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="'chart take-off distance ' + fmt(tod) + ' m: ' + spare(toSpare)"></text>
+    <g stroke-width="1.5" stroke="var(--color-warn)">
+      <line y1="228" y2="228" :x1="pos(0)" :x2="pos(asda)"/>
+      <line y1="222" y2="234" :x1="pos(0)" :x2="pos(0)"/><line y1="222" y2="234" :x1="pos(asda)" :x2="pos(asda)"/>
+    </g>
+    <text y="222" font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="clamp(mid(0, asda), 190, 450)"><tspan font-weight="700">ASDA</tspan> <tspan x-text="fmt(asda) + ' m' + (sw > 0 ? ' = TORA + stopway' : ' = TORA, no stopway')"></tspan></text>
+    <g stroke-width="1.5" stroke="var(--color-info)">
+      <line y1="258" y2="258" :x1="pos(disp)" :x2="pos(len)"/>
+      <line y1="252" y2="264" :x1="pos(disp)" :x2="pos(disp)"/><line y1="252" y2="264" :x1="pos(len)" :x2="pos(len)"/>
+    </g>
+    <text y="252" font-size="12" text-anchor="middle" class="num" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="clamp(mid(disp, len), 190, 450)"><tspan font-weight="700">LDA</tspan> <tspan x-text="fmt(lda) + ' m' + (disp > 0 ? ' from the displaced threshold' : ' from the threshold')"></tspan></text>
+    <rect y="266" height="10" rx="3" fill-opacity="0.35" stroke-width="1.5" :x="Math.min(pos(disp), pos(disp + ldr))" :width="ldr * k"
+      :fill="ldgSpare >= 0 ? 'var(--color-ok)' : 'var(--color-bad)'" :stroke="ldgSpare >= 0 ? 'var(--color-ok)' : 'var(--color-bad)'"/>
+    <text y="291" font-size="12" text-anchor="middle" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="5" stroke-linejoin="round" :x="clamp(mid(disp, disp + ldr), 190, 450)"
+      :fill="ldgSpare >= 0 ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="'chart landing distance ' + fmt(ldr) + ' m: ' + spare(ldgSpare)"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ddr-dir">Direction</label>
+      <select id="ddr-dir" class="input" x-model="dirS">
+        <option value="S">Runway 18: take-off and landing towards the south</option>
+        <option value="N">Runway 36: take-off and landing towards the north</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="ddr-len">Runway length <output for="ddr-len" x-text="fmt(len) + ' m'"></output></label>
+      <input type="range" id="ddr-len" min="400" max="2000" step="10" x-model.number="len">
+    </div>
+    <div class="widget-control" x-show="south">
+      <label for="ddr-dn">Displaced threshold at the north end (landing towards the south) <output for="ddr-dn" x-text="fmt(dN) + ' m'"></output></label>
+      <input type="range" id="ddr-dn" min="0" max="500" step="10" x-model.number="dN">
+    </div>
+    <div class="widget-control" x-show="!south">
+      <label for="ddr-ds">Displaced threshold at the south end (landing towards the north) <output for="ddr-ds" x-text="fmt(dS) + ' m'"></output></label>
+      <input type="range" id="ddr-ds" min="0" max="500" step="10" x-model.number="dS">
+    </div>
+    <div class="widget-control" x-show="south">
+      <label for="ddr-cws">Clearway beyond the south end <output for="ddr-cws" x-text="fmt(cwS) + ' m'"></output></label>
+      <input type="range" id="ddr-cws" min="0" max="300" step="10" x-model.number="cwS">
+    </div>
+    <div class="widget-control" x-show="!south">
+      <label for="ddr-cwn">Clearway beyond the north end <output for="ddr-cwn" x-text="fmt(cwN) + ' m'"></output></label>
+      <input type="range" id="ddr-cwn" min="0" max="300" step="10" x-model.number="cwN">
+    </div>
+    <div class="widget-control" x-show="south">
+      <label for="ddr-sws">Stopway beyond the south end <output for="ddr-sws" x-text="fmt(swS) + ' m'"></output></label>
+      <input type="range" id="ddr-sws" min="0" max="300" step="10" x-model.number="swS">
+    </div>
+    <div class="widget-control" x-show="!south">
+      <label for="ddr-swn">Stopway beyond the north end <output for="ddr-swn" x-text="fmt(swN) + ' m'"></output></label>
+      <input type="range" id="ddr-swn" min="0" max="300" step="10" x-model.number="swN">
+    </div>
+    <div class="widget-control">
+      <label for="ddr-tod">Chart take-off distance, to 50 ft (TODR) <output for="ddr-tod" x-text="fmt(tod) + ' m'"></output></label>
+      <input type="range" id="ddr-tod" min="300" max="1500" step="10" x-model.number="tod">
+    </div>
+    <div class="widget-control">
+      <label for="ddr-ldr">Chart landing distance, from 50 ft (LDR) <output for="ddr-ldr" x-text="fmt(ldr) + ' m'"></output></label>
+      <input type="range" id="ddr-ldr" min="300" max="1500" step="10" x-model.number="ldr">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="toSpare >= 0 ? 'ok' : 'bad'">
+      <dt class="widget-label">Take-off: TODR against TODA</dt>
+      <dd class="widget-value"><span x-text="fmt(tod) + ' m against ' + fmt(toda) + ' m: ' + spare(toSpare)"></span><span class="widget-flag bad" x-show="toSpare < 0">no go</span></dd>
+    </div>
+    <div class="widget-readout" :class="ldgSpare >= 0 ? 'ok' : 'bad'">
+      <dt class="widget-label">Landing: LDR against LDA</dt>
+      <dd class="widget-value"><span x-text="fmt(ldr) + ' m against ' + fmt(lda) + ' m: ' + spare(ldgSpare)"></span><span class="widget-flag bad" x-show="ldgSpare < 0">no go</span></dd>
+    </div>
+    <div class="widget-readout">
+      <dt class="widget-label">Declared distances, this direction</dt>
+      <dd class="widget-value num" x-text="'TORA ' + fmt(tora) + ' · TODA ' + fmt(toda) + ' · ASDA ' + fmt(asda) + ' · LDA ' + fmt(lda) + ' m'"></dd>
+    </div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('farm-strip-700')" :aria-pressed="active === 'farm-strip-700'">700 m strip</button>
+      <button type="button" @click="preset('displaced-lda-500')" :aria-pressed="active === 'displaced-lda-500'">Displaced: LDA 500 m</button>
+      <button type="button" @click="preset('wongan-hills-strip')" :aria-pressed="active === 'wongan-hills-strip'">Wongan Hills farm</button>
+      <button type="button" @click="preset('hypothetical-declared')" :aria-pressed="active === 'hypothetical-declared'">Clearway and displaced threshold</button>
+      <button type="button" @click="preset('power-poles-north')" :aria-pressed="active === 'power-poles-north'">Power poles, landing south</button>
+      <button type="button" @click="preset('land-north-full-length')" :aria-pressed="active === 'land-north-full-length'">Landing north</button>
+      <button type="button" @click="preset('pavement-works-south')" :aria-pressed="active === 'pavement-works-south'">Pavement works</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each chart figure has its own declared distance: the take-off distance to 50 ft goes against the TODA, which a clearway lengthens because you may climb over it; the landing distance from 50 ft goes against the LDA, which starts at the threshold. A displaced threshold shortens only the LDA, and only for landings over it: the arrowed pavement still counts for the take-off run and for the roll-out the other way. A stopway lengthens only the ASDA, the room to stop after an abandoned take-off.</p>
+  <details class="widget-try"><summary>Try it: a 700 m strip, chart landing distance 520 m. A displaced threshold leaves an LDA of 500 m. Can you land?</summary><p>Press 700 m strip: 180 m spare. Now Displaced: LDA 500 m: 520 m is 20 m more than the LDA, so no, even though the pavement is still 700 m long. The take-off is unchanged: TODR 640 m against TODA 700 m, 60 m spare (POPA 2.1).</p></details>
+  <details class="widget-try"><summary>Try it: the northern threshold is displaced 220 m for power poles. Which landings does it cost you?</summary><p>Press Power poles, landing south: landing over the poles you touch down past the bar, LDA 1,250 − 220 = 1,030 m, still enough for 540 m; the take-off run keeps the full 1,250 m. Press Landing north: you touch down at the southern threshold and may roll out onto the arrowed section, so the LDA is the full 1,250 m (PFRA 2.5).</p></details>
+</div>

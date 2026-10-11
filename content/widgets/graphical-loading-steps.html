@@ -1,0 +1,285 @@
+<div class="widget" x-data="timeline({
+  duration: 12,
+  loop: false,
+  t: 1,
+  // inputs: the user sets every weight, so no figure pretends to be the workbook's
+  we: 1050,     // basic empty weight, kg
+  ei: 5,        // basic empty index, in divisions of the (illustrative) top scale
+  r1: 154,      // row 1 occupants, kg (77 kg per division, arrow forward = left)
+  r2: 75,       // row 2 occupants, kg (50 kg per division, arrow aft = right)
+  bag: 20,      // rear baggage, kg (10 kg per division, arrow aft = right)
+  fuelL: 200,   // fuel, litres (x 0.72 kg/L); the fuel scale makes no index change on this chart
+  errDir: false,   // common error: move against the arrow on row 2
+  errCount: false, // common error: count row 1 at 50 kg per division
+  steps: [
+    { at: 0, label: '1 Empty index' },
+    { at: 0.14, label: '2 Weight lines' },
+    { at: 0.32, label: '3 Row 1' },
+    { at: 0.5, label: '4 Row 2' },
+    { at: 0.68, label: '5 Rear baggage' },
+    { at: 0.86, label: '6 Drop through' },
+  ],
+  // picture: index division d at x = 116 + 30 d (0..16); weight w at y = 415 - (w - 900) x 190 / 900 (900..1,800 kg)
+  X(d) { return 116 + 30 * this.clamp(d, -0.5, 16.5) },
+  Y(w) { return 415 - (this.clamp(w, 900, 1800) - 900) * 190 / 900 },
+  yS: [50, 90, 125, 160, 195],
+  // the illustrative envelope, in (division, kg): forward limit 3 at 950 kg, 4 at 1,300 kg, 6 at MTOW; aft limit 10 at 950 kg, 12 at MTOW
+  mtow: 1633,
+  env: [[3, 950], [4, 1300], [6, 1633], [12, 1633], [10, 950]],
+  get envPath() { return this.path(this.env.map((p) => [this.X(p[0]), this.Y(p[1])])) + ' Z' },
+  fwdLim(w) { return w <= 1300 ? 3 + (w - 950) / 350 : 4 + 2 * (w - 1300) / 333 },
+  aftLim(w) { return 10 + 2 * (w - 950) / 683 },
+  inside(d, w) { return w >= 950 && w <= this.mtow && d >= this.fwdLim(w) && d <= this.aftLim(w) },
+  // weights
+  get fuelKg() { return this.fuelL * 0.72 },
+  get zfw() { return this.we + this.r1 + this.r2 + this.bag },
+  get tow() { return this.zfw + this.fuelKg },
+  kg(w) { return this.fmt(w, Math.abs(w - Math.round(w)) > 0.04 ? 1 : 0) },
+  // divisions moved at each station: weight / kg per division
+  get d1() { return this.r1 / 77 },
+  get d2() { return this.r2 / 50 },
+  get d3() { return this.bag / 10 },
+  // index after each station (row 1 moves left, row 2 and baggage right)
+  get seq() { const a = this.ei - this.d1, b = a + this.d2; return [this.ei, a, b, b + this.d3] },
+  get wrong() { return this.errDir || this.errCount },
+  get wd1() { return this.r1 / (this.errCount ? 50 : 77) },
+  get wseq() { const a = this.ei - this.wd1, b = a + (this.errDir ? -1 : 1) * this.d2; return [this.ei, a, b, b + this.d3] },
+  get fin() { return this.seq[3] },
+  get zfwIn() { return this.inside(this.fin, this.zfw) },
+  get towIn() { return this.inside(this.fin, this.tow) },
+  get wzfwIn() { return this.inside(this.wseq[3], this.zfw) },
+  get wtowIn() { return this.inside(this.wseq[3], this.tow) },
+  get overMtow() { return this.tow > this.mtow },
+  // the pencil line, drawn phase by phase as the clock runs: each phase is drop, then move along the scale
+  get fr() { return [this.at(0.18, 0.32), this.at(0.36, 0.5), this.at(0.54, 0.68), this.at(0.72, 0.86)] },
+  phases(s) {
+    const y = this.yS, P = (d, yy) => [this.X(d), yy];
+    return [
+      [P(s[0], y[0]), P(s[0], y[1]), P(s[1], y[1])],
+      [P(s[1], y[1]), P(s[1], y[2]), P(s[2], y[2])],
+      [P(s[2], y[2]), P(s[2], y[3]), P(s[3], y[3])],
+      [P(s[3], y[3]), P(s[3], 415)],
+    ];
+  },
+  partial(pts, f) {
+    const L = []; let tot = 0;
+    for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); L.push(l); tot += l; }
+    if (f >= 1 || tot === 0) return pts;
+    let left = f * tot; const out = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+      if (left >= L[i - 1]) { out.push(pts[i]); left -= L[i - 1]; continue; }
+      const k = L[i - 1] ? left / L[i - 1] : 0;
+      out.push([pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * k, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * k]);
+      break;
+    }
+    return out;
+  },
+  trace(s) {
+    const ph = this.phases(s), fr = this.fr; let out = [ph[0][0]];
+    for (let i = 0; i < 4; i++) {
+      if (fr[i] <= 0) break;
+      out = out.concat(this.partial(ph[i], fr[i]).slice(1));
+      if (fr[i] < 1) break;
+    }
+    return out.length > 1 ? this.path(out) : 'M0 0';
+  },
+  get pencil() { return this.trace(this.seq) },
+  get wpencil() { return this.trace(this.wseq) },
+  get drawn() { return this.t >= 0.86 },
+  divText(n) { return this.fmt(n, 1) },
+  get off() { return this.seq.some((d) => d < 0 || d > 16) },
+  get caption() {
+    const s = this.step, w = this.wrong;
+    if (s <= 0) return 'Step 1: mark the basic empty index, ' + this.divText(this.ei) + ' divisions, on the top scale, and write the basic empty weight (' + this.fmt(this.we) + ' kg) at the top of the weight column.';
+    if (s === 1) return 'Step 2: total the weights. ZFW = ' + this.fmt(this.we) + ' + ' + this.fmt(this.r1) + ' + ' + this.fmt(this.r2) + ' + ' + this.fmt(this.bag) + ' = ' + this.fmt(this.zfw) + ' kg; add ' + this.fmt(this.fuelL) + ' L × 0.72 = ' + this.kg(this.fuelKg) + ' kg of fuel for a take-off weight of ' + this.kg(this.tow) + ' kg. Draw both as horizontal lines on the envelope.';
+    if (s === 2) return 'Step 3: drop to the row 1 scale and move ' + this.divText(this.d1) + ' divisions left, the way its arrow points: ' + this.fmt(this.r1) + ' kg ÷ 77 kg per division.' + (this.errCount ? ' Counted on a 50 kg scale it would be ' + this.divText(this.wd1) + ' divisions (the dashed path): too far forward.' : '');
+    if (s === 3) return 'Step 4: drop to row 2 and move ' + this.divText(this.d2) + ' divisions right, with its arrow: ' + this.fmt(this.r2) + ' kg ÷ 50 kg per division.' + (this.errDir ? ' The dashed path moves left, against the arrow: the error lands ' + this.divText(2 * this.d2) + ' divisions away from the right answer.' : '');
+    if (s === 4) return 'Step 5: drop to rear baggage and move ' + this.divText(this.d3) + ' divisions right: ' + this.fmt(this.bag) + ' kg ÷ 10 kg per division. Fuel comes next on the chart but makes no index change, so the line goes straight through it.';
+    const ok = this.zfwIn && this.towIn;
+    let msg = 'Step 6: drop straight down through the envelope. The zero fuel point (' + this.fmt(this.zfw) + ' kg) and the take-off point (' + this.kg(this.tow) + ' kg) lie on the same vertical; ';
+    msg += ok ? 'both are inside, so the load is good on this chart.' : this.overMtow ? 'the take-off weight is over the 1,633 kg MTOW: offload fuel or payload and start again.' : 'at least one is outside: reorganise the load and start again.';
+    if (w) msg += ' The dashed path, with the error, ends ' + this.divText(Math.abs(this.wseq[3] - this.fin)) + ' divisions away.';
+    return msg;
+  },
+  presets: {
+    'two-up-front': { we: 1050, ei: 5, r1: 154, r2: 75, bag: 20, fuelL: 200, errDir: false, errCount: false, t: 1 },
+    'wrong-way-error': { we: 1050, ei: 5, r1: 154, r2: 150, bag: 20, fuelL: 200, errDir: true, errCount: false, t: 1 },
+    'miscount-77-as-50': { we: 1050, ei: 4.5, r1: 154, r2: 75, bag: 20, fuelL: 250, errDir: false, errCount: true, t: 1 },
+    'over-mtow': { we: 1100, ei: 5, r1: 160, r2: 180, bag: 20, fuelL: 280, errDir: false, errCount: false, t: 1 },
+  },
+})">
+  <svg viewBox="0 0 640 430" role="img" aria-labelledby="gls-title" class="widget-stage">
+    <title id="gls-title">An illustrative loading chart in the style of ALPHA: an index scale across the top, scales for row 1, row 2, rear baggage and fuel beneath it, each with an arrow and a number of kilograms per division, and a CG envelope at the bottom with gross weight up the side and MTOW 1,633 kg. A pencil line drops from the empty index, steps along each scale and drops through the envelope, crossing the zero fuel and take-off weight lines.</title>
+    <defs>
+      <marker id="gls-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="430" rx="10" fill="var(--color-surface-2)"/>
+    <text x="356" y="17" font-size="12" font-style="italic" text-anchor="middle" fill="var(--color-fg-muted)">Illustrative chart in the style of ALPHA, not the workbook figure</text>
+    <!-- vertical grid: one line per division, so every drop is straight down -->
+    <path d="M116 50V415 M146 50V415 M176 50V415 M206 50V415 M236 50V415 M266 50V415 M296 50V415 M326 50V415 M356 50V415 M386 50V415 M416 50V415 M446 50V415 M476 50V415 M506 50V415 M536 50V415 M566 50V415 M596 50V415" stroke="var(--color-line)" stroke-width="1"/>
+
+    <!-- top index scale -->
+    <line x1="116" y1="50" x2="596" y2="50" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <path d="M116 46v8 M146 46v8 M176 46v8 M206 46v8 M236 46v8 M266 46v8 M296 46v8 M326 46v8 M356 46v8 M386 46v8 M416 46v8 M446 46v8 M476 46v8 M506 46v8 M536 46v8 M566 46v8 M596 46v8" stroke="var(--color-fg-muted)" stroke-width="1"/>
+    <g font-size="11" text-anchor="middle" fill="var(--color-fg-faint)" class="num">
+      <text x="116" y="40">0</text><text x="176" y="40">2</text><text x="236" y="40">4</text><text x="296" y="40">6</text><text x="356" y="40">8</text>
+      <text x="416" y="40">10</text><text x="476" y="40">12</text><text x="536" y="40">14</text><text x="596" y="40">16</text>
+    </g>
+    <text x="8" y="49" font-size="13" font-weight="600" fill="var(--color-fg)">Index</text>
+    <text x="8" y="63" font-size="11" fill="var(--color-fg-faint)">illustrative divs</text>
+
+    <!-- station scales, each with kg per division and an arrow -->
+    <g stroke="var(--color-fg-muted)">
+      <line x1="116" y1="90" x2="596" y2="90" stroke-width="1.25"/>
+      <path d="M116 86v8 M146 86v8 M176 86v8 M206 86v8 M236 86v8 M266 86v8 M296 86v8 M326 86v8 M356 86v8 M386 86v8 M416 86v8 M446 86v8 M476 86v8 M506 86v8 M536 86v8 M566 86v8 M596 86v8" stroke-width="1"/>
+      <line x1="116" y1="125" x2="596" y2="125" stroke-width="1.25"/>
+      <path d="M116 121v8 M146 121v8 M176 121v8 M206 121v8 M236 121v8 M266 121v8 M296 121v8 M326 121v8 M356 121v8 M386 121v8 M416 121v8 M446 121v8 M476 121v8 M506 121v8 M536 121v8 M566 121v8 M596 121v8" stroke-width="1"/>
+      <line x1="116" y1="160" x2="596" y2="160" stroke-width="1.25"/>
+      <path d="M116 156v8 M146 156v8 M176 156v8 M206 156v8 M236 156v8 M266 156v8 M296 156v8 M326 156v8 M356 156v8 M386 156v8 M416 156v8 M446 156v8 M476 156v8 M506 156v8 M536 156v8 M566 156v8 M596 156v8" stroke-width="1"/>
+      <line x1="116" y1="195" x2="596" y2="195" stroke-width="1" stroke-dasharray="4 3"/>
+    </g>
+    <g stroke="var(--color-fg)" stroke-width="1.5" stroke-linecap="round">
+      <line x1="98" y1="99" x2="72" y2="99" marker-end="url(#gls-arrow)"/>
+      <line x1="72" y1="134" x2="98" y2="134" marker-end="url(#gls-arrow)"/>
+      <line x1="72" y1="169" x2="98" y2="169" marker-end="url(#gls-arrow)"/>
+    </g>
+    <g font-size="13" font-weight="600" fill="var(--color-fg)">
+      <text x="8" y="89">Row 1</text><text x="8" y="124">Row 2</text><text x="8" y="159">Rear baggage</text><text x="8" y="194">Fuel</text>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)">
+      <text x="8" y="103" class="num">77 kg/div</text><text x="8" y="138" class="num">50 kg/div</text><text x="8" y="173" class="num">10 kg/div</text>
+      <text x="8" y="208">no index change</text>
+    </g>
+
+    <!-- the envelope: gross weight up the side, MTOW across the top -->
+    <line x1="116" y1="225" x2="116" y2="415" stroke="var(--color-fg-muted)" stroke-width="1.5"/>
+    <line x1="116" y1="415" x2="596" y2="415" stroke="var(--color-fg-muted)" stroke-width="1"/>
+    <g stroke="var(--color-fg-muted)" stroke-width="1"><path d="M110 393.9h6 M110 351.7h6 M110 309.4h6 M110 267.2h6 M110 225h6"/></g>
+    <g font-size="11" text-anchor="end" fill="var(--color-fg-faint)" class="num">
+      <text x="106" y="397.9">1,000</text><text x="106" y="355.7">1,200</text><text x="106" y="313.4">1,400</text><text x="106" y="271.2">1,600</text><text x="106" y="229">1,800</text>
+    </g>
+    <text x="0" y="0" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="translate(24 320) rotate(-90)">Gross weight (kg)</text>
+    <path :d="envPath" fill="var(--color-ok)" fill-opacity="0.12" stroke="var(--color-ok)" stroke-width="1.5" stroke-linejoin="round"/>
+    <line x1="116" y1="260.3" x2="596" y2="260.3" stroke="var(--color-bad)" stroke-width="1.5"/>
+
+    <!-- step 2: the ZFW and take-off weight lines -->
+    <g x-show="t >= 0.14">
+      <line x1="116" x2="596" stroke="var(--color-fg)" stroke-width="1.25" stroke-dasharray="4 3" :y1="Y(zfw)" :y2="Y(zfw)"/>
+      <line x1="116" x2="596" stroke="var(--color-fg)" stroke-width="1.25" stroke-dasharray="4 3" :y1="Y(tow)" :y2="Y(tow)"/>
+    </g>
+
+    <!-- the wrong path (common error), dashed, under the right one -->
+    <g x-show="wrong">
+      <path :d="wpencil" fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round"/>
+      <g x-show="drawn">
+        <circle r="5" fill="var(--color-surface)" stroke="var(--color-bad)" stroke-width="2" :cx="X(wseq[3])" :cy="Y(zfw)"/>
+        <circle r="5" fill="var(--color-surface)" stroke="var(--color-bad)" stroke-width="2" :cx="X(wseq[3])" :cy="Y(tow)"/>
+        <text font-size="12" font-weight="600" fill="var(--color-bad)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round"
+          :x="X(wseq[3]) + (wseq[3] < fin ? -8 : 8)" :text-anchor="wseq[3] < fin ? 'end' : 'start'" :y="(Y(zfw) + Y(tow)) / 2 + 4">error</text>
+      </g>
+    </g>
+
+    <!-- the pencil line -->
+    <path :d="pencil" fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- step 1: the empty index mark -->
+    <path fill="var(--color-brand)" :d="'M' + X(seq[0]) + ' 50 l-6 -10 h12 Z'"/>
+    <text font-size="12" font-weight="600" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :x="X(seq[0]) + 8" y="70" x-text="'empty ' + divText(ei)"></text>
+    <!-- marks at each station, and the divisions moved -->
+    <g x-show="fr[0] >= 1">
+      <circle r="4" fill="var(--color-brand)" :cx="X(seq[1])" cy="90"/>
+      <text font-size="11" text-anchor="middle" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-show="d1 >= 0.05" :x="(X(seq[0]) + X(seq[1])) / 2" y="82" x-text="'← ' + divText(d1)"></text>
+    </g>
+    <g x-show="fr[1] >= 1">
+      <circle r="4" fill="var(--color-brand)" :cx="X(seq[2])" cy="125"/>
+      <text font-size="11" text-anchor="middle" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-show="d2 >= 0.05" :x="(X(seq[1]) + X(seq[2])) / 2" y="117" x-text="divText(d2) + ' →'"></text>
+    </g>
+    <g x-show="fr[2] >= 1">
+      <circle r="4" fill="var(--color-brand)" :cx="X(seq[3])" cy="160"/>
+      <text font-size="11" text-anchor="middle" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-show="d3 >= 0.05" :x="(X(seq[2]) + X(seq[3])) / 2" y="152" x-text="divText(d3) + ' →'"></text>
+    </g>
+    <!-- step 6: the zero fuel and take-off points -->
+    <g x-show="drawn">
+      <circle r="6" stroke="var(--color-fg)" stroke-width="1.5" :fill="zfwIn ? 'var(--color-ok)' : 'var(--color-bad)'" :cx="X(fin)" :cy="Y(zfw)"/>
+      <circle r="6" stroke="var(--color-fg)" stroke-width="1.5" :fill="towIn ? 'var(--color-ok)' : 'var(--color-bad)'" :cx="X(fin)" :cy="Y(tow)"/>
+    </g>
+    <!-- labels on top, haloed where the pencil crosses them -->
+    <text x="316" y="398" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">CG envelope (illustrative)</text>
+    <text x="122" y="276" font-size="12" font-weight="600" fill="var(--color-bad)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">MTOW 1,633 kg</text>
+    <g x-show="t >= 0.14">
+      <text x="594" font-size="12" text-anchor="end" fill="var(--color-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="Y(zfw) + 15" x-text="'ZFW ' + fmt(zfw)"></text>
+      <text x="594" font-size="12" text-anchor="end" fill="var(--color-fg)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="Y(tow) - 6" x-text="'Take-off ' + kg(tow)"></text>
+    </g>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the method step by step'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="gls-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress through the method">
+    <span class="widget-clock" x-text="'Step ' + (step + 1) + ' of 6'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gls-we">Basic empty weight <output for="gls-we" class="num" x-text="fmt(we) + ' kg'"></output></label>
+      <input type="range" id="gls-we" min="900" max="1200" step="5" x-model.number="we">
+    </div>
+    <div class="widget-control">
+      <label for="gls-ei">Basic empty index <output for="gls-ei" class="num" x-text="divText(ei) + ' div'"></output></label>
+      <input type="range" id="gls-ei" min="2" max="8" step="0.1" x-model.number="ei">
+    </div>
+    <div class="widget-control">
+      <label for="gls-r1">Row 1 occupants <output for="gls-r1" class="num" x-text="fmt(r1) + ' kg'"></output></label>
+      <input type="range" id="gls-r1" min="0" max="200" step="1" x-model.number="r1">
+    </div>
+    <div class="widget-control">
+      <label for="gls-r2">Row 2 occupants <output for="gls-r2" class="num" x-text="fmt(r2) + ' kg'"></output></label>
+      <input type="range" id="gls-r2" min="0" max="200" step="1" x-model.number="r2">
+    </div>
+    <div class="widget-control">
+      <label for="gls-bag">Rear baggage <output for="gls-bag" class="num" x-text="fmt(bag) + ' kg'"></output></label>
+      <input type="range" id="gls-bag" min="0" max="60" step="1" x-model.number="bag">
+    </div>
+    <div class="widget-control">
+      <label for="gls-fuel">Fuel <output for="gls-fuel" class="num" x-text="fmt(fuelL) + ' L = ' + kg(fuelKg) + ' kg'"></output></label>
+      <input type="range" id="gls-fuel" min="0" max="320" step="5" x-model.number="fuelL">
+    </div>
+    <div class="widget-control">
+      <label for="gls-errdir" class="cursor-pointer"><span>Common error: move against the arrow on row 2</span>
+        <input type="checkbox" id="gls-errdir" x-model="errDir" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+    <div class="widget-control">
+      <label for="gls-errcount" class="cursor-pointer"><span>Common error: count row 1 at 50 kg per division</span>
+        <input type="checkbox" id="gls-errcount" x-model="errCount" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Row 1</dt><dd class="widget-value num" x-text="fmt(r1) + ' kg ÷ 77 = ' + divText(d1) + ' div left'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Row 2</dt><dd class="widget-value num" x-text="fmt(r2) + ' kg ÷ 50 = ' + divText(d2) + ' div right'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Rear baggage</dt><dd class="widget-value num" x-text="fmt(bag) + ' kg ÷ 10 = ' + divText(d3) + ' div right'"></dd></div>
+    <div class="widget-readout" :class="off ? 'warn' : ''"><dt class="widget-label">Final index</dt><dd class="widget-value num"><span x-text="divText(fin) + ' div'"></span><span class="widget-flag warn" x-show="off">off this chart</span></dd></div>
+    <div class="widget-readout" :class="zfwIn ? 'ok' : 'bad'"><dt class="widget-label">Zero fuel point</dt><dd class="widget-value"><span class="num" x-text="fmt(zfw) + ' kg'"></span> <span x-show="zfwIn">inside</span><span class="widget-flag bad" x-show="!zfwIn">outside</span></dd></div>
+    <div class="widget-readout" :class="towIn ? 'ok' : 'bad'"><dt class="widget-label">Take-off point</dt><dd class="widget-value"><span class="num" x-text="kg(tow) + ' kg'"></span> <span x-show="towIn">inside</span><span class="widget-flag bad" x-show="!towIn">outside</span></dd></div>
+    <div class="widget-readout" :class="overMtow ? 'bad' : 'ok'"><dt class="widget-label">Against MTOW 1,633 kg</dt><dd class="widget-value"><span class="num" x-text="kg(Math.abs(mtow - tow)) + ' kg ' + (overMtow ? 'over' : 'under')"></span><span class="widget-flag bad" x-show="overMtow">over MTOW</span></dd></div>
+    <div class="widget-readout bad" x-show="wrong"><dt class="widget-label">With the error</dt><dd class="widget-value"><span class="num" x-text="divText(wseq[3]) + ' div'"></span> <span x-text="'(ZFW ' + (wzfwIn ? 'inside' : 'outside') + ', take-off ' + (wtowIn ? 'inside' : 'outside') + ')'"></span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('two-up-front')" :aria-pressed="active === 'two-up-front'">154 kg in row 1</button>
+      <button type="button" @click="preset('wrong-way-error')" :aria-pressed="active === 'wrong-way-error'">Wrong way on row 2</button>
+      <button type="button" @click="preset('miscount-77-as-50')" :aria-pressed="active === 'miscount-77-as-50'">77 counted as 50</button>
+      <button type="button" @click="preset('over-mtow')" :aria-pressed="active === 'over-mtow'">Over MTOW</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Every station is the same move: drop straight down, then go along the scale in the direction of its arrow by weight ÷ kilograms per division (fractions allowed). Fuel changes only the weight line, so the zero fuel and take-off points lie on one vertical. The scales, divisions and envelope here are illustrative and so are the weights you set; only the 1,633 kg MTOW is ALPHA's. The method is the exam's, and in the exam you use the workbook's own chart on page 10.</p>
+  <details class="widget-try"><summary>Try it: two people weighing 154 kg in row 1, on a scale of 77 kg per division. How far do you move, and what if you read the 50 kg scale instead?</summary><p>154 ÷ 77 = 2.0 divisions, left, the way row 1's arrow points (choose "154 kg in row 1"). Counted at 50 kg per division it would be 154 ÷ 50 = 3.08, about 3 divisions: a whole division too far forward. Choose "77 counted as 50": the dashed line ends 1.1 divisions forward of the true one, and its take-off point falls outside the forward limit although the real load is inside.</p></details>
+  <details class="widget-try"><summary>Try it: why do the zero fuel and take-off points share one vertical line?</summary><p>The vertical carries the index after every load except fuel, and on ALPHA the fuel sits about at the CG, so it adds weight without moving the line. Drag the fuel slider: the take-off point slides up and down the same vertical, never sideways, while the zero fuel point stays put.</p></details>
+</div>

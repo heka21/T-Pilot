@@ -1,0 +1,127 @@
+<div class="widget" x-data="widget({
+  h: 16, phase: 'landing',
+  // RBKA 3.1: ground effect is noticeable from about one wingspan up and significant within about half a span (the
+  // last 15 ft or so for a trainer). Height here is the wing's height above the runway; the Cessna 152's span is
+  // 10.2 m, about 33.5 ft, and its wing is about 6.6 ft up when the wheels are on the runway. The curve is shape only.
+  span: 33.5,
+  get hb() { return this.h / this.span },
+  shape(x) { const q = (2.5 * x) ** 2; return q / (1 + q) },
+  get rem() { return this.shape(this.hb) },
+  get band() { return this.hb > 1.05 ? 0 : this.hb > 0.5 ? 1 : 2 },
+  get bandText() { return ['None: more than a span up', 'Noticeable: within a span', 'Significant: within ½ span'][this.band] },
+  get dragText() { return this.band === 0 ? 'about normal' : this.band === 1 ? 'a little less' : this.rem > 0.45 ? 'clearly less' : 'much less' },
+  get onGround() { return this.h < 7 },
+  get effect() {
+    if (this.phase === 'landing') {
+      if (this.band === 0) return { t: 'Normal approach: drag as usual', c: '' };
+      if (this.band === 1) return { t: 'Drag starts to fall away', c: '' };
+      return { t: 'Floats: less drag to slow it', c: 'warn' };
+    }
+    if (this.band === 2) return { t: 'Flies, but may not climb', c: 'warn' };
+    if (this.band === 1) return { t: 'Drag returning: may sink back', c: 'bad' };
+    return { t: 'Out of ground effect', c: 'ok' };
+  },
+  // picture: 3.33 px per ft (the C152 side view at scale 0.8); runway surface at y 250
+  k: 3.333,
+  get wingY() { return 250 - this.h * this.k },
+  get cgY() { return this.wingY + 6.4 },
+  get pitch() { return this.phase === 'landing' ? -4 : -6 },
+  // downwash behind the wing, flattened by the ground
+  get dw() { return 0.15 + 0.85 * this.rem },
+  get wash() { const x0 = 168, y0 = this.wingY + 4, L = 120, a = 0.32 * this.dw, room = Math.max(4, 248 - y0); const dy = Math.min(room, L * Math.tan(a)); return 'M' + x0 + ' ' + y0.toFixed(1) + ' Q' + (x0 - L * 0.55) + ' ' + (y0 + dy * 0.2).toFixed(1) + ' ' + (x0 - L) + ' ' + (y0 + dy).toFixed(1) },
+  get vortex() { return { cx: 40, cy: Math.min(this.wingY + 18 * this.dw, 244 - 14 * this.dw), rx: 16, ry: Math.max(3, 15 * this.dw) } },
+  // chart on the right shares the height axis: induced drag from much less (x 410) to normal (x 610)
+  get curvePath() { const p = []; for (let i = 0; i <= 40; i++) { const hf = 0.0 + 1.65 * i / 40; p.push([410 + 200 * this.shape(hf), 250 - hf * this.span * this.k]) } return this.path(p) },
+  get dot() { return { x: 410 + 200 * this.rem, y: this.wingY } },
+  presets: {
+    'out-of-ground-effect': { h: 50, phase: 'landing' },
+    'one-span': { h: 33.5, phase: 'landing' },
+    'flare-half-span': { h: 16, phase: 'landing' },
+    'float': { h: 9, phase: 'landing' },
+    'early-lift-off': { h: 9, phase: 'takeoff' },
+    'climbing-out': { h: 28, phase: 'takeoff' },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="gfh-title" class="widget-stage">
+    <title id="gfh-title">A Cessna 152 at a chosen height over the runway with its downwash and wing-tip vortex, beside a curve of how much induced drag is left at each height in wingspans</title>
+    <rect x="0" y="0" width="380" height="250" fill="var(--color-sky-soft)"/>
+    <!-- span reference heights -->
+    <g stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3">
+      <line x1="0" x2="640" :y1="250 - span * k" :y2="250 - span * k"/>
+      <line x1="0" x2="640" :y1="250 - span * k / 2" :y2="250 - span * k / 2"/>
+    </g>
+    <!-- runway -->
+    <rect x="0" y="250" width="380" height="14" fill="var(--color-tarmac)"/>
+    <g stroke="var(--color-paint)" stroke-width="2"><line x1="20" y1="257" x2="50" y2="257"/><line x1="90" y1="257" x2="120" y2="257"/><line x1="160" y1="257" x2="190" y2="257"/><line x1="230" y1="257" x2="260" y2="257"/><line x1="300" y1="257" x2="330" y2="257"/></g>
+    <rect x="0" y="264" width="380" height="36" fill="var(--color-surface-2)"/>
+    <!-- downwash and the tip vortex trailing behind -->
+    <g fill="none" stroke="var(--color-brand)" stroke-linecap="round">
+      <path stroke-width="2" :d="wash"/>
+      <path stroke-width="1.25" :d="wash" transform="translate(-14 10)" stroke-dasharray="4 3"/>
+    </g>
+    <ellipse fill="none" stroke="var(--color-brand)" stroke-width="2" :cx="vortex.cx" :cy="vortex.cy" :rx="vortex.rx" :ry="vortex.ry"/>
+    <text x="40" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :y="vortex.cy - vortex.ry - 6">tip vortex</text>
+    <text x="96" font-size="12" text-anchor="middle" fill="var(--color-brand-fg)" paint-order="stroke" stroke="var(--color-sky-soft)" stroke-width="4" stroke-linejoin="round" :y="Math.min(244, wingY + 40 * dw + 22)" x-show="h > 12">downwash</text>
+    <!-- the aeroplane: wing (local y -8) at the chosen height -->
+    <g :transform="'translate(240 ' + cgY + ') rotate(' + pitch + ') scale(0.8)'"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    <!-- motion hint -->
+    <g x-show="phase === 'landing' && band === 2" stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round">
+      <line x1="300" x2="346" :y1="cgY - 30" :y2="cgY - 30"/><line x1="310" x2="340" :y1="cgY - 22" :y2="cgY - 22"/>
+    </g>
+    <text x="300" font-size="12" fill="var(--color-warn-fg)" x-show="phase === 'landing' && band === 2" :y="cgY - 38">floating</text>
+    <path x-show="phase === 'takeoff' && band === 1" fill="none" stroke="var(--color-bad)" stroke-width="2" marker-end="url(#gfh-arrow)" :d="'M300 ' + (cgY - 30) + ' q20 0 30 18'"/>
+    <text x="300" font-size="12" fill="var(--color-bad-fg)" x-show="phase === 'takeoff' && band === 1" :y="cgY - 38">sinks back?</text>
+    <defs><marker id="gfh-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
+
+    <!-- chart: induced drag left at each height (shape only) -->
+    <rect x="404" y="20" width="230" height="230" fill="var(--color-surface-2)" rx="6"/>
+    <rect x="404" width="230" fill="var(--color-ok)" fill-opacity="0.12" :y="250 - span * k / 2" :height="span * k / 2"/>
+    <line x1="410" y1="250" x2="628" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="610" y1="24" x2="610" y2="250" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="curvePath"/>
+    <circle r="6" fill="var(--color-surface)" stroke="var(--color-brand)" stroke-width="3" :cx="dot.x" :cy="dot.y"/>
+    <text x="519" y="38" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)">Induced drag left</text>
+    <g font-size="12" fill="var(--color-fg-muted)">
+      <text x="412" :y="250 - span * k - 6">1 span, about 33 ft</text>
+      <text x="412" :y="250 - span * k / 2 - 6">½ span, about 17 ft</text>
+    </g>
+    <text x="606" y="62" font-size="12" text-anchor="end" fill="var(--color-fg-muted)">normal →</text>
+    <text x="416" y="242" font-size="12" fill="var(--color-ok-fg)">significant</text>
+    <text x="519" y="278" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">← much less … normal</text>
+    <text x="519" y="294" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">shape only, not to scale</text>
+    <text x="20" y="22" font-size="13" font-weight="600" fill="var(--color-fg)" class="num" x-text="'wing ' + fmt(h) + ' ft up = ' + fmt(hb, 2) + ' span'"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gfh-h">Wing height above the runway <output for="gfh-h" x-text="fmt(h) + ' ft (' + fmt(hb, 2) + ' span)'"></output></label>
+      <input type="range" id="gfh-h" min="7" max="55" step="0.5" x-model.number="h">
+    </div>
+    <div class="widget-control">
+      <label for="gfh-phase">Phase</label>
+      <select id="gfh-phase" class="input" x-model="phase">
+        <option value="landing">Landing: flare, throttle closed</option>
+        <option value="takeoff">Take-off: lifted off early</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="band === 2 ? 'ok' : ''"><dt class="widget-label">Ground effect</dt><dd class="widget-value" x-text="bandText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Induced drag</dt><dd class="widget-value" x-text="dragText"></dd></div>
+    <div class="widget-readout" :class="effect.c"><dt class="widget-label" x-text="phase === 'landing' ? 'In the flare' : 'After an early lift-off'"></dt><dd class="widget-value" x-text="effect.t"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('out-of-ground-effect')" :aria-pressed="active === 'out-of-ground-effect'">On the approach</button>
+      <button type="button" @click="preset('one-span')" :aria-pressed="active === 'one-span'">One span up</button>
+      <button type="button" @click="preset('flare-half-span')" :aria-pressed="active === 'flare-half-span'">Last 15 ft</button>
+      <button type="button" @click="preset('float')" :aria-pressed="active === 'float'">Float</button>
+      <button type="button" @click="preset('early-lift-off')" :aria-pressed="active === 'early-lift-off'">Early lift-off</button>
+      <button type="button" @click="preset('climbing-out')" :aria-pressed="active === 'climbing-out'">Climbing out of it</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Close to the runway the ground gets in the way of the downwash and squashes the tip vortices, so induced drag falls with no change of speed or angle of attack. You start to notice it about a span up, and within about half a span, the last 15 ft or so for a trainer, it is significant. Landing, that means a float: less drag to slow you down. Taking off, it lets the aeroplane fly before it can climb, and the drag comes back as you climb out. The curve is a shape, not a figure from the lesson.</p>
+  <details class="widget-try"><summary>Try it: why does an approach 10 kt fast end in a long float?</summary><p>Press Float: in the last few feet induced drag is much less than on the approach, so the extra speed bleeds away slowly and the aeroplane keeps flying along the runway until it is slow enough to settle.</p></details>
+  <details class="widget-try"><summary>Try it: you haul a heavy aeroplane off a hot strip early. What happens as you climb?</summary><p>Press Early lift-off, then Climbing out of it: the aeroplane flew a few feet up on the low drag of ground effect, but climbing through half a span to a span the induced drag returns and it may sink back or refuse to accelerate. Lift off at the POH speed; if you are off early, stay low and accelerate first.</p></details>
+</div>

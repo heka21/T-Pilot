@@ -1,0 +1,112 @@
+<div class="widget" x-data="widget({
+  a: 300, aa: 0, b: 300, ba: 90, w: 0,
+  na: 'Force A', nb: 'Force B',
+  // drawing scale (px per newton) and where the first tail sits, set by each preset so the picture fits
+  sc: 0.42, ox: 150, oy: 250,
+  // BAKC 2.5: add vectors tip to tail; the resultant runs from the first tail to the last tip.
+  // Directions are measured anticlockwise from 'forward' (pointing right): 90 is straight up.
+  rad(d) { return d * Math.PI / 180 },
+  get A() { return { x: this.ox + this.a * this.sc * Math.cos(this.rad(this.aa)), y: this.oy - this.a * this.sc * Math.sin(this.rad(this.aa)) } },
+  // collinear vectors would sit on top of each other: draw B a few pixels to one side (the sum is unchanged)
+  get off() { const s = Math.sin(this.rad(this.ba - this.aa)); return Math.abs(s) < 0.03 && this.a > 0 && this.b > 0 ? 9 : 0 },
+  get B0() { return { x: this.A.x - this.off * Math.sin(this.rad(this.aa)), y: this.A.y - this.off * Math.cos(this.rad(this.aa)) } },
+  get B() { return { x: this.B0.x + this.b * this.sc * Math.cos(this.rad(this.ba)), y: this.B0.y - this.b * this.sc * Math.sin(this.rad(this.ba)) } },
+  get rx() { return this.a * Math.cos(this.rad(this.aa)) + this.b * Math.cos(this.rad(this.ba)) },
+  get ry() { return this.a * Math.sin(this.rad(this.aa)) + this.b * Math.sin(this.rad(this.ba)) },
+  get r() { return Math.hypot(this.rx, this.ry) },
+  get rdir() { return ((Math.atan2(this.ry, this.rx) * 180 / Math.PI) + 360) % 360 },
+  get R() { return { x: this.ox + this.rx * this.sc, y: this.oy - this.ry * this.sc } },
+  get zero() { return this.r < Math.max(this.a, this.b) * 0.005 },
+  // against the weight (straight down): what is left over
+  get netx() { return this.rx },
+  get nety() { return this.ry - this.w },
+  get net() { return Math.hypot(this.netx, this.nety) },
+  get balanced() { return this.w > 0 && this.net < this.w * 0.002 },
+  dirText(d) { d = Math.round(d) % 360; return d === 0 ? 'forward' : d === 90 ? 'straight up' : d === 180 ? 'backward' : d === 270 ? 'straight down' : d + '°' },
+  mid(P, Q, side) { const dx = Q.x - P.x, dy = Q.y - P.y, L = Math.hypot(dx, dy) || 1; return { x: (P.x + Q.x) / 2 - side * dy / L * 18, y: (P.y + Q.y) / 2 + side * dx / L * 18 + 4 } },
+  // a long arrow with a short one at its tip (lift and drag): put the labels beside the picture instead of on it
+  get thin() { return Math.min(this.a, this.b) * this.sc < 45 && this.a > 0 && this.b > 0 },
+  get left() { return Math.min(this.ox, this.R.x, this.A.x) - 26 },
+  get right() { return Math.max(this.ox, this.R.x, this.A.x, this.B.x) + 26 },
+  get labA() { return this.thin ? { x: this.right, y: (this.oy + this.A.y) / 2, t: 'start' } : Object.assign(this.mid({ x: this.ox, y: this.oy }, this.A, 1), { t: 'middle' }) },
+  get labB() { return this.thin ? { x: this.right, y: Math.min(this.B0.y, this.B.y) + 5, t: 'start' } : Object.assign(this.mid(this.B0, this.B, 1), { t: 'middle' }) },
+  get labR() { return this.thin ? { x: this.left, y: this.oy - (this.oy - this.R.y) * 0.3, t: 'end' } : Object.assign(this.mid({ x: this.ox, y: this.oy }, this.R, -1), { t: 'middle' }) },
+  get wx() { return this.B.x + (this.thin ? -14 : 14) },
+  get labW() { return this.thin ? { x: this.left, y: this.oy - (this.oy - this.R.y) * 0.65, t: 'end' } : { x: this.wx + 12, y: this.B.y + this.w * this.sc / 2 + 4, t: 'start' } },
+  get hr() { return this.thin ? 11 : 16 },
+  get max() { return Math.round(280 / this.sc / 10) * 10 },
+  dragA(p) { const dx = (p.x - this.ox) / this.sc, dy = (this.oy - p.y) / this.sc; this.a = Math.min(this.max, Math.round(Math.hypot(dx, dy) / 10) * 10); this.aa = Math.round(((Math.atan2(dy, dx) * 180 / Math.PI) + 360) % 360); this.active = null },
+  dragB(p) { const dx = (p.x - this.B0.x) / this.sc, dy = (this.B0.y - p.y) / this.sc; this.b = Math.min(this.max, Math.round(Math.hypot(dx, dy) / 10) * 10); this.ba = Math.round(((Math.atan2(dy, dx) * 180 / Math.PI) + 360) % 360); this.active = null },
+  presets: {
+    'same-direction': { a: 300, aa: 0, b: 300, ba: 0, w: 0, na: 'Force A', nb: 'Force B', sc: 0.42, ox: 70, oy: 200 },
+    'equal-and-opposite': { a: 300, aa: 0, b: 300, ba: 180, w: 0, na: 'Force A', nb: 'Force B', sc: 0.42, ox: 150, oy: 200 },
+    'right-angles': { a: 300, aa: 0, b: 300, ba: 90, w: 0, na: 'Force A', nb: 'Force B', sc: 0.42, ox: 150, oy: 250 },
+    'glide-lift-and-drag': { a: 9760, aa: 84.29, b: 976, ba: 174.29, w: 9810, na: 'Lift', nb: 'Drag', sc: 0.025, ox: 320, oy: 280 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="vtt-title" class="widget-stage">
+    <title id="vtt-title">Two force arrows added tip to tail, with the resultant drawn from the tail of the first to the tip of the second; drag either arrowhead to change a force</title>
+    <defs>
+      <marker id="vtt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="0" width="640" height="300" rx="10" fill="var(--color-surface-2)"/>
+    <!-- the weight, added from the last tip: in balance it closes the shape back to the start -->
+    <g x-show="w > 0">
+      <line stroke="var(--color-fg-muted)" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#vtt-arrow)" :x1="wx" :y1="B.y" :x2="wx" :y2="B.y + w * sc"/>
+      <text font-size="13" font-weight="700" fill="var(--color-fg-muted)" class="num" :x="labW.x" :y="labW.y" :text-anchor="labW.t" x-text="'Weight ' + fmt(w) + ' N'"></text>
+    </g>
+    <!-- resultant -->
+    <line stroke="var(--color-ok)" stroke-width="4" stroke-linecap="round" marker-end="url(#vtt-arrow)" x-show="!zero" :x1="ox" :y1="oy" :x2="R.x" :y2="R.y" stroke-opacity="0.85"/>
+    <!-- A then B, tip to tail -->
+    <line stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#vtt-arrow)" x-show="a > 0" :x1="ox" :y1="oy" :x2="A.x" :y2="A.y"/>
+    <line stroke="var(--color-info)" stroke-width="3" stroke-linecap="round" marker-end="url(#vtt-arrow)" x-show="b > 0" :x1="B0.x" :y1="B0.y" :x2="B.x" :y2="B.y"/>
+    <circle r="5" fill="var(--color-fg)" :cx="ox" :cy="oy"/>
+    <!-- labels -->
+    <g font-size="13" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text fill="var(--color-brand-fg)" :x="labA.x" :y="labA.y" :text-anchor="labA.t" x-text="na + ' ' + fmt(a) + ' N'"></text>
+      <text fill="var(--color-info)" :x="labB.x" :y="labB.y" :text-anchor="labB.t" x-text="nb + ' ' + fmt(b) + ' N'"></text>
+      <text fill="var(--color-ok-fg)" x-show="!zero" :x="labR.x" :y="labR.y" :text-anchor="labR.t" x-text="'Resultant ' + fmt(r) + ' N'"></text>
+    </g>
+    <text x="320" y="40" font-size="16" font-weight="700" text-anchor="middle" fill="var(--color-ok-fg)" x-show="zero">Resultant zero: no net force, no change of motion</text>
+    <!-- drag handles on the two arrowheads -->
+    <circle :r="hr" fill="var(--color-brand)" fill-opacity="0.12" stroke="var(--color-brand)" stroke-width="1.25" stroke-dasharray="3 3" style="touch-action: none; cursor: grab" :cx="A.x" :cy="A.y" @pointerdown="drag($event, (p) => dragA(p))"/>
+    <circle :r="hr" fill="var(--color-info)" fill-opacity="0.12" stroke="var(--color-info)" stroke-width="1.25" stroke-dasharray="3 3" style="touch-action: none; cursor: grab" :cx="B.x" :cy="B.y" @pointerdown="drag($event, (p) => dragB(p))"/>
+    <text x="620" y="286" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">drag either arrowhead · drawn to scale</text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="vtt-a"><span x-text="na + ' size'"></span> <output for="vtt-a" x-text="fmt(a) + ' N'"></output></label>
+      <input type="range" id="vtt-a" min="0" :max="max" step="10" x-model.number="a" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="vtt-aa"><span x-text="na + ' direction'"></span> <output for="vtt-aa" x-text="dirText(aa)"></output></label>
+      <input type="range" id="vtt-aa" min="0" max="359" step="1" x-model.number="aa" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="vtt-b"><span x-text="nb + ' size'"></span> <output for="vtt-b" x-text="fmt(b) + ' N'"></output></label>
+      <input type="range" id="vtt-b" min="0" :max="max" step="10" x-model.number="b" @input="active = null">
+    </div>
+    <div class="widget-control">
+      <label for="vtt-ba"><span x-text="nb + ' direction'"></span> <output for="vtt-ba" x-text="dirText(ba)"></output></label>
+      <input type="range" id="vtt-ba" min="0" max="359" step="1" x-model.number="ba" @input="active = null">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="zero ? 'ok' : ''"><dt class="widget-label">Resultant</dt><dd class="widget-value" x-text="zero ? '0 N' : fmt(r) + ' N, ' + dirText(rdir)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Sizes simply added (right only if they point the same way)</dt><dd class="widget-value" x-text="fmt(a + b) + ' N'"></dd></div>
+    <div class="widget-readout" :class="balanced ? 'ok' : 'warn'" x-show="w > 0"><dt class="widget-label">Resultant against the weight</dt><dd class="widget-value"><span x-text="balanced ? 'equal and opposite: balanced' : fmt(net) + ' N left over'"></span><span class="widget-flag ok" x-show="balanced">steady glide</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('same-direction')" :aria-pressed="active === 'same-direction'">Same way</button>
+      <button type="button" @click="preset('equal-and-opposite')" :aria-pressed="active === 'equal-and-opposite'">300 N each, opposite</button>
+      <button type="button" @click="preset('right-angles')" :aria-pressed="active === 'right-angles'">At right angles</button>
+      <button type="button" @click="preset('glide-lift-and-drag')" :aria-pressed="active === 'glide-lift-and-drag'">Lift + drag in a glide</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Start the second arrow at the tip of the first and the resultant runs from the first tail to the last tip. Only forces pointing the same way add as plain numbers; opposite forces subtract, and two at right angles make the long side of a right-angled triangle. In a steady glide, lift and drag added this way point straight up, and the weight drawn on from their tip comes straight back to the start: no net force.</p>
+  <details class="widget-try"><summary>Try it: two forces of 300 N, one forward and one back. What is the resultant?</summary><p>Press 300 N each, opposite: the second arrow returns to where the first began, so the resultant is zero and the body keeps whatever motion it had. Adding the sizes, 600 N, is the mistake.</p></details>
+  <details class="widget-try"><summary>Try it: in a glide at a lift-to-drag ratio of 10, lift is about 9,760 N and drag about 976 N. What do they add to?</summary><p>Press Lift + drag in a glide: they are at right angles, so the resultant is √(9,760² + 976²) ≈ 9,809 N, pointing straight up, equal and opposite to the 9,810 N weight of a 1,000 kg aeroplane.</p></details>
+</div>

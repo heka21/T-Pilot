@@ -1,0 +1,119 @@
+<div class="widget" x-data="widget({
+  chart: 'wac', mm: 251, tt: 67, vr: -1.5,
+  // vr: variation, negative = west (west is best: add), positive = east (east is least: subtract)
+  get scale() { return this.chart === 'wac' ? 1000000 : 500000 },
+  get scaleText() { return this.chart === 'wac' ? '1:1,000,000' : '1:500,000' },
+  get km() { return this.mm * this.scale / 1e6 },
+  get nm() { return this.km / 1.852 },
+  get thumb() { return (this.mm / 10) * (this.chart === 'wac' ? 5.4 : 2.7) },
+  get mt() { return ((this.tt - this.vr) % 360 + 360) % 360 },
+  get varText() { return this.vr === 0 ? 'nil' : this.fmt(Math.abs(this.vr), 1) + '° ' + (this.vr < 0 ? 'W' : 'E') },
+  get mtText() { const v = this.mt; return (v < 100 ? (v < 10 ? '00' : '0') : '') + this.fmt(v, Number.isInteger(v) ? 0 : 1) },
+  // picture: 1.8 px per mm from Jandakot at x 40
+  get k() { return 1.8 },
+  get x1() { return 40 + this.mm * this.k },
+  // one minute of latitude on the chart, in mm: 1,852 m at the chart's scale
+  get minMm() { return 1852000 / this.scale },
+  get mmTicks() { let d = ''; for (let m = 0; m <= 300; m += 10) d += 'M' + (40 + m * this.k).toFixed(1) + ' 140 v' + (m % 50 ? 6 : 11) + ' '; return d },
+  get latTicks() { let d = ''; const step = this.minMm * this.k; for (let i = 0; 40 + i * step <= 600; i++) d += 'M' + (40 + i * step).toFixed(1) + ' 214 v' + (i % 10 ? 5 : 11) + ' '; return d },
+  latX(n) { return 40 + n * this.minMm * this.k },
+  get latLabelStep() { return this.chart === 'wac' ? 20 : 10 },
+  get dividers() { const a = 40, b = this.x1, m = (a + b) / 2, top = 194; return 'M' + a.toFixed(1) + ' 214 L' + m.toFixed(1) + ' ' + top.toFixed(1) + ' L' + b.toFixed(1) + ' 214' },
+  get caption() {
+    return 'At ' + this.scaleText + ' 1 mm is ' + (this.chart === 'wac' ? '1 km' : '0.5 km') + ', so ' + this.mm + ' mm is ' + this.fmt(this.km, this.km % 1 ? 1 : 0) + ' km, and ÷ 1.852 gives ' + this.fmt(this.nm, 1) + ' NM. The dividers carried to the latitude scale span the same ' + this.fmt(this.nm) + ' minutes.';
+  },
+  presets: {
+    'wac-251-mm': { chart: 'wac', mm: 251, tt: 67, vr: -1.5 },
+    'vnc-120-mm': { chart: 'vnc', mm: 120, tt: 67, vr: -1.5 },
+    'same-120-mm-on-wac': { chart: 'wac', mm: 120, tt: 67, vr: -1.5 },
+  },
+})">
+  <svg viewBox="0 28 640 272" role="img" aria-labelledby="lms-title" class="widget-stage">
+    <title id="lms-title">A leg drawn on the chart from Jandakot with a millimetre ruler beneath it, a latitude scale in minutes for the same chart scale, dividers spanning the leg, and a protractor showing the true track at the mid-meridian</title>
+    <defs>
+      <marker id="lms-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <rect x="0" y="28" width="640" height="272" fill="var(--color-surface)" rx="10"/>
+    <!-- the chart -->
+    <rect x="20" y="40" width="600" height="94" rx="4" fill="var(--color-ok-soft)" fill-opacity="0.6" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="30" y="58" font-size="12" font-weight="600" fill="var(--color-fg-muted)" x-text="(chart === 'wac' ? 'WAC ' : 'VNC ') + scaleText"></text>
+    <line y1="40" y2="134" stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="4 3" :x1="(40 + x1) / 2" :x2="(40 + x1) / 2"/>
+    <text y="128" font-size="11" fill="var(--color-fg-faint)" :x="(40 + x1) / 2 + 6">mid-meridian</text>
+    <line x1="40" y1="100" y2="100" :x2="x1" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="40" cy="100" r="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <circle cy="100" r="5" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" :cx="x1"/>
+    <text x="40" y="86" font-size="12" fill="var(--color-fg)" text-anchor="middle">Jandakot</text>
+    <text y="86" font-size="12" fill="var(--color-fg)" text-anchor="middle" :x="x1">B</text>
+    <!-- the ruler -->
+    <rect x="30" y="136" width="580" height="30" rx="3" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <path :d="mmTicks" stroke="var(--color-fg-muted)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text x="40" y="162">0</text><text x="130" y="162">50</text><text x="220" y="162">100</text><text x="310" y="162">150</text><text x="400" y="162">200</text><text x="490" y="162">250</text><text x="580" y="162">300 mm</text>
+    </g>
+    <line y1="138" y2="164" stroke="var(--color-brand)" stroke-width="2" :x1="x1" :x2="x1"/>
+    <!-- the latitude scale, minutes along a meridian, laid beside the leg -->
+    <text x="30" y="264" font-size="12" fill="var(--color-info)" font-weight="600">latitude scale, minutes: 1′ = 1 NM</text>
+    <line x1="40" y1="214" x2="600" y2="214" stroke="var(--color-info)" stroke-width="1.25"/>
+    <path :d="latTicks" stroke="var(--color-info)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-info)" text-anchor="middle" class="num">
+      <text y="240" :x="latX(latLabelStep)" x-text="latLabelStep + '′'"></text>
+      <text y="240" :x="latX(latLabelStep * 2)" x-text="latLabelStep * 2 + '′'"></text>
+      <text y="240" :x="latX(latLabelStep * 3)" x-text="latLabelStep * 3 + '′'"></text>
+      <text y="240" :x="latX(latLabelStep * 4)" x-text="latLabelStep * 4 + '′'" :display="(latX(latLabelStep * 4) < 600) ? 'inline' : 'none'"></text>
+      <text y="240" :x="latX(latLabelStep * 5)" x-text="latLabelStep * 5 + '′'" :display="(latX(latLabelStep * 5) < 600) ? 'inline' : 'none'"></text>
+      <text y="240" :x="latX(latLabelStep * 6)" x-text="latLabelStep * 6 + '′'" :display="(latX(latLabelStep * 6) < 600) ? 'inline' : 'none'"></text>
+      <text y="240" :x="latX(latLabelStep * 7)" x-text="latLabelStep * 7 + '′'" :display="(latX(latLabelStep * 7) < 600) ? 'inline' : 'none'"></text>
+      <text y="240" :x="latX(latLabelStep * 8)" x-text="latLabelStep * 8 + '′'" :display="(latX(latLabelStep * 8) < 600) ? 'inline' : 'none'"></text>
+    </g>
+    <!-- dividers spanning the leg -->
+    <path :d="dividers" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle r="3" fill="var(--color-fg-muted)" :cx="(40 + x1) / 2" cy="194"/>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" class="num" text-anchor="middle" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="Math.max(80, (40 + x1) / 2)" y="185" x-text="'dividers: ' + fmt(nm, 1) + '′ = ' + fmt(nm, 1) + ' NM'"></text>
+    <!-- protractor at the mid-meridian -->
+    <circle cx="596" cy="270" r="24" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="596" y1="270" x2="596" y2="248" stroke="var(--color-fg-faint)" stroke-width="1"/>
+    
+    <line x1="596" y1="270" stroke="var(--color-brand)" stroke-width="2" marker-end="url(#lms-arrow)" :x2="pol(596, 270, 20, tt).x" :y2="pol(596, 270, 20, tt).y"/>
+    <text x="564" y="290" font-size="12" text-anchor="end" fill="var(--color-fg)" class="num" x-text="trk(tt) + '°T, var ' + varText + ' → ' + mtText + '°M'"></text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <span class="widget-label">Chart</span>
+      <span class="widget-presets" role="group" aria-label="Chart">
+        <button type="button" @click="chart = 'wac'; active = null" :aria-pressed="chart === 'wac'">WAC 1:1,000,000</button>
+        <button type="button" @click="chart = 'vnc'; active = null" :aria-pressed="chart === 'vnc'">VNC 1:500,000</button>
+      </span>
+    </div>
+    <div class="widget-control">
+      <label for="lms-mm">Leg measured on the chart <output for="lms-mm" x-text="mm + ' mm'"></output></label>
+      <input type="range" id="lms-mm" min="10" max="300" step="1" x-model.number="mm">
+    </div>
+    <div class="widget-control">
+      <label for="lms-tt">Protractor at the mid-meridian <output for="lms-tt" x-text="trk(tt) + '°T'"></output></label>
+      <input type="range" id="lms-tt" min="0" max="359" step="1" x-model.number="tt">
+    </div>
+    <div class="widget-control">
+      <label for="lms-vr">Variation, nearest isogonal <output for="lms-vr" x-text="varText"></output></label>
+      <input type="range" id="lms-vr" min="-5" max="5" step="0.5" x-model.number="vr">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Ground distance</dt><dd class="widget-value" x-text="mm + ' mm × ' + (chart === 'wac' ? '1,000,000' : '500,000') + ' = ' + fmt(km, km % 1 ? 1 : 0) + ' km'"></dd></div>
+    <div class="widget-readout ok"><dt class="widget-label">In nautical miles</dt><dd class="widget-value" x-text="fmt(km, km % 1 ? 1 : 0) + ' ÷ 1.852 = ' + fmt(nm, 1) + ' NM, about ' + fmt(nm)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Rule-of-thumb check</dt><dd class="widget-value" x-text="fmt(mm / 10, 1) + ' cm × ' + (chart === 'wac' ? '5.4' : '2.7') + ' = ' + fmt(thumb, 1) + ' NM'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Magnetic track</dt><dd class="widget-value" x-text="trk(tt) + '°T ' + (vr < 0 ? '+ ' : vr > 0 ? '− ' : '') + (vr === 0 ? '' : fmt(Math.abs(vr), 1) + ' ') + '= ' + mtText + '°M'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('wac-251-mm')" :aria-pressed="active === 'wac-251-mm'">251 mm on a WAC</button>
+      <button type="button" @click="preset('vnc-120-mm')" :aria-pressed="active === 'vnc-120-mm'">120 mm on a VNC</button>
+      <button type="button" @click="preset('same-120-mm-on-wac')" :aria-pressed="active === 'same-120-mm-on-wac'">120 mm on a WAC</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The scale is the conversion: on a WAC a length in millimetres is the distance in kilometres, on a VNC half that, and ÷ 1.852 turns kilometres into nautical miles. Lay the dividers on the latitude scale and the arithmetic disappears: the minutes they span are the nautical miles. The protractor gives a true track, so apply the variation: west is best, east is least.</p>
+  <details class="widget-try"><summary>Try it: a leg measures 251 mm on a WAC, the protractor reads 067°T and the isogonal shows 1.5° W. Distance and magnetic track?</summary><p>251 mm = 251 km; ÷ 1.852 = 135.5, about 136 NM (check: 25.1 cm × 5.4 = 135.5). West is best: 067 + 1.5 = 068.5°M. Press 251 mm on a WAC.</p></details>
+  <details class="widget-try"><summary>Try it: the same 120 mm on a VNC and on a WAC. Why the difference?</summary><p>The VNC is 1:500,000, so 120 mm is 60 km, about 32 NM; the WAC is 1:1,000,000, so 120 mm is 120 km, about 65 NM. Always check which chart before you convert.</p></details>
+</div>

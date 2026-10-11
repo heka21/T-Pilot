@@ -1,0 +1,135 @@
+<div class="widget" x-data="widget({
+  aoa: 4,
+  // BAKC 4.1: on a cambered wing the CP moves forward as the angle of attack rises through the normal range, then moves
+  // rapidly rearward when the flow separates at the stall (critical angle about 16°). Illustrative model: CL = 0.09 (α + 2)
+  // up to 16°, CP at 25% chord + 0.06 / CL (a cambered section's nose-down pitching moment), separation starting near
+  // the trailing edge from about 10° (the stall-sequence diagram's 12° shows it under way) and spreading forward.
+  crit: 16, cgX: 0.2,
+  get stalled() { return this.aoa > this.crit },
+  get cl() { return this.aoa <= this.crit ? 0.09 * (this.aoa + 2) : 0.09 * 18 * (1 - 0.09 * (this.aoa - this.crit)) },
+  get cpAttached() { return 0.25 + 0.06 / (0.09 * (Math.min(this.aoa, this.crit) + 2)) },
+  // past the critical angle the CP runs aft to about 42% chord within a degree or two
+  get cp() { return this.aoa <= this.crit ? this.cpAttached : this.lerp(this.cpAttached, 0.42, this.ease(this.seg(this.aoa, this.crit, this.crit + 1.5))) },
+  get sep() { return this.aoa < 10 ? 1 : this.aoa <= this.crit ? 1 - 0.4 * (this.aoa - 10) / 6 : this.lerp(0.6, 0.12, this.ease(this.seg(this.aoa, this.crit, this.crit + 2))) },
+  get gap() { return (this.cp - this.cgX) * 100 },
+  get flow() { return this.stalled ? 'Stalled: separated' : this.sep < 0.99 ? 'Separating at the rear' : 'Attached' },
+  get flowState() { return this.stalled ? 'bad' : this.sep < 0.99 ? 'warn' : 'ok' },
+  // picture: chord 380 px, pivot at 25% chord at (330, 150); local u runs forward (towards the leading edge, right),
+  // v downward; the group is turned nose-up by the angle of attack
+  C: 380,
+  yt(x) { return 0.6 * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1015 * x ** 4) },
+  yc(x) { return x < 0.4 ? 0.04 / 0.16 * (0.8 * x - x * x) : 0.04 / 0.36 * (0.2 + 0.8 * x - x * x) },
+  U(x) { return (0.25 - x) * this.C },
+  up(x) { return -(this.yc(x) + this.yt(x)) * this.C },
+  get foil() {
+    const pts = [];
+    for (let i = 0; i <= 40; i++) { const x = (1 - Math.cos(Math.PI * i / 40)) / 2; pts.push([this.U(x), this.up(x)]) }
+    for (let i = 39; i >= 0; i--) { const x = (1 - Math.cos(Math.PI * i / 40)) / 2; pts.push([this.U(x), -(this.yc(x) - this.yt(x)) * this.C]) }
+    return this.path(pts.reverse()) + ' Z';
+  },
+  // the low-pressure (suction) envelope over the top: its peak moves forward and grows with the angle of attack,
+  // and collapses and spreads when the wing stalls
+  get peak() { return this.stalled ? 0.35 : 0.3 - 0.012 * this.aoa },
+  suction(x) {
+    const a = 70 * this.cl / 1.62, w = x < this.peak ? 0.07 + 0.003 * this.aoa : 0.4;
+    const s = a * Math.exp(-(((x - this.peak) / w) ** 2));
+    return x > this.sep ? s * Math.max(0, 1 - (x - this.sep) / 0.08) : s;
+  },
+  get envelope() {
+    const top = [], base = [];
+    for (let i = 0; i <= 50; i++) { const x = 0.005 + 0.995 * i / 50; top.push([this.U(x), this.up(x) - this.suction(x)]); base.unshift([this.U(x), this.up(x)]) }
+    return this.path(top.concat(base)) + ' Z';
+  },
+  // turbulent eddies over the separated part of the upper surface
+  eddy(i) { const x = this.sep + (1.02 - this.sep) * (i + 0.5) / 5; return { x: this.U(x), y: this.up(Math.min(1, x)) - 7 - (x - this.sep) * 26, r: 4 + (x - this.sep) * 12, show: this.sep < 0.99 && x <= 1.05 } },
+  get e0() { return this.eddy(0) }, get e1() { return this.eddy(1) }, get e2() { return this.eddy(2) }, get e3() { return this.eddy(3) }, get e4() { return this.eddy(4) },
+  // screen positions of points on the chord line after the nose-up turn
+  onChord(x) { const u = this.U(x), a = this.aoa * Math.PI / 180; return { x: 330 + u * Math.cos(a), y: 150 - u * Math.sin(a) } },
+  get cpPt() { return this.onChord(this.cp) },
+  get cgPt() { return this.onChord(this.cgX) },
+  get caption() {
+    if (this.stalled) return 'Past the critical angle the flow has broken away over most of the top surface. The suction collapses, lift falls and the centre of pressure jumps rearward, far behind the CG: the nose-down couple grows suddenly, part of why the nose drops at the stall.';
+    if (this.sep < 0.99) return 'Near the critical angle the flow starts to break away at the trailing edge. The suction peak is right up near the leading edge and the CP is as far forward as it gets.';
+    if (this.aoa >= 6) return 'A higher angle of attack: the suction peak grows and moves forward, so the centre of pressure moves forward, closer to the CG. The CG does not move at all.';
+    return 'A small angle of attack, as in the cruise: the suction is spread along the top and the centre of pressure sits well back, behind the CG. Lift behind the CG makes a nose-down couple that the tailplane balances.';
+  },
+  presets: {
+    'cruise-small-angle': { aoa: 2 },
+    'climb-larger-angle': { aoa: 8 },
+    'near-critical': { aoa: 15 },
+    'stalled': { aoa: 18 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="cpt-title" class="widget-stage">
+    <title id="cpt-title">A wing section at an adjustable angle of attack with the low-pressure region over its top, the centre of pressure and lift arrow, and the fixed centre of gravity: the centre of pressure moves forward as the angle rises, then jumps rearward at the stall</title>
+    <defs>
+      <marker id="cpt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- relative airflow, from ahead (the right), parallel to the flight path -->
+    <g stroke="var(--color-sky-fg)" stroke-width="1.25" stroke-linecap="round" marker-end="url(#cpt-arrow)">
+      <line x1="630" y1="96" x2="540" y2="96"/><line x1="630" y1="150" x2="540" y2="150"/><line x1="630" y1="204" x2="540" y2="204"/>
+    </g>
+    <text x="630" y="228" font-size="12" text-anchor="end" fill="var(--color-sky-fg)">relative airflow</text>
+    <!-- the wing section, turned nose up by the angle of attack -->
+    <g :transform="'translate(330 150) rotate(' + (-aoa) + ')'">
+      <path :d="envelope" fill="var(--color-brand)" fill-opacity="0.18" stroke="var(--color-brand)" stroke-width="1.25" stroke-linejoin="round"/>
+      <path :d="foil" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" stroke-linejoin="round"/>
+      <!-- chord line, extended forward to show the angle against the airflow -->
+      <line x1="-285" y1="0" x2="190" y2="0" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+      <g fill="none" stroke="var(--color-bad)" stroke-width="1.5" stroke-linecap="round">
+        <circle x-show="e0.show" :cx="e0.x" :cy="e0.y" :r="e0.r" stroke-dasharray="10 5"/>
+        <circle x-show="e1.show" :cx="e1.x" :cy="e1.y" :r="e1.r" stroke-dasharray="10 5"/>
+        <circle x-show="e2.show" :cx="e2.x" :cy="e2.y" :r="e2.r" stroke-dasharray="10 5"/>
+        <circle x-show="e3.show" :cx="e3.x" :cy="e3.y" :r="e3.r" stroke-dasharray="10 5"/>
+        <circle x-show="e4.show" :cx="e4.x" :cy="e4.y" :r="e4.r" stroke-dasharray="10 5"/>
+      </g>
+    </g>
+    <!-- angle of attack between the extended chord and the airflow -->
+    <line x1="520" y1="150" x2="440" y2="150" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="528" y="138" font-size="13" fill="var(--color-fg-muted)" class="num" x-text="'α ' + fmt(aoa) + '°'"></text>
+    <!-- CG (fixed by loading) with weight, CP with lift at right angles to the airflow -->
+    <line stroke="var(--color-info)" stroke-width="2" marker-end="url(#cpt-arrow)" :x1="cgPt.x" :y1="cgPt.y + 6" :x2="cgPt.x" :y2="cgPt.y + 88"/>
+    <text font-size="13" fill="var(--color-info-fg)" font-weight="600" :x="cgPt.x + 8" :y="cgPt.y + 84">weight</text>
+    <g :transform="'translate(' + cgPt.x + ' ' + cgPt.y + ')'">
+      <circle r="7" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="1.5"/>
+      <path d="M0 -7 A7 7 0 0 1 7 0 L0 0 Z M0 7 A7 7 0 0 1 -7 0 L0 0 Z" fill="var(--color-fg)"/>
+    </g>
+    <text font-size="13" font-weight="700" fill="var(--color-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="cgPt.x + 12" :y="cgPt.y + 18">CG</text>
+    <line stroke="var(--color-brand)" stroke-width="2.5" marker-end="url(#cpt-arrow)" :x1="cpPt.x" :y1="cpPt.y - 6" :x2="cpPt.x" :y2="cpPt.y - (stalled ? 60 : 88)"/>
+    <circle r="6" fill="var(--color-brand)" :cx="cpPt.x" :cy="cpPt.y"/>
+    <text font-size="13" font-weight="700" fill="var(--color-brand-fg)" text-anchor="end" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="cpPt.x - 10" :y="cpPt.y - (stalled ? 66 : 76)">lift at the CP</text>
+    <!-- the gap between them: the arm of the nose-down couple -->
+    <line stroke="var(--color-warn)" stroke-width="2" stroke-linecap="round" :x1="cpPt.x" :x2="cgPt.x" y1="256" y2="256"/>
+    <line stroke="var(--color-warn)" stroke-width="1" stroke-dasharray="2 3" :x1="cpPt.x" :x2="cpPt.x" :y1="cpPt.y + 8" y2="256"/>
+    <text font-size="12" fill="var(--color-warn-fg)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="(cpPt.x + cgPt.x) / 2" y="276" text-anchor="middle" x-text="'CP ' + fmt(gap) + '% of chord behind CG'"></text>
+    <!-- the upper-surface labels -->
+    <text x="150" y="30" font-size="13" fill="var(--color-brand-fg)" x-show="!stalled">low pressure over the top</text>
+    <text x="150" y="30" font-size="13" fill="var(--color-bad-fg)" font-weight="600" x-show="stalled">flow separated: suction collapses</text>
+    <text x="20" y="294" font-size="12" fill="var(--color-fg-faint)">Leading edge on the right. Illustrative section and pressures.</text>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control sm:col-span-2">
+      <label for="cpt-aoa">Angle of attack <output for="cpt-aoa" x-text="fmt(aoa) + '°'"></output></label>
+      <input type="range" id="cpt-aoa" min="0" max="20" step="1" x-model.number="aoa">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="stalled ? 'bad' : ''"><dt class="widget-label">Centre of pressure</dt><dd class="widget-value" x-text="fmt(cp * 100) + '% chord from the LE'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Centre of gravity</dt><dd class="widget-value">20%, fixed</dd></div>
+    <div class="widget-readout" :class="flowState"><dt class="widget-label">Airflow over the top</dt><dd class="widget-value"><span x-text="flow"></span><span class="widget-flag bad" x-show="stalled">stall</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cruise-small-angle')" :aria-pressed="active === 'cruise-small-angle'">Cruise 2°</button>
+      <button type="button" @click="preset('climb-larger-angle')" :aria-pressed="active === 'climb-larger-angle'">Slower 8°</button>
+      <button type="button" @click="preset('near-critical')" :aria-pressed="active === 'near-critical'">Near critical 15°</button>
+      <button type="button" @click="preset('stalled')" :aria-pressed="active === 'stalled'">Stalled 18°</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Raise the angle of attack and the suction peak over the top grows and moves forward, taking the centre of pressure with it; the CG, set by the loading, stays put. Past the critical angle (about 16° here) the flow breaks away from the rear, the suction collapses and the CP jumps rearward, so the nose drops. Lift stays at right angles to the relative airflow, not to the chord. The section, pressures and percentages are illustrative.</p>
+  <details class="widget-try"><summary>Try it: the exam asks which way the CP moves as the angle of attack increases. Check it.</summary><p>Step from Cruise 2° to Slower 8° to Near critical 15°: the CP moves forward along the chord each time (here from about 42% to 29%). Then press Stalled 18°: it jumps back to about 42%, well behind the CG.</p></details>
+  <details class="widget-try"><summary>Try it: why does the nose tend to drop at the stall?</summary><p>Press Near critical, then Stalled: the gap between the CP and the CG (the arm of the nose-down couple) suddenly grows as the CP runs aft, and the lift itself falls. Both pitch the nose down.</p></details>
+</div>

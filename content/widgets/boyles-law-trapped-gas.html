@@ -1,0 +1,128 @@
+<div class="widget" x-data="widget({
+  start: 0, alt: 8000, v1: 150,
+  // ISA pressures from PHFC 2.4 (1013, about 753 at 8,000, 700 at 10,000, 500 at 18,000, 375 at 25,000) and
+  // PHFC 2.11 (843 at 5,000), joined log-linearly
+  anchors: [[0, 1013], [5000, 843], [8000, 753], [10000, 700], [18000, 500], [25000, 375]],
+  pAt(ft) {
+    const a = this.anchors;
+    for (let i = 1; i < a.length; i++) if (ft <= a[i][0]) { const f = (ft - a[i - 1][0]) / (a[i][0] - a[i - 1][0]); return a[i - 1][1] * Math.pow(a[i][1] / a[i - 1][1], f) }
+    return a[a.length - 1][1];
+  },
+  // Boyle: P1 V1 = P2 V2
+  get p1() { return this.pAt(this.start) },
+  get p2() { return this.pAt(this.alt) },
+  get ratio() { return this.p1 / this.p2 },
+  get v2() { return this.v1 * this.ratio },
+  get dir() { return this.alt > this.start ? 'climb' : this.alt < this.start ? 'descent' : 'level' },
+  get change() {
+    if (this.dir === 'level') return ['No change', 'ok'];
+    return this.dir === 'climb' ? ['Expanding: gut and teeth', 'warn'] : ['Shrinking: ears and sinuses', 'warn'];
+  },
+  // the picture: altitude 0..25,000 ft up y 270..40; the pocket's area in proportion to its volume
+  Y(ft) { return 270 - ft / 25000 * 230 },
+  r(v) { return 42 * Math.sqrt(v / 150) },
+  get inside() { return this.r(this.v2) >= 44 },
+  get labelY() { return this.inside ? 162 : 162 + this.r(this.v2) + 10 + 28 * this.p2 / 1013 + 20 },
+  hpa(p) { return String(Math.round(p)) },
+  // pressure arrows around the pocket, longer for higher outside pressure
+  arrow(i) {
+    const a = this.pol(270, 162, this.r(this.v2) + 10, i * 45), len = 28 * this.p2 / 1013, b = this.pol(270, 162, this.r(this.v2) + 10 + len, i * 45);
+    return 'M' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + ' L' + a.x.toFixed(1) + ' ' + a.y.toFixed(1);
+  },
+  // volume compared with sea level, against altitude: x 410..610, y ×1 (250) to ×3 (60)
+  CX(ft) { return 410 + ft / 25000 * 200 },
+  CY(k) { return 250 - (k - 1) / 2 * 190 },
+  get curve() { const pts = []; for (let f = 0; f <= 25000; f += 500) pts.push([this.CX(f), this.CY(1013 / this.pAt(f))]); return this.path(pts) },
+  get caption() {
+    const r = this.fmt(this.ratio, 2);
+    if (this.dir === 'level') return 'Same height, same pressure, same volume. Move the aeroplane up or down and watch the pocket answer to the outside pressure.';
+    if (this.dir === 'climb') return 'Climbing from ' + this.fmt(this.start) + ' to ' + this.fmt(this.alt) + ' ft the outside pressure falls from ' + this.hpa(this.p1) + ' to ' + this.hpa(this.p2) + ' hPa, so the trapped gas grows by ' + r + ' times. Where it cannot escape quickly, in the gut or under a filling, it hurts on the climb.' + (this.alt >= 17500 && this.alt <= 18500 && this.start === 0 ? ' Half the pressure, double the volume.' : '');
+    return 'Descending from ' + this.fmt(this.start) + ' to ' + this.fmt(this.alt) + ' ft the outside pressure rises from ' + this.hpa(this.p1) + ' to ' + this.hpa(this.p2) + ' hPa and the gas shrinks to ' + r + ' of its volume. In the middle ear and sinuses air must get back in to fill the space: that is why ears and sinuses hurt on the descent.';
+  },
+  presets: {
+    'gut-at-8000': { start: 0, alt: 8000, v1: 150 },
+    'climb-to-10000': { start: 0, alt: 10000, v1: 150 },
+    'gut-at-18000': { start: 0, alt: 18000, v1: 150 },
+    'pocket-120-at-18000': { start: 0, alt: 18000, v1: 120 },
+    'down-from-10000': { start: 10000, alt: 0, v1: 150 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="blg-title" class="widget-stage">
+    <title id="blg-title">A pocket of trapped gas that grows as the aeroplane climbs and the outside pressure falls, with an altitude scale and a chart of volume against altitude</title>
+    <defs>
+      <marker id="blg-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <!-- altitude scale -->
+    <line x1="80" y1="40" x2="80" y2="270" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num">
+      <text x="72" y="274">0</text><text x="72" y="228">5,000</text><text x="72" y="182">10,000</text><text x="72" y="136">15,000</text><text x="72" y="90">20,000</text><text x="72" y="44">25,000 ft</text>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1"><line x1="76" y1="224" x2="84" y2="224"/><line x1="76" y1="178" x2="84" y2="178"/><line x1="76" y1="132" x2="84" y2="132"/><line x1="76" y1="86" x2="84" y2="86"/></g>
+    <!-- where the gas was trapped, and where the aeroplane is now -->
+    <line x1="80" x2="80" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" :y1="Y(start)" :y2="Y(alt)"/>
+    <circle r="5" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2" cx="80" :cy="Y(start)"/>
+    <g :transform="'translate(120 ' + (Y(alt) - 2) + ')'">
+      <!-- python -m tools.diagrams.plane side, scale 0.4, no gear, colour brand -->
+      <g transform="translate(0 0) rotate(0) scale(0.4)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text x="96" font-size="12" fill="var(--color-fg-muted)" :y="Y(start) + (start > alt ? -10 : 18)" x-show="start !== alt">trapped here</text>
+
+    <!-- the pocket of gas, with the outside pressure pushing on it -->
+    <circle cx="270" cy="162" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="2" :r="r(v2)"/>
+    <circle cx="270" cy="162" fill="none" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-dasharray="4 3" :r="r(v1)" x-show="start !== alt"/>
+    <g stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" marker-end="url(#blg-arrow)" fill="none">
+      <path :d="arrow(0)"/><path :d="arrow(1)"/><path :d="arrow(2)"/><path :d="arrow(3)"/><path :d="arrow(4)"/><path :d="arrow(5)"/><path :d="arrow(6)"/><path :d="arrow(7)"/>
+    </g>
+    <text x="270" font-size="15" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :y="labelY - (inside ? 4 : 0)" x-text="fmt(v2) + ' mL'"></text>
+    <text x="270" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" :y="labelY + (inside ? 14 : 16)" x-text="'× ' + fmt(ratio, 2)"></text>
+    <text x="270" y="22" font-size="12" text-anchor="middle" fill="var(--color-info)" x-text="'outside pressure ' + hpa(p2) + ' hPa'"></text>
+
+    <!-- volume against altitude -->
+    <line x1="410" y1="250" x2="610" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="410" y1="60" x2="410" y2="250" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <g stroke="var(--color-line)" stroke-width="1"><line x1="410" y1="155" x2="610" y2="155"/><line x1="410" y1="60" x2="610" y2="60"/></g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="end" class="num"><text x="404" y="254">×1</text><text x="404" y="159">×2</text><text x="404" y="64">×3</text></g>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text x="410" y="266">0</text><text x="490" y="266">10,000</text><text x="554" y="266">18,000</text></g>
+    <text x="510" y="284" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">altitude (ft)</text>
+    <text x="410" y="40" font-size="12" fill="var(--color-fg-muted)">volume compared with sea level</text>
+    <line x1="554" x2="554" y1="250" :y2="CY(1013 / 500)" stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="548" y="146" font-size="11" text-anchor="end" fill="var(--color-fg-muted)">half the pressure</text>
+    <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" :d="curve"/>
+    <circle r="4" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="2" :cx="CX(start)" :cy="CY(1013 / p1)"/>
+    <circle r="5" fill="var(--color-brand)" :cx="CX(alt)" :cy="CY(1013 / p2)"/>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="blg-start">Gas trapped at <output for="blg-start" x-text="fmt(start) + ' ft'"></output></label>
+      <input type="range" id="blg-start" min="0" max="25000" step="500" x-model.number="start">
+    </div>
+    <div class="widget-control">
+      <label for="blg-alt">The aeroplane is now at <output for="blg-alt" x-text="fmt(alt) + ' ft'"></output></label>
+      <input type="range" id="blg-alt" min="0" max="25000" step="500" x-model.number="alt">
+    </div>
+    <div class="widget-control">
+      <label for="blg-v1">Volume when trapped <output for="blg-v1" x-text="v1 + ' mL'"></output></label>
+      <input type="range" id="blg-v1" min="50" max="200" step="10" x-model.number="v1">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Pressure ratio P1 ÷ P2</dt><dd class="widget-value num" x-text="hpa(p1) + ' ÷ ' + hpa(p2) + ' = ' + fmt(ratio, 2)"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Volume now</dt><dd class="widget-value" x-text="fmt(v2) + ' mL'"></dd></div>
+    <div class="widget-readout" :class="change[1]"><dt class="widget-label">What hurts</dt><dd class="widget-value" x-text="change[0]"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('gut-at-8000')" :aria-pressed="active === 'gut-at-8000'">Gut at 8,000</button>
+      <button type="button" @click="preset('climb-to-10000')" :aria-pressed="active === 'climb-to-10000'">10,000</button>
+      <button type="button" @click="preset('gut-at-18000')" :aria-pressed="active === 'gut-at-18000'">18,000</button>
+      <button type="button" @click="preset('pocket-120-at-18000')" :aria-pressed="active === 'pocket-120-at-18000'">120 mL to 18,000</button>
+      <button type="button" @click="preset('down-from-10000')" :aria-pressed="active === 'down-from-10000'">Down from 10,000</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Volume follows pressure inversely, $V_2 = V_1 \times P_1 / P_2$: about 1.5 times at 10,000 ft and double at 18,000 ft, where the pressure is half. Climbing, trapped gas swells (gut, teeth); descending, it shrinks and air must get back in (ears, sinuses). The pressures are the lessons' ISA values, joined smoothly between them.</p>
+  <details class="widget-try"><summary>Try it: a 150 mL pocket of gas in the gut at sea level. How big is it at 8,000 ft, where the pressure is about 753 hPa?</summary><p>Press Gut at 8,000: 1013 ÷ 753 = 1.35, so 150 mL becomes about 202 mL, a third bigger at an ordinary cruising level.</p></details>
+  <details class="widget-try"><summary>Try it: a pocket trapped at 10,000 ft is carried down to sea level. Grow or shrink, and by how much?</summary><p>Press Down from 10,000: the pressure rises from 700 to 1013 hPa and the volume falls to about 0.69, roughly two-thirds. In the middle ear that shrinking pulls the eardrum in unless air gets back up the eustachian tube.</p></details>
+</div>

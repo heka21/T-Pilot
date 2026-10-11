@@ -1,0 +1,141 @@
+<div class="widget" x-data="timeline({
+  duration: 20, loop: false, how: 'idle', heat: false,
+  // illustrative model, no numbers in the lessons: cylinder head temperature as a fraction of its cruise value
+  // through a descent from 4,500 ft back to the circuit (BAKC 3.3), for an idle glide, an idle glide with brief
+  // bursts of throttle, or some power on with the descent in stages
+  hows: { idle: 'Idle glide', bursts: 'Idle, with throttle bursts', stages: 'Some power, in stages' },
+  alt(tt) {
+    if (this.how === 'stages') return tt < 0.1 ? 1 : tt < 0.35 ? 1 - 0.5 * this.seg(tt, 0.1, 0.35) : tt < 0.45 ? 0.5 : 0.5 - 0.5 * this.seg(tt, 0.45, 0.8);
+    return 1 - this.seg(tt, 0.1, 0.55);
+  },
+  burst(tt) { let b = 0; [0.22, 0.34, 0.46].forEach((c) => { if (tt >= c) b += 0.1 * Math.exp(-(tt - c) / 0.03) * this.seg(tt, c, c + 0.01) }); return b },
+  cht(tt) {
+    if (tt < 0.1) return 1;
+    if (this.how === 'stages') {
+      const a = 1 - 0.12 * this.ease(this.seg(tt, 0.1, 0.35)) + 0.03 * this.ease(this.seg(tt, 0.35, 0.45)) - 0.1 * this.ease(this.seg(tt, 0.45, 0.8));
+      return a + 0.02 * this.ease(this.seg(tt, 0.8, 1));
+    }
+    const floor = this.how === 'bursts' ? 0.47 : 0.33;
+    const fall = floor + (1 - floor) * Math.exp(-(Math.min(tt, 0.55) - 0.1) / 0.1);
+    const after = tt > 0.55 ? 0.15 * this.ease(this.seg(tt, 0.55, 1)) : 0;
+    return fall + after + (this.how === 'bursts' ? this.burst(tt) : 0);
+  },
+  get c() { return this.cht(this.t) },
+  get rate() { return (this.cht(Math.max(0, this.t - 0.02)) - this.c) / 0.02 },
+  get descending() { return this.t >= 0.1 && this.alt(this.t) > 0.001 && !(this.how === 'stages' && this.t >= 0.35 && this.t < 0.45) },
+  get atIdle() { return this.how !== 'stages' && this.t >= 0.1 && this.t < 0.55 },
+  get shock() { return this.rate > 1.6 },
+  get cold() { return this.c < 0.45 },
+  // plug fouling builds with time at idle; bursts clear some of it
+  get fouling() { const idleT = this.how === 'stages' ? 0 : Math.max(0, Math.min(this.t, 0.55) - 0.1); return this.how === 'bursts' ? idleT * 0.4 : idleT },
+  get iceRisk() { return this.atIdle && !this.heat },
+  // chart: t across x 70..600; profile alt 0..1 at y 140..40; CHT 0.2..1.1 at y 300..190
+  X(tt) { return 70 + tt * 530 },
+  AY(a) { return 140 - a * 100 },
+  CY(c) { return 300 - (c - 0.2) / 0.9 * 110 },
+  pathOf(f, Y, t1) { const pts = []; for (let tt = 0; tt <= t1 + 1e-9; tt += 0.005) pts.push([this.X(tt), Y(f(tt))]); pts.push([this.X(t1), Y(f(t1))]); return this.path(pts) },
+  get profFull() { return this.pathOf((tt) => this.alt(tt), (a) => this.AY(a), 1) },
+  get chtFull() { return this.pathOf((tt) => this.cht(tt), (c) => this.CY(c), 1) },
+  get chtDone() { return this.pathOf((tt) => this.cht(tt), (c) => this.CY(c), this.t) },
+  get planeAt() { const tt = this.t, a = this.alt(tt), a2 = this.alt(Math.min(1, tt + 0.01)); const ang = Math.atan2(this.AY(a2) - this.AY(a), this.X(tt + 0.01) - this.X(tt)) * 180 / Math.PI; return { x: this.X(tt), y: this.AY(a) - 6, r: ang } },
+  get steps() {
+    if (this.how === 'stages') return [{ at: 0, label: 'Cruise' }, { at: 0.1, label: 'First stage down' }, { at: 0.35, label: 'Level, warm up' }, { at: 0.45, label: 'Second stage' }, { at: 0.8, label: 'Circuit' }];
+    return [{ at: 0, label: 'Cruise' }, { at: 0.1, label: 'Throttle closed' }, { at: 0.3, label: 'Cooling fast' }, { at: 0.55, label: 'Circuit' }];
+  },
+  get caption() {
+    const t = this.t;
+    if (t < 0.1) return 'Cruise in the training area at 4,500 ft: the cylinders are working and warm. Time to come home.';
+    if (this.how === 'stages') {
+      if (t < 0.35) return 'Some power on and a moderate rate of descent: the cylinders keep making heat, so the cylinder head temperature eases down instead of plunging.';
+      if (t < 0.45) return 'Levelling between stages gives the engine a breather: the temperature recovers a little. The butterfly is not sitting nearly closed, so throttle ice is less likely too.';
+      if (t < 0.8) return 'The second stage: still a gentle fall. The plugs stay clean because the engine never sits rich and cool at idle.';
+      return 'Joining the circuit with a warm engine, clean plugs and the power there when you ask for it.';
+    }
+    if (t < 0.3) return 'Throttle closed: the cylinders make little heat while a fast descent blows a lot of cold air over them. The heads cool rapidly and unevenly, setting up stresses that can crack cylinders: shock cooling.';
+    if (t < 0.55) return this.how === 'bursts' ? 'Brief bursts of throttle warm the engine and clear the plugs, as some POHs recommend, but most of the glide is still at idle.' : 'Still at idle: rich and cool, so the plugs are fouling, and the nearly closed butterfly in humid air is exactly where carburettor ice forms' + (this.heat ? ' (carburettor heat applied before closing the throttle helps).' : '.');
+    return 'At the circuit with a cold engine: the cylinder heads are below where they should be, the plugs may be fouled, and now you need power.';
+  },
+  pick() { this.pause(); this.t = 0; this.active = null },
+  presets: {
+    'cruise-before-descent': { how: 'idle', heat: false, t: 0.05 },
+    'idle-glide-shock-cooling': { how: 'idle', heat: false, t: 0.25 },
+    'idle-glide-arrives-cold': { how: 'idle', heat: false, t: 0.62 },
+    'idle-with-bursts': { how: 'bursts', heat: true, t: 0.5 },
+    'some-power-in-stages': { how: 'stages', heat: true, t: 0.62 },
+  },
+})">
+  <svg viewBox="0 0 640 320" role="img" aria-labelledby="ldc-title" class="widget-stage">
+    <title id="ldc-title">A descent from 4,500 ft back to the circuit drawn as a profile, with the cylinder head temperature traced below it: an idle glide makes it plunge, some power on in stages keeps it up</title>
+    <!-- profile -->
+    <line x1="70" y1="140" x2="600" y2="140" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" y1="40" x2="600" y2="40" stroke="var(--color-line)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="62" y="44" font-size="12" text-anchor="end" fill="var(--color-fg-faint)" class="num">4,500</text>
+    <text x="62" y="144" font-size="12" text-anchor="end" fill="var(--color-fg-faint)">circuit</text>
+    <path fill="none" stroke="var(--color-line-strong)" stroke-width="1.5" stroke-dasharray="4 3" :d="profFull"/>
+    <g :transform="'translate(' + planeAt.x + ' ' + planeAt.y + ') rotate(' + planeAt.r + ')'">
+      <!-- python -m tools.diagrams.plane side, scale 0.4, pitch minus 4, colour fg, fill surface, no gear (the outer group sets the angle) -->
+      <g transform="translate(0 0) rotate(4) scale(0.4)"><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" :x="planeAt.x + 14" :y="planeAt.y - 12" :fill="atIdle ? 'var(--color-bad-fg)' : 'var(--color-ok-fg)'" x-text="t < 0.1 ? 'cruise power' : atIdle ? 'idle' : 'some power'" x-show="planeAt.x < 520"></text>
+    <!-- CHT chart -->
+    <rect x="70" :y="CY(0.45)" width="530" :height="300 - CY(0.45)" fill="var(--color-info)" fill-opacity="0.1"/>
+    <text x="596" y="297" font-size="12" text-anchor="end" fill="var(--color-info-fg)">too cold: fouling plugs, carburettor ice</text>
+    <line x1="70" y1="300" x2="600" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <line x1="70" y1="180" x2="70" y2="300" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <text x="22" y="246" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" transform="rotate(-90 22 246)">cylinder head temp</text>
+    <text x="74" :y="CY(1) - 8" font-size="12" fill="var(--color-fg-faint)">cruise</text>
+    <path fill="none" stroke="var(--color-line-strong)" stroke-width="1.5" stroke-dasharray="4 3" :d="chtFull"/>
+    <path fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" :stroke="how === 'stages' ? 'var(--color-ok)' : 'var(--color-bad)'" :d="chtDone"/>
+    <circle r="5" :cx="X(t)" :cy="CY(c)" :fill="shock ? 'var(--color-bad)' : cold ? 'var(--color-info)' : 'var(--color-brand)'"/>
+    <text font-size="12" font-weight="600" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" fill="var(--color-bad-fg)" :x="X(t) + 10" :y="CY(c) - 10" x-show="shock">shock cooling</text>
+    <text x="335" y="316" font-size="12" text-anchor="middle" fill="var(--color-fg-faint)">time in the descent (shape only, not to scale)</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the descent'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ldc-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Progress through the descent">
+    <span class="widget-clock" x-text="Math.round(alt(t) * 100) + '% of the way up'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ldc-how">How you come down</label>
+      <select id="ldc-how" class="input" x-model="how" @change="pick()">
+        <option value="idle">Idle glide all the way</option>
+        <option value="bursts">Idle glide, brief throttle bursts</option>
+        <option value="stages">Some power on, descending in stages</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="ldc-heat" class="cursor-pointer"><span>Carburettor heat applied before reducing power</span>
+        <input type="checkbox" id="ldc-heat" x-model="heat" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="shock ? 'bad' : cold ? 'warn' : 'ok'"><dt class="widget-label">Cylinder heads</dt><dd class="widget-value"><span x-text="shock ? 'cooling fast' : cold ? 'too cold' : c > 0.95 ? 'cruise temperature' : rate < -0.01 ? 'recovering, still below cruise' : 'warm, easing down'"></span><span class="widget-flag bad" x-show="shock">crack risk</span></dd></div>
+    <div class="widget-readout" :class="fouling > 0.3 ? 'bad' : fouling > 0.12 ? 'warn' : 'ok'"><dt class="widget-label">Spark plugs</dt><dd class="widget-value" x-text="fouling > 0.3 ? 'fouling: long time rich and cool' : fouling > 0.12 ? 'starting to foul' : 'clean'"></dd></div>
+    <div class="widget-readout" :class="iceRisk ? 'bad' : atIdle ? 'warn' : 'ok'"><dt class="widget-label">Carburettor ice, humid day</dt><dd class="widget-value" x-text="iceRisk ? 'butterfly nearly closed: likely' : atIdle ? 'heat on: guarded, keep watching' : 'throttle open: less likely'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('cruise-before-descent')" :aria-pressed="active === 'cruise-before-descent'">Cruise</button>
+      <button type="button" @click="preset('idle-glide-shock-cooling')" :aria-pressed="active === 'idle-glide-shock-cooling'">Idle glide: shock cooling</button>
+      <button type="button" @click="preset('idle-glide-arrives-cold')" :aria-pressed="active === 'idle-glide-arrives-cold'">Arriving cold</button>
+      <button type="button" @click="preset('idle-with-bursts')" :aria-pressed="active === 'idle-with-bursts'">Throttle bursts</button>
+      <button type="button" @click="preset('some-power-in-stages')" :aria-pressed="active === 'some-power-in-stages'">Power on, in stages</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Closing the throttle for a long glide does three things at once: the cylinder heads cool fast and unevenly (shock cooling), the engine sits rich and cool (fouled plugs), and the butterfly sits nearly closed (carburettor ice). Some power on, a moderate rate and a level stage keep all three away. The curves are illustrative shapes; the POH gives your engine's limits.</p>
+  <details class="widget-try"><summary>Try it: why is an idle glide from 4,500 ft hard on the engine but pleasant for you?</summary><p>Play the idle glide: the temperature plunges as soon as the throttle closes, because the engine makes little heat while the fast descent blows cold air over it. Parts cool at different rates, which can crack cylinders, and the long spell at idle fouls the plugs (BAKC 3.3).</p></details>
+  <details class="widget-try"><summary>Try it: what does the POH-style technique change?</summary><p>Choose Some power on, descending in stages, with carburettor heat as the POH requires: the line eases down instead of plunging, the plugs stay clean and the butterfly is never nearly closed. Some POHs also suggest brief bursts of throttle during a long glide; try them to see them help, but less.</p></details>
+</div>

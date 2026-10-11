@@ -1,0 +1,238 @@
+<div class="widget" x-data="timeline({
+  duration: 24, loop: false,
+  scen: 'stages',
+  // RBKA 4.2's hypothetical aeroplane: VFO 85, VFE 105 (first stage), VFE 95 (full flap). The lesson gives no stall
+  // speeds: VS1 55 (clean) is RBKA 3.6's book figure and VS0 50 (full flap) gives the 65 kt approach of RBKA 3.2 and
+  // 3.7 at 1.3 × VS0 (as flapless-vs-flap-approach); the first stage's 52 kt is interpolated. Heights, timings and
+  // the lift bar are illustrative.
+  vfo: 85, vfeFirst: 105, vfeFull: 95, vs0: 50, vs1: 55, vsFirst: 52,
+  // flap 2 = full, 1 = first stage, 0 = up
+  get fl() {
+    const t = this.t, s = this.scen;
+    if (s === 'all') return 2 - 2 * this.at(0.36, 0.39);
+    const first = 2 - this.at(0.36, 0.39);
+    return s === 'nose' ? first - this.at(0.91, 0.94) : first - this.at(0.73, 0.76);
+  },
+  get vs() { const f = this.fl; return f >= 1 ? this.lerp(this.vsFirst, this.vs0, f - 1) : this.lerp(this.vs1, this.vsFirst, f) },
+  get v() {
+    const t = this.t, s = this.scen;
+    if (t < 0.36) return 65;
+    if (s === 'all') return t < 0.55 ? 65 - 7 * this.eased(0.39, 0.55) : 58 + 17 * this.eased(0.55, 0.78);
+    if (s === 'nose') {
+      if (t < 0.80) return 65 + 35 * this.eased(0.47, 0.68);
+      return 100 - 15 * this.eased(0.80, 0.90);
+    }
+    return 65 + 10 * this.eased(0.47, 0.70);
+  },
+  // climb rate keypoints [t, ft per 0.01 of t], integrated for the height above the runway
+  rates: {
+    stages: [[0, -6.7], [0.15, -6.7], [0.25, 3], [0.35, 3], [0.40, 1], [0.47, 4], [0.72, 4.5], [0.76, 3], [0.80, 4], [1, 4]],
+    all: [[0, -6.7], [0.15, -6.7], [0.25, 3], [0.36, 3], [0.42, -9], [0.55, 0], [0.75, 2.5], [0.80, 4], [1, 4]],
+    nose: [[0, -6.7], [0.15, -6.7], [0.25, 3], [0.35, 3], [0.40, 1], [0.47, 4], [0.55, 1], [0.80, 1], [0.84, 8], [0.90, 5], [0.94, 3], [1, 4]],
+  },
+  rateAt(u) { const k = this.rates[this.scen]; for (let i = 1; i < k.length; i++) if (u <= k[i][0]) return this.lerp(k[i - 1][1], k[i][1], this.seg(u, k[i - 1][0], k[i][0])); return k[k.length - 1][1] },
+  get track() { const out = [200]; let h = 200; for (let i = 1; i <= 400; i++) { h += this.rateAt((i - 0.5) / 400) * 0.25; out.push(h) } return out },
+  hAt(u) { const i = this.clamp(u, 0, 1) * 400, a = Math.floor(i), b = Math.min(400, a + 1); return this.lerp(this.track[a], this.track[b], i - a) },
+  get h() { return this.hAt(this.t) },
+  get rate() { return this.rateAt(this.t) },
+  // lift / weight: above 1 while the climb rate is increasing, below while it is falling (illustrative)
+  get lift() { const d = (this.rateAt(this.t + 0.005) - this.rateAt(this.t - 0.005)); return this.clamp(1 + 0.08 * d, 0.6, 1.3) },
+  get pitch() {
+    const t = this.t, s = this.scen;
+    if (t < 0.15) return -2;
+    let p = -2 + 9 * this.eased(0.15, 0.22);
+    if (s === 'all') p += 4 * this.eased(0.42, 0.50) * (1 - this.eased(0.58, 0.70));
+    if (s === 'nose') p -= 7 * this.eased(0.47, 0.55) * (1 - this.eased(0.80, 0.84));
+    if (s === 'nose') p += 3 * this.eased(0.80, 0.84) * (1 - this.eased(0.88, 0.94));
+    return p;
+  },
+  get flapOut() { return this.fl > 0.001 },
+  get flapMoving() { return Math.abs(this.fl - Math.round(this.fl)) > 0.001 },
+  get flapName() { const f = this.fl; return this.flapMoving ? 'moving up' : f > 1.5 ? 'Full' : f > 0.5 ? 'First stage' : 'Up' },
+  get vfeNow() { return this.fl > 1.001 ? this.vfeFull : this.vfeFirst },
+  get margin() { return this.v - this.vs },
+  get marginState() { return this.margin < 5 ? 'bad' : this.margin < 10 ? 'warn' : 'ok' },
+  get limits() {
+    if (!this.flapOut) return { t: 'Flap up: no flap limits', c: 'ok' };
+    if (this.v > this.vfeNow) return { t: 'Over VFE ' + this.vfeNow, c: 'bad' };
+    if (this.flapMoving && this.v > this.vfo) return { t: 'Moving flap above VFO 85', c: 'bad' };
+    if (this.v > this.vfo) return { t: 'Inside VFE ' + this.vfeNow + ', above VFO 85: the flap may not move', c: 'warn' };
+    return { t: 'Below VFO 85: the flap may move (VFE ' + this.vfeNow + ')', c: 'ok' };
+  },
+  get fpath() {
+    if (this.t < 0.15) return { t: 'Descending on final', c: '' };
+    if (this.rate < -0.5) return { t: 'Sinking, ' + this.fmt(this.h) + ' ft above the runway', c: this.h < 80 ? 'bad' : 'warn' };
+    if (this.rate < 1.5) return { t: 'Barely climbing, ' + this.fmt(this.h) + ' ft', c: this.h < 80 ? 'warn' : '' };
+    return { t: 'Climbing, ' + this.fmt(this.h) + ' ft', c: 'ok' };
+  },
+  steps: [
+    { at: 0, label: 'Short final' },
+    { at: 0.15, label: 'Go-around: power and attitude' },
+    { at: 0.35, label: 'First stage up' },
+    { at: 0.47, label: 'Accelerate' },
+    { at: 0.72, label: 'Flap up' },
+  ],
+  get caption() {
+    const t = this.t, s = this.scen;
+    if (t < 0.15) return 'Short final at 65 kt with full flap, low over the runway. The flap is adding lift, so the wing stalls at only 50 kt (VS0); clean, it would stall at 55 (VS1).';
+    if (t < 0.35) return 'Go-around: full power and climb attitude together. The power stops the descent and the attitude stops the speed rising. The flap stays where it is until the aeroplane is climbing.';
+    if (s === 'all' && t < 0.55) return 'All the flap up at once: the wing loses the lift the flap was giving, lift falls short of the weight and the aeroplane sinks towards the runway, while the stall speed jumps to the clean 55 kt. Raising the nose to stop the sink takes you closer to the stall.';
+    if (s === 'all' && t < 0.72) return 'It recovers now, but it came within a few tens of feet of the runway, slow and close to the stall: the reason flap comes up a stage at a time.';
+    if (s === 'all') return 'Clean and climbing at last, but only after a sink near the ground that the staged retraction avoids.';
+    if (t < 0.47) return 'Climbing, so raise the first, high-drag stage. Most of the drag goes and most of the extra lift stays: a small sink, the stall speed rises a little (to about 52 kt), and a touch more nose-up holds it.';
+    if (s === 'nose' && t < 0.55) return 'The nose is allowed to drop. At full power with flap out, the speed builds quickly.';
+    if (s === 'nose' && t < 0.80) return '100 kt with the first stage out: inside its 105 kt VFE, so you may fly like this, but above the 85 kt VFO, so you may not retract the flap until you slow again.';
+    if (s === 'nose' && t < 0.91) return 'Raise the nose and slow to 85 kt (VFO) before the flap can come up: time spent that holding the climb attitude would have saved.';
+    if (s === 'nose') return 'At 85 kt the flap may move, and up it comes. Hold the attitude and keep the speed in the white arc until the flap is up.';
+    if (t < 0.72) return 'Hold the climb attitude and let the speed build in the white arc. Still below VFO 85, so the flap may move once you are climbing positively, well above the clean stall speed.';
+    return 'Climbing positively at 75 kt, 20 kt above the clean stall speed of 55, and below VFO 85: raise the rest of the flap. A small sink, then a clean climb away.';
+  },
+  // picture: side view x 0..470, 0.5 px per ft, runway at y 300; airspeed tape at x 560..600, 40..110 kt
+  X(u) { return 80 + 360 * u },
+  Y(h) { return 300 - 10.7 - h * 0.5 },
+  get px() { return this.X(this.t) },
+  get py() { return this.Y(this.h) },
+  get route() { const pts = []; for (let i = 0; i <= 100; i++) pts.push([this.X(i / 100), this.Y(this.hAt(i / 100))]); return this.path(pts) },
+  get flown() { const pts = [], n = Math.ceil(this.t * 100); for (let i = 0; i <= n; i++) { const u = Math.min(this.t, i / 100); pts.push([this.X(u), this.Y(this.hAt(u))]); } return this.path(pts) },
+  VY(v) { return 300 - (this.clamp(v, 40, 110) - 40) * 3.7 },
+  get flapAngle() { return this.fl >= 1 ? this.lerp(15, 35, this.fl - 1) : 15 * this.fl },
+  get flapEnd() { const a = this.flapAngle * Math.PI / 180; return { x: -17.4 - 11 * Math.cos(a), y: -6.4 + 11 * Math.sin(a) } },
+  presets: {
+    'short-final-full-flap': { scen: 'stages', t: 0.05 },
+    'power-and-attitude': { scen: 'stages', t: 0.3 },
+    'first-stage-up': { scen: 'stages', t: 0.44 },
+    'all-at-once-sink': { scen: 'all', t: 0.5 },
+    'nose-low-100kt-first-stage': { scen: 'nose', t: 0.74 },
+    'clean-climb': { scen: 'stages', t: 1 },
+    'fly-the-go-around': { scen: 'stages', t: 0, play: true },
+  },
+})">
+  <svg viewBox="0 0 640 340" role="img" aria-labelledby="gfs-title" class="widget-stage">
+    <title id="gfs-title">Side view of a go-around from short final with full flap: height above the runway, the flap position, lift against weight, and an airspeed tape showing the stall speed for the current flap, VFO and VFE</title>
+    <defs>
+      <clipPath id="gfs-clip"><rect x="0" y="0" width="476" height="340"/></clipPath>
+    </defs>
+    <rect x="0" y="0" width="476" height="340" fill="var(--color-sky-soft)"/>
+    <rect x="476" y="0" width="164" height="340" fill="var(--color-surface)"/>
+    <!-- height guides -->
+    <g stroke="var(--color-line-strong)" stroke-width="1" stroke-dasharray="2 4">
+      <line x1="48" y1="239.3" x2="470" y2="239.3"/><line x1="48" y1="189.3" x2="470" y2="189.3"/><line x1="48" y1="139.3" x2="470" y2="139.3"/><line x1="48" y1="89.3" x2="470" y2="89.3"/>
+    </g>
+    <g font-size="11" fill="var(--color-fg-faint)" class="num">
+      <text x="6" y="243">100 ft</text><text x="6" y="193">200 ft</text><text x="6" y="143">300 ft</text><text x="6" y="93">400 ft</text>
+    </g>
+    <!-- ground and runway -->
+    <rect x="0" y="300" width="476" height="40" fill="var(--color-surface-2)"/>
+    <line x1="0" y1="300" x2="476" y2="300" stroke="var(--color-fg-muted)" stroke-width="2"/>
+    <rect x="130" y="297" width="346" height="6" fill="var(--color-tarmac)"/>
+    <g stroke="var(--color-paint)" stroke-width="1.5"><line x1="136" y1="298" x2="136" y2="302"/><line x1="141" y1="298" x2="141" y2="302"/><line x1="146" y1="298" x2="146" y2="302"/></g>
+    <text x="300" y="322" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)">runway · heights and timings illustrative</text>
+    <!-- route and the part flown -->
+    <g clip-path="url(#gfs-clip)">
+      <path fill="none" stroke="var(--color-fg-faint)" stroke-width="1.25" stroke-dasharray="4 3" :d="route"/>
+      <path fill="none" stroke="var(--color-brand)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :d="flown"/>
+    </g>
+    <!-- lift against weight -->
+    <rect x="10" y="10" width="226" height="74" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="20" y="30" font-size="12" font-weight="600" fill="var(--color-fg)">Lift</text>
+    <rect x="68" y="20" height="12" rx="3" :width="lift * 110" :fill="lift < 0.95 ? 'var(--color-bad)' : 'var(--color-brand)'"/>
+    <text x="20" y="54" font-size="12" font-weight="600" fill="var(--color-fg)">Weight</text>
+    <rect x="68" y="44" width="110" height="12" rx="3" fill="var(--color-info)"/>
+    <line x1="178" y1="16" x2="178" y2="60" stroke="var(--color-fg-muted)" stroke-width="1" stroke-dasharray="3 2"/>
+    <text x="68" y="76" font-size="11" fill="var(--color-fg-muted)" x-text="lift < 0.97 ? 'lift < weight: it sinks' : lift > 1.03 ? (rate < 0 ? 'lift > weight: sink slows' : 'lift > weight') : 'lift = weight'"></text>
+    <!-- flap indicator: a wing section with the flap at its angle -->
+    <rect x="246" y="10" width="220" height="74" rx="8" fill="var(--color-surface)" stroke="var(--color-line)" stroke-width="1"/>
+    <text x="256" y="30" font-size="12" font-weight="600" fill="var(--color-fg)">Flap</text>
+    <path d="M266 50 C266 42 280 38 304 38 L350 41 L350 52 L282 55 C272 55 266 54 266 50 Z" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linejoin="round"/>
+    <line x1="352" y1="47" stroke="var(--color-brand)" stroke-width="5" stroke-linecap="round" :x2="352 + 34 * Math.cos(flapAngle * Math.PI / 180)" :y2="47 + 34 * Math.sin(flapAngle * Math.PI / 180)"/>
+    <text x="456" y="30" font-size="13" font-weight="600" text-anchor="end" fill="var(--color-brand-fg)" x-text="flapName === 'moving up' ? 'moving up' : flapName.toLowerCase()"></text>
+    <!-- the C152 (plane tool: side, scale 0.55), pitched by its wrapper; flap drawn at the trailing edge -->
+    <g :transform="'translate(' + px + ' ' + py + ') rotate(' + (-pitch) + ')'">
+      <g transform="translate(0 0) rotate(0) scale(0.55)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-fg)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-fg)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+      <g transform="scale(0.55)">
+        <line x1="-17.4" y1="-6.4" stroke="var(--color-brand)" stroke-width="5" stroke-linecap="round" :x2="flapEnd.x" :y2="flapEnd.y" :stroke-opacity="flapOut ? 1 : 0"/>
+      </g>
+    </g>
+    <!-- airspeed and flap tag over the aeroplane -->
+    <g :transform="'translate(' + clamp(px, 70, 420) + ' ' + (py < 140 ? py + 40 : py - 40) + ')'">
+      <rect x="-58" y="-14" width="116" height="22" rx="6" stroke-width="1.5"
+        :fill="marginState === 'bad' ? 'var(--color-bad-soft)' : marginState === 'warn' ? 'var(--color-warn-soft)' : 'var(--color-surface)'"
+        :stroke="marginState === 'bad' ? 'var(--color-bad)' : marginState === 'warn' ? 'var(--color-warn)' : 'var(--color-line-strong)'"/>
+      <text y="2" font-size="12" font-weight="600" text-anchor="middle" class="num" fill="var(--color-fg)" x-text="fmt(v) + ' kt · ' + (flapMoving ? 'flap moving' : fl > 1.5 ? 'full flap' : fl > 0.5 ? 'first stage' : 'clean')"></text>
+    </g>
+
+    <!-- airspeed tape -->
+    <text x="580" y="20" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-fg)">IAS (kt)</text>
+    <rect x="560" y="30" width="40" height="274" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
+    <!-- white arc VS0 50 to VFE 95 (full flap), green arc from VS1 55 -->
+    <rect x="546" width="7" fill="var(--color-surface)" stroke="var(--color-fg-muted)" stroke-width="1" :y="VY(vfeFull)" :height="VY(vs0) - VY(vfeFull)"/>
+    <rect x="554" width="5" fill="var(--color-ok)" :y="VY(110)" :height="VY(vs1) - VY(110)"/>
+    <g font-size="11" fill="var(--color-fg-muted)" class="num" text-anchor="middle">
+      <text x="580" :y="VY(40) - 4">40</text><text x="580" :y="VY(50) + 4">50</text><text x="580" :y="VY(60) + 4">60</text><text x="580" :y="VY(70) + 4">70</text>
+      <text x="580" :y="VY(80) + 4">80</text><text x="580" :y="VY(90) + 4">90</text><text x="580" :y="VY(100) + 4">100</text><text x="580" :y="VY(110) + 12">110</text>
+    </g>
+    <!-- VFO and the VFE for the flap that is out -->
+    <line x1="540" x2="568" stroke="var(--color-warn)" stroke-width="2" :y1="VY(vfo)" :y2="VY(vfo)"/>
+    <text x="538" font-size="12" text-anchor="end" fill="var(--color-warn-fg)" class="num" :y="VY(vfo) + 4">VFO 85</text>
+    <g :opacity="flapOut ? 1 : 0">
+      <line x1="540" x2="568" stroke="var(--color-bad)" stroke-width="2" :y1="VY(vfeNow)" :y2="VY(vfeNow)"/>
+      <text x="538" font-size="12" text-anchor="end" fill="var(--color-bad-fg)" class="num" :y="VY(vfeNow) + 4" x-text="'VFE ' + vfeNow"></text>
+    </g>
+    <!-- stall speed for the current flap -->
+    <rect x="560" width="40" fill="var(--color-bad)" fill-opacity="0.25" :y="VY(vs)" :height="VY(40) - VY(vs)"/>
+    <line x1="540" x2="568" stroke="var(--color-bad)" stroke-width="2.5" :y1="VY(vs)" :y2="VY(vs)"/>
+    <text x="538" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-bad-fg)" class="num" :y="VY(vs) + 4" x-text="'stall ' + fmt(vs)"></text>
+    <!-- current IAS -->
+    <path fill="var(--color-brand)" stroke="var(--color-brand)" stroke-width="1" stroke-linejoin="round" :d="'M601 ' + VY(v) + ' l14 -9 l0 18 z'"/>
+    <line x1="592" x2="600" stroke="var(--color-brand)" stroke-width="3" :y1="VY(v)" :y2="VY(v)"/>
+    <text x="580" y="322" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">white arc: flap range</text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Fly the go-around'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="gfs-t" min="0" max="1" step="0.002" x-model.number="t" @input="pause()" aria-label="Progress through the go-around">
+    <span class="widget-clock" x-text="fmt(v) + ' kt'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gfs-scen">How the flap comes up</label>
+      <select id="gfs-scen" class="input" x-model="scen">
+        <option value="stages">In stages: first stage when climbing, the rest at a safe speed</option>
+        <option value="all">All at once</option>
+        <option value="nose">In stages, but the nose is let drop</option>
+      </select>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">Flap</dt><dd class="widget-value" x-text="flapName"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Indicated airspeed</dt><dd class="widget-value" x-text="fmt(v) + ' kt'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Stall speed now</dt><dd class="widget-value" x-text="fmt(vs) + ' kt'"></dd></div>
+    <div class="widget-readout" :class="marginState"><dt class="widget-label">Margin above the stall</dt><dd class="widget-value"><span x-text="fmt(margin) + ' kt'"></span><span class="widget-flag bad" x-show="marginState === 'bad'">near stall</span></dd></div>
+    <div class="widget-readout" :class="limits.c"><dt class="widget-label">VFE and VFO</dt><dd class="widget-value"><span x-text="limits.t"></span><span class="widget-flag warn" x-show="limits.c === 'warn'">slow first</span></dd></div>
+    <div class="widget-readout" :class="fpath.c"><dt class="widget-label">Flight path</dt><dd class="widget-value"><span x-text="fpath.t"></span><span class="widget-flag bad" x-show="fpath.c === 'bad'">near the ground</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('short-final-full-flap')" :aria-pressed="active === 'short-final-full-flap'">Short final</button>
+      <button type="button" @click="preset('power-and-attitude')" :aria-pressed="active === 'power-and-attitude'">Power and attitude</button>
+      <button type="button" @click="preset('first-stage-up')" :aria-pressed="active === 'first-stage-up'">First stage up</button>
+      <button type="button" @click="preset('all-at-once-sink')" :aria-pressed="active === 'all-at-once-sink'">All at once</button>
+      <button type="button" @click="preset('nose-low-100kt-first-stage')" :aria-pressed="active === 'nose-low-100kt-first-stage'">Nose low, 100 kt</button>
+      <button type="button" @click="preset('clean-climb')" :aria-pressed="active === 'clean-climb'">Clean climb</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Flap is lift as well as drag. Take it all away while slow and low and, at the same attitude, the lift goes with it: the aeroplane sinks towards the runway and its stall speed jumps to the clean figure. The first, high-drag stage costs little lift; the rest comes up once you are climbing well above the next stall speed. Hold the attitude, too: let the nose drop and the speed runs past VFO (85 kt), and the flap is stuck out until you slow again. VFO and VFE are the lesson's hypothetical aeroplane; the stall speeds are the RBKA example aeroplane's (55 kt clean as in RBKA 3.6, 50 kt with full flap so that 1.3 × 50 gives the 65 kt approach, about 52 kt at the first stage); the 75 kt climb, the heights, timings and the lift bar are illustrative.</p>
+  <details class="widget-try"><summary>Try it: on the go-around you raise all the flap at once at 65 kt. What happens to the stall speed and to the flight path?</summary><p>Choose All at once: the stall speed jumps from 50 kt to the clean 55 kt while you are still slow, and with the flap's lift gone the aeroplane sinks to a few tens of feet above the runway. Raising the nose to stop the sink brings the margin down to a few knots. In stages, the margin never drops below about 13 kt.</p></details>
+  <details class="widget-try"><summary>Try it: you let the nose drop and reach 100 kt with the first stage still out (VFO 85, VFE 105 and 95). Within limits? May you raise the flap?</summary><p>Press Nose low, 100 kt: within limits, because 100 kt is below the first-stage VFE of 105. But 100 kt is above VFO 85, so the flap may not move: raise the nose and slow to 85 kt or below first, then retract it.</p></details>
+</div>

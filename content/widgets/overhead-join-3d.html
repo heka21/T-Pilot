@@ -1,0 +1,26 @@
+<div class="widget" data-widget="explorer" data-explorer="overhead">
+  <div class="widget-canvas" data-canvas aria-label="3D view of an aeroplane joining the circuit from overhead: crossing above circuit height, descending on the dead side and joining crosswind"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="oj3-speed">Animation speed</label><input id="oj3-speed" type="range" min="0.3" max="3" step="0.1" value="1" data-param="speed"></div>
+    <div class="widget-control">
+      <label class="check"><input type="checkbox" data-param="runway06"> Use runway 06 instead of 24 (wind from the other end)</label>
+      <label class="check"><input type="checkbox" data-param="rightHand"> Right-hand circuit (only where ERSA publishes one)</label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt>Where you are</dt><dd data-out="phase" class="text-sm">inbound overhead, above circuit height</dd></div>
+    <div class="widget-readout"><dt>Height</dt><dd data-out="height">1,500 ft above aerodrome level</dd></div>
+    <div class="widget-readout"><dt>Runway in use</dt><dd data-out="runway" class="text-sm">runway 24</dd></div>
+  </dl>
+  <p class="widget-value mt-2 text-sm text-fg-muted" data-out="deadside">left-hand circuit: dead side to the right of the runway, looking along the landing direction</p>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Runway and circuit direction">
+      <button type="button" data-preset="runway-24-left-hand" data-set='{"runway06": false, "rightHand": false}'>24 left-hand</button>
+      <button type="button" data-preset="runway-06-left-hand" data-set='{"runway06": true, "rightHand": false}'>06 left-hand</button>
+      <button type="button" data-preset="runway-24-right-hand" data-set='{"runway06": false, "rightHand": true}'>24 right-hand</button>
+    </div>
+    <button type="button" class="btn-secondary" data-action="play">Pause</button><button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> The join never descends through the circuit. You cross the aerodrome above circuit height, lose height in a turn on the dead side (the side opposite the circuit), cross the upwind end at circuit height heading in the crosswind direction, and join crosswind, then downwind with everyone else. Change the runway or the circuit direction and the dead side moves with the pattern. The lesson gives no figure for the overhead height; the model crosses 500 ft above a 1,000 ft circuit.</p>
+  <details class="widget-try"><summary>Try this: switch to a right-hand circuit for runway 24. Which side does the descent now happen on, looking along the landing direction?</summary><p>On the left. The dead side is always the side opposite the circuit, so with right-hand turns it moves to the left of the runway. Build it from the landing direction and the published circuit direction every time, never from memory of "the right side".</p></details>
+</div>

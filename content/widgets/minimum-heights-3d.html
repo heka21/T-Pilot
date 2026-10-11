@@ -1,0 +1,27 @@
+<div class="widget" data-widget="explorer" data-explorer="minheights">
+  <div class="widget-canvas" data-canvas aria-label="3D view of a town and open country with the aeroplane, the radius the minimum-height rule uses and the floor it must stay above"><p class="widget-fallback">Loading the 3D view…</p></div>
+  <div class="widget-controls">
+    <div class="widget-control"><label for="mh3-x">Where you are along the track (town in the middle)</label><input id="mh3-x" type="range" min="-30" max="30" step="0.5" value="0" data-param="x"></div>
+    <div class="widget-control"><label for="mh3-alt">Your height above the ground datum <output data-out="alt">1,200 ft</output></label><input id="mh3-alt" type="range" min="200" max="2000" step="50" value="1200" data-param="altitude"></div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout warn"><dt>Over</dt><dd data-out="where" class="text-sm">a populous area</dd></div>
+    <div class="widget-readout"><dt>Highest obstacle in the radius</dt><dd data-out="highest" class="text-sm">100 m tower</dd></div>
+    <div class="widget-readout"><dt>Minimum height here</dt><dd data-out="floor" class="text-sm">1,328 ft</dd></div>
+    <div class="widget-readout bad"><dt>You</dt><dd><span data-out="alt" class="text-sm">1,200 ft</span><span class="widget-flag bad" data-flag="low" style="display:none">Below the minimum</span></dd></div>
+  </dl>
+  <p class="widget-value mt-2 text-sm text-fg-muted" data-out="rule">populous area: not below 1,000 ft above the highest obstacle within a 600 m radius of the aircraft</p>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Scenarios">
+      <button type="button" data-preset="over-the-town" data-set='{"x": 0, "altitude": 1400}'>Over the town</button>
+      <button type="button" data-preset="tower-within-600-m" data-set='{"x": 9, "altitude": 1200}'>Tower 350 m away</button>
+      <button type="button" data-preset="open-country" data-set='{"x": 16, "altitude": 600}'>Open country</button>
+      <button type="button" data-preset="over-the-hill" data-set='{"x": 23, "altitude": 600}'>Over the hill</button>
+      <button type="button" data-preset="over-the-mast" data-set='{"x": -22, "altitude": 600}'>Over the mast</button>
+    </div>
+    <button type="button" class="btn-ghost" data-action="reset">Reset</button><span class="text-xs text-fg-faint">Drag to orbit, scroll or pinch to zoom. 1 grid square = 500 m.</span>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Two heights, two datums. Over a populous area (a city, town or other populous area, and over a public gathering) you may not fly below 1,000 ft above the highest obstacle within a 600 m radius of the aircraft: the datum is the obstacle, not the ground, so a 100 m tower 500 m to your side raises your floor by 328 ft. Anywhere else the floor is 500 ft above the highest feature or obstacle within a 300 m radius of the point directly below you; over flat open country that is 500 ft above the surface, and a hill or a mast raises it. The red line is that floor along the track. The exceptions are taking off and landing, CASA-approved operations, a forced landing and avoiding weather or terrain, and you must always be able to glide clear of a populous area if the engine fails. The town and its obstacles are made up; the figures are the lesson's.</p>
+  <details class="widget-try"><summary>Try this: move to 900 m from the tower, still over the town, at 1,200 ft. Legal?</summary><p>No. The tower is within the 600 m radius, so the floor is 1,000 ft above its 100 m (328 ft) top: 1,328 ft. At 1,200 ft you are 128 ft below the minimum although you are 1,200 ft above the ground beneath you.</p></details>
+  <details class="widget-try"><summary>Try this: at 600 ft over the open country, slide towards the 60 m hill. When does the floor rise, and to what?</summary><p>When the hill comes within 300 m of the point below you, the floor becomes 500 ft above its 60 m (197 ft) top: 697 ft. Out in the open the floor is 500 ft above the 15 m trees, 549 ft, so 600 ft is enough there but not over the hill.</p></details>
+</div>

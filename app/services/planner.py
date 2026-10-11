@@ -26,7 +26,7 @@ QUIZ_MINUTES = 10
 QUIZ_FROM_STUDY_DAY = 3  # 1-based: the third study day gets the first quiz
 REVISION_QUIZ_MINUTES = 25
 MIN_CHUNK = 10  # don't leave a sliver of a subtopic for the next day
-DEFAULT_WEEKS = 12  # full lessons total about 5,000 study minutes; 12 weeks Mon-Sat at 120 min is about 6,500
+DEFAULT_WEEKS = 15  # lessons with the 2026-10 visuals total about 7,700 study minutes; 15 weeks Mon-Sat at 120 min leaves room for quizzes and revision
 RPL_SHARE = 186 / 320  # knowledge elements in RPLA units over both exams' total
 
 

@@ -1,0 +1,142 @@
+<div class="widget" x-data="widget({
+  sym: 'V', len: 20, mat: 'rocks', ht: 1000,
+  // PHFC 2.14: the ERSA's ground-to-air codes (V require assistance, X require medical assistance, N no, Y yes, arrow
+  // proceeding in this direction); make them large and contrasting (rocks on red sand, dark branches on a pale
+  // claypan, trenches dug so their shadows show); a symbol a few metres across is invisible from a search aircraft at
+  // height, so make each line as long and as wide as the materials allow; lay the arrow only if you really leave.
+  // The aeroplane is the Cessna 152 (10.2 m span) for scale. The searcher's view is illustrative: a view about 0.19 x
+  // the height (in ft) wide, in metres, and the 'seen' thresholds are not measurements.
+  meanings: { V: 'Require assistance', X: 'Require medical assistance', N: 'No', Y: 'Yes', A: 'Proceeding in this direction' },
+  mats: {
+    rocks: { name: 'rocks on red sand', ground: 'var(--color-bad-soft)', ink: 'var(--color-fg-muted)', op: 1, c: 1 },
+    branches: { name: 'dark branches on a pale claypan', ground: 'var(--color-warn-soft)', ink: 'var(--color-fg)', op: 1, c: 1 },
+    trenches: { name: 'trenches, their shadows showing', ground: 'var(--color-warn-soft)', ink: 'var(--color-fg-muted)', op: 0.75, c: 0.75 },
+    pale: { name: 'pale stones on a pale claypan', ground: 'var(--color-warn-soft)', ink: 'var(--color-warn)', op: 0.3, c: 0.2 },
+  },
+  get m() { return this.mats[this.mat] },
+  // a symbol in a unit square, centred on 0 0
+  shapes: {
+    V: [[[-0.5, -0.5], [0, 0.5], [0.5, -0.5]]],
+    X: [[[-0.5, -0.5], [0.5, 0.5]], [[0.5, -0.5], [-0.5, 0.5]]],
+    N: [[[-0.4, 0.5], [-0.4, -0.5], [0.4, 0.5], [0.4, -0.5]]],
+    Y: [[[-0.5, -0.5], [0, 0], [0.5, -0.5]], [[0, 0], [0, 0.5]]],
+    A: [[[-0.5, 0], [0.5, 0]], [[0.2, -0.3], [0.5, 0], [0.2, 0.3]]],
+  },
+  shape(cx, cy, s) { return this.shapes[this.sym].map((pl) => this.path(pl.map((p) => [cx + p[0] * s, cy + p[1] * s]))).join(' ') },
+  // on the ground: 5 px per metre; from the air: illustrative, about 1,105 / height px per metre
+  get pxm() { return 1105 / this.ht },
+  get sGround() { return this.len * 5 },
+  get sAir() { return this.len * this.pxm },
+  get groundPath() { return this.shape(190, 142, this.sGround) },
+  get airPath() { return this.shape(472, 142, this.sAir) },
+  // the aeroplane 27 m to the left of the symbol in both views
+  get planeAir() { return 'translate(' + (472 - 27 * this.pxm).toFixed(1) + ' 142) scale(' + (this.pxm * 0.102).toFixed(3) + ')' },
+  get score() { return this.sAir * this.m.c },
+  get seen() { return this.score >= 16 ? ['Easy to spot', 'ok'] : this.score >= 6 ? ['Only if they look right at it', 'warn'] : ['Not seen', 'bad'] },
+  get looks() { return this.score >= 16 ? 'a clear ' + (this.sym === 'A' ? 'arrow' : this.sym) : this.score >= 6 ? 'a small mark' : 'nothing: lost in the scrub' },
+  get caption() {
+    if (this.sym === 'A') return 'An arrow means proceeding in this direction: lay it only if you really leave, pointing the way you have gone. Otherwise stay with the aircraft and lay a V.';
+    if (this.m.c < 0.5) return 'Pale on pale: from the air the lines vanish into the claypan however long they are. Contrast is half the job: dark branches on a pale claypan, rocks on red sand, or trenches whose shadows show.';
+    if (this.score < 6) return this.len <= 6 ? 'A symbol a few metres across is invisible from a search aircraft at height. On the ground it looks plenty big; from ' + this.fmt(this.ht) + ' ft it is lost in the scrub.' : 'From ' + this.fmt(this.ht) + ' ft even this is lost: make each line as long and as wide as the materials allow.';
+    if (this.score < 16) return 'Visible, but only to a searcher looking right at it. Longer and wider lines turn a small mark into a shape nobody can miss.';
+    return this.meanings[this.sym] + ': large, contrasting and next to the aeroplane, a shape that does not belong in the landscape. That is what searchers are looking for.';
+  },
+  presets: {
+    'v-large-contrasting': { sym: 'V', len: 20, mat: 'rocks', ht: 1000 },
+    'v-few-metres': { sym: 'V', len: 3, mat: 'rocks', ht: 1000 },
+    'x-medical': { sym: 'X', len: 20, mat: 'branches', ht: 1000 },
+    'pale-on-pale': { sym: 'V', len: 20, mat: 'pale', ht: 1000 },
+    'search-higher': { sym: 'V', len: 20, mat: 'rocks', ht: 2500 },
+    'arrow-leaving': { sym: 'A', len: 20, mat: 'trenches', ht: 1000 },
+  },
+})">
+  <svg viewBox="0 0 640 290" role="img" aria-labelledby="gsa-title" class="widget-stage">
+    <title id="gsa-title">A ground-to-air signal laid out beside a Cessna 152, seen close up on the ground and from a search aircraft overhead; the higher the search aircraft and the smaller or paler the symbol, the harder it is to see</title>
+    <defs>
+      <clipPath id="gsa-panel"><rect x="16" y="34" width="288" height="216" rx="10"/></clipPath>
+      <clipPath id="gsa-view"><circle cx="472" cy="142" r="108"/></clipPath>
+    </defs>
+
+    <!-- on the ground, 5 px per metre -->
+    <text x="160" y="22" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)">On the ground</text>
+    <g clip-path="url(#gsa-panel)">
+      <rect x="16" y="34" width="288" height="216" :fill="m.ground"/>
+      <g fill="var(--color-ok)" fill-opacity="0.45">
+        <circle cx="34" cy="56" r="7"/><circle cx="282" cy="62" r="6"/><circle cx="276" cy="226" r="8"/><circle cx="40" cy="232" r="6"/>
+        <circle cx="120" cy="238" r="5"/><circle cx="250" cy="44" r="5"/>
+      </g>
+      <path fill="none" stroke-linecap="round" stroke-linejoin="round" :stroke="m.ink" :stroke-opacity="m.op" :stroke-width="(sGround * 0.12).toFixed(1)" :d="groundPath"/>
+      <!-- python -m tools.diagrams.plane top, scale 0.51, x 57, y 142 -->
+      <g transform="translate(57 142) scale(0.51)"><g transform="translate(0 0) rotate(0) scale(1)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    </g>
+    <rect x="16" y="34" width="288" height="216" rx="10" fill="none" stroke="var(--color-line-strong)" stroke-width="1.25"/>
+    <text x="160" y="270" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num" x-text="'lines ' + len + ' m long; the aeroplane spans 10 m'"></text>
+
+    <!-- from the search aircraft -->
+    <text x="472" y="22" font-size="13" font-weight="600" text-anchor="middle" fill="var(--color-fg)" x-text="'From the search aircraft at ' + fmt(ht) + ' ft'"></text>
+    <g clip-path="url(#gsa-view)">
+      <rect x="360" y="30" width="224" height="224" :fill="m.ground"/>
+      <g fill="var(--color-ok)" fill-opacity="0.45">
+        <circle cx="400" cy="80" r="3"/><circle cx="430" cy="210" r="2.5"/><circle cx="520" cy="70" r="3"/><circle cx="548" cy="180" r="2.5"/>
+        <circle cx="470" cy="60" r="2"/><circle cx="392" cy="150" r="2.5"/><circle cx="560" cy="120" r="2"/><circle cx="500" cy="226" r="3"/>
+        <circle cx="444" cy="110" r="2"/><circle cx="512" cy="196" r="2"/><circle cx="420" cy="176" r="2"/><circle cx="534" cy="98" r="2.5"/>
+        <circle cx="486" cy="168" r="2"/><circle cx="456" cy="190" r="2.5"/><circle cx="506" cy="122" r="2"/>
+      </g>
+      <path fill="none" stroke-linecap="round" stroke-linejoin="round" :stroke="m.ink" :stroke-opacity="m.op" :stroke-width="Math.max(0.6, sAir * 0.12).toFixed(2)" :d="airPath"/>
+      <!-- the same aeroplane, scaled to the view (pasted markup as above) -->
+      <g :transform="planeAir"><g transform="translate(0 0) rotate(0) scale(1)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g></g>
+    </g>
+    <circle cx="472" cy="142" r="108" fill="none" stroke="var(--color-fg)" stroke-width="2"/>
+    <text x="472" y="270" font-size="12" text-anchor="middle" font-weight="600" :fill="seen[1] === 'ok' ? 'var(--color-ok-fg)' : seen[1] === 'warn' ? 'var(--color-warn-fg)' : 'var(--color-bad-fg)'" x-text="'they see ' + looks"></text>
+  </svg>
+
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="gsa-sym">Symbol</label>
+      <select id="gsa-sym" class="input" x-model="sym" @change="active = null">
+        <option value="V">V: require assistance</option>
+        <option value="X">X: require medical assistance</option>
+        <option value="N">N: no</option>
+        <option value="Y">Y: yes</option>
+        <option value="A">Arrow: proceeding in this direction</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="gsa-mat">Made of</label>
+      <select id="gsa-mat" class="input" x-model="mat" @change="active = null">
+        <option value="rocks">Rocks on red sand</option>
+        <option value="branches">Dark branches on a pale claypan</option>
+        <option value="trenches">Trenches, their shadows showing</option>
+        <option value="pale">Pale stones on a pale claypan</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="gsa-len">Length of each line <output for="gsa-len" x-text="len + ' m'"></output></label>
+      <input type="range" id="gsa-len" min="2" max="30" step="1" x-model.number="len">
+    </div>
+    <div class="widget-control">
+      <label for="gsa-ht">Search aircraft height <output for="gsa-ht" x-text="fmt(ht) + ' ft'"></output></label>
+      <input type="range" id="gsa-ht" min="500" max="3000" step="100" x-model.number="ht">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout"><dt class="widget-label">It means</dt><dd class="widget-value text-sm" x-text="meanings[sym]"></dd></div>
+    <div class="widget-readout" :class="m.c < 0.5 ? 'bad' : m.c < 1 ? 'warn' : 'ok'"><dt class="widget-label">Contrast</dt><dd class="widget-value" x-text="m.c < 0.5 ? 'Poor' : m.c < 1 ? 'Fair' : 'Strong'"></dd></div>
+    <div class="widget-readout" :class="seen[1]"><dt class="widget-label">From the air</dt><dd class="widget-value text-sm"><span x-text="seen[0]"></span><span class="widget-flag bad" x-show="seen[1] === 'bad'">bigger</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('v-large-contrasting')" :aria-pressed="active === 'v-large-contrasting'">Big V</button>
+      <button type="button" @click="preset('v-few-metres')" :aria-pressed="active === 'v-few-metres'">A few metres</button>
+      <button type="button" @click="preset('x-medical')" :aria-pressed="active === 'x-medical'">X, medical</button>
+      <button type="button" @click="preset('pale-on-pale')" :aria-pressed="active === 'pale-on-pale'">Pale on pale</button>
+      <button type="button" @click="preset('search-higher')" :aria-pressed="active === 'search-higher'">Searching higher</button>
+      <button type="button" @click="preset('arrow-leaving')" :aria-pressed="active === 'arrow-leaving'">Arrow</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> A symbol that looks huge beside you shrinks to a speck from a search aircraft, and pale lines on pale ground vanish at any size. Make it large and contrasting, next to the aircraft, and know V (require assistance) and X (require medical assistance) by heart. The codes are the ERSA's; how wide the searcher's view is and the size at which a mark is seen are illustrative.</p>
+  <details class="widget-try"><summary>Try it: you have laid a neat V of rocks about three metres across. Will the search aircraft see it?</summary><p>Press A few metres: on the ground it looks plenty big, but from 1,000 ft it is lost in the scrub. Press Big V: twenty-metre lines of rocks on red sand make a shape nobody can miss.</p></details>
+  <details class="widget-try"><summary>Try it: when do you lay an arrow, and which way does it point?</summary><p>Only if you really leave the aircraft, for example to walk to a homestead you can see. It means proceeding in this direction and points the way you have gone, so searchers who find the aircraft know where to look.</p></details>
+</div>

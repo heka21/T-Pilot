@@ -1,0 +1,155 @@
+<div class="widget" x-data="widget({
+  nOn: 'Destination', nBack: 'Departure', nAlt: 'Alternate',
+  dOn: 80, dBack: 100, dAlt: 45, gsOn: 85, gsBack: 125, gsAlt: 100, altAng: 70,
+  flow: 36, onboard: 55, hold: 0,
+  // POPC 2.6: for each option, time = distance / groundspeed, fuel = time x flow, then add the 30-minute fixed reserve
+  // and any holding that aerodrome requires; compare the total with the fuel on board
+  get reserve() { return 30 * this.flow / 60 },
+  get holdL() { return this.hold * this.flow / 60 },
+  opt(i) {
+    const d = [this.dOn, this.dBack, this.dAlt][i], gs = [this.gsOn, this.gsBack, this.gsAlt][i];
+    const min = d / gs * 60, fuel = min * this.flow / 60, hold = i === 0 ? this.holdL : 0;
+    const total = fuel + hold + this.reserve;
+    return { name: [this.nOn, this.nBack, this.nAlt][i], verb: ['Continue to', 'Return to', 'Divert to'][i], d, gs, min, fuel, hold, total, spare: this.onboard - total, ok: total <= this.onboard + 1e-9 };
+  },
+  get best() { let b = -1; for (let i = 0; i < 3; i++) { const o = this.opt(i); if (o.ok && (b < 0 || o.total < this.opt(b).total)) b = i } return b },
+  get nAvail() { return [0, 1, 2].filter((i) => this.opt(i).ok).length },
+  // plan view: track from x 60 (departure) to 580 (destination) at y 96; an alternate off to the side is drawn schematically
+  get k() { return 520 / (this.dBack + this.dOn) },
+  get px() { return 60 + this.dBack * this.k },
+  get alt() { return this.altAng === 180 ? { x: Math.max(70, this.px - this.dAlt * this.k), y: 96 } : { x: Math.min(this.px + 60, 500), y: 150 } },
+  // bars: litres across x 230..590
+  get lmax() { return Math.max(this.onboard, this.opt(0).total, this.opt(1).total, this.opt(2).total) * 1.08 },
+  L(l) { return 230 + l / this.lmax * 360 },
+  rowY(i) { return 232 + i * 54 },
+  get caption() {
+    const b = this.best;
+    if (b < 0) return 'No option leaves the reserve intact: every bar crosses the fuel-on-board line. That is an emergency, so land at the nearest suitable place and tell ATC.';
+    const o = this.opt(b), bad = [0, 1, 2].filter((i) => !this.opt(i).ok).map((i) => this.opt(i).name);
+    return o.verb + ' ' + o.name + ' needs the least fuel, ' + this.fmt(o.total) + ' L with the reserve, leaving ' + this.fmt(o.spare) + ' L spare.' +
+      (bad.length ? ' ' + bad.join(' and ') + (bad.length > 1 ? ' are' : ' is') + ' not available: flying there would eat into the reserve.' : ' All three keep the reserve intact.') +
+      ' Then check weather, daylight, runway and fuel there, commit, and amend the SARTIME.';
+  },
+  presets: {
+    '100-nm-out': { nOn: 'Destination', nBack: 'Departure', nAlt: 'Alternate', dOn: 80, dBack: 100, dAlt: 45, gsOn: 85, gsBack: 125, gsAlt: 100, altAng: 70, flow: 36, onboard: 55, hold: 0 },
+    'destination-holding': { nOn: 'Destination', nBack: 'Departure', nAlt: 'Alternate', dOn: 80, dBack: 100, dAlt: 45, gsOn: 85, gsBack: 125, gsAlt: 100, altAng: 70, flow: 36, onboard: 55, hold: 30 },
+    'kalgoorlie': { nOn: 'Kalgoorlie', nBack: 'Jandakot', nAlt: 'Southern Cross', dOn: 85, dBack: 210, dAlt: 25, gsOn: 85, gsBack: 135, gsAlt: 135, altAng: 180, flow: 32, onboard: 68, hold: 60 },
+  },
+})">
+  <svg viewBox="0 0 640 390" role="img" aria-labelledby="dfo-title" class="widget-stage">
+    <title id="dfo-title">Your position on the track with three ways to go, on to the destination, back to departure or to an alternate, and for each a bar of trip fuel, holding and fixed reserve against the fuel on board: a bar that crosses the line is not available</title>
+    <rect x="0" y="0" width="640" height="390" rx="10" fill="var(--color-surface-2)"/>
+    <!-- plan view (schematic: the labels carry the distances) -->
+    <line x1="60" y1="96" x2="580" y2="96" stroke="var(--color-line-strong)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <line y1="96" y2="96" stroke-width="2.5" stroke-linecap="round" :x1="px" x2="580" :stroke="best === 0 ? 'var(--color-brand)' : opt(0).ok ? 'var(--color-fg-muted)' : 'var(--color-bad)'"/>
+    <line y1="96" y2="96" x1="60" stroke-width="2.5" stroke-linecap="round" :x2="altAng === 180 ? alt.x : px" :stroke="best === 1 ? 'var(--color-brand)' : opt(1).ok ? 'var(--color-fg-muted)' : 'var(--color-bad)'"/>
+    <line stroke-width="2.5" stroke-linecap="round" :x1="px" y1="96" :x2="alt.x" :y2="alt.y" :stroke="best === 2 ? 'var(--color-brand)' : opt(2).ok ? 'var(--color-fg-muted)' : 'var(--color-bad)'" :stroke-dasharray="altAng === 180 ? '0' : '6 4'"/>
+    <circle cx="60" cy="96" r="7" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <circle cx="580" cy="96" r="7" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2"/>
+    <circle r="6" fill="var(--color-surface)" stroke="var(--color-fg)" stroke-width="2" :cx="alt.x" :cy="alt.y"/>
+    <text x="52" y="124" font-size="13" font-weight="600" fill="var(--color-fg)" x-text="nBack"></text>
+    <text x="588" y="124" font-size="13" font-weight="600" text-anchor="end" fill="var(--color-fg)" x-text="nOn"></text>
+    <text font-size="13" font-weight="600" fill="var(--color-fg)" :x="altAng === 180 ? alt.x : alt.x + 12" :y="altAng === 180 ? 124 : alt.y + 5" :text-anchor="altAng === 180 ? 'middle' : 'start'" x-text="nAlt"></text>
+    <!-- you -->
+    <path fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="1.5" :d="'M' + (px - 9) + ' 88 L' + (px + 11) + ' 96 L' + (px - 9) + ' 104 L' + (px - 4) + ' 96 Z'"/>
+    <text y="44" font-size="12" font-weight="600" text-anchor="middle" fill="var(--color-brand-fg)" :x="Math.min(Math.max(px, 120), 520)">you are here</text>
+    <!-- leg labels -->
+    <g font-size="12" fill="var(--color-fg-muted)" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round">
+      <text text-anchor="middle" :y="altAng === 180 ? 64 : 84" :x="(px + 580) / 2" x-text="dOn + ' nm at ' + gsOn + ' kt'"></text>
+      <text y="84" text-anchor="middle" :x="(60 + (altAng === 180 ? alt.x : px)) / 2" x-text="dBack + ' nm at ' + gsBack + ' kt'"></text>
+      <text :x="altAng === 180 ? (px + alt.x) / 2 : (px + alt.x) / 2 + 10" :y="altAng === 180 ? 84 : (96 + alt.y) / 2 + 6" :text-anchor="altAng === 180 ? 'middle' : 'start'" x-text="dAlt + ' nm at ' + gsAlt + ' kt'"></text>
+    </g>
+    <!-- fuel on board line across the bars -->
+    <line y1="212" y2="376" stroke="var(--color-fg)" stroke-width="2.5" stroke-linecap="round" :x1="L(onboard)" :x2="L(onboard)"/>
+    <text y="206" font-size="12" font-weight="600" fill="var(--color-fg)" :x="L(onboard)" :text-anchor="L(onboard) > 520 ? 'end' : 'middle'" x-text="'on board ' + onboard + ' L'"></text>
+    <!-- three option rows (written out) -->
+    <g>
+      <text x="20" :y="rowY(0) + 2" font-size="13" font-weight="600" :fill="best === 0 ? 'var(--color-brand-fg)' : 'var(--color-fg)'" x-text="opt(0).verb + ' ' + opt(0).name"></text>
+      <text x="20" :y="rowY(0) + 20" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="fmt(opt(0).min) + ' min, ' + fmt(opt(0).fuel) + ' L' + (opt(0).hold ? ' + hold ' + fmt(opt(0).hold) : '')"></text>
+      <rect height="26" :y="rowY(0) - 12" :x="L(0)" :width="L(opt(0).fuel) - L(0)" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5"/>
+      <rect height="26" :y="rowY(0) - 12" :x="L(opt(0).fuel)" :width="L(opt(0).fuel + opt(0).hold) - L(opt(0).fuel)" fill="var(--color-warn-soft)" stroke="var(--color-warn)" stroke-width="1.5" x-show="opt(0).hold > 0"/>
+      <rect height="26" :y="rowY(0) - 12" :x="L(opt(0).fuel + opt(0).hold)" :width="L(opt(0).total) - L(opt(0).fuel + opt(0).hold)" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.5"/>
+      <text font-size="12" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="rowY(0) + 30" :x="L(opt(0).total)" text-anchor="end" :fill="opt(0).ok ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="fmt(opt(0).total) + ' L: ' + (opt(0).ok ? fmt(opt(0).spare) + ' L spare' : 'not available')"></text>
+    </g>
+    <g>
+      <text x="20" :y="rowY(1) + 2" font-size="13" font-weight="600" :fill="best === 1 ? 'var(--color-brand-fg)' : 'var(--color-fg)'" x-text="opt(1).verb + ' ' + opt(1).name"></text>
+      <text x="20" :y="rowY(1) + 20" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="fmt(opt(1).min) + ' min, ' + fmt(opt(1).fuel) + ' L'"></text>
+      <rect height="26" :y="rowY(1) - 12" :x="L(0)" :width="L(opt(1).fuel) - L(0)" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5"/>
+      <rect height="26" :y="rowY(1) - 12" :x="L(opt(1).fuel)" :width="L(opt(1).total) - L(opt(1).fuel)" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.5"/>
+      <text font-size="12" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="rowY(1) + 30" :x="L(opt(1).total)" text-anchor="end" :fill="opt(1).ok ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="fmt(opt(1).total) + ' L: ' + (opt(1).ok ? fmt(opt(1).spare) + ' L spare' : 'not available')"></text>
+    </g>
+    <g>
+      <text x="20" :y="rowY(2) + 2" font-size="13" font-weight="600" :fill="best === 2 ? 'var(--color-brand-fg)' : 'var(--color-fg)'" x-text="opt(2).verb + ' ' + opt(2).name"></text>
+      <text x="20" :y="rowY(2) + 20" font-size="12" fill="var(--color-fg-muted)" class="num" x-text="fmt(opt(2).min) + ' min, ' + fmt(opt(2).fuel) + ' L'"></text>
+      <rect height="26" :y="rowY(2) - 12" :x="L(0)" :width="L(opt(2).fuel) - L(0)" fill="var(--color-brand-soft)" stroke="var(--color-brand)" stroke-width="1.5"/>
+      <rect height="26" :y="rowY(2) - 12" :x="L(opt(2).fuel)" :width="L(opt(2).total) - L(opt(2).fuel)" fill="var(--color-bad-soft)" stroke="var(--color-bad)" stroke-width="1.5"/>
+      <text font-size="12" font-weight="700" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" :y="rowY(2) + 30" :x="L(opt(2).total)" text-anchor="end" :fill="opt(2).ok ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="fmt(opt(2).total) + ' L: ' + (opt(2).ok ? fmt(opt(2).spare) + ' L spare' : 'not available')"></text>
+    </g>
+    <!-- key -->
+    <g font-size="11" fill="var(--color-fg-faint)">
+      <rect x="230" y="172" width="10" height="10" fill="var(--color-brand-soft)" stroke="var(--color-brand)"/><text x="245" y="181">trip fuel</text>
+      <rect x="305" y="172" width="10" height="10" fill="var(--color-warn-soft)" stroke="var(--color-warn)"/><text x="320" y="181">holding</text>
+      <rect x="375" y="172" width="10" height="10" fill="var(--color-bad-soft)" stroke="var(--color-bad)"/><text x="390" y="181" x-text="'fixed reserve ' + fmt(reserve) + ' L (30 min)'"></text>
+    </g>
+  </svg>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="dfo-onboard">Fuel on board now <output for="dfo-onboard" x-text="onboard + ' L'"></output></label>
+      <input type="range" id="dfo-onboard" min="20" max="120" step="1" x-model.number="onboard">
+    </div>
+    <div class="widget-control">
+      <label for="dfo-hold" x-text="'Holding required at ' + nOn"></label>
+      <select id="dfo-hold" class="input" x-model.number="hold">
+        <option value="0">None</option>
+        <option value="30">30 min (INTER)</option>
+        <option value="60">60 min (TEMPO)</option>
+      </select>
+    </div>
+    <div class="widget-control">
+      <label for="dfo-flow">Fuel flow <output for="dfo-flow" x-text="flow + ' L/h'"></output></label>
+      <input type="range" id="dfo-flow" min="20" max="45" step="1" x-model.number="flow">
+    </div>
+    <div class="widget-control">
+      <label for="dfo-gson">Groundspeed on <output for="dfo-gson" x-text="gsOn + ' kt'"></output></label>
+      <input type="range" id="dfo-gson" min="60" max="150" step="1" x-model.number="gsOn">
+    </div>
+    <div class="widget-control">
+      <label for="dfo-don">Distance on <output for="dfo-don" x-text="dOn + ' nm'"></output></label>
+      <input type="range" id="dfo-don" min="5" max="250" step="1" x-model.number="dOn">
+    </div>
+    <div class="widget-control">
+      <label for="dfo-gsback">Groundspeed back <output for="dfo-gsback" x-text="gsBack + ' kt'"></output></label>
+      <input type="range" id="dfo-gsback" min="60" max="150" step="1" x-model.number="gsBack">
+    </div>
+    <div class="widget-control">
+      <label for="dfo-dback">Distance back <output for="dfo-dback" x-text="dBack + ' nm'"></output></label>
+      <input type="range" id="dfo-dback" min="5" max="250" step="1" x-model.number="dBack">
+    </div>
+    <div class="widget-control">
+      <label for="dfo-gsalt">Groundspeed to the alternate <output for="dfo-gsalt" x-text="gsAlt + ' kt'"></output></label>
+      <input type="range" id="dfo-gsalt" min="60" max="150" step="1" x-model.number="gsAlt">
+    </div>
+    <div class="widget-control">
+      <label for="dfo-dalt">Distance to the alternate <output for="dfo-dalt" x-text="dAlt + ' nm'"></output></label>
+      <input type="range" id="dfo-dalt" min="5" max="150" step="1" x-model.number="dAlt">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="best >= 0 ? 'ok' : 'bad'"><dt class="widget-label">Least fuel</dt><dd class="widget-value" x-text="best >= 0 ? opt(best).verb + ' ' + opt(best).name : 'none available'"></dd></div>
+    <div class="widget-readout" :class="nAvail === 3 ? 'ok' : nAvail ? 'warn' : 'bad'"><dt class="widget-label">Options available</dt><dd class="widget-value"><span x-text="nAvail + ' of 3'"></span><span class="widget-flag warn" x-show="nAvail < 3 && nAvail > 0">struck out</span></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Fixed reserve</dt><dd class="widget-value" x-text="'30 min × ' + flow + ' L/h = ' + fmt(reserve) + ' L'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('100-nm-out')" :aria-pressed="active === '100-nm-out'">100 nm out</button>
+      <button type="button" @click="preset('destination-holding')" :aria-pressed="active === 'destination-holding'">+ 30 min holding</button>
+      <button type="button" @click="preset('kalgoorlie')" :aria-pressed="active === 'kalgoorlie'">Kalgoorlie TEMPO</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each option is time from distance and groundspeed, fuel from time and flow, then the 30-minute fixed reserve and any holding stacked on top. A bar that crosses the fuel-on-board line is struck out, because flying it means landing on the reserve. The wind can make the longer way home the cheaper one, and holding at one aerodrome can rule it out altogether.</p>
+  <details class="widget-try"><summary>Try it: 100 nm out with 55 L. Why is going home cheaper than continuing, when home is 20 nm further?</summary><p>Home is 100 nm at 125 kt, 48 min and 29 L; on is 80 nm at 85 kt, 56 min and 34 L. The 40 kt higher groundspeed home more than pays for the extra distance. Add 30 minutes of holding at the destination and continuing needs 70 L: struck out.</p></details>
+  <details class="widget-try"><summary>Try it: in the Kalgoorlie case, how much fuel would you need on board for continuing to come back into play?</summary><p>Continuing needs 32 L to get there, 32 L of holding and the 16 L reserve: 80 L. With 68 L you are 12 L short; slide the fuel up to 80 L and the bar just reaches the line.</p></details>
+</div>

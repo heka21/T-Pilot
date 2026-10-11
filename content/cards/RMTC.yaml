@@ -45,11 +45,11 @@
 - id: RMTC-C005
   elements: ["RMTC 2.2.1"]
   front: "TAF change groups FM, BECMG, TEMPO, INTER, PROB?"
-  back: "FM: permanent change from a time. BECMG: gradual change over a period. TEMPO: fluctuations under 1 hour each. INTER: fluctuations under 30 min. PROB30/40: probability."
+  back: "FM: permanent change from a time. BECMG: gradual change over a period. TEMPO: spells of 30 to 60 minutes each. INTER: spells of less than 30 minutes. PROB30/40: probability."
   stem: "In an Australian TAF, the difference between TEMPO and INTER is that:"
   options:
-    - "TEMPO fluctuations each last under 1 hour; INTER fluctuations each last under 30 minutes."
-    - "TEMPO fluctuations each last under 30 minutes; INTER fluctuations each last under 1 hour."
+    - "TEMPO spells each last 30 to 60 minutes; INTER spells each last less than 30 minutes."
+    - "TEMPO spells each last less than 30 minutes; INTER spells each last 30 to 60 minutes."
     - "TEMPO is a permanent change from a stated time; INTER is a gradual change over a stated period."
     - "TEMPO is a gradual change over a period; INTER is a 30 or 40 percent probability."
   answer: 0

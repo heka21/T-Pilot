@@ -1,0 +1,123 @@
+<div class="widget" x-data="widget({
+  front: 160, rear: 70, bag: 20, bagArm: 3500, fuelL: 150,
+  // BAKC 6.4 worked example: empty 680 kg at 2,050 mm; front seats 2,000 mm; rear seat 2,900 mm; baggage locker 3,500 mm;
+  // fuel at 2,300 mm, SG 0.72; MTOW 1,050 kg; CG limits 2,000 to 2,120 mm aft of the datum.
+  empty: 680, emptyArm: 2050, frontArm: 2000, rearArm: 2900, fuelArm: 2300, sg: 0.72, mtow: 1050, fwd: 2000, aft: 2120,
+  get fuel() { return this.fuelL * this.sg },
+  get items() { return [
+    { k: 'empty', w: this.empty, a: this.emptyArm }, { k: 'front', w: this.front, a: this.frontArm }, { k: 'rear', w: this.rear, a: this.rearArm },
+    { k: 'bag', w: this.bag, a: this.bagArm }, { k: 'fuel', w: this.fuel, a: this.fuelArm } ] },
+  get weight() { return this.items.reduce((s, i) => s + i.w, 0) },
+  get moment() { return this.items.reduce((s, i) => s + i.w * i.a, 0) },
+  get cg() { return this.moment / this.weight },
+  get over() { return this.weight > this.mtow + 1e-9 },
+  get cgState() { return this.cg > this.aft + 0.5 || this.cg < this.fwd - 0.5 ? 'bad' : this.aft - this.cg < 5 || this.cg - this.fwd < 5 ? 'warn' : 'ok' },
+  get cgText() { const c = Math.round(this.cg); return c > this.aft ? (c - this.aft) + ' mm aft of the limit' : c < this.fwd ? (this.fwd - c) + ' mm forward of the limit' : 'inside, ' + Math.min(this.aft - c, c - this.fwd) + ' mm to the nearer limit' },
+  get legal() { return !this.over && this.cgState !== 'bad' },
+  // the plank: 1,900 to 3,600 mm across x 40..620; loads drawn as down arrows, 0.5 px per kg (the empty weight's arrow is shortened)
+  X(a) { return 40 + (a - 1900) / 1700 * 580 },
+  L(w) { return Math.max(4, w * 0.5) },
+  Le: 110,
+  // the zoomed CG ruler: 1,950 to 2,200 mm across x 40..620
+  Z(a) { return 40 + (this.clamp(a, 1950, 2200) - 1950) / 250 * 580 },
+  snap(x) { const a = 1900 + (x - 40) / 580 * 1700; return [2000, 2900, 3500].reduce((b, s) => Math.abs(s - a) < Math.abs(b - a) ? s : b, 2000) },
+  get bagWhere() { return this.bagArm === 3500 ? 'locker' : this.bagArm === 2900 ? 'rear seat' : 'front' },
+  presets: {
+    'worked-example': { front: 160, rear: 70, bag: 20, bagArm: 3500, fuelL: 150 },
+    'bag-moved-forward': { front: 160, rear: 70, bag: 20, bagArm: 2000, fuelL: 150 },
+    'bag-removed': { front: 160, rear: 70, bag: 0, bagArm: 3500, fuelL: 150 },
+    'rear-passenger-stays-home': { front: 160, rear: 0, bag: 20, bagArm: 3500, fuelL: 150 },
+    'heavier-front-seats': { front: 170, rear: 70, bag: 20, bagArm: 3500, fuelL: 150 },
+    'solo-take-off': { front: 85, rear: 0, bag: 30, bagArm: 3500, fuelL: 120 },
+    'solo-after-60-litres': { front: 85, rear: 0, bag: 30, bagArm: 3500, fuelL: 60 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="cgs-title" class="widget-stage">
+    <title id="cgs-title">The aeroplane as a seesaw: each load pushes down at its arm from the datum, the balance point is the total moment divided by the total weight, and a magnified ruler shows it against the CG limits</title>
+    <defs>
+      <marker id="cgs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker>
+    </defs>
+    <text x="16" y="24" font-size="14" font-weight="700" :fill="legal ? 'var(--color-ok-fg)' : 'var(--color-bad-fg)'" x-text="fmt(weight, weight % 1 > 0.05 ? 1 : 0) + ' kg · CG ' + fmt(cg) + ' mm · ' + (legal ? 'within limits' : over ? 'over MTOW' : 'outside the CG limits')"></text>
+    <!-- the plank with the CG range marked -->
+    <rect x="40" y="160" width="580" height="8" rx="3" fill="var(--color-surface-2)" stroke="var(--color-fg-muted)" stroke-width="1.25"/>
+    <rect :x="X(fwd)" y="160" :width="X(aft) - X(fwd)" height="8" fill="var(--color-ok)" fill-opacity="0.6"/>
+    <!-- loads -->
+    <g stroke-width="2.5" marker-end="url(#cgs-arrow)">
+      <line stroke="var(--color-fg-muted)" :x1="X(emptyArm)" :x2="X(emptyArm)" :y1="156 - Le" y2="156"/>
+      <line stroke="var(--color-info)" :x1="X(frontArm)" :x2="X(frontArm)" :y1="156 - L(front)" y2="156"/>
+      <line stroke="var(--color-info)" :x1="X(fuelArm)" :x2="X(fuelArm)" :y1="156 - L(fuel)" y2="156" x-show="fuelL > 0"/>
+      <line stroke="var(--color-warn)" :x1="X(rearArm)" :x2="X(rearArm)" :y1="156 - L(rear)" y2="156" x-show="rear > 0"/>
+      <line stroke="var(--color-warn)" :x1="X(bagArm) + (bagArm === 2900 && rear > 0 ? 10 : bagArm === 2000 ? 8 : 0)" :x2="X(bagArm) + (bagArm === 2900 && rear > 0 ? 10 : bagArm === 2000 ? 8 : 0)" :y1="156 - L(bag)" y2="156" x-show="bag > 0"/>
+    </g>
+    <!-- break mark: the empty weight's arrow is not to scale -->
+    <rect :x="X(emptyArm) - 7" y="76" width="14" height="6" fill="var(--color-surface)"/>
+    <path :d="'M' + (X(emptyArm) - 7) + ' 79 L' + (X(emptyArm) + 7) + ' 73 M' + (X(emptyArm) - 7) + ' 85 L' + (X(emptyArm) + 7) + ' 79'" stroke="var(--color-fg-muted)" stroke-width="1.25" stroke-linecap="round"/>
+    <g font-size="12" class="num" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round">
+      <text fill="var(--color-fg-muted)" :x="X(emptyArm) + 8" :y="156 - Le + 12" x-text="'empty ' + empty + ' kg (arrow shortened)'"></text>
+      <text fill="var(--color-info-fg)" text-anchor="end" :x="X(frontArm) - 6" :y="156 - L(front) + 4" x-text="'front ' + front"></text>
+      <text fill="var(--color-info-fg)" text-anchor="middle" :x="X(fuelArm)" :y="150 - L(fuel)" x-show="fuelL > 0" x-text="'fuel ' + fmt(fuel, Math.abs(fuel - Math.round(fuel)) < 0.05 ? 0 : 1)"></text>
+      <text fill="var(--color-warn-fg)" text-anchor="middle" :x="X(rearArm)" :y="150 - L(rear)" x-show="rear > 0" x-text="'rear ' + rear"></text>
+      <text fill="var(--color-warn-fg)" :text-anchor="bagArm === 2000 ? 'end' : 'middle'" :x="bagArm === 2000 ? X(2000) - 6 : X(bagArm)" :y="(bagArm === 2900 && rear > 0 ? 134 - L(rear) : bagArm === 2000 ? 156 - L(front) - 14 : 150 - L(bag) - 8)" x-show="bag > 0" x-text="'bag ' + bag"></text>
+    </g>
+    <!-- drag the bag between the front seats, the rear seat and the locker -->
+    <g style="touch-action: none; cursor: ew-resize" x-show="bag > 0" @pointerdown="drag($event, (p) => { bagArm = snap(p.x) })">
+      <rect :x="X(bagArm) - 16" y="100" width="32" height="60" fill="var(--color-warn)" fill-opacity="0"/>
+      <rect :x="X(bagArm) - 9" :y="156 - L(bag) - 2" width="18" height="12" rx="3" :transform="'translate(' + (bagArm === 2900 && rear > 0 ? 10 : bagArm === 2000 ? 8 : 0) + ' -10)'" fill="var(--color-warn)" stroke="var(--color-fg)" stroke-width="1.25"/>
+    </g>
+    <!-- the balance point -->
+    <path :d="'M' + X(cg) + ' 170 L' + (X(cg) - 11) + ' 192 L' + (X(cg) + 11) + ' 192 Z'" :fill="cgState === 'bad' ? 'var(--color-bad)' : cgState === 'warn' ? 'var(--color-warn)' : 'var(--color-ok)'" stroke="var(--color-fg)" stroke-width="1.25" stroke-linejoin="round"/>
+    <!-- stations -->
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num">
+      <text :x="X(2000)" y="204">2,000</text><text :x="X(2300)" y="204">2,300</text><text :x="X(2900)" y="204">2,900</text><text :x="X(3500)" y="204">3,500 mm</text>
+    </g>
+    <!-- magnified CG ruler -->
+    <text x="40" y="223" font-size="12" font-weight="600" fill="var(--color-fg-muted)">Magnified: the CG against the limits</text>
+    <rect x="40" y="236" width="580" height="14" rx="3" fill="var(--color-bad)" fill-opacity="0.12"/>
+    <rect :x="Z(fwd)" y="236" :width="Z(aft) - Z(fwd)" height="14" fill="var(--color-ok)" fill-opacity="0.35" stroke="var(--color-ok)" stroke-width="1.25"/>
+    <g font-size="12" class="num" fill="var(--color-fg-muted)" text-anchor="middle">
+      <text :x="Z(fwd)" y="268">2,000</text><text :x="Z(aft)" y="268">2,120</text><text :x="Z(2200) - 14" y="268">2,200</text>
+    </g>
+    <path :d="'M' + Z(cg) + ' 238 L' + (Z(cg) - 8) + ' 225 L' + (Z(cg) + 8) + ' 225 Z'" fill="var(--color-fg)"/>
+    <line :x1="Z(cg)" :x2="Z(cg)" y1="236" y2="254" stroke="var(--color-fg)" stroke-width="2"/>
+    <text font-size="12" font-weight="700" :fill="cgState === 'bad' ? 'var(--color-bad-fg)' : 'var(--color-fg)'" :text-anchor="Z(cg) > 330 ? 'end' : 'start'" :x="Z(cg) > 330 ? Z(cg) - 10 : Z(cg) + 10" y="290" x-text="fmt(cg) + ' mm: ' + cgText"></text>
+  </svg>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="cgs-front">Pilot and front passenger <output for="cgs-front" x-text="front + ' kg'"></output></label>
+      <input type="range" id="cgs-front" min="60" max="200" step="5" x-model.number="front">
+    </div>
+    <div class="widget-control">
+      <label for="cgs-rear">Rear passenger <output for="cgs-rear" x-text="rear + ' kg'"></output></label>
+      <input type="range" id="cgs-rear" min="0" max="100" step="5" x-model.number="rear">
+    </div>
+    <div class="widget-control">
+      <label for="cgs-bag">Bag <output for="cgs-bag" x-text="bag + ' kg, ' + bagWhere"></output></label>
+      <input type="range" id="cgs-bag" min="0" max="40" step="5" x-model.number="bag">
+    </div>
+    <div class="widget-control">
+      <label for="cgs-fuel">Fuel <output for="cgs-fuel" x-text="fuelL + ' L = ' + fmt(fuel, 1) + ' kg'"></output></label>
+      <input type="range" id="cgs-fuel" min="0" max="150" step="5" x-model.number="fuelL">
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="over ? 'bad' : mtow - weight < 10 ? 'warn' : 'ok'"><dt class="widget-label">Total weight</dt><dd class="widget-value" x-text="fmt(weight, weight % 1 ? 1 : 0) + ' kg of 1,050'"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Total moment</dt><dd class="widget-value" x-text="fmt(moment) + ' kg mm'"></dd></div>
+    <div class="widget-readout" :class="cgState"><dt class="widget-label">CG = moment ÷ weight</dt><dd class="widget-value"><span x-text="fmt(cg) + ' mm'"></span><span class="widget-flag bad" x-show="cgState === 'bad'">out</span></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('worked-example')" :aria-pressed="active === 'worked-example'">Four on board</button>
+      <button type="button" @click="preset('bag-moved-forward')" :aria-pressed="active === 'bag-moved-forward'">Bag forward</button>
+      <button type="button" @click="preset('bag-removed')" :aria-pressed="active === 'bag-removed'">Bag out</button>
+      <button type="button" @click="preset('rear-passenger-stays-home')" :aria-pressed="active === 'rear-passenger-stays-home'">Rear seat empty</button>
+      <button type="button" @click="preset('heavier-front-seats')" :aria-pressed="active === 'heavier-front-seats'">Front 170 kg</button>
+      <button type="button" @click="preset('solo-take-off')" :aria-pressed="active === 'solo-take-off'">Solo take-off</button>
+      <button type="button" @click="preset('solo-after-60-litres')" :aria-pressed="active === 'solo-after-60-litres'">Solo, 60 L burned</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> Each load pushes down at its own arm, and the balance point is the total moment divided by the total weight. Loads far aft (the rear seat at 2,900 mm, the locker at 3,500 mm) pull it aft out of proportion to their weight. Taking a load out changes the divisor as well as the moment, so re-calculate after every change. Drag the bag between the front seats, the rear seat and the locker. The aeroplane and its figures are the lesson's worked example.</p>
+  <details class="widget-try"><summary>Try it: four on board is aft of the limit. Does moving the bag forward or taking it out fix it?</summary><p>Press Four on board: 1,038 kg, CG 2,154 mm, 34 mm aft. Bag forward: 2,125 mm. Bag out: 2,127 mm, further aft than moving it, because the divisor shrank too. Neither is enough. Rear seat empty: 968 kg and 2,100 mm, inside the limits.</p></details>
+  <details class="widget-try"><summary>Try it: solo with a 30 kg bag and 120 L. Inside at take-off? And after burning 60 L?</summary><p>Press Solo take-off: 881.4 kg and 2,119 mm, inside by only 1 mm. Press Solo, 60 L burned: 838.2 kg and 2,110 mm. The tanks at 2,300 mm are aft of the CG, so burning fuel moves the CG forward.</p></details>
+</div>

@@ -1,0 +1,157 @@
+<div class="widget" x-data="timeline({
+  duration: 20, loop: false,
+  collide: true,
+  // the last 45 seconds before the tracks cross. You fly north at 90 kt, a Warrior at 110 kt converges from your
+  // one o'clock (30 degrees right). Speeds and span are illustrative; the geometry is exact.
+  v1: 90, v2: 110, brg: 30, span: 10.7, secs: 45,
+  get kc() { const b = this.brg * Math.PI / 180; return this.v1 * Math.cos(b) + Math.sqrt(this.v2 * this.v2 - Math.pow(this.v1 * Math.sin(b), 2)) },
+  // the Warrior's direction of travel (unit vector, x east, y north)
+  get u2() { const b = this.brg * Math.PI / 180; return { x: -this.kc * Math.sin(b) / this.v2, y: (this.v1 - this.kc * Math.cos(b)) / this.v2 } },
+  // seconds the Warrior arrives after you at the crossing point (0 = collision)
+  get lag() { return this.collide ? 0 : 9 },
+  ours(tau) { return { x: 0, y: -this.v1 * tau / 3600 } },
+  theirs(tau) { const d = this.v2 * (tau + this.lag) / 3600; return { x: -d * this.u2.x, y: -d * this.u2.y } },
+  rel(tau) { const a = this.ours(tau), b = this.theirs(tau); return { x: b.x - a.x, y: b.y - a.y } },
+  get tau() { return Math.max(0.4, (1 - this.t) * this.secs) },
+  get r() { const v = this.rel(this.tau); return Math.hypot(v.x, v.y) },
+  bearingAt(tau) { const v = this.rel(tau); return Math.atan2(v.x, v.y) * 180 / Math.PI },
+  get b() { return this.bearingAt(this.tau) },
+  // apparent wingspan in degrees
+  sizeAt(tau) { const v = this.rel(tau); return Math.atan(this.span / 1852 / Math.max(Math.hypot(v.x, v.y), 1e-4)) * 180 / Math.PI },
+  get size() { return this.sizeAt(this.tau) },
+  get grow() { return this.size / this.sizeAt(this.secs) },
+  // plan view: 90 px per NM, crossing point at (150, 112), north up
+  P(p) { return { x: 150 + p.x * 90, y: 112 - p.y * 90 } },
+  get me() { return this.P(this.ours(this.tau)) },
+  get him() { return this.P(this.theirs(this.tau)) },
+  sight(i) { const tau = this.secs * (1 - i / 5); return { a: this.P(this.ours(tau)), b: this.P(this.theirs(tau)), on: this.t >= i / 5 - 1e-6 } },
+  get hisHdg() { return Math.atan2(this.u2.x, this.u2.y) * 180 / Math.PI },
+  // windscreen: 2.2 px per degree either side of the nose (x 470); the Warrior sits on the horizon (same level)
+  WX(b) { return 440 + this.clamp(b, -36, 62) * 3 },
+  get px() { return this.clamp(this.size * 3, 3, 240) },
+  get track1() { const a = this.P(this.ours(this.secs)), b = this.P(this.ours(-8)); return { a, b } },
+  get track2() { const a = this.P(this.theirs(this.secs)), b = this.P(this.theirs(-8)); return { a, b } },
+  ghost(i) { const tau = this.secs * (1 - i / 5); return { x: this.WX(this.bearingAt(tau)), on: this.t >= i / 5 - 1e-6 } },
+  get passed() { return !this.collide && this.t > 0.999 },
+  get steps() {
+    return this.collide
+      ? [{ at: 0, label: 'A speck at 1 o’clock' }, { at: 0.6, label: 'Same spot, a bit bigger' }, { at: 0.9, label: 'Blossoming' }, { at: 0.985, label: 'Impact' }]
+      : [{ at: 0, label: 'A speck at 1 o’clock' }, { at: 0.6, label: 'Drifting aft' }, { at: 0.95, label: 'Passes behind' }];
+  },
+  get drift() { return Math.abs(this.b - this.bearingAt(this.secs)) },
+  get brgText() { return this.trk(this.b) + (this.drift < 0.5 ? ', steady' : ', moving aft ' + this.fmt(this.drift) + '°') },
+  get caption() {
+    const s = Math.round(this.tau);
+    if (this.collide) {
+      if (this.t < 0.5) return 'At ' + this.fmt(this.r, 1) + ' NM the Warrior is a dot a few minutes of arc across, sitting at one o’clock. Nothing moves on the windscreen, so your peripheral vision, which hunts for movement, ignores it.';
+      if (this.t < 0.88) return 'Twenty seconds later it is still in exactly the same place on the windscreen, and only a little bigger. Every line of sight on the map is parallel: a constant relative bearing, the geometry of a collision.';
+      if (this.t < 0.985) return 'In the last few seconds the size doubles and doubles again: it blossoms out of nowhere. ' + s + ' s to impact, and a turn takes seconds to have any effect.';
+      return 'The tracks meet. Had you scanned in 10 to 15 degree sectors, pausing about a second on each, the speck at one o’clock would have been found while there was time.';
+    }
+    if (this.t < 0.5) return 'Another speck at one o’clock. Watch whether it moves against the windscreen frame.';
+    if (this.t < 0.95) return 'This one is drifting back along the windscreen: its relative bearing is changing, the lines of sight are not parallel, and it will pass behind you.';
+    return 'It passes behind. Movement across the windscreen means a miss; no movement means a collision course.';
+  },
+  presets: {
+    'speck-at-one-oclock': { collide: true, t: 0.3 },
+    'still-not-moving': { collide: true, t: 0.75 },
+    'blossoming': { collide: true, t: 0.96 },
+    'passes-behind': { collide: false, t: 0.8 },
+  },
+})">
+  <svg viewBox="0 0 640 300" role="img" aria-labelledby="ccc-title" class="widget-stage">
+    <title id="ccc-title">Two aircraft converging, seen from above with their lines of sight, and the other aircraft as you see it through the windscreen: fixed in place and growing on a collision course</title>
+    <!-- plan view -->
+    <rect x="10" y="10" width="290" height="280" rx="10" fill="var(--color-sky-soft)"/>
+    <text x="22" y="32" font-size="13" fill="var(--color-sky-fg)" font-weight="600">From above</text>
+    <g stroke="var(--color-fg-faint)" stroke-width="1" stroke-dasharray="4 3">
+      <line :x1="sight(0).a.x" :y1="sight(0).a.y" :x2="sight(0).b.x" :y2="sight(0).b.y" x-show="sight(0).on"/>
+      <line :x1="sight(1).a.x" :y1="sight(1).a.y" :x2="sight(1).b.x" :y2="sight(1).b.y" x-show="sight(1).on"/>
+      <line :x1="sight(2).a.x" :y1="sight(2).a.y" :x2="sight(2).b.x" :y2="sight(2).b.y" x-show="sight(2).on"/>
+      <line :x1="sight(3).a.x" :y1="sight(3).a.y" :x2="sight(3).b.x" :y2="sight(3).b.y" x-show="sight(3).on"/>
+      <line :x1="sight(4).a.x" :y1="sight(4).a.y" :x2="sight(4).b.x" :y2="sight(4).b.y" x-show="sight(4).on"/>
+    </g>
+    <g stroke="var(--color-line-strong)" stroke-width="1.25" stroke-linecap="round">
+      <line :x1="track1.a.x" :y1="track1.a.y" :x2="track1.b.x" :y2="track1.b.y"/>
+      <line :x1="track2.a.x" :y1="track2.a.y" :x2="track2.b.x" :y2="track2.b.y"/>
+    </g>
+    <line :x1="me.x" :y1="me.y" :x2="him.x" :y2="him.y" stroke="var(--color-brand)" stroke-width="1.25"/>
+    <path d="M144 106 L156 118 M156 106 L144 118" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" x-show="collide"/>
+    <g :transform="'translate(' + me.x + ' ' + me.y + ') rotate(-90)'">
+      <!-- python -m tools.diagrams.plane top, scale 0.3, colour brand -->
+      <g transform="translate(0 0) rotate(0) scale(0.3)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-brand)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <g :transform="'translate(' + him.x + ' ' + him.y + ') rotate(' + (hisHdg - 90) + ')'">
+      <!-- python -m tools.diagrams.plane top, scale 0.3, colour fg -->
+      <g transform="translate(0 0) rotate(0) scale(0.3)"><path d="M-37.6 -1.2 L-41.4 -16.7 L-50.8 -16.7 L-51.2 -1.2 Z M-37.6 1.2 L-41.4 16.7 L-50.8 16.7 L-51.2 1.2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-46" y1="-2" x2="-46" y2="-16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-46" y1="2" x2="-46" y2="16.2" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.8 0 C18.8 -2.6 17 -3.9 14 -4.4 L8.4 -4.9 L-12 -5.2 L-47.7 -1.3 L-47.7 1.3 L-12 5.2 L8.4 4.9 L14 4.4 C17 3.9 18.8 2.6 18.8 0 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-30" y1="0" x2="-51.4" y2="0" stroke="var(--color-fg)" stroke-width="2" stroke-linecap="round"/><path d="M7.4 -4.3 Q8.8 0 7.4 4.3 L4 4.9 L4 -4.9 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-12.7 -4.3 L-18.6 -2.4 L-18.6 2.4 L-12.7 4.3 Z" stroke="var(--color-fg)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 -24 L4 24 L-1.6 47.6 Q-2.3 50 -4.8 50 L-11 50 Q-12.7 50 -12.7 47.6 L-12.7 -47.6 Q-12.7 -50 -11 -50 L-4.8 -50 Q-2.3 -50 -1.6 -47.6 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-9.6" y1="-46" x2="-9.6" y2="-25" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><line x1="-9.6" y1="25" x2="-9.6" y2="46" stroke="var(--color-fg)" stroke-width="1" stroke-linecap="round"/><path d="M18.6 -2 C20.2 -1.8 21.2 -0.9 21.2 0 C21.2 0.9 20.2 1.8 18.6 2 Z" stroke="var(--color-fg)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="19.3" y1="-8.6" x2="19.3" y2="8.6" stroke="var(--color-fg)" stroke-width="1.25" stroke-linecap="round"/></g>
+    </g>
+    <text font-size="12" fill="var(--color-brand-fg)" font-weight="600" :x="me.x - 22" :y="me.y + 5" text-anchor="end">you</text>
+    <text font-size="12" fill="var(--color-fg-muted)" :x="him.x + 18" :y="him.y - 12">Warrior</text>
+    <text x="22" y="280" font-size="12" fill="var(--color-fg-muted)" x-text="collide ? 'lines of sight stay parallel' : 'lines of sight swing'"></text>
+
+    <!-- the view through the windscreen -->
+    <rect x="320" y="10" width="310" height="280" rx="10" fill="var(--color-surface-2)"/>
+    <rect x="330" y="40" width="290" height="160" fill="var(--color-sky-soft)"/>
+    <rect x="330" y="150" width="290" height="50" fill="var(--color-ok)" fill-opacity="0.12"/>
+    <line x1="330" y1="150" x2="620" y2="150" stroke="var(--color-fg-faint)" stroke-width="1"/>
+    <text x="332" y="32" font-size="13" fill="var(--color-fg)" font-weight="600">Through your windscreen</text>
+    <!-- where it was earlier -->
+    <g fill="var(--color-bad)" fill-opacity="0.35">
+      <circle r="2.5" cy="150" :cx="ghost(0).x" x-show="ghost(0).on"/><circle r="2.5" cy="150" :cx="ghost(1).x" x-show="ghost(1).on"/>
+      <circle r="2.5" cy="150" :cx="ghost(2).x" x-show="ghost(2).on"/><circle r="2.5" cy="150" :cx="ghost(3).x" x-show="ghost(3).on"/>
+    </g>
+    <!-- the Warrior, head-on-ish: a thin wing edge and a fuselage -->
+    <g :transform="'translate(' + WX(b) + ' 150)'" x-show="!passed">
+      <line :x1="-px / 2" :x2="px / 2" y1="0" y2="0" stroke="var(--color-fg)" :stroke-width="Math.max(2, px / 22)" stroke-linecap="round"/>
+      <circle cx="0" cy="0" fill="var(--color-fg)" :r="Math.max(1.5, px / 12)"/>
+      <line x1="0" x2="0" y1="0" :y2="-px / 6" stroke="var(--color-fg)" :stroke-width="Math.max(1, px / 30)" stroke-linecap="round"/>
+    </g>
+    <circle r="14" fill="none" stroke="var(--color-bad)" stroke-width="1.25" stroke-dasharray="3 3" cy="150" :cx="WX(b)" x-show="!passed && px < 10"/>
+    <!-- windscreen frame: the dashboard and the door pillars -->
+    <path d="M330 200 L620 200 L620 290 L330 290 Z" fill="var(--color-surface-2)"/>
+    <rect x="330" y="198" width="290" height="12" rx="4" fill="var(--color-fg-faint)"/>
+    <rect x="342" y="40" width="10" height="160" fill="var(--color-fg-faint)"/>
+    <rect x="590" y="40" width="10" height="160" fill="var(--color-fg-faint)"/>
+    <g font-size="11" fill="var(--color-fg-faint)" text-anchor="middle" class="num"><text :x="WX(0)" y="226">12</text><text :x="WX(30)" y="226">1</text><text :x="WX(60)" y="226">2</text><text :x="WX(-30)" y="226">11</text></g>
+    <text x="475" y="268" font-size="13" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'apparent size × ' + fmt(grow, grow < 10 ? 1 : 0) + ' since the start'"></text>
+  </svg>
+
+  <div class="widget-timeline">
+    <button type="button" class="widget-play" @click="toggle()" :aria-label="playing ? 'Pause' : 'Play the last 45 seconds'">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="!playing"><path d="M6 4 L16 10 L6 16 Z"/></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" x-show="playing"><rect x="5" y="4" width="3.5" height="12" rx="1"/><rect x="11.5" y="4" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <input type="range" id="ccc-t" min="0" max="1" step="0.001" x-model.number="t" @input="pause()" aria-label="Time before the tracks cross">
+    <span class="widget-clock" x-text="(collide ? 'impact in ' : 'crossing in ') + Math.round(tau) + ' s'"></span>
+  </div>
+  <div class="widget-steps">
+    <template x-for="(s, i) in steps" :key="s.label">
+      <button type="button" @click="goStep(i)" :aria-pressed="step === i" x-text="s.label"></button>
+    </template>
+  </div>
+  <p class="widget-caption" aria-live="polite" x-text="caption"></p>
+
+  <div class="widget-controls">
+    <div class="widget-control">
+      <label for="ccc-collide" class="cursor-pointer"><span>On a collision course (untick: the Warrior is a few seconds later and passes behind)</span>
+        <input type="checkbox" id="ccc-collide" x-model="collide" class="size-5 accent-[var(--color-brand)]"></label>
+    </div>
+  </div>
+  <dl class="widget-readouts">
+    <div class="widget-readout" :class="collide ? 'bad' : 'ok'"><dt class="widget-label">Relative bearing</dt><dd class="widget-value" x-text="brgText"></dd></div>
+    <div class="widget-readout"><dt class="widget-label">Range</dt><dd class="widget-value" x-text="fmt(r, 2) + ' NM'"></dd></div>
+    <div class="widget-readout" :class="size > 1 ? 'bad' : size > 0.3 ? 'warn' : ''"><dt class="widget-label">Wingspan as you see it</dt><dd class="widget-value" x-text="fmt(size, size < 1 ? 2 : 1) + '°'"></dd></div>
+  </dl>
+  <div class="widget-actions">
+    <span class="widget-presets">
+      <button type="button" @click="preset('speck-at-one-oclock')" :aria-pressed="active === 'speck-at-one-oclock'">A speck</button>
+      <button type="button" @click="preset('still-not-moving')" :aria-pressed="active === 'still-not-moving'">Still not moving</button>
+      <button type="button" @click="preset('blossoming')" :aria-pressed="active === 'blossoming'">Blossoming</button>
+      <button type="button" @click="preset('passes-behind')" :aria-pressed="active === 'passes-behind'">Passes behind</button>
+    </span>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
+  <p class="widget-notice"><strong>What to notice.</strong> On a collision course the other aircraft does not move on your windscreen: the relative bearing stays constant and it only grows, slowly while it is distant and then very fast in the last few seconds. Movement across the windscreen means it will pass ahead or behind. The speeds (90 and 110 kt) and the Warrior's span are illustrative; the geometry is exact.</p>
+  <details class="widget-try"><summary>Try it: which is more dangerous, an aircraft sliding across your windscreen or one sitting still at one o’clock?</summary><p>Play the collision: the Warrior stays on the same spot (the faint dots show where it was) and grows only at the very end. Untick the box and play again: it drifts aft and passes behind. The one that does not move is the one that hits you.</p></details>
+  <details class="widget-try"><summary>Try it: how much bigger is the Warrior 10 seconds before impact than 45 seconds before?</summary><p>Drag to 10 s: the apparent size is about 4.5 times what it was at the start, still well under a degree. Most of the growth comes in the last few seconds, which is why it seems to blossom out of nowhere.</p></details>
+</div>
