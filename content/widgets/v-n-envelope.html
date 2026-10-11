@@ -1,6 +1,6 @@
 <div class="widget" x-data="widget({
-  v: 101, n: 3.8, w: 100, cat: 'normal',
-  // BAKC 6.3 / RBKA 3.8: stall speed 52 kt at maximum weight, n max = (V / Vs)^2, VA = Vs √n limit, Vs ∝ √weight.
+  v: 101, n: 3.8, w: 100, cat: 'normal', vsMax: 52,
+  // BAKC 6.3 / RBKA 3.8: stall speed 52 kt at maximum weight (POPC 2.2's example: 55 kt, the popc- presets), n max = (V / Vs)^2, VA = Vs √n limit, Vs ∝ √weight.
   // Limits from the lessons' table; ultimate = 1.5 × limit. VNO, VNE and the negative stall curve are schematic
   // positions (as in the lessons' V-n diagram); the design gust line is shaped so it crosses +3.8 g just past VNO.
   vno: 128, vne: 160,
@@ -8,10 +8,10 @@
   get nl() { return this.cat === 'utility' ? 4.4 : 3.8 },
   get nn() { return this.cat === 'utility' ? -1.76 : -1.52 },
   get nu() { return this.nl * 1.5 },
-  get vs() { return 52 * Math.sqrt(this.wf) },
+  get vs() { return this.vsMax * Math.sqrt(this.wf) },
   get vsn() { return 64 * Math.sqrt(this.wf) },
   // as the lessons work it: VA at maximum weight (52 × √3.8 ≈ 101 kt, as a POH would publish it), then × √(weight ratio)
-  get vaMax() { return Math.round(52 * Math.sqrt(this.nl)) },
+  get vaMax() { return Math.round(this.vsMax * Math.sqrt(this.nl)) },
   get va() { return this.vaMax * Math.sqrt(this.wf) },
   get vneg() { return this.vsn * Math.sqrt(-this.nn) },
   get kg() { return 2.8 / 135 / this.wf },
@@ -45,13 +45,15 @@
     this.active = null;
   },
   presets: {
-    'va-at-max-weight': { v: 101, n: 3.8, w: 100, cat: 'normal' },
-    'steep-turn-60': { v: 100, n: 2, w: 100, cat: 'normal' },
-    'full-pull-below-va': { v: 80, n: 2.4, w: 100, cat: 'normal' },
-    'pull-above-va': { v: 120, n: 4.6, w: 100, cat: 'normal' },
-    'solo-light': { v: 101, n: 4.7, w: 80, cat: 'normal' },
-    'gust-in-yellow-arc': { v: 145, n: 4, w: 100, cat: 'normal' },
-    'utility': { v: 109, n: 4.4, w: 100, cat: 'utility' },
+    'va-at-max-weight': { v: 101, n: 3.8, w: 100, cat: 'normal', vsMax: 52 },
+    'steep-turn-60': { v: 100, n: 2, w: 100, cat: 'normal', vsMax: 52 },
+    'full-pull-below-va': { v: 80, n: 2.4, w: 100, cat: 'normal', vsMax: 52 },
+    'pull-above-va': { v: 120, n: 4.6, w: 100, cat: 'normal', vsMax: 52 },
+    'solo-light': { v: 101, n: 4.7, w: 80, cat: 'normal', vsMax: 52 },
+    'gust-in-yellow-arc': { v: 145, n: 4, w: 100, cat: 'normal', vsMax: 52 },
+    'utility': { v: 109, n: 4.4, w: 100, cat: 'utility', vsMax: 52 },
+    'popc-va-max-weight': { v: 107, n: 3.8, w: 100, cat: 'normal', vsMax: 55 },
+    'popc-va-80-percent': { v: 96, n: 3.8, w: 80, cat: 'normal', vsMax: 55 },
   },
 })">
   <svg viewBox="0 0 640 340" role="img" aria-labelledby="vne-title" class="widget-stage" style="touch-action: none"
@@ -143,9 +145,9 @@
       <dt class="widget-label">Most g before the stall</dt>
       <dd class="widget-value" x-text="v < 1 ? '–' : fmt(Math.min(nmax, 99), 1) + ' g at ' + v + ' kt'"></dd>
     </div>
-    <div class="widget-readout" :class="v > va && v <= vne ? 'warn' : ''">
+    <div class="widget-readout" :class="v > Math.round(va) && v <= vne ? 'warn' : ''">
       <dt class="widget-label">VA at this weight</dt>
-      <dd class="widget-value"><span x-text="fmt(va) + ' kt (Vs ' + fmt(vs) + ')'"></span><span class="widget-flag warn" x-show="v > va && v <= vne">above VA</span></dd>
+      <dd class="widget-value"><span x-text="fmt(va) + ' kt (Vs ' + fmt(vs) + ')'"></span><span class="widget-flag warn" x-show="v > Math.round(va) && v <= vne">above VA</span></dd>
     </div>
     <div class="widget-readout" :class="1 + gust > nl ? 'bad' : ''">
       <dt class="widget-label">Design gust at this speed</dt>
@@ -160,6 +162,8 @@
       <button type="button" @click="preset('solo-light')" :aria-pressed="active === 'solo-light'">Solo, 80% weight</button>
       <button type="button" @click="preset('gust-in-yellow-arc')" :aria-pressed="active === 'gust-in-yellow-arc'">Gust in the yellow</button>
       <button type="button" @click="preset('utility')" :aria-pressed="active === 'utility'">Utility</button>
+      <button type="button" @click="preset('popc-va-max-weight')" :aria-pressed="active === 'popc-va-max-weight'">Stall 55 kt: VA</button>
+      <button type="button" @click="preset('popc-va-80-percent')" :aria-pressed="active === 'popc-va-80-percent'">Stall 55 kt, 80% weight</button>
     </span>
     <button type="button" class="btn-secondary" @click="reset()">Reset</button>
   </div>

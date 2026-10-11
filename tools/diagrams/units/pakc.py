@@ -78,7 +78,7 @@ def ctaf_broadcast_anatomy() -> Canvas:
     rows = [
         ("Location", "Northam", ["which aerodrome the call", "is about"]),
         ("Traffic", "traffic,", ["addressed to all aircraft,", "not to one station"]),
-        ("Type", "Cessna 172", ["what to look for, and", "how fast it will be"]),
+        ("Type", "Cessna 152", ["what to look for, and", "how fast it will be"]),
         ("Call-sign", "Alpha Bravo Charlie,", ["who you are"]),
         ("Position", "10 miles south,", ["where you are"]),
         ("Level", "2,500,", ["how high you are"]),
@@ -87,7 +87,7 @@ def ctaf_broadcast_anatomy() -> Canvas:
     ]
     rh, top = 46, 84
     h = top + len(rows) * rh + 44
-    c = Canvas("One CTAF broadcast, eight items in a fixed order", "The inbound call from the lesson, Northam traffic, Cessna 172 Alpha Bravo "
+    c = Canvas("One CTAF broadcast, eight items in a fixed order", "The inbound call from the lesson, Northam traffic, Cessna 152 Alpha Bravo "
                "Charlie, 10 miles south, 2,500, inbound, estimate circuit at 25, Northam, split into its eight items: location, traffic, type, "
                "call-sign, position, level, intentions, location. Each item has a reason beside it. The aerodrome name is said first and last "
                "because many aerodromes share one frequency, often 126.7, and a pilot who tunes in late still hears the last word.",
@@ -366,7 +366,7 @@ def distress_message_anatomy() -> Canvas:
     rows = [
         (["Signal"], "MAYDAY MAYDAY MAYDAY", ["recognised through noise;", "clears the frequency"]),
         (["Station", "addressed"], "Melbourne Centre,", ["who you are calling; skip", "it if unknown or no time"]),
-        (["Call-sign", "and type"], ["Cessna 172 Alpha Bravo Charlie,", "Alpha Bravo Charlie (×3)"], ["who you are; the type tells", "searchers what to look for"]),
+        (["Call-sign", "and type"], ["Cessna 152 Alpha Bravo Charlie,", "Alpha Bravo Charlie (×3)"], ["who you are; the type tells", "searchers what to look for"]),
         (["Nature of the", "emergency"], "engine failure,", ["what kind of help", "is needed"]),
         (["Intentions"], "forced landing in a paddock,", ["what you will do (in a forced", "landing: where you will be)"]),
         (["Position,", "level, heading"], ["8 miles north-east of Northam,", "passing 2,000, heading 230,"], ["narrows the search area"]),

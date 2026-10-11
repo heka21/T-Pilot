@@ -7,9 +7,9 @@
   _names: { sig: 'Signal ×3', stn: 'Station addressed', cs: 'Call-sign and type', nat: 'Nature of emergency', int: 'Intentions', pos: 'Position, level, heading', oth: 'Other information' },
   // PAKC 3.7 worked examples, word for word
   _words: {
-    mayday: { sig: 'MAYDAY MAYDAY MAYDAY', stn: 'Melbourne Centre', cs: 'Cessna 172 Alpha Bravo Charlie, Alpha Bravo Charlie, Alpha Bravo Charlie', nat: 'engine failure',
+    mayday: { sig: 'MAYDAY MAYDAY MAYDAY', stn: 'Melbourne Centre', cs: 'Cessna 152 Alpha Bravo Charlie, Alpha Bravo Charlie, Alpha Bravo Charlie', nat: 'engine failure',
               int: 'forced landing in a paddock', pos: '8 miles north-east of Northam, passing 2,000, heading 230', oth: 'two POB' },
-    pan: { sig: 'PAN PAN, PAN PAN, PAN PAN', stn: 'Melbourne Centre', cs: 'Cessna 172 Alpha Bravo Charlie', nat: 'rough-running engine',
+    pan: { sig: 'PAN PAN, PAN PAN, PAN PAN', stn: 'Melbourne Centre', cs: 'Cessna 152 Alpha Bravo Charlie', nat: 'rough-running engine',
            int: 'diverting to York', pos: '10 miles west of York, 3,500 ft', oth: 'two POB, endurance two hours' },
   },
   get W() { return this._words[this.kind] },

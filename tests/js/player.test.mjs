@@ -402,3 +402,35 @@ test("a closed player stays a bar where there is no lesson bar, and starting a l
   play.click();
   assert.equal(w.localStorage.getItem("player:collapsed"), null, "starting a lesson opens the player");
 });
+
+test("Watch mode applies a widget cue's preset (or resets it) and plays it as the narration reaches the cue", async () => {
+  const desc = lesson("RFRC 2.3");
+  const timeline = {
+    chapters: desc.chapters, captions: [{ t: 0, text: "Hello." }],
+    cues: [{ kind: "diagram", slug: "d", t: 31 }, { kind: "widget", slug: "w", t: 40, preset: "high" },
+           { kind: "widget", slug: "w", t: 60 }, { kind: "widget", slug: "w", t: 80, preset: "low", play: true }],
+  };
+  const { w, audio } = setup({ body: `<section data-watch-page>
+    <script type="application/json" data-watch-lesson>${JSON.stringify(desc)}</script>
+    <script type="application/json" data-watch-timeline>${JSON.stringify(timeline)}</script>
+    <div data-watch-card></div><div data-visual-key="diagram:d" hidden></div><div data-visual-key="widget:w" hidden></div>
+    <p data-watch-caption></p></section>` });
+  const calls = [];
+  w.CasaViz = { drive: (el, opts) => calls.push([el.getAttribute("data-visual-key"), opts.preset, !!opts.reset, !!opts.play]) };
+  await tick();   // jsdom fires DOMContentLoaded itself (dispatching it again would bind the page twice)
+  const at = async (t) => { audio.currentTime = t; audio.fire("timeupdate"); await tick(); };
+  await at(35);
+  assert.equal(w.document.querySelector("[data-visual-key='diagram:d']").hidden, false);
+  assert.equal(calls.length, 0, "diagrams are not driven");
+  await at(45);
+  await at(50);
+  assert.equal(w.document.querySelector("[data-visual-key='widget:w']").hidden, false);
+  assert.deepEqual(calls, [["widget:w", "high", false, false]], "once per cue, not on every tick");
+  await at(65);
+  assert.deepEqual(calls.at(-1), ["widget:w", undefined, true, false], "cued without a preset: reset");
+  await at(85);
+  assert.deepEqual(calls.at(-1), ["widget:w", "low", false, true]);
+  await at(45);
+  assert.deepEqual(calls.at(-1), ["widget:w", "high", false, false], "seeking back applies that cue's preset again");
+  assert.equal(calls.length, 4);
+});

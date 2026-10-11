@@ -21,7 +21,7 @@
     return a + 'Too late: the circuit has little time to find you. For 6 minutes at this speed, call by ' + this.n1(Math.max(10, this.need)) + ' nm.';
   },
   presets: {
-    'c172-10nm-100kt': { gs: 100, dist: 10 },
+    'c152-10nm-100kt': { gs: 100, dist: 10 },
     'late-call-5nm': { gs: 100, dist: 5 },
     'fast-aircraft-180kt': { gs: 180, dist: 10 },
     'slow-aircraft-60kt': { gs: 60, dist: 10 },
@@ -119,7 +119,7 @@
   </dl>
   <div class="widget-actions">
     <span class="widget-presets">
-      <button type="button" @click="preset('c172-10nm-100kt')" :aria-pressed="active === 'c172-10nm-100kt'">10 nm, 100 kt</button>
+      <button type="button" @click="preset('c152-10nm-100kt')" :aria-pressed="active === 'c152-10nm-100kt'">10 nm, 100 kt</button>
       <button type="button" @click="preset('late-call-5nm')" :aria-pressed="active === 'late-call-5nm'">Late, 5 nm</button>
       <button type="button" @click="preset('fast-aircraft-180kt')" :aria-pressed="active === 'fast-aircraft-180kt'">180 kt</button>
       <button type="button" @click="preset('slow-aircraft-60kt')" :aria-pressed="active === 'slow-aircraft-60kt'">60 kt</button>

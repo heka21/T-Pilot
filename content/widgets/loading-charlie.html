@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   emptyKg: 687, emptyIu: 19522, oil: 7, row1: 140, row2: 160, bag: 20, fuelL: 140, utility: false,
   arms: { oil: 1230, row1: 2750, row2: 3600, bag: 4210, fuel: 2950 }, sg: 0.72, bagMax: 122, fuelMax: 216,
   iu(kg, arm) { return kg * arm / 100 },
@@ -26,8 +26,12 @@
   px(mm) { return (70 + (mm - 2680) / 360 * 540).toFixed(1) },
   py(kg) { return (320 - (Math.min(Math.max(kg, 700), 1200) - 700) / 500 * 280).toFixed(1) },
   fmt(n, d) { return n.toLocaleString('en-AU', { minimumFractionDigits: d, maximumFractionDigits: d }) },
-  reset() { this.emptyKg = 687; this.emptyIu = 19522; this.oil = 7; this.row1 = 140; this.row2 = 160; this.bag = 20; this.fuelL = 140; this.utility = false }
-}">
+  presets: {
+    'workbook-example': { emptyKg: 687, emptyIu: 19522, oil: 7, row1: 140, row2: 160, bag: 20, fuelL: 140, utility: false },
+    'four-people-and-bags': { emptyKg: 687, emptyIu: 19522, oil: 7, row1: 160, row2: 75, bag: 40, fuelL: 120, utility: false },
+    'landing-after-60-litres': { emptyKg: 687, emptyIu: 19522, oil: 7, row1: 160, row2: 75, bag: 40, fuelL: 60, utility: false },
+  },
+})">
   <svg viewBox="0 0 640 360" role="img" aria-labelledby="lc-title" class="widget-stage">
     <title id="lc-title">Loading system CHARLIE centre of gravity envelope with the zero fuel and take-off points plotted</title>
     <defs><marker id="lc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
@@ -53,7 +57,7 @@
     <text x="386" y="210" font-size="12" text-anchor="end" fill="var(--color-info)">Utility: max 925 kg, aft 2896</text>
     <text x="160" y="300" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">fwd 2744</text>
     <!-- fuel burn: take-off point to zero fuel point -->
-    <line :x1="px(towCg)" :y1="py(tow)" :x2="px(zfCg)" :y2="py(zfw)" stroke="var(--color-info)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#lc-arrow)" x-show="fuelL > 0"/>
+    <line :x1="px(towCg)" :y1="py(tow)" :x2="px(zfCg)" :y2="py(zfw)" stroke="var(--color-info)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#lc-arrow)" :opacity="fuelL > 0 ? 1 : 0"/>
     <circle :cx="px(zfCg)" :cy="py(zfw)" r="5" fill="var(--color-surface)" :stroke="cgOk(zfCg, zfw) ? 'var(--color-info)' : 'var(--color-bad)'" stroke-width="2"/>
     <text :x="Number(px(zfCg)) - 10" :y="Number(py(zfw)) + 18" font-size="11" text-anchor="end" fill="var(--color-info)">ZFW</text>
     <circle :cx="px(towCg)" :cy="py(tow)" r="7" :fill="ok ? 'var(--color-brand)' : 'var(--color-bad)'" stroke="var(--color-surface)" stroke-width="2"/>
@@ -100,6 +104,11 @@
   </dl>
 
   <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Worked examples from the lesson">
+      <button type="button" @click="preset('workbook-example')" :aria-pressed="active === 'workbook-example'">Workbook example</button>
+      <button type="button" @click="preset('four-people-and-bags')" :aria-pressed="active === 'four-people-and-bags'">Four people and bags</button>
+      <button type="button" @click="preset('landing-after-60-litres')" :aria-pressed="active === 'landing-after-60-litres'">Same, after burning 60 L</button>
+    </div>
     <button type="button" class="btn-secondary" @click="reset()">Reset to the workbook example</button>
     <button type="button" class="btn-ghost" @click="utility = !utility" x-text="utility ? 'Check against normal category' : 'Check against utility category'"></button>
   </div>

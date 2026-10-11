@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   rwy: 240, wdir: 280, wspd: 20, limit: 15,
   get rel() { return ((this.wdir - this.rwy + 540) % 360) - 180 },
   get off() { return Math.abs(this.rel) },
@@ -14,9 +14,14 @@
   get sx() { return 320 + 120 * Math.sin(this.rad) },
   get sy() { return 175 - 120 * Math.cos(this.rad) },
   three(d) { return String(d % 360 === 0 ? 360 : d).padStart(3, '0') },
-  setOff(a) { this.wdir = (this.rwy + a + 360) % 360 || 360 },
-  reset() { this.rwy = 240; this.wdir = 280; this.wspd = 20; this.limit = 15 }
-}">
+  setOff(a) { this.wdir = (this.rwy + a + 360) % 360 || 360; this.active = null },
+  presets: {
+    'rwy24-280-20': { rwy: 240, wdir: 280, wspd: 20, limit: 15 },
+    'rwy24-290-20': { rwy: 240, wdir: 290, wspd: 20, limit: 15 },
+    'northam-rwy32-290-15': { rwy: 320, wdir: 290, wspd: 15, limit: 15 },
+    'jandakot-rwy24-240-12': { rwy: 240, wdir: 240, wspd: 12, limit: 15 },
+  },
+})">
   <svg viewBox="0 0 640 350" role="img" aria-labelledby="xw-title" class="widget-stage">
     <title id="xw-title">Runway in plan view with the wind arrow split into headwind and crosswind components</title>
     <defs>
@@ -41,14 +46,14 @@
     <text x="452" y="306" font-size="12" fill="var(--color-fg-muted)">crosswind ≈ ½, 0.7, 0.9</text>
     <text x="452" y="322" font-size="12" fill="var(--color-fg-muted)">and all of the wind speed</text>
     <!-- components: crosswind across, then head or tail along the runway -->
-    <line :x1="sx" :y1="sy" x2="320" :y2="sy" :stroke="over ? 'var(--color-bad)' : 'var(--color-warn)'" stroke-width="3" stroke-linecap="round" marker-end="url(#xw-arrow)" x-show="cross >= 1"/>
-    <text :x="sx + (rel > 0 ? 12 : -12)" :y="sy - 8" font-size="13" font-weight="700" :text-anchor="rel > 0 ? 'start' : 'end'" :fill="over ? 'var(--color-bad)' : 'var(--color-warn-fg)'" class="num" x-show="cross >= 1" x-text="Math.round(cross) + ' kt cross'"></text>
-    <line x1="320" :y1="sy" x2="320" y2="175" :stroke="tail ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="3" stroke-linecap="round" marker-end="url(#xw-arrow)" x-show="Math.abs(head) >= 1"/>
-    <text :x="rel > 0 ? 294 : 346" :y="(sy + 175) / 2 + 4" font-size="13" font-weight="700" :text-anchor="rel > 0 ? 'end' : 'start'" :fill="tail ? 'var(--color-bad)' : 'var(--color-ok-fg)'" class="num" x-show="Math.abs(head) >= 1" x-text="Math.abs(Math.round(head)) + ' kt ' + (tail ? 'tail' : 'head')"></text>
+    <line :x1="sx" :y1="sy" x2="320" :y2="sy" :stroke="over ? 'var(--color-bad)' : 'var(--color-warn)'" stroke-width="3" stroke-linecap="round" marker-end="url(#xw-arrow)" :opacity="cross >= 1 ? 1 : 0"/>
+    <text :x="sx + (rel > 0 ? 12 : -12)" :y="sy - 8" font-size="13" font-weight="700" :text-anchor="rel > 0 ? 'start' : 'end'" :fill="over ? 'var(--color-bad)' : 'var(--color-warn-fg)'" class="num" :opacity="cross >= 1 ? 1 : 0" x-text="Math.round(cross) + ' kt cross'"></text>
+    <line x1="320" :y1="sy" x2="320" y2="175" :stroke="tail ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="3" stroke-linecap="round" marker-end="url(#xw-arrow)" :opacity="Math.abs(head) >= 1 ? 1 : 0"/>
+    <text :x="rel > 0 ? 294 : 346" :y="(sy + 175) / 2 + 4" font-size="13" font-weight="700" :text-anchor="rel > 0 ? 'end' : 'start'" :fill="tail ? 'var(--color-bad)' : 'var(--color-ok-fg)'" class="num" :opacity="Math.abs(head) >= 1 ? 1 : 0" x-text="Math.abs(Math.round(head)) + ' kt ' + (tail ? 'tail' : 'head')"></text>
     <!-- the wind itself: blows from the source point towards the runway -->
     <line :x1="sx" :y1="sy" x2="320" y2="175" stroke="var(--color-brand)" stroke-width="3.5" stroke-linecap="round" marker-end="url(#xw-arrow)"/>
     <circle :cx="sx" :cy="sy" r="5" fill="var(--color-brand)"/>
-    <text :x="sx + (rel > 0 ? 12 : -12)" :y="sy + 20" font-size="14" font-weight="700" :text-anchor="rel > 0 ? 'start' : 'end'" fill="var(--color-brand)" class="num" x-text="three(wdir) + '/' + String(wspd).padStart(2, '0')"></text>
+    <text :x="sx + (rel > 0 ? 12 : Math.abs(rel) < 10 ? -26 : -12)" :y="sy + 20" font-size="14" font-weight="700" :text-anchor="rel > 0 ? 'start' : 'end'" fill="var(--color-brand)" class="num" x-text="three(wdir) + '/' + String(wspd).padStart(2, '0')"></text>
     <text x="24" y="306" font-size="12" fill="var(--color-fg-muted)">Runway drawn pointing up the page:</text>
     <text x="24" y="322" font-size="12" fill="var(--color-fg-muted)">you are lined up on it. The wind arrow</text>
     <text x="24" y="338" font-size="12" fill="var(--color-fg-muted)">points where the air goes.</text>
@@ -97,8 +102,10 @@
 
   <div class="widget-actions">
     <div class="widget-presets" role="group" aria-label="Worked examples">
-      <button type="button" @click="rwy = 240; wdir = 280; wspd = 20">Rwy 24, wind 280/20</button>
-      <button type="button" @click="rwy = 210; wdir = 240; wspd = 4">Rwy 21, wind 240/04</button>
+      <button type="button" @click="preset('rwy24-280-20')" :aria-pressed="active === 'rwy24-280-20'">Rwy 24, 280/20</button>
+      <button type="button" @click="preset('rwy24-290-20')" :aria-pressed="active === 'rwy24-290-20'">Rwy 24, 290/20</button>
+      <button type="button" @click="preset('northam-rwy32-290-15')" :aria-pressed="active === 'northam-rwy32-290-15'">Northam 32, 290/15</button>
+      <button type="button" @click="preset('jandakot-rwy24-240-12')" :aria-pressed="active === 'jandakot-rwy24-240-12'">Jandakot 24, 240/12</button>
     </div>
     <button type="button" class="btn-secondary" @click="reset()">Reset</button>
   </div>

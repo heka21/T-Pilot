@@ -138,12 +138,12 @@ def alternate_static_cabin() -> Canvas:
 def readability_scale() -> Canvas:
     c = Canvas("The readability scale",
                "The readability scale from AIP GEN 3.4, used to answer a radio check. Each grade shows the request 'radio check one two "
-               "zero decimal three' as the other station hears it. 1 unreadable: nothing but noise. 2 readable now and then: a word "
+               "four decimal three' as the other station hears it. 1 unreadable: nothing but noise. 2 readable now and then: a word "
                "here and there. 3 readable but with difficulty: all the words come through the noise, with effort. 4 readable. 5 "
                "perfectly readable. Grades 4 and 5 are fine; anything below 4 is worth investigating on the ground before you leave: "
                "the microphone position, the plugs and the other COM radio.", height=388, prefix="rds")
     c.add(text(320, 28, "Readability 1 to 5: how well were you heard?", 16, "middle", "fg", weight=700))
-    words = ["radio", "check", "one", "two", "zero", "decimal", "three"]
+    words = ["radio", "check", "one", "two", "four", "decimal", "three"]
     shown = {1: [], 2: [1, 6], 3: [0, 1, 2, 3, 4, 5, 6], 4: [0, 1, 2, 3, 4, 5, 6], 5: [0, 1, 2, 3, 4, 5, 6]}
     noise = {1: 1.0, 2: 0.8, 3: 0.5, 4: 0.12, 5: 0.0}
     meaning = {1: "Unreadable", 2: "Readable now and then", 3: "Readable but with difficulty", 4: "Readable", 5: "Perfectly readable"}
@@ -183,7 +183,7 @@ def readability_scale() -> Canvas:
 def establishing_contact() -> Canvas:
     c = Canvas("Establishing two-way contact",
                "A sequence between you and Melbourne Centre. First call: the station you are calling, your call-sign, and request: "
-               "'Melbourne Centre, Cessna 172 Alpha Bravo Charlie, request traffic', short so that the controller is ready before the "
+               "'Melbourne Centre, Cessna 152 Alpha Bravo Charlie, request traffic', short so that the controller is ready before the "
                "details. Then wait for the reply. No reply: wait at least about 10 seconds before calling again, and check the "
                "frequency, the volume, the MIC selector and range. Centre answers using your call-sign. You give the rest of the message. "
                "Centre's reply includes an item that must be read back, such as a QNH. You read it back and end with your call-sign: "
@@ -203,7 +203,7 @@ def establishing_contact() -> Canvas:
         if note:
             c.add(multiline(cxl + 14 if frm == "you" else yx - 14, y - 3, note, 12, "start" if frm == "you" else "end", "fg-muted", 1.25))
 
-    msg(116, "you", ["“Melbourne Centre, Cessna 172 Alpha Bravo Charlie,", "request traffic”"], None, "brand")
+    msg(116, "you", ["“Melbourne Centre, Cessna 152 Alpha Bravo Charlie,", "request traffic”"], None, "brand")
     c.add(text((yx + cxl) / 2, 134, "station, call-sign, request: short, so they are ready before the details", 12, "middle", "fg-muted"))
     # wait / no reply loop
     c.add(rect(120, 150, 388, 54, "warn-soft", "warn", SECOND, rx=10))

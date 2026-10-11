@@ -116,6 +116,15 @@ test("CasaViz.drive applies a preset and plays", async () => {
   data.pause();
 });
 
+test("CasaViz.drive resets a widget cued without a preset", async () => {
+  const { dom, el, data } = await mount(`<figure><div x-data="widget({ h: 1000, presets: { high: { h: 5000 } } })"></div></figure>`);
+  data.preset("high");
+  assert.equal(data.h, 5000);
+  dom.window.CasaViz.drive(el.parentElement, { reset: true });
+  assert.equal(data.h, 1000);
+  assert.equal(data.active, null);
+});
+
 test("timeline(): a steps getter may use the helpers (it is not read before Alpine starts)", async () => {
   const { data } = await mount(`<div x-data="timeline({ get steps() { return [{ at: this.lerp(0, 1, 0.3), label: 'A' }] } })"></div>`);
   data.next();

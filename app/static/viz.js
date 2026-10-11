@@ -241,12 +241,13 @@
     return c;
   }
 
-  // Watch mode and tests drive a widget through this: drive(el, { preset: "name", play: true })
+  // Watch mode and tests drive a widget through this: drive(el, { preset: "name", play: true }), or { reset: true }
   function drive(el, opts) {
     var root = el && (el.matches && el.matches("[x-data]") ? el : el.querySelector && el.querySelector("[x-data]"));
     if (!root || !window.Alpine) return false;
     var data = window.Alpine.$data(root);
     if (!data) return false;
+    if (opts.reset && typeof data.reset === "function") data.reset();
     if (opts.preset && typeof data.preset === "function") data.preset(opts.preset);
     if (opts.play && typeof data.play === "function") data.play();
     if (opts.pause && typeof data.pause === "function") data.pause();

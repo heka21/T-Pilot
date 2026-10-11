@@ -1,9 +1,11 @@
 """Narrate the listening scripts in content/audio/ to media/audio/<UNIT>/<n.n>.mp3 plus a .json of timings. Idempotent:
 a lesson is rebuilt only when what it says changed (its script, or a lexicon entry it uses), or the voice or speed.
+New or moved visual cues and edited captions alone do not re-render: they are re-timed from the existing .json.
 
     python -m tools.audio.build                      # every script
     python -m tools.audio.build RFRC "RBKA 3.5"      # units or subtopics
     python -m tools.audio.build --jobs 3             # lessons in parallel (each process gets cores/jobs threads)
+    python -m tools.audio.build --cues-only          # only re-time cues and captions; list lessons needing audio
     python -m tools.audio.build --sample             # the same passage in each candidate voice, to choose one
     python -m tools.audio.build --say "the METAR and the TAF"    # one line, with the phonemes, to check a word
 
@@ -115,19 +117,73 @@ def out_paths(subtopic: str) -> tuple[Path, Path]:
 
 
 def stamp(script: Script, voice: str, speed: float) -> dict:
-    """What a rendered lesson was made from; any difference means rebuild. script.sha covers the lexicon's effect."""
-    return {"version": FORMAT_VERSION, "script_sha": script.sha, "voice": voice, "speed": speed}
+    """What a rendered lesson was made from. audio_sha (what is heard, including the lexicon's effect) decides
+    re-rendering; script_sha also covers cues and captions, which re-timing brings up to date."""
+    return {"version": FORMAT_VERSION, "audio_sha": script.audio_sha, "script_sha": script.sha, "voice": voice, "speed": speed}
+
+
+def rendered(script: Script) -> dict | None:
+    """The existing .json for this script's lesson, or None when there is no complete render."""
+    mp3, meta = out_paths(script.subtopic)
+    if not (mp3.is_file() and meta.is_file()):
+        return None
+    try:
+        return json.loads(meta.read_text())
+    except ValueError:
+        return None
+
+
+def audio_current(script: Script, old: dict | None, voice: str, speed: float) -> bool:
+    """The rendered audio says exactly what the script says now. Renders from before audio_sha existed qualify when
+    their script_sha (which covers everything) still matches."""
+    if not old or (old.get("version"), old.get("voice"), old.get("speed")) != (FORMAT_VERSION, voice, speed):
+        return False
+    if "audio_sha" in old:
+        return old["audio_sha"] == script.audio_sha
+    return old.get("script_sha") == script.sha
 
 
 def up_to_date(script: Script, voice: str, speed: float) -> bool:
-    mp3, meta = out_paths(script.subtopic)
-    if not (mp3.is_file() and meta.is_file()):
-        return False
-    try:
-        old = json.loads(meta.read_text())
-    except ValueError:
-        return False
-    return all(old.get(k) == v for k, v in stamp(script, voice, speed).items())
+    old = rendered(script)
+    return audio_current(script, old, voice, speed) and all(old.get(k) == v for k, v in stamp(script, voice, speed).items())
+
+
+def cue_json(cue: Cue, t: float) -> dict:
+    out = {"kind": cue.kind, "slug": cue.slug, "t": t}
+    if cue.preset:
+        out["preset"] = cue.preset
+    if cue.play:
+        out["play"] = True
+    return out
+
+
+def retime(script: Script, old: dict) -> dict:
+    """Chapters, cues and captions for `script` placed on the timing of an existing render of the same audio
+    (audio_current). A cue sits where the narration reaches it: the start of the next sentence, less any pauses
+    and chapter gaps between the two (or the end of the audio when no sentence follows)."""
+    starts = [c["t"] for c in old["captions"]]
+    if len(starts) != len(script.speeches()) or len(old["chapters"]) != len(script.chapters):
+        raise ValueError(f"{script.subtopic}: the render does not match the script's sentences and chapters")
+    chapters, cues, captions, waiting = [], [], [], []   # waiting: [cue, seconds of silence between it and the next sentence]
+    k = 0
+    for ci, chapter in enumerate(script.chapters):
+        if ci:
+            for w in waiting:
+                w[1] += CHAPTER_GAP
+        chapters.append({"id": chapter.id, "title": chapter.title, "t": old["chapters"][ci]["t"]})
+        for item in chapter.items:
+            if isinstance(item, Cue):
+                waiting.append([item, 0.0])
+            elif isinstance(item, Pause):
+                for w in waiting:
+                    w[1] += item.seconds
+            elif isinstance(item, Speech):
+                cues += [cue_json(c, round(max(0.0, starts[k] - gap), 2)) for c, gap in waiting]
+                waiting = []
+                captions.append({"t": starts[k], "text": item.caption})
+                k += 1
+    cues += [cue_json(c, round(max(0.0, old["duration"] - gap), 2)) for c, gap in waiting]
+    return {**old, "words": script.words(), "chapters": chapters, "cues": cues, "captions": captions}
 
 
 def narrate(script: Script, voice: str, speed: float, say=synth) -> tuple[np.ndarray, dict]:
@@ -150,7 +206,7 @@ def narrate(script: Script, voice: str, speed: float, say=synth) -> tuple[np.nda
         chapters.append({"id": chapter.id, "title": chapter.title, "t": round(n / rate, 2)})
         for item in chapter.items:
             if isinstance(item, Cue):
-                cues.append({"kind": item.kind, "slug": item.slug, "t": round(n / rate, 2)})
+                cues.append(cue_json(item, round(n / rate, 2)))
             elif isinstance(item, Pause):
                 silence(item.seconds)
             elif isinstance(item, Speech):
@@ -184,6 +240,29 @@ def selected(args: list[str], lexicon: Lexicon) -> list[Script]:
     return [s for s in scripts if s.subtopic in args or s.subtopic.split()[0] in args]
 
 
+def retime_all(scripts: list[Script], voice: str, speed: float) -> tuple[list[str], list[Script]]:
+    """Re-time every script whose audio is current but whose cues, captions or stamp are not. Returns the subtopics
+    re-timed and the scripts that need narrating."""
+    done, stale = [], []
+    for s in scripts:
+        old = rendered(s)
+        if not audio_current(s, old, voice, speed):
+            stale.append(s)
+        elif any(old.get(k) != v for k, v in stamp(s, voice, speed).items()):
+            meta = {**retime(s, old), **stamp(s, voice, speed)}
+            write_atomic(out_paths(s.subtopic)[1], json.dumps(meta, ensure_ascii=False, indent=1).encode())
+            done.append(s.subtopic)
+    return done, stale
+
+
+def cues_only(scripts: list[Script], voice: str, speed: float) -> int:
+    done, stale = retime_all(scripts, voice, speed)
+    print(f"re-timed {len(done)} of {len(scripts)} lessons" + (f": {', '.join(done)}" if done else ""))
+    if stale:
+        print(f"{len(stale)} need narrating (what they say changed): {', '.join(s.subtopic for s in stale)}")
+    return 0
+
+
 def hms(seconds: float) -> str:
     m, s = divmod(int(seconds), 60)
     h, m = divmod(m, 60)
@@ -197,11 +276,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--speed", type=float, default=SPEED)
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--force", action="store_true", help="rebuild even when up to date")
+    ap.add_argument("--cues-only", action="store_true", help="re-time cues and captions only; list the lessons whose audio is out of date")
     ap.add_argument("--sample", action="store_true", help=f"render a sample passage in {', '.join(SAMPLE_VOICES)}")
     ap.add_argument("--say", metavar="TEXT", help="narrate one line to media/audio/say.mp3 and print its phonemes")
     args = ap.parse_args(argv)
-    ensure_models()
     lexicon = Lexicon.load(CONTENT)
+    if args.cues_only:
+        return cues_only(selected(args.only, lexicon), args.voice, args.speed)
+    ensure_models()
 
     if args.say:
         spoken, _ = spoken_and_caption(args.say, lexicon)
@@ -225,6 +307,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.only and not scripts:
         print(f"no listening scripts match {args.only}")
         return 1
+    if not args.force:
+        retime_all(scripts, args.voice, args.speed)
     todo = [s for s in scripts if args.force or not up_to_date(s, args.voice, args.speed)]
     for s in scripts:
         if s.unknown:

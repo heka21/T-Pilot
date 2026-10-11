@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   elr: 2.5, ts: 26, h: 2000, sat: 'dry',
   get rate() { return this.sat === 'sat' ? 1.5 : 3 },
   env(z) { return this.ts - this.elr * z / 1000 },
@@ -15,9 +15,15 @@
   ft(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',') },
   tx(v) { return 70 + (v - (this.ts - 20)) / 30 * 370 },
   hy(z) { return 290 - z / 5000 * 240 },
-  set(e, s, z, p) { this.elr = e; this.ts = s; this.h = z; this.sat = p },
-  reset() { this.set(2.5, 26, 2000, 'dry') }
-}">
+  set(e, s, z, p) { this.elr = e; this.ts = s; this.h = z; this.sat = p; this.active = null },
+  presets: {
+    'worked-example-dry': { elr: 2.5, ts: 26, h: 2000, sat: 'dry' },
+    'worked-example-saturated': { elr: 2.5, ts: 26, h: 2000, sat: 'sat' },
+    'isa-lapse-rate': { elr: 1.98, ts: 15, h: 2000, sat: 'dry' },
+    'heated-from-below': { elr: 3.5, ts: 30, h: 2000, sat: 'dry' },
+    'dawn-inversion': { elr: -1, ts: 8, h: 1000, sat: 'dry' },
+  },
+})">
   <svg viewBox="0 0 640 336" role="img" aria-labelledby="lrs-title" class="widget-stage">
     <title id="lrs-title">Temperature against height: the environment's lapse rate line, the dry and saturated adiabatic lines, and a parcel lifted from the surface compared with the air around it</title>
     <defs><marker id="lrs-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
@@ -54,9 +60,9 @@
     <text :x="tx(env(5000))" y="22" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-info)" x-text="'Environment ' + t(elr) + '°'"></text>
     <!-- parcel line up to the lift height -->
     <line x1="316.7" y1="290" :x2="tx(pT)" :y2="hy(h)" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
-    <text :x="tx(pT) - 12" :y="hy(h) + 20" font-size="12" font-weight="700" text-anchor="end" fill="var(--color-brand)">parcel</text>
+    <text :x="sat === 'sat' && rises ? tx(pT) + 14 : tx(pT) - 12" :y="hy(h) + 20" font-size="12" font-weight="700" :text-anchor="sat === 'sat' && rises ? 'start' : 'end'" fill="var(--color-brand)">parcel</text>
     <!-- gap at the lift height -->
-    <line :x1="tx(eT)" :y1="hy(h)" :x2="tx(pT)" :y2="hy(h)" :stroke="rises ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="1.5" stroke-dasharray="4 3" x-show="diff !== 0"/>
+    <line :x1="tx(eT)" :y1="hy(h)" :x2="tx(pT)" :y2="hy(h)" :stroke="rises ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="1.5" stroke-dasharray="4 3" :opacity="diff !== 0 ? 1 : 0"/>
     <circle :cx="tx(eT)" :cy="hy(h)" r="5" fill="var(--color-surface)" stroke="var(--color-info)" stroke-width="2"/>
     <circle :cx="tx(pT)" :cy="hy(h)" r="6" fill="var(--color-brand)" stroke="var(--color-surface)" stroke-width="2"/>
     <!-- side column: the parcel and where it goes -->
@@ -66,8 +72,8 @@
     <path d="M540 286 L540 270" stroke="var(--color-fg-muted)" stroke-width="1.25" marker-end="url(#lrs-arrow)"/>
     <circle cx="540" :cy="hy(h)" r="17" :fill="rises ? 'var(--color-bad-soft)' : sinks ? 'var(--color-ok-soft)' : 'var(--color-surface-2)'" stroke="var(--color-brand)" stroke-width="2"/>
     <text x="540" :y="hy(h) + 4" font-size="11" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="t(pT) + '°'"></text>
-    <path :d="'M540 ' + (hy(h) - 21) + ' L540 ' + (hy(h) - 46)" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#lrs-arrow)" x-show="rises"/>
-    <path :d="'M540 ' + (hy(h) + 21) + ' L540 ' + Math.min(282, hy(h) + 46)" stroke="var(--color-ok)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#lrs-arrow)" x-show="sinks"/>
+    <path :d="'M540 ' + (hy(h) - 21) + ' L540 ' + (hy(h) - 46)" stroke="var(--color-bad)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#lrs-arrow)" :opacity="rises ? 1 : 0"/>
+    <path :d="'M540 ' + (hy(h) + 21) + ' L540 ' + Math.min(282, hy(h) + 46)" stroke="var(--color-ok)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#lrs-arrow)" :opacity="sinks ? 1 : 0"/>
     <text x="566" :y="hy(h) - 4" font-size="11" fill="var(--color-info)" class="num" x-text="'air ' + t(eT) + '°'"></text>
     <text x="566" :y="hy(h) + 12" font-size="12" font-weight="700" :fill="rises ? 'var(--color-bad-fg)' : sinks ? 'var(--color-ok-fg)' : 'var(--color-fg-muted)'" x-text="rises ? 'rises' : sinks ? 'sinks' : 'neutral'"></text>
     <text x="540" y="22" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-brand)" x-text="sat === 'sat' ? 'Saturated parcel' : 'Dry parcel'"></text>
@@ -110,11 +116,11 @@
 
   <div class="widget-actions">
     <div class="widget-presets" role="group" aria-label="Examples">
-      <button type="button" @click="set(2.5, 26, 2000, 'dry')">Worked example: 26°, ELR 2.5, dry</button>
-      <button type="button" @click="set(2.5, 26, 2000, 'sat')">Same air, saturated parcel</button>
-      <button type="button" @click="set(1.98, 15, 2000, 'dry')">ISA: 1.98</button>
-      <button type="button" @click="set(3.5, 30, 2000, 'dry')">Hot afternoon: 3.5</button>
-      <button type="button" @click="set(-1, 8, 1000, 'dry')">Inversion at dawn</button>
+      <button type="button" @click="preset('worked-example-dry')" :aria-pressed="active === 'worked-example-dry'">Worked example: 26°, ELR 2.5, dry</button>
+      <button type="button" @click="preset('worked-example-saturated')" :aria-pressed="active === 'worked-example-saturated'">Same air, saturated parcel</button>
+      <button type="button" @click="preset('isa-lapse-rate')" :aria-pressed="active === 'isa-lapse-rate'">ISA: 1.98</button>
+      <button type="button" @click="preset('heated-from-below')" :aria-pressed="active === 'heated-from-below'">Hot afternoon: 3.5</button>
+      <button type="button" @click="preset('dawn-inversion')" :aria-pressed="active === 'dawn-inversion'">Inversion at dawn</button>
     </div>
     <button type="button" class="btn-secondary" @click="reset()">Reset</button>
   </div>

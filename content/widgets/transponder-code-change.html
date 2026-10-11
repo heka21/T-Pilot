@@ -43,7 +43,7 @@
     if (this.alarm) return this.code + ' is on the controller’s screen right now: the ' + this._R[this.code] + ' code. Each intermediate code is transmitted as you dial, so this order of digits trips an alarm.';
     if (this.i < this.n - 1 && this.code[0] === '7' && this.A[0] !== '7') return 'Dialling: ' + this.code + ' is being transmitted. Turning the first digit up through 7 first briefly shows ' + this.code + ', which is harmless; but a code change that steps the second digit through 5, 6 or 7 while the first is 7 passes 7500, 7600 or 7700 and trips an alarm on the controller’s screen.';
     if (this.i < this.n - 1) return 'Dialling: ' + this.code + ' is being transmitted. ' + (this.passedSoFar.length ? 'Already passed through ' + this.passedSoFar.join(' and ') + '.' : 'No emergency code so far.');
-    if (this.passed.length) return 'You reached ' + this.B + ', but on the way you transmitted ' + this.passed.join(' and ') + '. Change the digits in another order: here, the first digit first.';
+    if (this.passed.length) return 'You reached ' + this.B + ', but on the way you transmitted ' + this.passed.join(' and ') + '. Change the digits in another order: here, ' + (this.order === 'ltr' ? 'the last digits first.' : 'the first digit first.');
     if (this.A === '7300' && this.B === '3500') return 'Safe: change the 7 to a 3 first and the steps are 3300, 3400 and 3500, none of them an emergency code (the first digit’s own clicks, 6300 to 4300, are harmless too).';
     return 'You reached ' + this.B + ' without passing through 7500, 7600 or 7700.';
   },
@@ -52,6 +52,8 @@
   presets: {
     'first-digit-first': { from: '7300', to: '3500', order: 'ltr', mode: 'ALT', t: 1 },
     'second-digit-first': { from: '7300', to: '3500', order: 'rtl', mode: 'ALT', t: 0.34 },
+    '7730-second-digit-first': { from: '7300', to: '7730', order: 'ltr', mode: 'ALT', t: 0 },
+    '7730-last-digits-first': { from: '7300', to: '7730', order: 'rtl', mode: 'ALT', t: 0 },
     '1200-to-7234': { from: '1200', to: '7234', order: 'ltr', mode: 'ALT', t: 0.462 },
     'vfr-1200-alt': { from: '1200', to: '1200', order: 'ltr', mode: 'ALT', t: 0 },
   },
@@ -176,6 +178,8 @@
     <span class="widget-presets">
       <button type="button" @click="preset('first-digit-first')" :aria-pressed="active === 'first-digit-first'">7300 → 3500, first digit first</button>
       <button type="button" @click="preset('second-digit-first')" :aria-pressed="active === 'second-digit-first'">7300 → 3500, second digit first</button>
+      <button type="button" @click="preset('7730-second-digit-first')" :aria-pressed="active === '7730-second-digit-first'">7300 → 7730, second digit first</button>
+      <button type="button" @click="preset('7730-last-digits-first')" :aria-pressed="active === '7730-last-digits-first'">7300 → 7730, last digits first</button>
       <button type="button" @click="preset('1200-to-7234')" :aria-pressed="active === '1200-to-7234'">1200 → 7234</button>
       <button type="button" @click="preset('vfr-1200-alt')" :aria-pressed="active === 'vfr-1200-alt'">1200 ALT</button>
     </span>

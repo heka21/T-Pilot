@@ -248,6 +248,44 @@ AUDIO_WORDS = (2000, 5000)
 H2_RE = re.compile(r"^## (.+?)\s*$", re.M)
 
 
+def widget_presets(path: Path) -> tuple[set[str], bool]:
+    """The named presets a widget defines (`presets: { name: {...}, ... }`) and whether it is a timeline."""
+    text = path.read_text(encoding="utf-8")
+    m = re.search(r"presets\s*:\s*\{", text)
+    names: set[str] = set()
+    if m:
+        depth, i = 1, m.end()
+        while i < len(text) and depth:       # the keys at depth 1 of the presets object
+            ch = text[i]
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+            elif depth == 1 and (k := re.match(r"\s*['\"]?([a-z0-9][a-z0-9-]*)['\"]?\s*:", text[i:])) and text[i - 1] in "{, \n":
+                names.add(k.group(1))
+                i += k.end() - 1
+            i += 1
+    return names, "timeline(" in text
+
+
+def cue_option_problems(cue: narration.Cue) -> list[str]:
+    """preset= and play only on widgets, naming a preset the widget defines; play only on a timeline."""
+    if not (cue.preset or cue.play):
+        return []
+    if cue.kind != "widget":
+        return ["preset and play apply to widgets only"]
+    path = visual_path(CONTENT, cue.kind, cue.slug)
+    if not path.is_file():
+        return []
+    names, is_timeline = widget_presets(path)
+    out = []
+    if cue.preset and cue.preset not in names:
+        out.append(f"preset {cue.preset!r} is not one of the widget's presets ({', '.join(sorted(names)) or 'none'})")
+    if cue.play and not is_timeline:
+        out.append("play needs a timeline widget")
+    return out
+
+
 def check_audio(notes: dict[str, str], problems: list[str], warnings: list[str], verbose: bool = False) -> int:
     """Listening scripts against their lessons. notes: subtopic id -> lesson path. Returns the number of scripts."""
     lexicon = narration.Lexicon.load(CONTENT)
@@ -280,10 +318,16 @@ def check_audio(notes: dict[str, str], problems: list[str], warnings: list[str],
         for kind, slug in cued:
             if (kind, slug) not in embedded:
                 problems.append(f"{rel}: cue {kind}:{slug} is not a visual this lesson embeds")
-        for dup in {c for c in cued if cued.count(c) > 1}:
-            problems.append(f"{rel}: cue {dup[0]}:{dup[1]} appears more than once")
+        # A widget may be cued again to show another of its presets; anything else is cued once.
+        with_options = [(c.key, c.preset, c.play) for c in script.cues()]
+        for dup in {c for c in with_options if with_options.count(c) > 1}:
+            problems.append(f"{rel}: cue {dup[0]}{' preset=' + dup[1] if dup[1] else ''} appears more than once")
+        for c in script.cues():
+            problems += [f"{rel}: cue {c.key}: {p}" for p in cue_option_problems(c)]
         if uncued := sorted(slug for kind, slug in embedded if kind == "diagram" and ("diagram", slug) not in cued):
             warnings.append(f"{rel}: diagrams never cued: {', '.join(uncued)}")
+        if uncued := sorted(slug for kind, slug in embedded if kind == "widget" and ("widget", slug) not in cued):
+            warnings.append(f"{rel}: widgets never cued: {', '.join(uncued)}")
         for sp in script.speeches():
             for issue in narration.speech_issues(sp.raw):
                 problems.append(f"{rel}: {issue}: {sp.raw[:70]}")

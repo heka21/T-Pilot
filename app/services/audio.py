@@ -76,7 +76,7 @@ def descriptor(sub: Subtopic, data: dict, progress: ListenProgress | None = None
         "sid": sub.id,
         "title": sub.note.title if sub.note else sub.title,
         "unit": unit,
-        "src": f"/media/audio/{unit}/{number}.mp3?v={data.get('script_sha', '')}{data.get('voice', '')}",
+        "src": f"/media/audio/{unit}/{number}.mp3?v={data.get('audio_sha') or data.get('script_sha', '')}{data.get('voice', '')}",
         "duration": data.get("duration", 0),
         "chapters": data.get("chapters", []),
         "lesson_url": note_url(sub),

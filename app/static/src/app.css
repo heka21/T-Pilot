@@ -1119,6 +1119,12 @@
   .watch-visual > figure > svg { @apply h-auto max-h-[calc(100%-4.5rem)] w-auto max-w-full; }
   .watch-visual > figure > img, .watch-visual .workbook-page img { @apply h-auto max-h-[calc(100dvh-16rem)] w-auto max-w-full; }
   .watch-visual figcaption { @apply mt-3 max-w-3xl text-center; }
+  /* Widgets: as wide as the stage allows, the picture shrunk to leave room for the controls, the rest scrolls;
+     the "try" prompts are for reading, not watching. */
+  .watch-visual > figure.visual-widget { @apply overflow-y-auto overscroll-contain; justify-content: safe center; }
+  .watch-visual .widget { @apply max-w-[min(64rem,100%)] shrink-0; }
+  .watch-visual .widget > svg, .watch-visual .widget-stage > svg { @apply mx-auto max-h-[calc(100dvh-24rem)] w-auto max-w-full; min-height: 10rem; }
+  .watch-visual .widget-try { display: none; }
   .watch-start { @apply absolute bottom-6 left-1/2 -translate-x-1/2 shadow-(--shadow-pop); }
   .watch-caption {
     @apply mx-auto min-h-[3.5rem] w-full max-w-4xl shrink-0 px-4 py-2 text-center text-base leading-snug font-medium text-balance text-fg sm:min-h-[4.5rem] sm:text-xl;

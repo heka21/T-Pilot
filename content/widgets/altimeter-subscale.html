@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   qnh: 1008, sub: 1008, alt: 1200,
   get ind() { return this.alt + (this.sub - this.qnh) * 30 },
   get err() { return this.ind - this.alt },
@@ -10,8 +10,14 @@
   hand2(v) { const a = (v / 10000) * 2 * Math.PI; return 'M150 150 L' + (150 + 58 * Math.sin(a)).toFixed(1) + ' ' + (150 - 58 * Math.cos(a)).toFixed(1) },
   y(v) { return (300 - Math.max(-200, Math.min(3200, v)) / 3000 * 250).toFixed(1) },
   fmt(v) { return Math.round(v).toLocaleString('en-AU') + ' ft' },
-  reset() { this.qnh = 1008; this.sub = 1008; this.alt = 1200 }
-}">
+  presets: {
+    'pressure-height-1350': { qnh: 1008, sub: 1013, alt: 1200 },
+    'left-on-1013-at-500ft': { qnh: 1003, sub: 1013, alt: 500 },
+    'set-1023-qnh-1013': { qnh: 1013, sub: 1023, alt: 1200 },
+    'set-1003-qnh-1013': { qnh: 1013, sub: 1003, alt: 1500 },
+    'high-to-low-1020-1005': { qnh: 1005, sub: 1020, alt: 2050 },
+  },
+})">
   <svg viewBox="0 0 640 330" role="img" aria-labelledby="alt-title" class="widget-stage">
     <title id="alt-title">Altimeter with its subscale window, beside a scale comparing the aeroplane's true altitude with what the altimeter shows</title>
     <defs><marker id="alt-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
@@ -31,12 +37,13 @@
     <text x="150" y="104" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">× 100 ft</text>
     <!-- subscale window -->
     <rect x="166" y="138" width="62" height="24" rx="3" fill="var(--color-surface-2)" :stroke="std ? 'var(--color-info)' : 'var(--color-brand)'" stroke-width="1.5"/>
-    <text x="197" y="155" font-size="13" font-weight="700" text-anchor="middle" :fill="std ? 'var(--color-info)' : 'var(--color-brand)'" class="num" x-text="sub"></text>
     <text x="197" y="176" font-size="11" text-anchor="middle" fill="var(--color-fg-faint)">hPa</text>
     <!-- hands -->
     <path :d="hand2(ind)" stroke="var(--color-fg)" stroke-width="6" stroke-linecap="round"/>
     <path :d="hand(ind, 1000)" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round"/>
     <circle cx="150" cy="150" r="7" fill="var(--color-fg)"/>
+    <!-- subscale figure drawn over the hands (with a halo) so it stays legible when a hand crosses the window -->
+    <text x="197" y="155" font-size="13" font-weight="700" text-anchor="middle" :fill="std ? 'var(--color-info)' : 'var(--color-brand)'" class="num" paint-order="stroke" stroke="var(--color-surface-2)" stroke-width="4" stroke-linejoin="round" x-text="sub"></text>
     <text x="150" y="300" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'shows ' + fmt(ind)"></text>
 
     <!-- altitude scale -->
@@ -59,8 +66,8 @@
     <g :transform="'translate(592 ' + y(alt) + ')'"><g transform="translate(0 -9.5) rotate(0) scale(0.5)"><line x1="13.6" y1="11.6" x2="15" y2="16.9" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="15" cy="17.1" r="2.4" fill="var(--color-brand)" stroke="none"/><line x1="-3.5" y1="12.5" x2="-7.5" y2="16" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><circle cx="-7.5" cy="16.2" r="3.3" fill="var(--color-brand)" stroke="none"/><path d="M25 -0.2 C26.6 0 27.2 1.2 27.2 2.6 C27.2 4.6 26.4 6.2 24.6 7.2 C21.5 9.6 16.5 11.6 10 12.6 L-8 12.8 L-66 5.6 L-66 0.6 L-26 -0.4 L-17.5 -6.1 L5.5 -6.1 L10.2 -0.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-38 -0.3 C-46 -0.6 -51.5 -1.8 -55.5 -4 L-66.5 -14.5 L-71.3 -14.5 L-67.4 5.2 L-65 5.4 L-65 0.6 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="-67.4" y1="-13.6" x2="-61.8" y2="4.8" stroke="var(--color-brand)" stroke-width="1" stroke-linecap="round"/><path d="M-52 4.4 C-52 3.3 -53.2 2.9 -55 2.9 L-71.4 4 L-71.4 4.9 L-55 5.9 C-53.2 5.9 -52 5.5 -52 4.4 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 -6.1 C6.6 -6.1 7.8 -6.6 7.8 -7.6 C7.8 -9 5.6 -9.9 2 -9.9 C-5 -9.9 -12.5 -8.4 -20 -6.4 L-17.4 -6.1 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 -0.8 L5.2 -5.6 L4 -5.6 L4 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.8 -5.6 L-5.6 -5.6 L-5.6 -0.8 L2.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-6.8 -5.6 L-15.4 -5.6 L-12.6 -0.8 L-6.8 -0.8 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><path d="M-17.6 -5.2 L-23.6 -1.1 L-17.6 -1.1 Z" stroke="var(--color-brand)" stroke-width="1" fill="var(--color-surface-2)" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.5" y1="10.4" x2="-0.6" y2="-6.1" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/><path d="M26.4 0.2 C28.2 0.6 29.4 1.6 29.4 2.6 C29.4 3.6 28.2 4.6 26.4 5 Z" stroke="var(--color-brand)" stroke-width="2" fill="var(--color-surface)" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.9" y1="-9.3" x2="26.9" y2="14.5" stroke="var(--color-brand)" stroke-width="1.25" stroke-linecap="round"/></g></g>
     <text x="384" :y="alt <= ind ? Number(y(alt)) + 18 : Number(y(alt)) - 6" font-size="12" font-weight="700" fill="var(--color-brand)" x-text="'really at ' + fmt(alt)"></text>
     <!-- the error -->
-    <line x1="540" :y1="y(ind)" x2="540" :y2="y(alt)" :stroke="low ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="2.5" marker-end="url(#alt-arrow)" x-show="Math.abs(err) >= 60"/>
-    <text x="530" :y="(Number(y(ind)) + Number(y(alt))) / 2 + 5" font-size="13" font-weight="700" text-anchor="end" :fill="low ? 'var(--color-bad)' : 'var(--color-ok)'" x-show="Math.abs(err) >= 90" x-text="(low ? 'lower ' : 'higher ') + Math.abs(err) + ' ft'"></text>
+    <line x1="540" :y1="y(ind)" x2="540" :y2="y(alt)" :stroke="low ? 'var(--color-bad)' : 'var(--color-ok)'" stroke-width="2.5" marker-end="url(#alt-arrow)" :opacity="Math.abs(err) >= 60 ? 1 : 0"/>
+    <text x="530" :y="(Number(y(ind)) + Number(y(alt))) / 2 + 5" font-size="13" font-weight="700" text-anchor="end" :fill="low ? 'var(--color-bad)' : 'var(--color-ok)'" :opacity="Math.abs(err) >= 270 ? 1 : 0" x-text="(low ? 'lower ' : 'higher ') + Math.abs(err) + ' ft'"></text>
   </svg>
 
   <div class="widget-controls">
@@ -95,15 +102,16 @@
 
   <div class="widget-actions">
     <div class="widget-presets" role="group" aria-label="Presets">
-      <button type="button" @click="qnh = 1008; sub = 1008; alt = 1200">QNH 1008 set at 1,200 ft</button>
-      <button type="button" @click="qnh = 1008; sub = 1013; alt = 1200">Same place, 1013 set</button>
-      <button type="button" @click="qnh = 1013; sub = 1023; alt = 1200">1023 set, QNH 1013</button>
-      <button type="button" @click="qnh = 1013; sub = 1003; alt = 1500">1003 set, QNH 1013</button>
+      <button type="button" @click="preset('pressure-height-1350')" :aria-pressed="active === 'pressure-height-1350'">1,200 ft, QNH 1008, 1013 set</button>
+      <button type="button" @click="preset('left-on-1013-at-500ft')" :aria-pressed="active === 'left-on-1013-at-500ft'">500 ft, QNH 1003, 1013 left set</button>
+      <button type="button" @click="preset('set-1023-qnh-1013')" :aria-pressed="active === 'set-1023-qnh-1013'">1023 set, QNH 1013</button>
+      <button type="button" @click="preset('set-1003-qnh-1013')" :aria-pressed="active === 'set-1003-qnh-1013'">1003 set, QNH 1013</button>
+      <button type="button" @click="preset('high-to-low-1020-1005')" :aria-pressed="active === 'high-to-low-1020-1005'">High to low: 1020 set, QNH 1005</button>
     </div>
     <button type="button" class="btn-secondary" @click="reset()">Reset</button>
   </div>
 
   <p class="widget-notice"><strong>What to notice.</strong> Each hectopascal of difference between the subscale and the real QNH moves the reading about 30 ft. Set too high a number (or fly from high pressure into low without resetting) and the altimeter over-reads: you are lower than it says. With 1013 set it shows pressure height, $\text{altitude} + (1013 - \text{QNH}) \times 30$.</p>
-  <details class="widget-try"><summary>Try this: the aerodrome is at 1,200 ft and QNH is 1008. What is the pressure height?</summary><p>$1200 + (1013 - 1008) \times 30 = 1200 + 150 = 1350$ ft. Press "Same place, 1013 set": the altimeter now shows 1,350 ft.</p></details>
+  <details class="widget-try"><summary>Try this: the aerodrome is at 1,200 ft and QNH is 1008. What is the pressure height?</summary><p>$1200 + (1013 - 1008) \times 30 = 1200 + 150 = 1350$ ft. Press "1,200 ft, QNH 1008, 1013 set": the altimeter now shows 1,350 ft.</p></details>
   <details class="widget-try"><summary>Try this: you leave 1023 set when the QNH is 1013 and hold 1,500 ft on the altimeter. Where are you really?</summary><p>The altimeter over-reads by $(1023 - 1013) \times 30 = 300$ ft, so you are at 1,200 ft: 300 ft lower than shown. High to low, look out below.</p></details>
 </div>

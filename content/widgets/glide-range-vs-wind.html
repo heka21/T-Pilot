@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   h: 2200, v: 65, ld: 9, wind: 0, target: 3.0,
   x0: 104, plotW: 500, gy: 220,
   get stillNm() { return this.h * this.ld / 6076 },
@@ -16,9 +16,14 @@
   get yTop() { return this.gy - this.h / 5000 * 170 },
   clampX(x) { return Math.min(550, Math.max(90, x)) },
   get windText() { return this.wind > 0 ? this.wind + ' kt headwind' : this.wind < 0 ? (-this.wind) + ' kt tailwind' : 'calm' },
-  preset(p) { Object.assign(this, p) },
-  reset() { this.h = 2200; this.v = 65; this.ld = 9; this.wind = 0; this.target = 3.0 }
-}">
+  presets: {
+    'still-air-2200-ft': { h: 2200, v: 65, ld: 9, wind: 0, target: 3.0 },
+    'headwind-20-kt': { h: 2200, v: 65, ld: 9, wind: 20, target: 3.0 },
+    'tailwind-20-kt': { h: 2200, v: 65, ld: 9, wind: -20, target: 4.0 },
+    'engine-failure-3000-ft': { h: 3000, v: 65, ld: 9, wind: 0, target: 3.0 },
+    'mishandled-7-to-1': { h: 3000, v: 65, ld: 7, wind: 0, target: 3.0 },
+  },
+})">
   <svg viewBox="0 0 640 300" role="img" aria-labelledby="grw-title" class="widget-stage">
     <title id="grw-title">Side view of a glide from height: the still-air glide path, the path over the ground with the wind, and the target field</title>
     <defs>
@@ -41,8 +46,8 @@
     <text x="64" :y="yTop + 4" font-size="13" font-weight="600" text-anchor="end" fill="var(--color-fg-muted)" class="num" x-text="h + ' ft'"></text>
     <text x="64" :y="yTop - 12" font-size="11" text-anchor="end" fill="var(--color-fg-faint)">AGL</text>
     <!-- wind arrow: points where the wind blows to -->
-    <line :x1="wind > 0 ? 380 : 300" y1="24" :x2="wind > 0 ? 300 : 380" y2="24" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#grw-arrow)" x-show="wind !== 0"/>
-    <text x="392" y="28" font-size="13" font-weight="600" fill="var(--color-sky-fg)" class="num" x-text="windText" x-show="wind !== 0"></text>
+    <line :x1="wind > 0 ? 380 : 300" y1="24" :x2="wind > 0 ? 300 : 380" y2="24" stroke="var(--color-sky-fg)" stroke-width="2" stroke-linecap="round" marker-end="url(#grw-arrow)" :opacity="wind !== 0 ? 1 : 0"/>
+    <text x="392" y="28" font-size="13" font-weight="600" fill="var(--color-sky-fg)" class="num" x-text="windText" :opacity="wind !== 0 ? 1 : 0"></text>
     <!-- target field -->
     <g :transform="'translate(' + xs(target).toFixed(1) + ' 220)'">
       <line x1="0" y1="0" x2="0" y2="-30" :stroke="stateColor" stroke-width="2" stroke-linecap="round"/>
@@ -90,12 +95,16 @@
     </div>
   </dl>
 
-  <div class="widget-actions"><button type="button" class="btn-secondary" @click="reset()">Reset</button>
-    <button type="button" class="btn-ghost" @click="preset({ h: 2200, v: 65, ld: 9, wind: 0 })">Note example: 2200 ft, 65 kt</button>
-    <button type="button" class="btn-ghost" @click="wind = 20">20 kt headwind</button>
-    <button type="button" class="btn-ghost" @click="wind = -20">20 kt tailwind</button>
-    <button type="button" class="btn-ghost" @click="preset({ h: 3000, ld: 9, wind: 0 })">3000 ft at 9:1</button>
-    <button type="button" class="btn-ghost" @click="ld = 7">Mishandled: 7:1</button></div>
+  <div class="widget-actions">
+    <div class="widget-presets" role="group" aria-label="Worked examples from the lesson">
+      <button type="button" @click="preset('still-air-2200-ft')" :aria-pressed="active === 'still-air-2200-ft'">2200 ft, 65 kt, calm</button>
+      <button type="button" @click="preset('headwind-20-kt')" :aria-pressed="active === 'headwind-20-kt'">20 kt headwind</button>
+      <button type="button" @click="preset('tailwind-20-kt')" :aria-pressed="active === 'tailwind-20-kt'">20 kt tailwind</button>
+      <button type="button" @click="preset('engine-failure-3000-ft')" :aria-pressed="active === 'engine-failure-3000-ft'">3000 ft at 9:1</button>
+      <button type="button" @click="preset('mishandled-7-to-1')" :aria-pressed="active === 'mishandled-7-to-1'">Mishandled: 7:1</button>
+    </div>
+    <button type="button" class="btn-secondary" @click="reset()">Reset</button>
+  </div>
 
   <p class="widget-notice"><strong>What to notice.</strong> Wind moves the air, not the glide through it: rate of descent, time to the ground and still-air distance never change, but a headwind cuts the groundspeed and shortens the distance over the ground while a tailwind lengthens it. Still-air distance is height × L/D, and only the best glide speed gives the best L/D (some textbooks add: fly slightly faster than best glide in a strong headwind, slightly slower in a tailwind).</p>
   <details class="widget-try"><summary>Try this: 2200 ft, 65 kt, 9 : 1. How far in still air, into a 20 kt headwind and with a 20 kt tailwind?</summary><p>Rate of descent $= 65 \times 6076 \div 60 \div 9 \approx 730$ fpm, so the time is $2200 \div 731 \approx 3.01$ min. Still air: $3.01 \times 65 \div 60 \approx 3.26$ NM. Headwind (GS 45 kt): $3.01 \times 45 \div 60 \approx 2.26$ NM. Tailwind (GS 85 kt): $3.01 \times 85 \div 60 \approx 4.26$ NM. The note rounds the time to 3 minutes and gets 3.25, 2.25 and 4.25 NM: same answer, rounder numbers.</p></details>

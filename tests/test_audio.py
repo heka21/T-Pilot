@@ -202,6 +202,64 @@ def test_narrate_timings() -> None:
     assert captions == sorted(captions, key=lambda c: c["t"])
 
 
+def test_cue_options_and_audio_sha() -> None:
+    widget = SCRIPT.replace("[[pause 2.5]]", "[[widget:bank-angle preset=steep-60 play]]\n[[pause 2.5]]")
+    cue = parse(widget).cues()[1]
+    assert (cue.key, cue.preset, cue.play) == ("widget:bank-angle", "steep-60", True)
+    assert parse(SCRIPT).cues()[0].preset is None and not parse(SCRIPT).cues()[0].play
+    # Cues and captions change the script's sha but not what is heard; moving a cue between paragraphs neither.
+    moved = SCRIPT.replace("[[diagram:right-of-way-rules]]\n", "").replace("## Key points", "[[diagram:right-of-way-rules]]\n## Key points")
+    caption = SCRIPT.replace("{1013 hPa|", "{1013 hectopascals|")
+    for variant in (widget, moved, caption):
+        assert parse(variant).sha != parse(SCRIPT).sha
+        assert parse(variant).audio_sha == parse(SCRIPT).audio_sha
+    # A cue that splits a paragraph changes a gap, so it is heard.
+    split = SCRIPT.replace("on the subscale. Then", "on the subscale.\n[[diagram:right-of-way-rules]]\nThen")
+    assert parse(split).audio_sha != parse(SCRIPT).audio_sha
+
+
+def test_retime_matches_a_fresh_render() -> None:
+    _, old = build.narrate(parse(), "af_heart", 1.0, say=fake_say)
+    recued = (SCRIPT.replace("This is X", "[[widget:bank-angle preset=steep-60]]\nThis is X")
+              .replace("## Key points", "[[widget:bank-angle play]]\n## Key points")
+              .replace("Last one!", "Last one!\n[[diagram:thing]]")
+              .replace("{1013 hPa|", "{1013 hectopascals|"))
+    script = parse(recued)
+    _, fresh = build.narrate(script, "af_heart", 1.0, say=fake_say)
+    retimed = build.retime(script, old)
+    for key in ("chapters", "captions", "words", "duration"):
+        assert retimed[key] == fresh[key], key
+    assert [c["t"] for c in retimed["cues"]] == pytest.approx([c["t"] for c in fresh["cues"]], abs=0.011)
+    assert [{k: v for k, v in c.items() if k != "t"} for c in retimed["cues"]] == [
+        {"kind": "widget", "slug": "bank-angle", "preset": "steep-60"}, {"kind": "diagram", "slug": "right-of-way-rules"},
+        {"kind": "widget", "slug": "bank-angle", "play": True}, {"kind": "diagram", "slug": "thing"}]
+    with pytest.raises(ValueError):
+        build.retime(parse(SCRIPT.replace("Then climb.", "Then climb. Now level off.")), old)
+
+
+def test_cues_only_rewrites_the_json_but_not_the_audio(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(build, "OUT", tmp_path)
+    script = parse()
+    _, meta = build.narrate(script, "af_heart", 1.0, say=fake_say)
+    mp3, js = build.out_paths("X 1.1")
+    mp3.parent.mkdir(parents=True)
+    mp3.write_bytes(b"mp3")
+    # A render from before audio_sha existed, made from this very script.
+    js.write_text(json.dumps({"version": build.FORMAT_VERSION, "script_sha": script.sha, "voice": "af_heart", "speed": 1.0, **meta}))
+    recued = parse(SCRIPT.replace("## Key points", "[[diagram:thing]]\n## Key points"))
+    changed = parse(SCRIPT.replace("Then climb.", "Then climb steadily."))
+    assert build.audio_current(script, json.loads(js.read_text()), "af_heart", 1.0)
+    assert not build.audio_current(recued, json.loads(js.read_text()), "af_heart", 1.0)   # unknown until stamped
+    assert build.retime_all([script], "af_heart", 1.0) == (["X 1.1"], [])               # stamps audio_sha
+    assert build.retime_all([recued], "af_heart", 1.0) == (["X 1.1"], [])
+    out = json.loads(js.read_text())
+    assert out["audio_sha"] == recued.audio_sha and out["script_sha"] == recued.sha and len(out["cues"]) == 2
+    assert build.up_to_date(recued, "af_heart", 1.0) and mp3.read_bytes() == b"mp3"
+    assert build.retime_all([recued], "af_heart", 1.0) == ([], [])
+    assert build.retime_all([changed], "af_heart", 1.0) == ([], [changed])
+    assert not build.up_to_date(changed, "af_heart", 1.0)
+
+
 # ---------------------------------------------------------------- check_content.check_audio
 LESSON = """---
 subtopic: X 1.1
@@ -280,6 +338,29 @@ def test_check_audio_problems_and_warnings(fake_content: Path) -> None:
     assert extra.endswith("numbers not in the lesson: 42")
     assert "7700" not in extra
     assert any("lesson sections with no chapter: Key points" in w for w in warnings)
+
+
+def test_check_audio_widget_cue_presets(fake_content: Path) -> None:
+    (fake_content / "widgets").mkdir()
+    (fake_content / "widgets" / "dial.html").write_text(
+        '<div x-data="widget({ h: 1, presets: { low: { h: 1 }, \'high-up\': { h: 2 } } })"></div>', encoding="utf-8")
+    lesson = LESSON.replace("![Right of way](diagram:thing)", "![Right of way](diagram:thing)\n\n![Dial](widget:dial)")
+    (fake_content / "notes" / "X" / "1.1-a.md").write_text(lesson, encoding="utf-8")
+    script = GOOD_SCRIPT.format(sha=narration.lesson_sha(lesson))
+    ok = script.replace("[[diagram:thing]]", "[[diagram:thing]]\n[[widget:dial preset=low]]\n\nOne.\n\n[[widget:dial preset=high-up]]")
+    problems, warnings = run_check(fake_content, ok)
+    assert problems == [] and not any("widgets never cued" in w for w in warnings)
+    problems, warnings = run_check(fake_content, script)
+    assert any("widgets never cued: dial" in w for w in warnings)
+    bad = script.replace("[[diagram:thing]]", "[[diagram:thing play]]\n[[widget:dial preset=nope play]]\n\nOne.\n\n"
+                         "[[widget:dial preset=low]]\n\nTwo.\n\n[[widget:dial preset=low]]")
+    problems, _ = run_check(fake_content, bad)
+    text = "\n".join(problems)
+    assert "cue diagram:thing: preset and play apply to widgets only" in text
+    assert "preset 'nope' is not one of the widget's presets (high-up, low)" in text
+    assert "cue widget:dial: play needs a timeline widget" in text
+    assert "cue widget:dial preset=low appears more than once" in text
+    assert len(problems) == 4, problems
 
 
 # ---------------------------------------------------------------- services.audio and routes: fake narrations

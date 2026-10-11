@@ -77,6 +77,18 @@ At least 500 ft above the aerodrome ...
     immediately before the sentences that describe that visual, and describe it right after.
   - Cue every diagram the lesson embeds. Widgets and workbook figures too, unless the lesson only mentions them
     in passing.
+  - Put a cue between paragraphs, never between two lines of one paragraph. A cue there splits the paragraph,
+    which changes a pause, so the lesson has to be narrated again. A cue between paragraphs is only re-timed
+    (`python -m tools.audio.build --cues-only`).
+- **`[[widget:slug preset=name]]`, `[[widget:slug play]]`:** Watch mode drives the widget when the narration
+  reaches the cue.
+  - `preset=name` applies one of the widget's named presets (the `presets: { ... }` object in
+    `content/widgets/<slug>.html`). Use it where the narration works through the example that preset reproduces.
+  - A widget may be cued again further on with a different preset, when the narration moves to a second case.
+  - A widget cued without a preset is reset to its starting values.
+  - `play` starts a timeline widget's clock (`x-data="timeline(...)"`). Use it on most timeline cues, so the
+    process plays out while it is described. The two may be combined: `[[widget:sea-breeze-day preset=typical-summer play]]`.
+  - The 3D explorers (`data-widget="explorer"`) take no options.
 - **`[[pause N]]`:** N seconds of silence. Use 4 after a "Check yourself" question, or 6 for one that needs a
   calculation.
 - **`{written|spoken}`:** the caption shows the left side and the voice says the right side, word for word. Use it

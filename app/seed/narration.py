@@ -13,6 +13,8 @@ records the lesson's hash in `source_sha` so check_content can say when the less
     One paragraph per idea. Sentences are captions in watch mode.
 
     [[diagram:vmc-minima-by-airspace]]   # watch mode shows this visual from the next sentence on
+    [[widget:bank-angle preset=60-degrees]]   # a widget, set to one of its named presets (viz.js) as it appears
+    [[widget:sea-breeze-day play]]       # a timeline widget, started playing (both options may be combined)
     [[pause 4]]                          # silence, in seconds (thinking time after a question)
 
     Below {10,000 ft|ten thousand feet}  # {as written|as spoken}: captions show the left, the voice says the right
@@ -39,7 +41,8 @@ INTRO_ID = "top"
 INTRO_TITLE = "Introduction"
 
 CHAPTER_RE = re.compile(r"^##\s+(.+?)\s*$")
-DIRECTIVE_RE = re.compile(r"^\[\[\s*(?:(diagram|widget|workbook):([a-z0-9][a-z0-9-]*)|pause\s+(\d+(?:\.\d+)?))\s*\]\]$")
+DIRECTIVE_RE = re.compile(r"^\[\[\s*(?:(diagram|widget|workbook):([a-z0-9][a-z0-9-]*)((?:\s+(?:preset=[a-z0-9][a-z0-9-]*|play))*)"
+                          r"|pause\s+(\d+(?:\.\d+)?))\s*\]\]$")
 OVERRIDE_RE = re.compile(r"\{([^{}|]+)\|([^{}]+)\}")
 # A sentence ends at . ! or ? (and any closing quote or bracket) followed by space and a capital, digit or override.
 SENTENCE_RE = re.compile(r"(?<=[.!?])[\"”’)]?\s+(?=[\"“(]?[A-Z0-9{])")
@@ -63,6 +66,15 @@ class Pause:
 class Cue:
     kind: str
     slug: str
+    preset: str | None = None   # widgets only: the named preset Watch mode applies when the cue is reached
+    play: bool = False          # timeline widgets only: start the clock when the cue is reached
+
+    @property
+    def key(self) -> str:
+        return f"{self.kind}:{self.slug}"
+
+    def options(self) -> str:
+        return (f" preset={self.preset}" if self.preset else "") + (" play" if self.play else "")
 
 
 @dataclass
@@ -90,7 +102,21 @@ class Script:
             parts.append(f"#{c.id}|{c.title}")
             for i in c.items:
                 parts.append(f"S{i.spoken}|{i.caption}|{i.para_end}" if isinstance(i, Speech)
-                             else f"P{i.seconds}" if isinstance(i, Pause) else f"C{i.kind}:{i.slug}")
+                             else f"P{i.seconds}" if isinstance(i, Pause) else f"C{i.key}{i.options()}")
+        return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:12]
+
+    @property
+    def audio_sha(self) -> str:
+        """Hash of only what is heard (spoken text, sentence and paragraph gaps, pauses, chapter breaks): when it is
+        unchanged, new or moved cues and edited captions are re-timed from the existing audio (build --cues-only)."""
+        parts = []
+        for c in self.chapters:
+            parts.append("#")
+            for i in c.items:
+                if isinstance(i, Speech):
+                    parts.append(f"S{i.spoken}|{i.para_end}")
+                elif isinstance(i, Pause):
+                    parts.append(f"P{i.seconds}")
         return hashlib.sha256("\n".join(parts).encode()).hexdigest()[:12]
 
     def speeches(self) -> list[Speech]:
@@ -282,10 +308,12 @@ def parse(path: Path, lexicon: Lexicon, text: str | None = None) -> Script:
             chapters.append(Chapter(plain_title(m.group(1)), chapter_id(m.group(1))))
         elif m := DIRECTIVE_RE.match(line):
             flush()
-            if m.group(3):
-                chapters[-1].items.append(Pause(float(m.group(3))))
+            if m.group(4):
+                chapters[-1].items.append(Pause(float(m.group(4))))
             else:
-                chapters[-1].items.append(Cue(m.group(1), m.group(2)))
+                opts = m.group(3).split()
+                preset = next((o.split("=", 1)[1] for o in opts if o.startswith("preset=")), None)
+                chapters[-1].items.append(Cue(m.group(1), m.group(2), preset, "play" in opts))
         elif not line:
             flush()
         else:

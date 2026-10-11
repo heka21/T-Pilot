@@ -26,7 +26,7 @@
 <text x="52" y="214.5" font-size="12" text-anchor="middle" fill="var(--color-fg)" font-weight="700" class="num">2</text>
 <text x="72" y="206" font-size="13" fill="var(--color-fg)" font-weight="700">Call-sign</text><text x="72" y="222.9" font-size="13" fill="var(--color-fg)" font-weight="700">and type</text>
 <rect x="190" y="188" width="240" height="44" rx="8" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
-<text x="202" y="206.5" font-size="12.5" fill="var(--color-fg)" font-style="italic">Cessna 172 Alpha Bravo Charlie,</text><text x="202" y="222.75" font-size="12.5" fill="var(--color-fg)" font-style="italic">Alpha Bravo Charlie (×3)</text>
+<text x="202" y="206.5" font-size="12.5" fill="var(--color-fg)" font-style="italic">Cessna 152 Alpha Bravo Charlie,</text><text x="202" y="222.75" font-size="12.5" fill="var(--color-fg)" font-style="italic">Alpha Bravo Charlie (×3)</text>
 <text x="442" y="206" font-size="12" fill="var(--color-fg-muted)">who you are; the type tells</text><text x="442" y="221.6" font-size="12" fill="var(--color-fg-muted)">searchers what to look for</text>
 <circle cx="52" cy="262" r="11" fill="var(--color-surface-2)" stroke="var(--color-line-strong)" stroke-width="1"/>
 <text x="52" y="266.5" font-size="12" text-anchor="middle" fill="var(--color-fg)" font-weight="700" class="num">3</text>

@@ -34,7 +34,7 @@
       why: 'the rule is against falsehood, not against caution. A genuine distress call that turns out to be unnecessary is cancelled, and nobody blames you.' },
     { name: 'Modified handheld', where: 'From a handheld not approved for aeronautical use', words: ['“Northam traffic, Cessna Alpha Bravo Charlie, …” (a correct call)'], fail: 5,
       why: 'the words are fine, but an unapproved or modified set can drift off frequency or interfere with navigation aids.' },
-    { name: 'Inbound at 10 miles', where: '10 miles south of Northam at 2,500 ft, the CTAF now quiet', words: ['“Northam traffic, Cessna 172 Alpha Bravo Charlie, 10 miles south, 2,500,', 'inbound, estimate circuit at 25, Northam.”'], fail: -1,
+    { name: 'Inbound at 10 miles', where: '10 miles south of Northam at 2,500 ft, the CTAF now quiet', words: ['“Northam traffic, Cessna 152 Alpha Bravo Charlie, 10 miles south, 2,500,', 'inbound, estimate circuit at 25, Northam.”'], fail: -1,
       why: 'necessary (an inbound call by 10 nm is recommended), identified, truthful, and on the CTAF where the traffic is.' },
   ],
   get s() { return this._S[this.sc] },

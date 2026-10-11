@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   tas: 80, blade: 21, u: 345, k: 1.2,
   get phi() { return Math.atan(this.tas / this.u) * 180 / Math.PI },
   get aoa() { return this.blade - this.phi },
@@ -10,8 +10,11 @@
   py(a, r) { return (250 - r * Math.sin(a * Math.PI / 180)).toFixed(1) },
   arc(r) { return 'M' + this.px(this.phi, r) + ' ' + this.py(this.phi, r) + ' A' + r + ' ' + r + ' 0 0 ' + (this.aoa >= 0 ? 0 : 1) + ' ' + this.px(this.blade, r) + ' ' + this.py(this.blade, r) },
   helixArc() { return 'M' + this.px(0, 150) + ' 250 A150 150 0 0 0 ' + this.px(this.phi, 150) + ' ' + this.py(this.phi, 150) },
-  reset() { this.tas = 80; this.blade = 21 }
-}">
+  presets: {
+    'climb-80-kt': { tas: 80, blade: 21 },
+    'fast-descent-120-kt': { tas: 120, blade: 21 },
+  },
+})">
   <svg viewBox="0 0 640 300" role="img" aria-labelledby="paa-title" class="widget-stage">
     <title id="paa-title">A propeller blade section three-quarters out along the blade, with its velocity triangle: rotational speed along the plane of rotation, forward speed at right angles, and the helical path between them</title>
     <defs><marker id="paa-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" fill="context-stroke"/></marker></defs>
@@ -21,12 +24,12 @@
     <!-- velocity triangle -->
     <line x1="130" y1="250" :x2="hx - 4" y2="250" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#paa-arrow)"/>
     <text x="337" y="288" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" class="num">round: 345 kt at 2,400 RPM</text>
-    <line :x1="hx" y1="250" :x2="hx" :y2="hy + 4" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#paa-arrow)" x-show="tas > 4"/>
+    <line :x1="hx" y1="250" :x2="hx" :y2="hy + 4" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#paa-arrow)" :opacity="tas > 4 ? 1 : 0"/>
     <text :x="hx + 10" :y="(250 + hy) / 2 + 4" font-size="13" font-weight="600" fill="var(--color-fg)" class="num" x-text="tas + ' kt'"></text>
     <line x1="130" y1="250" :x2="hx" :y2="hy" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round"/>
-    <text :x="130 + 0.7 * (hx - 130)" :y="250 - 0.7 * (250 - hy) + 20" font-size="12" font-weight="600" fill="var(--color-info)" x-show="tas > 30">helical path</text>
-    <path :d="helixArc()" fill="none" stroke="var(--color-info)" stroke-width="1.25" x-show="phi > 2"/>
-    <text :x="px(phi / 2, 162)" :y="+py(phi / 2, 162) + 5" font-size="12" font-weight="600" fill="var(--color-info)" class="num" x-text="'helix ' + Math.round(phi) + '°'" x-show="phi > 4"></text>
+    <text :x="130 + 0.7 * (hx - 130)" :y="250 - 0.7 * (250 - hy) + 20" font-size="12" font-weight="600" fill="var(--color-info)" :opacity="tas > 30 ? 1 : 0">helical path</text>
+    <path :d="helixArc()" fill="none" stroke="var(--color-info)" stroke-width="1.25" :opacity="phi > 2 ? 1 : 0"/>
+    <text :x="px(phi / 2, 162)" :y="+py(phi / 2, 162) + 5" font-size="12" font-weight="600" fill="var(--color-info)" class="num" x-text="'helix ' + Math.round(phi) + '°'" :opacity="phi > 4 ? 1 : 0"></text>
     <!-- chord line at the blade angle -->
     <line x1="130" y1="250" :x2="px(blade, 470)" :y2="py(blade, 470)" stroke="var(--color-fg)" stroke-width="1" stroke-dasharray="6 4"/>
     <text :x="px(blade, 470) - 4" :y="+py(blade, 470) - 8" font-size="12" text-anchor="end" fill="var(--color-fg-muted)" x-text="'chord: blade angle ' + blade + '°'"></text>
@@ -63,8 +66,8 @@
 
   <div class="widget-actions">
     <div class="widget-presets" role="group" aria-label="Airspeed presets">
-      <button type="button" @click="tas = 80" :aria-pressed="tas === 80">80 kt climb</button>
-      <button type="button" @click="tas = 120" :aria-pressed="tas === 120">120 kt fast descent</button>
+      <button type="button" @click="preset('climb-80-kt')" :aria-pressed="active === 'climb-80-kt'">80 kt climb</button>
+      <button type="button" @click="preset('fast-descent-120-kt')" :aria-pressed="active === 'fast-descent-120-kt'">120 kt fast descent</button>
     </div>
     <button type="button" class="btn-secondary" @click="reset()">Reset</button>
   </div>

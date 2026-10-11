@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   mode: 'L', litres: 120, kilos: 90, sg: 0.72,
   get L() { return this.mode === 'L' ? this.litres : this.kilos / this.sg },
   get kg() { return this.mode === 'L' ? this.litres * this.sg : this.kilos },
@@ -7,9 +7,14 @@
   f0(v) { return String(Math.round(v)) },
   get px() { return 1.6 },
   get level() { return Math.min(1, this.L / 250) },
-  set(p) { Object.assign(this, p) },
-  reset() { this.mode = 'L'; this.litres = 120; this.kilos = 90; this.sg = 0.72 }
-}">
+  set(p) { Object.assign(this, p); this.active = null },
+  presets: {
+    'fuel-100-litres': { mode: 'L', litres: 100, sg: 0.72 },
+    'fuel-120-litres': { mode: 'L', litres: 120, sg: 0.72 },
+    'full-tanks-180-litres': { mode: 'L', litres: 180, sg: 0.72 },
+    'only-90-kg-allowed': { mode: 'kg', kilos: 90, sg: 0.72 },
+  },
+})">
   <svg viewBox="0 0 640 300" role="img" aria-labelledby="fk-title" class="widget-stage">
     <title id="fk-title">A fuel tank holding a volume of avgas in litres, the same fuel on a scale in kilograms, and bars comparing the two numbers: kilograms are always the smaller number for avgas</title>
     <defs>
@@ -22,8 +27,8 @@
     <line x1="42" :y1="178 - 136 * level" x2="138" :y2="178 - 136 * level" stroke="var(--color-info)" stroke-width="2"/>
     <text x="90" y="206" font-size="18" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" class="num" x-text="f1(L) + ' L'"></text>
     <!-- conversion arrow -->
-    <line x1="160" y1="110" x2="290" y2="110" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#fk-arrow)" x-show="mode === 'L'"/>
-    <line x1="290" y1="110" x2="160" y2="110" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#fk-arrow)" x-show="mode === 'kg'"/>
+    <line x1="160" y1="110" x2="290" y2="110" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#fk-arrow)" :opacity="mode === 'L' ? 1 : 0"/>
+    <line x1="290" y1="110" x2="160" y2="110" stroke="var(--color-fg-muted)" stroke-width="2" stroke-linecap="round" marker-end="url(#fk-arrow)" :opacity="mode === 'kg' ? 1 : 0"/>
     <text x="225" y="98" font-size="15" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="(mode === 'L' ? '× ' : '÷ ') + sg.toFixed(2)"></text>
     <text x="225" y="132" font-size="12" text-anchor="middle" fill="var(--color-fg-muted)" x-text="mode === 'L' ? 'litres to kilograms' : 'kilograms to litres'"></text>
     <!-- scale -->
@@ -87,10 +92,10 @@
 
   <div class="widget-actions">
     <div class="widget-presets" role="group" aria-label="Worked examples from the lesson">
-      <button type="button" @click="set({ mode: 'L', litres: 100, sg: 0.72 })">100 L</button>
-      <button type="button" @click="set({ mode: 'L', litres: 120, sg: 0.72 })">120 L</button>
-      <button type="button" @click="set({ mode: 'L', litres: 180, sg: 0.72 })">Full tanks 180 L</button>
-      <button type="button" @click="set({ mode: 'kg', kilos: 90, sg: 0.72 })">Only 90 kg allowed</button>
+      <button type="button" @click="preset('fuel-100-litres')" :aria-pressed="active === 'fuel-100-litres'">100 L</button>
+      <button type="button" @click="preset('fuel-120-litres')" :aria-pressed="active === 'fuel-120-litres'">120 L</button>
+      <button type="button" @click="preset('full-tanks-180-litres')" :aria-pressed="active === 'full-tanks-180-litres'">Full tanks 180 L</button>
+      <button type="button" @click="preset('only-90-kg-allowed')" :aria-pressed="active === 'only-90-kg-allowed'">Only 90 kg allowed</button>
     </div>
     <button type="button" class="btn-secondary" @click="reset()">Reset</button>
   </div>

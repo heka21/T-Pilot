@@ -405,6 +405,8 @@
   }
 
   // Watch mode (watch.html): the visual whose cue was last passed, the chapter title between cues, and the caption.
+  // A widget cue may carry a named preset and/or play (tools/audio/build.py): reaching the cue, by playing or by
+  // seeking, applies the preset (or resets a widget cued without one) and starts a timeline widget's clock.
   function bindWatch(root) {
     var page = root.querySelector ? root.querySelector("[data-watch-page]") : null;
     if (!page) return;
@@ -424,7 +426,13 @@
       while (lo <= hi) { var mid = (lo + hi) >> 1; if (list[mid].t <= t + 0.05) { ans = mid; lo = mid + 1; } else hi = mid - 1; }
       return ans;
     }
-    var shown = null, lastCap = -2, lastChap = -2, wake = null, lastSpeed = null;
+    var shown = null, lastCap = -2, lastChap = -2, lastCue = -2, wake = null, lastSpeed = null;
+    function driveCue(cue) {
+      if (!cue || cue.kind !== "widget" || !window.CasaViz) return;
+      var el = visuals[cue.kind + ":" + cue.slug];
+      // After the shown figure is un-hidden, so a timeline sees itself visible; Alpine may still be initialising it.
+      setTimeout(function () { window.CasaViz.drive(el, { preset: cue.preset, reset: !cue.preset, play: cue.play }); }, 0);
+    }
     function wakeLock(on) {
       if (on && !wake && navigator.wakeLock) navigator.wakeLock.request("screen").then(function (w) { wake = w; w.addEventListener("release", function () { wake = null; }); }).catch(function () {});
       if (!on && wake) { wake.release().catch(function () {}); wake = null; }
@@ -454,6 +462,7 @@
         shown = key;
         if (card) card.hidden = !!key;
       }
+      if (cu !== lastCue) { lastCue = cu; if (key) driveCue(tl.cues[cu]); }
       if (ci !== lastChap) {
         lastChap = ci;
         if (cardTitle) cardTitle.textContent = ci >= 0 ? tl.chapters[ci].title : desc.title;

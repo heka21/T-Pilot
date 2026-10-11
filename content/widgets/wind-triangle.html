@@ -1,4 +1,4 @@
-<div class="widget" x-data="{
+<div class="widget" x-data="widget({
   tr: 70, tas: 110, wd: 20, ws: 25, vr: 2,
   rad(d) { return d * Math.PI / 180 },
   get theta() { return ((this.wd - this.tr + 540) % 360) - 180 },
@@ -45,9 +45,15 @@
   get hL() { return this.lbl(this.O, this.H, this.hSide, 40) },
   get gL() { return this.lbl(this.O, this.G, -this.hSide, 36) },
   get wL() { return this.lbl(this.H, this.G, this.hSide, 62) },
-  set(p) { Object.assign(this, p) },
-  reset() { this.tr = 70; this.tas = 110; this.wd = 20; this.ws = 25; this.vr = 2 }
-}">
+  set(p) { Object.assign(this, p); this.active = null },
+  presets: {
+    'track-070-wind-020-25': { tr: 70, tas: 110, wd: 20, ws: 25, vr: 2 },
+    'track-160-wind-230-20': { tr: 160, tas: 100, wd: 230, ws: 20, vr: 0 },
+    'cunderdin-eastbound': { tr: 68, tas: 108, wd: 270, ws: 20, vr: 0 },
+    'cunderdin-to-northam-headwind': { tr: 267, tas: 108, wd: 270, ws: 20, vr: 0 },
+    'diversion-040-tailwind': { tr: 40, tas: 105, wd: 270, ws: 20, vr: 2 },
+  },
+})">
   <svg viewBox="0 0 640 320" role="img" aria-labelledby="wt-title" class="widget-stage">
     <title id="wt-title">Triangle of velocities: the heading and TAS vector, the wind vector from its tip, and the track and groundspeed vector closing the triangle, with the drift angle between heading and track</title>
     <defs>
@@ -57,16 +63,16 @@
     <line x1="34" y1="78" x2="34" y2="30" stroke="var(--color-fg-muted)" stroke-width="1.5" marker-end="url(#wt-arrow)"/>
     <text x="34" y="96" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-fg-muted)">N (true)</text>
     <!-- drift arc -->
-    <path :d="arcD" fill="none" stroke="var(--color-warn)" stroke-width="2.5" x-show="drift >= 0.5"/>
+    <path :d="arcD" fill="none" stroke="var(--color-warn)" stroke-width="2.5" :opacity="drift >= 0.5 ? 1 : 0"/>
     <!-- vectors -->
     <line :x1="O[0]" :y1="O[1]" :x2="G[0]" :y2="G[1]" stroke="var(--color-fg)" stroke-width="3" stroke-linecap="round" marker-end="url(#wt-arrow)"/>
-    <line :x1="H[0]" :y1="H[1]" :x2="G[0]" :y2="G[1]" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#wt-arrow)" x-show="ws > 0"/>
+    <line :x1="H[0]" :y1="H[1]" :x2="G[0]" :y2="G[1]" stroke="var(--color-info)" stroke-width="2.5" stroke-linecap="round" marker-end="url(#wt-arrow)" :opacity="ws > 0 ? 1 : 0"/>
     <line :x1="O[0]" :y1="O[1]" :x2="H[0]" :y2="H[1]" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round" marker-end="url(#wt-arrow)"/>
     <circle :cx="O[0]" :cy="O[1]" r="5" fill="var(--color-fg)"/>
     <!-- labels -->
-    <text :x="hL[0]" :y="hL[1]" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand)" class="num" x-text="'HDG ' + three(hdgT) + '°T · TAS ' + tas"></text>
-    <text :x="gL[0]" :y="gL[1] + 4" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'TR ' + three(tr) + '°T · GS ' + Math.round(gs)"></text>
-    <text :x="wL[0]" :y="wL[1] + 4" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" class="num" x-show="ws > 0" x-text="'W/V ' + three(wd) + '/' + ws"></text>
+    <text :x="hL[0]" :y="clamp(hL[1], 16, 290)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-brand)" class="num" x-text="'HDG ' + three(hdgT) + '°T · TAS ' + tas"></text>
+    <text :x="gL[0]" :y="clamp(gL[1] + 4, 16, 290)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="700" text-anchor="middle" fill="var(--color-fg)" class="num" x-text="'TR ' + three(tr) + '°T · GS ' + Math.round(gs)"></text>
+    <text :x="wL[0]" :y="clamp(wL[1] + 4, 16, 290)" paint-order="stroke" stroke="var(--color-surface)" stroke-width="4" stroke-linejoin="round" font-size="12" font-weight="700" text-anchor="middle" fill="var(--color-info-fg)" class="num" :opacity="ws > 0 ? 1 : 0" x-text="'W/V ' + three(wd) + '/' + ws"></text>
     <text x="620" y="300" font-size="12" font-weight="600" text-anchor="end" fill="var(--color-warn-fg)" x-text="drift >= 0.5 ? 'Drift ' + Math.round(drift) + '° ' + driftSide + ' (amber arc)' : 'No drift'"></text>
     <text x="20" y="300" font-size="12" fill="var(--color-fg-muted)">The wind arrow points where the air goes.</text>
   </svg>
@@ -115,8 +121,11 @@
 
   <div class="widget-actions">
     <div class="widget-presets" role="group" aria-label="Worked examples from the lesson">
-      <button type="button" @click="set({ tr: 70, tas: 110, wd: 20, ws: 25, vr: 2 })">070°T, 110 kt, 020/25</button>
-      <button type="button" @click="set({ tr: 160, tas: 100, wd: 230, ws: 20, vr: 0 })">160°T, 100 kt, 230/20</button>
+      <button type="button" @click="preset('track-070-wind-020-25')" :aria-pressed="active === 'track-070-wind-020-25'">070°T, 110 kt, 020/25</button>
+      <button type="button" @click="preset('track-160-wind-230-20')" :aria-pressed="active === 'track-160-wind-230-20'">160°T, 100 kt, 230/20</button>
+      <button type="button" @click="preset('cunderdin-eastbound')" :aria-pressed="active === 'cunderdin-eastbound'">To Cunderdin, 270/20</button>
+      <button type="button" @click="preset('cunderdin-to-northam-headwind')" :aria-pressed="active === 'cunderdin-to-northam-headwind'">To Northam, into 270/20</button>
+      <button type="button" @click="preset('diversion-040-tailwind')" :aria-pressed="active === 'diversion-040-tailwind'">Diversion 040°T, 270/20</button>
       <button type="button" @click="set({ wd: (Math.round(tr / 10) * 10) || 360, ws: 25 })">Wind on the nose</button>
     </div>
     <button type="button" class="btn-secondary" @click="reset()">Reset</button>
